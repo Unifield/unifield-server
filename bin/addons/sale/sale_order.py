@@ -97,6 +97,7 @@ class sale_order(osv.osv):
             'sourcing_trace': '',
             'sourcing_trace_ok': False,
             'claim_name_goods_return': '',
+            'draft_cancelled': False,
         })
 
         if not context.get('keepClientOrder', False):
@@ -257,7 +258,7 @@ class sale_order(osv.osv):
                         amount_received += move_qty*line.price_unit
 
             if amount_total:
-                res[order.id] = (amount_received/amount_total)*100   
+                res[order.id] = (amount_received/amount_total)*100
 
         return res
 
@@ -444,7 +445,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         result = {}
         for so in self.browse(cr, uid, ids, context=context):
-            result[so.id] = so.state
+            if so.draft_cancelled:
+                result[so.id] = 'cancel'
+            else:
+                result[so.id] = so.state
 
         return result
 
@@ -466,11 +470,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for sol in so.order_line:
                 sol_states = set([sol.state for sol in so.order_line])
 
-            if not sol_states:
+            if so.draft_cancelled:
+                res[so.id] = 'cancel'
+            elif not sol_states:
                 res[so.id] = 'draft'
             elif all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
-            else: # else compute the less advanced state:
+            else:  # else compute the less advanced state:
                 sol_states.discard('cancel')
                 sol_states.discard('cancel_r')
 
@@ -502,10 +508,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # SO state must not go back:
             if sos_obj.get_sequence(cr, uid, [], res[so.id]) < sos_obj.get_sequence(cr, uid, [], so.state):
                 res[so.id] = so.state
-                # add the '_p' if needed: 
+                # add the '_p' if needed:
                 if res[so.id] in ['draft', 'validated', 'confirmed']:
                     current_state_sequence = sols_obj.get_sequence(cr, uid, [], so.state)
-                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states]) 
+                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states])
                     if has_line_further:
                         res[so.id] = '%s_p' % res[so.id]
 
@@ -523,8 +529,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                                     'sale.order.line': (_get_order, ['state'], 10),    
+                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line','draft_cancelled'], 10),
+                                     'sale.order.line': (_get_order, ['state'], 10),
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),
@@ -576,7 +582,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
                                        string='Order Type', required=True, readonly=True),
@@ -628,6 +634,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
+        'draft_cancelled': fields.boolean(string='State', readonly=True)
     }
 
     _defaults = {
@@ -650,7 +657,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'active': True,
         'no_line': lambda *a: True,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
-
+        'draft_cancelled': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1188,8 +1195,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         sale_order = self.browse(cr, uid, ids[0], context=context)
         sol_ids = [sol.id for sol in sale_order.order_line]
 
-        context.update({'line_ids': sol_ids})
-        return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
+        if len(sol_ids) > 0:
+            context.update({'lines_ids': sol_ids})
+            return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
+        else:
+            self.write(cr, uid, sale_order.id, {'draft_cancelled': True}, context=context)
+            return True
 
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -2388,7 +2399,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         wf_service = netsvc.LocalService("workflow")
-        signal = 'cancel_r' if resource else 'cancel' 
+        signal = 'cancel_r' if resource else 'cancel'
 
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty

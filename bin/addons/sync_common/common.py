@@ -76,6 +76,7 @@ WHITE_LIST_MODEL = [
     'msf.budget.decision.moment',
     'msf.budget.line',
     'msf.instance',
+    'msf.instance.cloud',
     'msf_button_access_rights.button_access_rule',
     'msf_field_access_rights.field_access_rule',
     'msf_field_access_rights.field_access_rule_line',

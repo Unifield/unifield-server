@@ -155,9 +155,9 @@ class stock_card_wizard(osv.osv_memory):
             inv_dom.append(('inventory_id.date_done', '>=', card.from_date))
             pi_counting_dom.extend([
                 '|',
-                ('inventory_id.date_done', '>=', card.from_date), 
-                '&', 
-                ('inventory_id.state', '=', 'confirmed'), 
+                ('inventory_id.date_done', '>=', card.from_date),
+                '&',
+                ('inventory_id.state', '=', 'confirmed'),
                 ('inventory_id.date_confirmed', '>=', card.from_date),
             ])
 
@@ -165,9 +165,9 @@ class stock_card_wizard(osv.osv_memory):
             domain.append(('date', '<=', card.to_date))
             inv_dom.append(('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'))
             pi_counting_dom.extend([
-                '|', 
+                '|',
                 ('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'),
-                '&', 
+                '&',
                 ('inventory_id.state', '=', 'confirmed'),
                 ('inventory_id.date_confirmed', '>=', card.to_date),
             ])

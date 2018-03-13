@@ -978,14 +978,14 @@ class Entity(osv.osv):
         messages_count = 0
         logger_index = None
         while True:
-            packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
+            msg_ids, packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
             if not packet:
                 break
             messages_count += len(packet)
             res = proxy.send_message(uuid, self._hardware_id, packet, {'md5': get_md5(packet)})
             if not res[0]:
                 raise Exception, res[1]
-            messages.packet_sent(cr, uid, packet, context=context)
+            messages.packet_sent(cr, uid, msg_ids, context=context)
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
                 logger.replace(logger_index, _("Message(s) sent: %d/%d") % (messages_count, messages_max))
@@ -1053,8 +1053,13 @@ class Entity(osv.osv):
 
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            data_ids = [data['id'] for data in packet]
-            res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+            if packet and packet[0].get('sync_id'):
+                data_ids = [data['sync_id'] for data in packet]
+                res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+            else:
+                # migration
+                data_ids = [data['id'] for data in packet]
+                res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
             if not res[0]: raise Exception, res[1]
             cr.commit()
 
@@ -1234,8 +1239,11 @@ class Entity(osv.osv):
         return False
 
     def get_status(self, cr, uid, context=None):
-        if not self.pool.get('sync.client.sync_server_connection').is_connected:
-            return "Not Connected"
+        connection_obj = self.pool.get('sync.client.sync_server_connection')
+        if not connection_obj.is_connected:
+            login, password = connection_obj._info_connection_from_config_file(cr)
+            if login == -1 or not login or not password:
+                return "Not Connected"
 
         if self.is_syncing():
             if self.aborting:
@@ -1488,6 +1496,13 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
+    def _info_connection_from_config_file(self, cr):
+        login = tools.config.get('sync_user_login')
+        if login == 'admin':
+            if not self.search_exist(cr, 1, [('host', 'in', ['127.0.0.1', 'localhost'])]):
+                login = -1
+        return (login, tools.config.get('sync_user_password'))
+
     def get_connection_from_config_file(self, cr, uid, ids=None, context=None):
         '''
         get credentials from config file if any and try to connect to the sync
@@ -1496,10 +1511,9 @@ class Connection(osv.osv):
         '''
         logger = logging.getLogger('sync.client')
         if not self.is_connected:
-            login = tools.config.get('sync_user_login')
-            if login == 'admin':
+            login, password = self._info_connection_from_config_file(cr)
+            if login == -1:
                 raise AdminLoginException
-            password = tools.config.get('sync_user_password')
             if login and password:
                 # write this credentials in the connection manager to be
                 # consistent with the credentials used for the current

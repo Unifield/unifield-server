@@ -1520,6 +1520,11 @@ class shipment(osv.osv):
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
             is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
+
+            # US-3822 Block STV creation if the partner is internal
+            if is_stv and partner.partner_type == 'internal':
+                continue
+
             if is_ivo or is_stv:
                 origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
                 fo = move and move.sale_line_id and move.sale_line_id.order_id or False
@@ -5090,6 +5095,26 @@ class stock_move(osv.osv):
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
+                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
+                    # check if the original PO line can be set to done
+                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
+                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                        ('picking_id.type', '=', 'in'),
+                    ], context=context)
+                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                        # all in lines processed or will be processed for this po line
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
+
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
@@ -5113,26 +5138,6 @@ class stock_move(osv.osv):
                         if out_move_id:
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
-
-                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                    ('purchase_line_id', '=', move.purchase_line_id.id),
-                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                    ('picking_id.type', '=', 'in'),
-                ], context=context)
-                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                    # all in lines processed or will be processed for this po line
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
-
-                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
-                    # check if the original PO line can be set to done
-                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
-                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                        ('picking_id.type', '=', 'in'),
-                    ], context=context)
-                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                        # all in lines processed or will be processed for this po line
-                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
