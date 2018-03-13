@@ -53,6 +53,20 @@ class Client(object):
             raise Exception(result.content)
         return True
 
+    def move(self, remote_path, dest):
+        webUri = '%s%s' % (self.path, remote_path)
+        destUri = '%s%s' % (self.path, dest)
+        request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Post
+        options.set_header("X-HTTP-Method", "POST")
+        self.request.context.authenticate_request(options)
+        self.request.context.ensure_form_digest(options)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        if result.status_code not in (200, 201):
+            raise Exception(result.content)
+        return True
+
     def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
         iid = uuid.uuid1()
 
