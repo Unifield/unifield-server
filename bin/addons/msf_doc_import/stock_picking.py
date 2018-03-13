@@ -20,6 +20,7 @@
 ##############################################################################
 
 import base64
+import time
 from os import path
 
 from osv import fields
@@ -35,6 +36,7 @@ from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_heade
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from service.web_services import report_spool
 import xml.etree.ElementTree as ET
 
 
@@ -129,7 +131,59 @@ class stock_picking(osv.osv):
         return res
 
 
+    def generate_simulation_screen_report(self, cr, uid, in_id, filetype, file_content, context=None):
+        '''
+        generate a IN simulation screen report
+        '''
+        if context is None:
+            context = {}
+
+        simu_id = self.pool.get('wizard.import.in.simulation.screen').create(cr, uid, {
+            'picking_id': in_id, 
+            'filetype': filetype,
+            'file_to_import': base64.encodestring(file_content),
+        }, context=context)
+        for move in self.pool.get('stock.picking').browse(cr, uid, in_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                self.pool.get('wizard.import.in.line.simulation.screen').create(cr, uid, {
+                    'move_id': move.id,
+                    'simu_id': simu_id,
+                    'move_product_id': move.product_id and move.product_id.id or False,
+                    'move_product_qty': move.product_qty or 0.00,
+                    'move_uom_id': move.product_uom and move.product_uom.id or False,
+                    'move_price_unit': move.price_unit or move.product_id.standard_price,
+                    'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                    'line_number': move.line_number,
+                    'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                }, context=context)
+
+        # generate report:
+        cr.commit()
+        datas = {'ids': [simu_id]}
+        rp_spool = report_spool()
+        result = rp_spool.exp_report(cr.dbname, uid, 'in.simulation.screen.xls', [simu_id], datas, context=context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            time.sleep(0.5)
+
+        # attach report to new IN:
+        self.pool.get('ir.attachment').create(cr, uid, {
+            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'description': 'IN simulation screen',
+            'res_model': 'stock.picking',
+            'res_id': in_id,
+            'datas': file_res.get('result'),
+        })
+
+        return True
+
+
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
+        '''
+        Method called by automated.imports feature
+        '''
         if context is None:
             context = {}
         filetype = self.get_import_filetype(cr, uid, file_path, context=context)
@@ -181,6 +235,9 @@ class stock_picking(osv.osv):
         # run method do_incoming_shipment:
         context.update({'do_not_process_incoming': True})
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context=context)
+
+        # create simulation screen to get the simulation report and then attach it to the newly created IN (available updated)
+        self.generate_simulation_screen_report(cr, uid, new_picking, filetype, file_content, context=context)
 
         return processed, rejected, headers
 
