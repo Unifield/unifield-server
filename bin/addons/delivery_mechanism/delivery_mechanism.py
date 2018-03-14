@@ -1314,6 +1314,9 @@ class stock_picking(osv.osv):
                     return backorder_id
                 elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, backorder_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return backorder_id
 
                 self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
@@ -1375,6 +1378,9 @@ class stock_picking(osv.osv):
                     return picking_id
                 elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
                     wf_service.trg_validate(uid, 'stock.picking', picking_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return picking_id
                 else:
                     # Cancel missing IN instead of processing
