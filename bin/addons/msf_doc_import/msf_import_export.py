@@ -733,6 +733,9 @@ class msf_import_export(osv.osv_memory):
             if value is None or field not in fields_def:
                 return
             if '.' not in field:
+                if fields_def[field]['type'] == 'char' and value and isinstance(value, basestring) and len(value.splitlines()) > 1 and ( field != 'name' or impobj != 'res.partner'):
+                    raise osv.except_osv(_('Warning !'), _("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field, tools.ustr(value)))
+
                 if fields_def[field]['type'] == 'selection':
                     if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
