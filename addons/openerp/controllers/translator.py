@@ -19,6 +19,8 @@
 #
 ###############################################################################
 import copy
+import base64
+import json
 
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, cache, common, TinyDict
@@ -148,6 +150,7 @@ class Translator(SecuredController):
         
         ctx = dict((params.context or {}), **rpc.session.context)
         params['context'] = ustr(ctx)
+        fields_values = []
 
         if translate == 'fields':
             if not params.id:
@@ -163,7 +166,24 @@ class Translator(SecuredController):
                         val = [val]
 
                     for v in val:
+                        if not v:
+                            # look for EN value first, then any
+                            if data['en_MF'] and data['en_MF'][name]:
+                                v = data['en_MF'][name]
+                                data[context['lang']][name] = data['en_MF'][name]
+                            else:
+                                for lang in data:
+                                    if data[lang] and data[lang][name]:
+                                        v = data[lang][name]
+                                        data[context['lang']][name] = data[lang][name]
+                                        break
                         rpc.session.execute('object', 'execute', params.model, 'write', [params.id], {name : v}, context)
+
+            for lang_field in data[ctx['lang']]:
+                fields_values.append({
+                    'id': lang_field,
+                    'value': data[ctx['lang']][lang_field],
+                })
 
         if translate == 'labels':
             for lang, value in data.items():
@@ -180,6 +200,7 @@ class Translator(SecuredController):
                 for id, val in value.items():
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
-        return dict(close_popup=True)
+        # Encoding fields_value to prevent escaping characters and shorten sent data
+        return dict(close_popup=True, fields_values=base64.b64encode(json.dumps(fields_values)))
 
 # vim: ts=4 sts=4 sw=4 si et

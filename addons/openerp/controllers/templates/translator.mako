@@ -8,8 +8,13 @@
 
 % if close_popup:
 <script type="text/javascript">
+var fields_values = JSON.parse(window.atob("${fields_values}"));
 jQuery(document).ready(function () {
-    window.parent.location.reload();
+    for (var i = 0; i < fields_values.length; i++) {
+        field_id = "#" + fields_values[i].id;
+        $(field_id, window.parent.document).val(fields_values[i].value);
+    }
+    window.frameElement.close();
 })
 </script>
 % else:
@@ -75,7 +80,7 @@ jQuery(document).ready(function () {
                         % for lang in langs:
 	                        <td class="grid-cell item">
                             % if fields_type.get(n) == 'text':
-                                <textarea name="${lang['code']}/${n}" style="width: 100%;">${v[lang['code']] or ''}</textarea>
+                                <textarea name="${lang['code']}/${n}" style="width: 100%; resize: vertical; min-height: 50px;">${v[lang['code']] or ''}</textarea>
                             % else:
 	                            <input type="text" name="${lang['code']}/${n}" value="${v[lang['code']] or ''}" style="width: 100%;"/>
                             % endif

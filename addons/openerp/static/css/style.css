@@ -1079,7 +1079,8 @@ span.char {
 
 .area_translatable {
     position: relative;
-    top: -30px;
+    top: -25px;
+    left: 2px;
 }
 
 img.translatable {
