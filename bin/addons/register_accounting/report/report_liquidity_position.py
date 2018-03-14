@@ -270,7 +270,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             pending_cheques['currency_amounts'][rev_cur]['total_amount_func_currency'] += rev_fctal
             pending_cheques['total_cheque'] += rev_fctal
             if rev_cur not in self.grand_total_reg_currency:
-                self.grand_total_reg_currency[rev_cur] = 0.0,
+                self.grand_total_reg_currency[rev_cur] = 0.0
             self.grand_total_reg_currency[rev_cur] += rev_booking
 
     def getPendingCheques(self):
