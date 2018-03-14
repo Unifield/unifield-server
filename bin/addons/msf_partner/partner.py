@@ -730,7 +730,13 @@ class res_partner(osv.osv):
                     # for each rule, check the record against the rule domain.
                     rules_to_check = []
                     for rule in rules_pool.read(cr, uid, rules_search, ['domain_text']):
-                        if _record_matches_domain(self, cr, new_id, rule['domain_text']):
+                        dom = rule['domain_text']
+                        if isinstance(dom, (str, unicode)):
+                            dom = eval(rule['domain_text'])
+                            if not isinstance(dom, bool) and dom:
+                                dom = ['&', ('active','in', ['t', 'f'])] + dom
+
+                        if _record_matches_domain(self, cr, new_id, dom):
                             rules_to_check.append(rule['id'])
                     if rules_to_check:
                         # get the fields with write_access=False
