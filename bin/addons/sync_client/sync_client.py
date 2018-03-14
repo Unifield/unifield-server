@@ -1183,6 +1183,23 @@ class Entity(osv.osv):
         context['lang'] = 'en_US'
         logger = context.get('logger')
         self._logger.info("Start synchronization")
+
+        version_instance_module = self.pool.get('sync.version.instance.monitor')
+        try:
+            version = self.pool.get('backup.config').get_server_version(cr, uid, context=context)
+            postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
+            unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
+            version_instance_module.create(cr, uid, {
+                'version': version,
+                'postgresql_disk_space': postgres_disk_space,
+                'unifield_disk_space': unifield_disk_space,
+            }, context=context)
+
+        except Exception:
+            cr.rollback()
+            logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
+            # do not block sync
+            pass
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
