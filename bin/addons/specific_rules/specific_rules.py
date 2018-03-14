@@ -508,7 +508,6 @@ class product_uom(osv.osv):
 
     def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
         dom = []
-
         for arg in args:
             if arg[0] == 'uom_by_parent' and arg[1] != '=':
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
@@ -522,11 +521,28 @@ class product_uom(osv.osv):
 
         return dom
 
+    def _search_uom_by_stock_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+
+        for arg in args:
+            if arg[0] == 'uom_by_stock_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_stock_product':
+                product_id = arg[2]
+                if product_id and isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                    if product_id:
+                        product = self.pool.get('product.product').read(cr, uid, product_id[0], ['uom_id'], context=context)
+                        if product['uom_id']:
+                            dom = [('id', '=', product['uom_id'][0])]
+        return dom
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product',
                                           method=True, help='Field used to filter the UoM for a specific product'),
         'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent',
                                          method=True, help='Field used to filter the UoM for a specific product'),
+        'uom_by_stock_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_stock_product, string='Stock UoM by Product',
+                                                method=True, help='Field used to filter the UoM for a specific product'),
     }
 
 product_uom()
@@ -682,6 +698,20 @@ class stock_move(osv.osv):
         """
         return True
 
+    def is_out_move_linked_to_dpo(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        move = self.browse(cr, uid, ids[0], context=context)
+        if move.sale_line_id:
+            pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
+            for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+                if pol.order_id.order_type == 'direct':
+                    return True
+
+        return False
+
     def _check_tracking(self, cr, uid, ids, context=None):
         """
         check for batch management
@@ -690,10 +720,10 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.batch_management:
-                    if not move.prodlot_id and move.product_qty:
+                    if not move.prodlot_id and move.product_qty and not self.is_out_move_linked_to_dpo(cr, uid, move.id, context=context):
                         raise osv.except_osv(_('Error!'),  _('You must assign a Batch Number for this product (Batch Number Mandatory).'))
                 if move.product_id.perishable:
-                    if not move.prodlot_id and move.product_qty:
+                    if not move.prodlot_id and move.product_qty and not self.is_out_move_linked_to_dpo(cr, uid, move.id, context=context):
                         raise osv.except_osv(_('Error!'),  _('You must assign an Expiry Date for this product (Expiry Date Mandatory).'))
             if move.prodlot_id:
                 if not move.product_id.perishable and not move.product_id.batch_management:

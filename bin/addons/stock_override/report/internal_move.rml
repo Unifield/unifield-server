@@ -186,7 +186,7 @@
         <setNextTemplate name="second" />
 
         <section>
-        <blockTable colWidths="20.0,70.0,120.0,50.0,60.0,45.0,40.0,70.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,100.0,120.0,50.0,45.0,45.0,40.0,55.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>

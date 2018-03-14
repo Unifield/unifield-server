@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF8.0 -->
+        <record id="set_sequence_main_nomen" model="patch.scripts">
+            <field name="method">set_sequence_main_nomen</field>
+        </record>
+
+        <record id="us_3734_rename_partners_with_new_lines" model="patch.scripts">
+            <field name="method">us_3734_rename_partners_with_new_lines</field>
+        </record>
+
+        <!-- UF7.3 -->
+        <record id="send_instance_uuid" model="patch.scripts">
+            <field name="method">send_instance_uuid</field>
+        </record>
+
+        <record id="flag_pi" model="patch.scripts">
+            <field name="method">flag_pi</field>
+        </record>
+
+        <!-- UF7.1 -->
+        <record id="compute_amount" model="patch.scripts">
+            <field name="method">recompute_amount</field>
+        </record>
+
         <!-- UF7.0 -->
         <record id="post_sll" model="patch.scripts">
             <field name="method">post_sll</field>
@@ -28,6 +51,25 @@
 
         <record id="us_3516_change_damage_reason_type_incoming_ok" model="patch.scripts">
             <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
+        </record>
+
+        <record id="delete_commitment" model="patch.scripts">
+            <field name="method">delete_commitment</field>
+        </record>
+
+        <record id="us_3879_set_pricelist_id_for_ir" model="patch.scripts">
+            <field name="method">us_3879_set_pricelist_id_for_ir</field>
+        </record>
+
+        <!-- UF7.1 -->
+        <record id="US-4036" model="patch.scripts">
+            <field name="method">trigger_pofomsg</field>
+        </record>
+        <record id="gen_pick" model="patch.scripts">
+            <field name="method">gen_pick</field>
+        </record>
+        <record id="close_pol_already_processed" model="patch.scripts">
+            <field name="method">close_pol_already_processed</field>
         </record>
 
         <!-- OLD -->

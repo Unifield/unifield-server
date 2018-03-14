@@ -13,6 +13,7 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
             'next_counter': self.get_next_counter,
             'reset_counter': self.reset_counter,
             'to_excel': self.to_excel,
+            'get_adjustement': self.get_adjustement,
         })
 
     @staticmethod
@@ -28,6 +29,15 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
     def reset_counter(self):
         self.counter = 0
 
+    def get_adjustement(self):
+        reason_obj = self.pool.get('stock.reason.type')
+        reason_ids = reason_obj.search(self.cr, self.uid, [('is_inventory', '=', True)])
+        all_reason = []
+        for x in reason_obj.read(self.cr, self.uid, reason_ids, ['complete_name'], context={'lang': self.localcontext.get('lang')}):
+            all_reason.append(x['complete_name'])
+
+        return ','.join(all_reason)
+
     def get_headers(self, objects):
         #   return list of cols:
             # Header Name
@@ -39,4 +49,4 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
             # ['Stock Valuation', 'float', self.compute_stock_value],
         ]
 
-SpreadsheetReport('report.physical_inventory_discrepancies_report_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_discrepancies_report.xml', parser=DiscrepanciesReportParser)
+SpreadsheetReport('report.physical_inventory_discrepancies_report_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_discrepancies_report_xls.mako', parser=DiscrepanciesReportParser)

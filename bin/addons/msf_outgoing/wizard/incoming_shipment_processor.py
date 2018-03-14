@@ -119,10 +119,11 @@ class stock_incoming_processor(osv.osv):
         cr.execute("""
             select so.id from
             stock_move m
+            left join stock_picking p on m.picking_id = p.id
             left join purchase_order_line pol on m.purchase_line_id = pol.id
-            left join sale_order_line sol on sol.id = pol.sale_order_line_id
+            left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            where m.picking_id = %s and so.procurement_request = 'f'
+            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:

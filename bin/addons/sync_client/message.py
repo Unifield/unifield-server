@@ -106,7 +106,7 @@ class local_message_rule(osv.osv):
         return False
 
     def get_rule_by_remote_call(self, cr, uid, remote_call, context=None):
-        rules = self.search(cr, uid, [('remote_call', '=', remote_call)], context=context)
+        rules = self.search(cr, uid, [('remote_call', '=', remote_call)], order='active desc, id', context=context)
         if rules:
             return self.browse(cr, uid, rules, context=context)[0]
         return False
@@ -152,7 +152,7 @@ class local_message_rule(osv.osv):
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
-            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
+            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
             if at is None:
                 del context['active_test']
             else:
@@ -168,14 +168,14 @@ class local_message_rule(osv.osv):
             full_method = model_name + "." + rule_method
             rule = self.get_rule_by_remote_call(cr, uid, full_method, context)
             if not rule:
-                logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method)) 
+                logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method))
                 return
 
             model_obj = self.pool.get(model_name)
             msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
 
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=False, context=context)
-            temp = arguments[0] 
+            temp = arguments[0]
             temp['picking'] = return_info
             arguments = [temp]
 
@@ -197,7 +197,7 @@ class local_message_rule(osv.osv):
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
-            logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name)) 
+            logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name))
 
     _order = 'sequence_number asc'
 local_message_rule()
@@ -235,12 +235,12 @@ class message_to_send(osv.osv):
 
         # either use rule filter_method or domain to find records for message
         if rule.filter_method:
-            obj_ids_temp = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+            obj_ids_temp_order = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
         else:
             domain = rule.domain and eval(rule.domain) or []
-            obj_ids_temp = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
+            obj_ids_temp_order = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
-        obj_ids_temp = self.pool.get(rule.model).need_to_push(cr, uid, obj_ids_temp)
+        obj_ids_temp = self.pool.get(rule.model).need_to_push(cr, uid, obj_ids_temp_order)
 
         '''
             Add only real new messages to sync those haven't been synced before! This reduces significantly the cost of calculating the args (which is heavy)
@@ -250,7 +250,7 @@ class message_to_send(osv.osv):
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
 
         # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
-        obj_ids = [obj_id for obj_id in obj_ids_temp if not \
+        obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
                    self.search(cr, uid, [('identifier', '=',
                                           identifiers[obj_id])], context=context)]
 
@@ -260,7 +260,7 @@ class message_to_send(osv.osv):
         for obj_id in obj_ids:
             if initial == False: # default action
                 args[obj_id] = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
-            else: # UF-2483: fake RW sync on creation of the RW instance 
+            else: # UF-2483: fake RW sync on creation of the RW instance
                 args[obj_id] = "Initial RW Sync - Ignore"
 
         generated_ids = []
@@ -319,7 +319,7 @@ class message_to_send(osv.osv):
     """
     def get_message_packet(self, cr, uid, max_size, context=None):
         packet = []
-
+        msg_ids = []
         for message in self.browse(cr, uid,
                                    self.search(cr, uid, [('sent', '=', False)],
                                                limit=max_size, order='id asc', context=context),
@@ -328,7 +328,7 @@ class message_to_send(osv.osv):
                 res_model, res_id = message.res_object.split(',')
                 res_id = int(res_id)
                 rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, message.remote_call, context=context)
-                if rule and rule.wait_while: 
+                if rule and rule.wait_while:
                     domain = eval(rule.wait_while)
                     if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
                         self.write(cr, uid, [message.id], {'waiting': True}, context=context)
@@ -342,16 +342,15 @@ class message_to_send(osv.osv):
                 'dest' : message.destination_name,
                 'args' : message.arguments,
             })
+            msg_ids.append(message.id)
 
-        return packet
+        return msg_ids, packet
 
 
-    def packet_sent(self, cr, uid, packet, context=None):
-        message_uuids = [data['id'] for data in packet]
-        ids = self.search(cr, uid, [('identifier', 'in', message_uuids)],
-                          order='NO_ORDER', context=context)
+    def packet_sent(self, cr, uid, ids, context=None):
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
+        return True
 
     _order = 'create_date desc, id desc'
 
@@ -438,7 +437,7 @@ class message_received(osv.osv):
             try:
                 model, method = self.get_model_and_method(message.remote_call)
                 arg = self.get_arg(message.arguments)
-                try: 
+                try:
                     fn = getattr(self.pool.get(model), method)
                     context.update({'identifier': message.identifier})
                     res = fn(cr, uid, message.source, *arg, context=context)

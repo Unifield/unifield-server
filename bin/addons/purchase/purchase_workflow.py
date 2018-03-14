@@ -49,7 +49,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
@@ -58,7 +58,7 @@ class purchase_order_line(osv.osv):
                 # update the PO line with new qty
                 self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
 
-                # update the linked IN if has:
+                # update IN moves of the original pol:
                 domain = [('purchase_line_id', '=', pol.original_line_id.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
                 linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                 if linked_in_move:
@@ -69,6 +69,28 @@ class purchase_order_line(osv.osv):
                     if sys_int_move:
                         self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
 
+                # cancel IN moves of the current split pol:
+                domain = [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                if linked_in_move:
+                    self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
+
+        return True
+
+
+    def check_unit_price(self, cr, uid, ids, context=None):
+        '''
+        made some checks on unit price before validating the PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['price_unit'], context=context):
+            if not pol.price_unit:
+                raise osv.except_osv(_('Warning'), _('You cannot validate a PO line with 0.0 as price unit !'))
+
         return True
 
     def update_fo_lines(self, cr, uid, ids, context=None):
@@ -77,10 +99,11 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
+            to_trigger = False
             # linked FO line already exists ?
             # => if yes update it, else create new
             create_line = False
@@ -94,14 +117,16 @@ class purchase_order_line(osv.osv):
                     ], context=context)
                     so_id = so_id and so_id[0] or False
                 if not so_id:
-                    continue # no sale order linked to our PO line
+                    continue  # no sale order linked to our PO line
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
+                if sale_order.state == 'cancel' and sale_order.procurement_request:
+                    to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
                 sale_order = pol.linked_sol_id.order_id
             else:
                 # case of PO line from scratch, nothing to update
-                continue 
+                continue
 
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
@@ -160,6 +185,8 @@ class purchase_order_line(osv.osv):
             if pol.modification_comment:
                 sol_values['modification_comment'] = pol.modification_comment
 
+
+            ad_id = pol.analytic_distribution_id or pol.order_id.analytic_distribution_id
             if create_line:
                 sol_values.update({
                     'order_id': so_id,
@@ -167,10 +194,35 @@ class purchase_order_line(osv.osv):
                     'set_as_sourced_n': True,
                 })
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
+                # update analytic distribution if PO line has one
+                if ad_id and not sale_order.procurement_request:
+                    sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
+                                                                                                         ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
-            else: # update FO line
+
+                if to_trigger:
+                    # IR is cancel but a new line is added, trigger a new wkf
+                    # UC: IR > PO > FO (full claim retrun + replacement on IN)
+                    cr.execute("update sale_order set state='draft' where id=%s", (so_id,))
+
+                # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
+                # the right OUT move (moves are already splits at this level):
+                if sol_values['is_line_split']:
+                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('sale_line_id', '=', sol_values['original_line_id']),
+                        ('type', '=', 'out')],
+                        context=context)
+                    if len(linked_out_moves) > 1:
+                        for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                            if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
+                                self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
+            else:  # update FO line
+                if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
+                    sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
+                                                                                                         ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
+
 
         return True
 
@@ -183,7 +235,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         if not fo_id:
             raise Exception, "No parent Sale Order given for the new Sale Order line"
@@ -246,6 +298,16 @@ class purchase_order_line(osv.osv):
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
             }
+
+            # if PO line has an analytic distribution, we copy it
+            ad_id = pol.analytic_distribution_id or pol.order_id.analytic_distribution_id
+            if ad_id and not sale_order.procurement_request:
+                sol_values.update({
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').
+                    copy(cr, uid, ad_id.id, {'partner_type': sale_order.partner_type},
+                         context=context)
+                })
+
             # create FO line:
             sol_values.update(self.get_split_info(cr, uid, pol, context))
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
@@ -262,10 +324,10 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
-            raise Exception , "No PO line given"
+            raise Exception, "No PO line given"
 
         # load common data into context:
         self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
@@ -289,7 +351,7 @@ class purchase_order_line(osv.osv):
         pick_id = self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
 
         # log picking creation
-        self.pool.get('stock.picking').log(cr, uid, pick_id, _('The new internal Picking %s has been created.')%name)
+        self.pool.get('stock.picking').log(cr, uid, pick_id, _('The new internal Picking %s has been created.') % name)
 
         return pick_id
 
@@ -300,7 +362,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -340,7 +402,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
@@ -357,6 +419,17 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def check_po_tax(self, cr, uid, ids, context=None):
+        """
+        Prevents from validating a PO with taxes when using an Intermission partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
+            if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
+                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -364,13 +437,15 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
         # checks before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
+        self.check_unit_price(cr, uid, ids, context=context)
+        self.check_po_tax(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
@@ -407,7 +482,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -428,13 +503,13 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
-        #update linked sol (same instance) to sourced-v (if has)
+        # update linked sol (same instance) to sourced-v (if has)
         for po in self.browse(cr, uid, ids, context=context):
             if po.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
@@ -448,7 +523,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
@@ -503,9 +578,9 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
                 # create internal moves (INT):
-                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'): 
+                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
                     internal_pick = self.pool.get('stock.picking').search(cr, uid, [
-                        ('type', '=', 'internal'), 
+                        ('type', '=', 'internal'),
                         ('purchase_id', '=', pol.order_id.id),
                         ('state', 'not in', ['done', 'cancel']),
                     ], context=context)
@@ -560,7 +635,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -569,8 +644,8 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
-            internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR
-            dpo = pol.order_id.order_type == 'direct' or False # direct PO
+            internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False  # PO line from Internal IR
+            dpo = pol.order_id.order_type == 'direct' or False  # direct PO
             ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
             if internal_ir or dpo or ir_non_stockable:
@@ -593,10 +668,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
@@ -615,10 +690,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
@@ -656,7 +731,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for po in self.browse(cr, uid, ids, context=context):
@@ -671,7 +746,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 

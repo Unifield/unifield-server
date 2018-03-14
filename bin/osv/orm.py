@@ -675,10 +675,18 @@ class orm_template(object):
                         elif f[i] in self._inherit_fields.keys():
                             cols = selection_field(self._inherits)
                         if cols and cols._type == 'selection' and not sync_context:
-                            sel_list = cols.selection
-                            if r and type(sel_list) == type([]):
-                                r = [x[1] for x in sel_list if r==x[0]]
-                                r = r and r[0] or False
+                            # if requested, translate the fields.selection values
+                            translated_selection = False
+                            if context.get('translate_selection_field', False) and r and f:
+                                fields_get_res = self.fields_get(cr, uid, f, context=context)
+                                if f[0] in fields_get_res and 'selection' in fields_get_res[f[0]]:
+                                    r = dict(fields_get_res[f[0]]['selection'])[r]
+                                    translated_selection = True
+                            if not translated_selection:
+                                sel_list = cols.selection
+                                if r and type(sel_list) == type([]):
+                                    r = [x[1] for x in sel_list if r==x[0]]
+                                    r = r and r[0] or False
                     if not r:
                         if f[i] in self._columns:
                             r = check_type(self._columns[f[i]]._type)
@@ -808,19 +816,21 @@ class orm_template(object):
         for d in list_data:
             i += 1
             try:
-                res = self.import_data(cr, uid, headers, [d])
+                res = self.import_data(cr, uid, headers, [d], has_header=True)
                 if res[0] == -1:
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
                 cr.commit()
             except Exception as e:
-                rejected.append((i, d, str(e)))
+                rejected.append((i, d, tools.ustr(e)))
                 cr.commit()
 
         return processed, rejected, headers
 
-    def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
+    def import_data(self, cr, uid, fields, datas, mode='init',
+                    current_module='', noupdate=False, context=None, filename=None,
+                    display_all_errors=False, has_header=False):
         """
         Import given data in given module
 
@@ -833,6 +843,8 @@ class orm_template(object):
         :param noupdate: flag for record creation
         :param context: context arguments, like lang, time zone,
         :param filename: optional file to store partial import state for recovery
+        :param display_all_errors: display only the first error by default
+        :param has_header: flag to add 1 to the total line in error message
         :rtype: tuple
 
         This method is used when importing data via client menu.
@@ -935,7 +947,13 @@ class orm_template(object):
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
-                    res = value
+                    if not context.get('sync_update_execution', False) and field_type == 'char' and isinstance(value, basestring) \
+                            and len(value.splitlines()) > 1 and (field[len(prefix)]!='name' or model_name != 'res.partner'):
+                        # US-2661 do not allowed newline character in char fields
+                        res = False
+                        warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], tools.ustr(value))]
+                    else:
+                        res = value
                 elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
@@ -1033,35 +1051,67 @@ class orm_template(object):
 
         from osv import except_osv
         position = 0
+        error_list = []
         while position<len(datas):
             res = {}
-
-            (res, position, warning, res_id, xml_id) = \
-                process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            try:
+                (res, position, warning, res_id, xml_id) = \
+                    process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            except Exception as e:
+                if display_all_errors:
+                    res = None
+                    position += 1
+                    warning = [tools.ustr(e)]
+                    res_id = False
+                    xml_id = False
+                else:
+                    raise
             if len(warning):
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          '\n'.join(warning)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + '!\n'.join(warning), '')
 
             try:
+                context.update({'from_import_data': True})
                 ir_model_data_obj._update(cr, uid, self._name,
                                           current_module, res, mode=mode, xml_id=xml_id,
                                           noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e.value)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e) + "\n" +
+                                                          tools.ustr(traceback.format_exc())))
+                    continue
+                else:
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
-            if config.get('import_partial', False) and filename and (not (position%100)):
+            if not error_list and config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
                 data[filename] = position
                 pickle.dump(data, file(config.get('import_partial'), 'wb'))
                 if context.get('defer_parent_store_computation'):
                     self._parent_store_compute(cr)
                 cr.commit()
+
+        if error_list:
+            return (-1, {}, '\n'.join(error_list), '')
 
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)
@@ -1235,6 +1285,13 @@ class orm_template(object):
 
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
+
+    def write_web(self, cr, user, ids, vals, context=None):
+        """
+        Method called by the Web on write
+        """
+        return self.write(cr, user, ids, vals, context=context)
+
 
     def create(self, cr, user, vals, context=None):
         raise NotImplementedError(_('The create method is not implemented on this object !'))
@@ -1472,6 +1529,19 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
+            if node.get('filter_selector'):
+                try:
+                    filter_eval = eval(node.get('filter_selector'))
+                    if filter_eval:
+                        trans_filter_eval = []
+                        for x in filter_eval:
+                            trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                            trans_filter_eval.append((trans_x, x[1]))
+                        node.set('filter_selector', '%s'%trans_filter_eval)
+                except:
+                    logger = netsvc.Logger()
+                    logger.notifyChannel("translate.view", netsvc.LOG_WARNING, "Unable to translate %s" % node.get('filter_selector'))
+
             if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
@@ -1852,7 +1922,7 @@ class orm_template(object):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
                 if data_menu:
                     act_id = data_menu.id
-                    if act_id:
+                    if act_id and data_menu._name == 'ir.actions.act_window':
                         data_action = self.pool.get('ir.actions.act_window').browse(cr, user, [act_id], context)[0]
                         result['submenu'] = getattr(data_action, 'menus', False)
         if toolbar:
@@ -3203,8 +3273,13 @@ class orm(orm_template):
                             if isinstance(f, fields.function):
                                 order = 10
                                 if f.store is not True:
-                                    order = f.store[f.store.keys()[0]][2]
-                                todo_update_store.append((order, f, k))
+                                    store_info = f.store[f.store.keys()[0]]
+                                    if isinstance(store_info, list):
+                                        order = store_info[0][2]
+                                    else:
+                                        order = store_info[2]
+                                else:
+                                    todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
@@ -3322,25 +3397,28 @@ class orm(orm_template):
                 sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10, None)}
             else:
                 sm = self._columns[store_field].store
-            for object, aa in sm.items():
-                if len(aa) == 4:
-                    (fnct, fields2, order, length) = aa
-                elif len(aa) == 3:
-                    (fnct, fields2, order) = aa
-                    length = None
-                else:
-                    raise except_orm('Error',
-                                     ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
-                self.pool._store_function.setdefault(object, [])
-                ok = True
-                for x, y, z, e, f, l in self.pool._store_function[object]:
-                    if (x==self._name) and (y==store_field) and (e==fields2):
-                        if f == order:
-                            ok = False
-                            break
-                if ok:
-                    self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
-                    self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
+            for object, aa_list in sm.items():
+                if isinstance(aa_list, tuple):
+                    aa_list = [aa_list]
+                for aa in aa_list:
+                    if len(aa) == 4:
+                        (fnct, fields2, order, length) = aa
+                    elif len(aa) == 3:
+                        (fnct, fields2, order) = aa
+                        length = None
+                    else:
+                        raise except_orm('Error',
+                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                    self.pool._store_function.setdefault(object, [])
+                    ok = True
+                    for x, y, z, e, f, l in self.pool._store_function[object]:
+                        if (x==self._name) and (y==store_field) and (e==fields2):
+                            if f == order:
+                                ok = False
+                                break
+                    if ok:
+                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
+                        self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
         for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
@@ -3560,7 +3638,11 @@ class orm(orm_template):
             else:
                 # order only when there is more than one id in ids
                 query = ''.join((query, ' ORDER BY ', order_by))
-                for sub_ids in cr.split_for_in_conditions(ids):
+                max_split = None
+                # number of C/S lines is big and using split breaks default order_by
+                if self._name == 'physical.inventory.counting':
+                    max_split = 3000
+                for sub_ids in cr.split_for_in_conditions(ids, max_split):
                     execute_request(res, query, rule_clause, sub_ids)
 
             context_lang = context and context.get('lang', False) or 'en_US'

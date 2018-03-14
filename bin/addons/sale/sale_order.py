@@ -97,6 +97,7 @@ class sale_order(osv.osv):
             'sourcing_trace': '',
             'sourcing_trace_ok': False,
             'claim_name_goods_return': '',
+            'draft_cancelled': False,
         })
 
         if not context.get('keepClientOrder', False):
@@ -122,6 +123,20 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'order_line' not in default:
+            default['order_line'] = []
+            sol_obj = self.pool.get('sale.order.line')
+            line_ids = sol_obj.search(cr, uid, [('order_id', '=', id), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            line_ids.sort()
+            for line_id in line_ids:
+                d = sol_obj.copy_data(cr, uid, line_id, context=context)
+                if d:
+                    default['order_line'].append((0, 0, d))
+
+        return super(sale_order, self).copy_data(cr, uid, id, default, context)
 
     def _amount_line_tax(self, cr, uid, line, context=None):
         val = 0.0
@@ -138,14 +153,16 @@ class sale_order(osv.osv):
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
             }
-            val = val1 = 0.0
-            cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                val1 += line.price_subtotal
-                val += self._amount_line_tax(cr, uid, line, context=context)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
-            res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if not order.procurement_request:
+                val = val1 = 0.0
+                cur = order.pricelist_id.currency_id
+                for line in order.order_line:
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val1 += line.price_subtotal
+                        val += self._amount_line_tax(cr, uid, line, context=context)
+                res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+                res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -241,14 +258,22 @@ class sale_order(osv.osv):
                         amount_received += move_qty*line.price_unit
 
             if amount_total:
-                res[order.id] = (amount_received/amount_total)*100   
+                res[order.id] = (amount_received/amount_total)*100
 
         return res
 
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
-        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
+        return result.keys()
+
+    def _get_order_state(self, cr, uid, ids, context=None):
+        # recompute FO amount total only if state switches to cancel(_r)
+        result = {}
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'],context=context):
+            if line.state in ('cancel', 'cancel_r'):
+                result[line.order_id.id] = True
         return result.keys()
 
     def _check_browse_param(self, param, method):
@@ -420,7 +445,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         result = {}
         for so in self.browse(cr, uid, ids, context=context):
-            result[so.id] = so.state
+            if so.draft_cancelled:
+                result[so.id] = 'cancel'
+            else:
+                result[so.id] = so.state
 
         return result
 
@@ -442,11 +470,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for sol in so.order_line:
                 sol_states = set([sol.state for sol in so.order_line])
 
-            if not sol_states:
+            if so.draft_cancelled:
+                res[so.id] = 'cancel'
+            elif not sol_states:
                 res[so.id] = 'draft'
             elif all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
-            else: # else compute the less advanced state:
+            else:  # else compute the less advanced state:
                 sol_states.discard('cancel')
                 sol_states.discard('cancel_r')
 
@@ -478,10 +508,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # SO state must not go back:
             if sos_obj.get_sequence(cr, uid, [], res[so.id]) < sos_obj.get_sequence(cr, uid, [], so.state):
                 res[so.id] = so.state
-                # add the '_p' if needed: 
+                # add the '_p' if needed:
                 if res[so.id] in ['draft', 'validated', 'confirmed']:
                     current_state_sequence = sols_obj.get_sequence(cr, uid, [], so.state)
-                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states]) 
+                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states])
                     if has_line_further:
                         res[so.id] = '%s_p' % res[so.id]
 
@@ -499,13 +529,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                                     'sale.order.line': (_get_order, ['state'], 10),    
+                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line','draft_cancelled'], 10),
+                                     'sale.order.line': (_get_order, ['state'], 10),
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),
         'state_hidden_sale_order': fields.function(_get_state_hidden, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State'),
-        'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
+        'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
         'date_confirm': fields.date('Confirmation Date', readonly=True, select=True, help="Date on which sales order is confirmed."),
         'user_id': fields.many2one('res.users', 'Salesman', states={'draft': [('readonly', False)]}, select=True),
@@ -521,19 +551,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
                                           store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
                                       store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
                                         store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The total amount."),
 
@@ -543,15 +582,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
-                                       string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)]}),
+                                       string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         # we increase the size of the 'details' field from 30 to 86
-        'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'details': fields.char(size=86, string='Details', readonly=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
                                     fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
@@ -595,6 +634,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
+        'draft_cancelled': fields.boolean(string='State', readonly=True)
     }
 
     _defaults = {
@@ -617,7 +657,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'active': True,
         'no_line': lambda *a: True,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
-
+        'draft_cancelled': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1147,32 +1187,20 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Launch the wizard to re-source lines
         '''
-        # Objects
-        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
-
-        # Variables
-        wf_service = netsvc.LocalService("workflow")
-
-        if not context:
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.state == 'validated' and len(order.order_line) > 0:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': order.id}, context=context)
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'sale.order.cancelation.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'target': 'new',
-                        'res_id': wiz_id,
-                        'context': context}
+        sale_order = self.browse(cr, uid, ids[0], context=context)
+        sol_ids = [sol.id for sol in sale_order.order_line]
 
-            wf_service.trg_validate(uid, 'sale.order', order.id, 'cancel', cr)
-
-        return True
+        if len(sol_ids) > 0:
+            context.update({'lines_ids': sol_ids})
+            return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
+        else:
+            self.write(cr, uid, sale_order.id, {'draft_cancelled': True}, context=context)
+            return True
 
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -2089,11 +2117,6 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        # do not copy canceled sale.order.line:
-        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
-        if sol.state in ['cancel', 'cancel_r']:
-            return False
-
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({
@@ -2366,6 +2389,36 @@ class sale_order_line(osv.osv):
 
         return True
 
+
+    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, context=None):
+        '''
+        cancel partially a SO line: create a split and cancel the split
+        '''
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        signal = 'cancel_r' if resource else 'cancel'
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            orig_qty = sol.product_uom_qty
+            # create split to cancel:
+            split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                'sale_line_id': sol.id,
+                'original_qty': orig_qty,
+                'old_line_qty': sol.product_uom_qty - qty_to_cancel,
+                'new_line_qty': qty_to_cancel,
+            }, context=context)
+            context.update({'return_new_line_id': True})
+            new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            context.update({'return_new_line_id': True})
+            wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
+
+        return True
+
+
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2397,7 +2450,6 @@ class sale_order_line(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         so_obj = self.pool.get('sale.order')
 
-        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -2431,12 +2483,13 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+        else:
+            # Update the line and the procurement
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
-        else:
-            wf_service.trg_write(uid, 'sale.order', order, cr)
 
         return so_to_cancel_id
 

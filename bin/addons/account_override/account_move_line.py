@@ -234,7 +234,7 @@ class account_move_line(osv.osv):
                 ('account_id.reconcile', '!=', False),
                 '|',
                 ('reconcile_id', '=', False),
-                ('reconcile_partial_id', '!=', False),    
+                ('reconcile_partial_id', '!=', False),
             ]
 
         return []
@@ -338,6 +338,8 @@ class account_move_line(osv.osv):
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
         'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
+        'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
+                                                                   "to the original SI and to the SR created are marked as 'is_si_refund'"),
     }
 
     _defaults = {
@@ -348,6 +350,7 @@ class account_move_line(osv.osv):
         'exported': lambda *a: False,
         'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
+        'is_si_refund': lambda *a: False,
     }
 
     _order = 'move_id DESC'
@@ -630,6 +633,7 @@ class account_move_line(osv.osv):
         - the reconciliation date
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
+        - the tag 'is_si_refund'
         """
         if context is None:
             context = {}
@@ -640,6 +644,7 @@ class account_move_line(osv.osv):
             'reconcile_date': None,
             'unreconcile_date': None,
             'unreconcile_txt': '',
+            'is_si_refund': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

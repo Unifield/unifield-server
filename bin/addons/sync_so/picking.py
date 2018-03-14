@@ -128,7 +128,7 @@ class stock_picking(osv.osv):
         batch_values = data['prodlot_id']
         if batch_values and product_id:
             # us-838: WORK IN PROGRESS ..................................
-            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN 
+            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN
             prodlot_obj = self.pool.get('stock.production.lot')
             prod = prod_obj.browse(cr, uid,product_id,context=context)
 
@@ -161,7 +161,7 @@ class stock_picking(osv.osv):
                 if prod.perishable and not prod.batch_management:
                     # In case it's a EP only product, then search for date and product, no need to search for batch name
                     if 'life_date' in batch_values:
-                        # If name exists in the sync message, search by name and product, not by xmlid 
+                        # If name exists in the sync message, search by name and product, not by xmlid
                         life_date = batch_values['life_date']
                         # US-838: use different way to retrieve the EP object
                         batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
@@ -346,7 +346,7 @@ class stock_picking(osv.osv):
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False
             for move_line in pick_dict['move_lines']:
-                if move_line['sale_line_id']['in_name_goods_return']:
+                if move_line.get('sale_line_id', {}).get('in_name_goods_return'):
                     in_name_goods_return = move_line['sale_line_id']['in_name_goods_return'].split(".")[-1]
             if in_name_goods_return:
                 # search for the right IN in case of synchro of multiple missing/replacement IN
@@ -453,7 +453,7 @@ class stock_picking(osv.osv):
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
-                    #US-1294: But still no move line with exact qty as the amount shipped 
+                    #US-1294: But still no move line with exact qty as the amount shipped
                     if not move_ids:
                         #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
@@ -616,10 +616,10 @@ class stock_picking(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
-    # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         '''
+        ' USED ONLY FOR SLL MIG, to delete after
         ' Cancel the OUT/PICK at the supplier side cancels the corresponding IN at the project side
         '''
         if not context:
@@ -1139,6 +1139,7 @@ class stock_picking(osv.osv):
             'claim_name_goods_return': source + '.' + stock_picking.claim_name,
             'pricelist_id': pricelist_obj.search(cr, uid, [('name', '=', po_info.pricelist_id.name)], limit=1, context=context)[0],
             'analytic_distribution_id': po_analytic_distrib,
+            'procurement_request': False,
         }
 
         fo_id = sale_obj.create(cr, uid, fo_data, context=context)

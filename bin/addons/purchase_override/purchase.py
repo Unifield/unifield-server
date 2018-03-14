@@ -425,6 +425,8 @@ class purchase_order_cancel_wizard(osv.osv_memory):
             self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context)
         else:
             for pol in po.order_line:
+                if pol.has_pol_been_synched:
+                    continue
                 signal = 'cancel' 
                 if resource and pol.linked_sol_id:
                     signal = 'cancel_r'

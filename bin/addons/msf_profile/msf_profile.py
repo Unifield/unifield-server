@@ -51,6 +51,214 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.0
+    def set_sequence_main_nomen(self, cr, uid, *a, **b):
+        nom = ['MED', 'LOG', 'LIB', 'SRV']
+        nom_obj = self.pool.get('product.nomenclature')
+        seq = 0
+        for name in nom:
+            seq += 10
+            nom_ids = nom_obj.search(cr, uid, [('level', '=', 0), ('name', '=', name)])
+            if nom_ids:
+                nom_obj.write(cr, uid, nom_ids, {'sequence': seq})
+
+        return True
+
+    def us_3734_rename_partners_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the name of the partners, as well as in the related JIs and AJIs
+        """
+        update_partner = """
+            UPDATE res_partner 
+            SET name = regexp_replace(name, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE name like '%' || chr(10) || '%';
+            """
+        update_ji = """
+            UPDATE account_move_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        update_aji = """
+            UPDATE account_analytic_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        cr.execute(update_partner)
+        cr.execute(update_ji)
+        cr.execute(update_aji)
+
+    # UF7.3
+    def flag_pi(self, cr, uid, *a, **b):
+        cr.execute('''select distinct i.id, p.default_code from
+            physical_inventory_discrepancy d,
+            physical_inventory i,
+            product_product p,
+            stock_move m
+            left join stock_production_lot lot on lot.id=m.prodlot_id
+            where d.inventory_id=i.id and d.product_id = p.id and m.product_id=d.product_id and
+                m.location_id=i.location_id and m.location_dest_id=i.location_id and
+                m.state='done' and coalesce(m.expired_date, '2999-01-01')=coalesce(d.expiry_date, '2999-01-01') and coalesce(lot.name,'')=coalesce(d.batch_number,'') and d.ignored='f'
+        ''')
+        pi = {}
+        for x in cr.fetchall():
+            pi.setdefault(x[0], []).append(x[1])
+
+        for pi_id in pi:
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+
+        return True
+
+    def send_instance_uuid(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance_id and not instance_id.instance_identifier and instance_id.state == 'active':
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                identifier = entity.get_uuid(cr, uid)
+                self._logger.warn('missing instance_identifier, set to %s' % (identifier,))
+                self.pool.get('msf.instance').write(cr, uid, [instance_id.id], {'instance_identifier': identifier})
+
+        return True
+
+    # UF7.1 patches
+    def recompute_amount(self, cr, uid, *a, **b):
+        cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        pol_ids = [x[0] for x in cr.fetchall()]
+        if pol_ids:
+            self.pool.get('purchase.order.line')._call_store_function(cr, uid, pol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d POs" % (len(pol_ids), ))
+
+        cr.execute("select min(id) from sale_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        sol_ids = [x[0] for x in cr.fetchall()]
+        if sol_ids:
+            self.pool.get('sale.order.line')._call_store_function(cr, uid, sol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d SOs" % (len(sol_ids), ))
+
+    def gen_pick(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.code
+        if instance_name == 'SO_SOMA':
+            self._logger.warn("SO_SOMA_OCA fix PO00027 to FO00013-1")
+            self.pool.get('purchase.order.line').write(cr, uid, [499, 500, 501, 502], {'origin': '17/NL/SO001/FO00013-1'})
+            self.pool.get('purchase.order.line').action_confirmed(cr, uid, [499, 500, 501, 502])
+
+        cr.execute("""select l.id,l.line_number, o.name, o.state, l.state
+        from sale_order_line l
+        inner join sale_order o on o.id = l.order_id
+        left join product_product p on p.id=l.product_id
+        left join product_template t on t.id=p.product_tmpl_id
+        left join stock_move m on m.sale_line_id=l.id
+        left join purchase_order_line pol on pol.linked_sol_id = l.id
+        where l.state in ('confirmed', 'done')
+        and l.type='make_to_order'
+        and m.id is null
+        and pol.state != 'cancel'
+        and o.split_type_sale_order!='original_sale_order'
+        and l.write_date > '2018-01-10 00:00:00'
+        and l.write_date is not null""")
+        to_conf = []
+        state_dict = {}
+        for x in cr.fetchall():
+            to_conf.append(x[0])
+            state_dict.setdefault(x[4], [])
+            state_dict[x[4]].append(x[0])
+            self._logger.warn("Gen pick for FO %s, line %s (line id:%s)" % (x[2], x[1], x[0]))
+        if to_conf:
+            self.pool.get('sale.order.line').action_confirmed(cr, uid, to_conf, {})
+        for state in state_dict:
+            self.pool.get('sale.order.line').write(cr, uid, state_dict[state], {'state': state}, {})
+        return True
+
+    def trigger_pofomsg(self, cr, uid, *a, **b):
+        sync_client_obj = self.pool.get('sync.client.entity')
+        if sync_client_obj:
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='sale.order.create_so'")
+            po_sent = [0]
+            for x in cr.fetchall():
+                po_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    po_sent.append(int(po_id))
+                except:
+                    pass
+            cr.execute("""
+                select po.id from purchase_order po where po.partner_type not in ('external', 'esc') and po.split_po='f'
+                and po.state in ('draft', 'draft-p', 'validated_p', 'validated') and po.id in (select res_id from ir_model_data where model='purchase.order' and (sync_date > last_modification and sync_date is not null))
+                and po.id not in %s
+                """, (tuple(po_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("PO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order'", (tuple(to_touch),))
+
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='purchase.order.normal_fo_create_po'")
+            fo_sent = [0]
+            for x in cr.fetchall():
+                fo_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    fo_sent.append(int(fo_id))
+                except:
+                    pass
+            cr.execute("""
+                select fo.id from sale_order fo, res_partner p where
+                p.id = fo.partner_id and p.partner_type not in ('external', 'esc') and procurement_request='f' and coalesce(fo.client_order_ref, '')=''
+                and fo.state != 'cancel' and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
+                and (fo.state != 'done' or fo.id in (select order_id from sale_order_line where coalesce(write_date, create_date) > '2018-01-14 18:00:00'))
+                and fo.id not in %s
+                """, (tuple(fo_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("FO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='sale.order'", (tuple(to_touch),))
+
+
+            # trigger sync msg for confirmed FO line
+            cr.execute('''
+                select l.id, l.line_number, o.name
+                from sale_order_line l, sale_order o where
+                     l.order_id=o.id and l.state in ('done', 'confirmed') and l.write_date>'2018-01-10' and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.line.sol_update_original_pol' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.update_split_po' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.procurement_request='f'
+                     and o.split_type_sale_order!='original_sale_order'
+            ''')
+            for x in cr.fetchall():
+                self._logger.warn("Fo line trigger confirmed msg FO: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context={})
+
+
+            # trigger sync msg for validated po lines
+            cr.execute('''
+                select l.id, l.line_number, o.name
+                from purchase_order_line l, purchase_order o where
+                     l.order_id=o.id and l.state = 'validated' and l.write_date>'2018-01-10' and o.partner_type not in ('esc', 'external') and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.line.create_so_line' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.create_so' and arguments like '%order_line%' and identifier ~ '/[0-9-]+_[0-9]+$')
+            ''')
+            to_touch = []
+            for x in cr.fetchall():
+                self._logger.warn("PO line to touch: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
+                to_touch.append(x[0])
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order.line'", (tuple(to_touch),))
+
+
+            cr.commit()
+            return True
+
+    def close_pol_already_processed(self, cr, uid, *a, **b):
+        wf_service = netsvc.LocalService("workflow")
+        cr.execute("select l.id, l.order_id, l.product_qty, o.name, l.line_number from purchase_order_line l, purchase_order o where l.order_id=o.id and l.state='confirmed'")
+        for x in cr.fetchall():
+            cr.execute('''select sum(product_qty) from stock_picking p, stock_move m
+            where m.picking_id = p.id and p.type='in' and p.state in ('done', 'cancel', 'cancel_r')
+            and p.purchase_id = %s and m.purchase_line_id = %s''', (x[1], x[0]))
+            res = cr.fetchone()
+            if res and res[0] and res[0] >= x[2]:
+                self._logger.warn("PO line to close: PO %s, line number: %s, poline id %s" % (x[3], x[4], x[0]))
+                wf_service.trg_validate(uid, 'purchase.order.line', x[0], 'done', cr)
+        cr.commit()
+        return True
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
@@ -109,10 +317,10 @@ class patch_scripts(osv.osv):
             'name': 'FO line updates PO line',
             'server_id': 999,
             'model': 'sale.order.line',
-            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft')]",
+            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0)]",
             'sequence_number': 12,
             'remote_call': 'purchase.order.line.sol_update_original_pol',
-            'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
+            'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'in_name_goods_return', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
             'destination_name': 'partner_id',
             'active': True,
             'type': 'MISSION',
@@ -213,7 +421,7 @@ class patch_scripts(osv.osv):
 
 
         # do not re-generate messages
-        cr.execute("select date_trunc('second', create_date) from sync_monitor where msg_push_send='ok' order by id desc limit 1")
+        cr.execute("select date_trunc('second', max(create_date)) from sync_client_message_to_send")
         create_date = [x[0] for x in cr.fetchall()]
         if create_date:
             cr.execute("update ir_model_data set sync_date=%s where module='sd' and model in ('purchase.order', 'sale.order', 'sale.order.line', 'purchase.order.line')", (create_date[0],))
@@ -221,6 +429,52 @@ class patch_scripts(osv.osv):
         # Set sync id on POL/SOL
         cr.execute("update purchase_order_line set sync_linked_sol=regexp_replace(sync_order_line_db_id,'/FO([0-9-]+)_([0-9]+)$', '/FO\\1/\\2') where sync_order_line_db_id ~ '/FO([0-9-]+)_([0-9]+)$' ")
         cr.execute("update sale_order_line set sync_linked_pol=regexp_replace(source_sync_line_id,'/PO([0-9-]+)_([0-9]+)$', '/PO\\1/\\2') where source_sync_line_id ~ '/PO([0-9-]+)_([0-9]+)$'")
+
+
+        acl_file = os.path.join(tools.config['root_path'], 'addons/msf_profile/migrations/7.0_acl.txt')
+        if not os.path.exists(acl_file):
+            self._logger.warn("File %s not found" % acl_file)
+        else:
+            all_acl = []
+            fd = open(acl_file)
+            for line in fd.readlines():
+                line = line.strip()
+                if line:
+                    all_acl.append(line)
+            update_module = self.pool.get('sync.server.update')
+            if update_module:
+                # we are on a sync server
+                # delete depecrated acl to prevent NR on new created instance
+                cr.execute('''delete from sync_server_update where sdref in %s''', (tuple(all_acl),))
+            else:
+                user_obj = self.pool.get('res.users')
+                usr = user_obj.browse(cr, uid, [uid])[0]
+                level_current = False
+
+                if usr and usr.company_id and usr.company_id.instance_id:
+                    level_current = usr.company_id.instance_id.level
+                # only at hq ?
+                if level_current == 'section':
+                    for line in all_acl:
+                        if line.startswith('_msf_profile/field_access_rule_line'):
+                            # FARL change of field xmlid, force update on this FARL
+                            cr.execute('''update ir_model_data set touched='[''field_name'']', last_modification=NOW() where name=%s''' , (line, ))
+                        elif line.startswith('_msf_profile_sale_override'):
+                            # ACL xmlid changed, force update
+                            cr.execute('''update ir_model_data set touched='[''name'']', last_modification=NOW() where name=%s''' , (line.replace('sale_override', 'sale'), ))
+
+        cr.commit()
+        return True
+
+
+    def delete_commitment(self, cr, uid, *a, **b):
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')])
+        if journal_ids:
+            aa_obj = self.pool.get('account.analytic.line')
+            aa_ids = aa_obj.search(cr, uid, [('journal_id', 'in', journal_ids)])
+            self._logger.warn("Delete %d Commitment" % len(aa_ids))
+            if aa_ids:
+                aa_obj.unlink(cr, uid, aa_ids)
         return True
 
     def us_3306(self, cr, uid, *a, **b):
@@ -310,7 +564,7 @@ class patch_scripts(osv.osv):
         cr.execute('truncate mission_move_rel')
         fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
                            'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val', 'central_qty',
-                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty'
+                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty', 'stock_qty'
                            ]
         if self.pool.get('sync.client.entity'):
             cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
@@ -333,6 +587,15 @@ class patch_scripts(osv.osv):
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
+        cr.execute("UPDATE return_claim SET old_version='t' WHERE state!='draft'")
+        return True
+
+    def us_3879_set_pricelist_id_for_ir(self, cr, uid, *a, **b):
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        pricelist_id = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'),
+                                                                           ('currency_id', '=', currency_id)], limit=1)[0]
+
+        cr.execute("UPDATE sale_order SET pricelist_id = %s WHERE procurement_request = 't'", (pricelist_id,))
         return True
 
     # OLD patches

@@ -40,7 +40,7 @@ class sale_order_line_compute_currency(osv.osv):
     _columns = {
         'currency_id': fields.related('order_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
         'functional_subtotal': fields.function(_amount_currency_line, method=True, store=False, string='Functional Subtotal', readonly=True, digits_compute=dp.get_precision('Sale Price')),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -98,7 +98,7 @@ class sale_order_compute_currency(osv.osv):
         'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=False, type='float', digits_compute=dp.get_precision('Sale Price'), string='Functional Untaxed Amount', multi='amount_untaxed, amount_tax, amount_total'),
         'functional_amount_tax': fields.function(_amount_currency, method=True, store=False, type='float', digits_compute=dp.get_precision('Sale Price'), string='Functional Taxes', multi='amount_untaxed, amount_tax, amount_total'),
         'functional_amount_total': fields.function(_amount_currency, method=True, store=False, type='float', digits_compute=dp.get_precision('Sale Price'), string='Functional Total', multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
 
 sale_order_compute_currency()
@@ -174,7 +174,7 @@ class purchase_order_compute_currency(osv.osv):
         'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Untaxed Amount', digits_compute=dp.get_precision('Purchase Price'), multi='amount_untaxed, amount_tax, amount_total'),
         'functional_amount_tax': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Taxes', digits_compute=dp.get_precision('Purchase Price'), multi='amount_untaxed, amount_tax, amount_total'),
         'functional_amount_total': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Total', digits_compute=dp.get_precision('Purchase Price'), multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
 
 purchase_order_compute_currency()

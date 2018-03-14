@@ -321,9 +321,9 @@ class entity(osv.osv):
     def ack_update(self, cr, uid, uuid, hardware_id, token, context=None):
         ids = self.search(cr, uid, [('identifier', '=' , uuid),
                                     ('hardware_id', '=', hardware_id),
-                                    ('user_id', '=', uid), 
-                                    ('state', '=', 'updated'), 
-                                    ('update_token', '=', token)], 
+                                    ('user_id', '=', uid),
+                                    ('state', '=', 'updated'),
+                                    ('update_token', '=', token)],
                           order='NO_ORDER', context=context)
         if not ids:
             return (False, 'Ack not valid')
@@ -864,6 +864,7 @@ class sync_manager(osv.osv):
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
         """
+        #### deprecated used only for migration
             @param entity: string : uuid of the synchronizing entity
             @param message_ids: list of string : The list of message identifier : ['message_uuid1', 'message_uuid2', ....]
             @return: tuple : (a,b)
@@ -875,7 +876,23 @@ class sync_manager(osv.osv):
             context = {}
         if context.get('md5'):
             check_md5(context['md5'], message_ids, _('server method message_received'))
-        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
+        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_uuids=message_ids, context=context))
+
+    @check_validated
+    def message_received_by_sync_id(self, cr, uid, entity, message_ids, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param message_ids: list of string : The list of message id
+            @return: tuple : (a,b)
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : message : is an error message if a is False
+
+        """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], message_ids, _('server method message_received'))
+        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids=message_ids, context=context))
 
     @check_validated
     def message_recover_from_seq(self, cr, uid, entity, start_seq, context=None):

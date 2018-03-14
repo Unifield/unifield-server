@@ -8,6 +8,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Physical Inventory" hide_delete_button="1">
+                    <field name="has_bad_stock" invisible="1" readonly="1" />
+                    <group colspan="4" attrs="{'invisible': [('has_bad_stock', '=', False)]}">
+                        <html>
+                            <div style="text-align: center; v-align: middle;color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                <p style="text-align: center; v-align: middle;"><translate>There is an issue with these products, please check the Theoretical Quantity and regenerate Discrepancy report to update it.<br />
+                            Otherwise,proceed with your PI and then issue a new PI for this product to correct the Stock level</translate></p>
+                            <field name="bad_stock_msg" widget="full_text" colspan="4" nolabel="1"/>
+                            </div>
+                        </html>
+                    </group>
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="ref"/>
                     <field name="location_id" domain="[('usage','=','internal')]"
@@ -16,6 +26,7 @@
                     <field name="responsible"/>
                     <field name="date_done"/>
                     <field name="full_inventory"/>
+                    <field name="discrepancies_generated" invisible="1" readonly="1"/>
                     <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
                         icon="gtk-about" 
                         confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
@@ -38,22 +49,23 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
                             <group col="4" colspan="4"
                                 attrs="{'invisible': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
                                 <button name="export_xls_counting_sheet" string="Export xls counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
-                                <field name="file_to_import" colspan="2"/>
-                                <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"/>
+                                <field name="file_to_import" colspan="2" attrs="{'invisible':[('discrepancies_generated', '=', True)]}"/>
+                                <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"
+                                        attrs="{'invisible': [('discrepancies_generated', '=', True)]}"/>
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
-                                attrs="{'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                                attrs="{'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
                                 <tree string="Counting lines" editable="bottom">
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
-                                    <field name="product_uom_id"/>
+                                    <field name="product_uom_id" domain="[('uom_by_stock_product', '=', product_id)]"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
                                     <field name="quantity" on_change="on_change_quantity(quantity)"/>
@@ -78,7 +90,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Discrepancy report" attrs="{'invisible': [('state', 'in', ['draft','counting'])], 'readonly': [('state', 'not in', ['counted', 'validated', 'confirmed'])]}">
+                        <page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)], 'readonly': [('state', 'not in', ['counted', 'validated'])]}">
                             <group col="4" colspan="4">
                                 <group col="4" colspan="4">
                                     <label string="" />
@@ -112,7 +124,8 @@
                                 <button name="import_xls_discrepancy_report" string="Import XLS discrepancy report"
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
-                            <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
+                                <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
+                                   attrs="{ 'readonly': [('state', 'not in', ['counted', 'validated'])]}"
                                    filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]">
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
@@ -193,16 +206,23 @@
                         <button name="action_counted" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
 
-                        <button name="generate_discrepancies" states="counted,validated" string="Generate discrepancies"
+                        <button name="generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', True)]}" string="Generate discrepancies"
+                                type="object" icon="gtk-refresh"/>
+
+                        <button name="re_generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', False)]}" string="Re-Generate discrepancies"
+                                confirm="Do you confirm that you want to delete and recreate Discrepancies ?"
                                 type="object" icon="gtk-refresh"/>
 
                         <button name="action_validate" states="counted" string="Finished"
-                                type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"/>
+                                type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"
+                                attrs="{'readonly': [('discrepancies_generated', '=', False)]}"/>
 
                         <button name="action_recount" states="validated" string="Recount"
                                 type="object" icon="gtk-undo"/>
+
                         <button name="action_confirm" states="validated" string="Confirm Inventory"
-                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"/>
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"
+                                attrs="{'readonly': [('discrepancies_generated', '=', False)]}"/>
 
                         <button name="action_done" states="confirmed" string="Close Inventory"
                                 type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
@@ -219,12 +239,13 @@
             <field name="model">physical.inventory</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Physical Inventories" colors="grey:state in ('cancel')">
+                <tree string="Physical Inventories" colors="red:has_bad_stock;grey:state in ('cancel')">
                     <field name="ref"/>
                     <field name="name"/>
                     <field name="location_id"/>
                     <field name="date"/>
                     <field name="state"/>
+                    <field name="has_bad_stock" invisible="1" />
                 </tree>
             </field>
         </record>

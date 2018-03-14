@@ -20,17 +20,17 @@
                     <group col="6" colspan="4" name="header">
                         <field name="name" />
                         <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="functional_currency_id" />
-                        <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="categ" on_change="onchange_categ(categ)" /> <!-- RO state!=draft set on _column, same on IR -->
                         <group colspan="2" col="3">
-                            <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                            <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
-                                attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                                attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         </group>
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
@@ -68,7 +68,7 @@
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="original_changed" readonly="1"/>
                                     <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
-                                            attrs="{'invisible': [('original_changed', '=', False)]}"/>
+                                            attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False)]}"/>
                                     <field name="price_unit"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
@@ -84,6 +84,8 @@
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1"/>
+                                    <field name="original_qty" invisible="1"/>
+                                    <field name="modification_comment" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
@@ -93,7 +95,7 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True"
+                                    <button string="Validate" icon="terp-check" name="validated_ir" type="object" header="True"
                                             attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
@@ -109,8 +111,8 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
-                                <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
+                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">

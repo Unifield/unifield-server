@@ -90,11 +90,11 @@ Scenario: SLL - State propagation and readonly checks in Purchase Orders
     | ADAPCABL1P- |
 
     I should see "Draft-p" in "Order State"
-    I should see "Creation Date" as editable
+    I should see "Creation Date" as readonly
     I should see "Supplier" as readonly
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Order Type" as readonly
-    I should see "Order category" as editable
+    I should see "Order category" as readonly
 
     # Check that we can see the details for a line by clicking on it
     I click on line and open the window:
@@ -105,11 +105,11 @@ Scenario: SLL - State propagation and readonly checks in Purchase Orders
     I click on "Save & Edit"
 
     I should see "Draft-p" in "Order State"
-    I should see "Creation Date" as editable
+    I should see "Creation Date" as readonly
     I should see "Supplier" as readonly
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Order Type" as readonly
-    I should see "Order category" as editable
+    I should see "Order category" as readonly
 
     I click on "Save"
 
@@ -130,11 +130,11 @@ Scenario: SLL - State propagation and readonly checks in Purchase Orders
     | ADAPCABL2S- |
 
     I should see "Validated-p" in "Order State"
-    I should see "Creation Date" as editable
+    I should see "Creation Date" as readonly
     I should see "Supplier" as readonly
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Order Type" as readonly
-    I should see "Order category" as editable
+    I should see "Order category" as readonly
 
     I click "Confirm" on line:
     | Product Code |

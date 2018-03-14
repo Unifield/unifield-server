@@ -67,15 +67,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
-    def getConvert(self, cur_id, amount):
+    def getConvert(self, cur_id, amount, report_period=None):
         '''
         Returns the amount converted from the currency whose id is in parameter into the functional currency
         '''
         currency = self.pool.get('res.currency').browse(self.cr, self.uid, cur_id)
         rate = 1
         # get the correct exchange rate according to the report period
+        if not report_period:
+            report_period = self.getPeriod()
         self.cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s "
-                        "ORDER BY name DESC LIMIT 1", (cur_id, self.getPeriod().date_stop))
+                        "ORDER BY name DESC LIMIT 1;", (cur_id, report_period.date_stop))
         if self.cr.rowcount != 0:
             rate = self.cr.fetchone()[0]
         converted_amount = amount / rate
@@ -186,15 +188,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
-    def getRegisterState(self, reg):
+    def getRegisterState(self, reg, report_period_id=None):
         '''
         Returns the register state (String) for the period of the report.
         If the register doesn't exist for this period, returns 'Not Created'.
         '''
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
+        if not report_period_id:
+            report_period_id = self.period_id
         reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
-                                                                        ('period_id', '=', self.period_id)])
+                                                                        ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
             # get the value from the selection field ("Closed" instead of "confirm", etc.)

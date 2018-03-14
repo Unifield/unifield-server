@@ -638,6 +638,9 @@ class wizard_delete_lines(osv.osv_memory):
             else:
                 line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
 
+            if wiz.to_remove_type in ['sale.order.line', 'purchase.order.line']:
+                line_ids = line_obj.search(cr, uid, [('id', 'in', line_ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+
             self.write(cr, uid, [wiz.id], {'line_ids': line_ids}, context=context)
 
         return {

@@ -49,7 +49,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
@@ -173,7 +173,7 @@ class account_move_line_compute_currency(osv.osv):
                                               base_date_dt.month, 1, )
             period_ids = period_obj.search(cr, uid, [
                 ('date_start', '>=', period_from),
-                ('state', '=', 'draft'),  # first opened period since 
+                ('state', '=', 'draft'),  # first opened period since
                 ('number', 'not in', [0, 16]),
             ], limit=1, order='date_start, number', context=context)
             if not period_ids:
@@ -429,6 +429,7 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+                        self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True
 
     def update_amounts(self, cr, uid, ids):
@@ -688,7 +689,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",

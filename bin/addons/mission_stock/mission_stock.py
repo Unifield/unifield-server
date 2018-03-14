@@ -39,7 +39,6 @@ from datetime import datetime
 from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
-from mx.DateTime import DateFrom, RelativeDateTime
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -303,9 +302,18 @@ class stock_mission_report(osv.osv):
 
     def generate_export_file(self, cr, uid, request_result, report_id, report_type,
                              attachments_path, header, write_attachment_in_db,
-                             product_values, file_type='xls'):
+                             product_values, file_type='xls',
+                             display_only_in_stock=False):
+        in_stock = display_only_in_stock and '_only_stock' or ''
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                                                         report_type + '.' + file_type)
+                                                         report_type + in_stock + '.' + file_type)
+
+        if display_only_in_stock:
+            ignore_if_null = []
+            for num, x in enumerate(header):
+                if x[1].endswith('qty'):
+                    ignore_if_null.append(num)
+
         if not write_attachment_in_db:
             export_file = open(os.path.join(attachments_path, file_name), 'wb')
         else:
@@ -368,6 +376,17 @@ class stock_mission_report(osv.osv):
                         data_list_append(eval(row.get(property_name, False)))
                     else:
                         data_list_append(row.get(property_name, False))
+
+                # remove the 5 firsts column are they are not stock qty
+                # and check if there is any other value than 0 on this last columns
+                if display_only_in_stock:
+                    ignore_line = True
+                    for x in ignore_if_null:
+                        if data_list[x]:
+                            ignore_line = False
+                            break
+                    if ignore_line:
+                        continue
 
                 if file_type == 'xls':
                     self.xls_write_row(sheet, data_list, row_count, row_style)
@@ -576,6 +595,8 @@ class stock_mission_report(osv.osv):
                 for name, key in fixed_data:
                     to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
                 for inst_id in all_instances:
+                    if inst_id not in report_id_by_instance_id:
+                        continue
                     for name, key in repeated_data:
                         num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
                         if not num or num == '.000':
@@ -752,22 +773,24 @@ class stock_mission_report(osv.osv):
             product_values[product_dict['id']] = {}
             product_values[product_dict['id']]['product_amc'] = product_dict['product_amc']
         for product_dict in product_reviewed_result:
-            if product_values[product_dict['id']] is None:
-                product_values[product_dict['id']] = {}
+            product_values.setdefault(product_dict['id'], {})
             product_values[product_dict['id']]['reviewed_consumption'] = product_dict['reviewed_consumption']
 
         # Check in each report if new products are in the database and not in the report
-        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, context=context)
+        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
 
         # After update of all normal reports, update the full view report
         context.update({'update_full_report': True})
-        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, context=context)
+        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
 
         return True
 
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
                                             csv=True, xls=True, with_valuation=True,
-                                            split_stock=True, context=None):
+                                            split_stock=True,
+                                            all_products=True,
+                                            display_only_in_stock=False,
+                                            context=None):
         if context is None:
             context = {}
         if isinstance(report_ids, (int, long)):
@@ -806,13 +829,16 @@ class stock_mission_report(osv.osv):
                         'state_ud': prod_state_ud,
                         'international_status_code': prod_creator,
                         'product_state': prod_state or '',
-                        'product_amc': product_values.get(product, {}).get('product_amc', 0),
-                        'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
+                        #'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                        #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
                     }, context=context)
 
-                # Don't update lines for full view or non local reports
-                if _get_instance_level(self, cr, uid) not in ('coordo', 'hq') and not report['local_report']:
-                    continue
+                if report['local_report'] and not report['full_view']:
+                    # update AMC / FMC
+                    cr.execute('select id, product_id, product_amc, product_consumption from stock_mission_report_line where mission_report_id = %s', (report['id'],))
+                    for x in cr.fetchall():
+                        if product_values.get(x[1]) and ( (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0)):
+                            line_obj.write(cr, uid, x[0], {'product_amc': product_values.get(x[1], {}).get('product_amc', 0), 'product_consumption':  product_values.get(x[1], {}).get('reviewed_consumption', 0)}, context=context)
 
                 msr_in_progress = self.pool.get('msr_in_progress')
                 #US-1218: If this report is previously processed, then do not redo it again for this transaction!
@@ -833,9 +859,12 @@ class stock_mission_report(osv.osv):
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
-                                 split_stock=split_stock, context=context)
+                                 split_stock=split_stock,
+                                 all_products=all_products,
+                                 display_only_in_stock=display_only_in_stock,
+                                 context=context)
 
-                if instance_id.level == 'coordo' and not report['full_view']:
+                if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
                     self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
@@ -1018,14 +1047,16 @@ class stock_mission_report(osv.osv):
             for report_type in HEADER_DICT.keys():
                 csv_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
                 xml_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
-                file_name_list = [csv_file_name, xml_file_name]
+                csv_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.csv')
+                xml_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.xls')
+                file_name_list = [csv_file_name, xml_file_name, csv_file_name_in_stock, xml_file_name_in_stock]
                 attachment_ids = ir_attachment_obj.search(cr, uid,
                                                           [('datas_fname', 'in', file_name_list)],
                                                           context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
                 try:
                     # in case reports are stored on file system, delete them
-                    attachments_path = self.pool.get('ir.attachment').get_root_path(cr, uid)
+                    attachments_path = ir_attachment_obj.get_root_path(cr, uid)
                     for file_name in file_name_list:
                         complete_path = os.path.join(attachments_path,
                                                      file_name)
@@ -1035,7 +1066,8 @@ class stock_mission_report(osv.osv):
                     pass
 
     def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True,
-                    with_valuation=True, split_stock=True, context=None):
+                    with_valuation=True, split_stock=True, all_products=True,
+                    display_only_in_stock=False, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -1056,6 +1088,7 @@ class stock_mission_report(osv.osv):
             attachments_path = attachment_obj.get_root_path(cr, uid)
         except osv.except_osv, e:
             logger.warning("___ %s The report will be stored in the database." % e.value)
+
 
         write_attachment_in_db = False
         # for MSR reports, the migration is ignored, if the path is defined and
@@ -1094,61 +1127,23 @@ class stock_mission_report(osv.osv):
             # generate CSV file
             if csv:
                 logger.info('___ Start CSV generation...')
-                self.generate_export_file(cr, uid, request_result, file_type='csv', **params)
+                if display_only_in_stock:
+                    self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=True,  **params)
+                if all_products:
+                    self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=False,  **params)
 
             # generate XLS files
             if xls:
                 logger.info('___ Start XLS generation...')
-                self.generate_export_file(cr, uid, request_result, file_type='xls', **params)
+                if display_only_in_stock:
+                    self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=True,  **params)
+                if all_products:
+                    self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=False,  **params)
 
             self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
             logger.info('___ CSV/XLS generation finished !')
             del request_result
             del product_values
-        return True
-
-    def background_amc_update(self, cr, uid, *a, **b):
-        KEY = 'background_amc_update'
-        config = self.pool.get('ir.config_parameter')
-        move_obj = self.pool.get('stock.move')
-        mission_line_obj = self.pool.get('stock.mission.report.line')
-
-        previous = config.get_param(cr, uid, KEY)
-        if not previous:
-            previous = time.strftime('%Y-%m-%d')
-
-
-        from_date = (DateFrom(previous) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
-        to_date = (DateFrom(previous) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
-
-        self.logger.info("___ MSR AMC: Start update products previous update %s" % (previous,))
-
-        domain = self.pool.get('product.product')._get_domain_compute_amc(cr, uid)
-        domain.append(('date', '<=', to_date))
-        domain.append(('date', '>=', from_date))
-        p_ids = []
-
-        # get all products with move in the past 3 months since the last AMC update date
-        for move in  move_obj.read_group(cr, uid, domain, ['product_id'], ['product_id']):
-            if move['product_id']:
-                p_ids.append(move['product_id'][0])
-
-        if not p_ids:
-            self.logger.info("___ MSR AMC: no product to update")
-            return True
-
-        mission_lines_ids = mission_line_obj.search(cr, uid, [('mission_report_id.full_view', '=', False), ('mission_report_id.local_report', '=', True), ('product_id', 'in', p_ids)])
-        mission_dict = {}
-        for mission_line in mission_line_obj.read(cr, uid, mission_lines_ids, ['product_id']):
-            mission_dict[mission_line['product_id'][0]] = mission_line['id']
-
-        self.logger.info("___ MSR AMC: update %d products" % (len(mission_dict.keys()), ))
-
-        for product in self.pool.get('product.product').read(cr, uid, mission_dict.keys(), ['product_amc']):
-            mission_line_obj.write(cr, uid, mission_dict[product['id']], {'product_amc': product['product_amc']})
-
-        config.set_param(cr, uid, KEY, time.strftime('%Y-%m-%d'))
-        self.logger.info("___ MSR AMC: Stop")
         return True
 
 

@@ -1188,9 +1188,8 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
-            if vals.get('product_qty', line.product_qty) <= 0.0 and \
-                    not line.order_id.rfq_ok and \
-                    'noraise' not in context and line.state != 'cancel':
+            if vals.get('product_qty', line.product_qty) <= 0.0 and not line.order_id.rfq_ok and 'noraise' not in context and \
+                    line.state != 'cancel' and context.get('button', '') != 'cancel_only_pol' and vals.get('state', '') != 'cancel':
                 raise osv.except_osv(
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
@@ -1331,7 +1330,7 @@ class purchase_order_line(osv.osv):
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
-            self.update_fo_lines(cr, uid, [pol.id, new_po_line], context=context)
+            self.update_fo_lines(cr, uid, [pol.id], context=context)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'
@@ -1628,9 +1627,13 @@ class purchase_order_line(osv.osv):
 
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
+        import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
         for pol in self.browse(cr, uid, ids, context=context):
             # only create CV for external and ESC partners:
             if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+                return False
+
+            if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
