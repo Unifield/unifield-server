@@ -166,13 +166,17 @@ class Translator(SecuredController):
                         val = [val]
 
                     for v in val:
-                        # if not v:
-                        #     for lang in data:
-                        #         if data[lang] and data[lang][name]:
-                        #             v = data[lang][name]
-                        #             data[context['lang']][name] = data[lang][name]
-                        #             break
-
+                        if not v:
+                            # look for EN value first, then any
+                            if data['en_MF'] and data['en_MF'][name]:
+                                v = data['en_MF'][name]
+                                data[context['lang']][name] = data['en_MF'][name]
+                            else:
+                                for lang in data:
+                                    if data[lang] and data[lang][name]:
+                                        v = data[lang][name]
+                                        data[context['lang']][name] = data[lang][name]
+                                        break
                         rpc.session.execute('object', 'execute', params.model, 'write', [params.id], {name : v}, context)
 
             for lang_field in data[ctx['lang']]:
