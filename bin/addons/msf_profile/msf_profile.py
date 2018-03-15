@@ -87,6 +87,25 @@ class patch_scripts(osv.osv):
         cr.execute(update_ji)
         cr.execute(update_aji)
 
+    def us_4407_update_free_lines_ad(self, cr, uid, *a, **b):
+        """
+        Updates the distribution_id of the Free1/2 lines by using the distrib_line_id
+        """
+        update_free_1 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_1_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.1.distribution.line,', '')::int) 
+                        WHERE distrib_line_id LIKE 'free.1.distribution.line%' AND distribution_id IS NULL;
+                        """
+        update_free_2 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_2_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.2.distribution.line,', '')::int) 
+                        WHERE distrib_line_id LIKE 'free.2.distribution.line%' AND distribution_id IS NULL;
+                        """
+        cr.execute(update_free_1)
+        cr.execute(update_free_2)
+
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
         cr.execute('''select distinct i.id, p.default_code from
