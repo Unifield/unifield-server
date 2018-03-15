@@ -372,6 +372,77 @@
             </field>
         </record>
 
+        <record id="view_msf_instance_backup_form" model="ir.ui.view">
+            <field name="name">msf.instance.backup.form"</field>
+            <field name="model">msf.instance.cloud</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cloud Backup Config">
+                    <field name="code" readonly="1"/>
+                    <field name="name" readonly="1"/>
+                    <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="is_editable" invisible="1" />
+                    <field name="has_config" invisible="1" />
+                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <newline />
+                    <button name="test_connection" icon="monitor.png" string="Test Connection" type="object" colspan="2"/>
+                    <group colspan="4" attrs="{'invisible': ['|', ('is_editable', '=', False), ('has_config', '=', False)]}">
+                        <separator colspan="4" string="Duplicate the configuration to all instances" />
+                        <field name="delay_minute" />
+                        <button name="copy_to_all" type="object" icon="gtk-copy" string="Duplicate Config to all instances" confirm="This will override all instances configuration." />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_msf_instance_backup_tree" model="ir.ui.view">
+            <field name="name">msf.instance.tree</field>
+            <field name="model">msf.instance.cloud</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="110" />
+            <field name="arch" type="xml">
+                <tree editable="top" hide_delete_button="1" hide_new_button="1" string="Cloud Backup Config" noteditable="not is_editable" colors="red: not has_config">
+                    <field name="code" readonly="1"/>
+                    <field name="name" readonly="1"/>
+                    <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="is_editable" invisible="1" />
+                    <field name="has_config" invisible="1" />
+                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <button name="test_connection" icon="monitor.png" string="Test Connection" type="object" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_msf_instance_backup_search" model="ir.ui.view">
+            <field name="name">msf.instance.search</field>
+            <field name="model">msf.instance.cloud</field>
+            <field name="type">search</field>
+            <field name="priority" eval="110" />
+            <field name="arch" type="xml">
+                <search>
+                    <filter string="Not configured" icon="terp-emblem-important" domain="[('has_config','=',False)]"/>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="cloud_url" />
+                    <field name="cloud_login" />
+                    <field name="cloud_schedule_time" widget="float_time"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_msf_instance_backup" model="ir.actions.act_window">
+            <field name="name">Cloud Backup Config</field>
+            <field name="res_model">msf.instance.cloud</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state', '=', 'active'), ('filter_by_level', '=', True)]</field>
+            <field name="search_view_id" ref="view_msf_instance_backup_search" />
+            <field name="view_id" ref="view_msf_instance_backup_tree" />
+        </record>
 
     </data>
 </openerp>

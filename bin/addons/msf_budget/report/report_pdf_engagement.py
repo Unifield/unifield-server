@@ -121,6 +121,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
 
         if purchase_order:
             for po_line in purchase_order.order_line:
+                if po_line.state.startswith('cancel'):
+                    continue
                 expense_account_id = False
                 if po_line.product_id and \
                    po_line.product_id.property_account_expense:

@@ -120,7 +120,7 @@
     <para style="default">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
+    <blockTable colWidths="1.5cm,4.5cm,5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -156,7 +156,7 @@
     </blockTable>
     <section>
       <para style="default">[[ repeatIn(o.counting_line_ids, 'p') ]]</para>
-      <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
+      <blockTable colWidths="1.5cm,4.5cm,5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
         <tr>
           <td>
             <para style="table_item_data">[[ p.line_no ]]</para>

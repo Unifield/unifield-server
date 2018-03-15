@@ -117,6 +117,7 @@ class wizard_register_import(osv.osv_memory):
                 'document_date',
                 'cheque_number',
                 'account_id',
+                'partner_type_mandatory',
                 'debit',
                 'credit',
                 'partner_id',
@@ -163,6 +164,7 @@ class wizard_register_import(osv.osv_memory):
                     'employee_id': employee_id,
                     'transfer_journal_id': transfer_journal_id,
                     'statement_id': register_id,
+                    'partner_type_mandatory': l.get('partner_type_mandatory', False),
                 }
                 if cheque_number:
                     vals['cheque_number'] = str(cheque_number)
@@ -590,10 +592,12 @@ class wizard_register_import(osv.osv_memory):
                     # - Destination
                     # - Cost Centre
                     # - Booking Currency
+
                     vals = {
                         'description': r_description or '',
                         'ref': line[4] or '',
                         'account_id': r_account or False,
+                        'partner_type_mandatory': has_specific_type,
                         'debit': r_debit or 0.0,
                         'credit': r_credit or 0.0,
                         'cost_center_id': r_cc or False,
@@ -608,6 +612,7 @@ class wizard_register_import(osv.osv_memory):
                         'free_1_id': r_free1 or False,
                         'free_2_id': r_free2 or False,
                     }
+
                     if type_for_register == 'advance':
                         vals.update({'employee_id': r_partner, })
                     elif type_for_register in ['transfer', 'transfer_same']:
@@ -718,6 +723,7 @@ class wizard_register_import_lines(osv.osv):
         'document_date': fields.date("Document date", required=True, readonly=True),
         'date': fields.date("Posting date", required=True, readonly=True),
         'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
         'funding_pool_id': fields.many2one('account.analytic.account', "Funding Pool", required=False, readonly=True),
@@ -741,6 +747,7 @@ class wizard_register_import_lines(osv.osv):
         'date': lambda *a: strftime('%Y-%m-%d'),
         'debit': lambda *a: 0.0,
         'credit': lambda *a: 0.0,
+        'partner_type_mandatory': False,
     }
 
 wizard_register_import_lines()

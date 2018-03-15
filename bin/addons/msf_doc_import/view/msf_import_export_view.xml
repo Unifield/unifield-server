@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+<data>
+
+    <record id="msf_import_export_view" model="ir.ui.view">
+        <field name="name">msf.import.export.view</field>
+        <field name="model">msf.import.export</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import / Export">
+                <group colspan="4" col="4">
+                    <field name="display_file_import" invisible="1" />
+                    <field name="display_file_export" invisible="1" />
+                    <field name="csv_button" invisible="1" />
+                    <field name="state" invisible="1" />
+                    <group colspan="2" col="2">
+                        <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
+                        <field name='supplier_catalogue_id' attrs="{'invisible': [('model_list_selection', '!=', 'supplier_catalogue_update')], 'required': [('model_list_selection', '=', 'supplier_catalogue_update')]}" />
+                        <field name='product_list_id' attrs="{'invisible': [('model_list_selection', '!=', 'product_list_update')], 'required': [('model_list_selection', '=', 'product_list_update')]}" />
+                    </group>
+                    <group colspan="2" col="2"></group>
+                </group>
+                <group col="4" colspan="4">
+                    <field name="hide_download_template" invisible="1" />
+                    <field name="hide_download_3_entries" invisible="1" />
+                    <field name="hide_download_all_entries" invisible="1" />
+                    <group colspan="2" col="2" name="file_import" attrs="{'invisible':[('display_file_import', '=', False)]}">
+                        <separator string="File Import" colspan="2"/>
+                        <field name="display_import_buttons" invisible="1" />
+                        <field name="import_file" colspan="4" on_change="file_change(import_file)"/>
+                        <button name="test_import" string="Test file" type="object" icon="gtk-ok" colspan="4" attrs="{'invisible':[('display_import_buttons', '=', False)]}" />
+                        <button name="import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', True)]}" />
+                        <button name="import_csv" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', False)]}" />
+                        <separator colspan="4" string="Information" />
+                        <field name="info_message" colspan="4" nolabel="1" />
+                    </group>
+                    <group colspan="2" col="2" name="file_export">
+                        <separator string="File Export" colspan="2"/>
+                        <group attrs="{'invisible':[('display_file_export', '=', False)]}">
+                            <button name="download_template_file" string="Export empty template" icon="gtk-save" help="Download template file" type="object" attrs="{'invisible':[('hide_download_template', '=', True)]}"/>
+                            <button name="download_3_entries_file" string="Export first 3 entries" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_3_entries', '=', True)]}"/>
+                            <button name="download_all_entries_file" string="Export all data" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_all_entries', '=', True)]}"/>
+                        </group>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('show_warning', '=', False)]}">
+                        <separator colspan="4" string="Warning messages" />
+                        <field name="warning_message" nolabel="1" colspan="4" widget="full_text"/>
+                    </group>
+
+                    <group colspan="4" attrs="{'invisible': [('show_error', '=', False)]}">
+                        <separator colspan="4" string="Error messages" />
+                        <field name="error_message" nolabel="1" colspan="4" widget="full_text"/>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="msf_import_export_supply_action" model="ir.actions.act_window">
+        <field name="name">Supply</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'supply'}</field>
+    </record>
+
+    <record id="msf_import_export_finance_action" model="ir.actions.act_window">
+        <field name="name">Finance</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'finance'}</field>
+    </record>
+
+    <record id="msf_import_export_non_functional_action" model="ir.actions.act_window">
+        <field name="name">Non Functional</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'non_functionnal'}</field>
+    </record>
+
+    <menuitem id="msf_import_export_menu"
+              name="Import / Export"
+              parent="object_query.menu_preferences" />
+
+    <menuitem id="msf_import_export_supply_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_supply_action" />
+
+    <menuitem id="msf_import_export_finance_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_finance_action" />
+
+    <menuitem id="msf_import_export_non_functional_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_non_functional_action" />
+
+
+</data>
+</openerp>

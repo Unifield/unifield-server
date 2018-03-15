@@ -188,7 +188,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                     else:
-                            batch = batch_ids[0]
+                        batch = batch_ids[0]
                 except Exception:
                     batch = False
 
@@ -635,6 +635,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         product_cache = {}
+        product_non_stockable_cache = {}
         product_error = []
         no_product_error = []
 
@@ -680,20 +681,29 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     product_code = product_code.strip()
                     if product_code in product_cache:
                         product_id = product_cache.get(product_code)
+                    elif product_code in product_non_stockable_cache:
+                        product_id = product_non_stockable_cache(product_code)
                     if not product_id:
-                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
+                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code), ('type', 'not in', ['service_recep', 'consu'])], context=context)
                         if product_ids:
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
+                        else:
+                            product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code), ('type', 'in', ['service_recep', 'consu'])], context=context)
+                            if product_ids:
+                                product_id = product_ids[0]
+                                product_non_stockable_cache[product_code] = product_id
+                    if product_code in product_non_stockable_cache:
+                        to_correct_ok = True
+                        comment += _('Impossible to import non-stockable products.')
+
                 except Exception:
                     to_correct_ok = True
 
-                # Product name
-                if not product_id:
+                if not product_id:  # Product name
                     to_correct_ok = True
                     product_error.append(line_num)
                     continue
-
             # Average cost
             cost = row.cells[2].data
             if not cost:
