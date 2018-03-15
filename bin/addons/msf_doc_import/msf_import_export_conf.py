@@ -263,13 +263,16 @@ MODEL_DATA_DICT = {
     'product_list_line': {
         'header_list': [
             'list_id.name',
-            'ref',
+            'name.default_code',
             'name',
             'comment',
         ],
         'required_field_list': [
-            'ref',
-            'name',
+            'list_id.name',
+            'name.default_code',
+        ],
+        'ignore_field': [
+            'name'
         ],
     },
     'suppliers': {
