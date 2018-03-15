@@ -448,6 +448,7 @@ class stock_incoming_processor(osv.osv):
             picking_id = wizard.picking_id.id
 
             simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, }, context=context)
+            context.update({'simu_id': simu_id})
             for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
                 if move.state not in ('draft', 'cancel', 'done'):
                     line_obj.create(cr, uid, {'move_id': move.id,

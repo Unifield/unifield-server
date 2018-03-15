@@ -131,35 +131,12 @@ class stock_picking(osv.osv):
         return res
 
 
-    def generate_simulation_screen_report(self, cr, uid, in_id, filetype, file_content, context=None):
+    def generate_simulation_screen_report(self, cr, uid, simu_id, context=None):
         '''
         generate a IN simulation screen report
         '''
         if context is None:
             context = {}
-
-        simu_id = self.pool.get('wizard.import.in.simulation.screen').create(cr, uid, {
-            'picking_id': in_id, 
-            'filetype': filetype,
-            'file_to_import': base64.encodestring(file_content),
-        }, context=context)
-        for move in self.pool.get('stock.picking').browse(cr, uid, in_id, context=context).move_lines:
-            if move.state not in ('draft', 'cancel', 'done'):
-                self.pool.get('wizard.import.in.line.simulation.screen').create(cr, uid, {
-                    'move_id': move.id,
-                    'simu_id': simu_id,
-                    'move_product_id': move.product_id and move.product_id.id or False,
-                    'move_product_qty': move.product_qty or 0.00,
-                    'move_uom_id': move.product_uom and move.product_uom.id or False,
-                    'move_price_unit': move.price_unit or move.product_id.standard_price,
-                    'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
-                    'line_number': move.line_number,
-                    'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
-                }, context=context)
-
-        # launch simulation
-        cr.commit()
-        self.pool.get('wizard.import.in.simulation.screen').simulate(cr.dbname, uid, [simu_id], context=context)
 
         # generate report:
         datas = {'ids': [simu_id]}
@@ -181,7 +158,6 @@ class stock_picking(osv.osv):
             context = {}
         filetype = self.get_import_filetype(cr, uid, file_path, context=context)
         file_content = self.get_file_content(cr, uid, file_path, context=context)
-        LINE_START = 11
 
         # get ID of the IN:
         in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
@@ -189,49 +165,20 @@ class stock_picking(osv.osv):
         # create stock.incoming.processor and its stock.move.in.processor:
         in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
         self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
-
-        # get imported moves and its qty:
-        context.update({'xml_is_string': True})
-        if filetype == 'excel':
-            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_excel(cr, uid, file_content, context=context)
-        else:
-            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_xml(cr, uid, file_content, context=context)
-        context.pop('xml_is_string')
+        self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context) 
+        simu_id = context.get('simu_id')
 
         # create simulation screen to get the simulation report:
-        file_res = self.generate_simulation_screen_report(cr, uid, in_id, filetype, file_content, context=context)
+        self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, [simu_id], {
+            'filetype': filetype,
+            'file_to_import': base64.encodestring(file_content),
+        }, context=context)
 
-        # for each move imported, update qty in the stock.incoming.processor:
-        processed, rejected, headers = [], [], values[LINE_START-1]
-        for index in range(LINE_START, LINE_START+nb_file_lines):
-            row = values[index]
-            line_data = [row.get(x) for x in headers]
-            move_id = self.pool.get('stock.move').search(cr, uid, [
-                ('picking_id', '=', in_id),
-                ('line_number', '=', row.get('line_number')),
-            ], context=context)
-            if move_id:
-                move = self.pool.get('stock.move').browse(cr, uid, move_id[0], context=context)
-                move_proc_ids = self.pool.get('stock.move.in.processor').search(cr, uid, [
-                    ('wizard_id', '=', in_processor),
-                    ('move_id', '=', move.id),
-                    ('quantity', '=', 0.00),
-                ], context=context)
-                if move_proc_ids:
-                    self.pool.get('stock.move.in.processor').write(cr, uid, move_proc_ids, {
-                        'quantity': row.get('product_qty', 0.00),
-                    }, context=context)
-                    processed.append( (index,line_data) )
-                else:
-                    rejected.append( (index,line_data) )
-                    raise osv.except_osv(_('Error'), _('No matching IN move processor found for line %s') % index)
-            else:
-                rejected.append( (index,line_data) )
-                raise osv.except_osv(_('Error'), _('No matching stock move found for line %s') % index)
-
-        # run method do_incoming_shipment:
-        context.update({'do_not_process_incoming': True})
-        new_picking = self.do_incoming_shipment(cr, uid, in_processor, context=context)
+        context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True})
+        self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
+        file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+        self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
+        context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread')
 
         # attach simulation report to new IN:
         self.pool.get('ir.attachment').create(cr, uid, {
@@ -239,11 +186,11 @@ class stock_picking(osv.osv):
             'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
             'description': 'IN simulation screen',
             'res_model': 'stock.picking',
-            'res_id': new_picking,
+            'res_id': context.get('new_picking', in_id),
             'datas': file_res.get('result'),
         })
 
-        return processed, rejected, headers
+        return [], [], []
 
 
     def export_template_file(self, cr, uid, ids, context=None):

@@ -300,9 +300,12 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
             cr.commit()
-            new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
-            new_thread.start()
-            new_thread.join(10.0)
+            if context.get('do_not_import_with_thread'):
+                self.simulate(cr.dbname, uid, ids, context=context)
+            else:
+                new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
+                new_thread.start()
+                new_thread.join(10.0)
 
             return self.go_to_simulation(cr, uid, ids, context=context)
 
@@ -401,7 +404,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         # Read the XML Excel file
         xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
-
+        
         # Read all lines
         rows = fileobj.getRows()
 
@@ -987,7 +990,8 @@ Nothing has been imported because of %s. See below:
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
-            picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            context['new_picking'] = new_picking
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
@@ -1042,23 +1046,25 @@ Nothing has been imported because of %s. See below:
 
         if simu_id.with_pack:
             cr.commit()
-            new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
-            new_thread.start()
-            new_thread.join(20)
-            if new_thread.isAlive():
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
-                prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
-
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'stock.picking.processing.info',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': prog_id,
-                    'view_id': [view_id],
-                    'context': context,
-                    'target': 'new',
-                }
+            if context.get('do_not_import_with_thread'):
+                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
+            else:
+                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+                new_thread.start()
+                new_thread.join(20)
+                if new_thread.isAlive():
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
+                    prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'stock.picking.processing.info',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': prog_id,
+                        'view_id': [view_id],
+                        'context': context,
+                        'target': 'new',
+                    }
 
             return self.return_to_in(cr, uid, simu_id.id, context=context)
 
