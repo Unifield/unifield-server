@@ -963,10 +963,10 @@ class msf_import_export(osv.osv_memory):
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
                 cr.rollback()
-                logging.getLogger('import data').info('Error %s' % e)
-                save_error(e, row_index)
+                logging.getLogger('import data').info('Error %s' % tools.ustr(e))
+                save_error(tools.ustr(e), row_index)
                 nb_error += 1
-                rejected.append((row_index+1, line_data, e))
+                rejected.append((row_index+1, line_data, tools.ustr(e)))
             else:
                 nb_imported_lines += 1
 
