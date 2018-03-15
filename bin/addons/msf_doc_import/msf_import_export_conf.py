@@ -35,6 +35,7 @@ MODEL_DICT = {
         'name': 'Product Categories',
         'domain_type': 'supply',
         'model': 'product.category',
+        'domain': [('msfid', '!=', False)],
     },
     'product_list': {
         'name': 'Products Lists',
@@ -239,13 +240,11 @@ MODEL_DATA_DICT = {
             'name',
             'property_stock_journal',
             'donation_expense_account',
-            'family_id',
-            'msfid',
+            'family_id.msfid',
         ],
         'required_field_list': [
             'name',
-            'family_id',
-            'msfid',
+            'family_id.msfid',
         ],
     },
     'product_list': {

@@ -875,8 +875,8 @@ class msf_import_export(osv.osv_memory):
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
                                                              data['msfid'])], order='NO_ORDER')
                 elif impobj._name == 'product.category':
-                    ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                                                             data['msfid'])], order='NO_ORDER')
+                    ids_to_update = impobj.search(cr, uid, [('family_id', '=',
+                                                             data['family_id'])], order='NO_ORDER')
                 elif impobj._name == 'supplier.catalogue':
                     ids_to_update = impobj.search(cr, uid, [
                         ('name', '=', data['name']),
