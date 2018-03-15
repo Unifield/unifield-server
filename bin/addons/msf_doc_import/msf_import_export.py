@@ -29,6 +29,7 @@ import tools
 from osv import fields
 from osv import osv, orm
 from tools.translate import _
+from tools import ustr
 
 from tempfile import TemporaryFile
 from lxml import etree
@@ -960,10 +961,10 @@ class msf_import_export(osv.osv_memory):
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
                 cr.rollback()
-                logging.getLogger('import data').info('Error %s' % e)
-                save_error(e, row_index)
+                logging.getLogger('import data').info('Error %s' % ustr(e))
+                save_error(ustr(e), row_index)
                 nb_error += 1
-                rejected.append((row_index+1, line_data, e))
+                rejected.append((row_index+1, line_data, ustr(e)))
             else:
                 nb_imported_lines += 1
 
