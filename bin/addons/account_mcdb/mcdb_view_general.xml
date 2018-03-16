@@ -1,4 +1,6 @@
                     <separator string="General" colspan="4"/>
+                    <field name="template"/>
+                    <button icon="gtk-save" name="load_mcdb_template" string="Load" type="object"/>
                     <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">

@@ -29,6 +29,53 @@ from tools import flatten
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
 
+    def _get_template_selection(self, cr, uid, context=None):
+        """
+        Gets all selectors having a description, ordered by description.
+        Returns them as a list a tuples (id, description)
+        """
+        if context is None:
+            context = {}
+        res = []
+        domain = [('description', '!=', False), ('description', '!=', '')]
+        if context.get('from', '') == 'account.analytic.line':
+            domain.append(('model', '=', 'account.analytic.line'))
+        else:
+            domain.append(('model', '=', 'account.move.line'))
+        selector_ids = self.search(cr, uid, domain, order='description', context=context)
+        for selector in self.browse(cr, uid, selector_ids, fields_to_fetch=['description'], context=context):
+            res.append((selector.id, selector.description))
+        return res
+
+    def load_mcdb_template(self, cr, uid, ids, context=None):
+        """
+        Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
+        the user clicks on the Search button)
+        """
+        if context is None:
+            context = {}
+        mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
+        template_id = mcdb and mcdb['template']
+        if not template_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
+        copied_template_id = self.copy(cr, uid, template_id, default={'description': '', 'template': None}, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': copied_template_id,
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
@@ -111,6 +158,7 @@ class account_mcdb(osv.osv):
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
+        'template': fields.selection(_get_template_selection, string='Template'),
     }
 
     _defaults = {
