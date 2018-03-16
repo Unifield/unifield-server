@@ -72,6 +72,7 @@ class account_mcdb(osv.osv):
             'view_type': 'form',
             'context': context,
             'res_id': copied_template_id,
+            'view_mode': 'form,tree',
             'view_id': [view_id],
             'target': 'self',
         }
