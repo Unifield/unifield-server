@@ -10268,7 +10268,7 @@ msgstr "Adresse d'Expédition"
 #: field:wizard.compare.rfq.line,product_name:0
 #, python-format
 msgid "Product Description"
-msgstr "Product Description"
+msgstr "Description Produit"
 
 #. module: tender_flow
 #: field:tender.cancel.wizard,no_need:0
@@ -21284,7 +21284,7 @@ msgstr "US/Indiana-Starke"
 #: field:sale.order.line,name:0
 #: field:sale.order.line,product_name:0
 msgid "Product description"
-msgstr "Product description"
+msgstr "Description Produit"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:576
@@ -101613,9 +101613,9 @@ msgstr "Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progres
 #: code:addons/msf_doc_import/initial_stock_inventory.py:653
 #, python-format
 msgid "You should have exactly 7 columns in this order:\n"
-"Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*"
+"Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry Date, Quantity"
 msgstr "Vous devriez avoir exactement 7 colonnes dans cet ordre :\n"
-"Code Produit*, Description du produit*, Coût moyen initial*, Lieu*, Lot*, Date d'expiration*, Quantité*"
+"Code Produit, Description produit, Coût moyen initial, Zone, Lot, Date d'Expiration, Quantité"
 
 #. module: product_nomenclature
 #: field:product.nomenclature,nomen_type_s:0
