@@ -982,7 +982,6 @@ Nothing has been imported because of %s. See below:
         # Create new cursor
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
-
         try:
             for wiz in inc_proc_obj.browse(new_cr, uid, partial_id, context=context):
                 for line in wiz.move_ids:

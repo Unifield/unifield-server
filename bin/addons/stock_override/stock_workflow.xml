@@ -67,6 +67,11 @@
             <field name="act_to" ref="act_updated"/>
             <field name="signal">updated</field>
         </record>
+        <record id="trans_draft_shipped" model="workflow.transition">
+            <field name="act_from" ref="stock.act_assigned"/>
+            <field name="act_to" ref="act_updated"/>
+            <field name="signal">updated</field>
+        </record>
 
         <record id="act_return_cancel" model="workflow.activity">
             <field name="wkf_id" ref="stock.wkf_picking"/>

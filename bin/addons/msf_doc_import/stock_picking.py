@@ -26,6 +26,7 @@ from os import path
 from osv import fields
 from osv import osv
 from tools.translate import _
+import netsvc
 
 from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
@@ -168,6 +169,8 @@ class stock_picking(osv.osv):
         line_start = len(HEADER_COLUMNS) + 4
         for index in range(line_start, line_start+nb_file_lines):
             line_data = [values[index].get(x) for x in tech_header]
+            if all([x is None for x in line_data]):
+                continue
             if import_success:
                 processed.append( (index, line_data) )
             else:
@@ -182,6 +185,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
+        wf_service = netsvc.LocalService("workflow")
 
         import_success = False
         try:
@@ -208,6 +212,10 @@ class stock_picking(osv.osv):
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
             context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread')
+
+            if context.get('new_picking') and context['new_picking'] != in_id:
+                wf_service.trg_validate(uid, 'stock.picking', context.get('new_picking', in_id), 'button_confirm', cr)
+            wf_service.trg_validate(uid, 'stock.picking', context.get('new_picking', in_id), 'updated', cr)
 
             # attach simulation report to new IN:
             self.pool.get('ir.attachment').create(cr, uid, {

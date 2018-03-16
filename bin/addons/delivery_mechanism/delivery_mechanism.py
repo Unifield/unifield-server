@@ -1369,7 +1369,6 @@ class stock_picking(osv.osv):
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
 
-
                 if sync_in:  # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
                     if context.get('for_dpo', False):
                         self.write(cr, uid, [picking_id], {'in_dpo': True}, context=context)
