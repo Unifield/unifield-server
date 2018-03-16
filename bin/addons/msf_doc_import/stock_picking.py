@@ -34,6 +34,8 @@ from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
+from msf_doc_import.wizard.wizard_in_simulation_screen import LINES_COLUMNS as IN_LINES_COLUMNS
+from msf_doc_import.wizard.wizard_in_simulation_screen import HEADER_COLUMNS
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from service.web_services import report_spool
@@ -150,47 +152,78 @@ class stock_picking(osv.osv):
         return file_res
 
 
+    def get_processed_rejected_header(self, cr, uid, filetype, file_content, import_success, context=None):
+        if context is None:
+            context = {}
+        processed, rejected = [], []
+
+        context.update({'xml_is_string': True})
+        if filetype == 'excel':
+            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_excel(cr, uid, file_content, context=context)
+        else:
+            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_xml(cr, uid, file_content, context=context)
+        context.pop('xml_is_string')
+
+        tech_header = [x[1] for x in IN_LINES_COLUMNS] 
+        line_start = len(HEADER_COLUMNS) + 4
+        for index in range(line_start, line_start+nb_file_lines):
+            line_data = [values[index].get(x) for x in tech_header]
+            if import_success:
+                processed.append( (index, line_data) )
+            else:
+                rejected.append( (index, line_data) )
+
+        return processed, rejected, [x[0] for x in IN_LINES_COLUMNS] 
+
+
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
         '''
         Method called by automated.imports feature
         '''
         if context is None:
             context = {}
-        filetype = self.get_import_filetype(cr, uid, file_path, context=context)
-        file_content = self.get_file_content(cr, uid, file_path, context=context)
 
-        # get ID of the IN:
-        in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
+        import_success = False
+        try:
+            filetype = self.get_import_filetype(cr, uid, file_path, context=context)
+            file_content = self.get_file_content(cr, uid, file_path, context=context)
 
-        # create stock.incoming.processor and its stock.move.in.processor:
-        in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
-        self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
-        self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context) 
-        simu_id = context.get('simu_id')
+            # get ID of the IN:
+            in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
 
-        # create simulation screen to get the simulation report:
-        self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, [simu_id], {
-            'filetype': filetype,
-            'file_to_import': base64.encodestring(file_content),
-        }, context=context)
+            # create stock.incoming.processor and its stock.move.in.processor:
+            in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
+            self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
+            self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context) 
+            simu_id = context.get('simu_id')
 
-        context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True})
-        self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
-        file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
-        self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
-        context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread')
+            # create simulation screen to get the simulation report:
+            self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, [simu_id], {
+                'filetype': filetype,
+                'file_to_import': base64.encodestring(file_content),
+            }, context=context)
 
-        # attach simulation report to new IN:
-        self.pool.get('ir.attachment').create(cr, uid, {
-            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'IN simulation screen',
-            'res_model': 'stock.picking',
-            'res_id': context.get('new_picking', in_id),
-            'datas': file_res.get('result'),
-        })
+            context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True})
+            self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
+            file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
+            context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread')
 
-        return [], [], []
+            # attach simulation report to new IN:
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'description': 'IN simulation screen',
+                'res_model': 'stock.picking',
+                'res_id': context.get('new_picking', in_id),
+                'datas': file_res.get('result'),
+            })
+            import_success = True
+        except Exception, e:
+            raise e
+
+        return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
+
 
 
     def export_template_file(self, cr, uid, ids, context=None):
