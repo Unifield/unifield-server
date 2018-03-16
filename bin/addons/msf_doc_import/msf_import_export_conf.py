@@ -25,43 +25,51 @@ MODEL_DICT = {
         'name': 'Products',
         'domain_type': 'supply',
         'model': 'product.product',
+        'partial': True,
     },
     'product_nomenclature': {
         'name': 'Product Nomenclature',
         'domain_type': 'supply',
         'model': 'product.nomenclature',
+        'partial': True,
     },
     'product_category': {
         'name': 'Product Categories',
         'domain_type': 'supply',
         'model': 'product.category',
         'domain': [('msfid', '!=', False)],
+        'partial': True,
     },
     'product_list': {
         'name': 'Products Lists',
         'domain_type': 'supply',
         'model': 'product.list',
+        'partial': True,
     },
     'product_list_line': {
         'name': 'Products Lists Lines',
         'domain_type': 'supply',
         'model': 'product.list.line',
+        'partial': True,
     },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
+        'partial': True,
     },
     'supplier_catalogues': {
         'name': 'Supplier Catalogues',
         'domain_type': 'supply',
         'model': 'supplier.catalogue',
+        'partial': True,
     },
     'supplier_catalogues_lines': {
         'name': 'Supplier Catalogue Lines',
         'domain_type': 'supply',
         'model': 'supplier.catalogue.line',
+        'partial': True,
     },
 
 
