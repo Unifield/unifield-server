@@ -324,32 +324,6 @@
             </field>
         </record>
 
-    <!-- Search view with different name -->
-        <record id="account_mcdb_search" model="ir.ui.view">
-            <field name="name">account.mcdb.search</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">search</field>
-            <field name="priority" eval="17"/>
-            <field name="arch" type="xml">
-                <search string="Selector - G/L">
-                    <field name="description" select="1"/>
-                    <field name="user" select="1"/>
-                </search>
-            </field>
-        </record>
-
-        <record id="account_mcdb_analytic_search" model="ir.ui.view">
-            <field name="name">account.mcdb.analytic.search</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Selector - Analytic">
-                    <field name="description" select="1"/>
-                    <field name="user" select="1"/>
-                </search>
-            </field>
-        </record>
-
     <!-- Actions to display form view (analytic OR G/L) -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
             <field name="name">G/L Selector</field>
@@ -357,7 +331,6 @@
             <field name="view_type">form</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_form"/>
-            <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
             <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
@@ -368,7 +341,6 @@
             <field name="view_type">form</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_analytic_form"/>
-            <field name="search_view_id" ref="account_mcdb_analytic_search"/>
             <field name="context">{'from': 'account.analytic.line', 'search_default_user': uid}</field>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
         </record>
