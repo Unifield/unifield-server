@@ -16166,12 +16166,6 @@ msgstr "Type"
 msgid "Fiscal year:"
 msgstr "Fiscal year:"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line_search
-msgid "Analytic Selector - Saved queries"
-msgstr "Analytic Selector - Saved queries"
-
 #. module: msf_outgoing
 #: report:packing.list:0
 msgid "total m³"
@@ -44660,12 +44654,6 @@ msgstr "Communication configuration"
 #, python-format
 msgid "Global analytic distribution"
 msgstr "Global analytic distribution"
-
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line_search
-msgid "G/L Selector - Saved queries"
-msgstr "G/L Selector - Saved queries"
 
 #. module: account_voucher
 #: help:account.voucher,reference:0

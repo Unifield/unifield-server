@@ -7657,12 +7657,6 @@ msgstr "¡Acción no válida!"
 msgid "To Close"
 msgstr "Para cerrar"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line_search
-msgid "Analytic Selector - Saved queries"
-msgstr "Selector analítico- consultas guardadas"
-
 #. module: stock
 #: selection:stock.move.split.lines,action:0
 msgid "Keep in one lot"
@@ -60475,12 +60469,6 @@ msgstr "¡El nombre del grupo debe ser único!"
 #: model:process.node,name:tender_flow.process_node_tender_draft
 msgid "Tender - draft"
 msgstr "Licitación - borrador"
-
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line_search
-msgid "G/L Selector - Saved queries"
-msgstr "Selector contable- consultas guardadas"
 
 #. module: product
 #: view:product.product:0

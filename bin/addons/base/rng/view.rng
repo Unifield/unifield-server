@@ -81,6 +81,7 @@
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_save_button"/></rng:optional>
+            <rng:optional><rng:attribute name="hide_cancel_button"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:ref name="container"/>
         </rng:element>
