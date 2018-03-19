@@ -131,7 +131,7 @@ class account_mcdb(osv.osv):
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
         'template': fields.selection(_get_template_selection, string='Template'),
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
-        'display_mcdb_load_button': fields.boolean(),
+        'display_mcdb_load_button': fields.boolean('Display the Load button'),
     }
 
     _defaults = {
@@ -1209,10 +1209,33 @@ class account_mcdb(osv.osv):
             'view_type': 'form',
             'context': context,
             'res_id': copied_template_id,
-            'view_mode': 'form,tree',
+            'view_mode': 'form,tree',  # to display the menu on the right
             'view_id': [view_id],
             'target': 'self',
         }
+
+    def _format_data(self, data):
+        """
+        Formats the dictionary in parameter containing the data to use to create/write a selector:
+        - removes the id, and the values related to the template itself
+        - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
+        - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
+        """
+        if 'id' in data:
+            del data['id']
+        if 'copied_id' in data:
+            del data['copied_id']
+        if 'template' in data:
+            del data['template']
+        if 'description' in data:  # Query name
+            del data['description']
+        if 'display_mcdb_load_button' in data:
+            del data['display_mcdb_load_button']
+        for i in data:
+            if type(data[i]) == list:
+                data[i] = [(6, 0, data[i])]
+            elif type(data[i]) == tuple:
+                data[i] = data[i][0]
 
     def edit_mcdb_template(self, cr, uid, ids, context=None):
         """
@@ -1227,25 +1250,24 @@ class account_mcdb(osv.osv):
         copied_id = data and data['copied_id'] and data['copied_id'][0] or False
         if not copied_id:
             raise osv.except_osv(_('Error'), _('You have to load the template first.'))
-        # don't keep the id, and the values related to the template itself
-        del data['copied_id']
-        if 'id' in data:
-            del data['id']
-        if 'template' in data:
-            del data['template']
-        if 'description' in data:  # Query name
-            del data['description']
-        if 'display_mcdb_load_button' in data:
-            del data['display_mcdb_load_button']
-        for i in data:
-            # format the many2many fields values to make them look like [(6, 0, [1, 2])]
-            if type(data[i]) == list:
-                data[i] = [(6, 0, data[i])]
-            elif type(data[i]) == tuple:
-                # get the id for the many2one fields that look like (1, u'FY 2018')
-                data[i] = data[i][0]
+        self._format_data(data)
         return self.write(cr, uid, copied_id, data, context=context)
 
+    def save_mcdb_template(self, cr, uid, ids, context=None):
+        """
+        Stores all the fields values under the template name chosen
+        """
+        if context is None:
+            context = {}
+        # get a dictionary containing ALL fields values of the selector
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        if data:
+            template_name = data['description']
+            if not template_name:
+                raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
+            self._format_data(data)
+            self.create(cr, uid, data, context=context)
+        return True
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
