@@ -84,6 +84,14 @@ class purchase_order(osv.osv):
         'import_in_progress': lambda *a: False,
     }
 
+    def auto_import_purchase_order(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        processed, rejected, header = [], [], []
+
+        return processed, rejected, header
+
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
         Remove the import_in_progress flag

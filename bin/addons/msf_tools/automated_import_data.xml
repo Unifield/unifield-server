@@ -74,6 +74,12 @@
             <field name="method_to_call">auto_import_incoming_shipment</field>
         </record>
 
+        <record id="auto_import_fnct_purchase_order" model="automated.import.function">
+            <field name="name">Import Purchase Order</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
+            <field name="method_to_call">auto_import_purchase_order</field>
+        </record>
+
         <record id="auto_import_fnct_product_categories" model="automated.import.function">
             <field name="name">Import Product Categories</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'product.category')]" />
