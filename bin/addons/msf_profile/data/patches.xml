@@ -10,6 +10,10 @@
             <field name="method">us_3734_rename_partners_with_new_lines</field>
         </record>
 
+        <record id="us_4407_update_free_lines_ad" model="patch.scripts">
+            <field name="method">us_4407_update_free_lines_ad</field>
+        </record>
+
         <!-- UF7.3 -->
         <record id="send_instance_uuid" model="patch.scripts">
             <field name="method">send_instance_uuid</field>

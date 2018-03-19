@@ -32,7 +32,7 @@
                         <button name="import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', True)]}" />
                         <button name="import_csv" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', False)]}" />
                         <separator colspan="4" string="Information" />
-                        <field name="info_message" colspan="4" nolabel="1" />
+                        <field name="info_message" colspan="4" nolabel="1" widget="full_text"/>
                     </group>
                     <group colspan="2" col="2" name="file_export">
                         <separator string="File Export" colspan="2"/>
