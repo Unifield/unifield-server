@@ -152,7 +152,7 @@ class account_mcdb(osv.osv):
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
-        'display_mcdb_load_button': lambda *a: False,
+        'display_mcdb_load_button': lambda *a: True,
     }
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
@@ -1179,13 +1179,14 @@ class account_mcdb(osv.osv):
         data['header'] = header
         return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
 
-    def load_mcdb_template(self, cr, uid, ids, context=None):
+    def load_mcdb_template(self, cr, buid, ids, context=None):
         """
         Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
         the user clicks on the Search button)
         """
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
         template_id = mcdb and mcdb['template']
         if not template_id:
@@ -1240,7 +1241,7 @@ class account_mcdb(osv.osv):
             elif type(data[i]) == tuple:
                 data[i] = data[i][0]
 
-    def edit_mcdb_template(self, cr, uid, ids, context=None):
+    def edit_mcdb_template(self, cr, buid, ids, context=None):
         """
         Edits the values of the selector of which the loaded template is a copy (see load_mcdb_template method)
         """
@@ -1248,15 +1249,16 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get a dictionary containing ALL fields values of the selector
-        data = self.read(cr, uid, ids[0], context=context)
+        data = ids and self.read(cr, uid, ids[0], context=context)
         copied_id = data and data['copied_id'] and data['copied_id'][0] or False
         if not copied_id:
             raise osv.except_osv(_('Error'), _('You have to load the template first.'))
         self._format_data(data)
         return self.write(cr, uid, copied_id, data, context=context)
 
-    def save_mcdb_template(self, cr, uid, ids, context=None):
+    def save_mcdb_template(self, cr, buid, ids, context=None):
         """
         Stores all the fields values under the template name chosen
         """
@@ -1264,17 +1266,20 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get a dictionary containing ALL fields values of the selector
         data = ids and self.read(cr, uid, ids[0], context=context)
         if data:
             template_name = data['description']
             if not template_name:
-                raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
+                raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
+            if self.search_exist(cr, uid, [('description', '=', template_name), ('user', '=', uid)], context=context):
+                raise osv.except_osv(_('Error'), _('This template name already exists. Please choose another name.'))
             self._format_data(data)
             self.create(cr, uid, data, context=context)
         return True
 
-    def delete_mcdb_template(self, cr, uid, ids, context=None):
+    def delete_mcdb_template(self, cr, buid, ids, context=None):
         """
         Deletes the selector of which the loaded template is a copy (see load_mcdb_template method),
         and loads a new empty selector
@@ -1283,8 +1288,9 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         # get the id of the template to delete
-        data = self.read(cr, uid, ids[0], ['copied_id'], context=context)
+        data = ids and self.read(cr, uid, ids[0], ['copied_id'], context=context)
         copied_id = data and data['copied_id'] and data['copied_id'][0] or False
         if not copied_id:
             raise osv.except_osv(_('Error'), _('You have to choose a template to delete.'))
