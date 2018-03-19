@@ -21,6 +21,7 @@
 
 import base64
 import time
+import re
 from os import path
 
 from osv import fields
@@ -74,6 +75,13 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
+        if po_name.find(':') != -1:
+            for part in po_name.split(':'):
+                re_res = re.findall(r'PO[0-9]+$', part)
+                if re_res:
+                    po_name = part
+                    break
+
         po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
@@ -84,6 +92,7 @@ class stock_picking(osv.osv):
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s' % po_name))
+            
         return in_id[0]
 
 
