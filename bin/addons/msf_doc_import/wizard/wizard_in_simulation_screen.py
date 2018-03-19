@@ -990,7 +990,8 @@ Nothing has been imported because of %s. See below:
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
             new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
-            context['new_picking'] = new_picking
+            if isinstance(new_picking, (int,long)):
+                context['new_picking'] = new_picking
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
