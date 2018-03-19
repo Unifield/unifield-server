@@ -1194,7 +1194,10 @@ class account_mcdb(osv.osv):
             template_int = int(template_id)
         except ValueError:
             template_int = None
-        default_dict = {'description': '', 'copied_id': template_id, 'template': template_int}
+        default_dict = {'description': '',
+                        'copied_id': template_id,
+                        'template': template_int,
+                        'display_mcdb_load_button': False}
         copied_template_id = self.copy(cr, uid, template_id, default=default_dict, context=context)
         module = 'account_mcdb'
         if context.get('from', '') == 'account.analytic.line':
@@ -1239,7 +1242,7 @@ class account_mcdb(osv.osv):
 
     def edit_mcdb_template(self, cr, uid, ids, context=None):
         """
-        Edits the values of the template of which the loaded template is a copy (see load_mcdb_template method).
+        Edits the values of the selector of which the loaded template is a copy (see load_mcdb_template method)
         """
         if context is None:
             context = {}
@@ -1259,6 +1262,8 @@ class account_mcdb(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # get a dictionary containing ALL fields values of the selector
         data = ids and self.read(cr, uid, ids[0], context=context)
         if data:
@@ -1268,6 +1273,42 @@ class account_mcdb(osv.osv):
             self._format_data(data)
             self.create(cr, uid, data, context=context)
         return True
+
+    def delete_mcdb_template(self, cr, uid, ids, context=None):
+        """
+        Deletes the selector of which the loaded template is a copy (see load_mcdb_template method),
+        and loads a new empty selector
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # get the id of the template to delete
+        data = self.read(cr, uid, ids[0], ['copied_id'], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to delete.'))
+        self.unlink(cr, uid, copied_id, context=context)
+        # create a new "empty" selector
+        new_id = self.create(cr, uid, {'display_mcdb_load_button': True}, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': new_id,
+            'view_mode': 'form,tree',  # to display the menu on the right
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
