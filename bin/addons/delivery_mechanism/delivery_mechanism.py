@@ -958,7 +958,7 @@ class stock_picking(osv.osv):
             sync_in = False
 
         in_out_updated = True
-        if sync_in:
+        if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
 
         backorder_id = False
