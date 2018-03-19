@@ -47,36 +47,6 @@ class account_mcdb(osv.osv):
             res.append((selector.id, selector.description))
         return res
 
-    def load_mcdb_template(self, cr, uid, ids, context=None):
-        """
-        Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
-        the user clicks on the Search button)
-        """
-        if context is None:
-            context = {}
-        mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
-        template_id = mcdb and mcdb['template']
-        if not template_id:
-            raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
-        copied_template_id = self.copy(cr, uid, template_id, default={'description': '', 'template': None}, context=context)
-        module = 'account_mcdb'
-        if context.get('from', '') == 'account.analytic.line':
-            view_name = 'account_mcdb_analytic_form'
-        else:
-            view_name = 'account_mcdb_form'
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'view_type': 'form',
-            'context': context,
-            'res_id': copied_template_id,
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'target': 'self',
-        }
-
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
@@ -160,6 +130,8 @@ class account_mcdb(osv.osv):
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
         'template': fields.selection(_get_template_selection, string='Template'),
+        'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
+        'display_mcdb_load_button': fields.boolean(),
     }
 
     _defaults = {
@@ -180,6 +152,7 @@ class account_mcdb(osv.osv):
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
+        'display_mcdb_load_button': lambda *a: False,
     }
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
@@ -298,6 +271,15 @@ class account_mcdb(osv.osv):
                 'value': value
             }
         return {}
+
+    def onchange_template(self, cr, uid, ids, context=None):
+        """
+        Whenever a new template is selected, display the "load" button
+        (and don't display the other options for the template, such as "delete"...)
+        """
+        res = {}
+        res['value'] = {'display_mcdb_load_button': True}
+        return res
 
     def _get_domain(self, cr, uid, ids, context=None):
         """
@@ -1196,6 +1178,74 @@ class account_mcdb(osv.osv):
         data['target_filename'] = target_filename
         data['header'] = header
         return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+
+    def load_mcdb_template(self, cr, uid, ids, context=None):
+        """
+        Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
+        the user clicks on the Search button)
+        """
+        if context is None:
+            context = {}
+        mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
+        template_id = mcdb and mcdb['template']
+        if not template_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
+        try:
+            template_int = int(template_id)
+        except ValueError:
+            template_int = None
+        default_dict = {'description': '', 'copied_id': template_id, 'template': template_int}
+        copied_template_id = self.copy(cr, uid, template_id, default=default_dict, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': copied_template_id,
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
+    def edit_mcdb_template(self, cr, uid, ids, context=None):
+        """
+        Edits the values of the template of which the loaded template is a copy (see load_mcdb_template method).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # get a dictionary containing ALL fields values of the selector
+        data = self.read(cr, uid, ids[0], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to load the template first.'))
+        # don't keep the id, and the values related to the template itself
+        del data['copied_id']
+        if 'id' in data:
+            del data['id']
+        if 'template' in data:
+            del data['template']
+        if 'description' in data:  # Query name
+            del data['description']
+        if 'display_mcdb_load_button' in data:
+            del data['display_mcdb_load_button']
+        for i in data:
+            # format the many2many fields values to make them look like [(6, 0, [1, 2])]
+            if type(data[i]) == list:
+                data[i] = [(6, 0, data[i])]
+            elif type(data[i]) == tuple:
+                # get the id for the many2one fields that look like (1, u'FY 2018')
+                data[i] = data[i][0]
+        return self.write(cr, uid, copied_id, data, context=context)
+
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

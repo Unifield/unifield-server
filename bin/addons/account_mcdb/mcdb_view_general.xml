@@ -1,6 +1,18 @@
                     <separator string="General" colspan="4"/>
-                    <field name="template"/>
-                    <button icon="gtk-save" name="load_mcdb_template" string="Load" type="object"/>
+
+                    <!-- TEMPLATE section -->
+                    <field name="display_mcdb_load_button" invisible="1" />
+                    <field name="template" on_change="onchange_template()" string="Select an existing template" />
+                    <button icon="gtk-save" name="load_mcdb_template" string="Load" type="object"
+                            attrs="{'invisible': [('display_mcdb_load_button', '=', False)]}" />
+                    <button icon="gtk-edit" name="edit_mcdb_template" string="Replace" type="object"
+                            attrs="{'invisible': [('display_mcdb_load_button', '=', True)]}" />
+                    <button icon="gtk-cancel" name="delete_mcdb_template" string="Delete" type="object"
+                            attrs="{'invisible': [('display_mcdb_load_button', '=', True)]}"
+                            confirm="Do you really want to delete the selected template?"/>
+                    <field name="description" colspan="2" string="or Choose a new template name" />
+                    <button icon="gtk-floppy" name="save_mcdb_template" string="Save new template" type="object" colspan="3" />
+
                     <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">
