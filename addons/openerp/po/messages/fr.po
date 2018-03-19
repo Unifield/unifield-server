@@ -440,9 +440,8 @@ msgstr "%d objets importés"
 
 #: controllers/impex.py:560
 #, python-format
-msgid "Error trying to import this record:%s. ErrorMessage:%s %s"
-msgstr ""
-"Erreur pendant l'import de cet enregistrement:%s. Message d'erreur: %s %s"
+msgid "Error trying to import this record: %r.\nErrorMessage:\n%s %s"
+msgstr "Erreur pendant l'import de cet enregistrement: %r.\nMessage d'erreur:\n%s %s"
 
 #: controllers/impex.py:561
 msgid "ImportationError"
@@ -516,6 +515,10 @@ msgstr "Base de données plus récente que la version d'UniField"
 #: controllers/utils.py:127 controllers/templates/login_ajax.mako:111
 msgid "Bad username or password"
 msgstr "Mauvais nom d'utilisateur ou mot de passe"
+
+#: controllers/utils.py:127 controllers/templates/login_ajax.mako:111
+msgid "Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes."
+msgstr "Votre IP à été bloquée à cause d'un trop grand nombre de connexion infructueuses. Elle sera débloquée dans %s minutes."
 
 #: controllers/view_log.py:32
 msgid "ID"

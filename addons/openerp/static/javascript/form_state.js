@@ -566,7 +566,6 @@ function form_setReadonly(container, fieldName, readonly) {
         return;
     }
 
-
     if (!type && ($field.hasClass('item-group'))) {
         jQuery($field).find(':input')
                 .toggleClass('readonlyfield', readonly)
@@ -583,6 +582,10 @@ function form_setReadonly(container, fieldName, readonly) {
         }
         
         $field.toggleClass('readonlyfield', type != 'button');
+        if ($field.attr('translatable') == "1") {
+            $('#'+field_id+'_translatable').hide();
+
+        }
     } else {
         $field.removeClass('readonlyfield');
         $field.css('color', '');

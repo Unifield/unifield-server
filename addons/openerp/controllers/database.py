@@ -442,11 +442,72 @@ class Database(BaseController):
                 ('backup', 'auto_bck_interval_unit', ('minutes', 'hours', 'work_days', 'days', 'weeks', 'months')),
                 ('reconfigure', 'delivery_process', ('complex', 'simple')),
             )
-
             for section, option, possible_values in possible_value_list:
                 self.check_possible_value(config, section, option, possible_values)
                 if self.msg:
                     return
+
+            if config.get('instance', 'instance_level') == 'project':
+                if len(config.get('instance', 'group_names').split(',')) != 3:
+                    self.msg = {
+                        'message': _('Project creation asked, you must set 3 sync groups'),
+                        'title': _('Bad sync groups'),
+                    }
+                    return
+
+            if config.get('instance', 'instance_level') == 'coordo':
+                if len(config.get('instance', 'group_names').split(',')) != 4:
+                    self.msg = {
+                        'message': _('Project creation asked, you must set 3 sync groups'),
+                        'title': _('Bad sync groups'),
+                    }
+                    return
+
+            protocol = 'http'
+            if config.get('instance', 'sync_protocol') == 'xmlrpcs':
+                protocol = 'https'
+            server_rpc = rpc.RPCSession(config.get('instance', 'sync_host'), config.get('instance', 'sync_port'), protocol=protocol)
+            uid = server_rpc.login(config.get('instance', 'sync_server'), config.get('instance', 'sync_user'), config.get('instance', 'sync_pwd'))
+            if uid <= 0:
+                self.msg = {
+                    'message': _('Unable to connect to Sync Server %s:%s,  db:%s, user:%s') % (config.get('instance', 'sync_host'), config.get('instance', 'sync_port'), config.get('instance', 'sync_server'), config.get('instance', 'sync_user')),
+                    'title': _('Sync Server Error'),
+                }
+                return
+
+            config_groups = config.get('instance', 'group_names').split(',')
+            found_group = []
+            groups_ids = server_rpc.execute('object', 'execute', 'sync.server.entity_group', 'search', [('name', 'in', config_groups)])
+            for x in server_rpc.execute('object', 'execute', 'sync.server.entity_group', 'read', groups_ids, ['name', 'oc']):
+                found_group.append(x['name'])
+                if x['oc'].lower() != config.get('instance', 'oc').lower():
+                    self.msg = {
+                        'message': _('Group %s has not the same OC (configured: %s)') % (x['name'], config.get('instance', 'oc')),
+                        'title': _('Sync Group'),
+                    }
+                    return
+
+            if set(config_groups) - set(found_group):
+                self.msg = {
+                    'message': _('Sync Groups %s not found on sync server') % (", ".join(list(set(config_groups) - set(found_group)),)),
+                    'title': _('Sync Group'),
+                }
+                return
+
+            if not server_rpc.execute('object', 'execute', 'sync.server.entity', 'search', [('name', '=', config.get('instance', 'parent_instance'))]):
+                self.msg = {
+                    'message': _('Parent Instance %s not found on sync server') % (config.get('instance', 'parent_instance'), ),
+                    'title': _('Parent Instance'),
+                }
+                return
+
+            if not server_rpc.execute('object', 'execute', 'sync.server.update', 'search', [('model', '=', 'msf.instance'), ('values', 'like', "'%s'" % config.get('instance', 'prop_instance_code'))]):
+                self.msg = {
+                    'message': _('No update found for %s. Did you create and sync. the new prop. instance at HQ ?') % (config.get('instance', 'prop_instance_code'), ),
+                    'title': _('HQ creation'),
+                }
+                return
+
 
         except NoOptionError as e:
             self.msg = {'message': ustr(_('No option \'%s\' found for the section \'[%s]\' in the config file \'%s\'') % (e.option, e.section, file_path)),

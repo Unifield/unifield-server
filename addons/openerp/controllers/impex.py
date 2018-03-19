@@ -412,6 +412,9 @@ class ImpEx(SecuredController):
                 # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
                 if 'original_domain' in ctx:
                     domain.extend(ctx['original_domain'])
+                # take also into account the "Filters => New Filter(s)" which have been selected
+                if 'new_filter_domain' in ctx:
+                    domain.extend(ctx['new_filter_domain'])
             else:
                 ids = params.ids or []
 
@@ -584,7 +587,9 @@ class ImpEx(SecuredController):
 
         #Inverting the header into column names
         try:
-            res = rpc.session.execute('object', 'execute', params.model, 'import_data', fields, datas, 'init', '', False, ctx)
+            res = rpc.session.execute('object', 'execute', params.model,
+                    'import_data', fields, datas, 'init', '', False, ctx,
+                    False, True, True)
         except Exception, e:
             error = {'message':ustr(e), 'title':_('XML-RPC error')}
             return self.imp(error=error, **kw)
@@ -593,10 +598,7 @@ class ImpEx(SecuredController):
         if res[0]>=0:
             return self.imp(success={'message':_('Imported %d objects') % (res[0],)}, **kw)
 
-        d = ''
-        for key,val in res[1].items():
-            d+= ('%s: %s' % (ustr(key),ustr(val)))
-        msg = _('Error trying to import this record:%s. ErrorMessage:%s %s') % (d,res[2],res[3])
+        msg = _('Error trying to import this record: %r.\nErrorMessage:\n%s %s') % (res[1], res[2], res[3])
         error = {'message':ustr(msg), 'title':_('ImportationError')}
 
         return self.imp(error=error, **kw)

@@ -37,6 +37,7 @@
                             $("div.my_state").text(data.state);
                             if (data.state === 'done') {
                                 clearInterval(interval);
+                                $("#login-button").css({'display': 'inline'})
                             };
                             if (data.monitor_status) {
                                 $("div.my_monitor_status").text(data.monitor_status);
@@ -74,6 +75,10 @@
 
         <div class="auto_creation_resume">
             <textarea rows="20" cols="80">${resume}</textarea>
+        </div>
+
+        <div id="connect_instance" class="auto_creation_resume">
+            <a href="/openerp/login/" id="login-button" style="display:none" class="button-a">Open Login Page</a>
         </div>
     </div>
 <a class="auto_instance_debug" href="/openerp/login/?style=noauto"><img src="/openerp/static/images/icons/idea.png" alt="debug access" /></a>

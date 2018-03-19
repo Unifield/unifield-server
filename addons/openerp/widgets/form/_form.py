@@ -30,7 +30,7 @@ import xml.dom.minidom
 import cherrypy
 import simplejson
 from openerp import validators
-from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval
+from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval, get_size
 from openerp.widgets import TinyWidget, TinyInputWidget, InputWidgetLabel, ConcurrencyInfo, get_widget, register_widget
 
 from _binary import Image
@@ -351,7 +351,7 @@ register_widget(Label, ["label"])
 class Char(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/char.mako"
-    params = ['password', 'size', 'readonly_before_state']
+    params = ['password', 'size', 'readonly_before_state', 'ro_by_trans']
 
     def __init__(self, **attrs):
 
@@ -365,6 +365,13 @@ class Char(TinyInputWidget):
         self.default = value
 
 register_widget(Char, ["char"])
+
+
+class HumanSize(Char):
+
+    def set_value(self, value):
+        self.default = get_size(value or 0.0) 
+register_widget(HumanSize, ["human_size"])
 
 
 class Email(TinyInputWidget):
@@ -383,6 +390,7 @@ register_widget(Email, ["email"])
 
 class Text(TinyInputWidget):
     template = "/openerp/widgets/form/templates/text.mako"
+    params = ['ro_by_trans']
 
     def __init__(self, **attrs):
         super(Text, self).__init__(**attrs)
@@ -902,6 +910,16 @@ class Form(TinyInputWidget):
                 continue
 
             attrs = node_attributes(node)
+            # US-3071 : Check if product.product field is not readonly and translatable
+            if self.id and not attrs.get('readonly') and not self.noteditable and node.localName == ustr('field') \
+                    and self.model == 'product.product' and attrs.get('name', False) \
+                    and fields.get(attrs['name'], {}).get('translate'):
+                product_proxy = rpc.RPCProxy(self.model)
+                if not product_proxy.is_field_translatable(self.context):
+                    attrs['readonly'] = True
+                    attrs['force_readonly'] = True
+                    attrs['ro_by_trans'] = True
+
             if self.noteditable:
                 attrs['readonly'] = True
                 attrs['force_readonly'] = True
