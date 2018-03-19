@@ -92,7 +92,7 @@ class stock_picking(osv.osv):
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s' % po_name))
-            
+
         return in_id[0]
 
 
@@ -234,6 +234,16 @@ class stock_picking(osv.osv):
                 'res_model': 'stock.picking',
                 'res_id': context.get('new_picking', in_id),
                 'datas': file_res.get('result'),
+            })
+            # attach import file to new IN (usefull to import & process auto PICK/PACK):
+            fname = path.basename(file_path) if path.basename(file_path).startswith('SHPM_') else 'SHPM_%s' % path.basename(file_path)
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': fname,
+                'datas_fname': fname,
+                'description': 'IN import file',
+                'res_model': 'stock.picking',
+                'res_id': context.get('new_picking', in_id),
+                'datas': base64.encodestring(file_content),
             })
             import_success = True
         except Exception, e:
