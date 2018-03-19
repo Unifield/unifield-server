@@ -1303,6 +1303,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
+        'esc_conf': fields.boolean(string='ESC Confirmed', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
         'imp_comment': fields.text(string='Comment', readonly=True),
@@ -1519,6 +1520,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
+            # ESC Confirmed
+            if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
+                write_vals['esc_conf'] = True
+
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
 
@@ -1627,11 +1632,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'order_id': line.simu_id.order_id.id,
                             'line_number': line.in_line_number,
                             'confirmed_delivery_date': line.imp_dcd or False,
+                            'esc_confirmed': line.esc_conf,
                         })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:
                             line_vals['confirmed_delivery_date'] = line.imp_dcd
+                            line_vals['esc_confirmed'] = line.esc_conf
                         line_obj.write(cr, uid, [new_po_line_id], line_vals,
                                        context=context)
 
@@ -1662,6 +1669,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
                 line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
@@ -1679,6 +1688,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
