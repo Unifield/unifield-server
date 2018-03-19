@@ -131,6 +131,7 @@ class account_mcdb(osv.osv):
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
         'template': fields.selection(_get_template_selection, string='Template'),
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
+        'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
     }
 
@@ -1233,6 +1234,8 @@ class account_mcdb(osv.osv):
             del data['template']
         if 'description' in data:  # Query name
             del data['description']
+        if 'template_name' in data:
+            del data['template_name']
         if 'display_mcdb_load_button' in data:
             del data['display_mcdb_load_button']
         for i in data:
@@ -1270,12 +1273,13 @@ class account_mcdb(osv.osv):
         # get a dictionary containing ALL fields values of the selector
         data = ids and self.read(cr, uid, ids[0], context=context)
         if data:
-            template_name = data['description']
+            template_name = data['template_name']
             if not template_name:
                 raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
             if self.search_exist(cr, uid, [('description', '=', template_name), ('user', '=', uid)], context=context):
                 raise osv.except_osv(_('Error'), _('This template name already exists. Please choose another name.'))
             self._format_data(data)
+            data.update({'description': template_name})  # store the name chosen as the "Query name"
             self.create(cr, uid, data, context=context)
         return True
 

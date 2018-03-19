@@ -90858,7 +90858,7 @@ msgstr "B/S / P&L account"
 msgid "Error ! You can not have a category linked to two different family"
 msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différentes"
 
-#. modules: account, resource, finance
+#. modules: account, resource, finance, account_mcdb
 #: field:account.aged.trial.balance,template_name:0
 #: field:account.analytic.chart,template_name:0
 #: field:account.balance.report,template_name:0
@@ -90879,6 +90879,7 @@ msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différ
 #: field:wizard.account.partner.balance.tree,template_name:0
 #: field:wizard.template,name:0
 #: field:wizard.template.form,template_name:0
+#: field:account.mcdb,template_name:0
 msgid "Template name"
 msgstr "Nom de modèle"
 
