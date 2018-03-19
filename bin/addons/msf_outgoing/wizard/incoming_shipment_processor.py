@@ -470,10 +470,44 @@ class stock_incoming_processor(osv.osv):
                 'res_id': simu_id,
                 'context': context}
 
+
+    def check_if_has_import_file_in_attachment(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        in_id = self.read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id'][0]
+
+        attach_ids = self.pool.get('ir.attachment').search(cr, uid, [
+            ('res_model', '=', 'stock.picking'),
+            ('res_id', '=', in_id),
+            ('name', 'like', 'SHPM_%%'),
+        ], context=context)
+
+        if len(attach_ids) > 1:
+            raise osv.except_osv(_('Error'), _('Too many import files in attachment for the same IN, only 1 import file prefixed with "SHPM_" is allowed'))
+
+        attach_data = False
+        if attach_ids:
+            attach_data = self.pool.get('ir.attachment').read(cr, uid, attach_ids[0], ['name', 'datas'], context=context)
+
+        return attach_data
+
+
     def launch_simulation_pack(self, cr, uid, ids, context=None):
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
         data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
+
+        file_attached = self.check_if_has_import_file_in_attachment(cr, uid, ids, context=context)
+        if file_attached:
+            self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {
+                'file_to_import': file_attached['datas'], # base64
+                'filetype': self.pool.get('stock.picking').get_import_filetype(cr, uid, file_attached['name'], context=context),
+            }, context=context)
+            self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, data['res_id'], context=context)
+            self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
         return data
 
 stock_incoming_processor()
