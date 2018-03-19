@@ -56,6 +56,7 @@ class Client(object):
     def move(self, remote_path, dest):
         webUri = '%s%s' % (self.path, remote_path)
         destUri = '%s%s' % (self.path, dest)
+        # falgs=1 to overwrite existing file
         request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
         options = RequestOptions(request_url)
         options.method = HttpMethod.Post

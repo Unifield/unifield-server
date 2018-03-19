@@ -721,8 +721,12 @@ class msf_instance_cloud(osv.osv):
                 progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
 
 
-            dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]), buffer_size=buffer_size, log=True, progress_obj=progress_obj)
+            temp_drive_file = '%s-temp-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
+
+            dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
             temp_fileobj.close()
+
+            dav.move(temp_drive_file, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
 
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:
