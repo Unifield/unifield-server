@@ -183,37 +183,68 @@ class purchase_order(osv.osv):
         return file_res
 
 
+    def get_processed_rejected_header(self, cr, uid, filetype, file_content, import_success, context=None):
+        if context is None:
+            context = {}
+
+        HEADER_LINE = 23
+        processed, rejected, header = [], [], []
+
+        if filetype == 'excel':
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.encodestring(file_content), context=context)
+        else:
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
+
+        header = values.get(HEADER_LINE)
+        for key in sorted([k for k in values.keys() if k > HEADER_LINE]):
+            if import_success:
+                processed.append( (key, values[key]) )
+            else:
+                rejected.append( (key, values[key]) )
+
+        return processed, rejected, header
+
+
     def auto_import_purchase_order(self, cr, uid, file_path, context=None):
+        '''
+        method called by obj automated.import
+        '''
         if context is None:
             context = {}
 
         processed, rejected, header = [], [], []
 
-        # get filetype
-        filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
-        file_content = self.get_file_content(cr, uid, file_path, context=context)
+        import_success = False
+        try:
+            # get filetype
+            filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
+            file_content = self.get_file_content(cr, uid, file_path, context=context)
 
-        # get po_id from file
-        po_id = self.get_po_id_from_file(cr, uid, file_path, context=None)
-        # create wizard.import.po.simulation.screen
-        simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
-        # launch simulate
-        self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context)
-        # get simulation report
-        file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
-        # import lines
-        self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context)
-        # attach simulation report
-        self.pool.get('ir.attachment').create(cr, uid, {
-            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'PO simulation screen',
-            'res_model': 'purchase.order',
-            'res_id': po_id,
-            'datas': file_res.get('result'),
-        })
+            # get po_id from file
+            po_id = self.get_po_id_from_file(cr, uid, file_path, context=None)
+            # create wizard.import.po.simulation.screen
+            simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
+            # launch simulate
+            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context)
+            # get simulation report
+            file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            # import lines
+            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context)
+            # attach simulation report
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'description': 'PO simulation screen',
+                'res_model': 'purchase.order',
+                'res_id': po_id,
+                'datas': file_res.get('result'),
+            })
+            import_success = True
+        except Exception, e:
+            raise e
 
-        return processed, rejected, header # TODO
+        return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
+
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
