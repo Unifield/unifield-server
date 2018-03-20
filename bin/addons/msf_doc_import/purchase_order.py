@@ -226,6 +226,7 @@ class purchase_order(osv.osv):
 
             # get po_id from file
             po_id = self.get_po_id_from_file(cr, uid, file_path, context=None)
+            context['po_id'] = po_id
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate
@@ -248,6 +249,17 @@ class purchase_order(osv.osv):
             raise e
 
         return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
+
+
+    def auto_import_confirmed_purchase_order(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
+        if context.get('po_id'):
+            self.confirm_lines(cr, uid, context['po_id'], context=context)
+
+        return res
 
 
     def copy(self, cr, uid, id, defaults=None, context=None):
