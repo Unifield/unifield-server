@@ -1204,7 +1204,7 @@ class account_mcdb(osv.osv):
     def _format_data(self, data):
         """
         Formats the dictionary in parameter containing the data to use to create/write a selector:
-        - removes the id, and the values related to the template itself
+        - removes the id, the values related to the template itself, and the user that shouldn't be modified
         - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
         - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
         """
