@@ -324,7 +324,9 @@ class automated_import_job(osv.osv):
             state = 'done'
             try:
                 if job.import_id.ftp_source_ok:
-                    temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    prefix = '%s_' % filename.split('.')[0]
+                    suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(cr, uid, filename) == 'excel' else '.xml' 
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
                     ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
                     temp_file.close()
                     oldest_file = temp_file.name
