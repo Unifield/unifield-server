@@ -187,20 +187,24 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        HEADER_LINE = 23
         processed, rejected, header = [], [], []
 
         if filetype == 'excel':
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.encodestring(file_content), context=context)
+            header = values.get(23)
+            for key in sorted([k for k in values.keys() if k > 23]):
+                if import_success:
+                    processed.append( (key, values[key]) )
+                else:
+                    rejected.append( (key, values[key]) )
         else:
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
-
-        header = values.get(HEADER_LINE)
-        for key in sorted([k for k in values.keys() if k > HEADER_LINE]):
-            if import_success:
-                processed.append( (key, values[key]) )
-            else:
-                rejected.append( (key, values[key]) )
+            header = [x.replace('_', ' ').title() for x in values.get(21)]
+            for key in sorted([k for k in values.keys() if k > 21]):
+                if import_success:
+                    processed.append( (key, values[key]) )
+                else:
+                    rejected.append( (key, values[key]) )
 
         return processed, rejected, header
 
