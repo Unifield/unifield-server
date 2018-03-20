@@ -22,14 +22,17 @@
 from osv import osv
 from osv import fields
 import time
+import datetime
+import os
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 from msf_doc_import import GENERIC_MESSAGE
-
-import datetime
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import xml.etree.ElementTree as ET
+from service.web_services import report_spool
 
 
 class purchase_order(osv.osv):
@@ -84,13 +87,133 @@ class purchase_order(osv.osv):
         'import_in_progress': lambda *a: False,
     }
 
+
+    def get_file_content(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+        res = ''
+        with open(file_path) as fich:
+            res = fich.read()
+        return res
+
+
+    def get_po_id_from_file(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context)
+        xmlstring = self.get_file_content(cr, uid, file_path, context=context)
+
+        po_id = False
+        po_name = False
+        if filetype == 'excel':
+            file_obj = SpreadsheetXML(xmlstring=xmlstring)
+            po_name = False
+            for index, row in enumerate(file_obj.getRows()):
+                if row.cells[0].data == 'Order Reference*':
+                    po_name = row.cells[1].data or ''
+                    if isinstance(po_name, (str,unicode)):
+                        po_name = po_name.strip()
+                    if not po_name:
+                        raise osv.except_osv(_('Error'), _('Field "Order Reference*" shouldn\'t be empty'))
+                    break
+            else:
+                raise osv.except_osv(_('Error'), _('Header field "Order Reference*" not found in the given XLS file'))
+
+        elif filetype == 'xml':
+            root = ET.fromstring(xmlstring)
+            orig = root.findall('.//record[@model="purchase.order"]/field[@name="name"]')
+            if orig:
+                po_name = orig[0].text or ''
+                po_name = po_name.strip()
+                if not po_name:
+                    raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
+            else:
+                raise osv.except_osv(_('Error'), _('No field with name "Origin" was found in the XML file'))
+
+        if not po_name:
+            raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
+
+        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        if not po_id:
+            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+
+        return po_id[0]
+
+
+    def create_simu_screen_wizard(self, cr, uid, ids, file_content, filetype, file_path, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        simu_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
+            'order_id': ids[0],
+            'file_to_import': base64.encodestring(file_content),
+            'filetype': filetype,
+            'filename': os.path.basename(file_path),
+        }, context=context)
+        for line in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
+            self.pool.get('wizard.import.po.simulation.screen.line').create(cr, uid, {
+                'po_line_id': line.id,
+                'in_line_number': line.line_number,
+                'in_ext_ref': line.external_ref,
+                'simu_id': simu_id,
+            }, context=context)
+
+        return simu_id
+
+
+    def generate_simulation_screen_report(self, cr, uid, simu_id, context=None):
+        '''
+        generate a IN simulation screen report
+        '''
+        if context is None:
+            context = {}
+
+        # generate report:
+        datas = {'ids': [simu_id]}
+        rp_spool = report_spool()
+        result = rp_spool.exp_report(cr.dbname, uid, 'po.simulation.screen.xls', [simu_id], datas, context=context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            time.sleep(0.5)
+
+        return file_res
+
+
     def auto_import_purchase_order(self, cr, uid, file_path, context=None):
         if context is None:
             context = {}
 
         processed, rejected, header = [], [], []
 
-        return processed, rejected, header
+        # get filetype
+        filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
+        file_content = self.get_file_content(cr, uid, file_path, context=context)
+
+        # get po_id from file
+        po_id = self.get_po_id_from_file(cr, uid, file_path, context=None)
+        # create wizard.import.po.simulation.screen
+        simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
+        # launch simulate
+        self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context)
+        # get simulation report
+        file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+        # import lines
+        self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context)
+        # attach simulation report
+        self.pool.get('ir.attachment').create(cr, uid, {
+            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'description': 'PO simulation screen',
+            'res_model': 'purchase.order',
+            'res_id': po_id,
+            'datas': file_res.get('result'),
+        })
+
+        return processed, rejected, header # TODO
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
