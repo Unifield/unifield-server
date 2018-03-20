@@ -98346,6 +98346,7 @@ msgid "Disabled"
 msgstr "Désactivé"
 
 #. module: account_mcdb
+#: view:account.mcdb:0
 #: code:addons/account_mcdb/account_mcdb.py:580
 #: code:addons/account_mcdb/account_mcdb.py:633
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb
@@ -107503,6 +107504,12 @@ msgid "Selector Template"
 msgstr "Modèle de Sélecteur"
 
 #. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1277
+#, python-format
+msgid "This template name already exists for the current user. Please choose another name."
+msgstr "Ce nom de modèle existe déjà pour l'utilisateur actuel. Veuillez choisir un autre nom."
+
+#. module: account_mcdb
 #: help:account.mcdb,copied_id:0
 msgid "Id of the template loaded"
 msgstr "Id du modèle chargé"
@@ -107512,9 +107519,3 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
-
-#. module: account_mcdb
-#: code:addons/account_mcdb/account_mcdb.py:1277
-#, python-format
-msgid "This template name already exists. Please choose another name."
-msgstr "Ce nom de modèle existe déjà. Veuillez choisir un autre nom."

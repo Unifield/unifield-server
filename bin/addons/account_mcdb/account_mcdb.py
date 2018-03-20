@@ -28,24 +28,7 @@ from tools import flatten
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
-
-    def _get_template_selection(self, cr, uid, context=None):
-        """
-        Gets all selectors having a description, ordered by description.
-        Returns them as a list a tuples (id, description)
-        """
-        if context is None:
-            context = {}
-        res = []
-        domain = [('description', '!=', False), ('description', '!=', '')]
-        if context.get('from', '') == 'account.analytic.line':
-            domain.append(('model', '=', 'account.analytic.line'))
-        else:
-            domain.append(('model', '=', 'account.move.line'))
-        selector_ids = self.search(cr, uid, domain, order='description', context=context)
-        for selector in self.browse(cr, uid, selector_ids, fields_to_fetch=['description'], context=context):
-            res.append((selector.id, selector.description))
-        return res
+    _rec_name = 'description'
 
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
@@ -129,7 +112,8 @@ class account_mcdb(osv.osv):
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
-        'template': fields.selection(_get_template_selection, string='Template'),
+        'template': fields.many2one('account.mcdb', 'Template',
+                                    domain=[('description', '!=', False), ('description', '!=', '')]),  # filter on model done in the view
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
         'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
@@ -155,6 +139,8 @@ class account_mcdb(osv.osv):
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
     }
+
+    _order = 'user, description, id'
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -1189,16 +1175,12 @@ class account_mcdb(osv.osv):
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
-        template_id = mcdb and mcdb['template']
+        template_id = mcdb and mcdb['template'] and mcdb['template'][0]
         if not template_id:
             raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
-        try:
-            template_int = int(template_id)
-        except ValueError:
-            template_int = None
         default_dict = {'description': '',
                         'copied_id': template_id,
-                        'template': template_int,
+                        'template': template_id,
                         'display_mcdb_load_button': False}
         copied_template_id = self.copy(cr, uid, template_id, default=default_dict, context=context)
         module = 'account_mcdb'
@@ -1236,6 +1218,8 @@ class account_mcdb(osv.osv):
             del data['description']
         if 'template_name' in data:
             del data['template_name']
+        if 'user' in data:
+            del data['user']
         if 'display_mcdb_load_button' in data:
             del data['display_mcdb_load_button']
         for i in data:
@@ -1277,7 +1261,7 @@ class account_mcdb(osv.osv):
             if not template_name:
                 raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
             if self.search_exist(cr, uid, [('description', '=', template_name), ('user', '=', uid)], context=context):
-                raise osv.except_osv(_('Error'), _('This template name already exists. Please choose another name.'))
+                raise osv.except_osv(_('Error'), _('This template name already exists for the current user. Please choose another name.'))
             self._format_data(data)
             data.update({'description': template_name})  # store the name chosen as the "Query name"
             self.create(cr, uid, data, context=context)

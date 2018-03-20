@@ -324,6 +324,20 @@
             </field>
         </record>
 
+    <!-- Search view -->
+        <record id="account_mcdb_search" model="ir.ui.view">
+            <field name="name">account.mcdb.search</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">search</field>
+            <field name="priority" eval="17"/>
+            <field name="arch" type="xml">
+                <search string="Selector">
+                    <field name="description" select="1"/>
+                    <field name="user" select="1"/>
+                </search>
+            </field>
+        </record>
+
     <!-- Actions to display form view (analytic OR G/L) -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
             <field name="name">G/L Selector</field>
