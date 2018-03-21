@@ -594,6 +594,7 @@
         <section>
             <blockTable colWidths="65.0,95.0,295.5,95.0,55.5,60.0,51.0,55.0" style="LinesTable">
                 [[repeatIn(objects[0].merged_line_ids,'line')]]
+                [[ line.state != 'cancel' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
                     	<para style="LinesBlue">[[ line.supplier_code ]]</para>

@@ -536,6 +536,7 @@
         <section>
             <blockTable colWidths="20.0,62.5,100,303.0,141.0,70.5,75.0" style="LinesTable">
                 [[ repeatIn(objects[0].order_line, 'line') ]]
+                [[ line.state != 'cancel' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>
