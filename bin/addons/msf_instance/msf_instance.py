@@ -468,6 +468,7 @@ class msf_instance_cloud(osv.osv):
 
     _logger = logging.getLogger('cloud.backup')
     _empty_pass = 'X' * 10
+    _temp_folder = 'Temp'
 
     def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
@@ -631,6 +632,11 @@ class msf_instance_cloud(osv.osv):
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to delete a test file: %s') % (e.message))
 
+        try:
+            dav.create_folder(self._temp_folder)
+        except webdav.ConnectionFailed, e:
+            raise osv.except_osv(_('Warning !'), _('Unable to create temp folder: %s') % (e.message))
+
         raise osv.except_osv(_('OK'), _('Connection to remote storage is OK'))
 
         return True
@@ -720,13 +726,13 @@ class msf_instance_cloud(osv.osv):
             if progress:
                 progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
 
-
-            temp_drive_file = '%s-temp-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
+            dav.create_folder(self._temp_folder)
+            final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
+            temp_drive_file = '%s/%s' % (self._temp_folder, final_name)
 
             dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
             temp_fileobj.close()
-
-            dav.move(temp_drive_file, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
+            dav.move(temp_drive_file, final_name)
 
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:
