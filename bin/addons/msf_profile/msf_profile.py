@@ -51,6 +51,93 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.1
+    def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
+        """
+        Context: in case of an SI refund-cancel or modify since US-1255 (UF7.0) the original PUR are marked as reallocated,
+        since US-4137 (UF7.2) PUF are marked as reversal.
+        This method fixes the entries generated in between:
+        - sets the PUF AJIs as is_reversal: will fix the discrepancies in Financing Contracts and Budget Monitoring Report
+        - sets the PUF JIs as is_si_refund: will make the lines not correctable
+        """
+        update_aji = """
+            UPDATE account_analytic_line
+            SET is_reversal = 't'
+            WHERE move_id IN (
+                SELECT id FROM account_move_line
+                WHERE move_id IN (
+                    SELECT DISTINCT(am.id)
+                        FROM account_move_line aml
+                        INNER JOIN account_move am ON aml.move_id = am.id
+                        INNER JOIN account_journal j ON aml.journal_id = j.id
+                        WHERE j.type = 'purchase_refund'
+                        AND am.status = 'sys'
+                        AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                        AND aml.create_date < (SELECT applied FROM sync_client_version WHERE name = 'UF7.2' LIMIT 1)
+                        AND aml.is_si_refund = 'f'
+                        AND aml.reversal = 'f'
+                        AND aml.reconcile_id IS NOT NULL
+                        AND aml.reconcile_id IN (
+                            SELECT r.id
+                            FROM account_move_reconcile r
+                            INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                            AND aml.id IN (
+                                SELECT aml.id
+                                FROM account_move_line aml
+                                INNER JOIN account_move am ON aml.move_id = am.id
+                                INNER JOIN account_journal j ON aml.journal_id = j.id
+                                WHERE j.type = 'purchase'
+                                AND am.status = 'sys'
+                                AND am.id IN (
+                                    SELECT DISTINCT(am.id)
+                                    FROM account_move am
+                                    INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                    WHERE aml.corrected = 't'
+                                    )
+                                )
+                            )
+                        )
+                );
+            """
+        update_ji = """
+            UPDATE account_move_line
+            SET is_si_refund = 't'
+            WHERE move_id IN (
+                SELECT DISTINCT(am.id)
+                FROM account_move_line aml
+                INNER JOIN account_move am ON aml.move_id = am.id
+                INNER JOIN account_journal j ON aml.journal_id = j.id
+                WHERE j.type = 'purchase_refund'
+                AND am.status = 'sys'
+                AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                AND aml.create_date < (SELECT applied FROM sync_client_version WHERE name = 'UF7.2' LIMIT 1)
+                AND aml.is_si_refund = 'f'
+                AND aml.reversal = 'f'
+                AND aml.reconcile_id IS NOT NULL
+                AND aml.reconcile_id IN (
+                    SELECT r.id
+                    FROM account_move_reconcile r
+                    INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                    AND aml.id IN (
+                        SELECT aml.id
+                        FROM account_move_line aml
+                        INNER JOIN account_move am ON aml.move_id = am.id
+                        INNER JOIN account_journal j ON aml.journal_id = j.id
+                        WHERE j.type = 'purchase'
+                        AND am.status = 'sys'
+                        AND am.id IN (
+                            SELECT DISTINCT(am.id)
+                            FROM account_move am
+                            INNER JOIN account_move_line aml ON aml.move_id = am.id
+                            WHERE aml.corrected = 't'
+                            )
+                        )
+                    )
+                );
+            """
+        cr.execute(update_aji)
+        cr.execute(update_ji)
+
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
         nom = ['MED', 'LOG', 'LIB', 'SRV']
