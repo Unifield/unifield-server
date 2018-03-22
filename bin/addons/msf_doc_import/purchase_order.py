@@ -276,7 +276,8 @@ class purchase_order(osv.osv):
             ('auto_exported_ok', '=', False), 
         ], context= context)
 
-        for po_id in po_ids:
+        processed, rejected, header = [], [], []
+        for index, po_id in enumerate(po_ids):
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -317,8 +318,9 @@ class purchase_order(osv.osv):
                     fich.write(base64.decodestring(file_res['result']))
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
+            processed.append((index, [po_id, po_name]))
 
-        return [], [], [] # TODO
+        return processed, rejected, ['PO id', 'PO name']
 
 
     def copy(self, cr, uid, id, defaults=None, context=None):

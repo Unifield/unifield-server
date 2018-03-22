@@ -222,12 +222,12 @@ class automated_export_job(osv.osv):
         if on_ftp:
             temp_path = csvfile.name
         spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
-        headers_row = [_('Line number')] + headers
+        headers_row = headers
         if rejected:
             headers_row += [_('Error')]
         spamwriter.writerow(headers_row)
         for pl in data_lines:
-            pl_row = [pl[0]] + pl[1]
+            pl_row = pl[1]
             if rejected:
                 pl_row += [pl[2]]
             spamwriter.writerow(pl_row)
