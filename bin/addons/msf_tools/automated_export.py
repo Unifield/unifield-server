@@ -68,7 +68,7 @@ class automated_export(osv.osv):
         ),
         'dest_path': fields.char(
             size=512,
-            string='Destination Path (success)',
+            string='Destination Path',
         ),
         'dest_path_failure': fields.char(
             size=512,
