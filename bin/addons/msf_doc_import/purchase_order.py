@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 import time
 import datetime
+import tempfile
 import os
 from tools.translate import _
 import base64
@@ -292,12 +293,26 @@ class purchase_order(osv.osv):
                 datetime.datetime.now().strftime('%Y_%m_%d'),
                 'xls' if export_wiz.export_format == 'excel' else 'xml',
             )
+            path_to_file = os.path.join(export_wiz.dest_path, filename)
             if export_wiz.ftp_dest_ok:
+                ftp_connec = None
+                if export_wiz.ftp_ok:
+                    context.update({'no_raise_if_ok': True})
+                    ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, export_wiz.id, context=context)
+                    context.pop('no_raise_if_ok')
+
                 # write export on FTP server
-                pass # TODO
+                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.close()
+                rep = ''
+                with open(tmp_file.name, 'rb') as fich:
+                    rep = ftp_connec.storbinary('STOR %s' % path_to_file, fich)
+                if not rep.startswith('2'):
+                    raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
             else:
                 # write export in local file
-                with open(os.path.join(export_wiz.dest_path, filename), 'w') as fich:
+                with open(path_to_file, 'w') as fich:
                     fich.write(base64.decodestring(file_res['result']))
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
