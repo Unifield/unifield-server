@@ -43,9 +43,6 @@
                     <field name="export_id" />
                     <field name="start_time" />
                     <field name="end_time" />
-                    <separator colspan="4" string="Export file" />
-                    <field name="file_to_export" readonly="True" filename="filename" />
-                    <field name="filename" invisible="1" />
                     <separator colspan="4" string="Export results" />
                     <field name="nb_processed_records" />
                     <field name="nb_rejected_records" />
@@ -64,39 +61,6 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <form string="Automated export job">
-                    <field name="file_sum" invisible="1" />
-                    <separator colspan="4" string="Export file" />
-                    <group colspan="4" attrs="{'invisible': [('file_sum', '!=', False)]}">
-                        <html>
-                            <style>
-                                #explanation_message_unifield div
-                                {
-                                    font-weight: bold;
-                                    font-size: 1.2em;
-                                }
-                            </style>
-                            <div id="explanation_message_unifield">
-                                <label colspan="4" string="If no file is selected, the system will try to get the oldest file in the source path." align="0.0" />
-                            </div>
-                        </html>
-                    </group>
-                    <group colspan="4" attrs="{'invisible': [('file_sum', '=', False)]}">
-                        <html>
-                            <style>
-                                #warning_message_unifield div
-                                {
-                                    font-weight: bold;
-                                    font-size: 1.2em;
-                                    color: red;
-                                }
-                            </style>
-                            <div id="warning_message_unifield">
-                                <label colspan="4" string="The file you selected has already been exported in the past. Are you sure you want to export it ?" align="0.0" />
-                            </div>
-                        </html>
-                    </group>
-                    <field name="file_to_export" filename="filename" />
-                    <field name="filename" invisible="1" />
                     <separator colspan="4" string="Actions" />
                     <button name="cancel_file_export" type="object" string="Cancel" icon="gtk-cancel" colspan="2" />
                     <button name="process_export" type="object" string="Run job" icon="gtk-execute" colspan="2" />

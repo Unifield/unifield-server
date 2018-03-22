@@ -81,6 +81,7 @@ class purchase_order(osv.osv):
             store=False,
         ),
         'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
+        'auto_exported_ok': fields.boolean('Already auto exported'),
     }
 
     _defaults = {
@@ -262,12 +263,50 @@ class purchase_order(osv.osv):
         return res
 
 
-    def auto_export_validated_purchase_order(self, cr, uid, file_path, context=None):
+    def auto_export_validated_purchase_order(self, cr, uid, export_wiz, context=None):
+        '''
+        Method called by obj automated.export
+        '''
         if context is None:
             context = {}
 
-        #TODO
-        return True
+        po_ids = self.search(cr, uid, [
+            ('state', 'in', ['validated']),
+            ('auto_exported_ok', '=', False),
+        ], context= context)
+
+        for po_id in po_ids:
+            wiz_id = self.pool.get('wizard.export.po.validated').create(cr, uid, {
+                'order_id': po_id,
+                'file_type': 'excel',
+            }, context=context)
+
+            # generate report:
+            datas = {'ids': [po_id]}
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, 'validated.purchase.order_xls', [po_id], datas, context=context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
+
+            po_name = self.read(cr, uid, po_id, ['name'], context=context)['name']
+            filename = 'POV_%s_%s.%s' % (
+                po_name.replace('/', '_'), 
+                datetime.datetime.now().strftime('%Y_%m_%d'),
+                'xls',
+            )
+            if export_wiz.ftp_dest_ok:
+                # write export on FTP server
+                pass # TODO
+            else:
+                # write export in local file
+                with open(os.path.join(export_wiz.dest_path, filename), 'w') as fich:
+                    fich.write(base64.decodestring(file_res['result']))
+
+            self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
+
+        return [], [], [] # TODO
 
 
     def copy(self, cr, uid, id, defaults=None, context=None):

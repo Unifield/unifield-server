@@ -22,7 +22,6 @@
 import os
 import csv
 import time
-import shutil
 import base64
 import hashlib
 import tools
@@ -32,7 +31,6 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from StringIO import StringIO
 
 
 
@@ -75,18 +73,6 @@ class automated_export_job(osv.osv):
             'automated.export',
             string='Automated export',
             required=True,
-            readonly=True,
-        ),
-        'file_to_export': fields.binary(
-            string='File to export',
-        ),
-        'filename': fields.char(
-            size=128,
-            string='Name of the file to export',
-        ),
-        'file_sum': fields.char(
-            string='Check sum',
-            size=256,
             readonly=True,
         ),
         'start_time': fields.datetime(
@@ -139,9 +125,6 @@ class automated_export_job(osv.osv):
         :param context: Context of the call
         :return: True
         """
-        export_obj = self.pool.get('automated.export')
-        data_obj = self.pool.get('ir.model.data')
-
         if context is None:
             context = []
 
@@ -152,99 +135,21 @@ class automated_export_job(osv.osv):
             nb_rejected = 0
             nb_processed = 0
             start_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            no_file = False
-            md5 = False
-            error = None
             data64 = None
-            filename = False
 
             ftp_connec = None
             if job.export_id.ftp_ok:
                 context.update({'no_raise_if_ok': True})
                 ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
 
-            try:
-                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', 'ftp_report_ok')]:
-                    if path[2] and not job.export_id[path[2]]:
-                        export_obj.path_is_accessible(job.export_id[path[0]], path[1])
-            except osv.except_osv as e:
-                error = tools.ustr(e)
-                # In case of manual processing, raise the error
-                if job.file_to_export:
-                    raise e
-
-            if not job.file_to_export:
-                try:
-                    oldest_file = get_oldest_filename(job, ftp_connec)
-                    if not oldest_file:
-                        raise ValueError()
-                    filename = os.path.split(oldest_file)[1]
-                    md5 = hashlib.md5(get_file_content(oldest_file, job.export_id.ftp_source_ok, ftp_connec)).hexdigest()
-                    data64 = base64.encodestring(get_file_content(oldest_file, job.export_id.ftp_source_ok, ftp_connec))
-                except ValueError:
-                    no_file = True
-
-                if not error:
-                    if no_file:
-                        error = _('No file to export in %s !') % job.export_id.src_path
-                    elif md5 and self.search_exist(cr, uid, [('export_id', '=', job.export_id.id), ('file_sum', '=', md5)], context=context):
-                        error = _('A file with same checksum has been already exported !')
-                        move_to_process_path(job.export_id, ftp_connec, filename, success=False)
-
-                if error:
-                    self.write(cr, uid, [job.id], {
-                        'filename': filename,
-                        'file_to_export': data64,
-                        'start_time': start_time,
-                        'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-                        'nb_processed_records': 0,
-                        'nb_rejected_records': 0,
-                        'comment': error,
-                        'file_sum': md5,
-                        'state': 'error',
-                    }, context=context)
-                    continue
-            else: # file to export given
-                if job.export_id.ftp_source_ok:
-                    raise osv.except_osv(_('Error'), _('You cannot manually select a file to export if given source path is set on FTP server'))
-                oldest_file = open(os.path.join(job.export_id.src_path, job.filename), 'wb+')
-                oldest_file.write(base64.decodestring(job.file_to_export))
-                oldest_file.close()
-                md5 = hashlib.md5(job.file_to_export).hexdigest()
-
-                if job.file_sum != md5:
-                    if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
-                        self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
-                        return {
-                            'type': 'ir.actions.act_window',
-                            'res_model': self._name,
-                            'res_id': ids[0],
-                            'view_type': 'form',
-                            'view_mode': 'form,tree',
-                            'target': 'new',
-                            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_export_job_file_view')[1]],
-                            'context': context,
-                        }
-
-                oldest_file = os.path.join(job.export_id.src_path, job.filename)
-                filename = job.filename
-                data64 = base64.encodestring(job.file_to_export)
-
             # Process export
             error_message = []
             state = 'done'
             try:
-                if job.export_id.ftp_source_ok:
-                    prefix = '%s_' % filename.split('.')[0]
-                    suffix = '.xls' if self.pool.get('stock.picking').get_export_filetype(cr, uid, filename) == 'excel' else '.xml' 
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
-                    ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
-                    temp_file.close()
-                    oldest_file = temp_file.name
                 processed, rejected, headers = getattr(
                     self.pool.get(job.export_id.function_id.model_id.model),
                     job.export_id.function_id.method_to_call
-                )(cr, uid, oldest_file)
+                )(cr, uid, job.export_id)
                 if processed:
                     nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec)
 
@@ -257,31 +162,25 @@ class automated_export_job(osv.osv):
                         error_message.append(line_message)
 
                 self.write(cr, uid, [job.id], {
-                    'filename': filename,
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
                     'comment': '\n'.join(error_message),
-                    'file_sum': md5,
-                    'file_to_export': data64,
                     'state': state,
                 }, context=context)
                 is_success = True if not rejected else False
-                move_to_process_path(job.export_id, ftp_connec, filename, success=is_success)
+                # move_to_process_path(job.export_id, ftp_connec, filename, success=is_success)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
-                    'filename': False,
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': str(e),
-                    'file_sum': md5,
-                    'file_to_export': data64,
                     'state': 'error',
                 }, context=context)
-                move_to_process_path(job.export_id, ftp_connec, filename, success=False)
+                # move_to_process_path(job.export_id, ftp_connec, filename, success=False)
 
         return {
             'type': 'ir.actions.act_window',
