@@ -141,6 +141,7 @@ WHITE_LIST_MODEL = [
     'supplier.catalogue.line',
     'sync.monitor',
     'sync.sale.order.line.split',
+    'sync.trigger.something',
     'sync.version.instance.monitor',
     'tender',
     'tender.line',

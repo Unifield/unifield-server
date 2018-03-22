@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="ud_trans" model="patch.scripts">
+            <field name="method">ud_trans</field>
+        </record>
         <!-- UF8.0 -->
         <record id="set_sequence_main_nomen" model="patch.scripts">
             <field name="method">set_sequence_main_nomen</field>

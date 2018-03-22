@@ -51,6 +51,28 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.1
+
+    def ud_trans(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        # only at hq ?
+        if level_current == 'section':
+            self._logger.warn('HQ touching UD trans')
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
+
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
+                model='ir.translation' and
+                res_id in (
+                    select tmpl.id from product_template tmpl, product_product p where p.product_tmpl_id = p.id and p.international_status=%s
+                )
+            """, (unidata_id,))
+
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
         nom = ['MED', 'LOG', 'LIB', 'SRV']
@@ -2427,3 +2449,33 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something(osv.osv):
+    _name = 'sync.trigger.something'
+
+    _columns = {
+        'name': fields.char('Name', size=16),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
+            _logger = logging.getLogger('tigger')
+
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_to_delete = """from ir_translation where name='product.template,name'
+                and ( res_id in (select tmpl.id from product_template tmpl, product_product p where p.product_tmpl_id = p.id and p.international_status=%s) or res_id=0)
+            """ % (unidata_id,)
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id  """ + trans_to_delete + """
+            )""")
+            _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
+            cr.execute("delete "+ trans_to_delete)
+            _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        return super(sync_tigger_something, self).create(cr, uid, vals, context)
+
+sync_tigger_something()
