@@ -881,7 +881,12 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
+        init_sync = not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
+        if init_sync:
+            update_ids = updates.search(cr, uid, [('run', '=', False), ('model', 'not in', ['product.list.line', ' composition.kit'])], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
+            update_ids += updates.search(cr, uid, [('run', '=', False), ('model', 'in', ['product.list.line', ' composition.kit'])], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
+        else:
+            update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
