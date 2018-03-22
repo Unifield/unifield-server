@@ -25,6 +25,7 @@ import netsvc
 import logging
 import time
 from tools.translate import _
+import uuid
 
 from sync_client import get_sale_purchase_logger
 
@@ -525,7 +526,13 @@ class purchase_order_sync(osv.osv):
             self.write(cr, uid, po_id, default, context=context)
         else:
             # create a new PO, then send it to Validated state
+
+            # do not eat a seq
+            default['name'] = '%s' % uuid.uuid4()
             po_id = self.create(cr, uid, default , context=context)
+
+            # no constraint raised, we can create the default name and save gap in ref
+            self.write(cr, uid, po_id, {'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')}, context=context)
 
         # update the next line number for the PO if needed
         so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)
