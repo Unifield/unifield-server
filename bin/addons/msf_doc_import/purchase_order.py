@@ -272,19 +272,15 @@ class purchase_order(osv.osv):
 
         po_ids = self.search(cr, uid, [
             ('state', 'in', ['validated']),
-            ('auto_exported_ok', '=', False),
+            ('auto_exported_ok', '=', False), 
         ], context= context)
 
         for po_id in po_ids:
-            wiz_id = self.pool.get('wizard.export.po.validated').create(cr, uid, {
-                'order_id': po_id,
-                'file_type': 'excel',
-            }, context=context)
-
             # generate report:
+            report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
             rp_spool = report_spool()
-            result = rp_spool.exp_report(cr.dbname, uid, 'validated.purchase.order_xls', [po_id], datas, context=context)
+            result = rp_spool.exp_report(cr.dbname, uid, report_name, [po_id], datas, context=context)
             file_res = {'state': False}
             while not file_res.get('state'):
                 file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
@@ -294,7 +290,7 @@ class purchase_order(osv.osv):
             filename = 'POV_%s_%s.%s' % (
                 po_name.replace('/', '_'), 
                 datetime.datetime.now().strftime('%Y_%m_%d'),
-                'xls',
+                'xls' if export_wiz.export_format == 'excel' else 'xml',
             )
             if export_wiz.ftp_dest_ok:
                 # write export on FTP server

@@ -100,6 +100,14 @@ class automated_export(osv.osv):
             string='Functionality',
             required=True,
         ),
+        'export_format': fields.selection(
+            selection=[
+                ('excel', 'Excel'),
+                ('xml', 'XML'),
+            ],
+            string='Export format',
+            required=True,
+        ),
         'active': fields.boolean(
             string='Active',
             readonly=True,

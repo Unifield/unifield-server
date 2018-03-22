@@ -40,6 +40,7 @@
                     <field name="name" />
                     <field name="function_id" widget="selection" />
                     <field name="active" />
+                    <field name="export_format"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
 
                     <separator colspan="4" string="FTP server" />
