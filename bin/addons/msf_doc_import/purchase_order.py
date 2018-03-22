@@ -308,6 +308,7 @@ class purchase_order(osv.osv):
                 rep = ''
                 with open(tmp_file.name, 'rb') as fich:
                     rep = ftp_connec.storbinary('STOR %s' % path_to_file, fich)
+                os.remove(tmp_file.name)
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
             else:
