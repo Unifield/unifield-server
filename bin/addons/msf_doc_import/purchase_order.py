@@ -262,6 +262,14 @@ class purchase_order(osv.osv):
         return res
 
 
+    def auto_export_validated_purchase_order(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        #TODO
+        return True
+
+
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''
         Remove the import_in_progress flag

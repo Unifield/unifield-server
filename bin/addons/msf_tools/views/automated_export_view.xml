@@ -2,12 +2,12 @@
 <openerp>
     <data>
 
-        <record id="automated_import_search_view" model="ir.ui.view">
-            <field name="name">automated.import.search.view</field>
-            <field name="model">automated.import</field>
+        <record id="automated_export_search_view" model="ir.ui.view">
+            <field name="name">automated.export.search.view</field>
+            <field name="model">automated.export</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Automated imports">
+                <search string="Automated exports">
                     <filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
                     <field name="name" />
                     <field name="function_id" />
@@ -15,12 +15,12 @@
             </field>
         </record>
 
-        <record id="automated_import_tree_view" model="ir.ui.view">
-            <field name="name">automated.import.tree.view</field>
-            <field name="model">automated.import</field>
+        <record id="automated_export_tree_view" model="ir.ui.view">
+            <field name="name">automated.export.tree.view</field>
+            <field name="model">automated.export</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Automated imports">
+                <tree string="Automated exports">
                     <field name="name" />
                     <field name="function_id" />
                     <field name="start_time" />
@@ -30,12 +30,12 @@
             </field>
         </record>
 
-        <record id="automated_import_form_view" model="ir.ui.view">
-            <field name="name">automated.import.form.view</field>
-            <field name="model">automated.import</field>
+        <record id="automated_export_form_view" model="ir.ui.view">
+            <field name="name">automated.export.form.view</field>
+            <field name="model">automated.export</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Automated import">
+                <form string="Automated export">
                     <separator colspan="4" string="General configuration" />
                     <field name="name" />
                     <field name="function_id" widget="selection" />
@@ -72,22 +72,22 @@
                     </group>
                     <separator colspan="4" string="Activation" />
                     <group colspan="4" col="1">
-                        <button name="active_import" string="Activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', True)]}" />
-                        <button name="deactive_import" string="De-activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
+                        <button name="active_export" string="Activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', True)]}" />
+                        <button name="deactive_export" string="De-activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
                     </group>
                 </form>
             </field>
         </record>
 
-        <record id="automated_import_action" model="ir.actions.act_window">
-            <field name="name">Automated imports</field>
-            <field name="res_model">automated.import</field>
+        <record id="automated_export_action" model="ir.actions.act_window">
+            <field name="name">Automated exports</field>
+            <field name="res_model">automated.export</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
         <menuitem
-            id="automated_import_menu"
-            action="automated_import_action"
+            id="automated_export_menu"
+            action="automated_export_action"
             parent="object_query.menu_preferences" />
 
     </data>
