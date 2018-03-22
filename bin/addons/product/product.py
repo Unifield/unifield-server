@@ -642,6 +642,7 @@ class product_product(osv.osv):
                 res = ptrn.search(name)
                 if res:
                     ids = self.search(cr, user, [('default_code','=', res.group(2))] + args, limit=limit, context=context)
+                    # this is used only to load product list lines in the 1st init sync, bc of a bug in the sync rule that use default_code instead of xmlid
                     if not ids and context.get('sync_update_execution') and not bool(self.pool.get('res.users').get_browse_user_instance(cr, user)) and operator == '=':
                         ids = self.search(cr, user, [('old_code', 'like', res.group(2))] + args, limit=limit, context=context)
         else:
