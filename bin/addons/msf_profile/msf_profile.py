@@ -69,7 +69,7 @@ class patch_scripts(osv.osv):
             cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
                 model='ir.translation' and
                 res_id in (
-                    select tmpl.id from product_template tmpl, product_product p where p.product_tmpl_id = p.id and p.international_status=%s
+                    select p.product_tmpl_id from product_product p where p.international_status=%s
                 )
             """, (unidata_id,))
 
@@ -2467,7 +2467,7 @@ class sync_tigger_something(osv.osv):
             unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
 
             trans_to_delete = """from ir_translation where name='product.template,name'
-                and ( res_id in (select tmpl.id from product_template tmpl, product_product p where p.product_tmpl_id = p.id and p.international_status=%s) or res_id=0)
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or res_id=0)
             """ % (unidata_id,)
             cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
                 select id  """ + trans_to_delete + """
