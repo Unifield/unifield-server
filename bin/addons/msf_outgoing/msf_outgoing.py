@@ -2964,9 +2964,10 @@ class stock_picking(osv.osv):
                     shipment_id = shipment_ids[0]
                     shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
                     # if expected ship date of shipment is greater than rts, update shipment_expected_date and shipment_actual_date
-                    shipment_expected = datetime.strptime(shipment.shipment_expected_date, db_datetime_format)
-                    if rts_obj < shipment_expected:
-                        shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts, }, context=context)
+                    if shipment.shipment_expected_date:
+                        shipment_expected = datetime.strptime(shipment.shipment_expected_date, db_datetime_format)
+                        if rts_obj < shipment_expected:
+                            shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts, }, context=context)
                     shipment_name = shipment.name
                     shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.') % (shipment_name,))
 
