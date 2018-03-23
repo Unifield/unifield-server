@@ -60,6 +60,7 @@ class patch_scripts(osv.osv):
         - sets the PUF AJIs as is_reversal: will fix the discrepancies in Financing Contracts and Budget Monitoring Report
         - sets the PUF JIs as is_si_refund: will make the lines not correctable
         """
+        user_obj = self.pool.get('res.users')
         update_aji = """
             UPDATE account_analytic_line
             SET is_reversal = 't'
@@ -73,7 +74,6 @@ class patch_scripts(osv.osv):
                         WHERE j.type = 'purchase_refund'
                         AND am.status = 'sys'
                         AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
-                        AND aml.create_date < (SELECT applied FROM sync_client_version WHERE name = 'UF7.2' LIMIT 1)
                         AND aml.is_si_refund = 'f'
                         AND aml.reversal = 'f'
                         AND aml.reconcile_id IS NOT NULL
@@ -110,7 +110,6 @@ class patch_scripts(osv.osv):
                 WHERE j.type = 'purchase_refund'
                 AND am.status = 'sys'
                 AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
-                AND aml.create_date < (SELECT applied FROM sync_client_version WHERE name = 'UF7.2' LIMIT 1)
                 AND aml.is_si_refund = 'f'
                 AND aml.reversal = 'f'
                 AND aml.reconcile_id IS NOT NULL
@@ -135,6 +134,54 @@ class patch_scripts(osv.osv):
                     )
                 );
             """
+        # trigger the sync for all AJIs whose the prop. instance is the current instance, to cover the use case where
+        # only AJIs exist in a project because the doc was generated in coordo or in another project
+        current_instance = user_obj.browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.level in ('coordo', 'project'):
+            trigger_sync = """
+                UPDATE ir_model_data SET last_modification=NOW(), touched='[''is_reversal'']'
+                WHERE module='sd' AND model='account.analytic.line' AND res_id IN (
+                    SELECT aal.id
+                    FROM account_analytic_line aal
+                    INNER JOIN account_analytic_journal aaj ON aal.journal_id = aaj.id
+                    WHERE aaj.is_current_instance = 't'
+                    AND move_id IN (
+                    SELECT id FROM account_move_line
+                    WHERE move_id IN (
+                        SELECT DISTINCT(am.id)
+                            FROM account_move_line aml
+                            INNER JOIN account_move am ON aml.move_id = am.id
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            WHERE j.type = 'purchase_refund'
+                            AND am.status = 'sys'
+                            AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                            AND aml.is_si_refund = 'f'
+                            AND aml.reversal = 'f'
+                            AND aml.reconcile_id IS NOT NULL
+                            AND aml.reconcile_id IN (
+                                SELECT r.id
+                                FROM account_move_reconcile r
+                                INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                                AND aml.id IN (
+                                    SELECT aml.id
+                                    FROM account_move_line aml
+                                    INNER JOIN account_move am ON aml.move_id = am.id
+                                    INNER JOIN account_journal j ON aml.journal_id = j.id
+                                    WHERE j.type = 'purchase'
+                                    AND am.status = 'sys'
+                                    AND am.id IN (
+                                        SELECT DISTINCT(am.id)
+                                        FROM account_move am
+                                        INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                        WHERE aml.corrected = 't'
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+            """
+            cr.execute(trigger_sync)
         cr.execute(update_aji)
         cr.execute(update_ji)
 
