@@ -106,6 +106,43 @@ class patch_scripts(osv.osv):
         cr.execute(update_free_1)
         cr.execute(update_free_2)
 
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        move_obj = self.pool.get('stock.move')
+
+        move_ids_currencies = {}
+        move_ids = move_obj.search(cr, uid, [('type', '=', 'out')])
+        to_fetch = ['sale_line_id', 'purchase_line_id', 'price_currency_id']
+        for move_id in move_ids:
+            move = move_obj.browse(cr, uid, move_id, fields_to_fetch=to_fetch)
+            if move.sale_line_id and (not move.sale_line_id.order_id.procurement_request or
+                                      (move.sale_line_id.order_id.procurement_request
+                                       and move.sale_line_id.order_id.location_requestor_id.chained_picking_type == 'out')):
+                if move.price_currency_id != move.sale_line_id.order_id.pricelist_id.currency_id.id:
+                    currency_id_key = move.sale_line_id.order_id.pricelist_id.currency_id.id
+                    if currency_id_key in move_ids_currencies:
+                        move_ids_currencies[currency_id_key].append(move_id)
+                    else:
+                        move_ids_currencies.update({currency_id_key: [move_id]})
+            elif move.purchase_line_id and move.purchase_line_id.linked_sol_id and (
+                    not move.purchase_line_id.linked_sol_id.order_id.procurement_request or
+                    (move.purchase_line_id.linked_sol_id.order_id.procurement_request
+                     and move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.chained_picking_type == 'out')):
+                if move.price_currency_id != move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id:
+                    currency_id_key = move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id
+                    if currency_id_key in move_ids_currencies:
+                        move_ids_currencies[currency_id_key].append(move_id)
+                    else:
+                        move_ids_currencies.update({currency_id_key: [move_id]})
+
+        for currency_id in move_ids_currencies:
+            cr.execute('''update stock_move set price_currency_id = %s where id in %s'''
+                       , (currency_id, tuple(move_ids_currencies[currency_id])))
+
+        return True
+
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
         cr.execute('''select distinct i.id, p.default_code from
@@ -276,32 +313,6 @@ class patch_scripts(osv.osv):
                 self._logger.warn("PO line to close: PO %s, line number: %s, poline id %s" % (x[3], x[4], x[0]))
                 wf_service.trg_validate(uid, 'purchase.order.line', x[0], 'done', cr)
         cr.commit()
-        return True
-
-    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
-        '''
-        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
-        '''
-        move_obj = self.pool.get('stock.move')
-
-        move_ids = move_obj.search(cr, uid, [('type', '=', 'out')])
-        for move_id in move_ids:
-            move = move_obj.browse(cr, uid, move_id,
-                                   fields_to_fetch=['sale_line_id', 'purchase_line_id', 'price_currency_id'])
-            if move.sale_line_id and (not move.sale_line_id.order_id.procurement_request or
-                                      (move.sale_line_id.order_id.procurement_request
-                                       and move.sale_line_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                if move.price_currency_id != move.sale_line_id.order_id.pricelist_id.currency_id.id:
-                    to_update = {'price_currency_id': move.sale_line_id.order_id.pricelist_id.currency_id.id}
-                    move_obj.write(cr, uid, move_id, to_update)
-            elif move.purchase_line_id and move.purchase_line_id.linked_sol_id and (
-                        not move.purchase_line_id.linked_sol_id.order_id.procurement_request or
-                        (move.purchase_line_id.linked_sol_id.order_id.procurement_request
-                         and move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                if move.price_currency_id != move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id:
-                    to_update = {'price_currency_id': move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id}
-                    move_obj.write(cr, uid, move_id, to_update)
-
         return True
 
     # UF7.0 patches
