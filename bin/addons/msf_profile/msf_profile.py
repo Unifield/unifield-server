@@ -62,10 +62,18 @@ class patch_scripts(osv.osv):
             level_current = usr.company_id.instance_id.level
         # only at hq ?
         if level_current == 'section':
-            self._logger.warn('HQ touching UD trans')
             self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
 
             unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+
+            cr.execute("""
+                update ir_translation r set xml_id =
+                    (select d.name from ir_model_data d where model='product.product' and module='sd' and d.res_id=(select p.id from product_product p where p.product_tmpl_id=r.res_id))
+                    where r.name='product.template,name'
+            """)
+            self._logger.warn('HQ update xml_id no %d product trans' % (cr.rowcount,))
+
             cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
                 model='ir.translation' and
                 res_id in (
@@ -74,6 +82,21 @@ class patch_scripts(osv.osv):
                         )
                 )
             """, (unidata_id,))
+            self._logger.warn('HQ touching %d UD trans' % (cr.rowcount,))
+
+            # send product on which UD has changed the name without any lang ctx, if there isn't any ir.trans record
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''name'']'
+                where model='product.product' and
+                res_id in (
+                    select id from product_product where product_tmpl_id in
+                        ( select id from product_template where id in
+                            (select res_id from audittrail_log_line where name='name' and object_id=128 and method='write')
+                          and id not in (select res_id from ir_translation where name='product.template,name' and lang='en_MF')
+                        )
+                )
+            """)
+            self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
 
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
