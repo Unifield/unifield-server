@@ -1,3 +1,4 @@
+<input type="hidden" id="${name}_terp_auto_refresh" name="${name}_terp_auto_refresh" value="${auto_refresh}"/>
 <input type="hidden" id="${name}_terp_string" name="${name}_terp_string" value="${string}"/>
 <input type="hidden" id="${name}_terp_model" name="${name}_terp_model" value="${model}"/>
 <input type="hidden" id="${name}_terp_state" name="${name}_terp_state" value="${state}"/>

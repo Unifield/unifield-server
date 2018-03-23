@@ -7,6 +7,20 @@
     if o2m:
         object = "new One2Many('%s')" % name
 %>
+<script type="text/javascript">
+var auto_field = $('#_terp_auto_refresh');
+var model = $('#_terp_model').val();
+if (auto_field && auto_field.val()){
+    if (global_list_refresh) {
+        clearTimeout(global_list_refresh);
+    }
+    global_list_refresh = setTimeout(function(model) {
+       if (model == $('#_terp_model').val()) {
+           new ListView('_terp_list').reload();
+       }
+    }, 1000*auto_field.val(), model);
+}
+</script>
 <%def name="make_editors(data=None)">
     % if editable and editors:
         <tr class="grid-row editors" record="${(data and data['id']) or -1}">
