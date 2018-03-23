@@ -69,7 +69,9 @@ class patch_scripts(osv.osv):
             cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
                 model='ir.translation' and
                 res_id in (
-                    select p.product_tmpl_id from product_product p where p.international_status=%s
+                   select id from ir_translation where name='product.template,name' and res_id in (
+                        select p.product_tmpl_id from product_product p where p.international_status=%s
+                        )
                 )
             """, (unidata_id,))
 
