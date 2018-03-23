@@ -54,6 +54,10 @@
             <field name="method">close_pol_already_processed</field>
         </record>
 
+        <record id="us_4151_change_correct_out_currency" model="patch.scripts">
+            <field name="method">us_4151_change_correct_out_currency</field>
+        </record>
+
         <!-- OLD -->
 
         <record id="us_3048_patch" model="patch.scripts">

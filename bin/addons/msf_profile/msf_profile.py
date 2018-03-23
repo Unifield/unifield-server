@@ -191,6 +191,32 @@ class patch_scripts(osv.osv):
         cr.commit()
         return True
 
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        move_obj = self.pool.get('stock.move')
+
+        move_ids = move_obj.search(cr, uid, [('type', '=', 'out')])
+        for move_id in move_ids:
+            move = move_obj.browse(cr, uid, move_id,
+                                   fields_to_fetch=['sale_line_id', 'purchase_line_id', 'price_currency_id'])
+            if move.sale_line_id and (not move.sale_line_id.order_id.procurement_request or
+                                      (move.sale_line_id.order_id.procurement_request
+                                       and move.sale_line_id.order_id.location_requestor_id.chained_picking_type == 'out')):
+                if move.price_currency_id != move.sale_line_id.order_id.pricelist_id.currency_id.id:
+                    to_update = {'price_currency_id': move.sale_line_id.order_id.pricelist_id.currency_id.id}
+                    move_obj.write(cr, uid, move_id, to_update)
+            elif move.purchase_line_id and move.purchase_line_id.linked_sol_id and (
+                        not move.purchase_line_id.linked_sol_id.order_id.procurement_request or
+                        (move.purchase_line_id.linked_sol_id.order_id.procurement_request
+                         and move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.chained_picking_type == 'out')):
+                if move.price_currency_id != move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id:
+                    to_update = {'price_currency_id': move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id}
+                    move_obj.write(cr, uid, move_id, to_update)
+
+        return True
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
