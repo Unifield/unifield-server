@@ -59,6 +59,20 @@ class patch_scripts(osv.osv):
         This method fixes the entries generated in between:
         - sets the PUF AJIs as is_reversal: will fix the discrepancies in Financing Contracts and Budget Monitoring Report
         - sets the PUF JIs as is_si_refund: will make the lines not correctable
+
+        Criteria used to spot the JIs to fix:
+        - JIs booked on a journal having the type "Purchase refund"
+        - which belong to a JE system
+        - which are reconciled (implies that all SI headers were booked on a reconcilable account) with a JI:
+            ==> booked on a journal having the type "Purchase"
+            ==> which belongs to a JE system
+            ==> which belongs to a JE having at least one leg set as "corrected"
+                Cf: - the JI corresponding to the SI header line is not set as corrected during a refund-cancel, only the SI lines are.
+                    - since US-1255 (UF7.0) it is not possible to do a refund-cancel once one of the SI lines has been corrected.
+        - with a creation date after 7.0
+            ==> no ending date to cover the diff between UF7.2 patch date at sync server and within each instance
+            ==> entries generated after 7.2 are already correct and won't be impacted
+        - which are set neither as "is_si_refund" nor as "reversal".
         """
         user_obj = self.pool.get('res.users')
         update_aji = """
