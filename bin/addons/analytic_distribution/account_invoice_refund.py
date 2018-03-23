@@ -87,20 +87,10 @@ class account_invoice_refund(osv.osv_memory):
 
     _defaults = {
         'document_date': _get_document_date,
-        'date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available
         'filter_refund': 'refund',
         'journal_id': _get_journal,  # US-193
     }
-
-    def onchange_date(self, cr, uid, ids, date, context=None):
-        res = {}
-        # Some verifications
-        if not context:
-            context = {}
-        if date:
-            res.update({'value': {'document_date' : date}})
-        return res
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """

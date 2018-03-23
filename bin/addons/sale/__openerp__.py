@@ -71,6 +71,7 @@
         'report/sale_donation_stock_moves_report.xml',
         'wizard/sale_loan_stock_moves_view.xml',
         'report/sale_loan_stock_moves_report.xml',
+        'wizard/delete_sale_order_line.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [

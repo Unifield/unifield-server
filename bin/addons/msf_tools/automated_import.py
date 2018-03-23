@@ -26,6 +26,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from ftplib import FTP
 
 
 class automated_import(osv.osv):
@@ -47,8 +48,8 @@ class automated_import(osv.osv):
             ids = [ids]
 
         for imp_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                if imp_brw[path[0]]:
+            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+                if imp_brw[path[0]] and path[2] and not imp_brw[path[2]]:
                     self.path_is_accessible(imp_brw[path[0]], path[1])
 
             if imp_brw.src_path:
@@ -101,7 +102,7 @@ class automated_import(osv.osv):
                 ('work_days', 'Work Days'),
                 ('days', 'Days'),
                 ('weeks', 'Weeks'),
-               ('months', 'Months'),
+                ('months', 'Months'),
             ],
             string='Interval Unit',
         ),
@@ -125,6 +126,13 @@ class automated_import(osv.osv):
             help="""Defines the priority of the automated import processing because some of them needs other data
 to import well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
+        'ftp_ok': fields.boolean(string='Enable FTP server', help='Enable FTP server if you want to read or write from a remote FTP server'),
+        'ftp_url': fields.char(string='FTP server address', size=256),
+        'ftp_port': fields.char(string='FTP server port', size=56),
+        'ftp_login': fields.char(string='FTP login', size=256),
+        'ftp_password': fields.char(string='FTP password', size=256),
+        'ftp_source_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
     }
 
     _defaults = {
@@ -156,6 +164,35 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     _constraints = [
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path']),
     ]
+
+    def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
+        if context is None:
+            context = {}
+        if ftp_ok == False:
+            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False}}
+        return {}
+
+    def ftp_test_connection(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            ftp = FTP()
+            try:
+                ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
+            except:
+                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
+            try:
+                ftp.login(user=obj.ftp_login, passwd=obj.ftp_password) # '230 Login successful.'
+            except:
+                raise osv.except_osv(_('Error'), _('Unable to connect with given login and password'))
+
+        if not context.get('no_raise_if_ok'):
+            raise osv.except_osv(_('Info'), _('Connection succeeded'))
+
+        return ftp
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """

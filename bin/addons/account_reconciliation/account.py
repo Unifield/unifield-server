@@ -54,14 +54,20 @@ class account_move_reconcile(osv.osv):
         """
         if not ids:
             return []
+        if context is None:
+            context = {}
         result = []
         for r in self.browse(cr, uid, ids, context=context):
-            total = reduce(lambda y,t: (t.debit_currency or 0.0) - (t.credit_currency or 0.0) + y, r.line_partial_ids, 0.0)
-            if total:
-                name = '%s (%.2f)' % (r.name, total)
-                result.append((r.id,name))
-            elif hasattr(r, "name"):
+            if context.get('from_track_changes'):
+                # partial rec to log on track changes, can't set residual amount, bc we don't have all account.move.line
                 result.append((r.id,r.name))
+            else:
+                total = reduce(lambda y,t: (t.debit_currency or 0.0) - (t.credit_currency or 0.0) + y, r.line_partial_ids, 0.0)
+                if total:
+                    name = '%s (%.2f)' % (r.name, total)
+                    result.append((r.id,name))
+                elif hasattr(r, "name"):
+                    result.append((r.id,r.name))
         return result
 
 account_move_reconcile()

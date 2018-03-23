@@ -444,17 +444,13 @@ class db(netsvc.ExportService):
         if not getattr(server_connecion_module, '_uid', False):
             return False
 
+        prod = False
         cr = connection.cursor()
         try:
-            cr.execute('''SELECT host, database
-            FROM sync_client_sync_server_connection''')
-            host, database = cr.fetchone()
+            prod = tools.misc.use_prod_sync(cr)
         finally:
             cr.close()
-        if host and database and database.strip() == 'SYNC_SERVER' and \
-                ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
-            return True
-        return False
+        return prod
 
     def exp_change_admin_password(self, new_password):
         tools.config['admin_passwd'] = new_password
