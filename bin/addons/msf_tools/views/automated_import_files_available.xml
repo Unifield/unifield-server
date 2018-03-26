@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="automated_import_files_available_form_view" model="ir.ui.view">
+            <field name="name">automated.import.files.available.form.view</field>
+            <field name="model">automated.import.files.available</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Files available">
+                    <field name="import_id" on_change="on_change_display_info(import_id)" />
+                    <field name="display_info" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_import_available_action" model="ir.actions.act_window">
+            <field name="name">Files available</field>
+            <field name="res_model">automated.import.files.available</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <menuitem
+            id="automated_import_file_available"
+            action="automated_import_available_action"
+            parent="automated_import_menu" />
+
+    </data>
+</openerp>

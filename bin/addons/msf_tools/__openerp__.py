@@ -38,6 +38,7 @@
         'views/automated_import_view.xml',
         'views/automated_import_function_view.xml',
         'views/automated_import_job_view.xml',
+        'views/automated_import_files_available.xml',
         'views/automated_export_view.xml',
         'views/automated_export_function_view.xml',
         'views/automated_export_job_view.xml',
