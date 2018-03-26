@@ -82,7 +82,7 @@ class purchase_order(osv.osv):
             store=False,
         ),
         'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
-        'auto_exported_ok': fields.boolean('Already auto exported'),
+        'auto_exported_ok': fields.boolean('Auto exported', help="Has this PO already been automatically exported ?"),
     }
 
     _defaults = {

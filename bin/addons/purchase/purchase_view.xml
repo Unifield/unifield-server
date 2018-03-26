@@ -331,6 +331,7 @@
                         </page>
                         <page string="Notes">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
+                            <field name="auto_exported_ok" readonly="1"/>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
                             <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}"/>
