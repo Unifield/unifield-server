@@ -197,8 +197,11 @@ class patch_scripts(osv.osv):
                     );
                 """
                 cr.execute(trigger_sync)
+                self._logger.warn('%s entries for which a sync will be triggered.' % (cr.rowcount,))
             cr.execute(update_aji)
+            self._logger.warn('%s AJI updated.' % (cr.rowcount,))
             cr.execute(update_ji)
+            self._logger.warn('%s JI updated.' % (cr.rowcount,))
 
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
