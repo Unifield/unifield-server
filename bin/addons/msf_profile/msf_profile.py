@@ -111,27 +111,22 @@ class patch_scripts(osv.osv):
         search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
         '''
         move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        company_obj = self.pool.get('res.company')
 
+        pick_ids = pick_obj.search(cr, uid, [('type', '=', 'out'), ('subtype', 'in', ['standard', 'picking'])])
         move_ids_currencies = {}
-        move_ids = move_obj.search(cr, uid, [('type', '=', 'out')])
-        to_fetch = ['sale_line_id', 'purchase_line_id', 'price_currency_id']
+        move_ids = move_obj.search(cr, uid, [('type', '=', 'out'), ('picking_id', 'in', pick_ids)])
         for move_id in move_ids:
-            move = move_obj.browse(cr, uid, move_id, fields_to_fetch=to_fetch)
-            if move.sale_line_id and (not move.sale_line_id.order_id.procurement_request or
-                                      (move.sale_line_id.order_id.procurement_request
-                                       and move.sale_line_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                if move.price_currency_id != move.sale_line_id.order_id.pricelist_id.currency_id.id:
+            move = move_obj.browse(cr, uid, move_id,
+                                   fields_to_fetch=['sale_line_id', 'purchase_line_id', 'price_currency_id'])
+            if move.sale_line_id and move.sale_line_id.order_id:
+                if move.sale_line_id.order_id.procurement_request:
+                    sale_currency = company_obj.browse(cr, uid, 1, fields_to_fetch=['currency_id']).currency_id.id
+                else:
+                    sale_currency = move.sale_line_id.order_id.pricelist_id.currency_id.id
+                if move.price_currency_id != sale_currency:
                     currency_id_key = move.sale_line_id.order_id.pricelist_id.currency_id.id
-                    if currency_id_key in move_ids_currencies:
-                        move_ids_currencies[currency_id_key].append(move_id)
-                    else:
-                        move_ids_currencies.update({currency_id_key: [move_id]})
-            elif move.purchase_line_id and move.purchase_line_id.linked_sol_id and (
-                    not move.purchase_line_id.linked_sol_id.order_id.procurement_request or
-                    (move.purchase_line_id.linked_sol_id.order_id.procurement_request
-                     and move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                if move.price_currency_id != move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id:
-                    currency_id_key = move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id
                     if currency_id_key in move_ids_currencies:
                         move_ids_currencies[currency_id_key].append(move_id)
                     else:
