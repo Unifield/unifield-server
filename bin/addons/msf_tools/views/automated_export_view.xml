@@ -87,7 +87,8 @@
         <menuitem
             id="automated_export_menu"
             action="automated_export_action"
-            parent="object_query.menu_preferences" />
+            parent="object_query.menu_preferences" 
+            sequence="16"/>
 
     </data>
 </openerp>
