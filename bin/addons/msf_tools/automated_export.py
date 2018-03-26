@@ -302,6 +302,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             params = {}
 
         for export_id in ids:
+            dest_path = self.read(cr, uid, export_id, ['dest_path'])['dest_path']
             params = {
                 'export_id': export_id,
                 'state': 'in_progress',

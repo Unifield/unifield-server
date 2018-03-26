@@ -106,6 +106,7 @@ class automated_export_job(osv.osv):
             readonly=True,
             required=True,
         ),
+        'export_path': fields.char(size=512, string='Export path', readonly=True),
     }
 
     _defaults = {
@@ -149,7 +150,7 @@ class automated_export_job(osv.osv):
                 processed, rejected, headers = getattr(
                     self.pool.get(job.export_id.function_id.model_id.model),
                     job.export_id.function_id.method_to_call
-                )(cr, uid, job.export_id)
+                )(cr, uid, job.export_id, context=context)
                 if processed:
                     nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec)
 
@@ -167,10 +168,10 @@ class automated_export_job(osv.osv):
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
                     'comment': '\n'.join(error_message),
+                    'export_path': context.get('path_to_file', ''),
                     'state': state,
                 }, context=context)
                 is_success = True if not rejected else False
-                # move_to_process_path(job.export_id, ftp_connec, filename, success=is_success)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
@@ -180,7 +181,6 @@ class automated_export_job(osv.osv):
                     'comment': str(e),
                     'state': 'error',
                 }, context=context)
-                # move_to_process_path(job.export_id, ftp_connec, filename, success=False)
 
         return {
             'type': 'ir.actions.act_window',

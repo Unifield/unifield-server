@@ -298,6 +298,7 @@ class purchase_order(osv.osv):
                 'xls' if export_wiz.export_format == 'excel' else 'xml',
             )
             path_to_file = os.path.join(export_wiz.dest_path, filename)
+            context['path_to_file'] = path_to_file
             if export_wiz.ftp_dest_ok:
                 ftp_connec = None
                 if export_wiz.ftp_ok:
