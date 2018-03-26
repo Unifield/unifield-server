@@ -2492,7 +2492,7 @@ class sync_tigger_something(osv.osv):
             unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
 
             trans_to_delete = """from ir_translation where name='product.template,name'
-                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or res_id=0)
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
             """ % (unidata_id,)
             cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
                 select id  """ + trans_to_delete + """
