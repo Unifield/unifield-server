@@ -276,6 +276,9 @@ class purchase_order(osv.osv):
             ('auto_exported_ok', '=', False), 
         ], context= context)
 
+        if not po_ids:
+            raise Exception, _('No PO to export !')
+
         processed, rejected, header = [], [], []
         for index, po_id in enumerate(po_ids):
             # generate report:
