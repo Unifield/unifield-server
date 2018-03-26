@@ -752,25 +752,11 @@ class stock_picking(osv.osv):
                 'manually_changed': pchanged,
             }
 
-            # search the currency_id in FO if OUT/PICK, else in PO or take the current move's currency
-            if move.sale_line_id and (not move.sale_line_id.order_id.procurement_request or
-                                      (move.sale_line_id.order_id.procurement_request
-                                       and move.sale_line_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                price_currency_id = move.sale_line_id.order_id.pricelist_id.currency_id.id
-            elif move.purchase_line_id:
-                if move.purchase_line_id.linked_sol_id and (not move.purchase_line_id.linked_sol_id.order_id.procurement_request or
-                                      (move.purchase_line_id.linked_sol_id.order_id.procurement_request
-                                       and move.purchase_line_id.linked_sol_id.order_id.location_requestor_id.chained_picking_type == 'out')):
-                    price_currency_id = move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id
-                else:
-                    price_currency_id = move.purchase_line_id.order_id.currency_id.id
-            else:
-                price_currency_id = line.currency.id
             # Record the values that were chosen in the wizard, so they can be
             # used for inventory valuation of real-time valuation is enabled.
             average_values = {
                 'price_unit': new_price,
-                'price_currency_id': price_currency_id,
+                'price_currency_id': line.currency.id,
             }
 
         return average_values, sptc_values
@@ -1098,6 +1084,7 @@ class stock_picking(osv.osv):
                                 context=context
                             )
                             out_values['price_unit'] = price_unit
+                            out_values['price_currency_id'] = out_move.price_currency_id.id
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
