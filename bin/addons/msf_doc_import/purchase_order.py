@@ -272,6 +272,7 @@ class purchase_order(osv.osv):
             context = {}
 
         po_ids = self.search(cr, uid, [
+            ('partner_type', '=', 'esc'),
             ('state', 'in', ['validated', 'validated_p']),
             ('auto_exported_ok', '=', False), 
         ], context= context)
