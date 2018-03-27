@@ -273,6 +273,7 @@
             <field name="arch" type="xml">
                 <form string="Selector - Combined Journals Report" hide_new_button="1" hide_duplicate_button="1"
                       hide_delete_button="1" hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
+                    <field name="model" invisible="1"/>
                     &general;
                     &gl_journals_and_periods;
                     &currency;

@@ -68,7 +68,9 @@ class account_mcdb(osv.osv):
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
-        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
+        'model': fields.selection([('account.move.line', 'Journal Items'),
+                                   ('account.analytic.line', 'Analytic Journal Items'),
+                                   ('combined.line', 'Both Journal Items and Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -1186,6 +1188,8 @@ class account_mcdb(osv.osv):
         module = 'account_mcdb'
         if context.get('from', '') == 'account.analytic.line':
             view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
         else:
             view_name = 'account_mcdb_form'
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
@@ -1288,6 +1292,8 @@ class account_mcdb(osv.osv):
         module = 'account_mcdb'
         if context.get('from', '') == 'account.analytic.line':
             view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
         else:
             view_name = 'account_mcdb_form'
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
