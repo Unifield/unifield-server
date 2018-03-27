@@ -1599,12 +1599,6 @@
             <field name="currency_name">PHILIPPINE PESO</field>
             <field name="company_id" ref="main_company"/>
         </record>
-        <record id="ratePHP" model="res.currency.rate" forcecreate="0">
-            <field name="rate">66.1</field>
-            <field name="currency_id" ref="PHP"/>
-            <field name="name">2014-01-01</field>
-        </record>
-
         <record id="SGD" model="res.currency" forcecreate="0">
             <field name="name">SGD</field>
             <field name="symbol">$</field>
