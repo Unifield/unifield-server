@@ -215,11 +215,10 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
 
         return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
 
-    def getContactName(self, partner_id):
-        addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', partner_id)])
+    def getContactName(self, addr_id):
         res = ''
         if addr_id:
-            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)[0]['name']
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
         return res
 
     def getInstanceAddress(self):
