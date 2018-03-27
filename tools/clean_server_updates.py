@@ -75,7 +75,7 @@ and u.create_date < now() - interval '18 months'
 ct['month18'] = cr.rowcount
 
 # delete orphean "pulled by" records
-cr.execute("delete from sync_server_entity_rel where update_id not in (select id from sync_server_update)")
+cr.execute("delete from sync_server_entity_rel where id in (select r.id from sync_server_entity_rel r left join sync_server_update u on u.id=r.update_id where u.id is null)")
 ct['pulled_by'] = cr.rowcount
 print ct
 
