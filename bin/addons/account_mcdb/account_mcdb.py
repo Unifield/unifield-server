@@ -1315,6 +1315,22 @@ class account_mcdb(osv.osv):
             'target': 'self',
         }
 
+    def combined_export_xls(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in Excel format
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        data = {'selector_id': ids[0]}
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'combined.journals.report.xls',
+            'datas': data,
+            'context': context,
+        }
+
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
