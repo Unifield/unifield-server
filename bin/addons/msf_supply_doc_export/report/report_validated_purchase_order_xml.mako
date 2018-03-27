@@ -26,7 +26,7 @@
         % endif
         <field name="dest_address_id" key="name,parent.partner_id">
             % if o.order_type == 'direct':
-            <field name="delivery_name">${getContactName(o.dest_partner_id.id)|x}</field>
+            <field name="delivery_name">${getContactName(o.dest_address_id.id) or ''|x}</field>
             % else:
             <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
             % endif

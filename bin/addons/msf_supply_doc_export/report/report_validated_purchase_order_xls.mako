@@ -129,7 +129,7 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address name')}</Data></Cell>
         % if o.order_type == 'direct':
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getContactName(o.dest_partner_id.id)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getContactName(o.dest_address_id.id) or ''|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.name or ''|x}</Data></Cell>
         % endif
