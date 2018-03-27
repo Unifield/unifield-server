@@ -41,11 +41,26 @@ def all_files_under(path):
 class automated_import_files_available(osv.osv_memory):
     _name = 'automated.import.files.available'
 
-    def on_change_display_info(self, cr, uid, ids, import_id, context=None):
+    _columns = {
+        'import_id': fields.many2one('automated.import', string='Automated Import', required=True),
+        'po_id': fields.many2one('purchase.order', string='Purchase Order'),
+        'in_id': fields.many2one('stock.picking', string='Incoming Shipment'),
+        'display_info': fields.text(string='Files available', readonly=True),
+        'selected_model': fields.char('Related model', size=256),
+    }
+
+    def on_change_display_info(self, cr, uid, ids, import_id, po_id, in_id, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if po_id:
+            po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
+            po_name = po_name.replace('/', '_')
+        if in_id:
+            in_name = self.pool.get('stock.picking').read(cr, uid, in_id, ['name'], context=context)['name']
+            in_name = in_name.replace('/', '_')
 
         auto_import = self.pool.get('automated.import').browse(cr, uid, import_id, context=context)
         if auto_import.ftp_source_ok:
@@ -62,21 +77,23 @@ class automated_import_files_available(osv.osv_memory):
         else: # local
             file_names = all_files_under(auto_import.src_path)
 
-        msg = ''
-        if not file_names:
+        found = False
+        msg = _('Files available under "%s" (%s folder):\n') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
+        for fn in file_names:
+            if po_id:
+                if fn.find(po_name) != -1:
+                    msg += '\t- %s\n' % os.path.basename(fn)
+                    found = True
+            elif in_id:
+                if fn.find(in_name) != -1:
+                    msg += '\t- %s\n' % os.path.basename(fn)
+                    found = True
+            else:
+                msg += '\t- %s\n' % os.path.basename(fn)
+                found = True
+        if not found:
             msg = _('No files available under "%s" (%s folder)') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
-        else:
-            msg = _('Files available under "%s" (%s folder):\n') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
-            for fn in file_names:
-                msg += '\t- %s\n' % fn
 
-        return {'value': {'display_info': msg}}
-
-
-    _columns = {
-        'import_id': fields.many2one('automated.import', string='Automated Import', required=True),
-        'display_info': fields.text(string='Files available', readonly=True),
-    }
-
+        return {'value': {'display_info': msg, 'selected_model': auto_import.function_id.model_id.model}}
 
 automated_import_files_available()
