@@ -728,7 +728,7 @@ class msf_instance_cloud(osv.osv):
 
             dav.create_folder(self._temp_folder)
             final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
-            temp_drive_file = '%s/%s' % (self._temp_folder, final_name)
+            temp_drive_file = '%s/%s.zip' % (self._temp_folder, local_instance.instance)
 
             dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
             temp_fileobj.close()
