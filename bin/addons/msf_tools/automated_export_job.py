@@ -23,8 +23,6 @@ import os
 import csv
 import time
 import base64
-import hashlib
-import tools
 import tempfile
 
 from osv import osv
