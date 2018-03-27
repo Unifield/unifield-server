@@ -277,6 +277,12 @@
                     &general;
                     &gl_journals_and_periods;
                     &currency;
+                    <separator string=" " colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button icon="gtk-clear" name="button_clear" string="Clear" type="object"/>
+                        <button icon="gtk-print" name="combined_export_pdf" string="Export PDF" type="object"/>
+                        <button icon="gtk-print" name="combined_export_xls" string="Export Excel" type="object"/>
+                    </group>
                 </form>
             </field>
         </record>

@@ -605,6 +605,9 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             name = _('Selector - Analytic')
             view_name = 'account_mcdb_analytic_form'
+        elif res_model == 'combined.line':
+            name = _('Selector - Combined Journals Report')
+            view_name = 'account_mcdb_combined_form'
         if not view_name or not name:
             raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
         # Search view_id
@@ -616,7 +619,7 @@ class account_mcdb(osv.osv):
             'res_model': 'account.mcdb',
             'res_id': res_id,
             'view_type': 'form',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',  # to display the menu on the right
             'view_id': [view_id],
             'context': context,
             'target': 'crush',
@@ -658,6 +661,9 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             name = _('Selector - Analytic')
             view_name = 'account_mcdb_analytic_form'
+        elif res_model == 'combined.line':
+            name = _('Selector - Combined Journals Report')
+            view_name = 'account_mcdb_combined_form'
         if not view_name or not name:
             raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
         # Search view_id
@@ -669,7 +675,7 @@ class account_mcdb(osv.osv):
             'res_model': 'account.mcdb',
             'res_id': res_id,
             'view_type': 'form',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',  # to display the menu on the right
             'view_id': [view_id],
             'context': context,
             'target': 'crush',
