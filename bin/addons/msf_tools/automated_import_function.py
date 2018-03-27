@@ -44,6 +44,7 @@ class automated_import_function(osv.osv):
             string='Method to call',
             required=True,
         ),
+        'startswith': fields.char('Starts with', size=56),
     }
 
     _defaults = {

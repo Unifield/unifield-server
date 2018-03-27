@@ -35,13 +35,15 @@ from tools.translate import _
 from StringIO import StringIO
 
 
-def all_files_under(path):
+def all_files_under(path, startswith=False):
     """
     Iterates through all files that are under the given path.
     :param path: Path on which we want to iterate
     """
     res = []
     for cur_path, dirnames, filenames in os.walk(path):
+        if startswith:
+            filenames = [fn for fn in filenames if fn.startswith(startswith)]
         res.extend([os.path.join(cur_path, fn) for fn in filenames])
         break # don't parse children
     return res
@@ -51,13 +53,15 @@ def get_oldest_filename(job, ftp_connec=None):
     Get the oldest file in local or on FTP server
     '''
     if not job.import_id.ftp_source_ok:
-        return min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+        return min(all_files_under(job.import_id.src_path, job.import_id.function_id.startswith), key=os.path.getmtime)
     else:
         files = []
         ftp_connec.dir(job.import_id.src_path, files.append)
         file_names = []
         for file in files:
             if file.startswith('d'): # directory
+                continue
+            if job.import_id.function_id.startswith and not file.split(' ')[-1].startswith(job.import_id.function_id.startswith):
                 continue
             file_names.append( os.path.join(job.import_id.src_path, file.split(' ')[-1]) )
         res = []
