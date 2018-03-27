@@ -104,7 +104,6 @@ class automated_export_job(osv.osv):
             readonly=True,
             required=True,
         ),
-        'export_path': fields.char(size=512, string='Export path', readonly=True),
     }
 
     _defaults = {
@@ -166,7 +165,6 @@ class automated_export_job(osv.osv):
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
                     'comment': '\n'.join(error_message),
-                    'export_path': context.get('path_to_file', ''),
                     'state': state,
                 }, context=context)
                 is_success = True if not rejected else False
