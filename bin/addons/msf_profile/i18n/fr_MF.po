@@ -13142,6 +13142,7 @@ msgstr "Table name not found for the given object: %s"
 #: selection:purchase.report,priority:0
 #: view:tender:0
 #: selection:tender,priority:0
+#: field:automated.export,priority:0
 msgid "Priority"
 msgstr "Priorité"
 
@@ -21917,6 +21918,9 @@ msgid "Sync order line DB Id of the splitted line"
 msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 
 #. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance, account_override, procurement_request, msf_tools
+#: field:automated.export,name:0
+#: field:automated.export.function,name:0
+#: field:automated.export.job,name:0
 #: field:account.account,name:0
 #: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
@@ -23996,9 +24000,11 @@ msgstr "Ancien code"
 msgid "Chaining Lead Time"
 msgstr "Délai d'enchaînement"
 
-#. modules: base, procurement_report
+#. modules: base, procurement_report, msf_tools
 #: field:ir.cron,interval_type:0
 #: field:procurement.batch.cron,interval_type:0
+#: field:automated.export,interval_unit:0
+#: field:automated.import,interval_unit:0
 msgid "Interval Unit"
 msgstr "Unité Intervalle"
 
@@ -25194,8 +25200,9 @@ msgstr "Export Files in Excel Format"
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Activate"
-msgstr "Activate"
+msgstr "Activer"
 
 #. module: account_payment
 #: report:payment.order:0
@@ -26369,6 +26376,7 @@ msgstr "Dominican Republic"
 
 #. module: msf_tools
 #: field:automated.import,function_id:0
+#: field:automated.export,function_id:0
 msgid "Functionality"
 msgstr "Fonctionnalité"
 
@@ -49496,6 +49504,7 @@ msgstr "Assistant pour traiter les Mouvements Internes"
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Run job manually"
 msgstr "Lancer la procédure manuellement"
 
@@ -72954,10 +72963,12 @@ msgstr "Show Inactive"
 msgid "msf.instance"
 msgstr "msf.instance"
 
-#. module: sync_client
+#. module: sync_client, msf_tools
 #: field:sync.client.message_received,remote_call:0
 #: field:sync.client.message_rule,remote_call:0
 #: field:sync.client.message_to_send,remote_call:0
+#: field:automated.export.function,method_to_call:0
+#: field:automated.import.function,method_to_call:0
 msgid "Method to call"
 msgstr "Méthode à utiliser"
 
@@ -80783,11 +80794,6 @@ msgstr "Etat Civil"
 msgid "Address name"
 msgstr "Address name"
 
-#. module: msf_tools
-#: field:automated.import,interval_unit:0
-msgid "Interval Unit"
-msgstr "Interval Unit"
-
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:749
 #: report:addons/msf_budget/report/monthly_budget.mako:279
@@ -81502,9 +81508,10 @@ msgid "Purchase Dashboard"
 msgstr "Achat - Tableau de bord"
 
 #. module: msf_tools
+#: field:automated.export,interval:0
 #: field:automated.import,interval:0
 msgid "Interval number"
-msgstr "Interval number"
+msgstr "Valeur de l'intervalle"
 
 #. module: procurement_auto
 #: model:ir.actions.act_window,help:procurement_auto.action_automatic_supply_tree
@@ -83791,8 +83798,9 @@ msgstr "Objet de base"
 
 #. module: msf_tools
 #: field:automated.import,start_time:0
+#: field:automated.export,start_time:0
 msgid "Date and time of first planned execution"
-msgstr "Date and time of first planned execution"
+msgstr "Date et heure de la première execution plannifiée"
 
 #. module: purchase
 #: field:purchase.order,unallocation_ok:0
@@ -89142,11 +89150,6 @@ msgstr "Enfants consolidés"
 #, python-format
 msgid "Nomen Family"
 msgstr "Nomen Famille"
-
-#. module: msf_tools
-#: field:automated.import.function,method_to_call:0
-msgid "Method to call"
-msgstr "Method to call"
 
 #. modules: account, hr, export_import_lang, procurement, base, analytic_distribution
 #: view:account.analytic.account:0
@@ -103660,6 +103663,7 @@ msgstr "OpenERP ajoutera automatiquement quelques '0' à gauche du 'Prochain Num
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Scheduler configuration"
 msgstr "Configuration du planificateur"
 
@@ -107685,3 +107689,19 @@ msgstr "Connection succeeded"
 msgid "%s :: New export job created"
 msgstr "%s :: Nouvelle procédure d'export automatisée créée"
 
+#. module: msf_tools
+#: view:automated.export:0
+#: view:automated.import:0
+msgid "Test connection"
+msgstr "Tester la connection"
+
+#. module: msf_tools
+#: field:automated.export,dest_path_failure:0
+#: field:automated.import,dest_path_failure:0
+msgid "Destination Path (failure)"
+msgstr "Chemin de destination (échec)"
+
+#. module: msf_tools
+#: field:automated.import.function,startswith:0
+msgid "Starts with"
+msgstr "Commence par"
