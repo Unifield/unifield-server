@@ -55,6 +55,9 @@ class automated_import_files_available(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if not import_id:
+            return {}
+
         if po_id:
             po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
             po_name = po_name.replace('/', '_')
@@ -80,6 +83,8 @@ class automated_import_files_available(osv.osv_memory):
         found = False
         msg = _('Files available under "%s" (%s folder):\n') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
         for fn in file_names:
+            if auto_import.function_id.startswith and not os.path.basename(fn).startswith(auto_import.function_id.startswith):
+                continue
             if po_id:
                 if fn.find(po_name) != -1:
                     msg += '\t- %s\n' % os.path.basename(fn)

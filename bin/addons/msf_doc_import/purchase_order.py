@@ -325,10 +325,8 @@ class purchase_order(osv.osv):
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
+            self.infolog(cr, uid, _('%s successfully exported') % po_name)
             
-        if processed:
-            self.infolog(cr, uid, _('POs successfully exported'))
-
         return processed, rejected, ['PO id', 'PO name']
 
 

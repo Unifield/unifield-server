@@ -325,6 +325,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             cr.commit()
 
         return res
+        
 
     def _generate_ir_cron(self, import_brw):
         """
