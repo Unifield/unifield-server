@@ -2422,7 +2422,7 @@ msgstr "Rechercher Réclamation"
 #. module: msf_tools
 #: view:automated.import.function:0
 msgid "Automated import function"
-msgstr "Automated import function"
+msgstr "Fonction d'import automatisé"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_hard_posting
@@ -5272,7 +5272,7 @@ msgstr "Ré-evaluation"
 #: model:ir.actions.act_window,name:msf_tools.automated_import_job_action
 #: model:ir.ui.menu,name:msf_tools.automated_import_job_menu
 msgid "Import job reports"
-msgstr "Import job reports"
+msgstr "Rapports d'import automatisé"
 
 #. module: base
 #: selection:res.widget.wizard,widgets_list:0
@@ -15406,9 +15406,10 @@ msgid "Sierra Leone"
 msgstr "Sierra Leone"
 
 #. module: msf_tools
+#: field:automated.export.job,end_time:0
 #: field:automated.import.job,end_time:0
 msgid "End time"
-msgstr "End time"
+msgstr "Date fin"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:104
@@ -23049,9 +23050,10 @@ msgid "My Logs"
 msgstr "Mes journaux"
 
 #. module: msf_tools
+#: field:automated.export.job,start_time:0
 #: field:automated.import.job,start_time:0
 msgid "Start time"
-msgstr "Start time"
+msgstr "Date début"
 
 #. modules: procurement_cycle, threshold_value
 #: field:stock.warehouse.order.cycle.line,expiry_before:0
@@ -27323,9 +27325,10 @@ msgid "This is the list of all delivery orders that have to be prepared, accordi
 msgstr "Ceci est la liste de tous les bons de livraison à préparer, d'après vos différentes commandes clients et de vos règles logistiques."
 
 #. module: msf_tools
+#: field:automated.export.job,nb_rejected_records:0
 #: field:automated.import.job,nb_rejected_records:0
 msgid "# of rejected records"
-msgstr "# of rejected records"
+msgstr "Lignes rejetées"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_selection.py:104
@@ -42683,9 +42686,10 @@ msgid "Budgeted expenses for the period M+1"
 msgstr "Dépenses budgétisées pour la période M+1"
 
 #. module: msf_tools
+#: field:automated.export.job,nb_processed_records:0
 #: field:automated.import.job,nb_processed_records:0
 msgid "# of processed records"
-msgstr "# of processed records"
+msgstr "Lignes importées"
 
 #. modules: account, stock
 #: code:addons/account/account_move_line.py:849
@@ -78631,7 +78635,7 @@ msgstr "Planning de Réapprovisionnement"
 #. module: msf_tools
 #: view:automated.import.job:0
 msgid "Import job report"
-msgstr "Import job report"
+msgstr "Rapport d'import automatisé"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -81737,7 +81741,7 @@ msgstr "Object"
 #: model:ir.actions.act_window,name:msf_tools.automated_import_function_action
 #: model:ir.ui.menu,name:msf_tools.automated_import_function_menu
 msgid "Automated import functions"
-msgstr "Automated import functions"
+msgstr "Fonctions d'import automatisé"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/consumption_calculation.py:629
@@ -87543,7 +87547,12 @@ msgstr "Le prix unitaire doit être supérieure à 0.00"
 #: view:automated.import:0
 #: field:automated.import.job,import_id:0
 msgid "Automated import"
-msgstr "Automated import"
+msgstr "Import automatisé"
+
+#. module: msf_tools
+#: field:automated.import.files.available,import_id:0
+msgid "Automated Import"
+msgstr "Import Automatisé"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.track_line_old
@@ -107705,3 +107714,24 @@ msgstr "Chemin de destination (échec)"
 #: field:automated.import.function,startswith:0
 msgid "Starts with"
 msgstr "Commence par"
+
+#. module: msf_tools
+#: view:automated.import.files.available:0
+#: field:automated.import.files.available,display_info:0
+#: model:ir.actions.act_window,name:msf_tools.automated_import_available_action
+#: model:ir.ui.menu,name:msf_tools.automated_import_file_available
+msgid "Files available"
+msgstr "Fichiers disponibles"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:100
+#, python-format
+msgid "No files available under \"%s\" (%s folder)"
+msgstr "Pas de fichier à importer dans \"%s\" (%s dossier)"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:84
+#, python-format
+msgid "Files available under \"%s\" (%s folder):\n"
+""
+msgstr "Fichiers disponibles sous \"%s\" (%s dossier):\n"
