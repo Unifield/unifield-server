@@ -106,6 +106,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="18"/>
 % endif
 
+<Row>
+    <Cell ss:StyleID="ssCell">
+        <Data ss:Type="String">${ criteria() |x}</Data>
+    </Cell>
+</Row>
+
 <!-- TABLE HEADER -->
 <Row>
     <Cell ss:StyleID="ssHeader">

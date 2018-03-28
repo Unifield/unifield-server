@@ -37,6 +37,7 @@ class combined_journals_report(report_sxw.rml_parse):
         self.localcontext.update({
             'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
+            'criteria': self._get_criteria,
         })
 
     def _cmp_sequence_account_type(self, a, b):
@@ -176,6 +177,21 @@ class combined_journals_report(report_sxw.rml_parse):
             }
             res.append(al_dict)
         return res
+
+    def _get_criteria(self):
+        """
+        Returns a String corresponding to the criteria selected
+        """
+        selector_obj = self.pool.get('account.mcdb')
+        # first get the Analytic axis
+        category = (self.analytic_axis == 'f1' and 'Free 1') or (self.analytic_axis == 'f2' and 'Free 2') or 'Funding Pool'
+        criteria = 'Display: %s' % category
+        # then get all the other criteria from the 'account.move.line' model
+        model = 'account.move.line'
+        aml_selection = selector_obj.get_selection_from_domain(self.cr, self.uid, self.aml_domain, model, context=self.context)
+        if aml_selection:
+            criteria = '%s ; %s' % (criteria, aml_selection)
+        return criteria
 
     def set_context(self, objects, data, ids, report_type=None):
         """
