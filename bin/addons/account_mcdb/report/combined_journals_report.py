@@ -37,11 +37,130 @@ class combined_journals_report(report_sxw.rml_parse):
             'lines': self._get_lines,
         })
 
+    def _cmp_sequence_account_type(self, a, b):
+        """
+        Comparison function to sort the JIs by Entry Sequence and then Account "analytic_addicted"
+        """
+        if a['entry_sequence'] > b['entry_sequence']:
+            return 1
+        elif a['entry_sequence'] < b['entry_sequence']:
+            return -1
+        else:
+            if a['account_analytic_addicted'] > b['account_analytic_addicted']:
+                return 1
+            elif a['account_analytic_addicted'] < b['account_analytic_addicted']:
+                return -1
+        return 0
+
     def _get_lines(self):
         """
-        Returns a list of dicts... (TODO)
+        Returns a list of dicts containing the data to display:
+        - first, ordered by Entry Sequence:
+            => the JIs booked on a "NON analytic_addicted" account
+            => the AJIs linked to the same JE
+        - then, ordered by Entry Sequence:
+            => the AJIs without JIs
         """
         res = []
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        user_obj = self.pool.get('res.users')
+        company = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
+        func_currency_name = company.currency_id.name
+        # get the JIs corresponding to the criteria selected
+        aml_ids = aml_obj.search(self.cr, self.uid, self.aml_domain, context=self.context, order='move_id ASC')
+        amls = []
+        for aml in aml_obj.browse(self.cr, self.uid, aml_ids, context=self.context):
+            aml_dict = {
+                'type': 'aml',
+                'id': aml.id,
+                'prop_instance': aml.instance_id and aml.instance_id.code or '',
+                'journal_code': aml.journal_id.code,
+                'entry_sequence': aml.move_id.name,
+                'description': aml.name,
+                'reference': aml.ref or '',
+                'document_date': aml.document_date,
+                'posting_date': aml.date,
+                'period': aml.period_id.code or '',
+                'gl_account': aml.account_id.code,
+                'account_analytic_addicted': aml.account_id.is_analytic_addicted and 1 or 0,
+                'third_party': aml.partner_txt or '',
+                'cost_center': '',
+                'destination': '',
+                'funding_pool': '',
+                'analytic_account': '',
+                'booking_debit': aml.debit_currency or 0.0,
+                'booking_credit': aml.credit_currency or 0.0,
+                'booking_currency': aml.currency_id and aml.currency_id.name or '',
+                'func_debit': aml.debit or 0.0,
+                'func_credit': aml.credit or 0.0,
+                'func_currency': func_currency_name,
+            }
+            amls.append(aml_dict)
+        amls.sort(self._cmp_sequence_account_type)
+        for ml in amls:
+            # if the JI has no related AJIs, store it directly
+            aal_ids = aal_obj.search(self.cr, self.uid, [('move_id', '=', ml['id'])], context=self.context, order='NO_ORDER')
+            if not aal_ids:
+                res.append(ml)
+            # else store only the related AJIs
+            else:
+                for aal in aal_obj.browse(self.cr, self.uid, aal_ids, context=self.context) :
+                    aal_dict = {
+                        'type': 'aal',
+                        'id': aal.id,
+                        'prop_instance': aal.instance_id and aal.instance_id.code or '',
+                        'journal_code': aal.journal_id.code,
+                        'entry_sequence': aal.entry_sequence or '',
+                        'description': aal.name,
+                        'reference': aal.ref or '',
+                        'document_date': aal.document_date,
+                        'posting_date': aal.date,
+                        'period': aal.period_id and aal.period_id.code or '',
+                        'gl_account': aal.general_account_id.code,
+                        'account_analytic_addicted': 1,
+                        'third_party': aal.partner_txt or '',
+                        'cost_center': aal.cost_center_id and aal.cost_center_id.code or '',
+                        'destination': aal.destination_id and aal.destination_id.code or '',
+                        'funding_pool': aal.account_id.code or '',
+                        'analytic_account': aal.account_id.code or '',  # can be a Funding Pool or a Free1/2 account
+                        'booking_debit': aal.amount_currency < 0 and aal.amount_currency or 0.0,
+                        'booking_credit': aal.amount_currency >= 0 and aal.amount_currency or 0.0,
+                        'booking_currency': aal.currency_id and aal.currency_id.name or '',
+                        'func_debit': aal.amount < 0 and aal.amount or 0.0,
+                        'func_credit': aal.amount >= 0 and aal.amount or 0.0,
+                        'func_currency': func_currency_name,
+                    }
+                    res.append(aal_dict)
+        # get the AJIs corresponding to the criteria selected AND not linked to a JI (use self.aal_domain)
+        orphan_aal_ids = aal_obj.search(self.cr, self.uid, self.aal_domain, context=self.context, order='entry_sequence')
+        for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, context=self.context):
+            al_dict = {
+                'type': 'aal',
+                'id': al.id,
+                'prop_instance': al.instance_id and al.instance_id.code or '',
+                'journal_code': al.journal_id.code,
+                'entry_sequence': al.entry_sequence or '',
+                'description': al.name,
+                'reference': al.ref or '',
+                'document_date': al.document_date,
+                'posting_date': al.date,
+                'period': al.period_id and al.period_id.code or '',
+                'gl_account': al.general_account_id.code,
+                'account_analytic_addicted': 1,
+                'third_party': al.partner_txt or '',
+                'cost_center': al.cost_center_id and al.cost_center_id.code or '',
+                'destination': al.destination_id and al.destination_id.code or '',
+                'funding_pool': al.account_id.code or '',
+                'analytic_account': al.account_id.code or '',  # can be a Funding Pool or a Free1/2 account
+                'booking_debit': al.amount_currency < 0 and al.amount_currency or 0.0,
+                'booking_credit': al.amount_currency >= 0 and al.amount_currency or 0.0,
+                'booking_currency': al.currency_id and al.currency_id.name or '',
+                'func_debit': al.amount < 0 and al.amount or 0.0,
+                'func_credit': al.amount >= 0 and al.amount or 0.0,
+                'func_currency': func_currency_name,
+            }
+            res.append(al_dict)
         return res
 
     def set_context(self, objects, data, ids, report_type=None):

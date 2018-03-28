@@ -172,7 +172,55 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${line['journal_code']|x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['entry_seq']|x}</Data>
+        <Data ss:Type="String">${line['entry_sequence']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['description']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['reference']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['document_date']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['posting_date']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['period']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['gl_account']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['third_party']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['cost_center']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['destination']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['funding_pool']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['booking_debit']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['booking_credit']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['booking_currency']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['func_debit']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['func_credit']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['func_currency']|x}</Data>
     </Cell>
 </Row>
 % endfor
