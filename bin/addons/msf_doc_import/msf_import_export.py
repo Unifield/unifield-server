@@ -51,12 +51,19 @@ class msf_import_export(osv.osv_memory):
     def _get_model_list(self, cr, uid, context=None):
         """The list of available model depend on the menu entry selected
         """
+
         if context is None:
             context = {}
+
+        realuser = hasattr(uid, 'realUid') and uid.realUid or uid
         domain_type = None
+        result_list = []
         if 'domain_type' in context:
             domain_type = context['domain_type']
-        result_list = [(key, _(value['name'])) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
+        for key, value in MODEL_DICT.items():
+            if value['domain_type'] == domain_type:
+                if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
+                    result_list.append((key, _(value['name'])))
         return [('', '')] + sorted(result_list, key=lambda a: a[0])
 
     _columns = {
@@ -249,7 +256,10 @@ class msf_import_export(osv.osv_memory):
                 res['name'] = custom_name
             else:
                 if child_field == 'id':
-                    res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    if first_part != 'id':
+                        res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    else:
+                        res['name'] = 'id'
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                                          _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -480,7 +490,10 @@ class msf_import_export(osv.osv_memory):
                 column_name = custom_name
             else:
                 if child_field == 'id':
-                    column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    if first_part != 'id':
+                        column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    else:
+                        column_name = 'id'
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                                          _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -622,7 +635,7 @@ class msf_import_export(osv.osv_memory):
 
         # Manage errors
         import_errors = {}
-
+        allow_partial = MODEL_DICT[import_brw.model_list_selection].get('partial')
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -727,6 +740,9 @@ class msf_import_export(osv.osv_memory):
             if value is None or field not in fields_def:
                 return
             if '.' not in field:
+                if fields_def[field]['type'] == 'char' and value and isinstance(value, basestring) and len(value.splitlines()) > 1 and ( field != 'name' or impobj != 'res.partner'):
+                    raise osv.except_osv(_('Warning !'), _("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field, tools.ustr(value)))
+
                 if fields_def[field]['type'] == 'selection':
                     if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
@@ -754,6 +770,7 @@ class msf_import_export(osv.osv_memory):
         nb_imported_lines = 0
         nb_lines_deleted = 0
         header_codes = [x[3] for x in headers]
+
         if import_data_obj.pre_hook.get(impobj._name):
             # for headers mod.
             col_datas = import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
@@ -790,6 +807,8 @@ class msf_import_export(osv.osv_memory):
                 if import_data_obj.pre_hook.get(impobj._name):
                     import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
+                # Search if an object already exist. If not, create it.
+                ids_to_update = []
                 for n, h in enumerate(header_codes):
                     if h in MODEL_DATA_DICT[import_brw.model_list_selection].get('ignore_field', []):
                         continue
@@ -818,7 +837,10 @@ class msf_import_export(osv.osv_memory):
                         o2mdatas = {}
                         delimiter = False
                         newo2m = False
-                    if '.' not in h:
+                    if h == 'id' and line_data[n]:
+                        ids_to_update = _get_obj('id.id', line_data[n], {'id': {'relation': impobj._name}})
+
+                    elif '.' not in h:
                         # type datetime, date, bool, int, float
                         value = process_data(h, line_data[n], fields_def)
                         if value is not None:
@@ -848,8 +870,6 @@ class msf_import_export(osv.osv_memory):
                     import_data_obj.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
 
 
-                # Search if an object already exist. If not, create it.
-                ids_to_update = []
                 if impobj._name == 'product.product':
                     # Allow to update the product, use xmlid_code or default_code
                     if 'xmlid_code' in data:
@@ -862,14 +882,13 @@ class msf_import_export(osv.osv_memory):
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
                                                              data['msfid'])], order='NO_ORDER')
                 elif impobj._name == 'product.category':
-                    ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                                                             data['msfid'])], order='NO_ORDER')
+                    ids_to_update = impobj.search(cr, uid, [('family_id', '=',
+                                                             data['family_id'])], order='NO_ORDER')
                 elif impobj._name == 'supplier.catalogue':
                     ids_to_update = impobj.search(cr, uid, [
                         ('name', '=', data['name']),
                         ('partner_id', '=', data['partner_id']),
                     ], order='NO_ORDER')
-
                 if import_brw.model_list_selection == 'supplier_catalogue_update':
                     data['catalogue_id'] = import_brw.supplier_catalogue_id.id
                     ids_to_update = impobj.search(cr, uid, [
@@ -888,6 +907,39 @@ class msf_import_export(osv.osv_memory):
                     if new_product_id:
                         ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', new_product_id[0])], context=context)
                     data['name'] = new_product_id and new_product_id[0] or False
+
+                if import_brw.model_list_selection == 'access_control_list':
+                    ids_to_update = self.pool.get('ir.model.access').search(cr, uid, [('model_id', '=', data.get('model_id')), ('name', '=', data.get('name'))])
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for model=%s, name=%s' % (len(ids_to_update), data.get('model_id'), data.get('name')))
+
+                if import_brw.model_list_selection == 'field_access_rule_lines':
+                    ids_to_update = self.pool.get('msf_field_access_rights.field_access_rule_line').search(cr, uid, [('field_access_rule', '=', data.get('field_access_rule')), ('field', '=', data.get('field'))], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, field=%s' % (len(ids_to_update), data.get('field_access_rule'), data.get('field')))
+
+                if import_brw.model_list_selection == 'field_access_rules':
+                    if not data.get('group_ids'):
+                        data['group_ids'] = [(6, 0, [])]
+                    ids_to_update = self.pool.get('msf_field_access_rights.field_access_rule').search(cr, uid, [('name', '=', data.get('name')), ('model_id', '=', data.get('model_id')), ('active', 'in', ['t', 'f'])], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
+
+                if import_brw.model_list_selection == 'record_rules':
+                    if not data.get('groups'):
+                        data['groups'] = [(6, 0, [])]
+
+                    ids_to_update = self.pool.get('ir.rule').search(cr, uid, [('name', '=', data.get('name')), ('model_id', '=', data.get('model_id'))], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
+
+                if import_brw.model_list_selection == 'button_access_rules':
+                    if not data.get('group_ids'):
+                        data['group_ids'] = [(6, 0, [])]
+
+                if import_brw.model_list_selection == 'window_actions':
+                    if not data.get('groups_id'):
+                        data['groups_id'] = [(6, 0, [])]
 
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
@@ -910,6 +962,8 @@ class msf_import_export(osv.osv_memory):
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
+                    if allow_partial:
+                        cr.commit()
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
@@ -918,10 +972,10 @@ class msf_import_export(osv.osv_memory):
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
                 cr.rollback()
-                logging.getLogger('import data').info('Error %s' % e)
-                save_error(e, row_index)
+                logging.getLogger('import data').info('Error %s' % tools.ustr(e))
+                save_error(tools.ustr(e), row_index)
                 nb_error += 1
-                rejected.append((row_index+1, line_data, e))
+                rejected.append((row_index+1, line_data, tools.ustr(e)))
             else:
                 nb_imported_lines += 1
 
@@ -943,12 +997,14 @@ class msf_import_export(osv.osv_memory):
                 if not err_msg.endswith('\n'):
                     err_msg += '\n'
 
-        if err_msg:
+        if err_msg and not allow_partial:
             cr.rollback()
 
         info_msg = _('''Processing of file completed in %s second(s)!
 - Total lines to import: %s
 - Total lines %s: %s %s
+- Total lines updated: %s
+- Total lines created: %s
 - Total lines deleted: %s
 - Total lines with errors: %s %s
 %s
@@ -960,10 +1016,12 @@ class msf_import_export(osv.osv_memory):
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
                 len(import_warnings.keys()) or '',
             ),
+            nb_update_success,
+            nb_succes,
             nb_lines_deleted,
             err_msg and len(import_errors.keys()) or 0,
             err_msg and _('(see error messages below)'),
-            err_msg and _("no data will be imported until all the error messages are corrected") or '',
+            err_msg and not allow_partial and _("no data will be imported until all the error messages are corrected") or '',
         )
 
         self.write(cr, uid, [import_brw.id], {

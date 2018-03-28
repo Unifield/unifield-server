@@ -35137,6 +35137,7 @@ msgstr "Have Cost Center changed?"
 #: model:ir.ui.menu,name:base.menu_sales
 #: selection:board.note,type:0
 #: model:process.process,name:sale.process_process_salesprocess0
+#: model:ir.actions.act_window,name:sale.act_res_partner_2_sale_order
 msgid "Sales"
 msgstr "Commandes"
 
@@ -72765,7 +72766,7 @@ msgstr "Projet"
 #: model:ir.ui.menu,name:base.menu_base_partner
 #: field:sale.followup.multi.wizard,order_ids:0
 msgid "Orders"
-msgstr "Orders"
+msgstr "Commandes"
 
 #. module: mission_stock
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:217
@@ -89142,11 +89143,6 @@ msgstr "Nomen Famille"
 #: field:automated.import.function,method_to_call:0
 msgid "Method to call"
 msgstr "Method to call"
-
-#. module: sale
-#: model:ir.actions.act_window,name:sale.act_res_partner_2_sale_order
-msgid "Sales"
-msgstr "Sales"
 
 #. modules: account, hr, export_import_lang, procurement, base, analytic_distribution
 #: view:account.analytic.account:0

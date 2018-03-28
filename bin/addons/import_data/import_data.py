@@ -69,7 +69,7 @@ class import_data(osv.osv_memory):
         context = {}
 
         msfid = data.get('msfid', False)
-        if msfid:
+        if msfid and not data.get('family_id'):
             nomen_ids = n_obj.search(cr, uid, [('msfid', '=', msfid)], limit=1, context=context)
             if nomen_ids:
                 data['family_id'] = nomen_ids[0]
@@ -77,6 +77,8 @@ class import_data(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
                                      % (msfid))
+        elif data.get('family_id'):
+            data['msfid'] = n_obj.read(cr, uid, data['family_id'], ['msfid'])['msfid']
         else:
             raise osv.except_osv(_('Warning !'),
                                  _('Product category MSFID required'))
