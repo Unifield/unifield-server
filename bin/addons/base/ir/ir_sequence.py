@@ -46,7 +46,7 @@ class ir_sequence(osv.osv):
             else:
                 # currval can't be used as it returns the value
                 # most recently obtained by nextval for this sequence in the current session
-                cr.execute("select last_value, is_called, increment_by from ir_sequence_%03d" % seq['id'])
+                cr.execute("select last_value, is_called, increment_by from ir_sequence_%03d" % seq['id'])  # not_a_user_entry
                 data = cr.fetchone()
                 ret[seq['id']] = data[0]
                 if data[1]:
@@ -104,7 +104,7 @@ class ir_sequence(osv.osv):
         if number_increment == 0:
             raise osv.except_osv(_('Warning!'),_("Increment number must not be zero."))
         assert isinstance(id, (int, long))
-        sql = "CREATE SEQUENCE ir_sequence_%03d INCREMENT BY %%s START WITH %%s" % id
+        sql = "CREATE SEQUENCE ir_sequence_%03d INCREMENT BY %%s START WITH %%s" % id  # not_a_user_entry
         cr.execute(sql, (number_increment, number_next))
 
     def _drop_sequence(self, cr, ids):
@@ -117,7 +117,7 @@ class ir_sequence(osv.osv):
 
         # RESTRICT is the default; it prevents dropping the sequence if an
         # object depends on it.
-        cr.execute("DROP SEQUENCE IF EXISTS %s RESTRICT " % names)
+        cr.execute("DROP SEQUENCE IF EXISTS %s RESTRICT " % names)  # not_a_user_entry
 
     def _alter_sequence(self, cr, id, number_increment):
         """ Alter a PostreSQL sequence.
@@ -129,13 +129,13 @@ class ir_sequence(osv.osv):
         assert isinstance(id, (int, long))
         cr.execute("""
             ALTER SEQUENCE ir_sequence_%03d INCREMENT BY %%s
-            """ % id, (number_increment,))
+            """ % id, (number_increment,))  # not_a_user_entry
 
     def create(self, cr, uid, values, context=None):
         values = self._add_missing_default_values(cr, uid, values, context)
         values['id'] = super(ir_sequence, self).create(cr, uid, values, context)
         if values['implementation'] == 'psql':
-            f = self._create_sequence(cr, values['id'], values['number_increment'], values['number_next'])
+            self._create_sequence(cr, values['id'], values['number_increment'], values['number_next'])
         return values['id']
 
     def unlink(self, cr, uid, ids, context=None):
@@ -162,7 +162,7 @@ class ir_sequence(osv.osv):
                         self._alter_sequence(cr, row['id'], i)
                 else:
                     self._drop_sequence(cr, row['id'])
-                    cr.execute('update %s set number_next=%%s where id=%%s ' % (self._table, ), (n, row['id']))
+                    cr.execute('update %s set number_next=%%s where id=%%s ' % (self._table, ), (n, row['id']))  # not_a_user_entry
             else:
                 if new_implementation in ('no_gap', None):
                     pass
@@ -201,7 +201,7 @@ class ir_sequence(osv.osv):
         if context is None:
             context = {}
         if seq['implementation'] == 'psql':
-            cr.execute("SELECT nextval('ir_sequence_%03d')" % seq['id'])
+            cr.execute("SELECT nextval('ir_sequence_%03d')" % seq['id'])  # not_a_user_entry
             seq['number_next'] = cr.fetchone()
         else:
             cr.execute("SELECT number_next FROM ir_sequence WHERE id=%s FOR UPDATE NOWAIT", (seq['id'],))
@@ -229,7 +229,7 @@ class ir_sequence(osv.osv):
             WHERE %s=%%s
               AND active=true
               AND (company_id in %%s or company_id is NULL)
-            ORDER BY company_id, id''' % code_or_id, (sequence_code_or_id, tuple(company_ids)))
+            ORDER BY company_id, id''' % code_or_id, (sequence_code_or_id, tuple(company_ids)))  # not_a_user_entry
         res = cr.dictfetchone()
         return self._next(cr, uid, res, context=context)
 

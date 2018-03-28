@@ -820,7 +820,7 @@ class stock_mission_report(osv.osv):
                                 FROM
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
-                            ''' % report['id'])
+                            ''', (report['id'],))
                 for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
                     line_obj.create(cr, uid, {
                         'product_id': product,
@@ -980,11 +980,10 @@ class stock_mission_report(osv.osv):
                         FROM stock_move
                         WHERE state = 'done'
                         AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''' % (report_id))
+            ''', (report_id,))
             res = cr.fetchall()
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
-                           (report_id, move[0]))
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)', (report_id, move[0]))
                 product = product_obj.browse(cr, uid, move[1],
                                              fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
@@ -1601,7 +1600,7 @@ class stock_mission_report_line(osv.osv):
                     central_qty=%s, cross_qty=%s, secondary_qty=%s,
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
                     wh_qty=%s
-                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
+                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,  # not_a_user_entry
                                       line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id))
         return True
 

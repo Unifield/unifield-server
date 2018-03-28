@@ -48,20 +48,19 @@ class expression(object):
         res = []
         if ids:
             if op in ['<','>','>=','<=']:
-                cr.execute('SELECT "%s"'    \
-                           '  FROM "%s"'    \
-                           ' WHERE "%s" %s %%s' % (s, f, w, op), (ids[0],))
+                cr.execute("""SELECT "%s"
+                              FROM "%s"
+                              WHERE "%s" %s %%s""" % (s, f, w, op), (ids[0],))  # not_a_user_entry
                 res.extend([r[0] for r in cr.fetchall()])
             else:
                 for i in range(0, len(ids), cr.IN_MAX):
                     subids = ids[i:i+cr.IN_MAX]
-                    cr.execute('SELECT "%s"'    \
-                               '  FROM "%s"'    \
-                               '  WHERE "%s" IN %%s' % (s, f, w),(tuple(subids),))
+                    cr.execute("""SELECT "%s"
+                                  FROM "%s"
+                                  WHERE "%s" IN %%s""" % (s, f, w),(tuple(subids),))  # not_a_user_entry
                     res.extend([r[0] for r in cr.fetchall()])
         else:
-            cr.execute('SELECT distinct("%s")'    \
-                       '  FROM "%s" where "%s" is not null'  % (s, f, s)),
+            cr.execute('SELECT distinct("%s")  FROM "%s" where "%s" is not null'  % (s, f, s))   # not_a_user_entry
             res.extend([r[0] for r in cr.fetchall()])
         return res
 

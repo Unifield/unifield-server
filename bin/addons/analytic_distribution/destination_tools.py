@@ -48,15 +48,14 @@ class many2many_sorted(fields.many2many):
 
         if self._rel == 'account_destination_link' and not context.get('display_disabled'):
             where_c = " %s AND disabled='f' " % (where_c, )
-        query = 'SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s \
-                   FROM %(rel)s, %(from_c)s \
-                  WHERE %(rel)s.%(id1)s IN %%s \
-                    AND %(rel)s.%(id2)s = %(tbl)s.id \
-                 %(where_c)s  \
-                 %(order_by)s \
-                 %(limit)s \
-                 OFFSET %(offset)d' \
-            % {'rel': self._rel,
+        query = '''SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s
+                   FROM %(rel)s, %(from_c)s
+                  WHERE %(rel)s.%(id1)s IN %%s
+                    AND %(rel)s.%(id2)s = %(tbl)s.id
+                 %(where_c)s
+                 %(order_by)s
+                 %(limit)s
+                 OFFSET %(offset)d''' % {'rel': self._rel,  # not_a_user_entry
                'from_c': from_c,
                'tbl': obj._table,
                'id1': self._id1,
@@ -103,15 +102,15 @@ class many2many_notlazy(many2many_sorted):
 
                 # JIRA UTP-334
                 if self._rel == 'account_destination_link':
-                    cr.execute('select id from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+                    cr.execute('select id from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)  # not_a_user_entry
                     unlink_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
                     for unlinked_id in cr.fetchall():
                         unlink_obj.unlink(cr, user, unlinked_id[0])
                 else:
-                    cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+                    cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)  # not_a_user_entry
 
 
-                cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [m_id, ])
+                cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [m_id, ])  # not_a_user_entry
                 existing = [x[0] for x in cr.fetchall()]
 
                 for act_nbr in act[2]:
@@ -120,7 +119,7 @@ class many2many_notlazy(many2many_sorted):
                             link_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
                             link_obj.create(cr, user, {self._id1: m_id, self._id2: act_nbr})
                         else:
-                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (m_id, act_nbr))
+                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (m_id, act_nbr))  # not_a_user_entry
 
             else:
                 newargs.append(act)

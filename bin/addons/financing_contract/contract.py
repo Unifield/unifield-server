@@ -656,7 +656,7 @@ class financing_contract_contract(osv.osv):
 
         res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
-            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract

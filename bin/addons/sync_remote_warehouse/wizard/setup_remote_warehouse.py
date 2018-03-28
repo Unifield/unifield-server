@@ -117,19 +117,19 @@ class setup_remote_warehouse(osv.osv_memory):
                 temp = 'ir_sequence_%03d' % seq['id']
                 if suffix == '-RW':
                     # US-27: Reset the sequence for the RW instance
-                    cr.execute("SELECT 0 FROM pg_class where relname = '%s'" % temp)
+                    cr.execute("SELECT 0 FROM pg_class where relname = '%s'" % temp)  # not_a_user_entry
                     res = cr.dictfetchone()
                     if res:
-                        cr.execute("select last_value from %s" % temp)
+                        cr.execute("select last_value from %s" % temp)  # not_a_user_entry
                         res = cr.dictfetchone()
                         if res:
                             dict_seq_values[temp] = res['last_value']
-                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(1))
+                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(1))  # not_a_user_entry
                 else:
                     # US-27: Revert all the sequence that has been set before
                     value = dict_seq_values.get(temp, False)
                     if value:
-                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(value + 1))
+                        cr.execute("ALTER SEQUENCE " + temp +" RESTART WITH " + str(value + 1))  # not_a_user_entry
                 new_suffix = '%s%s' % (old_suffix, suffix)
                 seq_obj.write(cr, uid, [seq.id], {'suffix': new_suffix}, context=context)
 

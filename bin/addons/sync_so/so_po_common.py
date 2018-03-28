@@ -170,7 +170,7 @@ class so_po_common(osv.osv_memory):
         seq_tools = self.pool.get('sequence.tools')
 
         # Make sure that even if the FO/PO has no line, then the default value is 1
-        cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
+        cr.execute("select max(line_number) from %s where order_id = %%s" % order_line_object, (str(order_id),))  # not_a_user_entry
         for x in cr.fetchall():
             # For the FO without any line
             val = 1

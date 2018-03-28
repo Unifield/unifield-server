@@ -186,7 +186,7 @@ class purchase_order(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
-                          WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat,
+                          WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat,  # not_a_user_entry
                        (tuple(ids),))
             res = cr.fetchall()
 

@@ -71,7 +71,7 @@ class account_move_line(osv.osv):
                 WHERE type=%s AND active)
             AND reconcile_id IS null
             AND credit > 0
-            AND ''' + where + ' and ' + query), ('payable',)+sql_args )
+            AND ''' + where + ' and ' + query), ('payable',)+sql_args )  # not_a_user_entry
 
         res = cr.fetchall()
         if not res:

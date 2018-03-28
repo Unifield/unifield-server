@@ -42,9 +42,9 @@ class res_partner(osv.osv):
         res = False
         sql = "select ml.id from account_move_line ml" \
             " left join account_move m on m.id=ml.move_id" \
-            " where m.state='posted' and ml.partner_id=%d limit 1" % (partner_id, )
+            " where m.state='posted' and ml.partner_id=%s limit 1"
 
-        cr.execute(sql)
+        cr.execute(sql, (partner_id,))
         res = cr.fetchone()
         return res and res[0] > 0 or False
 

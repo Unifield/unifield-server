@@ -152,7 +152,7 @@ class stock_production_lot(osv.osv):
         # 1. Table stock_move
         sql_x = 'select lot.name, move.product_id, move.' + field_expiry_name + ' as life_date from ' + table_name + ' move, stock_production_lot lot, product_product prod where move.'
         sql_x = sql_x + field_id + ' = lot.id and move.product_id != lot.product_id  and move.product_id = prod.id and '
-        sql_x = sql_x + ' (prod.batch_management = \'t\' OR prod.perishable = \'t\') group by lot.name, move.product_id, move.' + field_expiry_name +'  order by lot.name;'
+        sql_x = sql_x + ' (prod.batch_management = \'t\' OR prod.perishable = \'t\') group by lot.name, move.product_id, move.' + field_expiry_name +'  order by lot.name;'  # not_a_user_entry
         
         cr.execute(sql_x)
         
@@ -162,7 +162,6 @@ class stock_production_lot(osv.osv):
             return
         else:
             self._logger.info("__________Start to restore missing batch objects in table: %s _____ - for %s batches! \n %s" % (table_name, len(list_bn_prod), list_bn_prod))
-        context = {}
 
         lot_obj = self.pool.get('stock.production.lot')
         prod_obj = self.pool.get('product.product')
@@ -180,7 +179,7 @@ class stock_production_lot(osv.osv):
                 batch_id = batch_id[0]
 
                 sql_up = 'update ' + table_name + ' set ' + field_id + '=' + str(batch_id) + ' where id in (select move.id from ' + table_name  
-                sql_up = sql_up + ' move, stock_production_lot lot where move.' + field_id + " = lot.id and lot.name= '" + batch_name + "' and move.product_id = " + str(prod_id) + " and move." + field_expiry_name + "='" + life_date + "');"
+                sql_up = sql_up + ' move, stock_production_lot lot where move.' + field_id + " = lot.id and lot.name= '" + batch_name + "' and move.product_id = " + str(prod_id) + " and move." + field_expiry_name + "='" + life_date + "');"  # not_a_user_entry
                 
                 cr.execute(sql_up)
                 self._logger.info("--- Step 3: Batch already created. Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
@@ -214,7 +213,7 @@ class stock_production_lot(osv.osv):
                 self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
                 if batch_id:
                     sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id)  
-                    sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"
+                    sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"  # not_a_user_entry
                     cr.execute(sql_up)
 
         self._logger.info("__________Finish the migration task on duplicate batch objects for table: %s\n", table_name)
@@ -337,7 +336,7 @@ class stock_production_lot(osv.osv):
             self.update_table(cr, uid, element[0] , element[1], wrong_id, lead_id, batch_name)
 
     def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id, batch_name):
-        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;' %(wrong_id,))
+        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' =%s', (wrong_id,))  # not_a_user_entry
         count = cr.fetchone()[0]
         if count > 0: # Only update the table if wrong bn exists
             self._logger.info("Table %s has %s batch objects (%s) and will be-mapped.\n" %(table_name, count, batch_name,))
@@ -353,8 +352,8 @@ class stock_production_lot(osv.osv):
                 del_sql_update = "DELETE FROM real_average_consumption_line WHERE prodlot_id = %s"
                 cr.execute(del_sql_update, (wrong_id,))
             else:
-                sql_update = "update " + table_name + " set " + field_id + "=" + str(lead_id) + " where " + field_id + "=" + str(wrong_id)
-                cr.execute(sql_update)
+                sql_update = "update " + table_name + " set " + field_id + "=%s" + " where " + field_id + "=%s"  # not_a_user_entry
+                cr.execute(sql_update, (lead_id, wrong_id))
         else:
             self._logger.info("Table %s has NO duplicate batch (%s).\n" %(table_name, batch_name,))
 
