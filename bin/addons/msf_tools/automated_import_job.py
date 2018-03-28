@@ -283,7 +283,7 @@ class automated_import_job(osv.osv):
                     elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
                         move_to_process_path(job.import_id, ftp_connec, filename, success=False)
-                        self.infolog(cr, uid, _('%s :: Import file moved to destination path') % job.import_id.name)
+                        self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
 
                 if error:
                     self.infolog(cr, uid, '%s :: %s' % (job.import_id.name , error))
@@ -350,7 +350,7 @@ class automated_import_job(osv.osv):
                         line_message = _('Line %s: ' % resjected_line[0])
                         line_message += resjected_line[2]
                         error_message.append(line_message)
-                self.infolog(cr, uid, _('%s :: Import job done with %s processed and %s rejected') % (job.import_id.name, len(processed), len(rejected)))
+                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), len(rejected)))
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
@@ -365,7 +365,7 @@ class automated_import_job(osv.osv):
                 }, context=context)
                 is_success = True if not rejected else False
                 move_to_process_path(job.import_id, ftp_connec, filename, success=is_success)
-                self.infolog(cr, uid, _('%s :: Import file moved to destination path') % job.import_id.name)
+                self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
             except Exception as e:
                 self.infolog(cr, uid, '%s :: %s' % (job.import_id.name, str(e)))
                 self.write(cr, uid, [job.id], {
@@ -380,7 +380,7 @@ class automated_import_job(osv.osv):
                     'state': 'error',
                 }, context=context)
                 move_to_process_path(job.import_id, ftp_connec, filename, success=False)
-                self.infolog(cr, uid, _('%s :: Import file moved to destination path') % job.import_id.name)
+                self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
 
         return {
             'type': 'ir.actions.act_window',
