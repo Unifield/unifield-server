@@ -181,18 +181,18 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             try:
                 ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
             except:
-                self.infolog(cr, uid, _('%s :: FTP connection failed'), obj.name)
+                self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
             try:
                 ftp.login(user=obj.ftp_login, passwd=obj.ftp_password) # '230 Login successful.'
             except:
-                self.infolog(cr, uid, _('%s :: FTP connection failed'), obj.name)
+                self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Unable to connect with given login and password'))
 
         if not context.get('no_raise_if_ok'):
             raise osv.except_osv(_('Info'), _('Connection succeeded'))
         else:
-            self.infolog(cr, uid, _('%s :: FTP connection succeeded'), obj.name)
+            self.infolog(cr, uid, _('FTP connection succeeded'))
 
         return ftp
 
