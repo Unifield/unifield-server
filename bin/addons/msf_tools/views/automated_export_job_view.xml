@@ -46,7 +46,6 @@
                     <separator colspan="4" string="Export results" />
                     <field name="nb_processed_records" />
                     <field name="nb_rejected_records" />
-                    <field name="export_path" />
                     <field name="comment" colspan="4" />
                     <separator colspan="4" string="States" />
                     <field name="state" />
