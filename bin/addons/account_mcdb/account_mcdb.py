@@ -280,7 +280,7 @@ class account_mcdb(osv.osv):
             ids = [ids]
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
-        res_model = wiz and wiz.model or False
+        res_model = context.get('selector_model', False) or (wiz and wiz.model) or False
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields

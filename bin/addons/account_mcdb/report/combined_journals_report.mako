@@ -104,64 +104,78 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 <!-- TABLE HEADER -->
 <Row>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Proprietary Instance')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Journal Code')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Entry Sequence')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Description')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Reference')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Document Date')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Posting Date')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Period')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('G/L Account')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Third Parties')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Cost Centre')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Destination')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Funding pool')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Booking Debit')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Booking Credit')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Booking Currency')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Func. Debit')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Func. Credit')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Func. Currency')}</Data>
-</Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Proprietary Instance')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Journal Code')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Entry Sequence')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Description')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Reference')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Document Date')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Posting Date')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Period')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('G/L Account')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Third Parties')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Cost Centre')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Destination')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Funding pool')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Booking Debit')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Booking Credit')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Booking Currency')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Func. Debit')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Func. Credit')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Func. Currency')}</Data>
+    </Cell>
 </Row>
+
+% for line in lines():
+<Row>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['prop_instance']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['journal_code']|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['entry_seq']|x}</Data>
+    </Cell>
+</Row>
+% endfor
 
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
