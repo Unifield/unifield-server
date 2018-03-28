@@ -100,7 +100,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('Combined Journals Report')}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="18"/>
+% if analytic_axis() in ('f1', 'f2'):
+ <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="16"/>
+% else:
+ <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="18"/>
+% endif
 
 <!-- TABLE HEADER -->
 <Row>
@@ -134,15 +138,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Third Parties')}</Data>
     </Cell>
-    <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Cost Centre')}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Destination')}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Funding pool')}</Data>
-    </Cell>
+    % if analytic_axis() == 'fp':
+      <Cell ss:StyleID="ssHeader">
+          <Data ss:Type="String">${_('Cost Centre')}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssHeader">
+          <Data ss:Type="String">${_('Destination')}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssHeader">
+          <Data ss:Type="String">${_('Funding pool')}</Data>
+      </Cell>
+    % elif analytic_axis() in ('f1', 'f2'):
+      <Cell ss:StyleID="ssHeader">
+          <Data ss:Type="String">${_('Analytic account')}</Data>
+      </Cell>
+    % endif
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Booking Debit')}</Data>
     </Cell>
@@ -195,15 +205,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['third_party']|x}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['cost_center']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['destination']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['funding_pool']|x}</Data>
-    </Cell>
+    % if analytic_axis() == 'fp':
+      <Cell ss:StyleID="ssBorder">
+          <Data ss:Type="String">${line['cost_center']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssBorder">
+          <Data ss:Type="String">${line['destination']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssBorder">
+          <Data ss:Type="String">${line['funding_pool']|x}</Data>
+      </Cell>
+    % elif analytic_axis() in ('f1', 'f2'):
+      <Cell ss:StyleID="ssBorder">
+          <Data ss:Type="String">${line['analytic_account']|x}</Data>
+      </Cell>
+    % endif
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['booking_debit']|x}</Data>
     </Cell>

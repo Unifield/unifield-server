@@ -1323,7 +1323,11 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        data = {'selector_id': ids[0]}
+        selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
+        data = {
+            'selector_id': ids[0],
+            'analytic_axis': selector.get('analytic_axis', 'fp')
+        }
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'combined.journals.report.xls',

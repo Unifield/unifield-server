@@ -33,7 +33,9 @@ class combined_journals_report(report_sxw.rml_parse):
         self.selector_id = False
         self.aml_domain = []
         self.aal_domain = []
+        self.analytic_axis = 'fp'  # 'fp', 'f1' or 'f2'
         self.localcontext.update({
+            'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
         })
 
@@ -57,7 +59,7 @@ class combined_journals_report(report_sxw.rml_parse):
         Returns a list of dicts containing the data to display:
         - first, ordered by Entry Sequence:
             => the JIs booked on a "NON analytic_addicted" account
-            => the AJIs linked to the same JE
+            => the AJIs or Free1/2 lines (depending on the self.analytic_axis) linked to the same JE
         - then, ordered by Entry Sequence:
             => the AJIs without JIs
         """
@@ -65,12 +67,15 @@ class combined_journals_report(report_sxw.rml_parse):
         aml_obj = self.pool.get('account.move.line')
         aal_obj = self.pool.get('account.analytic.line')
         user_obj = self.pool.get('res.users')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         company = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
         func_currency_name = company.currency_id.name
         # get the JIs corresponding to the criteria selected
         aml_ids = aml_obj.search(self.cr, self.uid, self.aml_domain, context=self.context, order='move_id ASC')
         amls = []
-        for aml in aml_obj.browse(self.cr, self.uid, aml_ids, context=self.context):
+        aml_fields = ['instance_id', 'journal_id', 'move_id', 'name', 'ref', 'document_date', 'date', 'period_id', 'account_id',
+                      'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit']
+        for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_fields, context=self.context):
             aml_dict = {
                 'type': 'aml',
                 'id': aml.id,
@@ -98,14 +103,23 @@ class combined_journals_report(report_sxw.rml_parse):
             }
             amls.append(aml_dict)
         amls.sort(self._cmp_sequence_account_type)
+        aal_fields = ['instance_id', 'journal_id', 'entry_sequence', 'name', 'ref', 'document_date', 'date',
+                      'period_id', 'general_account_id', 'partner_txt', 'cost_center_id', 'destination_id', 'account_id',
+                      'amount_currency', 'currency_id', 'amount']
         for ml in amls:
-            # if the JI has no related AJIs, store it directly
-            aal_ids = aal_obj.search(self.cr, self.uid, [('move_id', '=', ml['id'])], context=self.context, order='NO_ORDER')
+            # if the JI has no related Analytic lines, store it directly
+            search_aal_domain = [('move_id', '=', ml['id'])]
+            category = (self.analytic_axis == 'f1' and 'FREE1') or (self.analytic_axis == 'f2' and 'FREE2') or 'FUNDING'
+            analytic_account_ids = analytic_acc_obj.search(self.cr, self.uid,
+                                                           [('category', '=', category), ('type', '=', 'normal')],
+                                                           context=self.context, order='NO_ORDER')
+            search_aal_domain.append(('account_id', 'in', analytic_account_ids))
+            aal_ids = aal_obj.search(self.cr, self.uid, search_aal_domain, context=self.context, order='NO_ORDER')
             if not aal_ids:
                 res.append(ml)
-            # else store only the related AJIs
+            # else store only the related Analytic lines
             else:
-                for aal in aal_obj.browse(self.cr, self.uid, aal_ids, context=self.context) :
+                for aal in aal_obj.browse(self.cr, self.uid, aal_ids, fields_to_fetch=aal_fields, context=self.context):
                     aal_dict = {
                         'type': 'aal',
                         'id': aal.id,
@@ -134,7 +148,7 @@ class combined_journals_report(report_sxw.rml_parse):
                     res.append(aal_dict)
         # get the AJIs corresponding to the criteria selected AND not linked to a JI (use self.aal_domain)
         orphan_aal_ids = aal_obj.search(self.cr, self.uid, self.aal_domain, context=self.context, order='entry_sequence')
-        for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, context=self.context):
+        for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, fields_to_fetch=aal_fields, context=self.context):
             al_dict = {
                 'type': 'aal',
                 'id': al.id,
@@ -152,7 +166,7 @@ class combined_journals_report(report_sxw.rml_parse):
                 'cost_center': al.cost_center_id and al.cost_center_id.code or '',
                 'destination': al.destination_id and al.destination_id.code or '',
                 'funding_pool': al.account_id.code or '',
-                'analytic_account': al.account_id.code or '',  # can be a Funding Pool or a Free1/2 account
+                'analytic_account': al.account_id.code or '',
                 'booking_debit': al.amount_currency < 0 and al.amount_currency or 0.0,
                 'booking_credit': al.amount_currency >= 0 and al.amount_currency or 0.0,
                 'booking_currency': al.currency_id and al.currency_id.name or '',
@@ -165,13 +179,15 @@ class combined_journals_report(report_sxw.rml_parse):
 
     def set_context(self, objects, data, ids, report_type=None):
         """
-        Gets the domains to take into account for JIs and AJIs and stores them in self.aml_domain and self.aal_domain
+        Gets the domains to take into account for JIs and AJIs and stores them in self.aml_domain and self.aal_domain,
+        stores the Analytic Axis in self.analytic_axis
         """
         selector_obj = self.pool.get('account.mcdb')
         self.context = data.get('context', {})
         self.selector_id = data.get('selector_id', False)
         if not self.selector_id:
             raise osv.except_osv(_('Warning'), _('Selector not found.'))
+        self.analytic_axis = data.get('analytic_axis', 'fp')
         # get the domain for the Journal Items
         aml_context = self.context.copy()
         aml_context.update({'selector_model': 'account.move.line'})  # Analytic axis will be excluded
