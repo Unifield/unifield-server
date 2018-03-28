@@ -86,8 +86,9 @@ class account_analytic_account(osv.osv):
                      COALESCE(SUM(l.unit_amount),0) AS quantity
               FROM account_analytic_account a
                   LEFT JOIN account_analytic_line l ON (a.id = l.account_id)
-              WHERE a.id IN %%s %s
-              GROUP BY a.id""" % where_date, where_clause_args)  # not_a_user_entry
+              WHERE a.id IN %s
+              """ + where_date + """
+              GROUP BY a.id""", where_clause_args) # not_a_user_entry
         for ac_id, debit, credit, balance, quantity in cr.fetchall():
             res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
         return self._compute_level_tree(cr, uid, ids, child_ids, res, ['debit', 'credit', 'balance', 'quantity'], context)

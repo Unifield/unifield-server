@@ -319,10 +319,10 @@ class msf_budget_line(osv.osv):
         if budget_ok:
             month_names = self._get_month_names(month_number)
             sql = """
-            SELECT id, COALESCE(%s, 0.0)
+            SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
-            WHERE id IN %%s;
-            """ % '+'.join(month_names)  # not_a_user_entry
+            WHERE id IN %s;
+            """ # not_a_user_entry
             cr.execute(sql, (tuple(ids),))
             tmp_res = cr.fetchall()
             if tmp_res:
@@ -366,9 +366,9 @@ class msf_budget_line(osv.osv):
         # Prepare some values
         res = {}
         sql = """
-            SELECT id, COALESCE(%s, 0.0)
+            SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
-            WHERE id IN %%s""" % '+'.join(month_names)  # not_a_user_entry
+            WHERE id IN %s""" # not_a_user_entry
         cr.execute(sql, (tuple(ids),))
         tmp_res = cr.fetchall()
         if tmp_res:

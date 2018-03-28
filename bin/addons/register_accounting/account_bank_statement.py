@@ -870,7 +870,7 @@ class account_bank_statement_line(osv.osv):
         sql_hard = """SELECT st.id FROM account_bank_statement_line st
             LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
             LEFT JOIN account_move m ON m.id = rel.statement_id
-            WHERE m.state = 'posted' %s
+            WHERE m.state = 'posted'
             """
         ids = []
         filterok = False
