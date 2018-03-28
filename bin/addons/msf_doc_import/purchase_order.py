@@ -278,7 +278,9 @@ class purchase_order(osv.osv):
         ], context= context)
 
         if not po_ids:
-            raise Exception, _('No PO to export !')
+            msg = _('No PO to export !')
+            self.infolog(cr, uid, msg)
+            raise Exception, msg
 
         processed, rejected, header = [], [], []
         for index, po_id in enumerate(po_ids):
@@ -323,6 +325,9 @@ class purchase_order(osv.osv):
 
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
+            
+        if processed:
+            self.infolog(cr, uid, _('POs successfully exported'))
 
         return processed, rejected, ['PO id', 'PO name']
 
