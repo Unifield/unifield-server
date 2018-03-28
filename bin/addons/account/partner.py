@@ -101,8 +101,8 @@ class res_partner(osv.osv):
             AND l.partner_id IN %%s
             AND l.reconcile_id IS NULL
             AND %s
-            GROUP BY l.partner_id, a.type""" % query,  # not_a_user_entry
-            (tuple(ids),))
+            GROUP BY l.partner_id, a.type""" % query,
+            (tuple(ids),)) # not_a_user_entry
         maps = {'receivable':'credit', 'payable':'debit' }
         res = {}
         for id in ids:
@@ -128,8 +128,8 @@ class res_partner(osv.osv):
             AND reconcile_id IS NULL
             AND %s
             AND partner_id IS NOT NULL
-            GROUP BY partner_id HAVING %s''' % (query, where)),  # not_a_user_entry
-                   (line_type,) + having_values)
+            GROUP BY partner_id HAVING %s''' % (query, where)),
+                   (line_type,) + having_values) # not_a_user_entry
         res = cr.fetchall()
         if not res:
             return [('id','=','0')]

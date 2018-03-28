@@ -548,8 +548,8 @@ class ir_model_access(osv.osv):
                      JOIN ir_model m ON (m.id = a.model_id)
                      JOIN res_groups_users_rel gu ON (gu.gid = a.group_id)
                     WHERE m.model = %%s
-                      AND gu.uid = %%s''' % mode  # not_a_user_entry
-                   , (model_name, uid,)
+                      AND gu.uid = %%s''' % mode
+                   , (model_name, uid,) # not_a_user_entry
                    )
         r = cr.fetchone()[0]
 
@@ -559,8 +559,8 @@ class ir_model_access(osv.osv):
                          FROM ir_model_access a
                          JOIN ir_model m ON (m.id = a.model_id)
                         WHERE a.group_id IS NULL
-                          AND m.model = %%s ''' % mode  # not_a_user_entry
-                       , (model_name,)
+                          AND m.model = %%s ''' % mode
+                       , (model_name,) # not_a_user_entry
                        )
             r = cr.fetchone()[0]
 
@@ -734,8 +734,8 @@ class ir_model_data(osv.osv):
         if xml_id:
             cr.execute('''SELECT imd.id, imd.res_id, md.id
                           FROM ir_model_data imd LEFT JOIN %s md ON (imd.res_id = md.id)
-                          WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,  # not_a_user_entry
-                       (module, xml_id))
+                          WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,
+                       (module, xml_id)) # not_a_user_entry
             results = cr.fetchall()
             for imd_id2,res_id2,real_id2 in results:
                 if not real_id2:

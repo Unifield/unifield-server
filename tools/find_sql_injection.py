@@ -70,8 +70,21 @@ class Checker(ast.NodeVisitor):
             lines = [node.lineno, node.right.lineno]
         elif isinstance(node, ast.Str):
             lines = [node.lineno]
+        elif isinstance(node, ast.Subscript):
+            pass
+        elif isinstance(node, ast.Name):
+            pass
         elif node.args:
-            lines = [node.lineno, node.args[-1].lineno]
+            if isinstance(node.args[-1], ast.BinOp):
+                if isinstance(node.args[-1].right, ast.Tuple):
+                    lines = [node.lineno, node.args[-1].right.elts[-1].lineno]
+                else:
+                    lines = [node.lineno, node.args[-1].right.lineno]
+            else:
+                if isinstance(node.args[-1], ast.Tuple):
+                    lines = [node.lineno, node.args[-1].elts[-1].lineno]
+                else:
+                    lines = [node.lineno, node.args[-1].lineno]
         for line_number in lines:
             file_text_line = linecache.getline(self.filename, line_number)
             res = re.search(' # (.*)', file_text_line)

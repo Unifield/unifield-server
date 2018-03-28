@@ -122,8 +122,8 @@ SELECT res_id
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",  # not_a_user_entry
-                       sql_params)
+          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
+                       sql_params) # not_a_user_entry
             result = [row[0] for row in cr.fetchall()]
         else:
             touched_fields = set(touched_fields)
@@ -133,8 +133,8 @@ SELECT res_id, touched
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",  # not_a_user_entry
-                       sql_params)
+          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
+                       sql_params) # not_a_user_entry
             result = [row[0] for row in cr.fetchall()
                       if row[1] is None \
                       or touched_fields.intersection(eval(row[1]) if row[1] else [])]

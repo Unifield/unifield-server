@@ -254,12 +254,12 @@ class product_pricelist(osv.osv):
                         'product_pricelist_version AS v, product_pricelist AS pl '
                     'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
                         'AND (product_id IS NULL OR product_id = %s) '
-                        'AND (' + categ_where + ' OR (categ_id IS NULL)) '  # not_a_user_entry
+                        'AND (' + categ_where + ' OR (categ_id IS NULL)) '
                         'AND price_version_id = %s '
                         'AND (min_quantity IS NULL OR min_quantity <= %s) '
                         'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
                     'ORDER BY sequence',
-                    (tmpl_id, product_id, plversion_ids[0], qty))
+                    (tmpl_id, product_id, plversion_ids[0], qty)) # not_a_user_entry
                 res1 = cr.dictfetchall()
                 uom_price_already_computed = False
                 for res in res1:
@@ -396,12 +396,12 @@ class product_pricelist(osv.osv):
                     'product_pricelist_version AS v, product_pricelist AS pl '
                 'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
                     'AND (product_id IS NULL OR product_id = %s) '
-                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '  # not_a_user_entry
+                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '
                     'AND price_version_id = %s '
                     'AND (min_quantity IS NULL OR min_quantity <= %s) '
                     'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
                 'ORDER BY sequence',
-                (tmpl_id, prod_id, plversion['id'], qty))
+                (tmpl_id, prod_id, plversion['id'], qty)) # not_a_user_entry
             res1 = cr.dictfetchall()
 
             for res in res1:
@@ -519,7 +519,7 @@ class product_pricelist_version(osv.osv):
                         'AND active ' \
                         'AND id <> %s', (
                             pricelist_version.pricelist_id.id,
-                            pricelist_version.id))
+                            pricelist_version.id))  # not_a_user_entry
             if cursor.fetchall():
                 return False
         return True

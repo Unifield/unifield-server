@@ -524,7 +524,7 @@ class patch_scripts(osv.osv):
                     cr.execute("""
                         ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
                         """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
-                               'unique(name, currency_id)'))
+                            'unique(name, currency_id)'))  # not_a_user_entry
                 except:
                     self._logger.warn('Unable to set unique constraint on currency rate')
                     cr.rollback()
@@ -593,7 +593,7 @@ class patch_scripts(osv.osv):
                         select id from stock_mission_report_line where 
                         """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
                     )
-            """)
+            """) # not_a_user_entry
 
         cr.execute("""
             update stock_mission_report_line set
@@ -602,7 +602,7 @@ class patch_scripts(osv.osv):
             (
                 select id from stock_mission_report where full_view='f' and export_ok='t'
             )
-        """)
+        """) # not_a_user_entry
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")

@@ -233,8 +233,8 @@ class account_automatic_reconcile(osv.osv_memory):
                 FROM account_move_line
                 WHERE account_id=%s
                 AND reconcile_id IS NULL
-                AND state <> 'draft' """ + partner_filter,  # not_a_user_entry
-                (account_id,))
+                AND state <> 'draft' """ + partner_filter,
+                (account_id,)) # not_a_user_entry
             additional_unrec = cr.fetchone()[0]
             unreconciled = unreconciled + additional_unrec
         context.update({'reconciled': reconciled, 'unreconciled': unreconciled})

@@ -1318,7 +1318,8 @@ class stock_mission_report_line_location(osv.osv):
 
     def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
         # set instance and location name to process received updates
-        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id))
+        assert name in ('instance_id', 'location_name'), 'Bad query'
+        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id)) # not_a_user_entry
         return True
 
     _columns = {
@@ -1600,8 +1601,8 @@ class stock_mission_report_line(osv.osv):
                     central_qty=%s, cross_qty=%s, secondary_qty=%s,
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
                     wh_qty=%s
-                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,  # not_a_user_entry
-                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id))
+                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
+                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id)) # not_a_user_entry
         return True
 
 stock_mission_report_line()

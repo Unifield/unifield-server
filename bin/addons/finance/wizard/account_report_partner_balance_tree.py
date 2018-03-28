@@ -76,10 +76,10 @@ class account_partner_balance_tree(osv.osv):
             " " + self.PARTNER_REQUEST + " "
             " " + self.TAX_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " "  # not_a_user_entry
+            " " + self.IB_DATE_TO + " "
             "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
             "ORDER BY ac.type, p.name ",
-            (tuple(self.ib_move_state_list),))
+            (tuple(self.ib_move_state_list),)) # not_a_user_entry
         return cr.dictfetchall()
 
     def _cmp_account_type_partner(self, a, b):

@@ -270,8 +270,8 @@ class real_average_consumption(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN real_average_consumption rac ON l.rac_id = rac.id
-                          WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,  # not_a_user_entry
-                       (tuple(ids),))
+                          WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:

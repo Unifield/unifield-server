@@ -1722,8 +1722,8 @@ class account_tax_code(osv.osv):
                     AND move.id = line.move_id
                     AND ((invoice.state = 'paid')
                         OR (invoice.id IS NULL))
-                GROUP BY line.tax_code_id''' % where,  # not_a_user_entry
-                (parent_ids,) + where_params)
+                GROUP BY line.tax_code_id''' % where,
+                (parent_ids,) + where_params) # not_a_user_entry
         else:
             cr.execute('''
                 SELECT line.tax_code_id, sum(line.tax_amount)
@@ -1731,8 +1731,8 @@ class account_tax_code(osv.osv):
                 account_move AS move
                 WHERE line.tax_code_id IN %%s %s
                 AND move.id = line.move_id
-                GROUP BY line.tax_code_id''' % where,  # not_a_user_entry
-                (parent_ids,) + where_params)
+                GROUP BY line.tax_code_id''' % where,
+                (parent_ids,) + where_params) # not_a_user_entry
         res = dict(cr.fetchall())
         res2 = {}
         obj_precision = self.pool.get('decimal.precision')
