@@ -392,97 +392,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
         }
         return True
 
-# Method abandonned because no "reverse" button on Correction Wizard
-#    def reverse(self, cr, uid, ids, date=None, context=None):
-#        """
-#        Reverse given lines by creating a new Journal Entry (account_move) and write in the reversal line.
-#        Reversal lines have some information:
-#         - name begin with REV
-#         - debit and credit are reversed
-#         - amount_currency is the opposite
-#         - date is those from given date or current date by default
-#         - period is those that correspond to the given date
-#         - line is written in the first 'correction' type journal found
-#        NB : return the succeeded move lines
-#        """
-#        # Verifications
-#        if not context:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#        if not date:
-#            date = strftime('%Y-%m-%d')
-#        # Prepare some values
-#        success_move_line_ids = []
-#        move_obj = self.pool.get('account.move')
-#        aal_obj = self.pool.get('account.analytic.line')
-#        j_obj = self.pool.get('account.journal')
-#        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-#                                       ('is_current_instance', '=', True)], context=context)
-#        # Search correction journal
-#        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-#                                            ('is_current_instance', '=', True)], context=context)
-#        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-#        # Search extra accounting journal
-#        ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-#                                        ('is_current_instance', '=', True)])
-#        j_extra_id = ej_ids and ej_ids[0] or False
-#        # Search attached period
-#        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
-#            limit=1, order='date_start, name')
-#        # Browse move line
-#        for ml in self.browse(cr, uid, ids, context=context):
-#            # Abort process if this move line was corrected before
-#            if ml.corrected:
-#                continue
-#            # Retrieve right journal. Extra-accounting journal for donation, else correction journal
-#            journal_id = j_corr_id
-#            if ml.account_id and ml.account_id.type_for_register == 'donation':
-#                journal_id = j_extra_id
-#                if not journal_id:
-#                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
-#            elif not journal_id:
-#                raise osv.except_osv(_('Error'), _('No Correction Journal found!'))
-#            # Create a new move
-#            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
-#            # Prepare default value for new line
-#            vals = {
-#                'move_id': move_id,
-#                'date': date,
-#                'document_date': date,
-#                'journal_id': journal_id,
-#                'period_id': period_ids[0],
-#            }
-#            # Copy the line
-#            rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
-#            # Do the reverse
-#            name = self.join_without_redundancy(ml.name, 'REV')
-#            amt = -1 * ml.amount_currency
-#            vals.update({
-#                'debit': ml.credit,
-#                'credit': ml.debit,
-#                'amount_currency': amt,
-#                'journal_id': journal_id,
-#                'name': name,
-#                'reversal_line_id': ml.id,
-#                'account_id': ml.account_id.id,
-#                'source_date': ml.date,
-#                'reversal': True,
-#                'reference': ml.move_id and ml.move_id.name or '',
-#                'ref': ml.move_id and ml.move_id.name or '',
-#            })
-#            self.write(cr, uid, [rev_line_id], vals, context=context)
-#            # Inform old line that it have been corrected
-#            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
-#            # Search analytic lines from first move line
-#            aal_ids = aal_obj.search(cr, uid, [('move_id', '=', ml.id)])
-#            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
-#            # Search analytic lines from reversed line and flag them as "is_reversal"
-#            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
-#            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
-#            # Add this line to succeded lines
-#            success_move_line_ids.append(ml.id)
-#        return success_move_line_ids
 
     def make_reversal_link(self, cr, uid, old_id, new_id, context=None):
         """
@@ -541,6 +450,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)], context=context)
+        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
                                                             limit=1, order='date_start, name')
@@ -569,8 +481,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
             journal_id = j_corr_id
             if is_inkind:
                 journal_id = j_extra_id
-            if not journal_id and is_inkind:
-                raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                j_ana_corr_id = j_ana_extra_id
+
+            if is_inkind:
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                elif not j_ana_extra_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Analytic Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 

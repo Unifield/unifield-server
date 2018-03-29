@@ -19,9 +19,11 @@
 #
 ##############################################################################
 
-from osv import osv, fields
 import pooler
 import tools
+import os
+import psutil
+from osv import osv, fields
 from tools.translate import _
 
 class MonitorLogger(object):
@@ -308,6 +310,54 @@ class sync_version_instance_monitor(osv.osv):
 
         return res
 
+    # code from https://stackoverflow.com/questions/13343700/bytes-to-human-readable-and-back-without-data-loss
+    def bytes2human(self, n, format="%(value)i%(symbol)s"):
+        """
+        >>> bytes2human(10000)
+        '9K'
+        >>> bytes2human(100001221)
+        '95M'
+        """
+        symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+        prefix = {}
+        for i, s in enumerate(symbols[1:]):
+            prefix[s] = 1 << (i+1)*10
+        for symbol in reversed(symbols[1:]):
+            if n >= prefix[symbol]:
+                value = float(n) / prefix[symbol]
+                return format % locals()
+        return format % dict(symbol=symbols[0], value=n)
+
+    def get_path_disk_usage(self, cr, uid, path):
+        '''return a human readable information of used disk space of the given
+        path, ex of output: 281.9G/436.1G (30.3% used)
+        '''
+        if os.path.exists(path):
+            du = psutil.disk_usage(path)
+            usage = '%s/%s (%s%% used)' % (self.bytes2human(du.free), self.bytes2human(du.total), du.percent)
+        else:
+            usage = "Path %s doesn't exists" % path
+        return usage
+
+    def _get_default_postgresql_disk_space(self, cr, uid, context=None):
+        if os.name == 'nt':
+            try:
+                # get the path from the database
+                cr.execute('SHOW data_directory')
+                postgres_path = cr.fetchone()
+                postgres_path = postgres_path  and postgres_path[0] or None
+            except:
+                cr.rollback()
+                return "?"
+        else:
+            # for linux (RB)
+            postgres_path = '/var/lib/postgresql/'
+        return self.get_path_disk_usage(cr, uid, postgres_path)
+
+    def _get_default_unifield_disk_space(self, cr, uid, context=None):
+        unifield_path = tools.config['root_path']
+        return self.get_path_disk_usage(cr, uid, unifield_path)
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),
@@ -322,6 +372,8 @@ class sync_version_instance_monitor(osv.osv):
                                                     ('inactive', 'Inactive')],
                                          string='Instance State',
                                          readonly=True, store=True),
+        'postgresql_disk_space': fields.char('PostgreSQL hd', size=128),
+        'unifield_disk_space': fields.char('UniField hd', size=128),
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
         'cloud_error': fields.text('Cloud last error', readonly=True),

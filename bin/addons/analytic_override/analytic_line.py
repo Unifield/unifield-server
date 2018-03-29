@@ -153,6 +153,8 @@ class account_analytic_line(osv.osv):
             context = {}
         if not 'account_id' in vals:
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
+        if context.get('skip_ad_date_check', False):
+            return True
 
         account_obj = self.pool.get('account.analytic.account')
 

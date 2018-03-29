@@ -1,16 +1,34 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        <!-- UF7.2 -->
+        <!-- UF8.1 -->
+        <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
+            <field name="method">us_4430_set_puf_to_reversal</field>
+        </record>
+
+        <!-- UF8.0 -->
+        <record id="set_sequence_main_nomen" model="patch.scripts">
+            <field name="method">set_sequence_main_nomen</field>
+        </record>
+
+        <record id="us_3734_rename_partners_with_new_lines" model="patch.scripts">
+            <field name="method">us_3734_rename_partners_with_new_lines</field>
+        </record>
+
+        <record id="us_4407_update_free_lines_ad" model="patch.scripts">
+            <field name="method">us_4407_update_free_lines_ad</field>
+        </record>
+
+        <!-- UF7.3 -->
         <record id="send_instance_uuid" model="patch.scripts">
             <field name="method">send_instance_uuid</field>
         </record>
 
-        <!-- UF7.1 -->
         <record id="flag_pi" model="patch.scripts">
             <field name="method">flag_pi</field>
         </record>
 
+        <!-- UF7.1 -->
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>
         </record>

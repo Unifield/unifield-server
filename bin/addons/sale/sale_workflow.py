@@ -52,7 +52,7 @@ class sale_order_line(osv.osv):
             o_ana_dist_id = so.analytic_distribution_id and so.analytic_distribution_id.id
             distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
-            #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
+            # US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
             if not distrib_id and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                 raise osv.except_osv(
                     _('Warning'),
@@ -102,7 +102,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         # for each line get a new copy:
@@ -122,7 +122,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
@@ -139,7 +139,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -164,7 +164,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
@@ -189,7 +189,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
@@ -283,7 +283,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
@@ -314,7 +314,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         pick_to_use = False
@@ -363,7 +363,7 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
@@ -398,7 +398,7 @@ class sale_order_line(osv.osv):
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
 
-            if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
+            if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'):  # IR non stockable
                 continue
 
             if linked_dpo_line:
@@ -439,7 +439,7 @@ class sale_order_line(osv.osv):
                 # Change Currency ??
                 if sol.order_partner_id.partner_type in ('section', 'intermission'):
                     picking = picking_obj.browse(cr, uid, pick_to_use, context=context)
-                    move = self.pool.get('stock.move').browse(cr ,uid, move_id, context=context)
+                    move = self.pool.get('stock.move').browse(cr, uid, move_id, context=context)
                     invoice_id, inv_type = picking_obj.action_invoice_create_header(cr, uid, picking, journal_id=False, invoices_group=False, type=False, use_draft=True, context=context)
                     if invoice_id:
                         picking_obj.action_invoice_create_line(cr, uid, picking, move, invoice_id, group=False, inv_type=inv_type, partner=sol.order_id.partner_id, context=context)
@@ -460,7 +460,7 @@ class sale_order_line(osv.osv):
                 self.pool.get('stock.move').action_confirm(cr, uid, [move_id], context=context)
 
                 # confirm the OUT if in draft state:
-                pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'] ,context=context)['state']
+                pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'], context=context)['state']
                 if picking_data['type'] == 'out' and picking_data['subtype'] == 'standard' and pick_state == 'draft':
                     self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
                 # run check availability on PICK/OUT:
@@ -480,6 +480,17 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
         return True
 
+    def check_fo_tax(self, cr, uid, ids, context=None):
+        """
+        Prevents from validating a FO with taxes when using an Intermission partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for fo_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'tax_id'], context=context):
+            if fo_line.tax_id and fo_line.order_id.partner_type == 'intermission':
+                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -490,11 +501,13 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.check_fo_tax(cr, uid, ids, context=context)
+
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
-            if not sol.order_id.procurement_request: # in case of FO
+            if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
                     raise osv.except_osv(
@@ -530,7 +543,7 @@ class sale_order_line(osv.osv):
         return True
 
 
-    def action_draft(self, cr ,uid, ids, context=None):
+    def action_draft(self, cr, uid, ids, context=None):
         '''
         Workflow method called when trying to reset draft the sale.order.line
         '''

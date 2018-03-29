@@ -413,7 +413,7 @@ class procurement_request(osv.osv):
             'procurement_request': proc,
         })
         # UFTP-322: Remove the block of code to calculate 'name' as the creation could be blocked by the user right to make a wrong increase of sequence
-        # moved this block of code to analytic_distribution_supply/sale.py method copy_data() 
+        # moved this block of code to analytic_distribution_supply/sale.py method copy_data()
         return default
 
     def copy(self, cr, uid, id, default, context=None):

@@ -28,64 +28,28 @@
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
             <Font ss:Bold="1" ss:Color="#000000" />
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection />
         </Style>
         <Style ss:ID="String">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Boolean">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Float">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <NumberFormat ss:Format="Fixed" />
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Number">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <NumberFormat ss:Format="Fixed" />
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="DateTime">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
             <NumberFormat ss:Format="Short Date" />
             <Protection ss:Protected="0" />
         </Style>
@@ -94,26 +58,50 @@
     <ss:Worksheet ss:Name="${data.get('model_name', _('Sheet 1'))|x}" ss:Protected="0">
 
         <Table x:FullColumns="1" x:FullRows="1">
-
-        % for col in data.get('header_columns', []):
+            <% rows = getRows(data) %>
+            <% headers = getHeaders(data['model'], data['fields'], rows, data['selection'], data['context']) %>
+            % for col in headers:
             <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
-        % endfor
+            % endfor
+
+            <% header_info_data = getHeaderInfo(data['model'], data['selection'], data['prod_list_id'], data['supp_cata_id'], data['context']) %>
+            % for header_info in header_info_data:
+                <Row>
+                    <Cell ss:StyleID="header">
+                        <Data ss:Type="String">${header_info[0]}</Data>
+                    </Cell>
+                    <Cell ss:StyleID="header">
+                        <Data ss:Type="String">${header_info[1]}</Data>
+                    </Cell>
+                </Row>
+            % endfor
+
 
             <Row>
-            % for col in data.get('header_columns', []):
+            % for col in headers:
                 <Cell ss:StyleID="header">
-                    <Data ss:Type="String">${col[0]}</Data>
+                    <Data ss:Type="String">${col[0]|x}</Data>
                 </Cell>
             % endfor
             </Row>
 
+            % if not data.get('template_only', False):
+            % for row in rows:
             <Row>
-            % for col in data.get('header_columns', []):
-                <Cell ss:StyleID="${col[1]|x}" />
-            % endfor
+                % for index, cell in enumerate(row):
+                <Cell ss:StyleID="${headers[index][1]|x}">
+                    % if headers[index][1] == 'String' and not cell:
+                        <Data ss:Type="String"></Data>
+                    % else:
+                        <Data ss:Type="String">${cell|x}</Data>
+                    % endif
+                </Cell>
+                % endfor
             </Row>
+            % endfor
+            % endif
         </Table>
-        
+
         <x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
             <ProtectScenarios>False</ProtectScenarios>
             <EnableSelection>UnlockedCells</EnableSelection>

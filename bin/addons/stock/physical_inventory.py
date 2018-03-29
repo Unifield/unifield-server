@@ -113,7 +113,7 @@ class PhysicalInventory(osv.osv):
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
-                                        'product_id', 'inventory_id', string="Product selection", order_by="default_code"),
+                                        'product_id', 'inventory_id', string="Product selection", domain=[('type', 'not in', ['service_recep', 'consu'])], order_by="default_code"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
                                                 states={'closed': [('readonly', True)]}),
         'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
@@ -292,7 +292,7 @@ class PhysicalInventory(osv.osv):
         counting_obj = self.pool.get('physical.inventory.counting')
 
         # delete all previous discepancies
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])]}, context=context)
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])], 'file_to_import2': False}, context=context)
 
         # Get the location and counting lines
         inventory = physical_inventory_obj.read(cr, uid, [inventory_id], [ "location_id",
@@ -432,7 +432,7 @@ class PhysicalInventory(osv.osv):
         create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
 
         # Do the actual write
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': True, 'has_bad_stock': False}, context=context)
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False, 'has_bad_stock': False}, context=context)
 
 
         self._update_total_product(cr, uid, inventory_id,
@@ -441,6 +441,9 @@ class PhysicalInventory(osv.osv):
                                    context=context)
 
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
+
+    def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
+        return self.generate_discrepancies(cr, uid, inventory_ids, context=context)
 
 
     def resolve_discrepancies_anomalies(self, cr, uid, inventory_id, context=None):
@@ -485,8 +488,9 @@ class PhysicalInventory(osv.osv):
                                   "line_id": line["id"]})
 
         if anomalies:
-            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies)
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies, inventory_id=inventory_id)
         else:
+            self.write(cr, uid, inventory_id, {'discrepancies_generated': True}, context=context)
             return {}
 
 
@@ -721,12 +725,15 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                     line_no = None
                     add_error(_("""Invalid line number"""), row_index, 0)
 
-            # Check product_code
+            # Check product_code and type
             product_code = row.cells[1].data
             product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
             product_id = False
             if len(product_ids) == 1:
                 product_id = product_ids[0]
+                # Check if product is non-stockable
+                if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
             else:
                 add_error(_("""Product %s not found""") % product_code, row_index, 1)
 
@@ -868,11 +875,12 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         if not inventory_rec.file_to_import2:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
+        if not inventory_rec.discrepancies_generated:
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
+
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
-        # product_obj = self.pool.get('product.product')
-        # product_uom_obj = self.pool.get('product.uom')
-        # counting_obj = self.pool.get('physical.inventory.counting')
+        product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
 
@@ -884,6 +892,14 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
+
+            # Check if product is non-stockable
+            product_code = row.cells[2].data
+            if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
+                                                  ('type', 'in', ['service_recep', 'consu'])],
+                                        context=context):
+                add_error(_("""Impossible to import non-stockable product %s""") % product_code, row_index, 2)
+
             adjustment_type = row.cells[18].data
             if adjustment_type:
                 adjustement_split = adjustment_type.split(' ')
@@ -933,6 +949,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         return result
 
     def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
+        if self.search_exist(cr, uid, [('id', 'in', ids), ('discrepancies_generated', '=', False)]):
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_discrepancies_report_xls',
@@ -983,6 +1002,20 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'counted'), ('discrepancies_generated', '=', False)], context=context):
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
+
+        # Check if a line contains a non-stockable product
+        dids = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [('inventory_id', 'in', ids), ('product_id.type', 'in', ['service_recep', 'consu']), ('ignored', '!=', True)])
+        if dids:
+            error = []
+            for disc in self.pool.get('physical.inventory.discrepancy').read(cr, uid, dids, ['line_no', 'product_id'], context=context):
+                error.append('Line %s, product %s' % (disc['line_no'], disc['product_id'][1]))
+            raise osv.except_osv(_('Error'),
+                                 _("Please remove non-stockable from the discrepancy report to validate:\n%s") % ("\n".join(error),)
+                                 )
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
@@ -996,7 +1029,6 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         # location, never recursively, so we use a special context
         product_context = dict(context, compute_child=False)
 
-        # location_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         product_tmpl_obj = self.pool.get('product.template')
         prod_lot_obj = self.pool.get('stock.production.lot')
@@ -1005,6 +1037,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         product_dict = {}
         product_tmpl_dict = {}
+
+        if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'validated'), ('discrepancies_generated', '=', False)], context=context):
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
         for inv in self.read(cr, uid, ids, ['counting_line_ids',
                                             'discrepancy_line_ids',
@@ -1159,7 +1194,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
@@ -1195,7 +1230,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
-                                      domain=[('type', '<>', 'service')]),
+                                      domain=[('type', 'not in', ['service_recep', 'consu'])]),
         'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
         'standard_price': fields.float(_("Unit Price"), readonly=True),
@@ -1348,7 +1383,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
 
         # Product
-        'product_id': fields.many2one('product.product', 'Product', required=True),
+        'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),
         'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
 
         'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
@@ -1361,7 +1396,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # BN / ED
         'batch_number': fields.char(_('Batch number'), size=64, readonly=True),
-        'expiry_date': fields.date(string=_('Expiry date')),
+        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),

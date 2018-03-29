@@ -185,7 +185,7 @@
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
-                            <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
                             <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
@@ -401,7 +401,7 @@
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>
                         </group>
-                        <button name="button_open_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <button name="button_open_cash_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
                             <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
                         </group>
@@ -562,6 +562,33 @@
             </field>
         </record>
 
+        <!-- Track Changes Search View for Registers -->
+        <record id="view_audittrail_log_line_register_search" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.register.search</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="19"/>  <!-- view not used by default (for other objects than registers) -->
+            <field name="arch" type="xml">
+                <search string="Search Log">
+                    <group col="10" colspan="4">
+                        <group colspan="2">
+                            <filter string="Creation" icon="gtk-new" domain="[('method', 'in', ['create'])]" context="{}"/>
+                            <filter string="Modification" icon="gtk-edit" domain="[('method', 'in', ['write'])]" context="{}"/>
+                            <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['unlink'])]" context="{}"/>
+                        </group>
+                        <field name="log" colspan="4"/>
+                        <field name="timestamp" colspan="4"/>
+                        <newline />
+                        <field name="sub_obj_name" colspan="2"/>
+                        <field name="trans_field_description" colspan="2"/>
+                        <field name="old_value_text" colspan="2"/>
+                        <field name="new_value_text" colspan="2"/>
+                        <field name="user_id" colspan="1"/>
+                        <field name="other_column" string="Sequence" colspan="1"/>
+                    </group>
+                </search>
+            </field>
+        </record>
 
         <!-- Bank Statement Track changes view (US-1587 -->
         <record id="view_audittrail_log_line_other_column_tree" model="ir.ui.view">
@@ -602,7 +629,7 @@
                     <field name="balance_end" />
                     <field name="balance_end_real"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -646,7 +673,7 @@
                     <field name="msf_calculated_balance"/>
                     <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
-                    <button type="object" string="Open" name="button_open_register" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Open" name="button_open_cash_register" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -897,7 +924,7 @@
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
-                        <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
                         <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
                 </form>
@@ -918,7 +945,7 @@
                     <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>

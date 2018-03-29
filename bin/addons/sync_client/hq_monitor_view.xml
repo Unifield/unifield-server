@@ -66,6 +66,8 @@
                     <field name="cloud_date" />
                     <field name="cloud_backup" />
                     <field name="cloud_size" widget="human_size" />
+                    <field name="postgresql_disk_space" />
+                    <field name="unifield_disk_space" />
                     <field name="instance_state" />
                 </tree>
             </field>

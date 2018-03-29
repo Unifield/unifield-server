@@ -1474,8 +1474,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
             elif line.simu_id.order_id.po_from_fo:
-                fo_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values[8])], context=context)
-                if not fo_ids:
+                fo_ids = self.pool.get('sale.order').search(cr, uid,
+                                                            [('name', '=', values[8]),
+                                                             ('procurement_request', '=', False)], context=context)
+                ir_ids = self.pool.get('sale.order').search(cr, uid,
+                                                            [('name', '=', values[8]),
+                                                             ('procurement_request', '=', True)], context=context)
+                if not fo_ids and not ir_ids:
                     err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
