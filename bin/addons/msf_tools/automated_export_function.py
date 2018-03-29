@@ -50,6 +50,8 @@ class automated_export_function(osv.osv):
         'method_to_call': lambda *a: 'export_data_from_csv',
     }
 
+    _order = 'name'
+
     def check_method_to_call(self, cr, uid, model_id, method):
         """
         Check if the model implements the method
