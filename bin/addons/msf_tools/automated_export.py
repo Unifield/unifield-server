@@ -261,7 +261,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             params = {}
 
         for export_brw in self.browse(cr, uid, ids, context=context):
-            if not export_brw.dest_path or not export_brw.report_path or not export_brw.dest_path_failure:
+            if not export_brw.dest_path or not export_brw.report_path:
                 raise osv.except_osv(
                     _('Error'),
                     _('You should define all paths before run manually this job !'),
