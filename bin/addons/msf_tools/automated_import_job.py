@@ -367,6 +367,7 @@ class automated_import_job(osv.osv):
                 move_to_process_path(job.import_id, ftp_connec, filename, success=is_success)
                 self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
             except Exception as e:
+                cr.rollback()
                 self.infolog(cr, uid, '%s :: %s' % (job.import_id.name, str(e)))
                 self.write(cr, uid, [job.id], {
                     'filename': False,
