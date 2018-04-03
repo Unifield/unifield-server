@@ -573,13 +573,13 @@ class tender(osv.osv):
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
-                #anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
+                anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
 
                 # attach new PO line:
                 pol_values = {
                     'order_id': po_to_use,
                     'linked_sol_id': tender_line.sale_order_line_id.id or False,
-                    #'origin': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.name or False,
+                    'origin': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.name or False,
                     'name': tender_line.product_id.partner_ref,
                     'product_qty': tender_line.qty,
                     'product_id': tender_line.product_id.id,
@@ -591,8 +591,8 @@ class tender(osv.osv):
                     'notes': tender_line.product_id.description_purchase,
                     'comment': tender_line.comment,
                 }
-                #if anal_dist_to_copy:
-                #    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context)
+                if anal_dist_to_copy:
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context)
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
 
             # when the po is generated, the tender is done - no more modification or comparison
