@@ -44,7 +44,8 @@
 
                     <separator colspan="4" string="FTP server" />
                     <group col="4" colspan="4">
-                        <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" colspan="4"/>
+                        <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" />
+                        <field name="ftp_protocol" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                         <field name="ftp_url" attrs="{'readonly': [('ftp_ok', '=', False)], 'required': [('ftp_ok', '!=', False)]}"/>
                         <field name="ftp_login" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                         <field name="ftp_port" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
