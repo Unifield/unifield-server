@@ -21,6 +21,7 @@
 
 import os
 import time
+import pysftp
 
 from osv import osv
 from osv import fields
@@ -187,6 +188,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.ftp_protocol == 'sftp':
+                return self.sftp_test_connection(cr, uid, ids, context=context)
             ftp = FTP()
             try:
                 ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
@@ -205,6 +208,28 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             self.infolog(cr, uid, _('FTP connection succeeded'))
 
         return ftp
+
+    def sftp_test_connection(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            sftp = None
+            try:
+                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password)
+            except:
+                self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
+                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
+
+        if not context.get('no_raise_if_ok'):
+            raise osv.except_osv(_('Info'), _('Connection succeeded'))
+        else:
+            self.infolog(cr, uid, _('SFTP connection succeeded'))
+
+        return sftp
+
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """

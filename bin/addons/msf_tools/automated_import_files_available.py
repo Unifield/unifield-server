@@ -66,7 +66,7 @@ class automated_import_files_available(osv.osv_memory):
             in_name = in_name.replace('/', '_')
 
         auto_import = self.pool.get('automated.import').browse(cr, uid, import_id, context=context)
-        if auto_import.ftp_source_ok:
+        if auto_import.ftp_protocol == 'ftp' and auto_import.ftp_source_ok:
             files = []
             context.update({'no_raise_if_ok': True})
             ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, auto_import.id, context=context)
@@ -77,11 +77,28 @@ class automated_import_files_available(osv.osv_memory):
                 if file.startswith('d'): # directory
                     continue
                 file_names.append( os.path.join(auto_import.src_path, file.split(' ')[-1]) )
+        elif auto_import.ftp_protocol == 'sftp' and auto_import.ftp_source_ok:
+            files = []
+            context.update({'no_raise_if_ok': True})
+            sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, auto_import.id, context=context)
+            context.pop('no_raise_if_ok')
+            file_names = []
+            with sftp.cd(auto_import.src_path):
+                files = sftp.listdir()
+                for file in files:
+                    if sftp.isfile(file):
+                        file_names.append(os.path.join(auto_import.src_path, file))                    
         else: # local
             file_names = all_files_under(auto_import.src_path)
 
+        fold = 'local'
+        if auto_import.ftp_source_ok and auto_import.ftp_protocol == 'ftp':
+            fold = 'FTP'
+        elif auto_import.ftp_source_ok and auto_import.ftp_protocol == 'sftp':
+            fold = 'SFTP'
+
         found = False
-        msg = _('Files available under "%s" (%s folder):\n') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
+        msg = _('Files available under "%s" (%s folder):\n') % (auto_import.src_path, fold)
         for fn in file_names:
             if auto_import.function_id.startswith and not os.path.basename(fn).startswith(auto_import.function_id.startswith):
                 continue
@@ -97,7 +114,7 @@ class automated_import_files_available(osv.osv_memory):
                 msg += '\t- %s\n' % os.path.basename(fn)
                 found = True
         if not found:
-            msg = _('No files available under "%s" (%s folder)') % (auto_import.src_path, _('local') if not auto_import.ftp_source_ok else _('FTP'))
+            msg = _('No files available under "%s" (%s folder)') % (auto_import.src_path, fold)
 
         return {'value': {'display_info': msg, 'selected_model': auto_import.function_id.model_id.model}}
 
