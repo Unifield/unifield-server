@@ -124,6 +124,7 @@ class automated_export(osv.osv):
 to export well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
         'ftp_ok': fields.boolean(string='Enable FTP server', help='Enable FTP server if you want to read or write from a remote FTP server'),
+        'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP')], string='Protocol', required=True),
         'ftp_url': fields.char(string='FTP server address', size=256),
         'ftp_port': fields.char(string='FTP server port', size=56),
         'ftp_login': fields.char(string='FTP login', size=256),
@@ -138,6 +139,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,
         'priority': lambda *a: 10,
+        'ftp_protocol': lambda *a: 'ftp',
     }
 
     _sql_constraints = [
