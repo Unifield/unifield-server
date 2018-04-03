@@ -76,7 +76,6 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
-    #@@@override account.account_account.__compute
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
         """ compute the balance, debit and/or credit for the provided
@@ -136,7 +135,8 @@ class account_account(osv.osv):
             # target_move from chart of account wizard
             filters = filters.replace("AND l.state <> 'draft'", '')
             prefilters = " "
-            if context.get('move_state', False):
+            possible_states = [x[0] for x in self.pool.get('account.move')._columns['state'].selection]
+            if context.get('move_state', False) and context['move_state'] in possible_states:
                 prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
             else:
                 prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
@@ -150,12 +150,10 @@ class account_account(osv.osv):
             # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
             # ON l.account_id = tmp.id
             # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l, account_move m" +\
-                       " WHERE l.account_id IN %s " \
-                       + prefilters + filters +
-                       " GROUP BY l.account_id")
+            request = """SELECT l.account_id as id, %s
+                       FROM account_move_line l, account_move m
+                       WHERE l.account_id IN %%s %s
+                       GROUP BY l.account_id""" % (', '.join(map(mapping.__getitem__, field_names)), prefilters + filters)  # not_a_user_entry
             params = [tuple(children_and_consolidated)]
             if query_params:
                 for qp in query_params:
@@ -197,7 +195,6 @@ class account_account(osv.osv):
                     new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[i].get(f_name), context=context)
                     res[i][f_name] = new_amount
         return res
-    #@@@end
 
     def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -769,7 +766,7 @@ class account_journal(osv.osv):
                         # BKLG-19/7: forbid creation of MANUAL journal entries
                         # from COORDO on a PROJECT journal
                         msf_instance_obj = self.pool.get('msf.instance')
-                        forbid_instance_ids = msf_instance_obj.search(cr, uid, 
+                        forbid_instance_ids = msf_instance_obj.search(cr, uid,
                                                                       [('level', '=', 'project')], context=context)
                         if forbid_instance_ids:
                             return [('instance_id', 'not in', forbid_instance_ids)]
@@ -781,7 +778,7 @@ class account_journal(osv.osv):
         return res
 
     _columns = {
-        # BKLG-19/7: journals instance filter 
+        # BKLG-19/7: journals instance filter
         'instance_filter': fields.function(
             _get_fake, fnct_search=_search_instance_filter,
             method=True, type='boolean', string='Instance filter'

@@ -88,7 +88,7 @@ class account_analytic_account(osv.osv):
                   LEFT JOIN account_analytic_line l ON (a.id = l.account_id)
               WHERE a.id IN %s
               """ + where_date + """
-              GROUP BY a.id""", where_clause_args)
+              GROUP BY a.id""", where_clause_args) # not_a_user_entry
         for ac_id, debit, credit, balance, quantity in cr.fetchall():
             res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
         return self._compute_level_tree(cr, uid, ids, child_ids, res, ['debit', 'credit', 'balance', 'quantity'], context)
@@ -110,12 +110,12 @@ class account_analytic_account(osv.osv):
     def _complete_name_calc(self, cr, uid, ids, prop, unknow_none, unknow_dict):
         res = self.name_get(cr, uid, ids)
         return dict(res)
-    
+
     def _child_compute(self, cr, uid, ids, name, arg, context=None):
         result = {}
         if context is None:
             context = {}
-        
+
         for account in self.browse(cr, uid, ids, context=context):
             for child in account.child_ids:
                 if child.state == 'template':
@@ -153,7 +153,7 @@ class account_analytic_account(osv.osv):
                                   \n* And finally when all the transactions are over, it can be in \'Close\' state. \
                                   \n* The project can be in either if the states \'Template\' and \'Running\'.\n If it is template then we can make projects based on the template projects. If its in \'Running\' state it is a normal project.\
                                  \n If it is to be reviewed then the state is \'Pending\'.\n When the project is completed the state is set to \'Done\'.'),
-       'currency_id': fields.many2one('res.currency', 'Account currency', required=True),
+        'currency_id': fields.many2one('res.currency', 'Account currency', required=True),
     }
 
     def _default_company(self, cr, uid, context=None):

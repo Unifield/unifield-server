@@ -349,7 +349,7 @@ class hq_entries_validation(osv.osv_memory):
                 ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
             # also write the OD entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
-            cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
+            cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (aal.entry_sequence, res_reverse[0]))
 
         # US-1333/1 - BKLG-12 pure AD correction flag marker for splitted lines
         # (do this bypassing model write)
@@ -498,14 +498,14 @@ class hq_entries_validation(osv.osv_memory):
                     continue
 
                 # UTP-1118: posting date should be those from initial HQ entry line
-                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id, 
+                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id,
                             'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
 
                 # US-1347: Use the entry sequence of HQ for reference, not the description
                 entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
                 if entry_seq and entry_seq[0]:
                     entry_seq = entry_seq[0].get('ref')
-                    vals_cor.update({'ref': entry_seq}) 
+                    vals_cor.update({'ref': entry_seq})
 
                 cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], vals_cor)
                 # update new ana line
