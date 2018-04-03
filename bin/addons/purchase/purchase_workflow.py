@@ -75,6 +75,34 @@ class purchase_order_line(osv.osv):
                 if linked_in_move:
                     self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
 
+                # update qty on linked sale.order.line if has:
+                if pol.original_line_id.linked_sol_id:
+                    self.pool.get('sale.order.line').write(cr, uid, [pol.original_line_id.linked_sol_id.id], {
+                        'product_uom_qty': new_qty,
+                        'product_uos_qty': new_qty,
+                    }, context=context)
+
+        return True
+
+
+    def cancel_related_in_moves(self, cr, uid, ids, context=None):
+        '''
+        check if PO line has related IN moves, if it is the case, then cancel them
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            related_in_moves = self.pool.get('stock.move').search(cr, uid, [
+                ('purchase_line_id', '=', pol.id),
+                ('type', '=', 'in'),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
+            if related_in_moves:
+                self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
+
         return True
 
 
@@ -490,9 +518,9 @@ class purchase_order_line(osv.osv):
 
         self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-sy (if has)
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
 
@@ -563,7 +591,7 @@ class purchase_order_line(osv.osv):
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel']),
+                    ('state', 'not in', ['done', 'cancel', 'shipped']),
                     ('type', '=', 'in'),
                 ])
                 created = False
@@ -668,6 +696,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
@@ -680,7 +709,7 @@ class purchase_order_line(osv.osv):
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
-        Wkf method called when getting the cancel state
+        Wkf method called when getting the cancel_r state
         '''
         if context is None:
             context = {}
@@ -690,6 +719,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
