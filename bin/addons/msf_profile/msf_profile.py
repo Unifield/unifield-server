@@ -52,6 +52,28 @@ class patch_scripts(osv.osv):
     }
 
     # UF8.1
+    def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version'):
+            cr.execute('''
+                select bad.id,bad.name,bad.state
+                from sale_order bad
+                left join sale_order_line badline on badline.order_id = bad.id
+                left join sale_order old on old.client_order_ref=bad.client_order_ref
+                where 
+                bad.split_type_sale_order='original_sale_order' and
+                bad.client_order_ref ~ '.*-[1,2,3]$' and
+                bad.procurement_request='f' and
+                bad.state='draft' and
+                old.split_type_sale_order != 'original_sale_order'
+                group by bad.id, bad.name, bad.state
+                having count(badline)=0 and count(old.id) > 0
+            ''')
+            for x in cr.fetchall():
+                self._logger.warn('US-4454: cancel FO %s (id:%s)' % (x[1], x[0]))
+                cr.execute("update sale_order set state='cancel', note='Cancelled by US-4453' where id=%s", (x[0],))
+
+        return True
+
     def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
         """
         Context: in case of an SI refund-cancel or modify since US-1255 (UF7.0) the original PUR are marked as reallocated,

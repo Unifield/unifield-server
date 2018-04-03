@@ -2,6 +2,10 @@
 <openerp>
     <data>
         <!-- UF8.1 -->
+        <record id="us-4454" model="patch.scripts">
+            <field name="method">cancel_extra_empty_draft_po</field>
+        </record>
+
         <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
             <field name="method">us_4430_set_puf_to_reversal</field>
         </record>
