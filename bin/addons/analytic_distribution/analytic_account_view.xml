@@ -72,9 +72,8 @@
                     <field name="parent_id" position="replace">
                         <field name="category" select="1" required="1" on_change="on_change_category(category)"/>
                         <field name="parent_id" on_change="on_change_parent(parent_id, category)" required="1"
-                               attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2'])]}"
-                               domain="[('type', '=', 'view'), ('category', '=', category)]"
-                        />
+                               attrs="{'readonly': [('category', '=', 'FUNDING')], 'required': [('category', 'not in', ['FREE1', 'FREE2', 'FUNDING'])]}"
+                               domain="[('type', '=', 'view'), ('category', '=', category)]"/>
                         <newline/>
                         <field name="for_fx_gain_loss"/>
                     </field>
