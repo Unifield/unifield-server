@@ -1401,6 +1401,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 po_values.update({
                     'order_type': 'direct',
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
+                    'dest_address_id': sourcing_line.order_id.partner_shipping_id.id,
                 })
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
