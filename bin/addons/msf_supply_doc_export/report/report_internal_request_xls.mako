@@ -62,6 +62,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -72,6 +73,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'state') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>
