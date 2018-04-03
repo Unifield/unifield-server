@@ -208,12 +208,11 @@
                     <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic account" toolbar="1" expand_button="1" nolink="1">
                         <field name="name"/>
                         <field name="code"/>
-                        <field name="description"/>
+                        <field name="parent_id"/>
                         <field name="category"/>
                         <field name="type"/>
                         <field name="date_start"/>
                         <field name="date"/>
-                        <field name="parent_id" invisible="1"/>
                     </tree>
                 </tree>
             </field>
