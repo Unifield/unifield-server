@@ -136,9 +136,13 @@ class automated_export_job(osv.osv):
             data64 = None
 
             ftp_connec = None
-            if job.export_id.ftp_ok:
-                context.update({'no_raise_if_ok': True})
+            sftp = None
+            context.update({'no_raise_if_ok': True})
+            if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
                 ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
+            elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
+                sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
+            context.pop('no_raise_if_ok')
 
             # Process export
             error_message = []
@@ -149,10 +153,10 @@ class automated_export_job(osv.osv):
                     job.export_id.function_id.method_to_call
                 )(cr, uid, job.export_id, context=context)
                 if processed:
-                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec)
+                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
 
                 if rejected:
-                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec)
+                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
                     state = 'error'
                     for resjected_line in rejected:
                         line_message = _('Line %s: ' % resjected_line[0])
@@ -189,7 +193,7 @@ class automated_export_job(osv.osv):
         }
 
 
-    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None):
+    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None):
         """
         Create a csv file that contains the processed lines and put this csv file
         on the report_path directory and attach it to the automated.export.job.
@@ -212,7 +216,7 @@ class automated_export_job(osv.osv):
         delimiter = ','
         quotechar = '"'
         on_ftp = job_brw.export_id.ftp_report_ok
-        assert not on_ftp or (on_ftp and ftp_connec), _('FTP connection issue')
+        assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp), _('FTP connection issue')
 
         csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
         if on_ftp:
@@ -229,11 +233,20 @@ class automated_export_job(osv.osv):
             spamwriter.writerow(pl_row)
         csvfile.close()
 
-        if on_ftp:
+        if on_ftp and job_brw.export_id.ftp_protocol == 'ftp':
             with open(temp_path, 'rb') as temp_file:
                 rep = ftp_connec.storbinary('STOR %s' % pth_filename, temp_file)
                 if not rep.startswith('2'):
-                    raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+                    raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
+        elif on_ftp and job_brw.export_id.ftp_protocol == 'sftp':
+            new_tmp_file_name = os.path.join(os.path.dirname(temp_path), filename)
+            os.rename(temp_path, new_tmp_file_name)
+            temp_path = new_tmp_file_name
+            try:
+                with sftp.cd(job_brw.export_id.report_path):
+                    sftp.put(new_tmp_file_name, preserve_mtime=True)
+            except:
+                raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 
         csvfile = open(on_ftp and temp_path or pth_filename, 'r')
         att_obj.create(cr, uid, {

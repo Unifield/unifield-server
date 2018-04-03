@@ -301,12 +301,11 @@ class purchase_order(osv.osv):
                 'xls' if export_wiz.export_format == 'excel' else 'xml',
             )
             path_to_file = os.path.join(export_wiz.dest_path, filename)
-            if export_wiz.ftp_dest_ok:
+            if export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'ftp':
                 ftp_connec = None
-                if export_wiz.ftp_ok:
-                    context.update({'no_raise_if_ok': True})
-                    ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, export_wiz.id, context=context)
-                    context.pop('no_raise_if_ok')
+                context.update({'no_raise_if_ok': True})
+                ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, export_wiz.id, context=context)
+                context.pop('no_raise_if_ok')
 
                 # write export on FTP server
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
@@ -318,6 +317,28 @@ class purchase_order(osv.osv):
                 os.remove(tmp_file.name)
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+            elif export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'sftp':
+                sftp = None
+                context.update({'no_raise_if_ok': True})
+                sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, export_wiz.id, context=context)
+                context.pop('no_raise_if_ok')
+
+                # create tmp file
+                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.close()
+                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
+                os.rename(tmp_file.name, new_tmp_file_name)
+
+                # transfer tmp file on SFTP server
+                try:
+                    with sftp.cd(export_wiz.dest_path):
+                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                except:
+                    raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
+
+                # now we can remove tmp file 
+                os.remove(new_tmp_file_name)
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:
