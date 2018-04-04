@@ -100,11 +100,24 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('Combined Journals Report')}">
 <Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="110"/>
+<Column ss:AutoFitWidth="1" ss:Width="80"/>
+<Column ss:AutoFitWidth="1" ss:Width="130"/>
+<Column ss:AutoFitWidth="1" ss:Width="180"/>
+<Column ss:AutoFitWidth="1" ss:Width="120"/>
+<Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="1"/>
+<Column ss:AutoFitWidth="1" ss:Width="60"/>
+<Column ss:AutoFitWidth="1" ss:Width="120"/>
+<Column ss:AutoFitWidth="1" ss:Width="160"/>
 % if analytic_axis() in ('f1', 'f2'):
- <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="16"/>
+ <Column ss:AutoFitWidth="1" ss:Width="100"/>
 % else:
- <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="18"/>
+ <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="2"/>
 % endif
+<Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
+<Column ss:AutoFitWidth="1" ss:Width="80"/>
+<Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
+<Column ss:AutoFitWidth="1" ss:Width="80"/>
 
 <Row>
     <Cell ss:StyleID="ssCell">
@@ -166,7 +179,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Booking Credit')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Booking Currency')}</Data>
+        <Data ss:Type="String">${_('Book. Currency')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Func. Debit')}</Data>
@@ -196,11 +209,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['reference']|x}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['document_date']|x}</Data>
+    <Cell ss:StyleID="ssBorderDate">
+        <Data ss:Type="DateTime">${line['document_date']|n}T00:00:00.000</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['posting_date']|x}</Data>
+    <Cell ss:StyleID="ssBorderDate">
+        <Data ss:Type="DateTime">${line['posting_date']|n}T00:00:00.000</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['period']|x}</Data>
@@ -226,20 +239,20 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
           <Data ss:Type="String">${line['analytic_account']|x}</Data>
       </Cell>
     % endif
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['booking_debit']|x}</Data>
+    <Cell ss:StyleID="ssNumber">
+        <Data ss:Type="Number">${line['booking_debit']}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['booking_credit']|x}</Data>
+    <Cell ss:StyleID="ssNumber">
+        <Data ss:Type="Number">${line['booking_credit']}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['booking_currency']|x}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['func_debit']|x}</Data>
+    <Cell ss:StyleID="ssNumber">
+        <Data ss:Type="Number">${line['func_debit']}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['func_credit']|x}</Data>
+    <Cell ss:StyleID="ssNumber">
+        <Data ss:Type="Number">${line['func_credit']}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['func_currency']|x}</Data>
@@ -256,6 +269,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
+    <FitHeight>0</FitHeight>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
     <HorizontalResolution>600</HorizontalResolution>
