@@ -156,7 +156,7 @@ def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
         # from FTP to local
         try:
             sftp.get(srcname, destname, preserve_mtime=True)
-            sftp.delete(srcname)
+            sftp.remove(srcname)
         except:
             raise osv.except_osv(_('Error'), ('Unable to move remote file to local destination location on SFTP server'))
     ############################################### LOCAL ####################################################
