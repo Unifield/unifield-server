@@ -53,7 +53,7 @@ class automated_export(osv.osv):
                 if imp_brw[path[0]] and path[2] and not imp_brw[path[2]]:
                     self.path_is_accessible(imp_brw[path[0]], path[1])
 
-            if imp_brw.active and not (imp_brw.dest_path and imp_brw.dest_path_failure and imp_brw.report_path):
+            if imp_brw.active and not (imp_brw.dest_path and imp_brw.report_path):
                 raise osv.except_osv(
                     _('Error'),
                     _('Before activation, the different paths should be set.')
