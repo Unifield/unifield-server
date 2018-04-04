@@ -80,7 +80,7 @@
          <td><para style="P2">[[ getHeaderLine(o)[5] ]]</para></td>
     </tr>     	  
      </blockTable>
-    <blockTable colWidths="25.0,110.0,185.0,40.0,50.0,50.0,85.0,70.0,70.0,70.0,60.0,85.0" style="Tableau3" >
+    <blockTable colWidths="25.0,110.0,150.0,50.0,40.0,50.0,85.0,50.0,65.0,65.0,55.0,60.0,85.0" style="Tableau3" >
       <tr>
         <td>
           <para style="P3">Item</para>
@@ -111,6 +111,9 @@
         </td>
         <td>
           <para style="P3">IN unit price</para>
+        </td>
+        <td>
+          <para style="P3">Line status</para>
         </td>
         <td>
           <para style="P3">Destination</para>
@@ -150,6 +153,9 @@
         </td>
         <td>
           <para style="P4Center">[[ line['in_unit_price'] ]]</para>
+        </td>
+        <td>
+          <para style="P4Center">[[ getSelValue('purchase.order.line', 'state', line.get('state', '')) ]]</para>
         </td>
         <td>
           <para style="P4Center">[[ line['destination'] ]]</para>

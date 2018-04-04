@@ -182,7 +182,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="32.0,80.0,130.0,110.0,45.0,45.0,45.0,45.0,45.0,75.0,60.0,60.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="32.0,80.0,130.0,110.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,47.0,47.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -220,6 +220,9 @@
                 <td>
                     <para style="Lines"></para>
                 </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
             </tr>
 	    	<tr>
 	    		<td>
@@ -253,6 +256,8 @@
                     <para style="Lines"><i>Delivery Order</i></para>
                 </td>
 	    		<td>
+                    <para style="Lines"><i>Line status</i></para>
+	    		</td><td>
                     <para style="Lines"><i>CDD</i></para>
 	    		</td>
                 <td>
@@ -301,6 +306,10 @@
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and getSelValue('sale.order.line', 'state', line.get('state', '-')) or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and getSelValue('sale.order.line', 'state', line.get('state', '-')) or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and (line.get('cdd', '') and formatLang(line['cdd'], date=True) or 'N/A') or removeParentNode('para') ]]</para>

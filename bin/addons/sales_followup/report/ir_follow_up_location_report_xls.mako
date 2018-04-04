@@ -277,6 +277,7 @@
                 _('Origin'),
                 _('PO ref'),
                 _('Status'),
+                _('Line status'),
                 _('Received'),
                 _('RDD'),
                 _('Item'),
@@ -310,6 +311,7 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.origin or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSelValue('sale.order.line', 'state', line.get('state', '-'))|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
@@ -339,6 +341,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSelValue('sale.order.line', 'state', line.get('state', '-'))|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>

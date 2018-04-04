@@ -213,6 +213,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if len(line.move_ids) == 0:
                 line_moves, int_name = self._get_move_from_line(line, line.product_id.id, line.order_id.name)
 
+            data = {
+                'state': line.state,
+            }
+
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     current_move_line_state = current_line_state
@@ -238,7 +242,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         delivery_order = move.picking_id.name
                         if move.picking_id.state != 'done':
                             delivery_order = '-'
-                        data = {
+                        data.update({
                             'po_name': po_name,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -250,7 +254,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'current_line_state': current_move_line_state,
                             'packing': '-',
                             'shipment': '-',
-                        }
+                        })
                         if first_line:
                             data.update({
                                 'uom_id': line.product_uom.name,
@@ -363,7 +367,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         delivery_order = int_name.get(line_move.id) or line_move.picking_id.name
                         if 'INT' in line_move.picking_id.name and line_move.picking_id.state != 'done':
                             delivery_order = '-'
-                        data = {
+                        data.update({
                             'po_name': po_name,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -373,7 +377,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'is_delivered': False,
                             'delivery_order': delivery_order,
                             'current_line_state': current_line_state,
-                        }
+                        })
                         if first_line:
                             data.update({
                                 'uom_id': line.product_uom.name,
@@ -408,7 +412,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             m_index += 1
             else:  # No move found
                 if first_line:
-                    data = {
+                    data.update({
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
@@ -423,7 +427,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'current_line_state': current_line_state,
                         'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
                         'cdd': cdd,
-                    }
+                    })
                     lines.append(data)
 
             # Put the backorderd qty on the first line

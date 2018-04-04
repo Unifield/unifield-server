@@ -131,6 +131,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
+            data = {
+                'state': line.state,
+            }
+
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -146,7 +150,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         move.product_qty,
                         line.product_uom.id,
                     )
-                    data = {
+                    data.update({
                         'po_name': po_name,
                         'cdd': cdd,
                         'line_number': line.line_number,
@@ -154,7 +158,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'product_code': line.product_id.code,
                         'is_delivered': False,
                         'backordered_qty': 0.00,
-                    }
+                    })
                     if first_line:
                         data.update({
                             'uom_id': line.product_uom.name,
@@ -232,7 +236,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             # No move found
             if first_line:
-                data = {
+                data.update({
                     'line_number': line.line_number,
                     'po_name': po_name,
                     'product_code': line.product_id.default_code,
@@ -244,7 +248,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
                     'cdd': cdd,
-                }
+                })
                 lines.append(data)
 
             # Put the backorderd qty on the first line

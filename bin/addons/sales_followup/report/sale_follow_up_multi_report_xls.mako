@@ -125,6 +125,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## Line Status
+        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Received
         <Column ss:AutoFitWidth="1" ss:Width="54.75" />
         ## Requested Delivery Date
@@ -226,6 +228,7 @@
                 _('Customer ref'),
                 _('PO ref'),
                 _('Status'),
+                _('Line status'),
                 _('Received'),
                 _('RDD'),
                 _('Item'),
@@ -258,6 +261,7 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSelValue('sale.order.line', 'state', line.get('state', '-'))|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>

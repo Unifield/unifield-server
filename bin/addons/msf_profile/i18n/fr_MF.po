@@ -107491,3 +107491,12 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #, python-format
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
+
+#. modules: msf_supply_doc_export, sales_followup
+#: report:po.follow.up_rml:0
+#: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:280
+#: report:ir.follow.up.location.report_pdf:0
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:231
+#: report:sales.follow.up.multi.report_pdf:0
+msgid "Line status"
+msgstr "Statut de la ligne"

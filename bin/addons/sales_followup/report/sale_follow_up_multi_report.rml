@@ -169,7 +169,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, grouped=True, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="32.0,90.0,150.0,50.0,30.0,50.0,50.0,50.0,50.0,60.0,60.0,50.0,50.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="32.0,80.0,135.0,45.0,30.0,50.0,50.0,50.0,50.0,41.0,55.0,60.0,47.0,47.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -191,6 +191,9 @@
                 </td>
                 <td>
                     <para style="Lines">Req. Delivery date: [[ o.delivery_requested_date and formatLang(o.delivery_requested_date, date=True) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
                 </td>
                 <td>
                     <para style="Lines"></para>
@@ -237,6 +240,9 @@
                     <para style="Lines"><i>Qty to deliver</i></para>
                 </td>
                 <td>
+                    <para style="Lines"><i>Line status</i></para>
+                </td>
+                <td>
                     <para style="Lines"><i>Transport</i></para>
                 </td>
                 <td>
@@ -280,6 +286,9 @@
                     <para style="LinesBlue">[[ line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
 	    		</td>
                 <td>
+	    			<para style="LinesBlue">[[ getSelValue('sale.order.line', 'state', line.get('state', '-')) ]]</para>
+	    		</td>
+	    		<td>
 	    			<para style="LinesBlue">[[ line.get('transport', '') and getSel(line['transport'], 'transport_type') or '' ]]</para>
 	    		</td>
                 <td>
