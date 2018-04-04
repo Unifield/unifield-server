@@ -799,6 +799,7 @@ class Form(TinyInputWidget):
         self.hide_button_delete = attrs.get('hide_delete_button', False)
         self.hide_button_edit = attrs.get('hide_edit_button', False)
         self.hide_button_save = attrs.get('hide_save_button', False)
+        self.hide_button_cancel = attrs.get('hide_cancel_button', False)
         self.noteditable = False
         self.link = attrs.get('link', nolinks)
         self.model = model

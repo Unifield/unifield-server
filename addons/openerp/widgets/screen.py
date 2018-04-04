@@ -154,6 +154,7 @@ class Screen(TinyInputWidget):
         self.button_delete = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_delete
         self.button_edit = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_edit
         self.button_save = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_save
+        self.button_cancel = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_cancel
 
         toolbar = {}
         for item, value in view.get('toolbar', {}).items():
