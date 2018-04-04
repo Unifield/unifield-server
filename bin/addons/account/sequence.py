@@ -50,9 +50,10 @@ class ir_sequence(osv.osv):
         if context is None:
             context = {}
 
+        assert code_or_id in ('id', 'code'), 'bad param code_or_id'
         if context.get('fiscalyear_id'):
             cr.execute('select id from ir_sequence where '
-                       + code_or_id + '=%s and active=%s', (sequence_id, True,))
+                       + code_or_id + '=%s and active=%s', (sequence_id, True,)) # ignore_sql_check
             res = cr.dictfetchone()
             if res:
                 for line in self.browse(cr, uid, res['id'], fields_to_fetch=['fiscal_ids'],

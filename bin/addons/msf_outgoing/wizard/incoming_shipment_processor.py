@@ -584,7 +584,7 @@ class stock_move_in_processor(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"  # not_a_user_entry
             cr.execute(sql, (value, ml_id))
         return True
 

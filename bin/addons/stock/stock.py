@@ -542,13 +542,14 @@ class stock_picking(osv.osv):
             ids = [ids]
         for pick in self.read(cr, uid, ids,['max_date'], context=context):
             sql_str = """update stock_move set
-                    date='%s'
+                    date=%s
                 where
-                    picking_id=%d """ % (value, pick['id'])
-
+                    picking_id=%s"""
+            sql_params = (value, pick['id'])
             if pick['max_date']:
-                sql_str += " and (date='" + pick['max_date'] + "' or date>'" + value + "')"
-            cr.execute(sql_str)
+                sql_str += " and (date=%s or date>%s)"
+                sql_params.extend((pick['max_date'], value))
+            cr.execute(sql_str, sql_params)
         return True
 
     def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
@@ -564,12 +565,14 @@ class stock_picking(osv.osv):
             ids = [ids]
         for pick in self.read(cr, uid, ids, ['min_date'], context=context):
             sql_str = """update stock_move set
-                    date='%s'
+                    date=%s
                 where
-                    picking_id=%s """ % (value, pick['id'])
+                    picking_id=%s"""
+            sql_params = (value, pick['id'])
             if pick['min_date']:
-                sql_str += " and (date='" + pick['min_date'] + "' or date<'" + value + "')"
-            cr.execute(sql_str)
+                sql_str += " and (date=%s or date<%s)"
+                sql_params.extend((pick['min_date'], value))
+            cr.execute(sql_str, sql_params)
         return True
 
     def get_min_max_date(self, cr, uid, ids, field_name, arg, context=None):
@@ -795,7 +798,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids): 
+        for pick in self.browse(cr, uid, ids):
             move_ids = self._hook_get_move_ids(cr, uid, pick=pick)
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
@@ -1828,7 +1831,7 @@ class stock_production_lot(osv.osv):
                     stock_report_prodlots
                 where
                     location_id IN %s group by prodlot_id
-                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
@@ -3033,7 +3036,7 @@ class stock_move(osv.osv):
                 too_many.append(move)
 
             # Average price computation
-            # Average and chaining with type='in' 
+            # Average and chaining with type='in'
             #old_moves = self.search(cr, uid, [('type', '=', 'in'), ('move_dest_id', '=', move.id)], context=context)
             #if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not old_moves:
             if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):

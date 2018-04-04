@@ -51,6 +51,158 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.1
+    def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
+        """
+        Context: in case of an SI refund-cancel or modify since US-1255 (UF7.0) the original PUR are marked as reallocated,
+        since US-4137 (UF7.2) PUF are marked as reversal.
+        This method fixes the entries generated in between:
+        - sets the PUF AJIs as is_reversal: will fix the discrepancies in Financing Contracts and Budget Monitoring Report
+        - sets the PUF JIs as is_si_refund: will make the lines not correctable
+
+        Criteria used to spot the JIs to fix:
+        - JIs booked on a journal having the type "Purchase refund"
+        - which belong to a JE system
+        - which are reconciled (implies that all SI headers were booked on a reconcilable account) with a JI:
+            ==> booked on a journal having the type "Purchase"
+            ==> which belongs to a JE system
+            ==> which belongs to a JE having at least one leg set as "corrected"
+                Cf: - the JI corresponding to the SI header line is not set as corrected during a refund-cancel, only the SI lines are.
+                    - since US-1255 (UF7.0) it is not possible to do a refund-cancel once one of the SI lines has been corrected.
+        - with a creation date after 7.0
+            ==> no ending date to cover the diff between UF7.2 patch date at sync server and within each instance
+            ==> entries generated after 7.2 are already correct and won't be impacted
+        - which are set neither as "is_si_refund" nor as "reversal".
+        """
+        if self.pool.get('sync_client.version'):  # exclude sync server + new instances being created
+            user_obj = self.pool.get('res.users')
+            update_aji = """
+                UPDATE account_analytic_line
+                SET is_reversal = 't'
+                WHERE move_id IN (
+                    SELECT id FROM account_move_line
+                    WHERE move_id IN (
+                        SELECT DISTINCT(am.id)
+                            FROM account_move_line aml
+                            INNER JOIN account_move am ON aml.move_id = am.id
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            WHERE j.type = 'purchase_refund'
+                            AND am.status = 'sys'
+                            AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                            AND aml.is_si_refund = 'f'
+                            AND aml.reversal = 'f'
+                            AND aml.reconcile_id IS NOT NULL
+                            AND aml.reconcile_id IN (
+                                SELECT r.id
+                                FROM account_move_reconcile r
+                                INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                                AND aml.id IN (
+                                    SELECT aml.id
+                                    FROM account_move_line aml
+                                    INNER JOIN account_move am ON aml.move_id = am.id
+                                    INNER JOIN account_journal j ON aml.journal_id = j.id
+                                    WHERE j.type = 'purchase'
+                                    AND am.status = 'sys'
+                                    AND am.id IN (
+                                        SELECT DISTINCT(am.id)
+                                        FROM account_move am
+                                        INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                        WHERE aml.corrected = 't'
+                                        )
+                                    )
+                                )
+                            )
+                    );
+                """
+            update_ji = """
+                UPDATE account_move_line
+                SET is_si_refund = 't'
+                WHERE move_id IN (
+                    SELECT DISTINCT(am.id)
+                    FROM account_move_line aml
+                    INNER JOIN account_move am ON aml.move_id = am.id
+                    INNER JOIN account_journal j ON aml.journal_id = j.id
+                    WHERE j.type = 'purchase_refund'
+                    AND am.status = 'sys'
+                    AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                    AND aml.is_si_refund = 'f'
+                    AND aml.reversal = 'f'
+                    AND aml.reconcile_id IS NOT NULL
+                    AND aml.reconcile_id IN (
+                        SELECT r.id
+                        FROM account_move_reconcile r
+                        INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                        AND aml.id IN (
+                            SELECT aml.id
+                            FROM account_move_line aml
+                            INNER JOIN account_move am ON aml.move_id = am.id
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            WHERE j.type = 'purchase'
+                            AND am.status = 'sys'
+                            AND am.id IN (
+                                SELECT DISTINCT(am.id)
+                                FROM account_move am
+                                INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                WHERE aml.corrected = 't'
+                                )
+                            )
+                        )
+                    );
+                """
+            # trigger the sync for all AJIs whose the prop. instance is the current instance, to cover the use case
+            # where only AJIs exist in a project because the doc was generated in coordo or in another project
+            current_instance = user_obj.browse(cr, uid, uid).company_id.instance_id
+            if current_instance and current_instance.level in ('coordo', 'project'):
+                trigger_sync = """
+                    UPDATE ir_model_data SET last_modification=NOW(), touched='[''is_reversal'']'
+                    WHERE module='sd' AND model='account.analytic.line' AND res_id IN (
+                        SELECT aal.id
+                        FROM account_analytic_line aal
+                        INNER JOIN account_analytic_journal aaj ON aal.journal_id = aaj.id
+                        WHERE aaj.is_current_instance = 't'
+                        AND move_id IN (
+                        SELECT id FROM account_move_line
+                        WHERE move_id IN (
+                            SELECT DISTINCT(am.id)
+                                FROM account_move_line aml
+                                INNER JOIN account_move am ON aml.move_id = am.id
+                                INNER JOIN account_journal j ON aml.journal_id = j.id
+                                WHERE j.type = 'purchase_refund'
+                                AND am.status = 'sys'
+                                AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                                AND aml.is_si_refund = 'f'
+                                AND aml.reversal = 'f'
+                                AND aml.reconcile_id IS NOT NULL
+                                AND aml.reconcile_id IN (
+                                    SELECT r.id
+                                    FROM account_move_reconcile r
+                                    INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                                    AND aml.id IN (
+                                        SELECT aml.id
+                                        FROM account_move_line aml
+                                        INNER JOIN account_move am ON aml.move_id = am.id
+                                        INNER JOIN account_journal j ON aml.journal_id = j.id
+                                        WHERE j.type = 'purchase'
+                                        AND am.status = 'sys'
+                                        AND am.id IN (
+                                            SELECT DISTINCT(am.id)
+                                            FROM account_move am
+                                            INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                            WHERE aml.corrected = 't'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    );
+                """
+                cr.execute(trigger_sync)
+                self._logger.warn('%s entries for which a sync will be triggered.' % (cr.rowcount,))
+            cr.execute(update_aji)
+            self._logger.warn('%s AJI updated.' % (cr.rowcount,))
+            cr.execute(update_ji)
+            self._logger.warn('%s JI updated.' % (cr.rowcount,))
+
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
         nom = ['MED', 'LOG', 'LIB', 'SRV']
@@ -86,6 +238,25 @@ class patch_scripts(osv.osv):
         cr.execute(update_partner)
         cr.execute(update_ji)
         cr.execute(update_aji)
+
+    def us_4407_update_free_lines_ad(self, cr, uid, *a, **b):
+        """
+        Updates the distribution_id of the Free1/2 lines by using the distrib_line_id
+        """
+        update_free_1 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_1_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.1.distribution.line,', '')::int) 
+                        WHERE distrib_line_id ~ 'free.1.distribution.line,[0-9]+$' AND distribution_id IS NULL;
+                        """
+        update_free_2 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_2_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.2.distribution.line,', '')::int) 
+                        WHERE distrib_line_id ~ 'free.2.distribution.line,[0-9]+$' AND distribution_id IS NULL;
+                        """
+        cr.execute(update_free_1)
+        cr.execute(update_free_2)
 
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
@@ -505,7 +676,7 @@ class patch_scripts(osv.osv):
                     cr.execute("""
                         ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
                         """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
-                               'unique(name, currency_id)'))
+                               'unique(name, currency_id)'))  # not_a_user_entry
                 except:
                     self._logger.warn('Unable to set unique constraint on currency rate')
                     cr.rollback()
@@ -574,7 +745,7 @@ class patch_scripts(osv.osv):
                         select id from stock_mission_report_line where 
                         """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
                     )
-            """)
+            """) # not_a_user_entry
 
         cr.execute("""
             update stock_mission_report_line set
@@ -583,7 +754,7 @@ class patch_scripts(osv.osv):
             (
                 select id from stock_mission_report where full_view='f' and export_ok='t'
             )
-        """)
+        """) # not_a_user_entry
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
@@ -839,7 +1010,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
 
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
+                    cr.execute("DELETE FROM ir_model_data WHERE model=%s AND module='sd'", (model,))
                     current_count = cr.rowcount
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
@@ -918,7 +1089,7 @@ class patch_scripts(osv.osv):
                         and d.model='res.partner'
                         and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
                         and name not like '%s%%'
-                    ) """ % (identifier, ))
+                    ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))
         return True
 
@@ -1829,22 +2000,22 @@ class patch_scripts(osv.osv):
                 cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                     (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
-                    and name like '"""+instance_id+"""%'
-                )""")
+                    and name like '%s%%'
+                )""" % instance_id)  # not_a_user_entry
                 cr.execute("""delete from ir_translation t
                     where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and id in
-                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""%')
-                """)
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                """ % instance_id)  # not_a_user_entry
                 if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
                     # also remove old UniData trans sent by coordo
                     cr.execute("""delete from ir_translation t
                         where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                             (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                         and id in
-                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+coordo_id+"""%')
-                    """)
+                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                    """ % coordo_id)  # not_a_user_entry
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
 
@@ -1975,7 +2146,7 @@ class patch_scripts(osv.osv):
         SET touched = '[''state_ud'', ''product_active'', ''international_status_code'']', last_modification = now()
         WHERE model = 'stock.mission.report.line' AND res_id IN (
           SELECT id FROM stock_mission_report_line WHERE mission_report_id IN %s)
-        ''' % (tuple(smr_ids),))
+        ''', (tuple(smr_ids),))
 
         return True
 
@@ -2263,10 +2434,8 @@ class email_configuration(osv.osv):
 
     def set_config(self, cr):
         data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
-        cr.execute("""select """+','.join(data)+"""
-            from email_configuration
-            limit 1
-        """)
+        cr.execute("""select %s from email_configuration
+            limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
         if res:
             for i, key in enumerate(data):
