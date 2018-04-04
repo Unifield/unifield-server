@@ -254,12 +254,22 @@ class purchase_order(osv.osv):
 
 
     def auto_import_confirmed_purchase_order(self, cr, uid, file_path, context=None):
+        '''
+        Method called by obj automated.export
+        '''
         if context is None:
             context = {}
 
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         if context.get('po_id'):
-            self.confirm_lines(cr, uid, context['po_id'], context=context)
+            po = self.browse(cr, uid, context['po_id'], context=context)
+            for pol in po.order_line:
+                try:
+                    self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                    cr.commit()
+                except:
+                    cr.rollback()
+                    self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
 
         return res
 
