@@ -70,7 +70,7 @@ class patch_scripts(osv.osv):
             ''')
             for x in cr.fetchall():
                 self._logger.warn('US-4454: cancel FO %s (id:%s)' % (x[1], x[0]))
-                cr.execute("update sale_order set state='cancel', note='Cancelled by US-4453' where id=%s", (x[0],))
+                cr.execute("update sale_order set state='cancel', client_order_ref='' where id=%s", (x[0],))
 
         return True
 
