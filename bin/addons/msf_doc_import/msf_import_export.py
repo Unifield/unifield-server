@@ -61,6 +61,8 @@ class msf_import_export(osv.osv_memory):
         if 'domain_type' in context:
             domain_type = context['domain_type']
         for key, value in MODEL_DICT.items():
+            if key in ['product_list_update', 'supplier_catalogue_update']:
+                continue
             if value['domain_type'] == domain_type:
                 if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
                     result_list.append((key, _(value['name'])))
