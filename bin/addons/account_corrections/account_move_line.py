@@ -915,7 +915,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
     def set_as_corrected(self, cr, uid, ji_ids, manual=True, context=None):
         """
         Sets the JIs and their related AJIs as Corrected according to the following rules:
-        - if one of the JIs or AJIs has already been corrected it raises an error
+        - if one of the JIs or AJIs has already been corrected or if the account can't be corrected it raises an error
         - if manual = True, the Correction will be set as Manual (= the user will be able to reverse it manually)
         """
         if context is None:
@@ -924,6 +924,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
         for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
+            # check that the account can be corrected
+            if ji.account_id.is_not_hq_correctible:
+                raise osv.except_osv(_('Error'), _('The account "%s - %s" is set as "Prevent correction on '
+                                                   'account codes".') % (ji.account_id.code, ji.account_id.name))
             # check that the JI isn't already corrected
             if ji.corrected:
                 raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.') % ji.move_id.name)

@@ -107491,3 +107491,9 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #, python-format
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
+
+#. module: account_corrections
+#: code:addons/account_corrections/account_move_line.py:929
+#, python-format
+msgid "The account \"%s - %s\" is set as \"Prevent correction on account codes\"."
+msgstr "Le compte \"%s - %s\" est défini comme \"Empêcher toutes corrections sur ce code comptable\"."
