@@ -192,6 +192,9 @@ class combined_journals_report(report_sxw.rml_parse):
         aml_selection = selector_obj.get_selection_from_domain(self.cr, self.uid, self.aml_domain, model, context=self.context)
         if aml_selection:
             criteria = '%s ; %s' % (criteria, aml_selection)
+        # truncate the string if it is too long
+        if len(criteria) > 4000:
+            criteria = "%s..." % criteria[:4000]
         return criteria
 
     def _get_current_instance_code(self):
