@@ -107519,3 +107519,10 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:324
+#: code:addons/msf_config_locations/stock_configuration.py:351
+#, python-format
+msgid "A location with a similar name already exists."
+msgstr "Une zone avec un nom similaire existe déjà."
