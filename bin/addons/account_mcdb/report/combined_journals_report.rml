@@ -30,6 +30,7 @@
     <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER"/>
     <blockTableStyle id="Table1">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -194,6 +195,66 @@
         </td>
         <td>
           <parawrap style="P4">[[ line['func_currency'] ]]</parawrap>
+        </td>
+      </tr>
+      <!-- TOTAL -->
+      <tr>
+        <td>
+          <para style="Total">TOTAL</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3">[[ analytic_axis() == 'fp' and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ analytic_axis() == 'fp' and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="Total">Total Booking</para>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_booking_debit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_booking_credit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <para style="Total">Total Func.</para>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_func_debit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_func_credit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <para style="P3"></para>
         </td>
       </tr>
     </blockTable>

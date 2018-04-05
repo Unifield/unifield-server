@@ -34,11 +34,19 @@ class combined_journals_report(report_sxw.rml_parse):
         self.aml_domain = []
         self.aal_domain = []
         self.analytic_axis = 'fp'  # 'fp', 'f1' or 'f2'
+        self.total_booking_debit = 0.0
+        self.total_booking_credit = 0.0
+        self.total_func_debit = 0.0
+        self.total_func_credit = 0.0
         self.localcontext.update({
             'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
             'criteria': self._get_criteria,
             'current_inst_code': self._get_current_instance_code,
+            'total_booking_debit': lambda *a: self.total_booking_debit,
+            'total_booking_credit': lambda *a: self.total_booking_credit,
+            'total_func_debit': lambda *a: self.total_func_debit,
+            'total_func_credit': lambda *a: self.total_func_credit,
         })
 
     def _cmp_sequence_account_type(self, a, b):
@@ -63,7 +71,8 @@ class combined_journals_report(report_sxw.rml_parse):
             => the JIs booked on a "NON analytic_addicted" account
             => the AJIs or Free1/2 lines (depending on the self.analytic_axis) linked to the same JE
         - then, ordered by Entry Sequence:
-            => the AJIs without JIs
+            => the AJIs without JIs.
+        Updates the global totals in booking & functional (self.total_booking_debit...).
         """
         res = []
         aml_obj = self.pool.get('account.move.line')
@@ -119,6 +128,10 @@ class combined_journals_report(report_sxw.rml_parse):
             aal_ids = aal_obj.search(self.cr, self.uid, search_aal_domain, context=self.context, order='NO_ORDER')
             if not aal_ids:
                 res.append(ml)
+                self.total_booking_debit += ml['booking_debit']
+                self.total_booking_credit += ml['booking_credit']
+                self.total_func_debit += ml['func_debit']
+                self.total_func_credit += ml['func_credit']
             # else store only the related Analytic lines
             else:
                 for aal in aal_obj.browse(self.cr, self.uid, aal_ids, fields_to_fetch=aal_fields, context=self.context):
@@ -148,6 +161,10 @@ class combined_journals_report(report_sxw.rml_parse):
                         'func_currency': func_currency_name,
                     }
                     res.append(aal_dict)
+                    self.total_booking_debit += aal_dict['booking_debit']
+                    self.total_booking_credit += aal_dict['booking_credit']
+                    self.total_func_debit += aal_dict['func_debit']
+                    self.total_func_credit += aal_dict['func_credit']
         # get the AJIs corresponding to the criteria selected AND not linked to a JI (use self.aal_domain)
         orphan_aal_ids = aal_obj.search(self.cr, self.uid, self.aal_domain, context=self.context, order='entry_sequence')
         for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, fields_to_fetch=aal_fields, context=self.context):
@@ -177,6 +194,10 @@ class combined_journals_report(report_sxw.rml_parse):
                 'func_currency': func_currency_name,
             }
             res.append(al_dict)
+            self.total_booking_debit += al_dict['booking_debit']
+            self.total_booking_credit += al_dict['booking_credit']
+            self.total_func_debit += al_dict['func_debit']
+            self.total_func_credit += al_dict['func_credit']
         return res
 
     def _get_criteria(self):
