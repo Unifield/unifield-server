@@ -29,6 +29,7 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
     <blockTableStyle id="Table1">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -132,6 +133,67 @@
         </td>
         <td>
           <para style="P3">Func. Currency</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3">[[ repeatIn(lines(), 'line') ]]</para>
+          <parawrap style="P3">[[ line['prop_instance'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['journal_code'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['entry_sequence'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['description'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['reference'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['document_date'], date=True) or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['posting_date'], date=True) or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['period'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['gl_account'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['third_party'] ]]</parawrap>
+        </td>
+        <!-- Analytic Distrib.: add a space after each Analytic Axis to avoid a shift for the B/S lines without AD -->
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['cost_center']) or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['destination']) or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['funding_pool']) or ('%s ' % line['analytic_account']) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['booking_debit'] or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['booking_credit'] or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['booking_currency'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['func_debit'] or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['func_credit'] or '0.0' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['func_currency'] ]]</parawrap>
         </td>
       </tr>
     </blockTable>
