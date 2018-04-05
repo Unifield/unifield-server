@@ -38,6 +38,7 @@ class combined_journals_report(report_sxw.rml_parse):
             'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
             'criteria': self._get_criteria,
+            'current_inst_code': self._get_current_instance_code,
         })
 
     def _cmp_sequence_account_type(self, a, b):
@@ -192,6 +193,14 @@ class combined_journals_report(report_sxw.rml_parse):
         if aml_selection:
             criteria = '%s ; %s' % (criteria, aml_selection)
         return criteria
+
+    def _get_current_instance_code(self):
+        """
+        Returns the code of the current instance
+        """
+        res_obj = self.pool.get('res.users')
+        company = res_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
+        return company.instance_id and company.instance_id.code or ''
 
     def set_context(self, objects, data, ids, report_type=None):
         """

@@ -11,6 +11,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssCell">
 <Alignment ss:Vertical="Top" ss:WrapText="1"/>
 </Style>
+<Style ss:ID="ssCellBold">
+<Font ss:Bold="1" />
+<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
+</Style>
 <Style ss:ID="ssCellRight">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 </Style>
@@ -25,6 +29,23 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssBorderTopLeftRight">
+<Font ss:Bold="1" />
+<Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssBorderBottomLeftRight">
+<Alignment ss:Vertical="Center" ss:Horizontal="Left" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
 <Style ss:ID="ssBorderDate">
@@ -97,6 +118,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssDateTimeLeft">
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="General Date" />
+</Style>
 </Styles>
 <Worksheet ss:Name="${_('Combined Journals Report')}">
 <Table x:FullColumns="1" x:FullRows="1">
@@ -119,10 +144,53 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
 <Column ss:AutoFitWidth="1" ss:Width="80"/>
 
+<!-- HEADER -->
 <Row>
-    <Cell ss:StyleID="ssCell">
+    <Cell ss:StyleID="ssDateTimeLeft" >
+       <Data ss:Type="DateTime">${time.strftime('%Y-%m-%dT%H:%M:%S')|n}.000</Data>
+    </Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell" >
+       <Data ss:Type="String">${ current_inst_code() |x}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssCellBold" ss:MergeAcross="2">
+       <Data ss:Type="String">${_('COMBINED JOURNALS REPORT')}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="18">
+        <Data ss:Type="String">${_('SELECTION')}</Data>
+    </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="18">
         <Data ss:Type="String">${ criteria() |x}</Data>
     </Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+</Row>
+<Row>
+    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
 </Row>
 
 <!-- TABLE HEADER -->
