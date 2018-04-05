@@ -85,7 +85,7 @@ class ir_followup_location_wizard(osv.osv_memory):
             string='Closed',
         ),
         'cancel_ok': fields.boolean(
-            string='Cancel',
+            string='Cancelled',
         ),
         'only_bo': fields.boolean(
             string='Pending order lines only (PDF)',

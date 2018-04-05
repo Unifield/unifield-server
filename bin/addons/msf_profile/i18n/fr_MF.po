@@ -107500,3 +107500,120 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
 #: report:sales.follow.up.multi.report_pdf:0
 msgid "Line status"
 msgstr "Statut de la ligne"
+
+#. module: sales_followup
+#: field:ir.followup.location.wizard,cancel_ok:0
+#: field:sale.followup.multi.wizard,cancel_ok:0
+msgid "Cancelled"
+msgstr "Annulé"
+
+#. modules: purchase, purchase_override, sale
+#: selection:purchase.order.line,state:0
+#: selection:purchase.order.merged.line,state:0
+#: selection:sale.order.line,state:0
+msgid "Cancelled-r"
+msgstr "Annulé-r"
+
+#. modules: msf_order_date, purchase, documents_done, sale, purchase_override, stock_forecast, purchase_allocation_report, sourcing
+#: selection:documents.done.wizard,display_state:0
+#: selection:sale.order.line,so_state_stored:0
+#: selection:purchase.order,state:0
+#: selection:purchase.order.line,order_state_purchase_order_line:0
+#: selection:purchase.order.line,po_state_stored:0
+#: selection:purchase.order.line.allocation.report,state:0
+#: selection:purchase.order.merged.line,order_state_purchase_order_line:0
+#: selection:purchase.order.merged.line,po_state_stored:0
+#: selection:sale.order,state:0
+#: selection:sale.order,state_hidden_sale_order:0
+#: selection:sale.order.leave.close,order_state:0
+#: selection:sale.report,state:0
+#: selection:sale.order.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
+msgid "Draft-p"
+msgstr "Brouillon-p"
+
+#. modules: msf_order_date, purchase, documents_done, sale, purchase_override, stock_forecast, purchase_allocation_report, sourcing
+#: selection:documents.done.wizard,display_state:0
+#: selection:sale.order.line,so_state_stored:0
+#: selection:purchase.order,state:0
+#: selection:purchase.order.line,order_state_purchase_order_line:0
+#: selection:purchase.order.line,po_state_stored:0
+#: selection:purchase.order.line.allocation.report,state:0
+#: selection:purchase.order.merged.line,order_state_purchase_order_line:0
+#: selection:purchase.order.merged.line,po_state_stored:0
+#: selection:sale.order,state:0
+#: selection:sale.order,state_hidden_sale_order:0
+#: selection:sale.order.leave.close,order_state:0
+#: selection:sale.report,state:0
+#: selection:sale.order.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
+msgid "Validated-p"
+msgstr "Validé-p"
+
+#. modules: purchase, purchase_override
+#: selection:purchase.order.line,state:0
+#: selection:purchase.order.merged.line,state:0
+msgid "Validated-n"
+msgstr "Validé-n"
+
+#. modules: purchase, purchase_override, sale
+#: selection:purchase.order.line,state:0
+#: selection:purchase.order.merged.line,state:0
+#: selection:sale.order.line,state:0
+msgid "Sourced-v"
+msgstr "Sourcé-v"
+
+#. modules: msf_order_date, purchase, documents_done, sale, purchase_override, stock_forecast, purchase_allocation_report, sourcing
+#: selection:documents.done.wizard,display_state:0
+#: selection:sale.order.line,so_state_stored:0
+#: selection:purchase.order,state:0
+#: selection:purchase.order.line,order_state_purchase_order_line:0
+#: selection:purchase.order.line,po_state_stored:0
+#: selection:purchase.order.line.allocation.report,state:0
+#: selection:purchase.order.merged.line,order_state_purchase_order_line:0
+#: selection:purchase.order.merged.line,po_state_stored:0
+#: selection:sale.order,state:0
+#: selection:sale.order,state_hidden_sale_order:0
+#: selection:sale.order.leave.close,order_state:0
+#: selection:sale.report,state:0
+#: selection:sale.order.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
+msgid "Sourced-p"
+msgstr "Sourcé-p"
+
+#. modules: purchase, purchase_override, sale
+#: selection:purchase.order.line,state:0
+#: selection:purchase.order.merged.line,state:0
+#: selection:sale.order.line,state:0
+msgid "Sourced-n"
+msgstr "Sourcé-n"
+
+#. module: sale
+#: field:sale.order.line,set_as_sourced_n:0
+msgid "Sourced-n line"
+msgstr "Ligne sourcée-n"
+
+#. modules: purchase, purchase_override, sale
+#: selection:purchase.order.line,state:0
+#: selection:purchase.order.merged.line,state:0
+#: selection:sale.order.line,state:0
+msgid "Sourced-sy"
+msgstr "Sourcé-sy"
+
+#. modules: msf_order_date, purchase, documents_done, sale, purchase_override, stock_forecast, purchase_allocation_report, sourcing
+#: selection:documents.done.wizard,display_state:0
+#: selection:sale.order.line,so_state_stored:0
+#: selection:purchase.order,state:0
+#: selection:purchase.order.line,order_state_purchase_order_line:0
+#: selection:purchase.order.line,po_state_stored:0
+#: selection:purchase.order.line.allocation.report,state:0
+#: selection:purchase.order.merged.line,order_state_purchase_order_line:0
+#: selection:purchase.order.merged.line,po_state_stored:0
+#: selection:sale.order,state:0
+#: selection:sale.order,state_hidden_sale_order:0
+#: selection:sale.order.leave.close,order_state:0
+#: selection:sale.report,state:0
+#: selection:sale.order.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
+msgid "Confirmed-p"
+msgstr "Confirmé-p"
