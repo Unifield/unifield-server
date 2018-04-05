@@ -50,7 +50,7 @@
 
   <story>
 
-    <blockTable colWidths="821.0" style="Table1">
+    <blockTable colWidths="823.0" style="Table1">
       <tr>
         <td>
           <para style="P1">Combined Journals Report</para>
@@ -61,7 +61,7 @@
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="821.0" style="Table2">
+    <blockTable colWidths="823.0" style="Table2">
       <tr>
         <td>
           <para style="P3">Selection</para>
