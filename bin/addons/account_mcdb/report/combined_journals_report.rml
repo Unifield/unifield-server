@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<document filename="combined_journals_report.pdf">
+
+  <template pageSize="(842.0,595.0)" title="Combined Journals Report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="28.0" y1="57.0" width="772" height="481"/>
+      <pageGraphics>
+        <fill color="blue"/>
+        <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+        <image x="50" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+        <setFont name="Helvetica" size="8"/>
+        <fill color="black"/>
+        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+    <initialize>
+      <paraStyle name="all" fontName="Helvetica" fontSize="9.0"/>
+    </initialize>
+    <paraStyle name="right" alignment="RIGHT"/>
+    <paraStyle name="center" alignment="CENTER"/>
+    <paraStyle name="text" leftIndent="3mm"/>
+    <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+    <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="7.0" leading="9" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_header_Centre" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
+  </stylesheet>
+
+  <story>
+    <section>
+
+        <para style="terp_default_8">
+            <font color="white"> </font>
+        </para>
+        <para style="terp_header_Centre">Combined Journals Report</para>
+        <para style="terp_default_8">
+            <font color="white"> </font>
+        </para>
+
+    </section>
+  </story>
+</document>

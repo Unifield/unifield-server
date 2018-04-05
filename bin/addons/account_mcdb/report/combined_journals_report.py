@@ -230,6 +230,12 @@ class combined_journals_report(report_sxw.rml_parse):
         return super(combined_journals_report, self).set_context(objects, data, ids, report_type)
 
 
+# XLS report
 SpreadsheetReport('report.combined.journals.report.xls', 'account.mcdb',
                   'addons/account_mcdb/report/combined_journals_report.mako', parser=combined_journals_report)
+
+# PDF report
+report_sxw.report_sxw('report.combined.journals.report.pdf', 'account.mcdb',
+                      'addons/account_mcdb/report/combined_journals_report.rml', parser=combined_journals_report,
+                      header='internal landscape')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

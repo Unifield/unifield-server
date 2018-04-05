@@ -1315,14 +1315,18 @@ class account_mcdb(osv.osv):
             'target': 'self',
         }
 
-    def combined_export_xls(self, cr, uid, ids, context=None):
+    def combined_export(self, cr, uid, ids, format='pdf', context=None):
         """
-        Generates the Combined Journals Report in Excel format
+        Generates the Combined Journals Report in 'pdf' or 'xls' format
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if format == 'pdf':
+            report_name = 'combined.journals.report.pdf'
+        else:
+            report_name = 'combined.journals.report.xls'
         selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
         data = {
             'selector_id': ids[0],
@@ -1330,10 +1334,22 @@ class account_mcdb(osv.osv):
         }
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'combined.journals.report.xls',
+            'report_name': report_name,
             'datas': data,
             'context': context,
         }
+
+    def combined_export_xls(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in Excel format
+        """
+        return self.combined_export(cr, uid, ids, format='xls', context=context)
+
+    def combined_export_pdf(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in PDF format
+        """
+        return self.combined_export(cr, uid, ids, format='pdf', context=context)
 
 
 account_mcdb()

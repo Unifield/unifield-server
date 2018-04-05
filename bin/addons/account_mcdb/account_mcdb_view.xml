@@ -378,16 +378,5 @@
             </field>
         </record>
 
-        <!-- Combined Journals Report XLS declaration -->
-        <report id="combined_journals_report_xls"
-                string="Combined Journals Report XLS"
-                model="account.mcdb"
-                name="combined.journals.report.xls"
-                file="account_mcdb/report/combined_journals_report.mako"
-                report_type="webkit"
-                header="False"
-                auto="False"
-                menu="False"/>
-
     </data>
 </openerp>
