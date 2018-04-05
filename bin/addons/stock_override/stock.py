@@ -1721,6 +1721,7 @@ class stock_move(osv.osv):
                                                                         ('product_uom', '=', loc['uom_id']),
                                                                         ('line_number', '=', move['line_number']),
                                                                         ('location_id', '=', loc['location_id']),
+                                                                        ('sale_line_id', '=', move['sale_line_id'] and move['sale_line_id'][0] or False),
                                                                         ('location_dest_id', '=', move['location_dest_id'][0]),
                                                                         ('prodlot_id', '=', loc['prodlot_id'])],
                                                                     context=context)
