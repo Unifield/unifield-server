@@ -355,7 +355,7 @@ class purchase_order_line(osv.osv):
 
         return pick_id
 
-    def _create_counterpart_fo_for_external_partner_po(self, cr, uid, p_order, context=False):
+    def create_counterpart_fo_for_external_partner_po(self, cr, uid, p_order, context=False):
         '''
         US-4165 : Create a Field Order as a loan Purchase Order's counterpart
         '''
@@ -366,7 +366,8 @@ class purchase_order_line(osv.osv):
         curr_obj = self.pool.get('res.currency')
         pricelist_obj = self.pool.get('product.pricelist')
 
-        pol_ids = self.search(cr, uid, [('order_id', '=', p_order.id)], context=context)
+        pol_ids = self.search(cr, uid, [('order_id', '=', p_order.id), ('state', 'not in', ['cancel', 'cancel_r'])],
+                              context=context)
         company_currency_id = company_obj.browse(cr, uid, uid, fields_to_fetch=['currency_id'], context=context).currency_id.id
         pricelist_id = pricelist_obj.search(cr, uid, [('currency_id', '=', company_currency_id), ('type', '=', 'sale')],
                                             context=context)[0]
@@ -431,17 +432,16 @@ class purchase_order_line(osv.osv):
         for pol_id in ids:
             wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
 
-        # Create the counterpart FO to a loan PO with an external partner if all lines have been confirmed
+        # Create the counterpart FO to a loan PO with an external partner if non-cancelled lines have been confirmed
         p_order = False
         for pol in self.browse(cr, uid, ids, context=context):
             p_order = pol.order_id
             break
         if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart and not p_order.origin\
                 and p_order.partner_type == 'external' and p_order.state == 'confirmed':
-            self._create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
+            self.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
 
         return True
-
 
     def action_validated_n(self, cr, uid, ids, context=None):
         '''
