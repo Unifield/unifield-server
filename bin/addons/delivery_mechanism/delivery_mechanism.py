@@ -1017,8 +1017,8 @@ class stock_picking(osv.osv):
                         continue
 
                     # Check if we must re-compute the price of the product
-                    compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method
-                    if values.get('location_dest_id', False):
+                    compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
+                    if not sync_in and values.get('location_dest_id', False):
                         compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
