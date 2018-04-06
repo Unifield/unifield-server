@@ -1324,10 +1324,10 @@ class account_mcdb(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         bg_obj = self.pool.get('memory.background.report')
-        if format == 'pdf':
-            report_name = 'combined.journals.report.pdf'
-        else:
+        if format == 'xls':
             report_name = 'combined.journals.report.xls'
+        else:
+            report_name = 'combined.journals.report.pdf'
         selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
         data = {
             'selector_id': ids[0],

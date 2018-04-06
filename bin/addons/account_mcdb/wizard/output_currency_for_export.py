@@ -246,10 +246,10 @@ class background_report(osv.osv_memory):
         if context.get('background_id'):
             if current_line_position == nb_lines:
                 percent = after
-                self.update_percent(cr, uid, [context.get('background_id')], percent)
+                self.update_percent(cr, uid, [context['background_id']], percent)
             elif current_line_position % 50 == 0:  # update percentage every 50 lines
                 percent = before + (current_line_position / float(nb_lines) * (after - before))
-                self.update_percent(cr, uid, [context.get('background_id')], percent)
+                self.update_percent(cr, uid, [context['background_id']], percent)
         return percent
 
 
