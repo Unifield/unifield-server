@@ -6221,6 +6221,8 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account_mcdb/report/combined_journals_report.mako:208
+#: report:combined.journals.report.pdf:0
 #: field:account.move,manual_name:0
 #: report:addons/account_override/report/open_invoices_xls.mako:339
 #: report:allocation.invoices.report:0
@@ -6515,7 +6517,7 @@ msgstr "# push msg"
 msgid "Import lines to a catalogue"
 msgstr "Importer des Lignes dans un catalogue"
 
-#. modules: account, analytic_distribution
+#. modules: account, analytic_distribution, account_mcdb
 #: view:account.analytic.account:0
 #: view:account.analytic.account:0
 #: field:analytic.distribution.wizard.f1.lines,analytic_id:0
@@ -8550,6 +8552,8 @@ msgstr "Ouvrir les Journaux de bord"
 #. modules: res_currency_functional, analytic_override, account_mcdb, transport_mgmt
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:259
+#: report:combined.journals.report.pdf:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:64
 #: code:addons/account_mcdb/report/account_mcdb_export.py:184
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
@@ -10417,6 +10421,8 @@ msgstr "Localisation 'Client MSF' ne peut être trouvée dans ce cas ou n'est pa
 #. modules: account, finance, account_mcdb
 #: field:account.move.line,credit:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:64
+#: report:addons/account_mcdb/report/combined_journals_report.mako:256
+#: report:combined.journals.report.pdf:0
 #: view:account.move:0
 #, python-format
 msgid "Func. Credit"
@@ -17483,9 +17489,10 @@ msgstr "Cet assistant va générer des écritures de fin d'exercice de l'exercic
 msgid "Analytic Lines (FP)"
 msgstr "Lignes Analytiques (FP)"
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, account_mcdb
 #: view:purchase.order.followup:0
 #: view:sale.order.followup:0
+#: view:account.mcdb:0
 msgid "Export PDF"
 msgstr "Export PDF"
 
@@ -24368,6 +24375,8 @@ msgstr "Veuillez d'abord sélectionner un registre."
 #. modules: account, finance, account_mcdb
 #: field:account.move.line,debit:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:64
+#: report:addons/account_mcdb/report/combined_journals_report.mako:253
+#: report:combined.journals.report.pdf:0
 #: view:account.move:0
 #, python-format
 msgid "Func. Debit"
@@ -25925,6 +25934,8 @@ msgstr "Wizard to split processor lines"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account_mcdb/report/combined_journals_report.mako:220
+#: report:combined.journals.report.pdf:0
 #: view:account.invoice:0
 #: view:account.period:0
 #: view:account.voucher:0
@@ -27324,10 +27335,12 @@ msgstr "# of rejected records"
 msgid "The theoretical version must be completed."
 msgstr "La version théorique doit être complétée"
 
-#. module: register_accounting
+#. modules: register_accounting, account_mcdb
 #: report:addons/register_accounting/report/open_advances_xls.mako:153
+#: report:addons/account_mcdb/report/combined_journals_report.mako:244
+#: report:combined.journals.report.pdf:0
 msgid "Booking Debit"
-msgstr "Booking Debit"
+msgstr "Débit Devise d'enreg."
 
 #. module: sale
 #: code:addons/sale/res_partner.py:54
@@ -28010,6 +28023,7 @@ msgstr "Ceci est la structure des entrepôts et des Zones de votre société. Vo
 #: report:account.move.line:0
 #: selection:ir.translation,type:0
 #: view:product.asset.event:0
+#: report:combined.journals.report.pdf:0
 msgid "Selection"
 msgstr "Sélection"
 
@@ -39437,6 +39451,8 @@ msgstr "No data to process !"
 #: field:int.commitment.realloc.wizard,funding_pool_id:0
 #: code:addons/analytic_override/analytic_line.py:212
 #: report:addons/financing_contract/report/project_expenses_xls.mako:497
+#: report:addons/account_mcdb/report/combined_journals_report.mako:236
+#: report:combined.journals.report.pdf:0
 #: field:financing.contract.account.quadruplet,funding_pool_id:0
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:230
 #: field:msf.doc.import.accounting.lines,funding_pool_id:0
@@ -42303,7 +42319,7 @@ msgstr "Estonian / Eesti keel"
 #. module: account_mcdb
 #: view:account.mcdb:0
 msgid "G/L journals"
-msgstr "G/L journals"
+msgstr "Journaux de Comptes de Grand Livre"
 
 #. module: account
 #: help:account.account,currency_mode:0
@@ -45915,6 +45931,8 @@ msgstr "Send a test email"
 #: field:sale.report,analytic_account_id:0
 #: field:sale.shop,project_id:0
 #: model:ir.model,name:sync_so.model_account_analytic_account
+#: report:addons/account_mcdb/report/combined_journals_report.mako:240
+#: report:combined.journals.report.pdf:0
 #, python-format
 msgid "Analytic Account"
 msgstr "Compte Analytique"
@@ -47365,6 +47383,8 @@ msgstr "Aucun appel d'offre"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account_mcdb/report/combined_journals_report.mako:205
+#: report:combined.journals.report.pdf:0
 #: field:account.journal.fake,sequence_id:0
 #: view:account.move.line:0
 #, python-format
@@ -50129,6 +50149,7 @@ msgstr "Point de Trésorerie Banque"
 #: report:expiry.report:0
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:546
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
+#: report:combined.journals.report.pdf:0
 msgid "TOTAL"
 msgstr "TOTAL"
 
@@ -63725,6 +63746,8 @@ msgstr "Albania"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:167
 #: report:addons/register_accounting/report/open_advances_xls.mako:146
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:223
+#: report:addons/account_mcdb/report/combined_journals_report.mako:211
+#: report:combined.journals.report.pdf:0
 #: field:wizard.account.invoice,reference:0
 #: field:wizard.account.invoice.line,reference:0
 #: field:wizard.advance.line,reference:0
@@ -67578,6 +67601,8 @@ msgstr "PO line to confirm"
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account_mcdb/report/combined_journals_report.mako:217
+#: report:combined.journals.report.pdf:0
 #: view:account.invoice:0
 #: field:account.analytic.line,date:0
 #: view:account.move:0
@@ -76423,6 +76448,8 @@ msgstr "Constraint error on Uom"
 #: report:account.analytic.line_csv:0
 #: report:account.move.line:0
 #: report:account.move.line_csv:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:250
+#: report:combined.journals.report.pdf:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:182
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
@@ -85010,9 +85037,10 @@ msgstr "Request parameters"
 msgid "Products Price Type"
 msgstr "Produits - Type de Prix"
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, account_mcdb
 #: view:purchase.order.followup:0
 #: view:sale.order.followup:0
+#: view:account.mcdb:0
 msgid "Export Excel"
 msgstr "Export Excel"
 
@@ -94868,6 +94896,8 @@ msgstr "Sous-flux de Demande de Devis générée."
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account_mcdb/report/combined_journals_report.mako:0
+#: report:combined.journals.report.pdf:0
 #: field:account.analytic.journal,instance_id:0
 #: field:account.analytic.journal.fake,instance_id:0
 #: field:account.analytic.line,instance_id:0
@@ -95742,6 +95772,8 @@ msgstr "Liste de Composition ne peut être inactive"
 #: field:account.mcdb,journal_ids:0
 #: report:account.move.line:0
 #: report:account.move.line_csv:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:202
+#: report:combined.journals.report.pdf:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:62
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
@@ -95931,10 +95963,12 @@ msgstr "Postes"
 msgid "Outgoing Currencies Rate"
 msgstr "Taux de Devises Sortantes"
 
-#. module: register_accounting
+#. modules: register_accounting, account_mcdb
 #: report:addons/register_accounting/report/open_advances_xls.mako:154
+#: report:addons/account_mcdb/report/combined_journals_report.mako:247
+#: report:combined.journals.report.pdf:0
 msgid "Booking Credit"
-msgstr "Booking Credit"
+msgstr "Crédit Devise d'enreg."
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
@@ -96930,6 +96964,8 @@ msgstr "Paiements client"
 
 #. modules: msf_doc_import, register_accounting, account_mcdb, analytic_distribution
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/account_mcdb/report/combined_journals_report.mako:223
+#: report:combined.journals.report.pdf:0
 #: field:account.destination.link,account_id:0
 #: field:account.destination.summary,account_id:0
 #: field:analytic.distribution.wizard,account_id:0
@@ -97060,7 +97096,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: register_accounting, msf_homere_interface
+#. modules: register_accounting, msf_homere_interface, account_mcdb
 #: field:hr.payroll.msf,partner_type:0
 #: field:account.bank.statement.line,partner_type:0
 #: field:account.bank.statement.line,third_parties:0
@@ -97071,6 +97107,8 @@ msgstr "Information Complémentaire"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:169
 #: report:addons/register_accounting/report/open_advances_xls.mako:151
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:225
+#: report:addons/account_mcdb/report/combined_journals_report.mako:226
+#: report:combined.journals.report.pdf:0
 msgid "Third Parties"
 msgstr "Tiers"
 
@@ -98593,6 +98631,8 @@ msgstr "Facture venant de"
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:234
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:240
 #: report:po.follow.up_rml:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:233
+#: report:combined.journals.report.pdf:0
 #: field:purchase.order,location_id:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
@@ -99519,6 +99559,8 @@ msgstr "wizard.export.po.validated"
 #: report:account.bank.statement.line_csv:0
 #: report:account.move.line:0
 #: report:account.move.line_csv:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:214
+#: report:combined.journals.report.pdf:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:62
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: code:addons/account_mcdb/report/account_mcdb_export.py:277
@@ -107519,3 +107561,68 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/combined_journals_report.mako:8
+#: report:addons/account_mcdb/report/combined_journals_report.mako:126
+#: report:combined.journals.report.pdf:0
+#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_combined_form
+#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_combined_line
+msgid "Combined Journals Report"
+msgstr "Rapport des journaux agrégés"
+
+#. module: account
+#: model:ir.actions.report.xml,name:account.combined_journals_report_pdf
+msgid "Combined Journals Report PDF"
+msgstr "Rapport des journaux agrégés PDF"
+
+#. module: account
+#: model:ir.actions.report.xml,name:account.combined_journals_report_xls
+msgid "Combined Journals Report XLS"
+msgstr "Rapport des journaux agrégés XLS"
+
+#. module: account_mcdb
+#: selection:account.mcdb,model:0
+msgid "Both Journal Items and Analytic Journal Items"
+msgstr "À la fois les Lignes d'Ecritures Comptables et les Lignes d'Ecritures Analytiques"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/combined_journals_report.mako:230
+#: report:combined.journals.report.pdf:0
+msgid "Cost Centre"
+msgstr "Centre de Coût"
+
+#. module: account_mcdb
+#: report:combined.journals.report.pdf:0
+msgid "Total Booking"
+msgstr "Total Devise d'Enreg."
+
+#. module: account_mcdb
+#: report:combined.journals.report.pdf:0
+msgid "Total Func."
+msgstr "Total Devise Fonc."
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+#: code:addons/account_mcdb/account_mcdb.py:609
+#: code:addons/account_mcdb/account_mcdb.py:665
+#, python-format
+msgid "Selector - Combined Journals Report"
+msgstr "Sélecteur - Rapport des journaux agrégés"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/combined_journals_report.mako:173
+#: report:combined.journals.report.pdf:0
+msgid "COMBINED JOURNALS REPORT"
+msgstr "RAPPORT DES JOURNAUX AGRÉGÉS"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/report/combined_journals_report.py:273
+#, python-format
+msgid "Selector not found."
+msgstr "Sélecteur non trouvé."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/combined_journals_report.mako:181
+msgid "SELECTION"
+msgstr "SÉLECTION"

@@ -79,61 +79,61 @@
       [[ analytic_axis() == 'fp' or setTag('blockTable', 'blockTable', {'colWidths': "48.0,42.0,53.0,57.0,46.0,56.0,56.0,38.0,49.0,42.0,41.0,53.0,50.0,50.0,50.0,42.0,50.0"}) ]]
       <tr>
         <td>
-          <para style="P3">Proprietary Instance</para>
+          <parawrap style="P3">Proprietary Instance</parawrap>
         </td>
         <td>
-          <para style="P3">Journal Code</para>
+          <parawrap style="P3">Journal Code</parawrap>
         </td>
         <td>
-          <para style="P3">Entry Sequence</para>
+          <parawrap style="P3">Entry Sequence</parawrap>
         </td>
         <td>
-          <para style="P3">Description</para>
+          <parawrap style="P3">Description</parawrap>
         </td>
         <td>
-          <para style="P3">Reference</para>
+          <parawrap style="P3">Reference</parawrap>
         </td>
         <td>
-          <para style="P3">Document Date</para>
+          <parawrap style="P3">Document Date</parawrap>
         </td>
         <td>
-          <para style="P3">Posting Date</para>
+          <parawrap style="P3">Posting Date</parawrap>
         </td>
         <td>
-          <para style="P3">Period</para>
+          <parawrap style="P3">Period</parawrap>
         </td>
         <td>
-          <para style="P3">G/L Account</para>
+          <parawrap style="P3">G/L Account</parawrap>
         </td>
         <td>
-          <para style="P3">Third Parties</para>
+          <parawrap style="P3">Third Parties</parawrap>
         </td>
         <td>
-          <para style="P3">[[ analytic_axis() == 'fp' and "Cost Centre" or removeParentNode('td') ]]</para>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Cost Centre") or removeParentNode('td') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ analytic_axis() == 'fp' and "Destination" or removeParentNode('td') ]]</para>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Destination") or removeParentNode('td') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ analytic_axis() == 'fp' and "Funding Pool" or "Analytic Account" ]]</para>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Funding Pool") or translate("Analytic Account") ]]</parawrap>
         </td>
         <td>
-          <para style="P3">Booking Debit</para>
+          <parawrap style="P3">Booking Debit</parawrap>
         </td>
         <td>
-          <para style="P3">Booking Credit</para>
+          <parawrap style="P3">Booking Credit</parawrap>
         </td>
         <td>
-          <para style="P3">Book. Currency</para>
+          <parawrap style="P3">Book. Currency</parawrap>
         </td>
         <td>
-          <para style="P3">Func. Debit</para>
+          <parawrap style="P3">Func. Debit</parawrap>
         </td>
         <td>
-          <para style="P3">Func. Credit</para>
+          <parawrap style="P3">Func. Credit</parawrap>
         </td>
         <td>
-          <para style="P3">Func. Currency</para>
+          <parawrap style="P3">Func. Currency</parawrap>
         </td>
       </tr>
       <tr>
@@ -201,7 +201,7 @@
       <!-- TOTAL -->
       <tr>
         <td>
-          <para style="Total">TOTAL</para>
+          <parawrap style="Total">TOTAL</parawrap>
         </td>
         <td>
           <para style="P3"></para>
@@ -237,7 +237,7 @@
           <para style="P3"></para>
         </td>
         <td>
-          <para style="Total">Total Booking</para>
+          <parawrap style="Total">Total Booking</parawrap>
         </td>
         <td>
           <parawrap style="Total">[[ formatLang(total_booking_debit() or 0.0) ]]</parawrap>
@@ -246,7 +246,7 @@
           <parawrap style="Total">[[ formatLang(total_booking_credit() or 0.0) ]]</parawrap>
         </td>
         <td>
-          <para style="Total">Total Func.</para>
+          <parawrap style="Total">Total Func.</parawrap>
         </td>
         <td>
           <parawrap style="Total">[[ formatLang(total_func_debit() or 0.0) ]]</parawrap>

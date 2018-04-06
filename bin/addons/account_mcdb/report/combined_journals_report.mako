@@ -233,11 +233,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
           <Data ss:Type="String">${_('Destination')}</Data>
       </Cell>
       <Cell ss:StyleID="ssHeader">
-          <Data ss:Type="String">${_('Funding pool')}</Data>
+          <Data ss:Type="String">${_('Funding Pool')}</Data>
       </Cell>
     % elif analytic_axis() in ('f1', 'f2'):
       <Cell ss:StyleID="ssHeader">
-          <Data ss:Type="String">${_('Analytic account')}</Data>
+          <Data ss:Type="String">${_('Analytic Account')}</Data>
       </Cell>
     % endif
     <Cell ss:StyleID="ssHeader">
