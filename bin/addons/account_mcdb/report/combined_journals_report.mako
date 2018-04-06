@@ -263,7 +263,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for line in lines():
 <Row>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['prop_instance']|x}</Data>
+        <!-- updates the percentage of the report generation -->
+        <Data ss:Type="String">${update_percent_display() and line['prop_instance']|x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['journal_code']|x}</Data>

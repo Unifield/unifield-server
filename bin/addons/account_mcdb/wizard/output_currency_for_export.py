@@ -230,7 +230,7 @@ class background_report(osv.osv_memory):
 
     def compute_percent(self, cr, uid, current_line_position, nb_lines, before=0, after=1, context=None):
         """
-        Computes the percentage of the Report Generation:
+        Computes and updates the percentage of the Report Generation:
         :param cr: DB cursor
         :param uid: id of the current user
         :param current_line_position: position of the current line starting from 1

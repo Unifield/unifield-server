@@ -39,6 +39,8 @@ class combined_journals_report(report_sxw.rml_parse):
         self.total_func_debit = 0.0
         self.total_func_credit = 0.0
         self.percent = 0.0
+        self.line_position = 0
+        self.nb_lines = 0  # total number of lines to be displayed
         self.localcontext.update({
             'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
@@ -48,6 +50,7 @@ class combined_journals_report(report_sxw.rml_parse):
             'total_booking_credit': lambda *a: self.total_booking_credit,
             'total_func_debit': lambda *a: self.total_func_debit,
             'total_func_credit': lambda *a: self.total_func_credit,
+            'update_percent_display': self._update_percent_display,
         })
 
     def _cmp_sequence_account_type(self, a, b):
@@ -219,6 +222,7 @@ class combined_journals_report(report_sxw.rml_parse):
             self.total_func_debit += al_dict['func_debit']
             self.total_func_credit += al_dict['func_credit']
             self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(orphan_aal_ids), before=0.45, after=0.5, context=self.context)
+        self.nb_lines = len(res)
         return res
 
     def _get_criteria(self):
@@ -246,6 +250,16 @@ class combined_journals_report(report_sxw.rml_parse):
         res_obj = self.pool.get('res.users')
         company = res_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
         return company.instance_id and company.instance_id.code or ''
+
+    def _update_percent_display(self):
+        """
+        Updates the % of the process (cf report run in background)
+        from self.percent (end of the data recovery) to 100% (end of the display generation).
+        """
+        bg_obj = self.pool.get('memory.background.report')
+        self.line_position += 1
+        return bg_obj.compute_percent(self.cr, self.uid, self.line_position, self.nb_lines, before=self.percent, after=1,
+                                      context=self.context) or True
 
     def set_context(self, objects, data, ids, report_type=None):
         """

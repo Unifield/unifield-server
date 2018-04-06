@@ -139,7 +139,8 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(lines(), 'line') ]]</para>
-          <parawrap style="P3">[[ line['prop_instance'] ]]</parawrap>
+          <!-- updates the percentage of the report generation -->
+          <parawrap style="P3">[[ update_percent_display() and line['prop_instance'] ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3">[[ line['journal_code'] ]]</parawrap>
