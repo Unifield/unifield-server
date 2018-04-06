@@ -42319,7 +42319,7 @@ msgstr "Estonian / Eesti keel"
 #. module: account_mcdb
 #: view:account.mcdb:0
 msgid "G/L journals"
-msgstr "Journaux de Comptes de Grand Livre"
+msgstr "Journaux G/L"
 
 #. module: account
 #: help:account.account,currency_mode:0
@@ -107569,17 +107569,17 @@ msgstr "Vous devez d'abord charger le modèle."
 #: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_combined_form
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_combined_line
 msgid "Combined Journals Report"
-msgstr "Rapport des journaux agrégés"
+msgstr "Rapport des Journaux Agrégés"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.combined_journals_report_pdf
 msgid "Combined Journals Report PDF"
-msgstr "Rapport des journaux agrégés PDF"
+msgstr "Rapport des Journaux Agrégés PDF"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.combined_journals_report_xls
 msgid "Combined Journals Report XLS"
-msgstr "Rapport des journaux agrégés XLS"
+msgstr "Rapport des Journaux Agrégés XLS"
 
 #. module: account_mcdb
 #: selection:account.mcdb,model:0
@@ -107608,7 +107608,7 @@ msgstr "Total Devise Fonc."
 #: code:addons/account_mcdb/account_mcdb.py:665
 #, python-format
 msgid "Selector - Combined Journals Report"
-msgstr "Sélecteur - Rapport des journaux agrégés"
+msgstr "Sélecteur - Rapport des Journaux Agrégés"
 
 #. module: account_mcdb
 #: report:addons/account_mcdb/report/combined_journals_report.mako:173
