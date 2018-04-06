@@ -318,6 +318,9 @@ class stock_location(osv.osv):
         :param context: Context of the call
         :return: Result of the super() call
         """
+        if context is None:
+            context = {}
+
         if vals and vals.get('name'):
             loc_name = vals.get('name', '').strip()
             if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
@@ -344,15 +347,14 @@ class stock_location(osv.osv):
 
         if vals and vals.get('name'):
             for loc_id in ids:
-                current_loc_name = self.browse(cr, uid, loc_id, fields_to_fetch=['name'], context=context).name
                 loc_name = vals.get('name', '').strip()
-                if current_loc_name != loc_name \
-                        and self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
+                if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)], context=context):
                     raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
                 vals['name'] = loc_name
 
         return super(stock_location, self).write(cr, uid, ids, vals, context=context)
-    
+
+
 stock_location()
 
 
