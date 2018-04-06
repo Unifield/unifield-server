@@ -1206,7 +1206,7 @@ class stock_picking(osv.osv):
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
                         track_changes_to_create.append({
-                            'product_id': move.product_id.id,
+                            'product_id': line.product_id.id,
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
