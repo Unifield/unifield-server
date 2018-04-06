@@ -1479,10 +1479,11 @@ class purchase_order_line(osv.osv):
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
                 info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
                                                                      info_price.price, round=False, context=context)
-                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
-                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
-                                                                            'for a minimal quantity of %s (the min quantity of the price list), ' \
-                                                                            'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.min_order_qty and qty < info_price.min_order_qty:
+                    res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+                                                                                'for a minimal quantity of %s (the min quantity of the price list), ' \
+                                                                                'it might change at the supplier confirmation.') % info_price.min_quantity}})
                 if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
                                 'this product, you should than modify ' \
