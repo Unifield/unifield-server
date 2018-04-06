@@ -101,8 +101,7 @@ class purchase_order_followup(osv.osv_memory):
         line_obj = self.pool.get('purchase.order.followup.line')
 
         for order in order_obj.browse(cr, uid, ids, context=context):
-            if order.state not in ('approved', 'done', 'confirmed_wait', 'split',
-                                   'sourced', 'except_picking', 'except_invoice'):
+            if order.state not in ('sourced_p', 'confirmed', 'confirmed_p', 'done'):
                 raise osv.except_osv(_('Error'),
                        _('You cannot follow a non-confirmed Purchase order !'))
 
