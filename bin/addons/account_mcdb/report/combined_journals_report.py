@@ -38,6 +38,7 @@ class combined_journals_report(report_sxw.rml_parse):
         self.total_booking_credit = 0.0
         self.total_func_debit = 0.0
         self.total_func_credit = 0.0
+        self.percent = 0.0
         self.localcontext.update({
             'analytic_axis': lambda *a: self.analytic_axis,
             'lines': self._get_lines,
@@ -66,27 +67,37 @@ class combined_journals_report(report_sxw.rml_parse):
 
     def _get_lines(self):
         """
-        Returns a list of dicts containing the data to display:
-        - first, ordered by Entry Sequence:
-            => the JIs booked on a "NON analytic_addicted" account
-            => the AJIs or Free1/2 lines (depending on the self.analytic_axis) linked to the same JE
-        - then, ordered by Entry Sequence:
-            => the AJIs without JIs.
-        Updates the global totals in booking & functional (self.total_booking_debit...).
+        - Returns a list of dicts containing the data to display:
+            - first, ordered by Entry Sequence:
+                => the JIs booked on a "NON analytic_addicted" account
+                => the AJIs or Free1/2 lines (depending on the self.analytic_axis) linked to the same JE
+            - then, ordered by Entry Sequence:
+                => the AJIs without JIs.
+        - Updates the global totals in booking & functional (self.total_booking_debit...).
+        - Updates the % of the process (cf report run in BG) from 0 to 50%.
         """
         res = []
         aml_obj = self.pool.get('account.move.line')
         aal_obj = self.pool.get('account.analytic.line')
         user_obj = self.pool.get('res.users')
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        bg_obj = self.pool.get('memory.background.report')
+        bg_id = False
+        if self.context.get('background_id'):
+            bg_id = self.context['background_id']
         company = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
         func_currency_name = company.currency_id.name
+        if bg_id:
+            self.percent += 0.05  # 5% of the total process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         # get the JIs corresponding to the criteria selected
         aml_ids = aml_obj.search(self.cr, self.uid, self.aml_domain, context=self.context, order='move_id ASC')
         amls = []
         aml_fields = ['instance_id', 'journal_id', 'move_id', 'name', 'ref', 'document_date', 'date', 'period_id', 'account_id',
                       'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit']
+        current_line_position = 0
         for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_fields, context=self.context):
+            current_line_position += 1
             aml_dict = {
                 'type': 'aml',
                 'id': aml.id,
@@ -113,11 +124,17 @@ class combined_journals_report(report_sxw.rml_parse):
                 'func_currency': func_currency_name,
             }
             amls.append(aml_dict)
+            self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
         amls.sort(self._cmp_sequence_account_type)
+        if bg_id:
+            self.percent += 0.05  # 20% of the total process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         aal_fields = ['instance_id', 'journal_id', 'entry_sequence', 'name', 'ref', 'document_date', 'date',
                       'period_id', 'general_account_id', 'partner_txt', 'cost_center_id', 'destination_id', 'account_id',
                       'amount_currency', 'currency_id', 'amount']
+        current_line_position = 0
         for ml in amls:
+            current_line_position += 1
             # if the JI has no related Analytic lines, store it directly
             search_aal_domain = [('move_id', '=', ml['id'])]
             category = (self.analytic_axis == 'f1' and 'FREE1') or (self.analytic_axis == 'f2' and 'FREE2') or 'FUNDING'
@@ -165,9 +182,12 @@ class combined_journals_report(report_sxw.rml_parse):
                     self.total_booking_credit += aal_dict['booking_credit']
                     self.total_func_debit += aal_dict['func_debit']
                     self.total_func_credit += aal_dict['func_credit']
+                    self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(amls), before=0.20, after=0.45, context=self.context)
         # get the AJIs corresponding to the criteria selected AND not linked to a JI (use self.aal_domain)
         orphan_aal_ids = aal_obj.search(self.cr, self.uid, self.aal_domain, context=self.context, order='entry_sequence')
+        current_line_position = 0
         for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, fields_to_fetch=aal_fields, context=self.context):
+            current_line_position += 1
             al_dict = {
                 'type': 'aal',
                 'id': al.id,
@@ -198,6 +218,7 @@ class combined_journals_report(report_sxw.rml_parse):
             self.total_booking_credit += al_dict['booking_credit']
             self.total_func_debit += al_dict['func_debit']
             self.total_func_credit += al_dict['func_credit']
+            self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(orphan_aal_ids), before=0.45, after=0.5, context=self.context)
         return res
 
     def _get_criteria(self):

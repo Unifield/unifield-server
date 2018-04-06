@@ -1323,6 +1323,7 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        bg_obj = self.pool.get('memory.background.report')
         if format == 'pdf':
             report_name = 'combined.journals.report.pdf'
         else:
@@ -1332,6 +1333,12 @@ class account_mcdb(osv.osv):
             'selector_id': ids[0],
             'analytic_axis': selector.get('analytic_axis', 'fp')
         }
+        # make the report run in background
+        background_id = bg_obj.create(cr, uid, {'file_name': 'Combined Journals Report',
+                                                'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
