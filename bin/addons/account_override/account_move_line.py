@@ -101,7 +101,7 @@ class account_move_line(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
             cr.execute(sql, (value, aml_id))
         return True
 
@@ -180,7 +180,7 @@ class account_move_line(osv.osv):
                       AND l1.id <= l2.id
                       AND l2.id IN %s AND """ + \
             self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+            " GROUP BY l2.id" # not_a_user_entry
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
-                     GROUP BY id, debit_currency, credit_currency having '+where)
+                     GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -234,7 +234,7 @@ class account_move_line(osv.osv):
                 ('account_id.reconcile', '!=', False),
                 '|',
                 ('reconcile_id', '=', False),
-                ('reconcile_partial_id', '!=', False),    
+                ('reconcile_partial_id', '!=', False),
             ]
 
         return []
@@ -338,6 +338,8 @@ class account_move_line(osv.osv):
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
         'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
+        'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
+                                                                   "to the original SI and to the SR created are marked as 'is_si_refund'"),
     }
 
     _defaults = {
@@ -348,6 +350,7 @@ class account_move_line(osv.osv):
         'exported': lambda *a: False,
         'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
+        'is_si_refund': lambda *a: False,
     }
 
     _order = 'move_id DESC'
@@ -630,6 +633,7 @@ class account_move_line(osv.osv):
         - the reconciliation date
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
+        - the tag 'is_si_refund'
         """
         if context is None:
             context = {}
@@ -640,6 +644,7 @@ class account_move_line(osv.osv):
             'reconcile_date': None,
             'unreconcile_date': None,
             'unreconcile_txt': '',
+            'is_si_refund': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

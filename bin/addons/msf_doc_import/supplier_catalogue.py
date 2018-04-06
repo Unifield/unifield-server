@@ -26,14 +26,79 @@ from osv import osv
 from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT as sup_cat_columns_header
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT as sup_cat_columns
+from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
+import mx.DateTime.DateTime
 
 
 class supplier_catalogue(osv.osv):
     _inherit = 'supplier.catalogue'
+
+    def auto_import(self, cr, uid, file_path, context=None):
+        '''
+        Method called in case of automated import
+        Tools > Automated import 
+        '''
+        if context is None:
+            context = {}
+
+        def get_well_formed_date(content):
+            if not content:
+                return False
+            elif type(content) == type(mx.DateTime.DateTime(1)):
+                return content.strftime('%Y-%m-%d')
+            elif isinstance(content, (str,unicode)):
+                return content.strip()
+            return False
+
+        xmlstring = open(file_path).read()
+        file_obj = SpreadsheetXML(xmlstring=xmlstring)
+
+        displayable = {}
+        for field in ['name', 'partner_id', 'currency_id', 'period_from',  'period_to']:
+            displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
+
+        data = {}
+        for index, row in enumerate(file_obj.getRows()):
+            if index > len(MODEL_DATA_DICT['supplier_catalogue_update'].get('header_info')) -1 :
+                break
+            if row.cells[0].data == displayable['name']:
+                data['name'] = row.cells[1].data
+            elif row.cells[0].data == displayable['partner_id']:
+                partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
+                data['partner_id'] = partner_id[0] if partner_id else False
+            elif row.cells[0].data == displayable['currency_id']:
+                currency_id = self.pool.get('res.currency').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
+                data['currency_id'] = currency_id[0] if currency_id else False
+            elif row.cells[0].data == displayable['period_from']:
+                data['period_from'] = get_well_formed_date(row.cells[1].data)
+            elif row.cells[0].data == displayable['period_to']:
+                data['period_to'] = get_well_formed_date(row.cells[1].data)
+
+        catalogue_id = False
+        if data['name'] and data['partner_id']:
+            catalogue_id = self.search(cr, uid, [('name', '=', data['name']), ('partner_id', '=', data['partner_id'])], context=context)
+        if not catalogue_id:
+            catalogue_id = self.create(cr, uid, data, context=context)
+            catalogue_id = [catalogue_id]
+            cr.commit()
+
+        res = (False, False, False)
+        if catalogue_id:
+            wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
+                'model_list_selection': 'supplier_catalogue_update',
+                'supplier_catalogue_id': catalogue_id[0],
+                'import_file': base64.encodestring(xmlstring),
+            }, context=context)
+
+            res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
+
+        return res
+
 
     def wizard_import_supplier_catalogue_line(self, cr, uid, ids, context=None):
         """

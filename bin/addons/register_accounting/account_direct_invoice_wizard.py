@@ -183,6 +183,9 @@ class account_direct_invoice_wizard(osv.osv_memory):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
+        if context is None:
+            context = {}
+
         self.check_analytic_distribution(cr, uid, ids)
 
         # Prepare some value
@@ -264,7 +267,9 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals_copy = vals.copy()
         # invoice lines are processed just after
         vals_copy.pop('invoice_line')
+        context.update({'skip_ad_date_check': True})
         inv_obj.write(cr, uid, [inv_id], vals_copy, context)
+        del context['skip_ad_date_check']
 
         # get line id list
         invl_id_list = [x.id for x in wiz_obj.browse(cr, uid, ids,
@@ -647,11 +652,6 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                 analytic_distribution.unlink(cr, uid,
                                              obj.analytic_distribution_id.id)
         return super(account_direct_invoice_wizard_line, self).unlink(cr, uid, ids)
-
-    def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
-        # just call the original method from account.invoice.line
-        return self.pool.get('account.invoice.line').onchange_account_id(cr, uid, ids,
-                                                                         fposition_id, account_id)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """

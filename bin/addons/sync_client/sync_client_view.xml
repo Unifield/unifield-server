@@ -80,6 +80,8 @@
         <menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
                 action="connection_manager_action"/>
 
+        <menuitem id="msf_instance_backup" parent="syncback_menu" action="msf_instance.action_msf_instance_backup" />
+
         <record model="ir.ui.view" id="ir_model_data_inherit">
             <field name="name">ir.model.data.inherit</field>
             <field name="model">ir.model.data</field>

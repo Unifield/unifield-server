@@ -195,8 +195,6 @@
                     <newline/>
                     <label string="- Unposted items" align="0.0"/>
                     <newline/>
-                    <label string="- Free 1 / Free 2 items" align="0.0"/>
-                    <newline/>
                     <html>
                         <br />
                     </html>

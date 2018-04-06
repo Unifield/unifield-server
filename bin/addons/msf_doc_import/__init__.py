@@ -36,6 +36,8 @@ ACCOUNTING_IMPORT_JOURNALS = [
     'migration',
     'sale',  # US-70/3
 ]
+PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
+
 
 import tender
 import purchase_order
@@ -54,3 +56,4 @@ import replenishment_rules
 import product_list
 import supplier_catalogue
 import report
+import msf_import_export
