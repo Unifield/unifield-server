@@ -354,7 +354,9 @@ class stock_picking(osv.osv):
                     .search(cr, uid, [('name', '=', in_name_goods_return), ('purchase_id', '=', po_id), ('state', '=', 'assigned')], limit=1, context=context)[0]
             else:
                 # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned', 'shipped'], context)
+                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+                if not in_id:
+                    in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['shipped'], context)
         else:
             # locations
             warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)

@@ -40,12 +40,42 @@ class Client(object):
         else:
             raise ConnectionFailed(ctx_auth.get_last_error())
 
+    def create_folder(self, remote_path):
+        webUri = '%s%s' % (self.path, remote_path)
+        request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')" % (self.baseurl, webUri)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Post
+        options.set_header("X-HTTP-Method", "POST")
+        self.request.context.authenticate_request(options)
+        self.request.context.ensure_form_digest(options)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        if result.status_code not in (200, 201):
+            result = requests.post("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), data="", headers=options.headers, auth=options.auth)
+            if result.status_code not in (200, 201):
+                raise Exception(result.content)
+        return True
+
     def delete(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
         request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')" % (self.baseurl, webUri)
         options = RequestOptions(request_url)
         options.method = HttpMethod.Delete
         options.set_header("X-HTTP-Method", "DELETE")
+        self.request.context.authenticate_request(options)
+        self.request.context.ensure_form_digest(options)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        if result.status_code not in (200, 201):
+            raise Exception(result.content)
+        return True
+
+    def move(self, remote_path, dest):
+        webUri = '%s%s' % (self.path, remote_path)
+        destUri = '%s%s' % (self.path, dest)
+        # falgs=1 to overwrite existing file
+        request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Post
+        options.set_header("X-HTTP-Method", "POST")
         self.request.context.authenticate_request(options)
         self.request.context.ensure_form_digest(options)
         result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
@@ -70,16 +100,23 @@ class Client(object):
         if not buffer_size:
             buffer_size = 10* 1024 * 1024
         x = ""
-        webUri = '%s%s' % (self.path, remote_path)
+        split_name = remote_path.split('/')
+        new_file = split_name.pop()
+        split_name.insert(0, self.path)
+        path  = '/'.join(split_name)
+        if path[-1] != '/':
+            path += '/'
+        webUri = '%s%s' % (path, new_file)
+
         while True:
             if offset == -1:
-                request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, self.path, remote_path)
+                request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
                 offset = 0
             elif not offset:
                 if len(x) == buffer_size:
                     request_url="%s/_api/web/getfilebyserverrelativeurl('%s')/startupload(uploadId=guid'%s')" % (self.baseurl, webUri, iid)
                 else:
-                    request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, self.path, remote_path)
+                    request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
             elif len(x) == buffer_size:
                 request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/continueupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, iid, offset)
             else:

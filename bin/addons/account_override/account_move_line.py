@@ -101,7 +101,7 @@ class account_move_line(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
             cr.execute(sql, (value, aml_id))
         return True
 
@@ -180,7 +180,7 @@ class account_move_line(osv.osv):
                       AND l1.id <= l2.id
                       AND l2.id IN %s AND """ + \
             self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+            " GROUP BY l2.id" # not_a_user_entry
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
-                     GROUP BY id, debit_currency, credit_currency having '+where)
+                     GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]

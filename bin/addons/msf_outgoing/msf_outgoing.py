@@ -267,7 +267,7 @@ class shipment(osv.osv):
         ) t
         group by t.id
         having sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) %s %s
-''' % (args[0][1], args[0][2]))
+''' % (args[0][1], args[0][2]))  # not_a_user_entry
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
@@ -1670,7 +1670,7 @@ class shipment(osv.osv):
                 pick_obj._hook_create_sync_messages(cr, uid, packing.id, context)  # UF-1617: Create the sync message for batch and asset before shipping
 
                 # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
-                cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' % packing.id)
+                cr.execute('update stock_picking set already_shipped=\'t\' where id=%s', (packing.id,))
 
                 # closing FO lines:
                 for stock_move in packing.move_lines:
@@ -2690,25 +2690,14 @@ class stock_picking(osv.osv):
         return created_ids
 
     def get_current_pick_sequence_for_rw(self, cr, uid, picking_type, context=None):
-        cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')
+        cr.execute('SELECT id FROM ir_sequence WHERE code=%s and active=true ORDER BY id', (picking_type,))
         res = cr.dictfetchone()
         if res and res['id']:
-            cr.execute("SELECT last_value from ir_sequence_%03d" % res['id'])
+            cr.execute("SELECT last_value from ir_sequence_%03d" % res['id'])  # not_a_user_entry
             res = cr.dictfetchone()
             if res and res['last_value']:
                 return res['last_value']
         return False
-
-    def alter_sequence_for_rw_pick(self, cr, uid, picking_type, value_to_force, context=None):
-        if not self._get_usb_entity_type(cr, uid, context):
-            return
-
-        cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')
-        res = cr.dictfetchone()
-        if res and res['id']:
-            seq = 'ir_sequence_%03d' % res['id']
-            cr.execute("ALTER SEQUENCE " + seq + " RESTART WITH " + str(value_to_force))
-        return
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -5095,26 +5084,6 @@ class stock_move(osv.osv):
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
-                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                    ('purchase_line_id', '=', move.purchase_line_id.id),
-                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                    ('picking_id.type', '=', 'in'),
-                ], context=context)
-                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                    # all in lines processed or will be processed for this po line
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
-
-                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
-                    # check if the original PO line can be set to done
-                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
-                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                        ('picking_id.type', '=', 'in'),
-                    ], context=context)
-                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                        # all in lines processed or will be processed for this po line
-                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
-
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
@@ -5139,14 +5108,33 @@ class stock_move(osv.osv):
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
 
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
+                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
+                    # check if the original PO line can be set to done
+                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
+                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                        ('picking_id.type', '=', 'in'),
+                    ], context=context)
+                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                        # all in lines processed or will be processed for this po line
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
+
+
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
-                    if resource:
-                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
 
@@ -5297,7 +5285,7 @@ class pack_family_memory(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
 
-            cr.execute('select id, move_lines from ' + self._table + ' where id in %s', (tuple(ids),))
+            cr.execute('select id, move_lines from ' + self._table + ' where id in %s', (tuple(ids),))  # not_a_user_entry
             for q_result in cr.fetchall():
                 result[q_result[0]]['move_lines'] = q_result[1] or []
         return result
