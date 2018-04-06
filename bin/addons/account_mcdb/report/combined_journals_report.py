@@ -173,11 +173,11 @@ class combined_journals_report(report_sxw.rml_parse):
                         'destination': aal.destination_id and aal.destination_id.code or '',
                         'funding_pool': aal.account_id.code or '',
                         'analytic_account': aal.account_id.code or '',  # can be a Funding Pool or a Free1/2 account
-                        'booking_debit': aal.amount_currency < 0 and aal.amount_currency or 0.0,
-                        'booking_credit': aal.amount_currency >= 0 and aal.amount_currency or 0.0,
+                        'booking_debit': aal.amount_currency < 0 and abs(aal.amount_currency) or 0.0,
+                        'booking_credit': aal.amount_currency >= 0 and abs(aal.amount_currency) or 0.0,
                         'booking_currency': aal.currency_id and aal.currency_id.name or '',
-                        'func_debit': aal.amount < 0 and aal.amount or 0.0,
-                        'func_credit': aal.amount >= 0 and aal.amount or 0.0,
+                        'func_debit': aal.amount < 0 and abs(aal.amount) or 0.0,
+                        'func_credit': aal.amount >= 0 and abs(aal.amount) or 0.0,
                         'func_currency': func_currency_name,
                     }
                     res.append(aal_dict)
@@ -209,11 +209,11 @@ class combined_journals_report(report_sxw.rml_parse):
                 'destination': al.destination_id and al.destination_id.code or '',
                 'funding_pool': al.account_id.code or '',
                 'analytic_account': al.account_id.code or '',
-                'booking_debit': al.amount_currency < 0 and al.amount_currency or 0.0,
-                'booking_credit': al.amount_currency >= 0 and al.amount_currency or 0.0,
+                'booking_debit': al.amount_currency < 0 and abs(al.amount_currency) or 0.0,
+                'booking_credit': al.amount_currency >= 0 and abs(al.amount_currency) or 0.0,
                 'booking_currency': al.currency_id and al.currency_id.name or '',
-                'func_debit': al.amount < 0 and al.amount or 0.0,
-                'func_credit': al.amount >= 0 and al.amount or 0.0,
+                'func_debit': al.amount < 0 and abs(al.amount) or 0.0,
+                'func_credit': al.amount >= 0 and abs(al.amount) or 0.0,
                 'func_currency': func_currency_name,
             }
             res.append(al_dict)
