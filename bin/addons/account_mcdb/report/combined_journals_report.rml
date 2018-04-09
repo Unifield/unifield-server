@@ -180,19 +180,19 @@
           <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['funding_pool']) or ('%s ' % line['analytic_account']) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P4">[[ line['booking_debit'] or '0.0' ]]</parawrap>
+          <parawrap style="P4">[[ formatLang(line['booking_debit'] or 0.0) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P4">[[ line['booking_credit'] or '0.0' ]]</parawrap>
+          <parawrap style="P4">[[ formatLang(line['booking_credit'] or 0.0) ]]</parawrap>
         </td>
         <td>
           <parawrap style="P4">[[ line['booking_currency'] ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3">[[ line['func_debit'] or '0.0' ]]</parawrap>
+          <parawrap style="P3">[[ formatLang(line['func_debit'] or 0.0) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3">[[ line['func_credit'] or '0.0' ]]</parawrap>
+          <parawrap style="P3">[[ formatLang(line['func_credit'] or 0.0) ]]</parawrap>
         </td>
         <td>
           <parawrap style="P4">[[ line['func_currency'] ]]</parawrap>
