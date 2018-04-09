@@ -159,7 +159,7 @@ class analytic_account(osv.osv):
                       LEFT JOIN account_analytic_line l ON (a.id = l.""" + default_field  + """)
                   WHERE a.id IN %s
                   """ + where_date + """
-                  GROUP BY a.id""", where_clause_args)
+                  GROUP BY a.id""", where_clause_args) # ignore_sql_check
             for ac_id, debit, credit, balance, quantity in cr.fetchall():
                 res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
             tmp_res = self._compute_level_tree(cr, uid, ids, child_ids, res, name, context)
@@ -281,7 +281,7 @@ class analytic_account(osv.osv):
             '''+self._table+''' d
             left join account_account a on a.default_destination_id = d.id
             left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id and l.disabled='f'
-            where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),)
+            where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),) # not_a_user_entry
                    )
         error = []
         for x in cr.fetchall():
@@ -436,14 +436,14 @@ class analytic_account(osv.osv):
 
         ###### US-113: I have moved the block that sql updates on the name causing the problem of sync (touched not update). The block is now moved to after the write
 
-        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check 
+        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check
         new_values = self.read(cr, uid, ids, ['category', 'name', 'code'], context=context)[0]
         if vals.get('name', False):
-            new_values['name'] = vals.get('name') 
+            new_values['name'] = vals.get('name')
         if vals.get('category', False):
-            new_values['category'] = vals.get('category') 
+            new_values['category'] = vals.get('category')
         if vals.get('code', False):
-            new_values['code'] = vals.get('code') 
+            new_values['code'] = vals.get('code')
 
         ######################################################
         # US-399: Now perform the check unicity manually!

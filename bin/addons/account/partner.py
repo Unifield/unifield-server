@@ -93,16 +93,16 @@ class res_partner(osv.osv):
 
     def _credit_debit_get(self, cr, uid, ids, field_names, arg, context=None):
         query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-        cr.execute("""SELECT l.partner_id, a.type, SUM(l.debit-l.credit)
-                      FROM account_move_line l
-                      LEFT JOIN account_account a ON (l.account_id=a.id)
-                      WHERE a.type IN ('receivable','payable')
-                      AND l.partner_id IN %s
-                      AND l.reconcile_id IS NULL
-                      AND """ + query + """
-                      GROUP BY l.partner_id, a.type
-                      """,
-                   (tuple(ids),))
+        cr.execute("""
+            SELECT l.partner_id, a.type, SUM(l.debit-l.credit)
+            FROM account_move_line l
+            LEFT JOIN account_account a ON (l.account_id=a.id)
+            WHERE a.type IN ('receivable','payable')
+            AND l.partner_id IN %%s
+            AND l.reconcile_id IS NULL
+            AND %s
+            GROUP BY l.partner_id, a.type""" % query,
+                   (tuple(ids),)) # not_a_user_entry
         maps = {'receivable':'credit', 'payable':'debit' }
         res = {}
         for id in ids:
@@ -112,23 +112,24 @@ class res_partner(osv.osv):
             res[pid][maps[type]] = (type=='receivable') and val or -val
         return res
 
-    def _asset_difference_search(self, cr, uid, obj, name, type, args, context=None):
+    def _asset_difference_search(self, cr, uid, obj, name, line_type, args, context=None):
         if not args:
             return []
         having_values = tuple(map(itemgetter(2), args))
         where = ' AND '.join(
             map(lambda x: '(SUM(debit-credit) %(operator)s %%s)' % {
-                                'operator':x[1]},args))
+                'operator':x[1]},args))
         query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-        cr.execute(('SELECT partner_id FROM account_move_line l '\
-                    'WHERE account_id IN '\
-                        '(SELECT id FROM account_account '\
-                        'WHERE type=%s AND active) '\
-                    'AND reconcile_id IS NULL '\
-                    'AND '+query+' '\
-                    'AND partner_id IS NOT NULL '\
-                    'GROUP BY partner_id HAVING '+where),
-                   (type,) + having_values)
+        cr.execute(('''
+            SELECT partner_id FROM account_move_line l
+            WHERE account_id IN
+               (SELECT id FROM account_account
+               WHERE type=%%s AND active)
+            AND reconcile_id IS NULL
+            AND %s
+            AND partner_id IS NOT NULL
+            GROUP BY partner_id HAVING %s''' % (query, where)),
+                   (line_type,) + having_values) # not_a_user_entry
         res = cr.fetchall()
         if not res:
             return [('id','=','0')]
@@ -142,7 +143,7 @@ class res_partner(osv.osv):
 
     _columns = {
         'credit': fields.function(_credit_debit_get,
-            fnct_search=_credit_search, method=True, string='Total Receivable', multi='dc', help="Total amount this customer owes you."),
+                                  fnct_search=_credit_search, method=True, string='Total Receivable', multi='dc', help="Total amount this customer owes you."),
         'debit': fields.function(_credit_debit_get, fnct_search=_debit_search, method=True, string='Total Payable', multi='dc', help="Total amount you have to pay to this supplier."),
         'debit_limit': fields.float('Payable Limit'),
         'property_account_payable': fields.property(
@@ -183,7 +184,7 @@ class res_partner(osv.osv):
             view_load=True,
             help="This payment term will be used instead of the default one for the current partner"),
         'ref_companies': fields.one2many('res.company', 'partner_id',
-            'Companies that refers to partner'),
+                                         'Companies that refers to partner'),
         'last_reconciliation_date': fields.datetime('Latest Reconciliation Date', help='Date on which the partner accounting entries were reconciled last time')
     }
 

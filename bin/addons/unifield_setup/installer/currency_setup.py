@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv
@@ -58,7 +58,7 @@ class currency_setup(osv.osv_memory):
         if company_id.currency_id.id == esc_id:
             res['functional_id'] = 'eur'
         else:
-            res['functional_id'] = 'chf' 
+            res['functional_id'] = 'chf'
         res['second_time'] = company_id and company_id.second_time or False
         res['esc_id'] = esc_id
         res['section_id'] = res['functional_id']

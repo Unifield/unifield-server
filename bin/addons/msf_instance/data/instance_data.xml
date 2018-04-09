@@ -1,6 +1,6 @@
 <openerp>
     <data noupdate="1">
-        
+
         <!-- Parent Instance -->
         <record model="msf.instance" id="instance_section">
             <field name="code">OCG</field>
@@ -14,6 +14,19 @@
         <record model="res.company" id="base.main_company">
             <field name="instance_id" ref="instance_section" />
         </record>
-        
+
+        <record id="ir_cron_remote_backup" model="ir.cron" forcecreate="1">
+            <field name="function">send_backup</field>
+            <field name="user_id">1</field>
+            <field name="name">Send Remote Backup</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="0" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">msf.instance</field>
+        </record>
+
     </data>
 </openerp>

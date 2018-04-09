@@ -211,10 +211,12 @@ class Cursor(object):
         return res
 
 
-    def split_for_in_conditions(self, ids):
+    def split_for_in_conditions(self, ids, max_split=None):
         """Split a list of identifiers into one or more smaller tuples
            safe for IN conditions, after uniquifying them."""
-        return tools.misc.split_every(self.IN_MAX, set(ids))
+        if max_split is None:
+            max_split = self.IN_MAX
+        return tools.misc.split_every(max_split, set(ids))
 
     def print_log(self):
         global sql_counter
