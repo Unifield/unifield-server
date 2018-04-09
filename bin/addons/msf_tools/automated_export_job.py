@@ -152,6 +152,10 @@ class automated_export_job(osv.osv):
                     self.pool.get(job.export_id.function_id.model_id.model),
                     job.export_id.function_id.method_to_call
                 )(cr, uid, job.export_id, context=context)
+
+                if context.get('po_not_found'):
+                    error_message.append(_('No PO to export !'))
+
                 if processed:
                     nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
 

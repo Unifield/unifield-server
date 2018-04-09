@@ -337,7 +337,7 @@ class automated_import_job(osv.osv):
                         'nb_rejected_records': 0,
                         'comment': error,
                         'file_sum': md5,
-                        'state': 'done' if no_file else 'error',
+                        'state': 'error',
                     }, context=context)
                     continue
             else: # file to import given

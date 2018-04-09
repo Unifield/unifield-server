@@ -290,7 +290,7 @@ class purchase_order(osv.osv):
         if not po_ids:
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
-            raise Exception, msg
+            context.update({'po_not_found': True})
 
         processed, rejected, header = [], [], []
         for index, po_id in enumerate(po_ids):
