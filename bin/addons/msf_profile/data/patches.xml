@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_3319_product_track_price" model="patch.scripts">
+            <field name="method">us_3319_product_track_price</field>
+        </record>
         <!-- UF8.1 -->
         <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
             <field name="method">us_4430_set_puf_to_reversal</field>

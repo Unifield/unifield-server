@@ -51,6 +51,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+
+        return True
     # UF8.1
     def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
         """
