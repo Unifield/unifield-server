@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-        <record id="automated_import_job_search_view" model="ir.ui.view">
+        <record id="automated_export_job_search_view" model="ir.ui.view">
             <field name="name">automated.export.job.search.view</field>
             <field name="model">automated.export.job</field>
             <field name="type">search</field>
