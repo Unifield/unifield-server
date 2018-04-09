@@ -107519,3 +107519,15 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:541
+#, python-format
+msgid "Line #%s: You cannot validate a line with no UoM."
+msgstr "Ligne #%s: Vous ne pouvez pas valider de ligne sans UdM."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:545
+#, python-format
+msgid "Line #%s: You have to select a product UoM in the same category than the UoM of the product."
+msgstr "Ligne #%s: Vous devez sélectionner une UdM de produit dans la même catégorie que l'UdM du produit."
