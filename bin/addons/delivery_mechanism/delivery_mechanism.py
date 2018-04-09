@@ -1015,7 +1015,6 @@ class stock_picking(osv.osv):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
-
                     # Check if we must re-compute the price of the product
                     compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
                     if not sync_in and values.get('location_dest_id', False):
@@ -1271,7 +1270,7 @@ class stock_picking(osv.osv):
 
                 for bo_move, bo_qty, av_values, data_back, move_sptc_values in backordered_moves:
                     for sptc_values in move_sptc_values:
-                        sptc_obj.track_change(cr, uid, move.product_id.id,
+                        sptc_obj.track_change(cr, uid, bo_move.product_id.id,
                                               _('Reception %s') % backorder_name,
                                               sptc_values, context=context)
                     if bo_move.product_qty != bo_qty:
