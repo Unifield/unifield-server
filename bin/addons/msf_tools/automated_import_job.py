@@ -27,6 +27,7 @@ import base64
 import hashlib
 import tools
 import tempfile
+import unicodedata
 
 from osv import osv
 from osv import fields
@@ -477,7 +478,13 @@ class automated_import_job(osv.osv):
             pl_row = [pl[0]] + pl[1]
             if rejected:
                 pl_row += [pl[2]]
-            spamwriter.writerow(pl_row)
+            pl_row2 = []
+            # csv lib doesnt handle unicode, so force conversion to ascii to avoid unicode error
+            for elem in pl_row:
+                if isinstance(elem, unicode):
+                    elem = unicodedata.normalize('NFKD', elem).encode('ascii','ignore')
+                pl_row2.append(elem)
+            spamwriter.writerow(pl_row2)
         csvfile.close()
 
         if on_ftp and job_brw.import_id.ftp_protocol == 'ftp':
