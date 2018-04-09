@@ -52,6 +52,48 @@ class patch_scripts(osv.osv):
     }
 
     # UF8.1
+    def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        if self.pool.get('sync_client.version'):
+            rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.update_fo_ref')
+            cr.execute('''
+                select bad.id,bad.name,bad.state, bad.client_order_ref
+                from sale_order bad
+                left join sale_order_line badline on badline.order_id = bad.id
+                left join sale_order old on old.client_order_ref=bad.client_order_ref
+                where 
+                bad.split_type_sale_order='original_sale_order' and
+                bad.client_order_ref ~ '.*-[1,2,3]$' and
+                bad.procurement_request='f' and
+                bad.state in ('draft', 'cancel') and
+                old.split_type_sale_order != 'original_sale_order'
+                group by bad.id, bad.name, bad.state
+                having count(badline)=0 and count(old.id) > 0
+            ''')
+            for x in cr.fetchall():
+                self._logger.warn('US-4454: cancel FO %s, ref: %s (id:%s)' % (x[1], x[3], x[0]))
+                cr.execute("update sale_order set state='cancel', client_order_ref='' where id=%s", (x[0],))
+                gen_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', x[3]), ('state', '!=', 'cancel')])
+                if gen_ids:
+                    self._logger.warn('US-4454: gen ref %s' % gen_ids)
+                    for gen_id in gen_ids:
+                        arguments = self.pool.get('sale.order').get_message_arguments(cr, uid, gen_id, rule)
+                        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, 'sale.order', [gen_id], rule.server_id)
+                        data = {
+                            'identifier' : identifiers[gen_id],
+                            'remote_call': rule.remote_call,
+                            'arguments': arguments,
+                            'destination_name': x[3].split('.')[0],
+                            'sent' : False,
+                            'res_object': '%s,%s' % ('sale.order', gen_id),
+                            'generate_message' : True,
+                        }
+                        msg_to_send_obj.create(cr, uid, data)
+
+        return True
+
     def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
         """
         Context: in case of an SI refund-cancel or modify since US-1255 (UF7.0) the original PUR are marked as reallocated,
