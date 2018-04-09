@@ -55,9 +55,9 @@ class patch_scripts(osv.osv):
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
         rule_obj = self.pool.get('sync.client.message_rule')
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-        rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.update_fo_ref')
 
         if self.pool.get('sync_client.version'):
+            rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.update_fo_ref')
             cr.execute('''
                 select bad.id,bad.name,bad.state, bad.client_order_ref
                 from sale_order bad
