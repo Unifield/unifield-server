@@ -229,6 +229,24 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if data.get('first_line'):
                             fl_index = m_index
                         m_index += 1
+                elif m_type and linked_pol and linked_pol.order_type == 'direct' \
+                        and linked_pol.state in ('confirmed', 'done'):
+                    data = {
+                        'po_name': po_name,
+                        'cdd': cdd,
+                        'line_number': line.line_number,
+                        'product_name': line.product_id.name,
+                        'product_code': line.product_id.code,
+                        'is_delivered': True,
+                        'backordered_qty': 0.00,
+                        'uom_id': line.product_uom.name,
+                        'ordered_qty': line.product_uom_qty,
+                        'delivered_qty': line.product_uom_qty,
+                        'first_line': True,
+                    }
+                    bo_qty -= line.product_uom_qty
+                    first_line = False
+                    lines.append(data)
 
             # No move found
             if first_line:
