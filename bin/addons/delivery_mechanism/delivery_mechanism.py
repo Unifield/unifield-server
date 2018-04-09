@@ -1195,7 +1195,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line.product_id.id))
                     if not sync_in:
                         # decrement qty of linked INTernal move:
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
@@ -1268,9 +1268,9 @@ class stock_picking(osv.osv):
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
-                for bo_move, bo_qty, av_values, data_back, move_sptc_values in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back, move_sptc_values, p_id in backordered_moves:
                     for sptc_values in move_sptc_values:
-                        sptc_obj.track_change(cr, uid, bo_move.product_id.id,
+                        sptc_obj.track_change(cr, uid, p_id,
                                               _('Reception %s') % backorder_name,
                                               sptc_values, context=context)
                     if bo_move.product_qty != bo_qty:
