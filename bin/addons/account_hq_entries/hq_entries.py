@@ -480,6 +480,7 @@ class hq_entries(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
+        At synchro. only delete the entries having the tag is_split (= sync of an unsplit done in coordo). Otherwise:
         Do not permit user to delete:
          - validated HQ entries
          - split entries
@@ -487,10 +488,18 @@ class hq_entries(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution', False):
+            new_ids = []
+            for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=['is_split'], context=context):
+                if hq_entry.is_split:
+                    new_ids.append(hq_entry.id)
+            ids = new_ids
         if not context.get('from', False) or context.get('from') != 'code' and ids:
             if self.search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete validated HQ Entries lines!'))
-            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]):
+            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]) and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('You cannot delete split entries!'))
             if self.search(cr, uid, [('id', 'in', ids), ('is_original', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
