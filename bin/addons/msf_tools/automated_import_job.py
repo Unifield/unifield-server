@@ -76,7 +76,7 @@ def get_oldest_filename(job, ftp_connec=None, sftp=None):
         latestfile = False
         with sftp.cd(job.import_id.src_path):
             for fileattr in sftp.listdir_attr():
-                if fileattr.st_mtime > latest:
+                if sftp.isfile(fileattr.filename) and fileattr.st_mtime > latest:
                     latest = fileattr.st_mtime
                     latestfile = fileattr.filename
         return os.path.join(job.import_id.src_path, latestfile) if latestfile else False
@@ -318,6 +318,8 @@ class automated_import_job(osv.osv):
                     data64 = base64.encodestring(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec, sftp))
                 except ValueError:
                     no_file = True
+                except Exception as e:
+                    error = str(e)
 
                 if not error:
                     if no_file:
@@ -338,7 +340,7 @@ class automated_import_job(osv.osv):
                         'nb_rejected_records': 0,
                         'comment': error,
                         'file_sum': md5,
-                        'state': 'error',
+                        'state': 'done' if no_file else 'error',
                     }, context=context)
                     continue
             else: # file to import given
