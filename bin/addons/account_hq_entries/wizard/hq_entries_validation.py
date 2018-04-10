@@ -264,7 +264,7 @@ class hq_entries_validation(osv.osv_memory):
             if line.is_original:
                 original_lines.add(line)
                 all_lines.add(line.id)
-            elif line.is_split:
+            elif line.is_split and line.original_id:
                 original_lines.add(line.original_id)
                 all_lines.add(line.original_id.id)
         # Create the original line as it is (and its reverse)
@@ -434,7 +434,7 @@ class hq_entries_validation(osv.osv_memory):
                     self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
                 # UTP-760: Do other modifications for split lines
-                if line.is_original or line.is_split:
+                if line.is_original or (line.is_split and line.original_id):
                     split_change.append(line)
                     continue
                 if not line.user_validated:

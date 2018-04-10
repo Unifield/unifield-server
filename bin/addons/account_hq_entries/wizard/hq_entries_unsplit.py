@@ -64,7 +64,7 @@ class hq_entries_unsplit(osv.osv_memory):
                 if line.is_original:
                     original_ids.append(line.id)
                     continue
-                if line.is_split:
+                if line.is_split and line.original_id:
                     split_ids.append(line.id)
                     continue
             # Process

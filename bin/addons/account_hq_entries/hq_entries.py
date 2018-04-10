@@ -262,7 +262,7 @@ class hq_entries(osv.osv):
             res.add(line.id)
             if line.is_original:
                 add_split(line)
-            if line.is_split:
+            if line.is_split and line.original_id:
                 # add original one
                 res.add(line.original_id.id)
                 # then other split lines
@@ -282,7 +282,7 @@ class hq_entries(osv.osv):
         # Prepare some values
         res = set()
         for line in self.browse(cr, uid, ids, context=context):
-            if line.user_validated == False and (line.is_original or line.is_split):
+            if line.user_validated == False and (line.is_original or (line.is_split and line.original_id)):
                 # First add original and split linked lines
                 for el in self.get_linked_lines(cr, uid, [line.id]):
                     res.add(el)
