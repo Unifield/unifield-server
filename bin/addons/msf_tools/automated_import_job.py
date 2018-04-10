@@ -34,6 +34,7 @@ from osv import fields
 
 from tools.translate import _
 from StringIO import StringIO
+from mission_stock.mission_stock import UnicodeWriter
 
 
 def all_files_under(path, startswith=False):
@@ -469,7 +470,7 @@ class automated_import_job(osv.osv):
         csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
         if on_ftp:
             temp_path = csvfile.name
-        spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
+        spamwriter = UnicodeWriter(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
         headers_row = [_('Line number')] + headers
         if rejected:
             headers_row += [_('Error')]
@@ -478,13 +479,7 @@ class automated_import_job(osv.osv):
             pl_row = [pl[0]] + pl[1]
             if rejected:
                 pl_row += [pl[2]]
-            pl_row2 = []
-            # csv lib doesnt handle unicode, so force conversion to ascii to avoid unicode error
-            for elem in pl_row:
-                if isinstance(elem, unicode):
-                    elem = unicodedata.normalize('NFKD', elem).encode('ascii','ignore')
-                pl_row2.append(elem)
-            spamwriter.writerow(pl_row2)
+            spamwriter.writerow(pl_row)
         csvfile.close()
 
         if on_ftp and job_brw.import_id.ftp_protocol == 'ftp':
