@@ -27,7 +27,6 @@ import base64
 import hashlib
 import tools
 import tempfile
-import unicodedata
 
 from osv import osv
 from osv import fields
@@ -399,6 +398,20 @@ class automated_import_job(osv.osv):
                         line_message += resjected_line[2]
                         error_message.append(line_message)
                 self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), len(rejected)))
+
+                if job.import_id.function_id.model_id.model == 'purchase.order':
+                    po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
+                    if po_id and (nb_processed or nb_rejected):
+                            po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
+                            msg = _('%s: ') % po_name
+                            if nb_processed:
+                                msg += _('%s lines have been updated') % nb_processed
+                                if nb_rejected:
+                                    msg += _(' and ')
+                            if nb_rejected:
+                                msg += _('%s lines have been rejected') % nb_rejected
+
+                            self.log(cr, uid, job.id, msg)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
