@@ -120,14 +120,15 @@ class hr_employee(osv.osv):
         if not data.get('identification_id') or not data.get('name'):
             return False
 
+        employee_name = data['name'].strip()
         existing_id = self.find_sd_ref(cr, uid, sdref)
         if not existing_id:
             # never run, but exists with the same id and name => ignore
-            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', data['name'])]):
+            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)]):
                 return True
 
         else:
-            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', data['name'])])
+            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)])
             if same_ids and existing_id not in same_ids:
                 # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
                 return True
