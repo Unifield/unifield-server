@@ -61,7 +61,7 @@ class hq_entries_unsplit(osv.osv_memory):
             split_ids = []
             original_ids = []
             for line in wiz.process_ids:
-                if line.is_original:
+                if line.is_original and line.split_ids:
                     original_ids.append(line.id)
                     continue
                 if line.is_split and line.original_id:

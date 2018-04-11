@@ -260,7 +260,7 @@ class hq_entries(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res.add(line.id)
-            if line.is_original:
+            if line.is_original and line.split_ids:
                 add_split(line)
             if line.is_split and line.original_id:
                 # add original one
@@ -282,7 +282,9 @@ class hq_entries(osv.osv):
         # Prepare some values
         res = set()
         for line in self.browse(cr, uid, ids, context=context):
-            if line.user_validated == False and (line.is_original or (line.is_split and line.original_id)):
+            line_original = line.is_original and line.split_ids
+            line_split = line.is_split and line.original_id
+            if not line.user_validated and (line_original or line_split):
                 # First add original and split linked lines
                 for el in self.get_linked_lines(cr, uid, [line.id]):
                     res.add(el)
@@ -466,8 +468,13 @@ class hq_entries(osv.osv):
 
         #US-921: Only save the user_validated value if the update comes from sync!
         if context.get('sync_update_execution', False):
-            if 'user_validated' in  vals:
-                return super(hq_entries, self).write(cr, uid, ids, {'user_validated': vals['user_validated']}, context)
+            sync_vals = {}
+            if 'user_validated' in vals:
+                sync_vals.update({'user_validated': vals['user_validated']})
+            if 'is_original' in vals:  # US-4169 also enable to sync the is_original tag
+                sync_vals.update({'is_original': vals['is_original']})
+            if sync_vals:
+                return super(hq_entries, self).write(cr, uid, ids, sync_vals, context)
             return True
 
         if 'account_id' in vals:
