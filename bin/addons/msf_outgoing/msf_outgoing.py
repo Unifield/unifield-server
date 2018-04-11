@@ -556,14 +556,19 @@ class shipment(osv.osv):
             )
 
         for shipment in self.browse(cr, uid, ids, context=context):
-            # Create the shipment processor wizard
-            ship_proc_vals = {
-                'shipment_id': shipment.id,
-                'address_id': shipment.address_id.id,
-                'transport_type': shipment.transport_type,
-            }
-            ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-            ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
+            # search for an existing shipment saved as draft ... :
+            wiz_ids = self.pool.get('shipment.processor').search(cr, uid, [('shipment_id', '=', shipment.id), ('draft', '=', True)], context=context)
+            if wiz_ids:
+                ship_proc_id = wiz_ids[0]
+            else:
+                # ... not found so create a new shipment processor wizard
+                ship_proc_vals = {
+                    'shipment_id': shipment.id,
+                    'address_id': shipment.address_id.id,
+                    'transport_type': shipment.transport_type,
+                }
+                ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+                ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',

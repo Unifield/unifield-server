@@ -10,15 +10,17 @@
                 <form string="Process Document">
                     <!-- Invisible fields -->
                     <field name="date" invisible="1" />
+                    <field name="draft" invisible="1" />
 
                     <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
                     <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
                     <separator colspan="4" string="Products" />
                     <field name="family_ids" nolabel="1" colspan="4" mode="tree" />
                     <separator colspan="4" string="Actions" />
-                    <label colspan="2"> </label>
-                    <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="1" />
-                    <button name="do_create_shipment" type="object" string="Create shipment" icon="gtk-go-forward" colspan="1" />
+                    <button special="cancel" icon="gtk-cancel" string="Cancel" />
+                    <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
+                    <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
+                    <button name="do_create_shipment" type="object" string="Create shipment" icon="gtk-go-forward" />
                     <field name="additional_line_ids" colspan="4" nolabel="1" mode="tree" string="Additional Items" />
                </form>
            </field>
