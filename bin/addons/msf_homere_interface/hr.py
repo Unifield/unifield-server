@@ -116,6 +116,26 @@ class hr_employee(osv.osv):
         'ex_allow_edition': lambda *a: True,
     }
 
+    def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
+        if not data.get('identification_id') or not data.get('name'):
+            return False
+
+        existing_id = self.find_sd_ref(cr, uid, sdref)
+        if not existing_id:
+            # never run, but exists with the same id and name => ignore
+            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', data['name'])]):
+                return True
+
+        else:
+            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', data['name'])])
+            if same_ids and existing_id not in same_ids:
+                # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
+                return True
+
+        return False
+
+
+
     def _check_unicity(self, cr, uid, ids, context=None):
         """
         Check that identification_id is not used yet.

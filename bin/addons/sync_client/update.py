@@ -572,9 +572,17 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    values.append(row)
-                    update_ids.append(update.id)
-                    versions.append( (update.sdref, update.version) )
+                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
+                        self.write(cr, uid, update.id, {
+                            'run': True,
+                            'editable': False,
+                            'execution_date': datetime.now(),
+                            'log': 'Set as Run because this employee already exists in the instance',
+                        })
+                    else:
+                        values.append(row)
+                        update_ids.append(update.id)
+                        versions.append( (update.sdref, update.version) )
 
                     #1 conflict detection
                     if self._conflict(cr, uid, update.sdref, update.version, context=context):
