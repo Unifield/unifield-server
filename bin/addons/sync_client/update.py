@@ -919,7 +919,7 @@ class update_received(osv.osv,fv_formatter):
                 except ValueError:
                     try:
                         #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
-                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line) 
+                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line)
                         if 'account_move_line' in xmlid:
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
