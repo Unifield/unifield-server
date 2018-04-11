@@ -584,12 +584,12 @@ class update_received(osv.osv,fv_formatter):
                         update_ids.append(update.id)
                         versions.append( (update.sdref, update.version) )
 
-                    #1 conflict detection
-                    if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                        #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                        index_id = eval(update.fields).index('id')
-                        sd_ref = eval(update.values)[index_id]
-                        logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                        #1 conflict detection
+                        if self._conflict(cr, uid, update.sdref, update.version, context=context):
+                            #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                            index_id = eval(update.fields).index('id')
+                            sd_ref = eval(update.values)[index_id]
+                            logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
                     self._set_not_run(cr, uid, [update.id],
                                       log=result['error_message'],
