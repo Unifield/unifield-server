@@ -4099,8 +4099,13 @@ class stock_picking(osv.osv):
                 _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
             )
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # search for an existing shipment saved as draft ... :
+        wiz_ids = self.pool.get('ppl.processor').search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 

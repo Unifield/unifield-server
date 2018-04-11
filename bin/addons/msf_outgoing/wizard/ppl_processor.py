@@ -46,7 +46,47 @@ class ppl_processor(osv.osv):
             string='Families',
             help="Pack of products",
         ),
+        'draft': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
     }
+
+    _defaults = {
+        'draft': lambda *a: False,
+    }
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
 
     def do_check_ppl(self, cr, uid, ids, context=None):
         """
@@ -190,8 +230,10 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
-        family_no_weight = []
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
 
+        family_no_weight = []
         for wizard in self.browse(cr, uid, ids, context=context):
             treated_moves = []
             for family in wizard.family_ids:
