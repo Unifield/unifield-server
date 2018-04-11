@@ -4100,7 +4100,7 @@ class stock_picking(osv.osv):
             )
 
         # search for an existing shipment saved as draft ... :
-        wiz_ids = self.pool.get('ppl.processor').search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        wiz_ids = self.pool.get('ppl.processor').search(cr, uid, [('picking_id', 'in', ids), ('draft_step1', '=', True)], context=context)
         if wiz_ids:
             processor_id = wiz_ids[0]
         else:
@@ -4148,6 +4148,12 @@ class stock_picking(osv.osv):
                     _('Error'),
                     _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
                 )
+
+            if wizard.draft_step2:
+                continue
+            else:
+                fam_ids = self.pool.get('ppl.family.processor').search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
+                self.pool.get('ppl.family.processor').unlink(cr, uid, fam_ids, context=context)
 
             families_data = {}
 

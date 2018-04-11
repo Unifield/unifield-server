@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <form string="PPL Information - Step 1">
                     <field name="date" invisible="1" />
-                    <field name="draft" invisible="1" />
+                    <field name="draft_step1" invisible="1" />
                     <field name="picking_id" invisible="1" />
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
@@ -18,8 +18,8 @@
                         <separator string="Actions" colspan="6" />
                         <label colspan="1"> </label>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
-                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
+                        <button name="do_reset_step1" type="object" string="Reset" attrs="{'invisible':[('draft_step1','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft_step1" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button name="do_check_ppl" type="object" string="Check integrity" icon="gtk-info" />
                         <button name="do_ppl_step1" type="object" string="Next" icon="gtk-go-forward" />
                     </group>
@@ -35,7 +35,7 @@
             <field name="arch" type="xml">
                 <form string="PPL Information - Step 2">
                     <field name="date" invisible="1" />
-                    <field name="draft" invisible="1" />
+                    <field name="draft_step2" invisible="1" />
                     <field name="picking_id" invisible="1" />
                     <separator colspan="4" string="Pack families" />
                     <field name="family_ids" mode="tree"
@@ -43,8 +43,8 @@
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
                         <label colspan="2"> </label>
-                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
-                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
+                        <button name="do_reset_step2" type="object" string="Reset" attrs="{'invisible':[('draft_step2','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft_step2" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button name="do_ppl_back" type="object" string="Previous" icon="gtk-go-back" />
                         <button name="do_ppl_step2" type="object" string="Process" icon="gtk-go-forward" />
                     </group>

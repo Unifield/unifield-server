@@ -46,47 +46,69 @@ class ppl_processor(osv.osv):
             string='Families',
             help="Pack of products",
         ),
-        'draft': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
+        'draft_step1': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
+        'draft_step2': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
     }
 
     _defaults = {
-        'draft': lambda *a: False,
+        'draft_step1': lambda *a: False,
+        'draft_step2': lambda *a: False,
     }
 
-    def do_reset(self, cr, uid, ids, context=None):
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'move_ids' in vals:
+            vals['draft_step2'] = False
+        return super(ppl_processor, self).write(cr, uid, ids, vals, context=context)
+
+    def do_reset_step1(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not ids:
-            raise osv.except_osv(
-                _('Processing Error'),
-                _('No data to process !'),
-            )
 
         pick_id = []
         for proc in self.browse(cr, uid, ids, context=context):
             pick_id = proc['picking_id']['id']
 
-        self.write(cr, uid, ids, {'draft': False}, context=context)
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
 
         return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
 
-
-    def do_save_draft(self, cr, uid, ids, context=None):
+    def do_save_draft_step1(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not ids:
-            raise osv.except_osv(
-                _('Processing Error'),
-                _('No data to process !'),
-            )
 
-        self.write(cr, uid, ids, {'draft': True}, context=context)
+        self.write(cr, uid, ids, {'draft_step1': True}, context=context)
 
         return {}
+
+    def do_reset_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft_step2': False}, context=context) #TODO Do not reset step 1 ?
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+    def do_save_draft_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'draft_step2': True, 'draft_step1': True}, context=context)
+
+        return {}
+
+
 
     def do_check_ppl(self, cr, uid, ids, context=None):
         """
@@ -231,7 +253,7 @@ class ppl_processor(osv.osv):
             )
 
         # disable "save as draft":
-        self.write(cr, uid, ids, {'draft': False}, context=context)
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
 
         family_no_weight = []
         for wizard in self.browse(cr, uid, ids, context=context):
@@ -298,9 +320,6 @@ class ppl_processor(osv.osv):
         # Objects
         data_obj = self.pool.get('ir.model.data')
         family_obj = self.pool.get('ppl.family.processor')
-
-        family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
-        family_obj.unlink(cr, uid, family_to_unlink, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 
