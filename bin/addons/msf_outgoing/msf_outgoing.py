@@ -1112,6 +1112,33 @@ class shipment(osv.osv):
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
 
+                ### update save as draft move if has ###
+                # get the linked "save as draft" wizard:
+                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
+                    ('shipment_id', '=', draft_shipment_id),
+                    ('draft', '=', True),
+                ], context=context)
+                if ship_processor_wiz:
+                    # create "save as draft" lines with returned qty:
+                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
+                    family_vals = {
+                        'wizard_id': ship_processor_wiz.id,
+                        'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
+                        'from_pack': family.from_pack,
+                        'to_pack': family.to_pack,
+                        'selected_number': family.num_of_packs,
+                        'pack_type': family.pack_type and family.pack_type.id or False,
+                        'length': family.length,
+                        'width': family.width,
+                        'height': family.height,
+                        'weight': family.weight,
+                        'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
+                        'ppl_id': family.ppl_id and family.ppl_id.id or False,
+                        'comment': family.comment,
+                    }
+                    self.pool.get('shipment.family.processor').create(cr, uid, family_vals, context=context)
+
+
                 move_data = {}
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
                     if move.state != 'assigned':
