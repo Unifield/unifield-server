@@ -88,6 +88,7 @@ class res_partner(osv.osv):
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
                     sl = self.pool.get('sale.order.line').browse(cr, uid, active_id)[0]
+                    newargs.append(('id', '!=', so.partner_id.id))
                     if not so.procurement_request:
                         types_allowed = ['external', 'esc']
                         if so.partner_type not in ['internal', 'section', 'intermission']:
@@ -183,6 +184,7 @@ class res_partner(osv.osv):
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
                     for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
+                        res.append(('id', '!=', line.partner_id.id))
                         if not line.order_id.procurement_request:
                             types_allowed = ['external', 'esc']
                             if line.partner_id.partner_type not in ['internal', 'section', 'intermission']:
