@@ -89,10 +89,8 @@ class res_partner(osv.osv):
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
                     sl = self.pool.get('sale.order.line').browse(cr, uid, active_id)[0]
                     if not so.procurement_request:
-                        types_allowed = ['esc']
-                        if so.partner_type in ['internal', 'section', 'intermission']:
-                            types_allowed.append('external')
-                        else:
+                        types_allowed = ['external', 'esc']
+                        if so.partner_type not in ['internal', 'section', 'intermission']:
                             types_allowed.extend(['internal', 'section', 'intermission'])
                         newargs.append(('partner_type', 'in', types_allowed))
                     elif so.procurement_request and not sl.product_id:
@@ -186,10 +184,8 @@ class res_partner(osv.osv):
                 if type(arg[2]) == type(list()):
                     for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], context=context):
                         if not line.order_id.procurement_request:
-                            types_allowed = ['esc']
-                            if line.partner_id.partner_type in ['internal', 'section', 'intermission']:
-                                types_allowed.append('external')
-                            else:
+                            types_allowed = ['external', 'esc']
+                            if line.partner_id.partner_type not in ['internal', 'section', 'intermission']:
                                 types_allowed.extend(['internal', 'section', 'intermission'])
                             res.append(('partner_type', 'in', types_allowed))
 
