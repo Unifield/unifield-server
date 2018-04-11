@@ -107519,3 +107519,8 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: sourcing
+#: help:multiple.sourcing.wizard,supplier_id:0
+msgid "If you chose lines coming from Field Orders, External/ESC suppliers will be available for Internal/Inter-section/Intermission customers and Internal/Inter-section/Intermission/ESC suppliers will be available for External customers"
+msgstr "Si vous aviez choisi des lignes venant de Commandes de Terrain, des fournisseurs Externe/ESC seront disponibles pour des clients Interne/Inter-section/Intermission et des fournisseurs Interne/Inter-section/Intermission seront disponibles pour des clients Externe"

@@ -65,7 +65,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'supplier_id': fields.many2one(
             'res.partner',
             string='Supplier',
-            help="If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.",
+            help="If you chose lines coming from Field Orders, External/ESC suppliers will be available for Internal/Inter-section/Intermission customers and Internal/Inter-section/Intermission/ESC suppliers will be available for External customers",
         ),
         'company_id': fields.many2one(
             'res.company',
