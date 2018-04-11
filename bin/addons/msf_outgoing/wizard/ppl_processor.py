@@ -724,6 +724,9 @@ class ppl_move_processor(osv.osv):
         if not vals.get('to_pack', False):
             vals['to_pack'] = 1
 
+        if vals.get('wizard_id', False):
+            self.pool.get('ppl.processor').write(cr, uid, [vals['wizard_id']], {'draft_step2': False}, context=context)
+
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
