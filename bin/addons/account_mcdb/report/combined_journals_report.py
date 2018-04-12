@@ -267,6 +267,7 @@ class combined_journals_report(report_sxw.rml_parse):
         stores the Analytic Axis in self.analytic_axis
         """
         selector_obj = self.pool.get('account.mcdb')
+        journal_obj = self.pool.get('account.journal')
         self.context = data.get('context', {})
         self.selector_id = data.get('selector_id', False)
         if not self.selector_id:
@@ -280,9 +281,19 @@ class combined_journals_report(report_sxw.rml_parse):
         aal_context = self.context.copy()
         aal_context.update({'selector_model': 'account.analytic.line'})
         aal_domain = selector_obj._get_domain(self.cr, self.uid, self.selector_id, context=aal_context)
-        # exclude G/L journals and Entry Status
+        # exclude Entry Status and get the Analytic Journals matching the G/L journals selected
         for t in aal_domain:
-            if t[0] not in ('journal_id', 'move_id.state'):
+            if t[0] == 'journal_id':
+                journal_dom = [('id', t[1], t[2])]  # ex: ('journal_id', 'not in', (9,)) ==> [('id', 'not in', (9,))]
+                gl_journal_ids = journal_obj.search(self.cr, self.uid, journal_dom, context=self.context)
+                analytic_journal_ids = []
+                for gl_journal in journal_obj.browse(self.cr, self.uid, gl_journal_ids,
+                                                     fields_to_fetch=['analytic_journal_id'], context=self.context):
+                    if gl_journal.analytic_journal_id:
+                        analytic_journal_ids.append(gl_journal.analytic_journal_id.id)
+                if analytic_journal_ids:
+                    self.aal_domain.append(('journal_id', 'in', analytic_journal_ids))
+            elif t[0] != 'move_id.state':
                 self.aal_domain.append(t)
         # only take into account AJIs which are NOT linked to a JIs
         self.aal_domain.append(('move_id', '=', False))
