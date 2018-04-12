@@ -11,6 +11,7 @@
                     <field name="date" invisible="1" />
                     <field name="linked_to_out"  invisible="1"/>
                     <field name="picking_id" invisible="1" />
+                    <field name="display_process_to_ship_button" invisible="1" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <group name="import_file_lines" string="Import Lines" colspan="4">
@@ -72,7 +73,7 @@
                             </page>
                         </notebook>
                     </group>
-                    <group colspan="8" col="8" name="actions">
+                    <group colspan="9" col="9" name="actions">
                         <separator string="Actions" colspan="8" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
@@ -84,6 +85,7 @@
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
+                        <button name="launch_simulation_pack" attrs="{'invisible':[('display_process_to_ship_button','!=',True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
             </field>

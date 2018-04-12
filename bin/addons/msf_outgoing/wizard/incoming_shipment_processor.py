@@ -36,6 +36,21 @@ class stock_incoming_processor(osv.osv):
     _inherit = 'stock.picking.processor'
     _description = 'Wizard to process an incoming shipment'
 
+
+    def _get_display_process_to_ship_button(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = False
+            attach_ok = self.check_if_has_import_file_in_attachment(cr, uid, [wiz.id], context=context)
+            if attach_ok and wiz.picking_id and wiz.picking_id.origin and wiz.picking_id.origin.find('/FO') != -1:
+                res[wiz.id] = True
+
+        return res
+
+
     _columns = {
         'move_ids': fields.one2many(
             'stock.move.in.processor',
@@ -89,6 +104,7 @@ class stock_incoming_processor(osv.osv):
         'claim_description': fields.text(
             string='Claim Description',
         ),
+        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
     }
 
     _defaults = {
