@@ -379,6 +379,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'active_id': ids[0],
             'active_ids': ids,
         })
+        # disable the default filters
+        new_context = context.copy()
+        for c in context:
+            if c.startswith('search_default_'):
+                del new_context[c]
         # Display the result
         return {
             'name': "History Move Line",
@@ -387,7 +392,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'target': 'new',
             'view_type': 'form',
             'view_mode': 'tree',
-            'context': context,
+            'context': new_context,
             'domain': domain,
         }
         return True
