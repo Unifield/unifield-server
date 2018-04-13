@@ -87,6 +87,10 @@ class res_currency(osv.osv):
         '''
         Create purchase and sale pricelists according to the currency
         '''
+
+        if context is None:
+            context = {}
+
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
         item_obj = self.pool.get('product.pricelist.item')
@@ -130,6 +134,11 @@ class res_currency(osv.osv):
                                   'base': -2,
                                   'min_quantity': 0.00}, context=context)
 
+        if context.get('sync_update_execution'):
+            # new currency created by sync
+            # create pricelist xmlid
+            pricelist_obj.get_sd_ref(cr, uid, [sale_price_id, purchase_price_id], context=context)
+
         return [sale_price_id, purchase_price_id]
 
     def create(self, cr, uid, values, context=None):
@@ -138,7 +147,6 @@ class res_currency(osv.osv):
         currency creation
         '''
         res = super(res_currency, self).create(cr, uid, values, context=context)
-
         # Create the corresponding pricelists (only for non currency that have a currency_table)
         if not values.get('currency_table_id', False):
             self.create_associated_pricelist(cr, uid, res, context=context)

@@ -87,20 +87,10 @@ class account_invoice_refund(osv.osv_memory):
 
     _defaults = {
         'document_date': _get_document_date,
-        'date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available
         'filter_refund': 'refund',
         'journal_id': _get_journal,  # US-193
     }
-
-    def onchange_date(self, cr, uid, ids, date, context=None):
-        res = {}
-        # Some verifications
-        if not context:
-            context = {}
-        if date:
-            res.update({'value': {'document_date' : date}})
-        return res
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """
@@ -118,16 +108,16 @@ class account_invoice_refund(osv.osv_memory):
         res.append('analytic_distribution_id')
         return res
 
-    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form):
+    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form, context=None):
         """
         Permits to adapt refund creation
         """
         if form.get('document_date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                form['document_date'], date)
-            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'])
+            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'], context=context)
         else:
-            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
+            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
     def _hook_create_invoice(self, cr, uid, data, form, *args):
         """

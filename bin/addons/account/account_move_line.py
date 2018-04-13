@@ -415,9 +415,7 @@ class account_move_line(osv.osv):
                     FROM account_move_line l1, account_move_line l2
                     WHERE l2.account_id = l1.account_id
                       AND l1.id <= l2.id
-                      AND l2.id IN %s AND """ + \
-            self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+                      AND l2.id IN %%s AND %s GROUP BY l2.id""" % self._query_get(cr, uid, obj='l1', context=c)  # ignore_sql_check
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -465,7 +463,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit-credit))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
-                     GROUP BY id, debit, credit having '+where)
+                        GROUP BY id, debit, credit having '+where)  # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -508,9 +506,10 @@ class account_move_line(osv.osv):
             qu1 = ' AND' + ' AND'.join(qu1)
         else:
             qu1 = ''
-        cursor.execute('SELECT l.id ' \
-                       'FROM account_move_line l, account_invoice i ' \
-                       'WHERE l.move_id = i.move_id ' + qu1, qu2)
+        cursor.execute('''
+            SELECT l.id
+            FROM account_move_line l, account_invoice i
+            WHERE l.move_id = i.move_id ''' + qu1, qu2)  # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -1011,9 +1010,6 @@ class account_move_line(osv.osv):
             result = super(account_move_line, self).unlink(cr, uid, [line.id], context=context)
             if check:
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
-            elif context.get('sync_update_execution'):
-                move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
-
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
@@ -1154,6 +1150,7 @@ class account_move_line(osv.osv):
         move_obj = self.pool.get('account.move')
         cur_obj = self.pool.get('res.currency')
         journal_obj = self.pool.get('account.journal')
+        invoice_line_obj = self.pool.get('account.invoice.line')
         if context is None:
             context = {}
         move_date = False
@@ -1240,6 +1237,16 @@ class account_move_line(osv.osv):
                     'user_id': uid
                 })]
 
+        # update the reversal in case of a refund cancel/modify
+        if vals.get('invoice_line_id', False):
+            inv_line = invoice_line_obj.browse(cr, uid, vals['invoice_line_id'],
+                                               fields_to_fetch=['reversed_invoice_line_id'], context=context)
+            if inv_line.reversed_invoice_line_id:
+                vals['reversal'] = True
+                reversed_amls = invoice_line_obj.browse(cr, uid, inv_line.reversed_invoice_line_id.id,
+                                                        fields_to_fetch=['move_lines'], context=context).move_lines
+                vals['reversal_line_id'] = reversed_amls and reversed_amls[0].id or False
+
         result = super(osv.osv, self).create(cr, uid, vals, context=context)
         # CREATE Taxes
         if vals.get('account_tax_id', False):
@@ -1318,9 +1325,10 @@ class account_move_line(osv.osv):
         Returns a JI view with all the JIs related to the selected one, i.e.:
         1) those having the same Entry Sequence as the selected JI (including the selected JI itself)
         2) those having the same reference as one of the JIs found in 1)
-        3) those being partially or totally reconciled with one of the JIs found in 1)
-        4) those whose reference contains EXACTLY the Entry Sequence of the selected JI
-        5) those having the same Entry Sequence as one of the JIs found in 2), 3) or 4)
+        3) those having an Entry Sequence matching exactly with the reference of one of the JIs found in 1)
+        4) those being partially or totally reconciled with one of the JIs found in 1)
+        5) those whose reference contains EXACTLY the Entry Sequence of the selected JI
+        6) those having the same Entry Sequence as one of the JIs found in 2), 3) 4) or 5)
         """
         if context is None:
             context = {}
@@ -1331,6 +1339,7 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'),
                                  _('The related entries feature can only be used with one Journal Item.'))
         ir_model_obj = self.pool.get('ir.model.data')
+        am_obj = self.pool.get('account.move')
         related_amls = set()
         selected_aml = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context)
         selected_entry_seq = selected_aml.move_id.name
@@ -1349,9 +1358,13 @@ class account_move_line(osv.osv):
             aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
             aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 
-        domain_related_jis = ['|', '|', '|',
+        # JEs with Entry Sequence = ref of one of the JIs of the account_move
+        je_ids = am_obj.search(cr, uid, [('name', 'in', list(set_of_refs))], order='NO_ORDER', context=context)
+
+        domain_related_jis = ['|', '|', '|', '|',
                               '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
                               ('ref', '=', selected_entry_seq),
+                              ('move_id', 'in', je_ids),
                               ('reconcile_id', 'in', list(set_of_reconcile_ids)),
                               ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
         related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)

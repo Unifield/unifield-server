@@ -40,7 +40,7 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['state','reference','account_id','partner_txt','debit_currency','credit_currency','employee_id','analytic_distribution_id']
+        fields = ['state','reference','account_id','partner_txt','debit_currency','credit_currency','employee_id','analytic_distribution_id', 'reconcile_id', 'reconcile_partial_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.move.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.move.line'), ('name', '=', 'name')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.move.line'), ('name', '=', 'move_id')], context=context)

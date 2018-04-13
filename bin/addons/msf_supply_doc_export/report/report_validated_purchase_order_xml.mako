@@ -12,6 +12,7 @@
         % endif
         <field name="partner_ref">${o.partner_ref or ''|x}</field>
         <field name="details">${o.details or ''|x}</field>
+        <field name="stock_take_date">${o.stock_take_date or ''|x}</field>
         % if o.delivery_requested_date and o.delivery_requested_date not in (False, 'False'):
         <field name="delivery_requested_date">${o.delivery_requested_date or ''|n}</field>
         % else:
@@ -24,14 +25,18 @@
         <field name="ready_to_ship_date"></field>
         % endif
         <field name="dest_address_id" key="name,parent.partner_id">
-        <field name="name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
-        <field name="street">${o.dest_address_id and o.dest_address_id.street or ''|x}</field>
-        <field name="street2">${o.dest_address_id and o.dest_address_id.street2 or ''|x}</field>
-        <field name="zip">${o.dest_address_id and o.dest_address_id.zip or ''|x}</field>
-        <field name="city">${o.dest_address_id and o.dest_address_id.city or ''|x}</field>
-        <field name="country_id" key="name">
-            <field name="name">${o.dest_address_id and o.dest_address_id.country_id and o.dest_address_id.country_id.name or ''|x}</field>
-        </field>
+            % if o.order_type == 'direct':
+            <field name="delivery_name">${getContactName(o.dest_address_id.id) or ''|x}</field>
+            % else:
+            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
+            % endif
+            % if o.order_type == 'direct':
+            <field name="delivery_address">${o.dest_partner_id and o.dest_partner_id.name or ''|x}</field>
+            % else:
+            <field name="delivery_address">${getInstanceName()|x}</field>
+            % endif
+            <field name="customer_name">${getInstanceAddress() or ''|x}</field>
+            <field name="customer_address">${getInstanceName()|x}</field>
         </field>
         % if o.shipment_date and o.shipment_date not in (False, 'False'):
         <field name="shipment_date">${o.shipment_date|n}</field>
@@ -42,6 +47,7 @@
         <field name="origin">${o.origin or ''|x}</field>
         <field name="project_ref">${o.fnct_project_ref or ''|x}</field>
         <field name="message_esc">${o.message_esc or ''|x}</field>
+        <field name="related_sourcing_id">${o.related_sourcing_id and o.related_sourcing_id.name or ''|x}</field>
         <field name="analytic_distribution_id">
             % if need_ad and o.analytic_distribution_id:
                 % for ccl in o.analytic_distribution_id.cost_center_lines:
@@ -71,6 +77,7 @@
                         <field name="name">${l.currency_id and l.currency_id.name or ''|x}</field>
                     </field>
                     <field name="origin">${l.origin or ''|x}</field>
+                    <field name="stock_take_date">${l.stock_take_date or ''|x}</field>
                     % if l.date_planned and l.date_planned not in (False, 'False'):
                     <field name="date_planned">${l.date_planned|n}</field>
                     % else:

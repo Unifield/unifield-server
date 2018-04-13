@@ -25,11 +25,14 @@ import time
 import shutil
 import base64
 import hashlib
+import tools
+import tempfile
 
 from osv import osv
 from osv import fields
 
 from tools.translate import _
+from StringIO import StringIO
 
 
 def all_files_under(path):
@@ -41,8 +44,44 @@ def all_files_under(path):
         for filename in filenames:
             yield os.path.join(cur_path, filename)
 
+def get_oldest_filename(job, ftp_connec=None):
+    '''
+    Get the oldest file in local or on FTP server
+    '''
+    if not job.import_id.ftp_source_ok:
+        return min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+    else:
+        files = []
+        ftp_connec.dir(job.import_id.src_path, files.append)
+        file_names = []
+        for file in files:
+            if file.startswith('d'): # directory
+                continue
+            file_names.append( os.path.join(job.import_id.src_path, file.split(' ')[-1]) )
+        res = []
+        for file in file_names:
+            dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
+            dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
+            res.append((dt, file))
+        return min(res, key=lambda x:x[1])[1] if res else False
 
-def move_to_process_path(file, src_path, dest_path):
+
+def get_file_content(file, from_ftp=False, ftp_connec=None):
+    '''
+    get file content from local of FTP
+    If ftp_connec is given then we try to retrieve line from FTP server
+    '''
+    def add_line(line):
+        ch.write('%s\n' % line)
+    if not from_ftp:
+        return open(file).read()
+    else:
+        ch = StringIO()
+        ftp_connec.retrlines('RETR %s' % file, add_line)
+        return ch.getvalue()
+
+
+def move_to_process_path(import_brw, ftp_connec, file, src_path, dest_path):
     """
     Move the file `file` from `src_path` to `dest_path`
     :param file: Name of the file to move
@@ -51,8 +90,37 @@ def move_to_process_path(file, src_path, dest_path):
     :return: return True
     """
     srcname = os.path.join(src_path, file)
-    renamed = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
-    shutil.move(srcname, renamed)
+    destname = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+
+    if import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+        # from FTP to FTP
+        rep = ftp_connec.rename(srcname, destname)
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), ('Unable to move file to destination location on FTP server'))
+    elif not import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+        # from local to FTP
+        rep = ftp_connec.storbinary('STOR %s' % destname, open(srcname, 'rb'))
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+        else:
+            os.remove(srcname)
+    elif import_brw.ftp_source_ok and not import_brw.ftp_dest_ok:
+        # from FTP to local
+        rep = ''
+        with open(destname, 'wb') as f:
+            def write_callback(data):
+                f.write(data)
+            rep = ftp_connec.retrbinary('RETR %s' % srcname, write_callback)
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), ('Unable to move remote file to local destination location on FTP server'))
+        else:
+            rep2 = ftp_connec.delete(srcname)
+            if not rep2.startswith('2'):
+                raise osv.except_osv(_('Error'), ('Unable to remove remote file on FTP server'))
+    else:
+        # from local to local
+        shutil.move(srcname, destname)
+
     return True
 
 
@@ -176,21 +244,29 @@ class automated_import_job(osv.osv):
             data64 = None
             filename = False
 
+            ftp_connec = None
+            if job.import_id.ftp_ok:
+                context.update({'no_raise_if_ok': True})
+                ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
+
             try:
-                for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                    import_obj.path_is_accessible(job.import_id[path[0]], path[1])
+                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+                    if path[2] and not job.import_id[path[2]]:
+                        import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
-                error = str(e)
+                error = tools.ustr(e)
                 # In case of manual processing, raise the error
                 if job.file_to_import:
                     raise e
 
             if not job.file_to_import:
                 try:
-                    oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+                    oldest_file = get_oldest_filename(job, ftp_connec)
+                    if not oldest_file:
+                        raise ValueError()
                     filename = os.path.split(oldest_file)[1]
-                    md5 = hashlib.md5(open(oldest_file).read()).hexdigest()
-                    data64 = base64.encodestring(open(oldest_file).read())
+                    md5 = hashlib.md5(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec)).hexdigest()
+                    data64 = base64.encodestring(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec))
                 except ValueError:
                     no_file = True
 
@@ -199,7 +275,7 @@ class automated_import_job(osv.osv):
                         error = _('No file to import in %s !') % job.import_id.src_path
                     elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
-                        move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                        move_to_process_path(job.import_id, ftp_connec, filename, job.import_id.src_path, job.import_id.dest_path)
 
                 if error:
                     self.write(cr, uid, [job.id], {
@@ -214,7 +290,9 @@ class automated_import_job(osv.osv):
                         'state': 'error',
                     }, context=context)
                     continue
-            else:
+            else: # file to import given
+                if job.import_id.ftp_source_ok:
+                    raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
                 oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
                 oldest_file.write(base64.decodestring(job.file_to_import))
                 oldest_file.close()
@@ -242,6 +320,11 @@ class automated_import_job(osv.osv):
             error_message = []
             state = 'done'
             try:
+                if job.import_id.ftp_source_ok:
+                    temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
+                    temp_file.close()
+                    oldest_file = temp_file.name
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
                     job.import_id.function_id.method_to_call
@@ -275,13 +358,13 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
-                    'comment': str(e),
+                    'comment': tools.ustr(e),
                     'file_sum': md5,
                     'file_to_import': data64,
                     'state': 'error',
                 }, context=context)
             finally:
-                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                move_to_process_path(job.import_id, ftp_connec, filename, job.import_id.src_path, job.import_id.dest_path)
 
         return {
             'type': 'ir.actions.act_window',

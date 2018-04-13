@@ -133,6 +133,10 @@ class output_currency_for_export(osv.osv_memory):
                 # get the ids of the entries and the header to display
                 # (for gl.selector/analytic.selector report if we come from JI/AJI view)
             dom = context.get('search_domain', [])
+            if context.get('original_domain'):
+                dom.extend(context['original_domain'])
+            if context.get('new_filter_domain'):
+                dom.extend(context['new_filter_domain'])
             if model == 'account.move.line':
                 dom.append(('period_id.number', '!=', 0))  # exclude IB entries
             export_obj = self.pool.get(model)
