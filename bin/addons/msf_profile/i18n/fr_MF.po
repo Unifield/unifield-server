@@ -38674,6 +38674,7 @@ msgstr "Have account changed?"
 #: code:addons/stock/physical_inventory.py:1081
 #: code:addons/stock/physical_inventory.py:1131
 #: code:addons/stock/stock.py:3254
+#: code:addons/specific_rules/stock.py:173
 #: model:ir.model,name:stock.model_stock_inventory
 #: field:physical.inventory.counting,inventory_id:0
 #: field:physical.inventory.discrepancy,inventory_id:0
@@ -50359,6 +50360,8 @@ msgstr "Picking (incoming, internal, outgoing, picking ticket, packing...) to pr
 
 #. module: stock
 #: model:ir.model,name:stock.model_physical_inventory
+#: code:addons/stock/physical_inventory.py:1020
+#: code:addons/stock/physical_inventory.py:1181
 #: view:physical.inventory:0
 #: view:stock.inventory:0
 msgid "Physical Inventory"
@@ -107519,3 +107522,15 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1181
+#, python-format
+msgid "is confirmed."
+msgstr "est confirmé."
+
+#. module: specific_rules
+#: code:addons/specific_rules/stock.py:173
+#, python-format
+msgid "is done."
+msgstr "est terminé."
