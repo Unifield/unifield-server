@@ -107519,3 +107519,14 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. modules: purchase, purchase_override
+#: field:purchase.order.line,esc_confirmed:0
+#: field:purchase.order.merged.line,esc_confirmed:0
+msgid "ESC confirmed"
+msgstr "ESC confirmé"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen.line,esc_conf:0
+msgid "ESC Confirmed"
+msgstr "ESC Confirmé"
