@@ -59,7 +59,7 @@ class sale_order(osv.osv):
         Check that partner and order type are compatibles
         """
         compats = {
-            'regular':      ['internal', 'intermission', 'section', 'external'],
+            'regular':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'donation_st':  ['internal', 'intermission', 'section', 'external'],
             'loan':         ['internal', 'intermission', 'section', 'external'],
             'donation_exp': ['internal', 'intermission', 'section', 'external'],
