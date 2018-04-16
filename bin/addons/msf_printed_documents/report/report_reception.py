@@ -224,16 +224,9 @@ class report_reception(report_sxw.rml_parse):
     def getActualReceiptDate(self,o):
         if o.state != 'done':
             actual_receipt_date = ''
-        elif not o.move_lines:
-            ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         else:
-            ard_min = time.strptime(o.move_lines[0].date, '%Y-%m-%d %H:%M:%S')
-            for move in o.move_lines:
-                move_ard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
-                if move_ard < ard_min:
-                    ard_min = move_ard
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard_min)
+            ard = time.strptime(o.date_done, '%Y-%m-%d %H:%M:%S')
+            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         return actual_receipt_date
 
     def get_lines(self, o):
