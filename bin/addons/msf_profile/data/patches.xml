@@ -10,6 +10,10 @@
             <field name="method">us_4430_set_puf_to_reversal</field>
         </record>
 
+        <record id="us_3015_remove_whitespaces_product_description" model="patch.scripts">
+            <field name="method">us_3015_remove_whitespaces_product_description</field>
+        </record>
+
         <!-- UF8.0 -->
         <record id="set_sequence_main_nomen" model="patch.scripts">
             <field name="method">set_sequence_main_nomen</field>
