@@ -3411,6 +3411,7 @@ class stock_picking(osv.osv):
                 # or claim is from INT created by processing an IN to Stock instead of Cross Docking
                 if wizard.register_a_claim and (wizard.claim_replacement_picking_expected
                                                 or (picking.type == 'internal'
+                                                    and move.purchase_line_id.linked_sol_id.order_id
                                                     and move.purchase_line_id.linked_sol_id.order_id.procurement_request
                                                     and wizard.claim_type in ('scrap', 'quarantine', 'return'))):
                     values.update({
