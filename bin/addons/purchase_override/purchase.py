@@ -420,17 +420,18 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             po = wiz.order_id
 
-        # cancel all lines:
+        # cancel all non-confirmed lines:
         if po.rfq_ok:
             self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context)
         else:
             for pol in po.order_line:
-                if pol.has_pol_been_synched:
-                    continue
-                signal = 'cancel' 
-                if resource and pol.linked_sol_id:
-                    signal = 'cancel_r'
-                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
+                if pol.state != 'confirmed':
+                    if pol.has_pol_been_synched:
+                        continue
+                    signal = 'cancel'
+                    if resource and pol.linked_sol_id:
+                        signal = 'cancel_r'
+                    wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
 
         return {'type': 'ir.actions.act_window_close'}
 

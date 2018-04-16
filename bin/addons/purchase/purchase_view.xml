@@ -375,7 +375,7 @@
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': [('state', 'not in', ['draft']), ('partner_type', 'not in', ('external', 'esc'))]}" string="Cancel" icon="gtk-cancel"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['&amp;', '|', '&amp;', ('state', 'not in', ['draft']), ('partner_type', 'not in', ('external', 'esc')), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p']), ('partner_type', 'in', ('external', 'esc'))]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward"/>
                         <button name="confirm_lines" states="validated,validated_p" string="Confirm lines" icon="gtk-go-forward" type="object"/>
