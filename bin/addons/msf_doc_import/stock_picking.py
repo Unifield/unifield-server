@@ -216,11 +216,11 @@ class stock_picking(osv.osv):
                 'file_to_import': base64.encodestring(file_content),
             }, context=context)
 
-            context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True})
+            context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True})
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
-            context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread')
+            context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread'); context.pop('simulation_bypass_missing_lot')
 
             if context.get('new_picking') and context['new_picking'] != in_id:
                 wf_service.trg_validate(uid, 'stock.picking', context.get('new_picking', in_id), 'button_confirm', cr)

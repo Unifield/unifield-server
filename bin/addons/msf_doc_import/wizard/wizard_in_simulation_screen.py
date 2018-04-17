@@ -1524,7 +1524,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_exp_date': exp_date,
                     })
 
-                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name'):
+                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name') and not context.get('simulation_bypass_missing_lot', False):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
 
@@ -1593,6 +1593,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         '''
         Return the integrity_status of the line
         '''
+        if context is None:
+            context = {}
+
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         product = vals.get('imp_product_id') and product_obj.browse(cr, uid, vals['imp_product_id'], context=context) or False
@@ -1608,14 +1611,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 return 'no_lot_needed'
 
         if product.batch_management:
-            if not prodlot_id and not prodlot_name:
+            if not prodlot_id and not prodlot_name and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_lot'
 
             if prodlot_id and prodlot_id.type != 'standard':
                 return 'wrong_lot_type_need_standard'
 
         if product.perishable:
-            if not exp_date:
+            if not exp_date and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_date'
 
             if not product.batch_management and prodlot_id and prodlot_id.type != 'internal':

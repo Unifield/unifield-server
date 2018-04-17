@@ -1010,8 +1010,7 @@ class stock_picking(osv.osv):
                 average_values = {}
                 move_sptc_values = []
 
-                for line in move_proc_obj.browse(cr, uid, proc_ids,
-                                                 context=context):
+                for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
