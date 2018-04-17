@@ -253,7 +253,7 @@ class patch_scripts(osv.osv):
 
         # Checking product's description in the translations
         cr.execute('''SELECT id, value FROM ir_translation 
-            WHERE name = 'product.template,name' AND value LIKE ' %'  or name LIKE '% ' ''')
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
         for x in cr.fetchall():
             cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
 
