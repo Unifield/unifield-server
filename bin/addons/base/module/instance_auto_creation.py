@@ -615,9 +615,9 @@ class instance_auto_creation(osv.osv):
             if len(company_id) != 1:
                 raise osv.except_osv(_("Error!"), 'There should be one and only one company with proprietary instance \'%s\', found %d.' % (config_dict['instance']['prop_instance_code'], len(instance_partner_id)))
 
-            vals = {
-                'schedule_range': float(config_dict['company']['scheduler_range_days']),
-            }
+            vals = {}
+            if config_dict['company']['scheduler_range_days']:
+                vals['schedule_range'] = float(config_dict['company']['scheduler_range_days'])
 
             account_property_dict = {  # config_file_property_name : unifield property name
                 'salaries_default_account': 'salaries_default_account',
@@ -649,7 +649,7 @@ class instance_auto_creation(osv.osv):
                 if cc_code:
                     cc_code = cc_code.upper()
                     analytic_account_module = self.pool.get('account.analytic.account')
-                    cc_id = analytic_account_module.search(cr, uid, [('code', '=', cc_code)])
+                    cc_id = analytic_account_module.search(cr, uid, [('code', '=ilike', cc_code), ('category', '=', 'OC')])
                     analytic_account_module.write(cr, uid, cc_id, {'for_fx_gain_loss': True})
 
             # send imported data and configuration
