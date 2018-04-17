@@ -111,10 +111,11 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
+    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
         if context is None:
             context ={}
         if True:
+            uid = 1
             at = context.get('active_test')
             context['active_test'] = False
             partner_name = 'fake'
