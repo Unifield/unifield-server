@@ -821,7 +821,8 @@ class so_po_common(osv.osv_memory):
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
-    def create_invalid_recovery_message(self, cr, uid, partner_name, name, context):
+    def create_invalid_recovery_message(self, cr, real_uid, partner_name, name, context):
+        uid = 1
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, 1003, context)
         if not rule:

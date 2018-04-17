@@ -57,7 +57,7 @@ class purchase_order_line_sync(osv.osv):
                 res[pol.id] = False
             elif pol.state.startswith('validated'):
                 pol_identifier = self.get_sd_ref(cr, uid, pol.id, context=context)
-                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, 1, [
                     ('sent', '=', True),
                     ('remote_call', '=', 'sale.order.line.create_so_line'),
                     ('identifier', 'like', pol_identifier),
