@@ -418,7 +418,6 @@ class Database(BaseController):
                 ('partner', 'external_account_payable'),
                 ('partner', 'internal_account_receivable'),
                 ('partner', 'internal_account_payable'),
-                ('company', 'default_counterpart'),
             )
             for section, option in not_empty_int_option_list:
                 self.check_mandatory_int(config, section, option)
