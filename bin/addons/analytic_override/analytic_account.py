@@ -422,7 +422,7 @@ class analytic_account(osv.osv):
             context = {}
 
         # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
-        if context.get('sync_update_creation') and vals.get('code') and vals.get('category') == 'OC':
+        if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
             param = self.pool.get('ir.config_parameter')
             init_cc_fx_gain = param.get_param(cr, 1, 'INIT_CC_FX_GAIN')
             if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
