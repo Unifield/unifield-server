@@ -26,6 +26,23 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 
+
+class hr_payment_method(osv.osv):
+    _name = 'hr.payment.method'
+    _description = 'Payment Method'
+    _columns = {
+        'name': fields.char(size=128, string='Name', required=True, select=1),
+    }
+
+    _order = 'name'
+
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The payment method name must be unique.')
+    ]
+
+hr_payment_method()
+
+
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
@@ -105,6 +122,9 @@ class hr_employee(osv.osv):
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
         'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
+        'payment_method': fields.many2one('hr.payment.method', string='Payment Method', required=False),
+        'bank_name': fields.char('Bank Name', size=256, required=False),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
     }
 
     _defaults = {
