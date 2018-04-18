@@ -51,6 +51,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF9.0
+    def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
+        cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
+        cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        return True
+
     # UF8.1
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
         rule_obj = self.pool.get('sync.client.message_rule')
