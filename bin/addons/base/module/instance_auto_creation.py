@@ -644,13 +644,8 @@ class instance_auto_creation(osv.osv):
             company_obj.write(cr, uid, company_id, vals)
 
             # configure cost center for FX gain loss
-            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss'):
-                cc_code = config_dict['accounting'].get('cost_center_code_for_fx_gain_loss')
-                if cc_code:
-                    cc_code = cc_code.upper()
-                    analytic_account_module = self.pool.get('account.analytic.account')
-                    cc_id = analytic_account_module.search(cr, uid, [('code', '=ilike', cc_code), ('category', '=', 'OC')])
-                    analytic_account_module.write(cr, uid, cc_id, {'for_fx_gain_loss': True})
+            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss') and  config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'):
+                self.pool.get('ir.config_parameter').set_param(cr, 1, 'INIT_CC_FX_GAIN', config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'))
 
             # send imported data and configuration
             self.pool.get('sync.client.entity').sync(cr, uid)
