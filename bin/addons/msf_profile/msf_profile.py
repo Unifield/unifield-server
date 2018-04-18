@@ -53,8 +53,9 @@ class patch_scripts(osv.osv):
 
     # UF9.0
     def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
-        cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
-        cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        if self.pool.get('sync.version.instance.monitor'):
+            cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
+            cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
         return True
 
     # UF8.1
