@@ -314,6 +314,9 @@ class Form(SecuredController):
         rules_pool = rpc.RPCProxy('msf_button_access_rights.button_access_rule')
         model_pool = rpc.RPCProxy('ir.model')
 
+        if btn_name and '/' in btn_name:
+            btn_name = btn_name.split('/')[-1]
+
         if btn_name and view_id:
             view_ids = rules_pool.get_family_ids(int(view_id))
             if not view_ids:
