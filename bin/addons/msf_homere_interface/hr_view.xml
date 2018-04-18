@@ -63,6 +63,8 @@
                             <separator string="Position" colspan="2"/>
                             <field name="job_id" domain="[('state','!=','old')]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="coach_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_start_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_end_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
                         </group>
                     </page>
                     <page string="Categories">

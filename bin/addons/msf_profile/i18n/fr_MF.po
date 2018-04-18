@@ -107519,3 +107519,13 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: hr
+#: field:hr.employee,contract_start_date:0
+msgid "Contract Start Date"
+msgstr "Date de Début de Contrat"
+
+#. module: hr
+#: field:hr.employee,contract_end_date:0
+msgid "Contract End Date"
+msgstr "Date de Fin de Contrat"
