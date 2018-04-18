@@ -285,6 +285,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         updated = 0
         if context is None:
             context = {}
+        payment_method_obj = self.pool.get('hr.payment.method')
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
@@ -310,6 +311,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             statutfamilial = employee_data.get('statutfamilial', False)
             tel_bureau = employee_data.get('tel_bureau', False)
             tel_prive = employee_data.get('tel_prive', False)
+            bqmodereglement = employee_data.get('bqmodereglement', False)
+            bqnom = employee_data.get('bqnom', False)
+            bqnumerocompte = employee_data.get('bqnumerocompte', False)
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
@@ -356,10 +360,23 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'mobile_phone': portable or False,
                 'work_phone': tel_bureau or False,
                 'private_phone': tel_prive or False,
+                'bank_name': bqnom,
+                'bank_account_number': bqnumerocompte,
             }
             # Update Birthday if equal to 0000-00-00
             if datenaissance and datenaissance == '0000-00-00':
                 vals.update({'birthday': False,})
+
+            # Update the payment method
+            payment_method_id = False
+            if bqmodereglement:
+                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
+                if payment_method_ids:
+                    payment_method_id = payment_method_ids[0]
+                else:
+                    payment_method_id = payment_method_obj.create(cr, uid, {'name': bqmodereglement}, context=context)
+            vals.update({'payment_method': payment_method_id})
+
             # Update Nationality
             if nation:
                 n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation))])
