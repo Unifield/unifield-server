@@ -22,10 +22,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-import logging
-import tools
-from os import path
-
 from order_types.stock import check_cp_rw
 
 
@@ -39,7 +35,7 @@ class purchase_order(osv.osv):
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage', '<>', 'view')],
-        help="""This location is set according to the Warehouse selected, or according to the option 'Cross docking'
+                                       help="""This location is set according to the Warehouse selected, or according to the option 'Cross docking'
         or freely if you do not select 'Warehouse'.But if the 'Order category' is set to 'Transport' or 'Service',
         you cannot have an other location than 'Service'"""),
     }
@@ -75,7 +71,7 @@ class purchase_order(osv.osv):
             warning = {
                 'title': _('Warning'),
                 'message': _('The IR lines to an internal location sourced by one of the lines of this PO will not affected by this modification'),
-                }
+            }
         else:
             warehouse_obj = self.pool.get('stock.warehouse')
             if not warehouse_id:
@@ -111,16 +107,6 @@ class purchase_order(osv.osv):
             If the 'Order Category' is 'Service' or 'Transport', you cannot have an other location than 'Service'
             """)}, 'value': {'location_id': stock_loc_obj.get_service_location(cr, uid)}}
         res['value']['cross_docking_ok'] = cross_docking_ok
-        return res
-
-    def onchange_warehouse_id(self, cr, uid, ids,  warehouse_id, order_type, dest_address_id):
-        """ Set cross_docking_ok to False when we change warehouse.
-        @param warehouse_id: Changed id of warehouse.
-        @return: Dictionary of values.
-        """
-        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids,  warehouse_id, order_type, dest_address_id)
-        if warehouse_id:
-            res['value'].update({'cross_docking_ok': False})
         return res
 
     def onchange_categ(self, cr, uid, ids, category, warehouse_id, cross_docking_ok, location_id, context=None):
@@ -188,7 +174,7 @@ class purchase_order(osv.osv):
                           WHERE (t.nomen_manda_0 != %s) AND po.id in %s LIMIT 1''',
                        (nomen_id, tuple(ids)))
             res = cr.fetchall()
-        
+
         if ids and category in ['service', 'transport']:
             # Avoid selection of non-service producs on Service PO
             category = category == 'service' and 'service_recep' or 'transport'
@@ -201,7 +187,7 @@ class purchase_order(osv.osv):
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
                           WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                       (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:
@@ -209,7 +195,7 @@ class purchase_order(osv.osv):
                 'title': _('Warning'),
                 'message': _('This order category is not consistent with product(s) on this PO'),
             })
-                
+
         return {'value': value, 'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -311,17 +297,6 @@ class stock_picking(osv.osv):
     for the selection of the LOCATION for IN (incoming shipment) and OUT (delivery orders)
     '''
     _inherit = 'stock.picking'
-
-    def init(self, cr):
-        """
-        Load msf_cross_docking_data.xml before self
-        """
-        if hasattr(super(stock_picking, self), 'init'):
-            super(stock_picking, self).init(cr)
-        logging.getLogger('init').info('HOOK: module msf_cross_docking: loading data/msf_msf_cross_docking_data.xml')
-        pathname = path.join('msf_cross_docking', 'data/msf_cross_docking_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_cross_docking', file, {}, mode='init', noupdate=False)
 
     def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -472,11 +447,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         assert values is not None, 'missing values'
         if context is None:
             context = {}
-        
+
         # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
         if context.get('sync_message_execution', False):
             return values
-        
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         # take ids of the wizard from the context.
@@ -654,10 +629,9 @@ class stock_move(osv.osv):
                 todo.append(move.id)
                 self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
         ret = True
-        picking_todo = []
         if todo:
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
-            
+
             # we cancel availability
             new_todo = self.cancel_assign(cr, uid, todo, context=context)
             if new_todo:
@@ -688,7 +662,6 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         todo = []
-        picking_todo = []
         for move in self.browse(cr, uid, ids, context=context):
             if move.state != 'done':
                 '''
@@ -718,7 +691,7 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo)
-            
+
             #FEFO
             self.fefo_update(cr, uid, todo, context)
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]

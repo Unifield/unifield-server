@@ -65,6 +65,30 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
+        'linked_to_out': fields.boolean('Is this IN linked to a single Pick (same FO) ?'),
+        'register_a_claim': fields.boolean(
+            string='Register a Claim to Supplier',
+        ),
+        'claim_partner_id': fields.many2one(
+            'res.partner',
+            string='Supplier',
+            required=False,
+        ),
+        'claim_in_has_partner_id': fields.boolean(
+            string='IN has Partner specified.',
+            readonly=True,
+        ),
+        'claim_type': fields.selection(
+            lambda s, cr, uid, context={}: s.pool.get('return.claim').get_in_claim_event_type(),
+            string='Claim Type',
+        ),
+        'claim_replacement_picking_expected': fields.boolean(
+            string='Replacement expected for Claim ?',
+            help="An Incoming Shipment will be automatically created corresponding to returned products.",
+        ),
+        'claim_description': fields.text(
+            string='Claim Description',
+        ),
     }
 
     _defaults = {
@@ -92,6 +116,21 @@ class stock_incoming_processor(osv.osv):
 
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
+        cr.execute("""
+            select so.id from
+            stock_move m
+            left join stock_picking p on m.picking_id = p.id
+            left join purchase_order_line pol on m.purchase_line_id = pol.id
+            left join sale_order_line sol on sol.id = pol.linked_sol_id
+            left join sale_order so on so.id = sol.order_id
+            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f'
+            group by so.id
+            """, (vals.get('picking_id'), ))
+        if cr.rowcount == 1:
+            vals['linked_to_out'] = True
+        else:
+            vals['linked_to_out'] = False
+
         if not vals.get('dest_type', False):
             cd_move = move_obj.search(cr, uid, [
                 ('picking_id', '=', picking.id),
@@ -116,6 +155,9 @@ class stock_incoming_processor(osv.osv):
 
         if not vals.get('source_type', False):
             vals['source_type'] = 'default'
+
+        if not vals.get('claim_partner_id', False):
+            vals['claim_partner_id'] = picking.partner_id2.id
 
         return super(stock_incoming_processor, self).create(cr, uid, vals, context=context)
 
@@ -286,6 +328,38 @@ class stock_incoming_processor(osv.osv):
 
         return result
 
+    def onchange_claim_type(self, cr, uid, ids, claim_type, context=None):
+        """
+        Put True to claim_replacement_picking_expected when claim_type is 'missing'.
+        """
+        if context is None:
+            context = {}
+
+        result = {'value': {'claim_replacement_picking_expected': False}}
+
+        if claim_type == 'missing':
+            result['value'].update({
+                'claim_replacement_picking_expected': True
+            })
+
+        return result
+
+    def onchange_register_a_claim(self, cr, uid, ids, register_a_claim, onchange_dest_type, context=None):
+        """
+        Put True to direct_incoming when register_a_claim is checked.
+        """
+        if context is None:
+            context = {}
+
+        result = {'value': {'direct_incoming': str(onchange_dest_type)}}
+
+        if register_a_claim:
+            result['value'].update({
+                'direct_incoming': 't',
+            })
+
+        return result
+
     def do_reset(self, cr, uid, ids, context=None):
         incoming_obj = self.pool.get('stock.incoming.processor')
         stock_p_obj = self.pool.get('stock.picking')
@@ -394,6 +468,12 @@ class stock_incoming_processor(osv.osv):
                 'target': 'same',
                 'res_id': simu_id,
                 'context': context}
+
+    def launch_simulation_pack(self, cr, uid, ids, context=None):
+        data = self.launch_simulation(cr, uid, ids, context)
+        self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+        data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
+        return data
 
 stock_incoming_processor()
 
@@ -504,7 +584,7 @@ class stock_move_in_processor(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"  # not_a_user_entry
             cr.execute(sql, (value, ml_id))
         return True
 
@@ -733,6 +813,7 @@ class stock_move_in_processor(osv.osv):
             multi='product_info',
             help="Ticked if the product is a Controlled Substance",
         ),
+        'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
 
     """

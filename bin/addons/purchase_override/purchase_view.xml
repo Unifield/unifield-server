@@ -1,292 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-
-
-        <record id="purchase_order_line_form_view_over" model="ir.ui.view">
-            <field name="name">purchase.order.line.form.view.over</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="priority">50</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook//page[@string='History']" position="replace">
-                    </xpath>
-                    <xpath expr="/form/notebook//page[@string='Invoicing']" position="replace">
-                    </xpath>
-                    <xpath expr="//field[@name='product_uom']" position="attributes">
-                        <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='notes']" position="before">
-                        <separator colspan="4" string="Information" />
-                        <field name="external_ref" readonly="1" />
-                        <field name="project_ref" readonly="1" />
-                        <field name="fnct_project_ref" readonly="1" />
-                        <separator colspan="4" string="Notes" />
-                    </xpath>
-
-                    <xpath expr="/form//group" position="before">
-                        <field name="vat_ok" invisible="1" />
-                    </xpath>
-
-                    <xpath expr="/form//group" position="attributes">
-                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-        <record id="purchase_order_type_form_view" model="ir.ui.view">
-            <field name="name">purchase.order.type.form.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="/form//field[@name='name']" position="before">
-                        <field name="requested_date_in_past" invisible="1" />
-                        <group colspan="6">
-                            <html>
-                                <p id="view_order_requested_in_past"
-                                    style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                    <translate>WARNING: The requested date of this purchase order is in the past.</translate>
-                                    <br />
-                                </p>
-                                <script language="javascript">
-                                    var is_in_past = $('#requested_date_in_past').val();
-                                    if (is_in_past == "1") {
-                                        msg_dom = $('#view_order_requested_in_past');
-                                        msg_dom.show();
-                                    }
-                                </script>
-                            </html>
-                        </group>
-                    </xpath>
-
-                    <xpath expr="/form/group/field[@name='partner_ref']" position="attributes">
-                        <attribute name="attrs">{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'confirmed'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']/group[2]" position="replace" >
-                    </xpath>
-
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//separator[@string='Purchase Control']" position="replace" >
-                    </xpath>
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='validator']" position="attributes" >
-                        <attribute name="invisible">1</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='date_approve']" position="attributes" >
-                        <attribute name="invisible">1</attribute>
-                    </xpath>
-
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//separator[@string='Invoices']" position="replace" >
-                    </xpath>
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']//field[@name='invoice_ids']" position="replace" >
-                    </xpath>
-
-
-                   <xpath expr="/form/notebook/page[@string='Notes']" position="before" >
-                        <page string="Invoices" > 
-                            <group colspan="2" col="2">
-                                <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method"/>
-                                <field name="fiscal_position" widget="selection"/>
-                            </group>
-                            <separator string="Invoices" colspan="4"/>
-                            <newline/>
-                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
-                        </page>
-                    </xpath>
-
-                    <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="after">
-                        <separator colspan="4" string="Message ESC" />
-                        <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}" />
-                        <separator colspan="4" string="Project info" />
-                        <field name="project_ref" readonly="1" />
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='warehouse_id']" position="replace">
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
-                    </xpath>
-
-                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
-                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
-                        <field name="allocation_setup" invisible="1" />
-                    </xpath>
-
-                    <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
-                        <field name="is_a_counterpart" invisible="1" />
-                        <field name="push_fo" invisible="1" />
-                        <field name="priority" />
-                        <newline />
-                        <field name="categ" />
-                        <field name="details" />
-                        <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
-                        <newline />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page//field[@name='invoice_method']" position="replace">
-                        <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
-                        <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}" />
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
-                        <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
-                            on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]" />
-                        <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
-                        <field name="invoice_address_id"
-                            domain="[('inv_address', 'in', [company_id])]"
-                            context="contact_display='partner_address'"
-                            attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
-                            />
-                    </xpath>
-
-                    <xpath expr="/form/notebook//tree" position="attributes">
-                        <attribute name="hide_delete_button">True</attribute>
-                    </xpath>
-
-                    <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
-                        <field name="red_color" invisible="1" />
-                        <field name="rfq_ok" invisible="1" />
-                        <field name="tender_line_id" invisible="1" />
-                        <field name="fake_state" invisible="1" />
-                        <field name="order_state_purchase_order_line" invisible="True" />
-                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
-                            attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
-                        <button string="Delete" icon="gtk-del" type="object" name="ask_unlink" confirm="You requested to cancel a line in the PO. Do you want to proceed?" 
-                            attrs="{'invisible': ['|', ('tender_line_id', '!=', False), ('order_state_purchase_order_line', 'not in', ('rfq_sent', 'draft', 'wait', 'confirmed'))]}" />
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='state']" position="after">
-                        <button name="dpo_received"
-                            string="Validate the reception"
-                            icon="terp-camera_test"
-                            attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" 
-                            />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
-        <record id="purchase.purchase_order_tree" model="ir.ui.view">
-            <field name="name">purchase.order.type.tree.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Purchase Orders"
-                      colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')">
-                      <field name="name" string="Reference" />
-                      <field name="order_type" />
-                      <field name="priority" />
-                      <field name="categ" />
-                      <field name="date_order" />
-                      <field name="partner_ref" />
-                      <field name="partner_id" string="Supplier" />
-                      <field name="delivery_requested_date" />
-                      <field name="origin" />
-                      <field name="customer_ref"/>
-                      <field name="dest_partner_names" />
-                      <field name="line_count" />
-                      <field name="shipped_rate" widget="progressbar" />
-                      <field name="invoiced_rate" widget="progressbar" />
-                      <field name="amount_total" />
-                      <field name="pricelist_id" string="Currency" />
-                      <field name="state" />
-                </tree>
-            </field>
-        </record>
-        
-        <record id="purchase.view_purchase_order_filter" model="ir.ui.view">
-            <field name="name">purchase.view.purchase.order.filter</field>
-            <field name="model">purchase.order</field>
-            <field name="type">search</field>
-            <field name="priority">18</field>
-            <field name="arch" type="xml">
-                <search string="Search Purchase Orders">
-                    <group col="8" colspan="4">
-                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
-                      <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
-                      <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
-                      <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state." />
-                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
-                      <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
-                      <separator orientation="vertical" />
-                      <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','split')]" context="{'active_test': False}" separator="1" />
-                      <separator orientation="vertical" />
-                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
-                      <separator orientation="vertical" />
-                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state." />
-                      <separator orientation="vertical" />
-                      <field name="name" select="1" string="Reference" />
-                      <field name="partner_id" select="1" string="Supplier" />
-                      <field name="partner_ref" select="1" string="Supplier Ref." />
-                    </group>
-                    <newline />
-                    <group>
-                      <field name="product_id" />
-                      <field name="origin" />
-                      <field name="create_uid" />
-                      <field name="date_order" />
-                    </group>
-                    <newline />
-                    <group string="Type" expand="0">
-	                  <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
-	                  <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
-	                  <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
-	                  <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
-	                  <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
-	                  <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
-	                  <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
-	                </group>
-	                <newline />
-	                <group string="Priority" expand="0">
-                      <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
-                      <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
-	                </group>
-	                <newline />
-	                <group string="Category" expand="0">
-                      <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
-                      <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                      <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
-                      <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
-	                </group>
-                    <newline />
-                    <group expand="0" string="Group By..." colspan="4" col="10">
-                      <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
-                      <separator orientation="vertical" />
-                      <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
-                      <separator orientation="vertical" />
-                      <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
-                      <separator orientation="vertical" />
-                      <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                      <separator orientation="vertical" />
-                      <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
-                      <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
-                      <separator orientation="vertical" />
-                      <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
-                      <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'delivery_requested_date'}" />
-                    </group>
-                </search>
-            </field>
-        </record>
-        
-        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
-            <field name="name">Purchase Orders</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.order</field>
-            <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
-            <field name="domain">[('tender_id', '=', False)]</field>
-            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
-            <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
-        </record>
-
         <!-- REWORK THE PURCHASE MENU − SEE UF-657 - ERGONOMIC REQUIREMENTS -->
         <!-- Purchase Management -->
         <menuitem id="purchase.menu_purchase_form_action" 
@@ -333,39 +47,6 @@
             <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
         </record>
 
-        <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
-            <field name="name">purchase.order.line.form.view</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="priority">35</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form//field[@name='product_id']" position="replace">
-                        <field name="tender_line_id" invisible="1" />
-                        <field name="product_id" colspan="4" 
-                            context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" 
-                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
-                            attrs="{'readonly': [('tender_line_id', '!=', False)]}"
-                            default_focus="1"
-                            />
-                        <!-- domain="[('purchase_type', '=', parent.categ)] />" -->
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='price_unit']" position="replace">
-                        <field name="rfq_ok" invisible="1" />
-                        <field name="state" invisible="1" />
-                        <field name="fake_id" invisible="1" />
-                        <field name="change_price_ok" invisible="1" />
-                        <field name="old_price_unit" invisible="1" />
-                        <field name="price_unit" 
-                            on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)" />
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-        
         <!-- Modify the view of the merge PO wizard -->
         <record id="inherit_view_purchase_order_group" model="ir.ui.view">
             <field name="name">Merger Purchase Orders</field>
@@ -428,64 +109,6 @@
 	<!-- Invoice control -->
         <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
 
-        <!-- Invoice control -->
-        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
-        
-<!--
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
-    used in useability_dashboard_and_menu/menu/supply_config_menu.xml
--->
-<!--        <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" /> -->
-
-        <!-- Here was an act_window to display all PO from products views.
-             This action is defined on product_attributes module -->
-
-        <record id="purchase_order_line_unlink_wizard_form_view" model="ir.ui.view">
-            <field name="name">purchase.order.line.unlink.wizard.form.view</field>
-            <field name="model">purchase.order.line.unlink.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Purchase order line cancelation">
-                    <field name="last_line" invisible="1" />
-                    <field name="only_exp" invisible="1" />
-                    <group colspan="4" col="1" attrs="{'invisible': [('only_exp', '=', True)]}">
-                        <html>
-                            <h4 style="text-align: center; margin: 10px; font-size: 1.2em"><translate>Would you re-source the needs sourced by this purchase order line ?</translate></h4>
-                        </html>
-                    </group>
-                    <group colspan="6">
-                        <html>
-                            <p id="view_last_line_message"
-                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                                <translate>WARNING! You are about to cancel/delete a line. This action once done cannot be changed, and it will mean all other related POs will be confirmed. Therefore if you wish to add another product to this PO you should do this BEFORE deleting this line. To add another product click "Close window".</translate>
-                                <br />
-                            </p>
-                            <script language="javascript">
-                                var is_displayed = $('#last_line').val();
-                                if (is_displayed == "1") {
-                                    msg_dom = $('#view_last_line_message')
-                                    msg_dom.show();
-                                }
-                            </script>
-                        </html>
-                    </group>
-                    <newline />
-                    <group colspan="4" col="6" attrs="{'invisible': [('only_exp', '=', True)]}">
-                        <separator string="Actions" colspan="6" />
-                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
-                        <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
-                    </group>
-                    <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', False)]}">
-                        <separator string="Actions" colspan="4" />
-                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="Confirm deletion" type="object" icon="gtk-execute" colspan="2" />
-                    </group>
-                </form>
-            </field>
-        </record>
-
         <record id="purchase_order_cancel_wizard_form_view" model="ir.ui.view">
             <field name="name">purchase.order.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>
@@ -493,15 +116,21 @@
             <field name="arch" type="xml">
                 <form string="Cancel Purchase Order">
                     <field name="last_lines" invisible="1" />
+                    <field name="has_linked_line" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</translate></h4>
+                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm that you want to cancel all lines of this PO</translate></h3>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('has_linked_line', '=', False)]}">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>If you click on 'Cancel &amp; Resource' button, all linked FO/IR lines will be re-sourced.</translate></h3>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
                     <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('has_linked_line', '=', False)]}"/>
                 </form>
             </field>
         </record>

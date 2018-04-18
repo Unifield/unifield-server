@@ -60,7 +60,7 @@ class freight_manifest(report_sxw.rml_parse):
         return self.cur
 
     def getTotM3(self):
-        return self.voltot and self.voltot or '0.0'
+        return self.voltot and round(self.voltot, 4) or '0.0'
 
     def getTotValue(self):
         return self.formatLang(self.valtot and self.valtot or 0.)
@@ -136,7 +136,7 @@ class freight_manifest(report_sxw.rml_parse):
                     'desc': line_obj[ref][ppl]['desc'],
                     'parcels': line_obj[ref][ppl]['parcels'],
                     'kgs': line_obj[ref][ppl]['kgs'],
-                    'm3': line_obj[ref][ppl]['m3'],
+                    'm3': round(line_obj[ref][ppl]['m3'], 4),
                     'value': round(line_obj[ref][ppl]['value'], 2),
                     'kc': line_obj[ref][ppl]['kc'],
                     'dg': line_obj[ref][ppl]['dg'],

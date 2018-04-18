@@ -43,8 +43,16 @@
     	<field name="context_lang">en_MF</field>
     </record>
 
+    <record model="res.users" id="base.user_sync">
+        <field name="signature">Synch</field>
+        <field name="name">Synch</field>
+        <field name="login">synch</field>
+    	<field name="context_lang">en_MF</field>
+    </record>
+
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
+        <field name="warehouse_id" ref="stock.warehouse0" />
     </record>
     <record id="uom_category_percentage" model="product.uom.categ">
         <field name="name">Percentage</field>

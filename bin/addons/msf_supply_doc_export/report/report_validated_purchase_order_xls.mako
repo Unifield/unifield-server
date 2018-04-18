@@ -103,6 +103,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
     </Row>
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Stock Take Date')}</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.stock_take_date|n}T00:00:00.000</Data></Cell>
+    </Row>
+    <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
         % if isDate(o.delivery_requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
@@ -123,28 +127,28 @@
         % endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address name')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address name')}</Data></Cell>
+        % if o.order_type == 'direct':
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getContactName(o.dest_address_id.id) or ''|x}</Data></Cell>
+        % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.name or ''|x}</Data></Cell>
+        % endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address street')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.street or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address')}</Data></Cell>
+        % if o.order_type == 'direct':
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_partner_id and o.dest_partner_id.name or ''|x}</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
+        % endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address street 2')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.street2 or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address name')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress() or ''|x}</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Zip')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.zip or ''|x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('City')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.city or ''|x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Country')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.country_id and o.dest_address_id.country_id.name or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
@@ -169,6 +173,10 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.message_esc or ''|x}</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sourcing group')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.related_sourcing_id and o.related_sourcing_id.name or ''|x}</Data></Cell>
     </Row>
 
     % if need_ad and o.analytic_distribution_id:
@@ -219,6 +227,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Stock Take Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery confirmed date*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Nomen Name')}</Data></Cell>
@@ -244,63 +253,66 @@
         % endif
     </Row>
     % for line in o.order_line:
-    <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.external_ref or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
-        % if isDate(line.date_planned):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif isDate(o.delivery_requested_date):
-        ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        % endif
-        % if isDate(line.confirmed_delivery_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
-        % elif isDate(o.delivery_confirmed_date):
-        ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_confirmed_date|n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        % endif
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_0 and line.nomen_manda_0.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_1 and line.nomen_manda_1.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_2 and line.nomen_manda_2.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.notes or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fnct_project_ref or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        % if need_ad:
-            % if line.analytic_distribution_id:
-                % for ccl in line.analytic_distribution_id.cost_center_lines:
-            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
-                % endfor
-                % for x in range(0, max_ad_lines-len_cc_lines):
+        % if line.state != 'cancel' and line.state != 'cancel_r':
+            <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
+            <Row>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.external_ref or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date|n}T00:00:00.000</Data></Cell>
+            % if isDate(line.date_planned):
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
+            % elif isDate(o.delivery_requested_date):
+            ## if the date does not exist in the line we take the one from the header
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+            % else:
             <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-                % endfor
             % endif
-        % else:
+            % if isDate(line.confirmed_delivery_date):
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
+            % elif isDate(o.delivery_confirmed_date):
+            ## if the date does not exist in the line we take the one from the header
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_confirmed_date|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_0 and line.nomen_manda_0.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_1 and line.nomen_manda_1.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.nomen_manda_2 and line.nomen_manda_2.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.notes or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fnct_project_ref or '')|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            % if need_ad:
+                % if line.analytic_distribution_id:
+                    % for ccl in line.analytic_distribution_id.cost_center_lines:
+                <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
+                    % endfor
+                    % for x in range(0, max_ad_lines-len_cc_lines):
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                    % endfor
+                % endif
+            % else:
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            </Row>
         % endif
-    </Row>
     % endfor
 </Table>
 <x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">

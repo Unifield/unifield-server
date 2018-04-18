@@ -675,10 +675,18 @@ class orm_template(object):
                         elif f[i] in self._inherit_fields.keys():
                             cols = selection_field(self._inherits)
                         if cols and cols._type == 'selection' and not sync_context:
-                            sel_list = cols.selection
-                            if r and type(sel_list) == type([]):
-                                r = [x[1] for x in sel_list if r==x[0]]
-                                r = r and r[0] or False
+                            # if requested, translate the fields.selection values
+                            translated_selection = False
+                            if context.get('translate_selection_field', False) and r and f:
+                                fields_get_res = self.fields_get(cr, uid, f, context=context)
+                                if f[0] in fields_get_res and 'selection' in fields_get_res[f[0]]:
+                                    r = dict(fields_get_res[f[0]]['selection'])[r]
+                                    translated_selection = True
+                            if not translated_selection:
+                                sel_list = cols.selection
+                                if r and type(sel_list) == type([]):
+                                    r = [x[1] for x in sel_list if r==x[0]]
+                                    r = r and r[0] or False
                     if not r:
                         if f[i] in self._columns:
                             r = check_type(self._columns[f[i]]._type)
@@ -808,19 +816,21 @@ class orm_template(object):
         for d in list_data:
             i += 1
             try:
-                res = self.import_data(cr, uid, headers, [d])
+                res = self.import_data(cr, uid, headers, [d], has_header=True)
                 if res[0] == -1:
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
                 cr.commit()
             except Exception as e:
-                rejected.append((i, d, str(e)))
+                rejected.append((i, d, tools.ustr(e)))
                 cr.commit()
 
         return processed, rejected, headers
 
-    def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
+    def import_data(self, cr, uid, fields, datas, mode='init',
+                    current_module='', noupdate=False, context=None, filename=None,
+                    display_all_errors=False, has_header=False):
         """
         Import given data in given module
 
@@ -833,6 +843,8 @@ class orm_template(object):
         :param noupdate: flag for record creation
         :param context: context arguments, like lang, time zone,
         :param filename: optional file to store partial import state for recovery
+        :param display_all_errors: display only the first error by default
+        :param has_header: flag to add 1 to the total line in error message
         :rtype: tuple
 
         This method is used when importing data via client menu.
@@ -935,7 +947,13 @@ class orm_template(object):
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
-                    res = value
+                    if not context.get('sync_update_execution', False) and field_type == 'char' and isinstance(value, basestring) \
+                            and len(value.splitlines()) > 1 and (field[len(prefix)]!='name' or model_name != 'res.partner'):
+                        # US-2661 do not allowed newline character in char fields
+                        res = False
+                        warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], tools.ustr(value))]
+                    else:
+                        res = value
                 elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
@@ -1033,35 +1051,67 @@ class orm_template(object):
 
         from osv import except_osv
         position = 0
+        error_list = []
         while position<len(datas):
             res = {}
-
-            (res, position, warning, res_id, xml_id) = \
-                process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            try:
+                (res, position, warning, res_id, xml_id) = \
+                    process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            except Exception as e:
+                if display_all_errors:
+                    res = None
+                    position += 1
+                    warning = [tools.ustr(e)]
+                    res_id = False
+                    xml_id = False
+                else:
+                    raise
             if len(warning):
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          '\n'.join(warning)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + '!\n'.join(warning), '')
 
             try:
+                context.update({'from_import_data': True})
                 ir_model_data_obj._update(cr, uid, self._name,
                                           current_module, res, mode=mode, xml_id=xml_id,
                                           noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e.value)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e) + "\n" +
+                                                          tools.ustr(traceback.format_exc())))
+                    continue
+                else:
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
-            if config.get('import_partial', False) and filename and (not (position%100)):
+            if not error_list and config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
                 data[filename] = position
                 pickle.dump(data, file(config.get('import_partial'), 'wb'))
                 if context.get('defer_parent_store_computation'):
                     self._parent_store_compute(cr)
                 cr.commit()
+
+        if error_list:
+            return (-1, {}, '\n'.join(error_list), '')
 
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)
@@ -1235,6 +1285,13 @@ class orm_template(object):
 
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
+
+    def write_web(self, cr, user, ids, vals, context=None):
+        """
+        Method called by the Web on write
+        """
+        return self.write(cr, user, ids, vals, context=context)
+
 
     def create(self, cr, user, vals, context=None):
         raise NotImplementedError(_('The create method is not implemented on this object !'))
@@ -1472,6 +1529,19 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
+            if node.get('filter_selector'):
+                try:
+                    filter_eval = eval(node.get('filter_selector'))
+                    if filter_eval:
+                        trans_filter_eval = []
+                        for x in filter_eval:
+                            trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                            trans_filter_eval.append((trans_x, x[1]))
+                        node.set('filter_selector', '%s'%trans_filter_eval)
+                except:
+                    logger = netsvc.Logger()
+                    logger.notifyChannel("translate.view", netsvc.LOG_WARNING, "Unable to translate %s" % node.get('filter_selector'))
+
             if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
@@ -1852,7 +1922,7 @@ class orm_template(object):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
                 if data_menu:
                     act_id = data_menu.id
-                    if act_id:
+                    if act_id and data_menu._name == 'ir.actions.act_window':
                         data_action = self.pool.get('ir.actions.act_window').browse(cr, user, [act_id], context)[0]
                         result['submenu'] = getattr(data_action, 'menus', False)
         if toolbar:
@@ -1907,7 +1977,7 @@ class orm_template(object):
             cr.execute("""
                 SELECT reltuples::BIGINT AS approximate_row_count
                 FROM pg_class WHERE relname = '%s'
-            """ % self._table)
+            """ % self._table)  # not_a_user_entry
             approximative_result = cr.fetchall()
             approximative_result = approximative_result and approximative_result[0][0] or 0
             # check if approximative is big
@@ -2240,8 +2310,9 @@ class orm_memory(orm_template):
         self.check_id = 0
         cr.execute('delete from wkf_instance where res_type=%s', (self._name,))
 
-    def _check_access(self, uid, object_id, mode):
-        if uid != 1 and self.datas[object_id]['internal.create_uid'] != uid:
+    def _check_access(self, cr, uid, object_id, mode):
+        user_obj = self.pool.get('res.users')
+        if uid != 1 and uid != user_obj._get_sync_user_id(cr) and self.datas[object_id]['internal.create_uid'] != uid:
             raise except_orm(_('AccessError'), '%s access is only allowed on your own records for osv_memory objects except for the super-user' % mode.capitalize())
 
     def vaccum(self, cr, uid, force=False):
@@ -2293,7 +2364,7 @@ class orm_memory(orm_template):
                 for f in fields_to_read:
                     record = self.datas.get(id)
                     if record:
-                        self._check_access(user, id, 'read')
+                        self._check_access(cr, user, id, 'read')
                         r[f] = record.get(f, False)
                         if r[f] and isinstance(self._columns[f], fields.binary) and context.get('bin_size', False):
                             r[f] = len(r[f])
@@ -2347,7 +2418,7 @@ class orm_memory(orm_template):
             else:
                 upd_todo.append(field)
         for object_id in ids:
-            self._check_access(user, object_id, mode='write')
+            self._check_access(cr, user, object_id, mode='write')
             try:
                 self.datas[object_id].update(vals2)
             except KeyError:
@@ -2557,7 +2628,7 @@ class orm_memory(orm_template):
 
     def unlink(self, cr, uid, ids, context=None):
         for id in ids:
-            self._check_access(uid, id, 'unlink')
+            self._check_access(cr, uid, id, 'unlink')
             self.datas.pop(id, None)
         if len(ids):
             cr.execute('delete from wkf_instance where res_type=%s and res_id IN %s', (self._name, tuple(ids)))
@@ -2568,7 +2639,7 @@ class orm_memory(orm_template):
         credentials = self.pool.get('res.users').name_get(cr, user, [user])[0]
         create_date = time.strftime('%Y-%m-%d %H:%M:%S')
         for id in ids:
-            self._check_access(user, id, 'read')
+            self._check_access(cr, user, id, 'read')
             result.append({
                 'create_uid': credentials,
                 'create_date': create_date,
@@ -2679,7 +2750,7 @@ class orm(orm_template):
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():
@@ -2759,7 +2830,7 @@ class orm(orm_template):
                 where = self._parent_name+' IS NULL'
             if self._parent_order:
                 where += ' order by '+self._parent_order
-            cr.execute('SELECT id FROM '+self._table+' WHERE '+where)
+            cr.execute('SELECT id FROM '+self._table+' WHERE '+where)  # not_a_user_entry
             pos2 = pos + 1
             for id in cr.fetchall():
                 pos2 = browse_rec(id[0], pos2)
@@ -2780,8 +2851,8 @@ class orm(orm_template):
         logger = netsvc.Logger()
         logger.notifyChannel('data', netsvc.LOG_INFO, "storing computed values of fields.function '%s'" % (k,))
         ss = self._columns[k]._symbol_set
-        update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
-        cr.execute('SELECT id FROM '+self._table)
+        update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])  # not_a_user_entry
+        cr.execute('SELECT id FROM '+self._table)  # not_a_user_entry
         ids_lst = map(lambda x: x[0], cr.fetchall())
 
         migrate = False
@@ -2842,7 +2913,7 @@ class orm(orm_template):
                 self.__logger.debug("column %s is in the table %s but not in the corresponding object %s",
                                     column['attname'], self._table, self._name)
             if column['attnotnull']:
-                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, column['attname']))
+                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, column['attname']))  # not_a_user_entry
                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                     self._table, column['attname'])
 
@@ -2867,6 +2938,56 @@ class orm(orm_template):
         '''
         pass
 
+    def _create_fk(self, cr, col_name, field_def, update=False):
+        ref = self.pool.get(field_def._obj)._table
+        # ir_actions is inherited so foreign key doesn't work on it
+        if ref != 'ir_actions':
+            to_create = True
+            if update:
+                to_create = False
+                # check if fk already exist on should be changed
+                cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
+                           'pg_attribute as att1, pg_attribute as att2 '
+                           'WHERE con.conrelid = cl1.oid '
+                           'AND cl1.relname = %s '
+                           'AND con.confrelid = cl2.oid '
+                           'AND cl2.relname = %s '
+                           'AND array_lower(con.conkey, 1) = 1 '
+                           'AND con.conkey[1] = att1.attnum '
+                           'AND att1.attrelid = cl1.oid '
+                           'AND att1.attname = %s '
+                           'AND array_lower(con.confkey, 1) = 1 '
+                           'AND con.confkey[1] = att2.attnum '
+                           'AND att2.attrelid = cl2.oid '
+                           'AND att2.attname = %s '
+                           "AND con.contype = 'f'", (self._table, ref, col_name, 'id'))
+                res2 = cr.dictfetchall()
+                if res2:
+                    if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(field_def.ondelete.upper(), 'a'):
+                        cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"') # not_a_user_entry
+                        to_create = True
+
+            if to_create:
+                cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, col_name, ref, field_def.ondelete)) # not_a_user_entry
+                self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
+                                    self._table, col_name, ref, field_def.ondelete)
+                cr.commit()
+
+    def _create_m2m_table(self, cr, f):
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
+        if not cr.dictfetchall():
+            if not self.pool.get(f._obj):
+                raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
+            ref = self.pool.get(f._obj)._table
+            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2)) # not_a_user_entry
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1)) # not_a_user_entry
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2)) # not_a_user_entry
+            cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref)) # not_a_user_entry
+            cr.commit()
+            self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
+                                f._rel, self._table, ref)
+
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2875,11 +2996,13 @@ class orm(orm_template):
         todo_end = []
         self._field_create(cr, context=context)
         to_migrate = []
+        missing_fk = {}
+        missing_m2m = {}
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
-                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id)) WITHOUT OIDS' % (self._table,))
-                cr.execute("COMMENT ON TABLE \"%s\" IS '%s'" % (self._table, self._description.replace("'", "''")))
+                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id)) WITHOUT OIDS' % (self._table,))  # not_a_user_entry
+                cr.execute("COMMENT ON TABLE \"%s\" IS '%s'" % (self._table, self._description.replace("'", "''")))  # not_a_user_entry
                 create = True
                 self.__schema.debug("Table '%s': created", self._table)
 
@@ -2890,8 +3013,8 @@ class orm(orm_template):
                     WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid
                     """, (self._table, 'parent_left'))
                 if not cr.rowcount:
-                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_left" INTEGER' % (self._table,))
-                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_right" INTEGER' % (self._table,))
+                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_left" INTEGER' % (self._table,))  # not_a_user_entry
+                    cr.execute('ALTER TABLE "%s" ADD COLUMN "parent_right" INTEGER' % (self._table,))  # not_a_user_entry
                     if 'parent_left' not in self._columns:
                         self.__logger.error('create a column parent_left on object %s: fields.integer(\'Left Parent\', select=1)',
                                             self._table)
@@ -2929,7 +3052,7 @@ class orm(orm_template):
                          WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid
                         """, (self._table, k))
                     if not cr.rowcount:
-                        cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, logs[k]))
+                        cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, logs[k]))  # not_a_user_entry
                         cr.commit()
                         self.__schema.debug("Table '%s': added column '%s' with definition=%s",
                                             self._table, k, logs[k])
@@ -2969,23 +3092,15 @@ class orm(orm_template):
                         cr.execute("SELECT count(1) as c FROM pg_class c,pg_attribute a WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid", (f._obj, f._fields_id))
                         res = cr.fetchone()[0]
                         if not res:
-                            cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY (%s) REFERENCES "%s" ON DELETE SET NULL' % (self._obj, f._fields_id, f._table))
+                            cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY (%s) REFERENCES "%s" ON DELETE SET NULL' % (self._obj, f._fields_id, f._table))  # not_a_user_entry
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
                                                 self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
-                    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
-                    if not cr.dictfetchall():
-                        if not self.pool.get(f._obj):
-                            raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                        ref = self.pool.get(f._obj)._table
-#                        ref = f._obj.replace('.', '_')
-                        cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2))
-                        cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref))
-                        cr.commit()
-                        self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
-                                            f._rel, self._table, ref)
+                    if not self.pool.get(f._obj):
+                        missing_m2m.setdefault(f._obj, [])
+                        missing_m2m[f._obj].append((self, f))
+                    else:
+                        self._create_m2m_table(cr, f)
                 else:
                     res = col_data.get(k, [])
                     res = res and [res] or []
@@ -2998,7 +3113,7 @@ class orm(orm_template):
                                    "AND a.atttypid=t.oid", (self._table, f.oldname))
                         res_old = cr.dictfetchall()
                         if res_old and len(res_old) == 1:
-                            cr.execute('ALTER TABLE "%s" RENAME "%s" TO "%s"' % (self._table, f.oldname, k))
+                            cr.execute('ALTER TABLE "%s" RENAME "%s" TO "%s"' % (self._table, f.oldname, k))  # not_a_user_entry
                             res = res_old
                             res[0]['attname'] = k
                             self.__schema.debug("Table '%s': renamed column '%s' to '%s'",
@@ -3013,7 +3128,7 @@ class orm(orm_template):
                                 not getattr(f, 'nodrop', False):
                             self.__logger.info('column %s (%s) in table %s removed: converted to a function !\n',
                                                k, f.string, self._table)
-                            cr.execute('ALTER TABLE "%s" DROP COLUMN "%s" CASCADE' % (self._table, k))
+                            cr.execute('ALTER TABLE "%s" DROP COLUMN "%s" CASCADE' % (self._table, k))  # not_a_user_entry
                             cr.commit()
                             self.__schema.debug("Table '%s': dropped column '%s' with cascade",
                                                 self._table, k)
@@ -3033,10 +3148,10 @@ class orm(orm_template):
                                 ('float8', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
                             if f_pg_type == 'varchar' and f._type == 'char' and f_pg_size < f.size:
-                                cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))
-                                cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))
-                                cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))
-                                cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))
+                                cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
+                                cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
+                                cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
+                                cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                 cr.commit()
                                 self.__schema.debug("Table '%s': column '%s' (type varchar) changed size from %s to %s",
                                                     self._table, k, f_pg_size, f.size)
@@ -3044,10 +3159,10 @@ class orm(orm_template):
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
                                         ok = True
-                                        cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))
-                                        cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, c[2]))
-                                        cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))
-                                        cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))
+                                        cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
+                                        cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, c[2]))  # not_a_user_entry
+                                        cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))  # not_a_user_entry
+                                        cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                         cr.commit()
                                         self.__schema.debug("Table '%s': column '%s' changed type from %s to %s",
                                                             self._table, k, c[0], c[1])
@@ -3066,10 +3181,10 @@ class orm(orm_template):
                                             break
                                         i += 1
                                     if f_pg_notnull:
-                                        cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, k))
-                                    cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % (self._table, k, newname))
-                                    cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
-                                    cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
+                                        cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, k))  # not_a_user_entry
+                                    cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % (self._table, k, newname))  # not_a_user_entry
+                                    cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))  # not_a_user_entry
+                                    cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))  # not_a_user_entry
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
                                                         self._table, k, f_pg_type, f._type, newname)
                                     to_migrate.append((newname, k))
@@ -3085,12 +3200,12 @@ class orm(orm_template):
 
                                     if default is not None:
                                         ss = self._columns[k]._symbol_set
-                                        query = 'UPDATE "%s" SET "%s"=%s WHERE "%s" is NULL' % (self._table, k, ss[0], k)
+                                        query = 'UPDATE "%s" SET "%s"=%s WHERE "%s" is NULL' % (self._table, k, ss[0], k)  # not_a_user_entry
                                         cr.execute(query, (ss[1](default),))
                                 # add the NOT NULL constraint
                                 cr.commit()
                                 try:
-                                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL' % (self._table, k), log_exceptions=False)
+                                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL' % (self._table, k), log_exceptions=False)  # not_a_user_entry
                                     cr.commit()
                                     self.__schema.debug("Table '%s': column '%s': added NOT NULL constraint",
                                                         self._table, k)
@@ -3101,7 +3216,7 @@ class orm(orm_template):
                                     self.__schema.warn(msg, self._table, k, self._table, k)
                                 cr.commit()
                             elif not f.required and f_pg_notnull == 1:
-                                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, k))
+                                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL' % (self._table, k))  # not_a_user_entry
                                 cr.commit()
                                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                                     self._table, k)
@@ -3110,7 +3225,7 @@ class orm(orm_template):
                             cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, self._table))
                             res2 = cr.dictfetchall()
                             if not res2 and f.select:
-                                cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))
+                                cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))  # not_a_user_entry
                                 cr.commit()
                                 if f._type == 'text':
                                     # FIXME: for fields.text columns we should try creating GIN indexes instead (seems most suitable for an ERP context)
@@ -3120,44 +3235,24 @@ class orm(orm_template):
                                         "Use a search view instead if you simply want to make the field searchable."
                                     self.__schema.warn(msg, self._table, k, f._type)
                             if res2 and not f.select:
-                                cr.execute('DROP INDEX "%s_%s_index"' % (self._table, k))
+                                cr.execute('DROP INDEX "%s_%s_index"' % (self._table, k))  # not_a_user_entry
                                 cr.commit()
                                 msg = "Table '%s': dropping index for column '%s' of type '%s' as it is not required anymore"
                                 self.__schema.debug(msg, self._table, k, f._type)
 
                             if isinstance(f, fields.many2one):
-                                ref = self.pool.get(f._obj)._table
-                                if ref != 'ir_actions':
-                                    cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
-                                               'pg_attribute as att1, pg_attribute as att2 '
-                                               'WHERE con.conrelid = cl1.oid '
-                                               'AND cl1.relname = %s '
-                                               'AND con.confrelid = cl2.oid '
-                                               'AND cl2.relname = %s '
-                                               'AND array_lower(con.conkey, 1) = 1 '
-                                               'AND con.conkey[1] = att1.attnum '
-                                               'AND att1.attrelid = cl1.oid '
-                                               'AND att1.attname = %s '
-                                               'AND array_lower(con.confkey, 1) = 1 '
-                                               'AND con.confkey[1] = att2.attnum '
-                                               'AND att2.attrelid = cl2.oid '
-                                               'AND att2.attname = %s '
-                                               "AND con.contype = 'f'", (self._table, ref, k, 'id'))
-                                    res2 = cr.dictfetchall()
-                                    if res2:
-                                        if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(f.ondelete.upper(), 'a'):
-                                            cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"')
-                                            cr.execute('ALTER TABLE "' + self._table + '" ADD FOREIGN KEY ("' + k + '") REFERENCES "' + ref + '" ON DELETE ' + f.ondelete)
-                                            cr.commit()
-                                            self.__schema.debug("Table '%s': column '%s': XXX",
-                                                                self._table, k)
+                                if self.pool.get(f._obj):
+                                    self._create_fk(cr, k, f, True)
+                                else:
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, True))
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
                     else:
                         if not isinstance(f, fields.function) or f.store:
                             # add the missing field
-                            cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
-                            cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
+                            cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))  # not_a_user_entry
+                            cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))  # not_a_user_entry
                             self.__schema.debug("Table '%s': added column '%s' with definition=%s",
                                                 self._table, k, get_pg_type(f)[1])
 
@@ -3169,7 +3264,7 @@ class orm(orm_template):
                                     default = self._defaults[k]
 
                                 ss = self._columns[k]._symbol_set
-                                query = 'UPDATE "%s" SET "%s"=%s' % (self._table, k, ss[0])
+                                query = 'UPDATE "%s" SET "%s"=%s' % (self._table, k, ss[0])  # not_a_user_entry
                                 cr.execute(query, (ss[1](default),))
                                 cr.commit()
                                 netsvc.Logger().notifyChannel('data', netsvc.LOG_DEBUG, "Table '%s': setting default value of new column %s" % (self._table, k))
@@ -3177,26 +3272,28 @@ class orm(orm_template):
                             if isinstance(f, fields.function):
                                 order = 10
                                 if f.store is not True:
-                                    order = f.store[f.store.keys()[0]][2]
-                                todo_update_store.append((order, f, k))
+                                    store_info = f.store[f.store.keys()[0]]
+                                    if isinstance(store_info, list):
+                                        order = store_info[0][2]
+                                    else:
+                                        order = store_info[2]
+                                else:
+                                    todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
                                 if not self.pool.get(f._obj):
-                                    raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                                ref = self.pool.get(f._obj)._table
-#                                ref = f._obj.replace('.', '_')
-                                # ir_actions is inherited so foreign key doesn't work on it
-                                if ref != 'ir_actions':
-                                    cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, k, ref, f.ondelete))
-                                    self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
-                                                        self._table, k, ref, f.ondelete)
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, False))
+                                else:
+                                    self._create_fk(cr, k, f, False)
+
                             if f.select:
-                                cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))
+                                cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))  # not_a_user_entry
                             if f.required:
                                 try:
                                     cr.commit()
-                                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL' % (self._table, k), log_exceptions=False)
+                                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL' % (self._table, k), log_exceptions=False)  # not_a_user_entry
                                     self.__schema.debug("Table '%s': column '%s': added a NOT NULL constraint",
                                                         self._table, k)
                                 except Exception:
@@ -3277,7 +3374,7 @@ class orm(orm_template):
         if store_compute:
             self._parent_store_compute(cr)
             cr.commit()
-        return todo_end
+        return todo_end, missing_fk, missing_m2m
 
     def __init__(self, cr):
         super(orm, self).__init__(cr)
@@ -3299,25 +3396,28 @@ class orm(orm_template):
                 sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10, None)}
             else:
                 sm = self._columns[store_field].store
-            for object, aa in sm.items():
-                if len(aa) == 4:
-                    (fnct, fields2, order, length) = aa
-                elif len(aa) == 3:
-                    (fnct, fields2, order) = aa
-                    length = None
-                else:
-                    raise except_orm('Error',
-                                     ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
-                self.pool._store_function.setdefault(object, [])
-                ok = True
-                for x, y, z, e, f, l in self.pool._store_function[object]:
-                    if (x==self._name) and (y==store_field) and (e==fields2):
-                        if f == order:
-                            ok = False
-                            break
-                if ok:
-                    self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
-                    self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
+            for object, aa_list in sm.items():
+                if isinstance(aa_list, tuple):
+                    aa_list = [aa_list]
+                for aa in aa_list:
+                    if len(aa) == 4:
+                        (fnct, fields2, order, length) = aa
+                    elif len(aa) == 3:
+                        (fnct, fields2, order) = aa
+                        length = None
+                    else:
+                        raise except_orm('Error',
+                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                    self.pool._store_function.setdefault(object, [])
+                    ok = True
+                    for x, y, z, e, f, l in self.pool._store_function[object]:
+                        if (x==self._name) and (y==store_field) and (e==fields2):
+                            if f == order:
+                                ok = False
+                                break
+                    if ok:
+                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
+                        self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
         for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
@@ -3514,7 +3614,7 @@ class orm(orm_template):
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
-            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,
+            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,  # ignore_sql_check
                                                               ','.join(tables), self._table)
             if rule_clause:
                 query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
@@ -3537,7 +3637,11 @@ class orm(orm_template):
             else:
                 # order only when there is more than one id in ids
                 query = ''.join((query, ' ORDER BY ', order_by))
-                for sub_ids in cr.split_for_in_conditions(ids):
+                max_split = None
+                # number of C/S lines is big and using split breaks default order_by
+                if self._name == 'physical.inventory.counting':
+                    max_split = 3000
+                for sub_ids in cr.split_for_in_conditions(ids, max_split):
                     execute_request(res, query, rule_clause, sub_ids)
 
             context_lang = context and context.get('lang', False) or 'en_US'
@@ -3595,6 +3699,8 @@ class orm(orm_template):
                 res2 = self._columns[val[0]].get(cr, self, ids, val, user, context=context, values=res)
                 for pos in val:
                     for record in res:
+                        if not record['id'] in res2:
+                            raise Exception("Could not process key %s" % key)
                         if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
                         multi_fields = res2.get(record['id'],{})
                         if multi_fields:
@@ -3679,7 +3785,7 @@ class orm(orm_template):
         query = '''SELECT %s, __imd.module, __imd.name
                    FROM %s LEFT JOIN ir_model_data __imd
                        ON (__imd.model = %%s and __imd.res_id = %s.id)
-                   WHERE %s.id IN %%s''' % (fields_str, quoted_table, quoted_table, quoted_table)
+                   WHERE %s.id IN %%s''' % (fields_str, quoted_table, quoted_table, quoted_table)  # not_a_user_entry
         cr.execute(query, (self._name, tuple(ids)))
         res = cr.dictfetchall()
         for r in res:
@@ -3711,7 +3817,7 @@ class orm(orm_template):
                     ids_to_check.extend([id, update_date])
             if not ids_to_check:
                 continue
-            cr.execute("SELECT id FROM %s WHERE %s" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)/2))), tuple(ids_to_check))
+            cr.execute("SELECT id FROM %s WHERE %s" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)/2))), tuple(ids_to_check))  # not_a_user_entry
             res = cr.fetchone()
             if res:
                 # mention the first one only to keep the error message readable
@@ -3784,8 +3890,7 @@ class orm(orm_template):
             cr.execute('DELETE FROM ir_attachment WHERE res_id IN %s AND res_model = %s',
                        (sub_ids, self._name))
 
-            cr.execute('DELETE FROM ' + self._table + ' ' \
-                       'WHERE id IN %s', (sub_ids,))
+            cr.execute('DELETE FROM ' + self._table + ' WHERE id IN %s', (sub_ids,))  # not_a_user_entry
 
             # Removing the ir_model_data reference if the record being deleted is a record created by xml/csv file,
             # as these are not connected with real database foreign keys, and would be dangling references.
@@ -3809,7 +3914,7 @@ class orm(orm_template):
         for order, current_obj, store_ids, field_list in result_store:
             if current_obj != self._name:
                 obj = self.pool.get(current_obj)
-                cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
+                cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))  # not_a_user_entry
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
                     obj._store_set_values(cr, uid, rids, field_list, context)
@@ -3870,6 +3975,7 @@ class orm(orm_template):
         """
         if not ids:
             return True
+        assert isinstance(vals, dict), "orm.write() expects a dictionnary as 4th argument!"
         readonly = None
         for field in vals.copy():
             fobj = None
@@ -3926,8 +4032,7 @@ class orm(orm_template):
                     (self._table, self._parent_name, self._parent_name)
                 cr.execute(query, (tuple(ids), parent_val))
             else:
-                query = "SELECT id FROM %s WHERE id IN %%s AND (%s IS NOT NULL)" % \
-                    (self._table, self._parent_name)
+                query = "SELECT id FROM %s WHERE id IN %%s AND (%s IS NOT NULL)" % (self._table, self._parent_name)  # not_a_user_entry
                 cr.execute(query, (tuple(ids),))
             parents_changed = map(operator.itemgetter(0), cr.fetchall())
 
@@ -4051,7 +4156,7 @@ class orm(orm_template):
                     clause, params = '%s IS NULL' % (self._parent_name,), ()
 
                 for current_id in parents_changed:
-                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (current_id,))
+                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (current_id,))  # not_a_user_entry
                     pleft, pright = cr.fetchone()
                     distance = pright - pleft + 1
 
@@ -4059,7 +4164,7 @@ class orm(orm_template):
                     # this can _not_ be fetched outside the loop, as it needs to be refreshed
                     # after each update, in case several nodes are sequentially inserted one
                     # next to the other (i.e computed incrementally)
-                    cr.execute('SELECT parent_right, id FROM %s WHERE %s ORDER BY %s' % (self._table, clause, order), params)
+                    cr.execute('SELECT parent_right, id FROM %s WHERE %s ORDER BY %s' % (self._table, clause, order), params)  # not_a_user_entry
                     parents = cr.fetchall()
 
                     # Find Position of the element
@@ -4180,7 +4285,7 @@ class orm(orm_template):
         # Try-except added to filter the creation of those records whose fields are readonly.
         # Example : any dashboard which has all the fields readonly.(due to Views(database views))
         try:
-            cr.execute("SELECT nextval('"+self._sequence+"')")
+            cr.execute("SELECT nextval('"+self._sequence+"')")  # not_a_user_entry
         except:
             raise except_orm(_('UserError'),
                              _('You cannot perform this operation. New Record Creation is not allowed for this object as this object is for reporting purpose.'))
@@ -4222,8 +4327,7 @@ class orm(orm_template):
                 for group in groups:
                     module = group.split(".")[0]
                     grp = group.split(".")[1]
-                    cr.execute("select count(*) from res_groups_users_rel where gid IN (select res_id from ir_model_data where name='%s' and module='%s' and model='%s') and uid=%s" % \
-                               (grp, module, 'res.groups', user))
+                    cr.execute("select count(*) from res_groups_users_rel where gid IN (select res_id from ir_model_data where name='%s' and module='%s' and model='%s') and uid=%s" % (grp, module, 'res.groups', user))   # not_a_user_entry
                     readonly = cr.fetchall()
                     if readonly[0][0] >= 1:
                         edit = True
@@ -4269,15 +4373,15 @@ class orm(orm_template):
                             break
                         pleft_old = pleft
                     if not pleft_old:
-                        cr.execute('select parent_left from '+self._table+' where id=%s', (parent,))
+                        cr.execute('select parent_left from '+self._table+' where id=%s', (parent,))  # not_a_user_entry
                         pleft_old = cr.fetchone()[0]
                     pleft = pleft_old
                 else:
-                    cr.execute('select max(parent_right) from '+self._table)
+                    cr.execute('select max(parent_right) from '+self._table)  # not_a_user_entry
                     pleft = cr.fetchone()[0] or 0
-                cr.execute('update '+self._table+' set parent_left=parent_left+2 where parent_left>%s', (pleft,))
-                cr.execute('update '+self._table+' set parent_right=parent_right+2 where parent_right>%s', (pleft,))
-                cr.execute('update '+self._table+' set parent_left=%s,parent_right=%s where id=%s', (pleft+1, pleft+2, id_new))
+                cr.execute('update '+self._table+' set parent_left=parent_left+2 where parent_left>%s', (pleft,))  # not_a_user_entry
+                cr.execute('update '+self._table+' set parent_right=parent_right+2 where parent_right>%s', (pleft,))  # not_a_user_entry
+                cr.execute('update '+self._table+' set parent_left=%s,parent_right=%s where id=%s', (pleft+1, pleft+2, id_new))  # not_a_user_entry
 
         # default element in context must be remove when call a one2many or many2many
         result = []
@@ -4364,7 +4468,7 @@ class orm(orm_template):
         field_flag = False
         field_dict = {}
         if self._log_access:
-            cr.execute('select id,write_date from '+self._table+' where id IN %s', (tuple(ids),))
+            cr.execute('select id,write_date from '+self._table+' where id IN %s', (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
             for r in res:
                 if r[1]:
@@ -4893,7 +4997,7 @@ class orm(orm_template):
         if type(ids) in (int, long):
             ids = [ids]
         query = 'SELECT count(1) FROM "%s"' % (self._table)
-        cr.execute(query + "WHERE ID IN %s", (tuple(ids),))
+        cr.execute(query + "WHERE ID IN %s", (tuple(ids),))  # not_a_user_entry
         return cr.fetchone()[0] == len(ids)
 
     def check_recursion(self, cr, uid, ids, context=None, parent=None):
@@ -4919,7 +5023,7 @@ class orm(orm_template):
         if not parent:
             parent = self._parent_name
         ids_parent = ids[:]
-        query = 'SELECT distinct "%s" FROM "%s" WHERE id IN %%s' % (parent, self._table)
+        query = 'SELECT distinct "%s" FROM "%s" WHERE id IN %%s' % (parent, self._table)  # not_a_user_entry
         while ids_parent:
             ids_parent2 = []
             for i in range(0, len(ids), cr.IN_MAX):
@@ -4999,7 +5103,7 @@ class orm(orm_template):
         for column, table in cr.fetchall():
             if table == self._table:
                 continue
-            cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(ids),))
+            cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
             if res[0][0]:
                 return True

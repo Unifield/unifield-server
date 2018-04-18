@@ -150,7 +150,7 @@ class act_window(osv.osv):
     _name = 'ir.actions.act_window'
     _table = 'ir_act_window'
     _sequence = 'ir_actions_id_seq'
-    _order = 'name'
+    _order = 'name, id'
     _replace_exported_fields = {
         'groups_txt': [
             (['groups_id', 'Groups'], 10)
@@ -209,7 +209,7 @@ class act_window(osv.osv):
             if act.search_view_id:
                 search_view_id = act.search_view_id.id
             else:
-                res_view = self.pool.get('ir.ui.view').search(cr, uid, 
+                res_view = self.pool.get('ir.ui.view').search(cr, uid,
                                                               [('model','=',act.res_model),('type','=','search'),
                                                                ('inherit_id','=',False)], context=context)
                 if res_view:
@@ -296,7 +296,7 @@ class act_window(osv.osv):
         'views': fields.function(_views_get_fnc, method=True, type='binary', string='Views'),
         'limit': fields.integer('Limit', help='Default limit for the list view'),
         'auto_refresh': fields.integer('Auto-Refresh',
-                                       help='Add an auto-refresh on the view'),
+                                       help='Auto refresh the view after X seconds'),
         'groups_id': fields.many2many('res.groups', 'ir_act_window_group_rel',
                                       'act_id', 'gid', 'Groups'),
         'search_view_id': fields.many2one('ir.ui.view', 'Search View Ref.'),

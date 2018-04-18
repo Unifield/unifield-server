@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="wkf_sale_order_line" model="workflow">
+            <field name="name">sale.order.line.basic</field>
+            <field name="osv">sale.order.line</field>
+            <field name="on_create">True</field>
+        </record>
+
+        
+        
+        <!-- #################### Activity #################### -->
+
+        <record id="act_sol_draft" model="workflow.activity">
+            <field name="name">draft</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="flow_start">True</field>
+        </record>
+        <record id="act_sol_validated" model="workflow.activity">
+            <field name="name">validated</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_validate()</field>
+        </record>
+        <record id="act_sol_sourced" model="workflow.activity">
+            <field name="name">sourced</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced()</field>
+        </record>
+        <record id="act_sol_sourced_v" model="workflow.activity">
+            <field name="name">sourced_v</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_v()</field>
+        </record>
+        <record id="act_sol_sourced_sy" model="workflow.activity">
+            <field name="name">sourced_sy</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_sy()</field>
+        </record>
+        <record id="act_sol_sourced_n" model="workflow.activity">
+            <field name="name">sourced_n</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_n()</field>
+        </record>
+        <record id="act_sol_confirmed" model="workflow.activity">
+            <field name="name">confirmed</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_confirmed()</field>
+        </record>
+        <record id="act_sol_cancel" model="workflow.activity">
+            <field name="name">cancel</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_cancel()</field>
+            <field name="flow_stop">True</field>
+        </record>
+        <record id="act_sol_cancel_r" model="workflow.activity">
+            <field name="name">cancel_r</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_cancel_r()</field>
+            <field name="flow_stop">True</field>
+        </record>
+        <record id="act_sol_done" model="workflow.activity">
+            <field name="name">done</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">action_done()</field>
+        </record>
+
+
+
+        <!-- #################### Transitions #################### -->
+
+        <record id="trans_sol_draft_validated" model="workflow.transition">
+            <field name="act_from" ref="act_sol_draft"/>
+            <field name="act_to" ref="act_sol_validated"/>
+            <field name="signal">validated</field>
+        </record>
+        <record id="trans_sol_draft_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_sol_draft"/>
+            <field name="act_to" ref="act_sol_confirmed"/>
+            <field name="signal">confirmed</field>
+        </record>
+        <record id="trans_sol_validated_sourced" model="workflow.transition">
+            <field name="act_from" ref="act_sol_validated"/>
+            <field name="act_to" ref="act_sol_sourced"/>
+            <field name="signal">sourced</field>
+        </record>
+
+        <!-- specific transition for sourced-XXX state -->
+            <record id="trans_sol_sourced_to_sourced_sy" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced"/>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
+            </record>
+            <record id="trans_sol_sourced_v_to_sourced_sy" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_v"/>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
+            </record>
+
+            <record id="trans_sol_sourced_n_to_sourced_sy" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_n"/>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
+            </record>
+
+            <record id="trans_sol_sourced_to_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced"/>
+                <field name="act_to" ref="act_sol_sourced_v"/>
+                <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_sol_sourced_sy_to_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
+                <field name="act_to" ref="act_sol_sourced_v"/>
+                <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_sol_sourced_sy_to_confirmed" model="workflow.transition"> <!-- may be useless depending on the way we generate sync msg ...-->
+                <field name="act_from" ref="act_sol_sourced_sy"/>
+                <field name="act_to" ref="act_sol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+            <record id="trans_sol_sourced_v_to_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_v"/>
+                <field name="act_to" ref="act_sol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+            
+            <record id="trans_sol_draft_sourced_n" model="workflow.transition">
+                <field name="act_from" ref="act_sol_draft"/>
+                <field name="act_to" ref="act_sol_sourced_n"/>
+                <field name="condition">set_as_sourced_n == True</field>
+            </record>
+            <record id="trans_sol_validated_sourced_n" model="workflow.transition">
+                <field name="act_from" ref="act_sol_validated"/>
+                <field name="act_to" ref="act_sol_sourced_n"/>
+                <field name="condition">set_as_sourced_n == True</field>
+            </record>
+            <record id="trans_sol_sourced_n_to_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_n"/>
+                <field name="act_to" ref="act_sol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+        <!-- end sourced-XXX -->
+
+        <record id="trans_sol_sourced_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_sol_sourced"/>
+            <field name="act_to" ref="act_sol_confirmed"/>
+            <field name="signal">confirmed</field>
+        </record>
+        <record id="trans_sol_confirmed_done" model="workflow.transition">
+            <field name="act_from" ref="act_sol_confirmed"/>
+            <field name="act_to" ref="act_sol_done"/>
+            <field name="signal">done</field>
+        </record>
+        <record id="trans_sol_confirmed_done_test" model="workflow.transition">
+            <field name="act_from" ref="act_sol_confirmed"/>
+            <field name="act_to" ref="act_sol_done"/>
+            <field name="condition">test_done()</field>
+        </record>
+
+        <!-- transition cancel -->
+            <record id="trans_sol_draft_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_draft"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_validated_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_validated"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_sourced_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_sourced_v_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_v"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_sourced_sy_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_sourced_n_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_n"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_confirmed_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_confirmed"/>
+                <field name="act_to" ref="act_sol_cancel"/>
+                <field name="signal">cancel</field>
+            </record>
+            <record id="trans_sol_draft_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_draft"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_validated_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_validated"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_sourced_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_sourced_v_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_v"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_sourced_sy_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_sourced_n_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_n"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_sol_confirmed_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_confirmed"/>
+                <field name="act_to" ref="act_sol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+        <!-- end cancel -->
+
+    </data>
+</openerp>

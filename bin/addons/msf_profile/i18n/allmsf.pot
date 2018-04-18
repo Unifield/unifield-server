@@ -18485,20 +18485,6 @@ msgstr ""
 msgid "Import cheque register from a bank register"
 msgstr ""
 
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: field:account.invoice,from_yml_test:0
-#: field:account.invoice.line,from_yml_test:0
-#: field:account.commitment,from_yml_test:0
-#: field:account.commitment.line,from_yml_test:0
-#: field:purchase.order,from_yml_test:0
-#: field:wizard.account.invoice,from_yml_test:0
-#: field:wizard.account.invoice.line,from_yml_test:0
-#: field:sale.order,from_yml_test:0
-#: field:procurement.order,from_yml_test:0
-#: field:stock.picking,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr ""
-
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1213
 #, python-format
@@ -41391,20 +41377,6 @@ msgstr ""
 #. module: procurement
 #: help:stock.warehouse.orderpoint,active:0
 msgid "If the active field is set to False, it will allow you to hide the orderpoint without removing it."
-msgstr ""
-
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: help:account.invoice,from_yml_test:0
-#: help:account.invoice.line,from_yml_test:0
-#: help:account.commitment,from_yml_test:0
-#: help:account.commitment.line,from_yml_test:0
-#: help:purchase.order,from_yml_test:0
-#: help:wizard.account.invoice,from_yml_test:0
-#: help:wizard.account.invoice.line,from_yml_test:0
-#: help:sale.order,from_yml_test:0
-#: help:procurement.order,from_yml_test:0
-#: help:stock.picking,from_yml_test:0
-msgid "Never set this field to true !"
 msgstr ""
 
 #. module: base_report_designer

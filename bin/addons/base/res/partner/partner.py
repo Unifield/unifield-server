@@ -25,6 +25,7 @@ from osv import fields,osv
 import tools
 import pooler
 from tools.translate import _
+from tools.validators import validate_email
 
 class res_payterm(osv.osv):
     _description = 'Payment term'
@@ -144,9 +145,36 @@ class res_partner(osv.osv):
             return [context['category_id']]
         return []
 
+    def _default_customer(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner isn't a customer (returns False), else it is (returns True)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return False
+        return True
+
+    def _default_supplier(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner is a supplier (returns True), else it isn't (returns False)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return True
+        return False
+
     _defaults = {
         'active': lambda *a: 1,
-        'customer': lambda *a: 1,
+        'customer': _default_customer,
+        'supplier': _default_supplier,
         'category_id': _default_category,
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner', context=c),
     }
@@ -275,7 +303,7 @@ res_partner()
 class res_partner_address(osv.osv):
     _description ='Partner Addresses'
     _name = 'res.partner.address'
-    _order = 'type, name'
+    _order = 'id'
     _columns = {
         'partner_id': fields.many2one('res.partner', 'Partner Name', ondelete='set null', select=True, help="Keep empty for a private address, not related to partner."),
         'type': fields.selection( [ ('default','Default'),('invoice','Invoice'), ('delivery','Delivery'), ('contact','Contact'), ('other','Other') ],'Address Type', help="Used to select automatically the right address according to the context in sales and purchases documents."),
@@ -303,6 +331,20 @@ class res_partner_address(osv.osv):
         'active': lambda *a: 1,
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner.address', context=c),
     }
+
+
+    def create(self, cr, uid, vals, context=None):
+
+        # If a non-empty email field is given
+        if "email" in vals and vals["email"]:
+            is_valid, error = validate_email(vals["email"])
+            if not is_valid:
+                raise osv.except_osv(_('Error'),
+                                     _('Invalid Value') + ": " + error)
+
+
+        return super(res_partner_address, self).create(cr, uid, vals, context=context)
+
 
     def name_get(self, cr, user, ids, context={}):
         if not len(ids):
@@ -446,7 +488,7 @@ class res_partner_bank(osv.osv):
                     res[field.name].setdefault('states', {})
                     res[field.name]['states'][type.code] = [
                         ('readonly', field.readonly),
-                            ('required', field.required)]
+                        ('required', field.required)]
         return res
 
     def name_get(self, cr, uid, ids, context=None):

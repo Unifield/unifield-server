@@ -30,6 +30,7 @@ from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
 
+
 def check_cycle(self, cr, uid, ids, context=None):
     """ climbs the ``self._table.parent_id`` chains for 100 levels or
     until it can't find any more parent(s)
@@ -39,10 +40,11 @@ def check_cycle(self, cr, uid, ids, context=None):
     """
     level = 100
     while len(ids):
-        cr.execute('SELECT DISTINCT parent_id '\
-                   'FROM '+self._table+' '\
-                   'WHERE id IN %s '\
-                   'AND parent_id IS NOT NULL',(tuple(ids),))
+        cr.execute('''
+            SELECT DISTINCT parent_id
+            FROM %s
+            WHERE id IN %%s
+            AND parent_id IS NOT NULL''' % self._table, (tuple(ids),))  # not_a_user_entry
         ids = map(itemgetter(0), cr.fetchall())
         if not level:
             return False
@@ -242,101 +244,6 @@ class account_account(osv.osv):
             ids3 = self._get_children_and_consol(cr, uid, ids3, context=context)
         return ids2 + ids3
 
-
-    def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
-                  query='', query_params=()):
-        """ compute the balance, debit and/or credit for the provided
-        account ids
-        Arguments:
-        `ids`: account ids
-        `field_names`: the fields to compute (a list of any of
-                       'balance', 'debit' and 'credit')
-        `arg`: unused fields.function stuff
-        `query`: additional query filter (as a string)
-        `query_params`: parameters for the provided query string
-                        (__compute will handle their escaping) as a
-                        tuple
-        """
-        if context is None:
-            context = {}
-        mapping = {
-            'balance': "COALESCE(SUM(l.debit),0) " \
-                       "- COALESCE(SUM(l.credit), 0) as balance",
-            'debit': "COALESCE(SUM(l.debit), 0) as debit",
-            'credit': "COALESCE(SUM(l.credit), 0) as credit"
-        }
-        #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
-                                                                  context=context)
-        #compute for each account the balance/debit/credit from the move lines
-        accounts = {}
-        sums = {}
-        if children_and_consolidated:
-            aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-
-            wheres = [""]
-            if query.strip():
-                wheres.append(query.strip())
-            if aml_query.strip():
-                wheres.append(aml_query.strip())
-            filters = " AND ".join(wheres)
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
-                                      'Filters: %s'%filters)
-            # IN might not work ideally in case there are too many
-            # children_and_consolidated, in that case join on a
-            # values() e.g.:
-            # SELECT l.account_id as id FROM account_move_line l
-            # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
-            # ON l.account_id = tmp.id
-            # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l" \
-                       " WHERE l.account_id IN %s " \
-                       + filters +
-                       " GROUP BY l.account_id")
-            params = (tuple(children_and_consolidated),) + query_params
-            cr.execute(request, params)
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
-                                      'Status: %s'%cr.statusmessage)
-
-            for res in cr.dictfetchall():
-                accounts[res['id']] = res
-
-            # consolidate accounts with direct children
-            children_and_consolidated.reverse()
-            brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
-            currency_obj = self.pool.get('res.currency')
-            display_only_checked_account = context.get('display_only_checked_account', False)
-            while brs:
-                current = brs[0]
-#                can_compute = True
-#                for child in current.child_id:
-#                    if child.id not in sums:
-#                        can_compute = False
-#                        try:
-#                            brs.insert(0, brs.pop(brs.index(child)))
-#                        except ValueError:
-#                            brs.insert(0, child)
-#                if can_compute:
-                brs.pop(0)
-                for fn in field_names:
-                    sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
-                    for child in current.child_id:
-                        # in context of report, if the current account is not
-                        # displayed, it should no impact the total amount
-                        if display_only_checked_account and not child.display_in_reports:
-                            continue
-                        if child.company_id.currency_id.id == current.company_id.currency_id.id:
-                            sums[current.id][fn] += sums[child.id][fn]
-                        else:
-                            sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
-        res = {}
-        null_result = dict((fn, 0.0) for fn in field_names)
-        for id in ids:
-            res[id] = sums.get(id, null_result)
-        return res
-
     def _get_company_currency(self, cr, uid, ids, field_name, arg, context=None):
         result = {}
         for rec in self.browse(cr, uid, ids, context=context):
@@ -409,9 +316,6 @@ class account_account(osv.osv):
         'child_parent_ids': fields.one2many('account.account','parent_id','Children'),
         'child_consol_ids': fields.many2many('account.account', 'account_account_consol_rel', 'child_id', 'parent_id', 'Consolidated Children'),
         'child_id': fields.function(_get_child_ids, method=True, type='many2many', relation="account.account", string="Child Accounts"),
-        'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
-        'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
-        'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
         'reconcile': fields.boolean('Reconcile', help="Check this if the user is allowed to reconcile entries in this account."),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
@@ -509,18 +413,6 @@ class account_account(osv.osv):
         else:
             ids = self.search(cr, user, args, context=context, limit=limit)
         return self.name_get(cr, user, ids, context=context)
-
-    def name_get(self, cr, uid, ids, context=None):
-        if not ids:
-            return []
-        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
-        res = []
-        for record in reads:
-            name = record['name']
-            if record['code']:
-                name = record['code'] + ' '+name
-            res.append((record['id'], name))
-        return res
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, id, context=context)
@@ -668,6 +560,10 @@ class account_journal(osv.osv):
         'entry_posted': fields.boolean('Skip \'Draft\' State for Manual Entries', help='Check this box if you don\'t want new journal entries to pass through the \'draft\' state and instead goes directly to the \'posted state\' without any manual validation. \nNote that journal entries that are automatically created by the system are always skipping that state.'),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=1, help="Company related to this journal"),
         'allow_date':fields.boolean('Check Date not in the Period', help= 'If set to True then do not accept the entry if the entry date is not into the period dates'),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
+        'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
+        'bank_swift_code': fields.char('Swift Code', size=32, required=False),
+        'bank_address': fields.text('Address', required=False),
     }
 
     _defaults = {
@@ -686,6 +582,82 @@ class account_journal(osv.osv):
         default['name'] = (journal['name'] or '') + '(copy)'
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
+    def _check_journal_constraints(self, cr, uid, journal_ids, context=None):
+        """
+        Checks the consistency of the journal created if not in a context of synchro
+        Raises a warning if one required condition isn't met.
+        """
+        if context is None:
+            context = {}
+        if isinstance(journal_ids, (int, long)):
+            journal_ids = [journal_ids]
+        res_obj = self.pool.get('res.users')
+        if not context.get('sync_update_execution'):
+            fields_list = ['type', 'analytic_journal_id', 'default_debit_account_id', 'default_credit_account_id',
+                           'bank_journal_id', 'code', 'currency', 'instance_id']
+            for journal in self.browse(cr, uid, journal_ids, fields_to_fetch=fields_list, context=context):
+                journal_type = journal.type or ''
+                journal_code = journal.code or ''
+                currency_id = None
+                # check on analytic journal
+                if journal_type not in ['situation', 'stock', 'system']:
+                    if not journal.analytic_journal_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The Analytic Journal is mandatory for the journal %s.') % journal_code)
+                # check on default debit/credit accounts
+                if journal_type in ['bank', 'cash', 'cheque', 'cur_adj']:
+                    if not journal.default_debit_account_id or not journal.default_credit_account_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('Default Debit and Credit Accounts are mandatory for the journal %s.') % journal_code)
+                # check on currency
+                if journal_type in ['bank', 'cash', 'cheque']:
+                    currency_id = journal.currency and journal.currency.id or False
+                    if not currency_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The currency is mandatory for the journal %s.') % journal_code)
+                # check on corresponding bank journal for a cheque journal
+                if journal_type == 'cheque':
+                    if not journal.bank_journal_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
+                    else:
+                        bank_currency = journal.bank_journal_id.currency
+                        bank_currency_id = bank_currency and bank_currency.id or False
+                        if not bank_currency_id or currency_id != bank_currency_id:
+                            raise osv.except_osv(_('Warning'),
+                                                 _('The Corresponding Bank Journal must have the same currency as the journal %s.') % journal_code)
+
+                # check on Proprietary Instance at import time
+                if context.get('from_import_data', False):
+                    company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+                    current_instance_id = company.instance_id and company.instance_id.id
+
+                    if journal.instance_id.id != current_instance_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
+
+    def _remove_unnecessary_links(self, cr, uid, vals, journal_id=None, context=None):
+        """
+        Remove the irrelevant links from the dict vals. Ex: create a Cheque journal, and then change its type
+        to Purchase => the link to the Corresponding bank journal should be removed.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            journal_type = ''
+            if 'type' in vals:
+                journal_type = vals.get('type', '')
+            elif journal_id:
+                journal_type = self.browse(cr, uid, journal_id, fields_to_fetch=['type'], context=context).type or ''
+            if journal_type != 'cheque':
+                vals['bank_journal_id'] = False
+            if journal_type != 'bank':
+                vals.update({'bank_account_name': '',
+                             'bank_account_number': '',
+                             'bank_swift_code': '',
+                             'bank_address': '',
+                             })
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -696,7 +668,12 @@ class account_journal(osv.osv):
                 move_lines = self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
                 if move_lines:
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
-        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
+            if not journal.is_current_instance and not context.get('sync_update_execution'):
+                raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
+            self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+        ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
+        self._check_journal_constraints(cr, uid, ids, context=context)
+        return ret
 
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -732,7 +709,10 @@ class account_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if not 'sequence_id' in vals or not vals['sequence_id']:
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
-        return super(account_journal, self).create(cr, uid, vals, context)
+        self._remove_unnecessary_links(cr, uid, vals, context=context)
+        journal_id = super(account_journal, self).create(cr, uid, vals, context)
+        self._check_journal_constraints(cr, uid, [journal_id], context=context)
+        return journal_id
 
     def name_get(self, cr, user, ids, context=None):
         """
@@ -1193,7 +1173,7 @@ class account_move(osv.osv):
                 if cond[1] in ['=like', 'like', 'not like', 'ilike', 'not ilike', 'in', 'not in', 'child_of']:
                     continue
 
-            cr.execute("select move_id from account_move_line group by move_id having sum(debit) %s %%s" % (cond[1]),(amount,))
+            cr.execute("select move_id from account_move_line group by move_id having sum(debit) %s %%s" % (cond[1]),(amount,))  # ignore_sql_check
             res_ids = set(id[0] for id in cr.fetchall())
             ids = ids and (ids & res_ids) or res_ids
         if ids:
@@ -1205,6 +1185,8 @@ class account_move(osv.osv):
         'name': fields.char('Number', size=64, required=True),
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
+                                        string='Fiscal Year', store=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
@@ -1376,6 +1358,30 @@ class account_move(osv.osv):
         })
         return super(account_move, self).copy(cr, uid, id, default, context)
 
+    def _track_liquidity_entries(self, cr, uid, move, context=None):
+        """
+        Create an "account.bank.statement.line.deleted"
+        to keep track of the deleted manual entries that were booked on Liquidity Journals
+        """
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        deleted_regline_obj = self.pool.get('account.bank.statement.line.deleted')
+        period_obj = self.pool.get('account.period')
+        is_liquidity = move.journal_id.type in ['bank', 'cheque', 'cash']
+        if is_liquidity and move.status == 'manu' and not context.get('sync_update_execution', False):
+            period_ids = period_obj.get_period_from_date(cr, uid, move.date, context=context)  # exclude special periods by default
+            if period_ids:
+                reg_domain = [('journal_id', '=', move.journal_id.id), ('period_id', '=', period_ids[0])]
+                reg_ids = reg_obj.search(cr, uid, reg_domain, context=context, order='NO_ORDER', limit=1)
+                if reg_ids:
+                    vals = {
+                        'statement_id': reg_ids[0],
+                        'sequence': move.name,
+                        'instance_id': move.instance_id and move.instance_id.id or False,
+                    }
+                    deleted_regline_obj.create(cr, uid, vals, context=context)
+
     def unlink(self, cr, uid, ids, context=None, check=True):
         if context is None:
             context = {}
@@ -1391,6 +1397,7 @@ class account_move(osv.osv):
             context['period_id'] = move.period_id.id
             obj_move_line._update_check(cr, uid, line_ids, context)
             obj_move_line.unlink(cr, uid, line_ids, context=context, check=check) #ITWG-84: Pass also the check flag to the call
+            self._track_liquidity_entries(cr, uid, move, context=context)
             toremove.append(move.id)
         result = super(account_move, self).unlink(cr, uid, toremove, context)
         return result
@@ -1453,9 +1460,9 @@ class account_move(osv.osv):
         else:
             line_id2 = 0
 
-        cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))
+        cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))  # not_a_user_entry
         result = cr.fetchone()[0] or 0.0
-        cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))
+        cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))  # not_a_user_entry
 
         #adjust also the amount in currency if needed
         cr.execute("select currency_id, sum(amount_currency) as amount_currency from account_move_line where move_id = %s and currency_id is not null group by currency_id", (move.id,))
@@ -1548,6 +1555,9 @@ class account_move(osv.osv):
                 if line.account_id.currency_id and line.currency_id:
                     if line.account_id.currency_id.id != line.currency_id.id and (line.account_id.currency_id.id != line.account_id.company_id.currency_id.id):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
+
+                if context.get('from_web_menu') and not line.name:
+                    raise osv.except_osv(_('Error'), _('The Description is missing for one of the lines.'))
 
             # When clicking on "Save" for a MANUAL Journal Entry:
             # - Check that the period is open.
@@ -1702,25 +1712,27 @@ class account_tax_code(osv.osv):
     def _sum(self, cr, uid, ids, name, args, context, where ='', where_params=()):
         parent_ids = tuple(self.search(cr, uid, [('parent_id', 'child_of', ids)]))
         if context.get('based_on', 'invoices') == 'payments':
-            cr.execute('SELECT line.tax_code_id, sum(line.tax_amount) \
-                    FROM account_move_line AS line, \
-                        account_move AS move \
-                        LEFT JOIN account_invoice invoice ON \
-                            (invoice.move_id = move.id) \
-                    WHERE line.tax_code_id IN %s '+where+' \
-                        AND move.id = line.move_id \
-                        AND ((invoice.state = \'paid\') \
-                            OR (invoice.id IS NULL)) \
-                            GROUP BY line.tax_code_id',
-                       (parent_ids,) + where_params)
+            cr.execute('''
+                SELECT line.tax_code_id, sum(line.tax_amount)
+                FROM account_move_line AS line,
+                     account_move AS move
+                     LEFT JOIN account_invoice invoice ON
+                        (invoice.move_id = move.id)
+                WHERE line.tax_code_id IN %%s %s
+                    AND move.id = line.move_id
+                    AND ((invoice.state = 'paid')
+                        OR (invoice.id IS NULL))
+                GROUP BY line.tax_code_id''' % where,
+                       (parent_ids,) + where_params) # not_a_user_entry
         else:
-            cr.execute('SELECT line.tax_code_id, sum(line.tax_amount) \
-                    FROM account_move_line AS line, \
-                    account_move AS move \
-                    WHERE line.tax_code_id IN %s '+where+' \
-                    AND move.id = line.move_id \
-                    GROUP BY line.tax_code_id',
-                       (parent_ids,) + where_params)
+            cr.execute('''
+                SELECT line.tax_code_id, sum(line.tax_amount)
+                FROM account_move_line AS line,
+                account_move AS move
+                WHERE line.tax_code_id IN %%s %s
+                AND move.id = line.move_id
+                GROUP BY line.tax_code_id''' % where,
+                       (parent_ids,) + where_params) # not_a_user_entry
         res = dict(cr.fetchall())
         res2 = {}
         obj_precision = self.pool.get('decimal.precision')
@@ -2342,6 +2354,25 @@ account_model_line()
 class account_subscription(osv.osv):
     _name = "account.subscription"
     _description = "Account Subscription"
+
+    def _get_has_unposted_entries(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the subscription,
+        and value = True if an unposted JE is linked to one of the subscription lines, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            res[sub.id] = False
+            for subline in sub.lines_id:
+                if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
+                    res[sub.id] = True
+                    break
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'ref': fields.char('Reference', size=16),
@@ -2353,7 +2384,9 @@ class account_subscription(osv.osv):
         'period_type': fields.selection([('day','days'),('month','month'),('year','year')], 'Period Type', required=True),
         'state': fields.selection([('draft','Draft'),('running','Running'),('done','Done')], 'State', required=True, readonly=True),
 
-        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines')
+        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines'),
+        'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
+                                                store=False, string='Has unposted entries'),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
@@ -2388,7 +2421,39 @@ class account_subscription(osv.osv):
         self.write(cr, uid, ids, {'state':'draft'})
         return False
 
+    def delete_unposted(self, cr, uid, ids, context=None):
+        """
+        This method:
+        - searches for the unposted Journal Entries linked to the account subscription(s)
+        - deletes the unposted JEs, and the related JIs and AJIs
+        - deletes all the Subscription Lines not linked to a Posted JE
+        - triggers the "Compute" method on the subscription(s) to get the correct lines and state
+        """
+        if context is None:
+            context = {}
+        subline_obj = self.pool.get('account.subscription.line')
+        je_obj = self.pool.get('account.move')
+        subline_to_delete_ids = []
+        je_to_delete_ids = []
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            for subline in sub.lines_id:
+                if not subline.move_id:
+                    # also deletes the sub. lines without JE (covers the case where frequency has been modified
+                    # => avoids having inconsistent lines at the end of the process)
+                    subline_to_delete_ids.append(subline.id)
+                elif subline.move_id.state == 'draft':  # draft = Unposted state
+                    subline_to_delete_ids.append(subline.id)
+                    je_to_delete_ids.append(subline.move_id.id)
+        subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
+        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        # retrigger the creation of the subscription lines "to be generated"
+        # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
+        self.compute(cr, uid, ids, context=context)
+        return True
+
     def compute(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         for sub in self.browse(cr, uid, ids, context=context):
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
@@ -2411,12 +2476,16 @@ class account_subscription(osv.osv):
             # create the subscription lines if they don't exist yet
             existing_sub_lines = sub.lines_id or []
             existing_dates = [l.date for l in existing_sub_lines]
-            for date_sub in [d for d in date_list if d not in existing_dates]:
+            dates_to_create = [d for d in date_list if d not in existing_dates]
+            for date_sub in dates_to_create:
                 self.pool.get('account.subscription.line').create(cr, uid, {
                     'date': date_sub,
                     'subscription_id': sub.id,
                 })
-        self.write(cr, uid, ids, {'state':'running'})
+            if dates_to_create:
+                self.write(cr, uid, sub.id, {'state': 'running'}, context=context)
+            else:  # all the subscription lines were already created => the account subscription can be marked as "Done"
+                self.write(cr, uid, sub.id, {'state': 'done'}, context=context)
         return True
 account_subscription()
 
@@ -2428,6 +2497,7 @@ class account_subscription_line(osv.osv):
         'date': fields.date('Date', required=True),
         'move_id': fields.many2one('account.move', 'Entry'),
     }
+    _order = 'date, id'
 
     def move_create(self, cr, uid, ids, context=None):
         tocheck = {}

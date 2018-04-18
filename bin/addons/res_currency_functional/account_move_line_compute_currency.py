@@ -49,7 +49,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
@@ -78,6 +78,7 @@ class account_move_line_compute_currency(osv.osv):
         to_create = False
         previous = None
         has_section_line = False
+        acc_obj = self.pool.get('account.account')
         for line in self.browse(cr, uid, lines):
             if not previous:
                 previous = line.instance_id.id
@@ -132,7 +133,16 @@ class account_move_line_compute_currency(osv.osv):
             ## Browse all lines to fetch some values
             partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
+            highest_debit_amount = highest_credit_amount = 0.0
+            highest_debit_line = highest_credit_line = None
             for rline in self.browse(cr, uid, lines):
+                # note: fctal debit and fctal credit are always positive
+                if rline.debit > highest_debit_amount:
+                    highest_debit_amount = rline.debit
+                    highest_debit_line = rline
+                elif rline.credit > highest_credit_amount:
+                    highest_credit_amount = rline.credit
+                    highest_credit_line = rline
                 account_id = (rline.account_id and rline.account_id.id) or False
                 partner_id = (rline.partner_id and rline.partner_id.id) or False
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
@@ -163,7 +173,7 @@ class account_move_line_compute_currency(osv.osv):
                                               base_date_dt.month, 1, )
             period_ids = period_obj.search(cr, uid, [
                 ('date_start', '>=', period_from),
-                ('state', '=', 'draft'),  # first opened period since 
+                ('state', '=', 'draft'),  # first opened period since
                 ('number', 'not in', [0, 16]),
             ], limit=1, order='date_start, number', context=context)
             if not period_ids:
@@ -200,7 +210,7 @@ class account_move_line_compute_currency(osv.osv):
                 addendum_line_account_id = addendum_line_debit_account_id
                 addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
             # create an analytic distribution if addendum_line_account_id is an analytic-a-holic account
-            account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
+            account = acc_obj.browse(cr, uid, addendum_line_account_id, context=context)
             if account and account.is_analytic_addicted:
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
                 # add a cost center for analytic distribution
@@ -241,12 +251,16 @@ class account_move_line_compute_currency(osv.osv):
                 'name': 'Realised loss/gain',
                 'is_addendum_line': True,
                 'currency_id': currency_id,
-                #'functional_currency_id': functional_currency_id,
             }
-            # UTP-494: use functional currency as currency for addendum line
+            # US-2594 if different currencies are used:
+            # if the FXA is for debit the currency is taken from the highest debit entry (and likewise for credit)
             if different_currency:
-                functional_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                vals.update({'currency_id': functional_currency_id})
+                new_currency_id = False
+                if partner_db:
+                    new_currency_id = highest_debit_line and highest_debit_line.currency_id and highest_debit_line.currency_id.id
+                elif partner_cr:
+                    new_currency_id = highest_credit_line and highest_credit_line.currency_id and highest_credit_line.currency_id.id
+                new_currency_id and vals.update({'currency_id': new_currency_id})
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             # UTP-1022: Allow account.move.line creation when we come from "create_addendum_line" because of currencies rate redefinition
@@ -255,7 +269,14 @@ class account_move_line_compute_currency(osv.osv):
             # Create addendum_line
             if distrib_id:
                 vals.update({'analytic_distribution_id': distrib_id})
-            vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
+            # the ref of the expense line is the B/S account code and name
+            reconciled_acc = account_id and acc_obj.read(cr, uid, account_id, ['code', 'name'], context=context)
+            fxa_ref = reconciled_acc and '%s - %s' % (reconciled_acc['code'], reconciled_acc['name']) or False
+            vals.update({'account_id': addendum_line_account_id,
+                         'debit': addendum_db or 0.0,
+                         'credit': addendum_cr or 0.0,
+                         'ref': fxa_ref,
+                         'reference': fxa_ref})
             addendum_line_id = self.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
@@ -408,6 +429,7 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+                        self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True
 
     def update_amounts(self, cr, uid, ids):
@@ -667,7 +689,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",

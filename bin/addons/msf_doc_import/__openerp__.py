@@ -40,7 +40,6 @@
     "init_xml": [],
     "update_xml": [
         'doc_import_report.xml',
-        'view/sale_order_import_lines_view.xml',
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
         'view/purchase_order_import_line_view.xml',
@@ -51,6 +50,7 @@
         'view/stock_picking_import_lines_view.xml',
         'view/replenishment_rules_view.xml',
         'view/supplier_catalogue_view.xml',
+        'view/msf_import_export_view.xml',
         'wizard/wizard_import_po_line_view.xml',
         'wizard/wizard_import_fo_line.xml',
         'wizard/wizard_import_tender_line.xml',
@@ -70,10 +70,7 @@
         'wizard/wiz_common_import_view.xml',
         'data/msf_doc_import_data.xml',
         'data/inactive_categ.xml',
-        'workflow/purchase_workflow.xml',
-        'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
-        'workflow/procurement_request_workflow.xml',
         'doc_import_report.xml',
         'wizard/wizard_import_batch_view.xml',
         'wizard/wizard_import_invoice_line.xml',
@@ -81,14 +78,6 @@
     ],
     "demo_xml": [],
     "test": [
-        'test/data.yml',
-        # test for the import in English
-        'test/import_ir.yml',
-        'test/import_po.yml',
-        'test/import_migration.yml',
-        'test/import_so.yml',
-        'test/import_composition_kit.yml',
-        'test/import_tender.yml',
     ],
     "installable": True,
     "active": False

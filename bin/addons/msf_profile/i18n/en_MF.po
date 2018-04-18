@@ -594,7 +594,6 @@ msgstr "Our Responsible"
 
 #. modules: account, base, sale
 #: view:account.analytic.line:0
-#: model:ir.ui.menu,name:base.menu_base_partner
 #: model:ir.ui.menu,name:base.menu_sale_config_sales
 #: model:ir.ui.menu,name:base.menu_sales
 #: model:ir.actions.act_window,name:sale.act_res_partner_2_sale_order

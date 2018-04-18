@@ -39,8 +39,6 @@
     'demo_xml': [
     ],
     'test': [
-        'test/create_rfq.yml',
-        'test/compare_rfq.yml',
     ],
     'installable': True,
     'active': False,

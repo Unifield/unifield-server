@@ -186,9 +186,6 @@
             </field>
         </record>
 
-    <!-- Delete payment lines link from invoices -->
-        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Payment Lines%')]"/>
-
     <!-- Add Split Invoice Button on invoices -->
         <record id="invoice_form_3" model="ir.ui.view">
             <field name="name">account.invoice.form.3</field>
@@ -239,8 +236,7 @@
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
-                               on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>
@@ -355,7 +351,7 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>

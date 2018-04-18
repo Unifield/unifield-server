@@ -29,6 +29,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 import logging
 import os
+import netsvc
 
 from mx import DateTime
 
@@ -45,7 +46,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
 NB_OF_HEADER_LINES = 20
-NB_LINES_COLUMNS = 19
+NB_LINES_COLUMNS = 20
 
 
 PRODUCT_CODE_ID = {}
@@ -70,7 +71,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
                  (14, _('Comment'), 'optionnal'),
-                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
+                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['validated'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
                  (18, _('Message ESC 2'), 'optionnal'),
@@ -79,8 +80,8 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
 HEADER_COLUMNS = [(1, _('Order Reference'), 'mandatory'),
                   (5, _('Supplier Reference'), 'optionnal'),
                   (9, _('Ready To Ship Date'), 'optionnal'),
-                  (16, _('Shipment Date'), 'optionnal'),
-                  (20, _('Message ESC'), 'optionnal')
+                  (14, _('Shipment Date'), 'optionnal'),
+                  (18, _('Message ESC'), 'optionnal')
                   ]
 
 
@@ -447,7 +448,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                  'product_code', 'product_name',
                                  'product_qty', 'product_uom',
                                  'price_unit', 'currency_id',
-                                 'origin', 'comment', 'date_planned',
+                                 'origin', 'stock_take_date','comment', 'date_planned',
                                  'confirmed_delivery_date',
                                  'nomen_manda_0', 'nomen_manda_1',
                                  'nomen_manda_2',
@@ -686,11 +687,14 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 # Line 6: Details
                 # Nothing to do
 
-                # Line 7: Delivery Requested Date
+                # Line 7: Stock take date
                 # Nothing to do
 
-                # Line 8: Transport mode
-                transport_mode = values.get(8, [])[1]
+                # Line 8: Delivery Requested Date
+                # Nothing to do
+
+                # Line 9: Transport mode
+                transport_mode = values.get(9, [])[1]
                 if transport_mode:
                     transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
                     for x in transport_select['imp_transport_mode']['selection']:
@@ -699,13 +703,13 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                             break
                     else:
                         possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
-                        err_msg = _('Line 8 of the file: The transport mode \'%s\' is not \
+                        err_msg = _('Line 9 of the file: The transport mode \'%s\' is not \
 a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
                         values_header_errors.append(err_msg)
 
 
-                # Line 9: RTS Date
-                rts_date = values.get(9, [])[1]
+                # Line 10: RTS Date
+                rts_date = values.get(10, [])[1]
                 if rts_date:
                     if type(rts_date) == type(DateTime.now()):
                         rts_date = rts_date.strftime('%Y-%m-%d')
@@ -715,30 +719,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(rts_date, '%Y-%m-%d')
                             header_values['imp_ready_to_ship_date'] = rts_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 10 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                             values_header_errors.append(err_msg)
 
-                # Line 10: Address name
+                # Line 11: Delivery address name
                 # Nothing to do
 
-                # Line 11: Address street
+                # Line 12: Delivery address
                 # Nothing to do
 
-                # Line 12: Address street 2
+                # Line 13: Customer address name
                 # Nothing to do
 
-                # Line 13: Zip
+                # Line 14: Customer address
                 # Nothing to do
 
-                # Line 14: City
-                # Nothing to do
-
-                # Line 15: Country
-                # Nothing to do
-
-                # Line 16: Shipment date
-                shipment_date = values.get(16, [])[1]
+                # Line 15: Shipment date
+                shipment_date = values.get(15, [])[1]
                 if shipment_date:
                     if type(shipment_date) == type(DateTime.now()):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
@@ -748,25 +746,27 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(shipment_date, '%Y-%m-%d')
                             header_values['imp_shipment_date'] = shipment_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 15 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                             values_header_errors.append(err_msg)
 
-                # Line 17: Notes
+                # Line 16: Notes
                 # UFTP-59
                 if wiz.filetype != 'excel':
-                    header_values['imp_notes'] = values.get(17, [])[1]
+                    header_values['imp_notes'] = values.get(16, [])[1]
 
-                # Line 18: Origin
+                # Line 17: Origin
                 # Nothing to do
 
-                # Line 19: Project Ref.
+                # Line 18: Project Ref.
                 # Nothing to do
 
-                # Line 20: Message ESC Header
+                # Line 19: Message ESC Header
                 if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(20, [])[1]
+                    header_values['imp_message_esc'] = values.get(19, [])[1]
 
+                # Line 20: Sourcing group
+                # Nothing to do
 
                 '''
                 The header values have been imported, start the importation of
@@ -1345,8 +1345,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
+            if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                write_vals['type_change'] = 'error'
+                errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
+
             # Comment
-            write_vals['imp_comment'] = values[14] and values[14].strip()
+            write_vals['imp_comment'] = values[15] and values[15].strip()
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1469,14 +1473,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
             elif line.simu_id.order_id.po_from_fo:
-                fo_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values[8])], context=context)
-                if not fo_ids:
+                fo_ids = self.pool.get('sale.order').search(cr, uid,
+                                                            [('name', '=', values[8]),
+                                                             ('procurement_request', '=', False)], context=context)
+                ir_ids = self.pool.get('sale.order').search(cr, uid,
+                                                            [('name', '=', values[8]),
+                                                             ('procurement_request', '=', True)], context=context)
+                if not fo_ids and not ir_ids:
                     err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
-            drd_value = values[9]
+            drd_value = values[10]
             if drd_value and type(drd_value) == type(DateTime.now()):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
@@ -1493,7 +1502,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Delivery Confirmed Date
-            dcd_value = values[10]
+            dcd_value = values[11]
             if dcd_value and type(dcd_value) == type(DateTime.now()):
                 write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
             elif dcd_value and isinstance(dcd_value, str):
@@ -1510,12 +1519,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Project Ref.
-            write_vals['imp_project_ref'] = values[16]
+            write_vals['imp_project_ref'] = values[17]
 
             # Message ESC1
-            write_vals['imp_esc1'] = values[17]
+            write_vals['imp_esc1'] = values[18]
             # Message ESC2
-            write_vals['imp_esc2'] = values[18]
+            write_vals['imp_esc2'] = values[19]
 
             if line.error_msg:
                 write_vals['type_change'] = 'error'
@@ -1540,6 +1549,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         split_obj = self.pool.get('split.purchase.order.line.wizard')
         simu_obj = self.pool.get('wizard.import.po.simulation.screen')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1556,12 +1566,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
-
             if line.type_change in ('ignore', 'error'):
-                # Don't do anything
                 continue
-            elif line.type_change == 'del' and line.po_line_id:
-                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
+
+            if line.type_change == 'del' and line.po_line_id:
+                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
@@ -1596,6 +1605,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
                                  'price_unit': line.imp_price,
+                                 'set_as_validated_n': True,
                                  }
                     if line.imp_drd:
                         line_vals['date_planned'] = line.imp_drd
@@ -1641,6 +1651,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
+                             'set_as_validated_n': True,
                              }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd

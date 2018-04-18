@@ -114,6 +114,12 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 line.update({'origin': origin_line.order_id.name})
                 if origin_line.stock_take_date:
                     line.update({'stock_take_date': origin_line.stock_take_date})
+                if origin_line.original_product:
+                    line.update({'original_product': origin_line.original_product.id})
+                if origin_line.original_qty:
+                    line.update({'original_qty': origin_line.original_qty})
+                if origin_line.original_uom:
+                    line.update({'original_uom': origin_line.original_uom.id})
             else:
                 # Update the link to the original FO to create new line on it at PO confirmation
                 procurement = kwargs['procurement']

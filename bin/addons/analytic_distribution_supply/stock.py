@@ -27,19 +27,6 @@ class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
 
-    def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
-        """
-        Create a link between invoice_line and purchase_order_line. This piece of information is available on move_line.order_line_id
-        """
-        if invoice_line_id and move_line:
-            vals = {}
-            if move_line.purchase_line_id:
-                vals.update({'order_line_id': move_line.purchase_line_id.id})
-            if move_line.sale_line_id:
-                vals.update({'sale_order_line_id': move_line.sale_line_id.id})
-            if vals:
-                self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], vals)
-        return super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
 
     def _invoice_hook(self, cr, uid, picking, invoice_id):
         """
@@ -74,12 +61,15 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Browse all elements
+
+        inv_obj = self.pool.get('account.invoice')
+        account_amount = {}
+        po_ids = {}
         for move in self.browse(cr, uid, ids, context=context):
             # Fetch all necessary elements
             qty = move.product_uos_qty or move.product_qty or 0.0
             picking = move.picking_id or False
-            if not picking:
+            if not picking or not move.purchase_line_id or picking.type !='in' or move.state == 'cancel':
                 # If no picking then no PO have generated this stock move
                 continue
             # fetch invoice type in order to retrieve price unit
@@ -88,14 +78,17 @@ class stock_move(osv.osv):
             if not price_unit:
                 # If no price_unit, so no impact on commitments because no price unit have been taken for commitment calculation
                 continue
-            # update all commitment voucher lines
-            if not move.purchase_line_id:
-                continue
-            for cl in move.purchase_line_id.commitment_line_ids:
-                new_amount = cl.amount - (qty * price_unit)
-                if new_amount < 0.0:
-                    new_amount = 0.0
-                self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': new_amount}, context=context)
+
+            po_ids[move.purchase_line_id.order_id.id] = True
+            account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
+            if account_id:
+                if account_id not in account_amount:
+                    account_amount[account_id] = 0
+                account_amount[account_id] += round(qty * price_unit, 2)
+
+        if account_amount and po_ids:
+            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=True, context=context)
+
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
 stock_move()

@@ -150,9 +150,9 @@
       <spacer length="5"/>
 
       <para style="text"><b>Comments:</b></para>
-      <blockTable colWidths="180mm" rowHeights="15mm" style="table_comments">
+      <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
         <tr>
-          <td>[[ format(o.notes or '') ]]</td>
+          <td>[[ format(formatComments(o.notes or '')) ]]</td>
         </tr>
       </blockTable>
 

@@ -72,7 +72,7 @@ class internal_picking_processor(osv.osv):
             string='Claim Type',
         ),
         'claim_replacement_picking_expected': fields.boolean(
-            string='Replacement expected for Return Claim?',
+            string='Replacement expected for Claim ?',
             help="An Incoming Shipment will be automatically created corresponding to returned products.",
         ),
         'claim_description': fields.text(
@@ -183,6 +183,7 @@ class internal_picking_processor(osv.osv):
             'in': ('view_picking_in_form', _('Incoming Shipments')),
             'internal': ('view_picking_form', _('Internal Moves')),
             'out': ('view_picking_out_form', _('Delivery Orders')),
+            'picking': ('view_picking_ticket_form', _('Picking Tickets')),
         }
 
         # Res
@@ -192,8 +193,14 @@ class internal_picking_processor(osv.osv):
             if wizard.register_a_claim:
                 # id of treated picking (can change according to backorder or not)
                 pick_id = res.values()[0]['delivered_picking']
-                pick_type = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context).type
-                view_id = data_obj.get_object_reference(cr, uid, 'stock', view_by_pick_type.get(pick_type, [False])[0])
+                pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
+                pick_type = pick.type
+                if pick_type == 'out' and pick.subtype == 'picking':
+                    pick_type = pick.subtype
+                    pick_view = view_by_pick_type.get(pick_type, [False])[0]
+                    view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', pick_view)
+                else:
+                    view_id = data_obj.get_object_reference(cr, uid, 'stock', view_by_pick_type.get(pick_type, [False])[0])
                 view_id = view_id and view_id[1] or False
                 return {'name': view_by_pick_type.get(pick_type, [None, _('Delivery Orders')])[1],
                         'view_mode': 'form,tree',

@@ -32,6 +32,7 @@ import threading
 import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
+from spreadsheet_xml import UNIT_SEPARATOR
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -143,6 +144,24 @@ class msf_doc_import_accounting(osv.osv_memory):
                 num += 1
         return True
 
+    def _check_has_data(self, line):
+        """
+        Returns True if there is data on the line
+        """
+        for i in range(len(line)):
+            if line[i]:
+                return True
+        return False
+
+    def _format_unit_separator(self, line):
+        """
+        Replaces back the arbitrary string used for the unit separator with the corresponding hexadecimal code
+        """
+        for i in range(len(line)):
+            if line[i] and isinstance(line[i], basestring) and UNIT_SEPARATOR in line[i]:
+                line[i] = line[i].replace(UNIT_SEPARATOR, '\x1F')
+        return line
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Do treatment before validation:
@@ -154,14 +173,8 @@ class msf_doc_import_accounting(osv.osv_memory):
         if context is None:
             context = {}
         # Prepare some values
-        from_yml = False
-        if context.get('from_yml', False):
-            from_yml = context.get('from_yml')
         # Do changes because of YAML tests
-        if from_yml:
-            cr = dbname
-        else:
-            cr = pooler.get_db(dbname).cursor()
+        cr = pooler.get_db(dbname).cursor()
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
@@ -201,7 +214,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                 fileobj = NamedTemporaryFile('w+b', delete=False)
                 fileobj.write(decodestring(wiz.file))
                 fileobj.close()
-                content = SpreadsheetXML(xmlfile=fileobj.name)
+                context.update({'from_je_import': True})
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content'))
                 # Update wizard
@@ -254,6 +268,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+
+                    # ignore empty lines
+                    if not self._check_has_data(line):
+                        continue
+
+                    self._format_unit_separator(line)
+
                     # Check document date
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
@@ -345,7 +366,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         else:
                             r_partner = tp_ids[0]
                     if line[cols['Employee']]:
-                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])],
+                                                                     order='active desc, id', limit=1)
                         if not tp_ids:
                             tp_label = _('Employee')
                             tp_content = line[cols['Employee']]
@@ -382,6 +404,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                         context=context)[r_account]
                     if not tp_check_res:
                         errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
+                        continue
+
+                    # US-3461 Accounts that can't be corrected on Account Codes are not allowed here
+                    if account.is_not_hq_correctible:
+                        errors.append(_("Line %s. The account \"%s - %s\" cannot be used because it is set as "
+                                        "\"Prevent correction on account codes\".") % (current_line_num, account.code, account.name,))
                         continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic
@@ -552,14 +580,12 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
 
             # Close cursor
-            if not from_yml:
-                cr.commit()
-                cr.close(True)
+            cr.commit()
+            cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
-            if not from_yml:
-                cr.close(True)
+            cr.close(True)
         except Exception as e:
             cr.rollback()
             if current_line_num is not None:
@@ -567,8 +593,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             else:
                 message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
             self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
-            if not from_yml:
-                cr.close(True)
+            cr.close(True)
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -578,14 +603,10 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
-        if context.get('from_yml', False):
-            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
-            self._import(cr, uid, ids, context=context)
-        else:
-            # Launch a thread if we come from web
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
+        # Launch a thread if we come from web
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
         return res
 
     def button_update(self, cr, uid, ids, context=None):

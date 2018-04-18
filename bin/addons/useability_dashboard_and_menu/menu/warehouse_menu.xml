@@ -17,7 +17,7 @@
         />
     
         <!-- we move the menu 'deliver products' from the menu sale to the menu warehouse' -->
-        <menuitem id="sale_override.menu_sale_action_picking_tree_out_move" 
+        <menuitem id="sale.menu_sale_action_picking_tree_out_move" 
         parent="stock.menu_stock_root" 
         />
         
@@ -107,17 +107,16 @@
                   sequence="23"
                   action="mission_stock.mission_stock_wizard_action" />
 	              
-	    <menuitem name="Physical Inventories"
-	              action="stock.action_inventory_form" 
-	              id="stock.menu_action_inventory_form" 
-	              parent="stock.menu_stock_inventory_control" 
-	              sequence="24"/>
-	              
         <menuitem name="Last Product Inventories"
                   parent="stock.menu_stock_inventory_control" 
                   action="stock.action_stock_line_date" 
                   id="stock.menu_report_stock_line_date" 
                   sequence="25"/>
-                  
+
+        <menuitem name="Previous Physical Inventories"
+                  action="stock.action_inventory_form" 
+                  id="stock.menu_action_inventory_form" 
+                  parent="stock.menu_stock_inventory_control" 
+                  sequence="30"/>
     </data>
 </openerp>

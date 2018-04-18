@@ -31,6 +31,9 @@ import sys
 import os
 import math
 import hashlib
+
+from random import random
+
 from psycopg2 import OperationalError
 from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ, TransactionRollbackError
 
@@ -595,14 +598,14 @@ class Entity(osv.osv):
                     field_obj = get_field_obj(related_model, field)
                 else:
                     field_obj = get_field_obj(model, field)
-                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                if field_obj and field_obj._type in ('many2one', 'many2many', 'one2many'):
                     model_set.add(field_obj._obj)
 
         # specific cases to sync BAR and FAR
         to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
         for f in to_remove:
             if f in model_set:
-                model_set.remove(f) 
+                model_set.remove(f)
 
         return model_set
 
@@ -810,6 +813,8 @@ class Entity(osv.osv):
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
+        init_sync = not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
+
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
         total_max_seq = entity.max_update
@@ -821,12 +826,12 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         # ask only max_seq_pack sequences to the sync server
-        max_seq_pack = 500
+        max_seq_pack = max_packet_size
 
         max_seq = min(last_seq+max_seq_pack, total_max_seq)
         while max_seq <= total_max_seq:
             while not last:
-                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
+                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover, init_sync)
                 if res and res[0]:
                     if res[1]: check_md5(res[3], res[1], _('method get_update'))
                     increment_to_offset = 0
@@ -945,20 +950,18 @@ class Entity(osv.osv):
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
-
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        uuid = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
-
-        res = proxy.get_message_rule(uuid, self._hardware_id)
-        if res and not res[0]: raise Exception, res[1]
-        check_md5(res[2], res[1], _('method get_message_rule'))
-        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
-
         rule_obj = self.pool.get("sync.client.message_rule")
 
+        to_update = {}
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
-            messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
+            generated_ids, ignored_ids = messages.create_from_rule(cr, uid, rule, None, context=context)
+            messages_count += len(generated_ids)
+            to_update.setdefault(rule.model, []).extend(generated_ids + ignored_ids)
+
+        for model, ids in to_update.iteritems():
+            if ids:
+                cr.execute('update ir_model_data set sync_date=NOW() where model=%s and res_id in %s', (model, tuple(ids)))
         return messages_count
 
     @sync_subprocess('msg_push_send')
@@ -975,14 +978,14 @@ class Entity(osv.osv):
         messages_count = 0
         logger_index = None
         while True:
-            packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
+            msg_ids, packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
             if not packet:
                 break
             messages_count += len(packet)
             res = proxy.send_message(uuid, self._hardware_id, packet, {'md5': get_md5(packet)})
             if not res[0]:
                 raise Exception, res[1]
-            messages.packet_sent(cr, uid, packet, context=context)
+            messages.packet_sent(cr, uid, msg_ids, context=context)
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
                 logger.replace(logger_index, _("Message(s) sent: %d/%d") % (messages_count, messages_max))
@@ -1004,6 +1007,12 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)
+
+        res = proxy.get_message_rule(entity.identifier, self._hardware_id)
+        if res and not res[0]: raise Exception, res[1]
+        check_md5(res[2], res[1], _('method get_message_rule'))
+        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
+
         if recover:
             proxy.message_recover_from_seq(entity.identifier, self._hardware_id, entity.message_last)
 
@@ -1044,8 +1053,13 @@ class Entity(osv.osv):
 
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            data_ids = [data['id'] for data in packet]
-            res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+            if packet and packet[0].get('sync_id'):
+                data_ids = [data['sync_id'] for data in packet]
+                res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+            else:
+                # migration
+                data_ids = [data['id'] for data in packet]
+                res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
             if not res[0]: raise Exception, res[1]
             cr.commit()
 
@@ -1059,11 +1073,14 @@ class Entity(osv.osv):
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
+        # force user to user_sync
+        uid = self.pool.get('res.users')._get_sync_user_id(cr)
+
         messages = self.pool.get(context.get('message_received_model', 'sync.client.message_received'))
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        message_ids = messages.search(cr, uid, [('run','=',False)], order='id asc', context=context)
+        message_ids = messages.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 
@@ -1166,6 +1183,23 @@ class Entity(osv.osv):
         context['lang'] = 'en_US'
         logger = context.get('logger')
         self._logger.info("Start synchronization")
+
+        version_instance_module = self.pool.get('sync.version.instance.monitor')
+        try:
+            version = self.pool.get('backup.config').get_server_version(cr, uid, context=context)
+            postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
+            unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
+            version_instance_module.create(cr, uid, {
+                'version': version,
+                'postgresql_disk_space': postgres_disk_space,
+                'unifield_disk_space': unifield_disk_space,
+            }, context=context)
+
+        except Exception:
+            cr.rollback()
+            logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
+            # do not block sync
+            pass
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -1222,8 +1256,11 @@ class Entity(osv.osv):
         return False
 
     def get_status(self, cr, uid, context=None):
-        if not self.pool.get('sync.client.sync_server_connection').is_connected:
-            return "Not Connected"
+        connection_obj = self.pool.get('sync.client.sync_server_connection')
+        if not connection_obj.is_connected:
+            login, password = connection_obj._info_connection_from_config_file(cr)
+            if login == -1 or not login or not password:
+                return "Not Connected"
 
         if self.is_syncing():
             if self.aborting:
@@ -1236,6 +1273,52 @@ class Entity(osv.osv):
             return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
         return "Connected"
+
+    def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
+        '''
+        if the current have used some shorcut, update his counter and last date of use accordingly
+        '''
+        if context is None:
+            context = {}
+        if not nb_shortcut_used:
+            return True
+        user_obj = self.pool.get('res.users')
+        current_date = datetime.now()
+        previous_nb_shortcut_used = user_obj.read(cr, uid, uid,
+                                                  ['nb_shortcut_used'],
+                                                  context=context)['nb_shortcut_used']
+        total_shortcut_used = previous_nb_shortcut_used + nb_shortcut_used
+        user_obj.write(cr, uid, uid, {'last_use_shortcut': current_date,
+                                      'nb_shortcut_used': total_shortcut_used,
+                                      }, context=context)
+        return True
+
+    def display_shortcut_message(self, cr, uid, context=None):
+        '''
+        return True if the message should be displayed, False otherwize.
+        random is used not display all the time the message, but 1 out of 10.
+        '''
+        if context is None:
+            context = {}
+        user_obj = self.pool.get('res.users')
+        result = user_obj.read(cr, uid, uid,
+                               ['nb_shortcut_used',
+                                'last_use_shortcut'],
+                               context=context)
+        if result['nb_shortcut_used'] and result['nb_shortcut_used'] > 100:
+            # once the user have used the shortcut a lot of times, do not
+            # bother him with warning message
+            return False
+        if not result['last_use_shortcut']:
+            # user have never used the shortcut
+            return random() < 0.1
+        last_date = result['last_use_shortcut']
+        last_date = datetime.strptime(last_date[:19],'%Y-%m-%d %H:%M:%S')
+        current_date = datetime.now()
+        if current_date - last_date > timedelta(days=1):
+            # the user didn't use the shortcut since long time
+            return random() < 0.1
+        return False
 
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
@@ -1256,15 +1339,15 @@ class Entity(osv.osv):
 
         # delete sync_client_update_received older than 6 month
         cr.execute("""DELETE FROM sync_client_update_received
-        WHERE create_date < now() - interval '%d month' AND
-        execution_date IS NOT NULL AND run='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        execution_date IS NOT NULL AND run='t'""", (nb_month_to_clean,))
         deleted_update_received = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_received' % deleted_update_received)
 
         # delete sync_client_update_to_send older than 6 month
         cr.execute("""DELETE FROM sync_client_update_to_send
-        WHERE create_date < now() - interval '%d month' AND
-        sent_date IS NOT NULL AND sent='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        sent_date IS NOT NULL AND sent='t'""", (nb_month_to_clean,))
         deleted_update_to_send = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
 
@@ -1430,6 +1513,13 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
+    def _info_connection_from_config_file(self, cr):
+        login = tools.config.get('sync_user_login')
+        if login == 'admin':
+            if not self.search_exist(cr, 1, [('host', 'in', ['127.0.0.1', 'localhost'])]):
+                login = -1
+        return (login, tools.config.get('sync_user_password'))
+
     def get_connection_from_config_file(self, cr, uid, ids=None, context=None):
         '''
         get credentials from config file if any and try to connect to the sync
@@ -1438,10 +1528,9 @@ class Connection(osv.osv):
         '''
         logger = logging.getLogger('sync.client')
         if not self.is_connected:
-            login = tools.config.get('sync_user_login')
-            if login == 'admin':
+            login, password = self._info_connection_from_config_file(cr)
+            if login == -1:
                 raise AdminLoginException
-            password = tools.config.get('sync_user_password')
             if login and password:
                 # write this credentials in the connection manager to be
                 # consistent with the credentials used for the current
@@ -1594,12 +1683,14 @@ class Connection(osv.osv):
 
     def change_protocol(self, cr, uid, ids, host, proto, context=None):
         xmlrpc = 8069
-        xmlrpcs = 8071
+        xmlrpcs = 443
         netrpc = 8070
         if host in ('127.0.0.1', 'localhost'):
             xmlrpc = tools.config.get('xmlrpc_port')
-            xmlrpcs = tools.config.get('xmlrpcs_port')
             netrpc = tools.config.get('netrpc_port')
+            # For xmlrpcs, we keep the default value (443) because this does
+            # not make much sense anyway to have SSL over localhost (won't have
+            # a valid certificate)
         ports = {
             'xmlrpc': xmlrpc,
             'gzipxmlrpc': xmlrpc,

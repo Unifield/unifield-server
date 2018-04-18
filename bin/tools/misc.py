@@ -173,6 +173,10 @@ def pg_dump(db_name, outfile=False):
     except Exception:
         _logger.error('Dump', exc_info=1)
         if outfile:
+            try:
+                os.remove(outfile)
+            except:
+                pass
             res = -1
     finally:
         _set_env_pg(remove=True)
@@ -1761,6 +1765,17 @@ class Path():
     def __init__(self, path, delete=True):
         self.path = path
         self.delete = delete
+
+def use_prod_sync(cr):
+    cr.execute('''SELECT host, database
+            FROM sync_client_sync_server_connection''')
+    host, database = cr.fetchone()
+
+    if host and database and database.strip() == 'SYNC_SERVER' and \
+            ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
+        return True
+
+    return False
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

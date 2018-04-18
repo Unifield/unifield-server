@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="physical_inventory_counting_sheet_xls"
+            string="Export xls counting sheet"
+            model="physical.inventory"
+            name="physical_inventory_counting_sheet_xls"
+            file="stock/report/physical_inventory_counting_sheet_xls.mako"
+            report_type="webkit"
+            menu="False"
+            />
+        <report
+            id="physical_inventory_counting_sheet_pdf"
+            string="Export pdf counting sheet"
+            model="physical.inventory"
+            name="physical_inventory_counting_sheet_pdf"
+            rml="addons/stock/report/physical_inventory_counting_sheet.rml"
+            header="False"
+            menu="False"
+        />
+        <report
+            id="physical_inventory_report_xls"
+            string="Export xls inventory report"
+            model="physical.inventory"
+            name="physical_inventory_discrepancies_report_xls"
+            file="stock/report/physical_inventory_discrepancies_report_xls.mako"
+            report_type="webkit"
+            menu="False"
+            />
+    </data>
+</openerp>

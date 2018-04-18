@@ -223,6 +223,7 @@ class analytic_line(osv.osv):
                                        help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
@@ -293,6 +294,8 @@ class analytic_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No GL journal found for corrections!'))
         gl_correction_journal_rec = aj_obj.browse(cr, uid, gl_correction_journal_id, context=context)
 
+        is_donation = {}
+        gl_correction_odx_journal_rec = False
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category in ['OC', 'DEST']:
@@ -322,15 +325,37 @@ class analytic_line(osv.osv):
                 else:
                     # mission close or + or HQ entry: reverse
 
-                    # compute entry sequence
                     seq_num_ctx = period and {'fiscalyear_id': period.fiscalyear_id.id} or None
-                    seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
-                    entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_journal_rec.code, seqnum)
+                    if aline.move_id.account_id.id not in is_donation:
+                        is_donation[aline.move_id.account_id.id] = aline.move_id.account_id.type_for_register == 'donation'
+
+                    if is_donation[aline.move_id.account_id.id]:
+                        if not gl_correction_odx_journal_rec:
+                            odx_aji = aj_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)])
+                            if not odx_aji:
+                                raise osv.except_osv(_('Error'), _('No GL journal found for ODX'))
+                            gl_correction_odx_journal_id = odx_aji[0]
+                            gl_correction_odx_journal_rec = aj_obj.browse(cr, uid, gl_correction_odx_journal_id, context=context)
+
+                            correction_odx_journal_ids = aaj_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)])
+                            correction_odx_journal_id = correction_odx_journal_ids and correction_odx_journal_ids[0] or False
+                            if not correction_odx_journal_id:
+                                raise osv.except_osv(_('Error'), _('No analytic journal found for ODX!'))
+
+
+                        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_odx_journal_rec.sequence_id.id, context=seq_num_ctx)
+                        entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_odx_journal_rec.code, seqnum)
+                        corr_j = correction_odx_journal_id
+                    else:
+                        # compute entry sequence
+                        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
+                        entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_journal_rec.code, seqnum)
+                        corr_j = correction_journal_id
 
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
                     # UTP-943: Shoud have a correction journal on these lines
-                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': correction_journal_id, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
+                    self.pool.get('account.analytic.line').write(cr, uid, rev_ids, {'journal_id': corr_j, 'is_reversal': True, 'reversal_origin': aline.id, 'last_corrected_id': False})
                     # UTP-943: Check that period is open
                     correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date, context=context)
                     if not correction_period_ids:
@@ -341,7 +366,7 @@ class analytic_line(osv.osv):
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id,
+                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': corr_j,
                                                                                               'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated

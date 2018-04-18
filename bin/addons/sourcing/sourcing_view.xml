@@ -2,52 +2,6 @@
 <openerp>
 	<data>
 
-		<!-- sale.order.line embedded in sale.order -->
-		<record id="view_order_form" model="ir.ui.view">
-			<field name="name">sale.order.form</field>
-			<field name="model">sale.order</field>
-			<field name="type">form</field>
-			<field name="priority">500</field>
-			<field name="inherit_id" ref="sale.view_order_form" />
-			<field name="arch" type="xml">
-				<data>
-					<field name="price_unit" position="after">
-						<field name="supplier" invisible="True" />
-						<field name="po_cft" invisible="True" />
-                    </field>
-
-                    <xpath expr="/form//field[@name='order_type']" position="after">
-                        <field name="sourcing_trace_ok" invisible="1" />
-                    </xpath>
-                    <xpath expr="/form//notebook" position="inside">
-                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
-                            <field name="sourcing_trace" colspan="4" nolabel="1" />
-                        </page>
-                    </xpath>
-				</data>
-			</field>
-        </record>
-
-        <record id="view_internal_request_form" model="ir.ui.view">
-            <field name="name">view.internal.request.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="500" />
-            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="inside">
-                        <field name="sourcing_trace_ok" invisible="1" />
-                    </xpath>
-
-                    <xpath expr="/form//notebook" position="inside">
-                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
-                            <field name="sourcing_trace" colspan="4" nolabel="1" />
-                        </page>
-                    </xpath>
-                </data>
-            </field>
-        </record>
 
 		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
 			<field name="name">sale.order.line.sourcing.form</field>
@@ -84,8 +38,7 @@
 					<field name="priority" readonly="True" />
 					<field name="categ" readonly="True" />
 					<field name="line_number" readonly="True" />
-					<field name="sale_order_state" readonly="True" />
-					<field name="state" invisible="True" />
+					<field name="state" readonly="True" />
 					<field name="product_id" readonly="True" />
                     <field name="comment" readonly="True" />
 					<field name="product_uom_qty" string="Qty" attrs="{'readonly': []}" />
@@ -94,28 +47,27 @@
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" readonly="True" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id, supplier)"
-						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
+						attrs="{'readonly': ['|', ('state', '!=', 'validated'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
-                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="related_sourcing_ok" invisible="1" />
                     <field name="related_sourcing_id"
-                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'draft'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
+                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
                     <field name="location_id" 
                         widget="selection"
                         on_change="onChangeLocation(location_id, product_id, rts, order_id)"
                         domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]"
-                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
+                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
                     <field name="virtual_stock" />
                     <field name="stock_uom_id" readonly="1" string="UoM Stock" />
-					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
 						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', order_id)]"
                         context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
-						attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
+						attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')]}"
 						on_change="onChangeSupplier(supplier, type)" />
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
@@ -134,12 +86,8 @@
 			<field name="priority" eval="99" />
 			<field name="arch" type="xml">
 				<search string="Sourcing Line">
-				
-					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
-                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
-                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('in_progress', '=', True)]" />
-					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
-					domain="['|', ('order_id.procurement_request', '=', True), ('order_id.split_type_sale_order', '!=', 'original_sale_order'), '|', ('type', '=', 'make_to_stock'), ('procurement_id.state', '!=', 'confirmed')]" />
+                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('state', '=', 'validated')]" />
+					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="[('state', 'not in', ['draft', 'validated', 'cancel', 'cancel_r'])]" />
 					<separator orientation="vertical"/>
 					<field name="order_id" string="Order" />
 					<field name="priority" />

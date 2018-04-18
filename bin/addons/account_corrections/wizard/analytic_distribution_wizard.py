@@ -148,7 +148,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+
+        jtype = 'correction'
+        if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
+            jtype = 'extra'
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', jtype), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -160,7 +164,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         any_reverse = False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
-        cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
+        cr.execute("select id, code from account_journal where type = %s and is_current_instance = true", (jtype,))
         for row in cr.dictfetchall():
             journal_id = row['id']
             code = row['code']
@@ -348,7 +352,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     sql_to_cor += ['entry_sequence=%s', 'last_corrected_id=%s', 'ref=%s']
                     sql_data += [keep_seq_and_corrected[0], keep_seq_and_corrected[1], keep_seq_and_corrected[3] or '']
                 sql_data += [created_analytic_line_ids[new_distrib_line]]
-                cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',
+                cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',  # not_a_user_entry
                            sql_data)
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
             if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
@@ -432,21 +436,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'amount': amount,
             }
 
-            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
-            if ml.corrected_line_id:
-                vals.update({
-                    'date': ml.date,
-                    'source_date': orig_date,
-                    'document_date': orig_document_date,
-                })
-            else:
-                # get the actual AJI date (can differ from the ML orig_date if an AD correction has already been made)
-                aal_date = ana_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
-                # original dates are kept but we add them in vals to trigger the check on dates with the new AD
-                vals.update({
-                    'date': aal_date,
-                    'document_date': orig_document_date,
-                })
+            # get the actual AJI date (can differ from the ML orig_date if an AD correction has already been made)
+            aal_date = ana_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
+            # original dates are kept but we add them in vals to trigger the check on dates with the new AD
+            vals.update({
+                'date': aal_date,
+                'document_date': orig_document_date,
+            })
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
@@ -527,6 +523,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_create = []
             to_delete = []
             to_override = []
+            old_line_ok = []
             old_line_ids = self.pool.get(obj_name).search(cr, uid, [('distribution_id', '=', distrib_id)])
             wiz_line_ids = self.pool.get(corr_name).search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', free[0])])
             # To create OR to override
@@ -562,7 +559,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'account_id': line.analytic_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': wizard.date,
+                    'date': orig_date,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })
@@ -581,7 +578,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)

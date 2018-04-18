@@ -9,26 +9,34 @@
         <field name="arch" type="xml">
             <form string="Mission stock report">
                 <field name="export_ok" invisible="1" />
+                <field name="local_report" invisible="1" />
+                <field name="full_view" invisible="1" />
                 <separator colspan="4" string="Mission stock" />
                 <field name="report_id" widget="selection" on_change="report_change(report_id)" />
                 <field name="last_update" />
                 <label colspan="4" />
-                <field name="processed_state" string="Updating..." />
+                <field name="processed_state" string="Updating..." attrs="{'invisible': [('local_report', '!=', True)]}"/>
                 <field name="processed_start_date" attrs="{'invisible': [('processed_state', '!=', 'in_progress')]}"/>
                 <separator colspan="4" string="Stock valuation" />
                 <field name="with_valuation" />
                 <separator colspan="4" string="Split Stock" />
                 <field name="split_stock" />
+                <separator colspan="4" string="Product in stock" />
+                <field name="display_only_in_stock" />
                 <group colspan="4" attrs="{'invisible': [('export_error_msg', '=', False)]}">
                     <separator colspan="4" string="Errors"/>
                     <field name="export_error_msg" colspan="4" />
                 </group>
+                <field name="instance_level" invisible="1" />
                 <separator colspan="4" string="Actions" />
-                <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
+                <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
-                <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
-                <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+                <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
+                <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
+                <group colspan="2" attrs="{'invisible': [('instance_level', '!=', 'coordo')]}">
+                    <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+                </group>
             </form>
         </field>
     </record>
@@ -138,15 +146,15 @@
                 <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
                 <field name="stock_qty" invisible="not context.get('split_stock')" />
                 <field name="central_qty" invisible="not context.get('split_stock')" />
-      <field name="wh_qty" invisible="context.get('split_stock')" />
+                <field name="wh_qty" invisible="context.get('split_stock')" />
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
-                <field name="product_amc" />
-                <field name="reviewed_consumption" />
+                <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
+                <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
                 <field name="in_pipe_qty" />
                 <field name="categ_id" invisible="1" />
                 <field name="type" invisible="1" />

@@ -351,9 +351,9 @@
                                     <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
                                 </group>
                                 <field name="has_draft_moves" invisible="1" />
-                                <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
+                                <button name="action_confirm_moves" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '!=', True)]}"/>
 								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
-								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
+								<button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
 								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you 'force availability' if you are sure goods are available)" context="{'from_button': True}" />
 								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
 								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"  context="{'from_button': True}" />

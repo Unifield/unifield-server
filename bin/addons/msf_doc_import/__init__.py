@@ -36,8 +36,10 @@ ACCOUNTING_IMPORT_JOURNALS = [
     'migration',
     'sale',  # US-70/3
 ]
-PPL_IMPORT_FOR_UPDATE_MESSAGE = _("""        The file should be in XML 2003 format.
 
+PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
+
+PPL_IMPORT_FOR_UPDATE_MESSAGE = _("""        The file should be in XML 2003 format.
 For the main header, the first 8 lines of the column 1 must have these values: Reference, Date, Requester Ref, \
 Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the line 1 of the column 4 and 7 \
 must have these values: Shipper, Consignee.
@@ -61,3 +63,4 @@ import replenishment_rules
 import product_list
 import supplier_catalogue
 import report
+import msf_import_export
