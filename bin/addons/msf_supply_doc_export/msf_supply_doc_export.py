@@ -486,6 +486,7 @@ class po_follow_up_mixin(object):
             report_line['order_created'] = ''
             report_line['order_confirmed_date'] = ''
             report_line['line_status'] = ''
+            report_line['state'] = ''
             report_line['order_status'] = ''
             report_line['item'] = ''
             report_line['code'] = ''
@@ -542,6 +543,7 @@ class po_follow_up_mixin(object):
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
+                    'state': line.state_to_display or '',
                     'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
@@ -567,6 +569,7 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
+                    'state': line.state_to_display or '',
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -597,6 +600,7 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
+                    'state': line.state_to_display or '',
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -627,6 +631,7 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
+                    'state': line.state_to_display or '',
                     'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',

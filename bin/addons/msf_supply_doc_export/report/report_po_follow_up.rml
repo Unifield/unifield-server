@@ -161,7 +161,7 @@
           <para style="P4Center">[[ line['cost_centre'] ]]</para>
        </td>
         <td>
-          <para style="P4Center">[[ line['line_status'] ]]</para>
+          <para style="P4Center">[[ line['state'] ]]</para>
        </td>
      </tr>
     
