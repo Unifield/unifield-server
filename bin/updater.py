@@ -184,6 +184,20 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
     if upgrade_now:
         logger.info("--------------- STARTING BASE UPGRADE PROCESS -----------------")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
+        script = pool.get('patch.scripts')
+        not_run = False
+        if script:
+            not_run = script.search(cr, 1, [('run', '=', False)])
+            if not_run:
+                logger.warn("%d patch scripts are not run" % len(not_run))
+        bad_modules = modules.search(cr, 1, [('state', 'in', ['to upgrade', 'to install', 'to remove'])])
+        if bad_modules:
+            logger.warn("%d modules not upgraded" % len(bad_modules))
+
+        if not not_run and not bad_modules:
+            logger.info("--------------- PATCH APPLIED ---------------")
+        else:
+            logger.info("--------------- ISSUES WITH PATCH APPLICATION ---------------")
 
 def process_deletes(update_dir, webpath):
     delfile = os.path.join(update_dir, 'delete.txt')
@@ -937,7 +951,7 @@ def do_pg_update():
             subprocess.call('net start %s' % svc, stdout=log, stderr=log)
 
         # 9. re-alter tables to put the problematic constraint back on
-        if re_alter:        
+        if re_alter:
             cf = tempfile.NamedTemporaryFile(delete=False)
             for db in dbs:
                 warn("alter tables in %s" % db)
