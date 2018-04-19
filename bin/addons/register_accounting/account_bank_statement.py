@@ -501,6 +501,7 @@ class account_bank_statement(osv.osv):
         register = registers and registers[0] or False
         if not register:
             raise osv.except_osv(_('Error'), _('Please select a register first.'))
+        context.update({'check_advance_reconciled': True})
         domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
         name = _('Open Advances')
         if register.journal_id and register.journal_id.currency:
@@ -932,14 +933,25 @@ class account_bank_statement_line(osv.osv):
     def _search_reconciled(self, cr, uid, obj, name, args, context=None):
         """
         Search all lines that are reconciled or not
+        If 'check_advance_reconciled' is in context, restrict the search to the accounts having the type "Advance".
+        Use case:
+        - advance booked on the account 13000 - Operating advances in a CHEQUE register
+        - advance line reconciled
+        - the register line should be seen as reconciled even if the other leg of the JE
+          (on the account 10210 - Outstanding Cheques) is still reconcilable.
         """
         # Test how many arguments we have
         if not len(args):
             return []
+        if context is None:
+            context = {}
         # We just support "=" case
         if args[0][1] not in ['=', 'in']:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Search statement lines that have move lines and which moves are posted
+        check_advance_reconciled = ''
+        if context.get('check_advance_reconciled', False):
+            check_advance_reconciled = " AND ac.type_for_register = 'advance' "
         if args[0][2] == True:
             sql_posted_moves = """
                 SELECT st.id FROM account_bank_statement_line st
@@ -948,7 +960,8 @@ class account_bank_statement_line(osv.osv):
                     LEFT JOIN account_move_line line ON line.move_id = move.id
                     LEFT JOIN account_account ac ON ac.id = line.account_id
                 WHERE rel.move_id is not null AND move.state = 'posted'
-                GROUP BY st.id HAVING COUNT(reconcile_id IS NULL AND ac.reconcile='t' OR NULL)=0
+                      %(check_advance_reconciled)s
+                GROUP BY st.id HAVING COUNT(reconcile_id IS NULL AND ac.reconcile='t' OR NULL)=0;
             """
         else:
             sql_posted_moves = """
@@ -958,9 +971,12 @@ class account_bank_statement_line(osv.osv):
                     LEFT JOIN account_move_line line ON line.move_id = move.id
                     LEFT JOIN account_account ac ON ac.id = line.account_id
                 WHERE
-                    rel.move_id is null OR move.state != 'posted' OR (line.reconcile_id IS NULL AND ac.reconcile='t')
+                    rel.move_id is null OR move.state != 'posted' OR 
+                    (line.reconcile_id IS NULL AND ac.reconcile='t' 
+                     %(check_advance_reconciled)s );
             """
-        cr.execute(sql_posted_moves)
+        sql_posted_moves = sql_posted_moves % {'check_advance_reconciled': check_advance_reconciled}
+        cr.execute(sql_posted_moves) # not_a_user_entry
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     def _search_amount(self, cr, uid, obj, name, args, context=None):
