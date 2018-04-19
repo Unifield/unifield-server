@@ -33,6 +33,34 @@ class hr_payment_order(osv.osv_memory):
         'period_id': fields.many2one('account.period', string='Period', required=False, domain="[('number', '!=', 0)]"),
     }
 
+    def print_payment_order_report(self, cr, uid, ids, context=None):
+        """
+        Generates the Payment Orders report
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        bg_obj = self.pool.get('memory.background.report')
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        data = {
+            'payment_method_id': wiz.payment_method_id.id,
+            'period_id': wiz.period_id and wiz.period_id.id or False,
+        }
+        # make the report run in background
+        report_name = 'hr.payment.order.report'
+        background_id = bg_obj.create(cr, uid, {'file_name': 'Payment Orders Report',
+                                                'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': data,
+            'context': context,
+        }
+
 
 hr_payment_order()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
