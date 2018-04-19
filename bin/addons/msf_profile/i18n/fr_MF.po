@@ -25949,6 +25949,7 @@ msgstr "Wizard to split processor lines"
 #: field:wizard.register.creation,period_id:0
 #: field:wizard.register.creation.lines,period_id:0
 #: field:wizard.register.import.lines,period_id:0
+#: field:hr.payment.order,period_id:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -58858,9 +58859,12 @@ msgstr "Référence de la Commande"
 msgid "Inventory counter Name"
 msgstr "Responsable Inventaire"
 
-#. module: account_payment
+#. modules: account_payment, msf_homere_interface
 #: model:ir.actions.act_window,name:account_payment.action_payment_order_tree
 #: model:ir.ui.menu,name:account_payment.menu_action_payment_order_form
+#: view:hr.payment.order:0
+#: model:ir.actions.act_window,name:msf_homere_interface.action_payment_orders
+#: model:ir.model,name:msf_homere_interface.model_hr_payment_order
 msgid "Payment Orders"
 msgstr "Ordres de Paiement"
 
@@ -58929,11 +58933,12 @@ msgstr "Autres Types"
 msgid "Logistic"
 msgstr "Logistique"
 
-#. modules: msf_doc_import, account, consumption_calculation
+#. modules: msf_doc_import, account, consumption_calculation, msf_homere_interface
 #: model:ir.actions.report.xml,name:account.account_invoices
 #: view:weekly.forecast.report:0
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
+#: view:hr.payment.order:0
 msgid "Print report"
 msgstr "Imprimer Rapport"
 
@@ -100278,6 +100283,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:ocp.matching.export.wizard:0
 #: view:wizard.hq.report.oca:0
 #: view:wizard.import.mapping:0
+#: view:hr.payment.order:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -107534,6 +107540,7 @@ msgstr "Date de Fin de Contrat"
 
 #. module: msf_homere_interface
 #: field:hr.employee,payment_method_id:0
+#: field:hr.payment.order,payment_method_id:0
 #: model:ir.model,name:msf_homere_interface.model_hr_payment_method
 msgid "Payment Method"
 msgstr "Mode de Paiement"
