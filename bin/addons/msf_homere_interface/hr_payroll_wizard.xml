@@ -273,10 +273,11 @@
             name="Payment Orders"
             res_model="hr.payment.order"
             src_model="hr.payroll.msf"
-            key2="client_action_multi"
+            key2="client_print_multi"
             view_mode="form"
             view_type="form"
             target="new"
+            empty_ids="1"
             view_id="payment_order_wizard"/>
 
         <!-- Expat Employee Import -->
