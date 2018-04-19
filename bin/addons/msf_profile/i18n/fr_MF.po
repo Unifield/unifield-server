@@ -107525,3 +107525,13 @@ msgstr "Vous devez d'abord charger le modèle."
 #, python-format
 msgid "The account \"%s - %s\" is set as \"Prevent correction on account codes\"."
 msgstr "Le compte \"%s - %s\" est défini comme \"Empêcher toutes corrections sur ce code comptable\"."
+
+#. module: register_accounting
+#: field:account.bank.statement,register_closed_by:0
+msgid "Register Closed by"
+msgstr "Registre Fermé par"
+
+#. module: register_accounting
+#: help:account.bank.statement,register_closed_by:0
+msgid "Name and position of the person who closes the register"
+msgstr "Nom et poste de la personne qui ferme le registre"

@@ -207,6 +207,8 @@ class account_bank_statement(osv.osv):
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
         'bank_account_number': fields.related('journal_id', 'bank_account_number', type='char',
                                               string='Bank Account Number', store=False, readonly=True),
+        'register_closed_by': fields.char('Register Closed by', size=128, states={'confirm': [('readonly', True)]},
+                                          help='Name and position of the person who closes the register'),
     }
 
     _order = 'state asc, period_number asc'
