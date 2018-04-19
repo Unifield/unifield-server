@@ -62,6 +62,24 @@
             </field>
         </record>
 
+        <!-- Payment orders Wizard -->
+        <record id="payment_order_wizard" model="ir.ui.view">
+            <field name="name">payment.order.wizard</field>
+            <field name="model">hr.payment.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payment Orders">
+                    <group colspan="4" col="4">
+                        <field name="payment_method_id"/>
+                        <field name="period_id"/>
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" colspan="2"/>
+                        <button name="print_payment_order_report" type="object" string="Print report" icon="gtk-print"
+                                colspan="2"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
         <record id="payroll_employee_import" model="ir.ui.view">
             <field name="name">payroll.employee.import</field>
             <field name="model">hr.payroll.employee.import</field>
@@ -249,6 +267,17 @@
             view_type="form"
             target="new"
             view_id="payroll_deletion_wizard"/>
+
+        <!-- Payment Orders -->
+        <act_window id="action_payment_orders"
+            name="Payment Orders"
+            res_model="hr.payment.order"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payment_order_wizard"/>
 
         <!-- Expat Employee Import -->
         <record id="action_expat_employee_import_wizard" model="ir.actions.act_window">

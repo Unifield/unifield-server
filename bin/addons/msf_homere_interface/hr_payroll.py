@@ -395,7 +395,7 @@ class ir_values(osv.osv):
         if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[1] == 'action_payroll_deletion':
+                if v[1] in ['action_payroll_deletion', 'action_payment_orders']:
                     # for all Payroll views
                     new_act.append(v)
                 elif context.get('payroll_bs_lines'):
