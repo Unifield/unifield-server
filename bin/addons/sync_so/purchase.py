@@ -134,6 +134,15 @@ class purchase_order_line_sync(osv.osv):
                         if resourced_sol_id:
                             pol_values['linked_sol_id'] = resourced_sol_id[0]
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
+            elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split'):
+                orig_line_ids = self.search(cr, uid, [
+                    ('order_id', '=', pol_values['order_id']),
+                    ('sync_linked_sol', 'ilike', '%%%s' % sol_dict['original_line_id']['id'].split('/')[-1])
+                ], context=context)
+                if orig_line_ids:
+                    orig_line = self.browse(cr, uid, orig_line_ids[0], context=context)
+                    pol_values['link_so_id'] = orig_line.link_so_id.id
+                    self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
 
         # search the PO line to update:
         pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
@@ -194,8 +203,6 @@ class purchase_order_line_sync(osv.osv):
             if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
                 # if the state is less than confirmed we update the PO line
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
-            elif po_line.state == 'done':
-                raise Exception, "Cannot update a closed purchase order line !"
 
         # update PO line state:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
