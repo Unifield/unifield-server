@@ -375,7 +375,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                     payment_method_id = payment_method_ids[0]
                 else:
                     payment_method_id = payment_method_obj.create(cr, uid, {'name': bqmodereglement}, context=context)
-            vals.update({'payment_method': payment_method_id})
+            vals.update({'payment_method_id': payment_method_id})
 
             # Update Nationality
             if nation:

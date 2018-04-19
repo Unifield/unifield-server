@@ -22062,6 +22062,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:addons/account/report/account_liquidity_balance.mako:162
 #: field:cash.request,name:0
 #: field:msf.instance.cloud,name:0
+#: field:hr.payment.method,name:0
 #: report:addons/account_override/report/account_chart_export.mako:136
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:146
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:50
@@ -56819,10 +56820,11 @@ msgstr "Certificat ?"
 msgid "ESC Message 1"
 msgstr "ESC Message 1"
 
-#. modules: hr, account, register_accounting
+#. modules: hr, account, register_accounting, msf_homere_interface
 #: field:account.journal,bank_account_number:0
 #: field:hr.employee,bank_account_id:0
 #: field:account.bank.statement,bank_account_number:0
+#: field:hr.employee,bank_account_number:0
 msgid "Bank Account Number"
 msgstr "Numéro de Compte Bancaire"
 
@@ -107529,3 +107531,30 @@ msgstr "Date de Début de Contrat"
 #: field:hr.employee,contract_end_date:0
 msgid "Contract End Date"
 msgstr "Date de Fin de Contrat"
+
+#. module: msf_homere_interface
+#: field:hr.employee,payment_method_id:0
+#: model:ir.model,name:msf_homere_interface.model_hr_payment_method
+msgid "Payment Method"
+msgstr "Mode de Paiement"
+
+#. module: hr
+#: model:ir.actions.act_window,name:hr.open_payment_method
+#: model:ir.ui.menu,name:hr.menu_hr_payment_method
+msgid "Payment methods"
+msgstr "Modes de paiement"
+
+#. module: hr
+#: view:hr.payment.method:0
+msgid "Payment method"
+msgstr "Mode de paiement"
+
+#. module: msf_homere_interface
+#: sql_constraint:hr.payment.method:0
+msgid "The payment method name must be unique."
+msgstr "Le nom du mode de paiement doit être unique."
+
+#. module: msf_homere_interface
+#: field:hr.employee,bank_name:0
+msgid "Bank Name"
+msgstr "Nom de la Banque"
