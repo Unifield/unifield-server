@@ -4458,7 +4458,7 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
 
-            # get the linked "save as draft" wizard if has:
+            # get the linked "save as draft" create.picking.processor wizard if has:
             picking_processor_wiz = []
             if draft_picking_id:
                 picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
@@ -4467,6 +4467,15 @@ class stock_picking(osv.osv):
                 ], context=context)
                 if picking_processor_wiz:
                     picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
+
+            # get the linked "save as draft" ppl.processor wizard if has:
+            ppl_processor_wiz = self.pool.get('ppl.processor').search(cr, uid, [
+                ('picking_id', '=', picking.id),
+                '|', ('draft_step1', '=', True),
+                ('draft_step2', '=', True),
+            ], context=context)
+            if ppl_processor_wiz:
+                ppl_processor_wiz = self.pool.get('ppl.processor').browse(cr, uid, ppl_processor_wiz[0], context=context)
 
             for line in wizard.move_ids:
                 return_qty = line.quantity
@@ -4538,6 +4547,22 @@ class stock_picking(osv.osv):
                                 'ordered_quantity': sad_move.ordered_quantity + return_qty,
                                 'quantity': sad_move.quantity + return_qty,
                             }, context=context)
+
+                if ppl_processor_wiz:
+                    sad_move = self.pool.get('ppl.move.processor').search(cr, uid, [
+                        ('wizard_id', '=', ppl_processor_wiz.id),
+                        ('move_id', '=', line.move_id.id),
+                    ], context=context)
+                    if sad_move:
+                        if ppl_processor_wiz.draft_step1 or ppl_processor_wiz.draft_step2:
+                            sad_move = self.pool.get('ppl.move.processor').browse(cr, uid, sad_move[0], context=context)
+                            if sad_move.quantity - return_qty <= 0:
+                                self.pool.get('ppl.move.processor').unlink(cr, uid, [sad_move.id], context=context)
+                            else:
+                                self.pool.get('ppl.move.processor').write(cr, uid, [sad_move.id], {'quantity': sad_move.quantity - return_qty}, context=context)
+
+                            if ppl_processor_wiz.draft_step2:
+                                self.pool.get('ppl.processor').write(cr, uid, [ppl_processor_wiz.id], {'draft_step2': False})
 
             # Log message for PPL
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]

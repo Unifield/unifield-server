@@ -476,6 +476,7 @@ class ppl_move_processor(osv.osv):
             ondelete='cascade',
             help="PPL processor wizard",
         ),
+        'move_id': fields.many2one('stock.move', string='Stock move', readonly=True),
         'from_pack': fields.integer(string='From p.', required=True),
         'to_pack': fields.integer(string='To p.', required=True),
         'num_of_packs': fields.function(
@@ -760,6 +761,7 @@ class ppl_move_processor(osv.osv):
             'width': move.width,
             'height': move.height,
             'weight': move.weight,
+            'move_id': move.id,
         })
 
         return res
