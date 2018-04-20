@@ -2,8 +2,11 @@
                     <group col="8" colspan="4">
                         <field name="currency_choice" on_change="onchange_currency_choice(currency_choice, functional_currency_id, amount_from, amount_to)"/>
                         <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" on_change="onchange_currency(currency_choice, currency_id)" domain="[('currency_table_id', '=', False)]"/>
-                        <field name="fx_table_id" on_change="onchange_fx_table(fx_table_id)"/>
-                        <field name="display_in_output_currency" domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"/>
+                        <field name="fx_table_id" on_change="onchange_fx_table(fx_table_id)"
+                               attrs="{'invisible': [('model', '=', 'combined.line')]}"/>
+                        <field name="display_in_output_currency"
+                               domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"
+                               attrs="{'invisible': [('model', '=', 'combined.line')]}"/>
                         <field name="amount_from" string="Amount from" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
                         <field name="amount_to" string="to" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
                     </group>
