@@ -68,12 +68,15 @@ class hr_payment_order_report(report_sxw.rml_parse):
         employee_obj = self.pool.get('hr.employee')
         account_obj = self.pool.get('account.account')
         aml_obj = self.pool.get('account.move.line')
+        bg_obj = self.pool.get('memory.background.report')
         employee_ids = employee_obj.search(self.cr, self.uid, [('employee_type', '=', 'local'),
                                                                ('payment_method_id', '=', self.payment_method_id)],
                                            order='name', context=self.context)
+        current_line_position = 0
         for employee in employee_obj.browse(self.cr, self.uid, employee_ids,
                                             fields_to_fetch=['name', 'identification_id', 'bank_name', 'bank_account_number'],
                                             context=self.context):
+            current_line_position += 1
             account_ids = account_obj.search(self.cr, self.uid,
                                              [('user_type_code', 'in', ['receivables', 'payables'])],
                                              order='NO_ORDER', context=self.context)
@@ -101,6 +104,7 @@ class hr_payment_order_report(report_sxw.rml_parse):
                     'currency': c,
                 }
                 res.append(employee_dict)
+            bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(employee_ids), context=self.context)
         return res
 
     def set_context(self, objects, data, ids, report_type=None):
