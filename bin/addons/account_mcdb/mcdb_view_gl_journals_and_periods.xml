@@ -1,0 +1,49 @@
+    <group col="5" colspan="4">
+        <group col="2" colspan="2">
+            <group col="4" colspan="2">
+                <separator string="G/L journals" colspan="3"/>
+                <field name="display_journal" colspan="1" nolabel="1"/>
+            </group>
+            <group col="2" colspan="2" attrs="{'invisible': [('display_journal', '=', False)]}">
+                <group col="2" colspan="2">
+                    <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
+                    <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
+                </group>
+                <field name="rev_journal_ids" colspan="2"/>
+                <field name="journal_ids" colspan="2" nolabel="1">
+                    <tree string="Journals" editable="top" noteditable="1">
+                        <field name="code"/>
+                        <field name="name" string="Name"/>
+                        <field name="type"/>
+                    </tree>
+                </field>
+            </group>
+        </group>
+        <group col="2" colspan="2">
+            <group col="4" colspan="2">
+                <separator string="Periods" colspan="3"/>
+                <field name="display_period" colspan="1" nolabel="1"/>
+            </group>
+            <group col="2" colspan="2" attrs="{'invisible': [('display_period', '=', False)]}">
+                <group col="2" colspan="2">
+                    <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
+                    <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
+                </group>
+                <field name="rev_period_ids" colspan="2"/>
+                <field name="period_ids" colspan="2" nolabel="1">
+                    <tree string="Periods" editable="top" noteditable="1">
+                        <field name="name" string="Name"/>
+                        <field name="state"/>
+                    </tree>
+                </field>
+            </group>
+        </group>
+        <group col="2" colspan="1">
+            <field name="fiscalyear_id"/>
+        </group>
+    </group>
+    <group colspan="2" col="2">
+        <html>
+            <br />
+        </html>
+    </group>
