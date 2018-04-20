@@ -107519,3 +107519,13 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:655
+msgid "Grand Total Func. Currency"
+msgstr "Total Général Devise Fonc."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:632
+msgid "Grand Total Reg. Currency"
+msgstr "Total Général Devise du Reg."
