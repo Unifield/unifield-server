@@ -71,13 +71,13 @@
     <blockTable style="TableData" colWidths="90.0,90.0,90.0,90.0,90.0,90.0">
       <tr>
         <td>
-          <parawrap style="P3">Employee name</parawrap>
+          <parawrap style="P3">Employee Name</parawrap>
         </td>
         <td>
           <parawrap style="P3">Employee ID</parawrap>
         </td>
         <td>
-          <parawrap style="P3">Bank name</parawrap>
+          <parawrap style="P3">Bank Name</parawrap>
         </td>
         <td>
           <parawrap style="P3">Bank Account Number</parawrap>

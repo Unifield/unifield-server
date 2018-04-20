@@ -25961,6 +25961,7 @@ msgstr "Wizard to split processor lines"
 #: field:wizard.register.creation.lines,period_id:0
 #: field:wizard.register.import.lines,period_id:0
 #: field:hr.payment.order,period_id:0
+#: report:hr.payment.order.report:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -56847,6 +56848,7 @@ msgstr "ESC Message 1"
 #: field:hr.employee,bank_account_id:0
 #: field:account.bank.statement,bank_account_number:0
 #: field:hr.employee,bank_account_number:0
+#: report:hr.payment.order.report:0
 msgid "Bank Account Number"
 msgstr "Numéro de Compte Bancaire"
 
@@ -58886,6 +58888,7 @@ msgstr "Responsable Inventaire"
 #: view:hr.payment.order:0
 #: model:ir.actions.act_window,name:msf_homere_interface.action_payment_orders
 #: model:ir.model,name:msf_homere_interface.model_hr_payment_order
+#: report:hr.payment.order.report:0
 msgid "Payment Orders"
 msgstr "Ordres de Paiement"
 
@@ -106123,7 +106126,7 @@ msgstr "Export Excel du Suivi des Changements des Bons de Commande"
 msgid "Price in functional currency"
 msgstr "Prix dans la devise fonctionnelle"
 
-#. modules: purchase_followup, finance
+#. modules: purchase_followup, finance, msf_homere_interface
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:242
 #: field:cash.request.expense,currency_id:0
 #: view:cash.request.liquidity.bank:0
@@ -106131,6 +106134,7 @@ msgstr "Prix dans la devise fonctionnelle"
 #: view:cash.request.liquidity.cheque:0
 #: field:cash.request.total.transfer.line,currency_id:0
 #: field:cash.request.transfer.currency,currency_id:0
+#: report:hr.payment.order.report:0
 msgid "Currency"
 msgstr "Devise"
 
@@ -107584,6 +107588,7 @@ msgstr "Date de Fin de Contrat"
 #: field:hr.employee,payment_method_id:0
 #: field:hr.payment.order,payment_method_id:0
 #: model:ir.model,name:msf_homere_interface.model_hr_payment_method
+#: report:hr.payment.order.report:0
 msgid "Payment Method"
 msgstr "Mode de Paiement"
 
@@ -107604,7 +107609,23 @@ msgid "The payment method name must be unique."
 msgstr "Le nom du mode de paiement doit être unique."
 
 #. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Employee Name"
+msgstr "Nom de l'Employé"
+
+#. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Employee ID"
+msgstr "ID de l'Employé"
+
+#. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Net to Pay"
+msgstr "Net à Payer"
+
+#. module: msf_homere_interface
 #: field:hr.employee,bank_name:0
+#: report:hr.payment.order.report:0
 msgid "Bank Name"
 msgstr "Nom de la Banque"
 
