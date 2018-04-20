@@ -300,6 +300,39 @@ class patch_scripts(osv.osv):
         cr.execute(update_free_1)
         cr.execute(update_free_2)
 
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        company_curr = self.pool.get('res.company').browse(cr, uid, 1, fields_to_fetch=['currency_id']).currency_id.id
+
+        move_ids_currencies = {}
+        cr.execute('''
+            select m.id, m.price_currency_id, s.procurement_request, pl.currency_id
+            from stock_move m
+                left join stock_picking p on (m.picking_id = p.id)
+                left join sale_order_line sl on (m.sale_line_id = sl.id)
+                left join sale_order s on (sl.order_id = s.id)
+                left join product_pricelist pl on (s.pricelist_id = pl.id)
+            where m.sale_line_id is not null and m.type = 'out' and p.type = 'out' and p.subtype in ('standard', 'picking')
+        ''')
+        for x in cr.fetchall():
+            if x[2]:
+                currency_id_key = company_curr
+            else:
+                currency_id_key = x[3]
+            if x[1] != currency_id_key:
+                if currency_id_key in move_ids_currencies:
+                    move_ids_currencies[currency_id_key].append(x[0])
+                else:
+                    move_ids_currencies.update({currency_id_key: [x[0]]})
+
+        for currency_id in move_ids_currencies:
+            cr.execute('''update stock_move set price_currency_id = %s where id in %s'''
+                       , (currency_id, tuple(move_ids_currencies[currency_id])))
+
+        return True
+
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
         cr.execute('''select distinct i.id, p.default_code from
