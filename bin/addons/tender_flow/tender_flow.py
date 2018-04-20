@@ -1624,7 +1624,8 @@ class purchase_order(osv.osv):
             if not rfq.rfq_ok:
                 continue
             for rfq_line in rfq.order_line:
-                if rfq_line.state != 'confirmed':
+                if (rfq_line.order_id.partner_type in ('external', 'esc') and rfq_line.state in ('draft', 'validated', 'validated_n'))\
+                        or (rfq_line.order_id.partner_type not in ('external', 'esc') and rfq_line.state == 'draft'):
                     wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)

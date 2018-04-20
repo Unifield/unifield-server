@@ -390,6 +390,21 @@ class purchase_order_line(osv.osv):
             res[line.id] = a
         return res
 
+    def _get_partner_type(self, cr, uid, ids, name, arg, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'partner_id'], context=context):
+            if pol.partner_id:
+                res[pol.id] = pol.partner_id.partner_type
+            elif pol.order_id and pol.order_id.partner_id:
+                res[pol.id] = pol.order_id.partner_id.partner_type
+
+        return res
 
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
@@ -502,6 +517,7 @@ class purchase_order_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
+        'partner_type': fields.function(_get_partner_type, method=True, type='text', string="Partner Type", store=True, readonly=True),
     }
 
     _defaults = {

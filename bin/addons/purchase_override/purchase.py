@@ -425,7 +425,8 @@ class purchase_order_cancel_wizard(osv.osv_memory):
             self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context)
         else:
             for pol in po.order_line:
-                if pol.state != 'confirmed':
+                if (pol.order_id.partner_type in ('external', 'esc') and pol.state in ('draft', 'validated', 'validated_n'))\
+                        or (pol.order_id.partner_type not in ('external', 'esc') and pol.state == 'draft'):
                     if pol.has_pol_been_synched:
                         continue
                     signal = 'cancel'
