@@ -517,7 +517,7 @@ class purchase_order_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
-        'partner_type': fields.function(_get_partner_type, method=True, type='text', string="Partner Type", store=True, readonly=True),
+        'partner_type': fields.function(_get_partner_type, method=True, type='text', string="Partner Type", readonly=True),
     }
 
     _defaults = {
