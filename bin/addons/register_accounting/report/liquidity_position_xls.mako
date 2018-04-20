@@ -536,6 +536,37 @@
       </Row>
       % endfor
 
+      <!-- REVALUATION LINES -->
+      % for rev_cur in getRevaluationLines():
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['prop_instance']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['journal_code']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['journal_name']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s26">
+          <Data ss:Type="Number">${ getRevaluationLines()[rev_cur]['booking_amount'] or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ str(rev_cur)|x }</Data>
+        </Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="s26">
+          <Data ss:Type="Number">${ getRevaluationLines()[rev_cur]['functional_amount'] or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
+        </Cell>
+      </Row>
+      % endfor
+
       % for cur in pending_cheques['currency_amounts']:
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25c"/>

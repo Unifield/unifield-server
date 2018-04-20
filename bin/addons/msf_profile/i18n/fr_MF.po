@@ -12869,10 +12869,11 @@ msgstr "Devise dans laquelle le coût unitaire est exprimé"
 msgid "OpenObject Report Designer Plug-in"
 msgstr "Plug-in (Greffon) du Concepteur de Rapports OpenObject"
 
-#. modules: account_override, account, analytic_distribution
+#. modules: account_override, account, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.mcdb:0
 msgid "Do you really want to delete the selected template?"
 msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"
 
@@ -15637,10 +15638,11 @@ msgstr "Remplir la ligne de distribution analytique de l'en-tête*"
 msgid "Project Ref."
 msgstr "Project Ref."
 
-#. modules: account_override, account, analytic_distribution
+#. modules: account_override, account, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.mcdb:0
 msgid "Save new template"
 msgstr "Enregistrer nouveau modèle"
 
@@ -16165,12 +16167,6 @@ msgstr "Type"
 #: report:addons/msf_budget/report/monthly_budget.mako:240
 msgid "Fiscal year:"
 msgstr "Fiscal year:"
-
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line_search
-msgid "Analytic Selector - Saved queries"
-msgstr "Analytic Selector - Saved queries"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -18986,10 +18982,11 @@ msgstr "attachments_path %s doesn't exists and the report has not been found in 
 msgid "List of Open Advances"
 msgstr "Listes des Avances Ouvertes"
 
-#. modules: supplier_catalogue, analytic, msf_doc_import
+#. modules: supplier_catalogue, analytic, msf_doc_import, account_mcdb
 #: selection:account.analytic.account,state:0
 #: field:stock.partial.picking,filename_template:0
 #: field:supplier.catalogue,filename_template:0
+#: field:account.mcdb,template:0
 msgid "Template"
 msgstr "Modèle"
 
@@ -22736,8 +22733,9 @@ msgstr "America/St_Barthelemy"
 msgid "Expense Account on Product Template"
 msgstr "Compte de Charge sur le Modèle Produit"
 
-#. module: resource
+#. modules: resource, account_mcdb
 #: code:addons/resource/wizard_template.py:60
+#: code:addons/account_mcdb/account_mcdb.py:1275
 #, python-format
 msgid "You have to choose a template name."
 msgstr "Vous devez choisir un nom de modèle."
@@ -44661,12 +44659,6 @@ msgstr "Communication configuration"
 msgid "Global analytic distribution"
 msgstr "Global analytic distribution"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line_search
-msgid "G/L Selector - Saved queries"
-msgstr "G/L Selector - Saved queries"
-
 #. module: account_voucher
 #: help:account.voucher,reference:0
 msgid "Transaction reference number."
@@ -47707,10 +47699,11 @@ msgstr "Certificat de Don Gratuit n'est disponible que pour les Objets d'Expédi
 msgid "wizard.import.in.line.simulation.screen"
 msgstr "wizard.import.in.line.simulation.screen"
 
-#. modules: account_override, account, analytic_distribution
+#. modules: account_override, account, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.mcdb:0
 msgid "Replace"
 msgstr "Remplacer"
 
@@ -49854,7 +49847,7 @@ msgstr "Vous ne pouvez sélectionner qu'un lieu interne"
 msgid "Child IDs"
 msgstr "ID Enfants"
 
-#. modules: purchase, account, finance, sale, specific_rules, account_override, delete_button, tender_flow, analytic_distribution
+#. modules: purchase, account, finance, sale, specific_rules, account_override, delete_button, tender_flow, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
@@ -49868,6 +49861,7 @@ msgstr "ID Enfants"
 #: view:sale.order:0
 #: view:stock.production.lot:0
 #: view:tender:0
+#: view:account.mcdb:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -81654,8 +81648,9 @@ msgstr "Import Catégorie Produit"
 msgid "Order Reference"
 msgstr "Order Reference"
 
-#. module: resource
+#. modules: resource, account_mcdb
 #: code:addons/resource/wizard_template.py:91
+#: code:addons/account_mcdb/account_mcdb.py:1193
 #, python-format
 msgid "You have to choose a template to load."
 msgstr "Vous devez choisir un modèle à charger."
@@ -87533,11 +87528,12 @@ msgstr "Automated import"
 msgid "Tracking a move"
 msgstr "Suivi d'un mouvement"
 
-#. modules: account_override, account, base, analytic_distribution
+#. modules: account_override, account, base, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
 #: view:base.language.install:0
+#: view:account.mcdb:0
 msgid "Load"
 msgstr "Charger"
 
@@ -90862,7 +90858,7 @@ msgstr "B/S / P&L account"
 msgid "Error ! You can not have a category linked to two different family"
 msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différentes"
 
-#. modules: account, resource, finance
+#. modules: account, resource, finance, account_mcdb
 #: field:account.aged.trial.balance,template_name:0
 #: field:account.analytic.chart,template_name:0
 #: field:account.balance.report,template_name:0
@@ -90883,6 +90879,7 @@ msgstr "Erreur ! Vous ne pouvez pas lier une catégorie à deux familles différ
 #: field:wizard.account.partner.balance.tree,template_name:0
 #: field:wizard.template,name:0
 #: field:wizard.template.form,template_name:0
+#: field:account.mcdb,template_name:0
 msgid "Template name"
 msgstr "Nom de modèle"
 
@@ -93597,10 +93594,11 @@ msgstr "Des informations sont manquantes : l'année fiscale, la période ou l'in
 msgid "Error!"
 msgstr "Erreur!"
 
-#. modules: account_override, account, analytic_distribution
+#. modules: account_override, account, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.mcdb:0
 msgid "Select an existing template"
 msgstr "Sélectionnez un modèle existant"
 
@@ -94398,8 +94396,9 @@ msgstr "Uom commandé"
 msgid "You have to select some lines before using this wizard."
 msgstr "Vous devez sélectionner quelques lignes avant d'utiliser l'assistant."
 
-#. module: resource
+#. modules: resource, account_mcdb
 #: code:addons/resource/wizard_template.py:140
+#: code:addons/account_mcdb/account_mcdb.py:1296
 #, python-format
 msgid "You have to choose a template to delete."
 msgstr "Vous devez choisir un modèle à supprimer."
@@ -98347,6 +98346,7 @@ msgid "Disabled"
 msgstr "Désactivé"
 
 #. module: account_mcdb
+#: view:account.mcdb:0
 #: code:addons/account_mcdb/account_mcdb.py:580
 #: code:addons/account_mcdb/account_mcdb.py:633
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb
@@ -100519,10 +100519,11 @@ msgstr "Registre"
 msgid "Only draft Consumption reports can be processed. Maybe this one has been already processed."
 msgstr "Only draft Consumption reports can be processed. Maybe this one has been already processed."
 
-#. modules: account_override, account, analytic_distribution
+#. modules: account_override, account, analytic_distribution, account_mcdb
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.mcdb:0
 msgid "or Choose a new template name"
 msgstr "ou Choisissez un nouveau nom de modèle"
 
@@ -107491,3 +107492,30 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #, python-format
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
+
+#. module: account_mcdb
+#: field:account.mcdb,display_mcdb_load_button:0
+msgid "Display the Load button"
+msgstr "Afficher le bouton Charger"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Selector Template"
+msgstr "Modèle de Sélecteur"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1277
+#, python-format
+msgid "This template name already exists for the current user. Please choose another name."
+msgstr "Ce nom de modèle existe déjà pour l'utilisateur actuel. Veuillez choisir un autre nom."
+
+#. module: account_mcdb
+#: help:account.mcdb,copied_id:0
+msgid "Id of the template loaded"
+msgstr "Id du modèle chargé"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1257
+#, python-format
+msgid "You have to load the template first."
+msgstr "Vous devez d'abord charger le modèle."

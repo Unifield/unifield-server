@@ -137,7 +137,7 @@
               <para style="P4">[[ stock_picking.ppl_customize_label.weight and translate('Weight:') or ' ' ]]</para>
             </td>
             <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(stock_picking.total_weight or '0.0') + ' kg' or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.ppl_customize_label.weight and get_pack_weight(stock_picking, titi) + ' kg' or ' ' ]]</para>
             </td>
           </tr>
           <tr>
