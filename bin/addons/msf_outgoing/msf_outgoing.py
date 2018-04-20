@@ -828,6 +828,14 @@ class shipment(osv.osv):
                     if picking_processor_wiz:
                         picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
 
+                # get the linked "save as draft" wizard if has:
+                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
+                    ('shipment_id', '=', shipment.id),
+                    ('draft', '=', True),
+                ], context=context)
+                if ship_processor_wiz:
+                    self.pool.get('shipment.processor').write(cr, uid, ship_processor_wiz, {'draft': False}, context=context)
+
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
                     'name': draft_picking.name,
