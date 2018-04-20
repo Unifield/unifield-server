@@ -31,7 +31,30 @@ class hr_payment_order_report(report_sxw.rml_parse):
         self.period_id = False
         self.localcontext.update({
             'lines': self._get_lines,
+            'period_selected': self._get_period_selected,
+            'payment_method_selected': self._get_payment_method_selected,
         })
+
+    def _get_period_selected(self):
+        """
+        Returns the name of the period selected or "-"
+        """
+        if not self.period_id:
+            return '-'
+        period_obj = self.pool.get('account.period')
+        period = period_obj.browse(self.cr, self.uid, self.period_id, fields_to_fetch=['name'], context=self.context)
+        return period.name
+
+    def _get_payment_method_selected(self):
+        """
+        Returns the name of the payment method selected or "-"
+        """
+        if not self.payment_method_id:
+            return '-'
+        payment_method_obj = self.pool.get('hr.payment.method')
+        payment_method = payment_method_obj.browse(self.cr, self.uid, self.payment_method_id, fields_to_fetch=['name'],
+                                                   context=self.context)
+        return payment_method.name
 
     def _get_lines(self):
         """
