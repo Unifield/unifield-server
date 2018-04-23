@@ -33,7 +33,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.registers = {}
         self.func_currency = {}
         self.pending_cheques = {}
-        self.chq_journal_codes = []
         self.revaluation_lines = {}
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
@@ -50,7 +49,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
-            'getChqJournalCodes': self.getChqJournalCodes,
+            # Cheque Journals to display, in alphabetical order:
+            'getChqJournalCodes': lambda *a: sorted(self.getPendingCheques()['registers']),
             'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
             'getRevaluationLines': self.getRevaluationLines,
         })
@@ -355,14 +355,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self._update_totals_with_revaluation_lines(pending_cheques)
         self.pending_cheques = pending_cheques
         return pending_cheques
-
-    def getChqJournalCodes(self):
-        """
-        Returns the codes of the Cheque Journals to display, in alphabetical order
-        """
-        if not self.chq_journal_codes:
-            self.chq_journal_codes = sorted(self.getPendingCheques()['registers'])
-        return self.chq_journal_codes
 
     def getGrandTotalRegCurrency(self):
         return self.grand_total_reg_currency
