@@ -833,8 +833,27 @@ class shipment(osv.osv):
                     ('shipment_id', '=', shipment.id),
                     ('draft', '=', True),
                 ], context=context)
-                if ship_processor_wiz:
-                    self.pool.get('shipment.processor').write(cr, uid, ship_processor_wiz, {'draft': False}, context=context)
+                if ship_processor_wiz and family.selected_number:
+                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
+                    related_draft_fam = False
+                    for fam in ship_processor_wiz.family_ids:
+                        if family.from_pack == fam.from_pack:
+                            if related_draft_fam:
+                                # if we enter there, it means that we have found 2 related draft family
+                                # so it's wrong, we stop the searcing
+                                related_draft_fam = False
+                                break
+                            else:
+                                related_draft_fam = fam
+
+                    if related_draft_fam:
+                        if family.selected_number < related_draft_fam.selected_number: # partial
+                            self.pool.get('shipment.family.processor').write(cr, uid, [related_draft_fam.id], {
+                                'selected_number': related_draft_fam.selected_number - family.selected_number,
+                                'to_pack': related_draft_fam.to_pack - family.selected_number,
+                            }, context=context)
+                        elif family.selected_number >= related_draft_fam.selected_number: # delete all line
+                            self.pool.get('shipment.family.processor').unlink(cr, uid, [related_draft_fam.id], context=context)
 
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
