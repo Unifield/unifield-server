@@ -85,7 +85,7 @@
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
-                        <button name="launch_simulation_pack" attrs="{'invisible':[('display_process_to_ship_button','!=',True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
+                        <button name="process_to_ship" attrs="{'invisible':[('display_process_to_ship_button','!=',True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
             </field>
@@ -185,6 +185,26 @@
                     <field name="currency" />
                     <field name="integrity_status" string="" />
                 </tree>
+            </field>
+        </record>
+
+        <record id="incoming_shipment_processor_step2_form_view" model="ir.ui.view">
+            <field name="name">stock.incoming.processor.step2.form.view</field>
+            <field name="model">stock.incoming.processor</field>
+            <field name="type">form</field>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <form string="PPL Information - Step 2">
+                    <separator colspan="4" string="Pack families" />
+                    <field name="family_ids" mode="tree"
+                           colspan="4" nolabel="1" />
+                    <group colspan="4" col="6" name="actions">
+                        <separator string="Actions" colspan="6" />
+                        <label colspan="4"> </label>
+                        <button name="do_in_back" type="object" string="Previous" icon="gtk-go-back" />
+                        <button name="do_in_step2" type="object" string="Process" icon="gtk-go-forward" />
+                    </group>
+                </form>
             </field>
         </record>
 

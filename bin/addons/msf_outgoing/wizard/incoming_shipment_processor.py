@@ -57,6 +57,12 @@ class stock_incoming_processor(osv.osv):
             'wizard_id',
             string='Moves',
         ),
+        'family_ids': fields.one2many(
+            'ppl.family.processor',
+            'wizard_id',
+            string='Families',
+            help="Pack of products",
+        ),
         'dest_type': fields.selection([
             ('to_cross_docking', 'To Cross Docking'),
             ('to_stock', 'To Stock'),
@@ -525,6 +531,36 @@ class stock_incoming_processor(osv.osv):
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, data['res_id'], context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
         return data
+
+    def process_to_ship(self, cr, uid, ids, context=None):
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'incoming_shipment_processor_step2_form_view')[1]
+        return {
+            'name': _('PPL Information - step 2'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.incoming.processor',
+            'res_id': ids[0],
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+    def do_in_back(self, cr, uid, ids, context=None):
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+        }
+
+    def do_in_step2(self, cr, uid, ids, context=None):
+        pass
 
 stock_incoming_processor()
 
