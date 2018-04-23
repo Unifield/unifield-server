@@ -1148,7 +1148,7 @@ class shipment(osv.osv):
                         'width': family.width,
                         'height': family.height,
                         'weight': family.weight,
-                        'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
+                        'draft_packing_id': draft_packing and draft_packing.id or False,
                         'ppl_id': family.ppl_id and family.ppl_id.id or False,
                         'comment': family.comment,
                     }
@@ -1319,7 +1319,6 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             # shipment state should be 'packed'
-            #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
             if shipment.state != 'packed':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
                                      _('Cannot process a Shipment which is in an incorrect state'))
