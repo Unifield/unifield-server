@@ -499,7 +499,7 @@
       </Row>
 
       <% pending_cheques = getPendingCheques() %>
-      % for journal in pending_cheques['registers']:
+      % for journal in getChqJournalCodes():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ pending_cheques['registers'][journal]['instance'] |x }</Data>

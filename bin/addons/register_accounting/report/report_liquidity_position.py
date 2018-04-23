@@ -33,6 +33,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.registers = {}
         self.func_currency = {}
         self.pending_cheques = {}
+        self.chq_journal_codes = []
         self.revaluation_lines = {}
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
@@ -49,6 +50,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
+            'getChqJournalCodes': self.getChqJournalCodes,
             'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
             'getRevaluationLines': self.getRevaluationLines,
         })
@@ -96,7 +98,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
         args = [('period_id', '=', self.period_id)]
-        reg_ids = reg_obj.search(self.cr, self.uid, args)
+        reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
 
         self.func_currency = regs[0].journal_id.company_id.currency_id.name
@@ -353,6 +355,14 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self._update_totals_with_revaluation_lines(pending_cheques)
         self.pending_cheques = pending_cheques
         return pending_cheques
+
+    def getChqJournalCodes(self):
+        """
+        Returns the codes of the Cheque Journals to display, in alphabetical order
+        """
+        if not self.chq_journal_codes:
+            self.chq_journal_codes = sorted(self.getPendingCheques()['registers'])
+        return self.chq_journal_codes
 
     def getGrandTotalRegCurrency(self):
         return self.grand_total_reg_currency
