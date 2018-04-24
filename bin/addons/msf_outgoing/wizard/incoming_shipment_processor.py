@@ -573,20 +573,19 @@ class stock_incoming_processor(osv.osv):
                 to_smaller_ids.append(seq[2])
         ok = True
         if missing_ids:
-            in_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
+            in_move_obj.write(cr, uid, missing_ids, {'sequence_issue': 'missing_1'}, context=context)
             ok = False
-
-        if to_smaller_ids:
-            in_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
+        elif to_smaller_ids:
+            in_move_obj.write(cr, uid, to_smaller_ids, {'sequence_issue': 'to_smaller_than_from'}, context=context)
             ok = False
-
-        if overlap_ids:
-            in_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
+        elif overlap_ids:
+            in_move_obj.write(cr, uid, overlap_ids, {'sequence_issue': 'overlap'}, context=context)
             ok = False
-
-        if gap_ids:
-            in_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
+        elif gap_ids:
+            in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'gap'}, context=context)
             ok = False
+        else:
+            in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'empty'}, context=context)
 
         return ok
 
@@ -727,7 +726,11 @@ class stock_move_in_processor(osv.osv):
         return super(stock_move_in_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
 
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
-        return super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        res = super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        for move in self.browse(cr, uid, ids, context=context):
+            if res.get(439, '') == 'empty' and move.sequence_issue and move.sequence_issue != 'empty':
+                res[move.id] = move.sequence_issue
+        return res
 
     def _get_batch_location_ids(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -927,7 +930,7 @@ class stock_move_in_processor(osv.osv):
             store={
                 'stock.move.in.processor': (
                     lambda self, cr, uid, ids, c=None: ids,
-                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date', 'sequence_issue'],
                     20
                 ),
             },
@@ -1051,6 +1054,7 @@ class stock_move_in_processor(osv.osv):
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
+        'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
     }
 
     """
