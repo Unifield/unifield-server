@@ -571,21 +571,23 @@ class stock_incoming_processor(osv.osv):
             # rule #4: to[i] >= from[i]
             if not (seq[1] >= seq[0]):
                 to_smaller_ids.append(seq[2])
+
+        in_move_ids = [s[2] for s in sequences]
+        in_move_obj.write(cr, uid, in_move_ids, {'sequence_issue': 'empty'}, context=context)
+
         ok = True
         if missing_ids:
             in_move_obj.write(cr, uid, missing_ids, {'sequence_issue': 'missing_1'}, context=context)
             ok = False
-        elif to_smaller_ids:
+        if to_smaller_ids:
             in_move_obj.write(cr, uid, to_smaller_ids, {'sequence_issue': 'to_smaller_than_from'}, context=context)
             ok = False
-        elif overlap_ids:
+        if overlap_ids:
             in_move_obj.write(cr, uid, overlap_ids, {'sequence_issue': 'overlap'}, context=context)
             ok = False
-        elif gap_ids:
+        if gap_ids:
             in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'gap'}, context=context)
             ok = False
-        else:
-            in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'empty'}, context=context)
 
         return ok
 
@@ -1080,6 +1082,19 @@ class stock_move_in_processor(osv.osv):
 
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if 'from_pack' in vals or 'to_pack' in vals:
+            vals['sequence_issue'] = 'empty'
+
+        return super(stock_move_in_processor, self).write(cr, uid, ids, vals, context=context)
+
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Update the unit price and the currency of the move line wizard if the
@@ -1116,6 +1131,14 @@ class stock_move_in_processor(osv.osv):
                 }, context=context)
 
         return res
+
+    def onchange_from_pack_to_pack(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        return {'value': {'integrity_status': 'empty'}}
 
 stock_move_in_processor()
 
