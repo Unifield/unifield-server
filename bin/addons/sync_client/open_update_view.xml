@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!-- ========================= UPDATES Sent & Received LINKS =============================== -->
+
+        <!-- JI menu -->
+        <record id="action_aml_open_update_sent" model="ir.actions.server">
+            <field name="name">Updates Sent</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_sent(context=context)</field>
+        </record>
+        <record id="ir_aml_open_update_sent" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Updates Sent</field>
+            <field eval="'ir.actions.server,%d'%action_aml_open_update_sent" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100010"/> <!-- after the Track Changes -->
+        </record>
+        <record id="action_aml_open_update_received" model="ir.actions.server">
+            <field name="name">Updates Received</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_received(context=context)</field>
+        </record>
+        <record id="ir_aml_open_update_received" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Updates Received</field>
+            <field eval="'ir.actions.server,%d'%action_aml_open_update_received" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100015"/> <!-- after the Track Changes -->
+        </record>
+
+        <!-- AJI menu -->
+        <record id="action_aal_open_update_sent" model="ir.actions.server">
+            <field name="name">Updates Sent</field>
+            <field name="model_id" ref="model_account_analytic_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_sent(context=context)</field>
+        </record>
+        <record id="ir_aal_open_update_sent" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Updates Sent</field>
+            <field eval="'ir.actions.server,%d'%action_aal_open_update_sent" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100010"/> <!-- at the very end of the list -->
+        </record>
+        <record id="action_aal_open_update_received" model="ir.actions.server">
+            <field name="name">Updates Received</field>
+            <field name="model_id" ref="model_account_analytic_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_received(context=context)</field>
+        </record>
+        <record id="ir_aal_open_update_received" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Updates Received</field>
+            <field eval="'ir.actions.server,%d'%action_aal_open_update_received" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100015"/> <!-- at the very end of the list -->
+        </record>
+
+        <!-- JE menu -->
+        <record id="action_am_open_update_sent" model="ir.actions.server">
+            <field name="name">Updates Sent</field>
+            <field name="model_id" ref="model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_sent(context=context)</field>
+        </record>
+        <record id="ir_am_open_update_sent" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.move</field>
+            <field name="name">Updates Sent</field>
+            <field eval="'ir.actions.server,%d'%action_am_open_update_sent" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100010"/> <!-- after the Track Changes -->
+        </record>
+        <record id="action_am_open_update_received" model="ir.actions.server">
+            <field name="name">Updates Received</field>
+            <field name="model_id" ref="model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_update_received(context=context)</field>
+        </record>
+        <record id="ir_am_open_update_received" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.move</field>
+            <field name="name">Updates Received</field>
+            <field eval="'ir.actions.server,%d'%action_am_open_update_received" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="100015"/> <!-- after the Track Changes -->
+        </record>
+
+    </data>
+</openerp>

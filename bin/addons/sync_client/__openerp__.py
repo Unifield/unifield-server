@@ -44,6 +44,7 @@ Synchronization Engine - Client Module
         'wizard/monitoring_view.xml',
         'wizard/view_entity_id.xml',
         'monitor_view.xml',
+        'open_update_view.xml',
         'data/cron.xml',
         'data/cron_ops.xml',
         'data/backupconfig.xml',

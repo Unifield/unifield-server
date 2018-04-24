@@ -1389,20 +1389,6 @@ class account_move_line(osv.osv):
             'domain': domain,
             'target': 'current',
         }
-    
-    def open_update_received(self, cr, uid, ids, context=None):
-        """
-        Opens the Updates Received View with the SD ref of the selected entry already filled in
-        """
-        update_received_obj = self.pool.get('sync.client.update_received')
-        return update_received_obj.open_update_list(cr, uid, ids, model='account.move.line', context=context)
-
-    def open_update_sent(self, cr, uid, ids, context=None):
-        """
-        Opens the Updates Sent View with the SD ref of the selected entry already filled in
-        """
-        update_sent_obj = self.pool.get('sync.client.update_to_send')
-        return update_sent_obj.open_update_list(cr, uid, ids, model='account.move.line', context=context)
 
 
 account_move_line()
