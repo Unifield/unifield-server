@@ -133,6 +133,7 @@
                     <field name="kit_check" invisible="1" />
                     <field name="asset_check" invisible="1" />
                     <field name="location_id" invisible="1" />
+                    <field name="linked_to_out" invisible="1" />
                     <field name="ssl_check" invisible="1" widget="null_boolean" />
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
@@ -162,8 +163,8 @@
                         domain="[('category_id', '=', ordered_uom_category)]"
                         on_change="onchange_uom_qty(uom_id, quantity)"
                         />
-                    <field name="from_pack" on_change="onchange_from_pack_to_pack()"/>
-                    <field name="to_pack" on_change="onchange_from_pack_to_pack()"/>
+                    <field name="from_pack" on_change="onchange_from_pack_to_pack()" attrs="{'readonly': [('linked_to_out', '=', False)]}"/>
+                    <field name="to_pack" on_change="onchange_from_pack_to_pack()" attrs="{'readonly': [('linked_to_out', '=', False)]}"/>
                     <button name="open_split_wizard"
                         type="object"
                         icon="terp-stock_effects-object-colorize"
