@@ -107658,3 +107658,13 @@ msgstr "Statut"
 #, python-format
 msgid "state"
 msgstr "Statut"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:655
+msgid "Grand Total Func. Currency"
+msgstr "Total Général Devise Fonc."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:632
+msgid "Grand Total Reg. Currency"
+msgstr "Total Général Devise du Reg."
