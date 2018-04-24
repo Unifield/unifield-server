@@ -2655,8 +2655,8 @@ msgstr "Compte- Code"
 
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
-msgid "Please confirm that you want to cancel all lines of this PO"
-msgstr "Please confirm that you want to cancel all lines of this PO"
+msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
+msgstr "Veuillez confirmer que vous voulez annuler toutes les lignes non-confirmées du BC"
 
 #. module: register_accounting
 #: view:wizard.transfer.with.change:0
