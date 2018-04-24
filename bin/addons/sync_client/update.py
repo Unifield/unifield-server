@@ -51,6 +51,51 @@ OBJ_TO_RECREATE = [
     'ir.rule',
 ]
 
+def open_update_list(self, cr, uid, ids, model='', type='received', context=None):
+    """
+    Returns the Update Received or Sent View with the SD ref of the selected entry already filled in.
+    :param model: String, name of the model of the selected entry (ex: 'account.move.line').
+    :param type: String. If 'received', will open the Update Received View. Else will open the Update Sent View.
+    """
+    if context is None:
+        context = {}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    active_ids = context.get('active_ids', [])  # to detect if the user has selected several entries
+    if len(ids) != 1 or len(active_ids) > 1:
+        raise osv.except_osv(_('Error'),
+                             _('This feature can only be used with one entry selected.'))
+    if model:
+        ir_model_obj = self.pool.get('ir.model.data')
+        ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
+                                                          ('model', '=', model),
+                                                          ('res_id', '=', ids[0])], limit=1, context=context)
+        sdref = False
+        if ir_model_data_ids:
+            sdref = ir_model_obj.browse(cr, uid, ir_model_data_ids[0], fields_to_fetch=['name'], context=context).name
+        if sdref:
+            context.update({'search_default_sdref': sdref})
+            context.update({'search_default_current': 0})  # "Not Run" filter
+    tree_view = type == 'received' and 'update_received_tree_view' or 'sync_client_update_to_send_tree_view'
+    view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', tree_view)
+    view_id = view_id and view_id[1] or False
+    search_view = type == 'received' and 'update_received_search_view' or 'update_sent_search_view'
+    search_view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', search_view)
+    search_view_id = search_view_id and search_view_id[1] or False
+    res_model = type == 'received' and 'sync.client.update_received' or 'sync.client.update_to_send'
+    return {
+        'name': type == 'received' and _('Update Received Monitor') or _('Update Sent Monitor'),
+        'type': 'ir.actions.act_window',
+        'res_model': res_model,
+        'view_type': 'form',
+        'view_mode': 'tree,form',
+        'view_id': [view_id],
+        'search_view_id': [search_view_id],
+        'context': context,
+        'domain': [],
+        'target': 'current',
+    }
+
 class fv_formatter:
     def fmt(self, cr, uid, ids, field_name, arg, context):
         res = {}
@@ -315,6 +360,9 @@ class update_to_send(osv.osv,fv_formatter):
             min_offset += 200
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
+
+    def open_update_list(self, cr, uid, ids, model='', context=None):
+        return open_update_list(self, cr, uid, ids, model=model, type='sent', context=context)
 
     _order = 'create_date desc, id desc'
 update_to_send()
@@ -955,6 +1003,9 @@ class update_received(osv.osv,fv_formatter):
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
         return result
+
+    def open_update_list(self, cr, uid, ids, model='', context=None):
+        return open_update_list(self, cr, uid, ids, model=model, type='received', context=context)
 
     _order = 'id desc'
 
