@@ -382,20 +382,6 @@ class stock_incoming_processor(osv.osv):
 
         return result
 
-    def copy_all(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids,(int,long)):
-            ids = [ids]
-
-        res = super(stock_incoming_processor, self).copy_all(cr, uid, ids, context=context)
-
-        for wiz_data in self.read(cr, uid, ids, ['linked_to_out'], context=context):
-            if wiz_data['linked_to_out']:
-                self.check_before_creating_pack_lines(cr, uid, wiz_data['id'], context=context)
-
-        return res
-
     def do_reset(self, cr, uid, ids, context=None):
         incoming_obj = self.pool.get('stock.incoming.processor')
         stock_p_obj = self.pool.get('stock.picking')
@@ -744,7 +730,7 @@ class stock_move_in_processor(osv.osv):
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
         res = super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
         for move in self.browse(cr, uid, ids, context=context):
-            if res.get(439, '') == 'empty' and move.sequence_issue and move.sequence_issue != 'empty':
+            if res.get(move.id, '') == 'empty' and move.sequence_issue and move.sequence_issue != 'empty':
                 res[move.id] = move.sequence_issue
         return res
 
