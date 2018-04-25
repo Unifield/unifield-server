@@ -607,6 +607,11 @@ class stock_incoming_processor(osv.osv):
                 total_qty += move.quantity
                 sequences.append((move.from_pack, move.to_pack, move.id))
                 sequence_ok_ids.append(move.id)
+                if move.integrity_status and move.integrity_status != 'empty':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Please correct red lines before processing')
+                    )
 
             if not total_qty:
                 raise osv.except_osv(
@@ -673,7 +678,6 @@ class stock_incoming_processor(osv.osv):
                 'target': 'new',
                 'context': context,
             }
-            
 
         # delete previous fam if has:
         pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
@@ -693,6 +697,7 @@ class stock_incoming_processor(osv.osv):
             'target': 'new',
             'context': context,
         }
+
 
     def do_in_back(self, cr, uid, ids, context=None):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
@@ -732,7 +737,7 @@ class stock_incoming_processor(osv.osv):
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
-                self.pool.get('stock.move.in.processor').write(cr, uid, [m.id for m in in_proc.move_ids], {'pack_info_id': pack_info_id}, context=context)
+                self.pool.get('stock.move.in.processor').write(cr, uid, [m.id for m in fam.move_ids], {'pack_info_id': pack_info_id}, context=context)
 
             new_picking = self.pool.get('stock.picking').do_incoming_shipment(cr, uid, [in_proc.id], context=context)
 
