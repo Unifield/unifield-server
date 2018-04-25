@@ -708,7 +708,36 @@ class stock_incoming_processor(osv.osv):
         }
 
     def do_in_step2(self, cr, uid, ids, context=None):
-        pass
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for in_proc in self.browse(cr, uid, ids, context=context):
+            for fam in in_proc.family_ids:
+                # fill fields 'pack_info_id' with new 'wizard.import.in.pack.simulation.screen':
+                pack_info = {
+                    # 'wizard_id':,
+                    'parcel_from': fam.from_pack,
+                    'parcel_to': fam.to_pack,
+                    # 'parcel_qty': ,
+                    'total_weight': fam.weight,
+                    # 'total_volume': ,
+                    'total_height': fam.height,
+                    'total_length': fam.length,
+                    'total_width': fam.width,
+                    'integrity_status': fam.integrity_status,
+                }
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
+                    if not pack_info.get(manda_field):
+                        raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
+                pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
+                self.pool.get('stock.move.in.processor').write(cr, uid, [m.id for m in in_proc.move_ids], {'pack_info_id': pack_info_id}, context=context)
+
+            new_picking = self.pool.get('stock.picking').do_incoming_shipment(cr, uid, [in_proc.id], context=context)
+
+        return new_picking
+
 
 stock_incoming_processor()
 
