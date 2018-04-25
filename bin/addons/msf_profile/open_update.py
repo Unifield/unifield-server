@@ -205,4 +205,11 @@ class account_period_state(osv.osv):
 account_period_state()
 
 
+class account_fiscalyear_state(osv.osv):
+    _name = 'account.fiscalyear.state'
+    _inherit = ['account.fiscalyear.state', 'open.update']
+
+account_fiscalyear_state()
+
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
