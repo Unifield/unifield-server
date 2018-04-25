@@ -138,4 +138,60 @@ class hq_entries(osv.osv):
 hq_entries()
 
 
+class msf_budget(osv.osv):
+    _name = 'msf.budget'
+    _inherit = ['msf.budget', 'open.update']
+
+msf_budget()
+
+
+class cash_request(osv.osv):
+    _name = 'cash.request'
+    _inherit = ['cash.request', 'open.update']
+
+cash_request()
+
+
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = ['account.account', 'open.update']
+
+account_account()
+
+
+class account_analytic_account(osv.osv):
+    _name = 'account.analytic.account'
+    _inherit = ['account.analytic.account', 'open.update']
+
+account_analytic_account()
+
+
+class account_journal(osv.osv):
+    _name = 'account.journal'
+    _inherit = ['account.journal', 'open.update']
+
+account_journal()
+
+
+class account_analytic_journal(osv.osv):
+    _name = 'account.analytic.journal'
+    _inherit = ['account.analytic.journal', 'open.update']
+
+account_analytic_journal()
+
+
+class account_fiscalyear(osv.osv):
+    _name = 'account.fiscalyear'
+    _inherit = ['account.fiscalyear', 'open.update']
+
+account_fiscalyear()
+
+
+class account_period(osv.osv):
+    _name = 'account.period'
+    _inherit = ['account.period', 'open.update']
+
+account_period()
+
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
