@@ -177,7 +177,10 @@ class stock_picking(osv.osv):
         tech_header = [x[1] for x in IN_LINES_COLUMNS] 
         line_start = len(HEADER_COLUMNS) + 4
         for index in range(line_start, line_start+nb_file_lines):
-            line_data = [values[index].get(x) for x in tech_header]
+            try:
+                line_data = [values[index].get(x) for x in tech_header]
+            except:
+                continue #TODO in case of with pack
             if all([x is None for x in line_data]):
                 continue
             if import_success:
