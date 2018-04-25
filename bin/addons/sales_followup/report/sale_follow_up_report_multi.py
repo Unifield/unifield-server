@@ -140,7 +140,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                 ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
-
                 if m_type and (ppl or s_out or ppl_not_shipped):
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
@@ -220,7 +219,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'shipment': shipment,
                             })
 
-                    if key in keys:
+                    if key in keys and lines:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
                                 if not grouped or (grouped and line.line_number == key[3]):
@@ -250,7 +249,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'cdd': cdd,
                 })
                 lines.append(data)
-
             # Put the backorderd qty on the first line
             if not lines:
                 continue
