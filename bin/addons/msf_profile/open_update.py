@@ -26,6 +26,9 @@ from tools.translate import _
 
 
 class open_update(osv.osv):
+    """
+    NOTE: this class is in msf_profile because it uses classes defined in modules loaded before this one
+    """
     _name = 'open.update'
 
     def _open_update_list(self, cr, uid, ids, model='', type='received', context=None):
@@ -42,7 +45,8 @@ class open_update(osv.osv):
         if len(ids) != 1 or len(active_ids) > 1:
             raise osv.except_osv(_('Error'),
                                  _('This feature can only be used with one entry selected.'))
-        if model:
+        if model and isinstance(model, basestring):
+            context.update({'search_default_model': model})
             ir_model_obj = self.pool.get('ir.model.data')
             ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
                                                               ('model', '=', model),
@@ -192,6 +196,13 @@ class account_period(osv.osv):
     _inherit = ['account.period', 'open.update']
 
 account_period()
+
+
+class account_period_state(osv.osv):
+    _name = 'account.period.state'
+    _inherit = ['account.period.state', 'open.update']
+
+account_period_state()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
