@@ -107646,4 +107646,4 @@ msgstr "SÉLECTION"
 #. module: account
 #: sql_constraint:account.move.line:0
 msgid "Wrong credit or debit value in booking currency!"
-msgstr "Valeur de crédit ou débit erronée en devise d'enregistement !"
+msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
