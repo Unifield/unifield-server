@@ -36,6 +36,8 @@ from tempfile import NamedTemporaryFile
 from urlparse import urlparse
 from mx import DateTime
 import logging
+import requests
+import time
 
 class crypt():
     def __init__(self, password):
@@ -470,6 +472,27 @@ class msf_instance_cloud(osv.osv):
     _empty_pass = 'X' * 10
     _temp_folder = 'Temp'
 
+    _backoff_max = 5
+    _backoff_factor = 0.1
+
+    def _get_backoff(self, dav, error):
+        if not dav:
+            self._logger.info(error)
+            time.sleep(self._backoff_factor)
+
+        nb_errors = dav.session_nb_error
+        dav.session_nb_error += 1
+        if nb_errors <= 1:
+            return 0
+
+        if nb_errors % 5 == 0:
+            self._logger.info(error)
+
+        backoff_value = self._backoff_factor * (2 ** (nb_errors - 1))
+        sleep_time = min(self._backoff_max, backoff_value)
+        time.sleep(sleep_time)
+
+
     def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
         for x in self.read(cr, uid, ids, ['cloud_password'], context=context):
@@ -499,7 +522,6 @@ class msf_instance_cloud(osv.osv):
                 crypt_o = crypt(d['instance_identifier'])
                 ret['password'] = crypt_o.decrypt(d['cloud_password'])
             except:
-                raise
                 raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
 
         return ret
@@ -595,7 +617,7 @@ class msf_instance_cloud(osv.osv):
 
         return super(msf_instance_cloud, self).create(cr, uid, vals, context)
 
-    def get_backup_connection(self, cr, uid, ids, context=None):
+    def get_backup_connection_data(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
             raise osv.except_osv(_('Warning !'), _('URL is not set!'))
@@ -607,9 +629,19 @@ class msf_instance_cloud(osv.osv):
         url = urlparse(info['url'])
         if not url.netloc:
             raise osv.except_osv(_('Warning !'), _('Unable to parse url: %s') % (info['url']))
+        return {
+            'host': url.netloc,
+            'port': url.port,
+            'protocol': url.scheme,
+            'username': info['login'],
+            'password': info['password'],
+            'path': url.path,
+        }
 
+    def get_backup_connection(self, cr, uid, ids, context=None):
+        data = self.get_backup_connection_data(cr, uid, ids, context=context)
         try:
-            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=info['password'], path=url.path)
+            dav = webdav.Client(**data)
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
 
@@ -686,7 +718,8 @@ class msf_instance_cloud(osv.osv):
             param_obj.set_param(cr, 1, 'CLOUD_BUFFER_SIZE',  buffer_size)
             cr.commit()
         buffer_size = int(buffer_size)
-        self._logger.info('OneDrive: upload backup started, buffer_size: %d bytes' % (buffer_size, ))
+        # TODO
+        buffer_size=2000
         progress_obj = False
         try:
             if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
@@ -713,7 +746,7 @@ class msf_instance_cloud(osv.osv):
                 if previous_backup == bck['name']:
                     raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
 
-            dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
+            dav_data = self.get_backup_connection_data(cr, uid, [local_instance.id], context=None)
             temp_fileobj = NamedTemporaryFile('w+b', delete=True)
             z = zipfile.ZipFile(temp_fileobj, "w", compression=zipfile.ZIP_DEFLATED)
             z.write(bck['path'], arcname=bck['name'])
@@ -723,17 +756,49 @@ class msf_instance_cloud(osv.osv):
             zip_size = os.path.getsize(temp_fileobj.name)
             today = DateTime.now()
 
+            self._logger.info('OneDrive: upload backup started, buffer_size: %s, total size %s' % (misc.human_size(buffer_size), misc.human_size(zip_size)))
             if progress:
                 progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
 
-            dav.create_folder(self._temp_folder)
             final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
             temp_drive_file = '%s/%s.zip' % (self._temp_folder, local_instance.instance)
 
-            dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
-            temp_fileobj.close()
-            dav.move(temp_drive_file, final_name)
+            dav_connected = False
+            temp_create = False
+            error = False
+            upload_ok = False
+            dav = False
+            while True:
+                try:
+                    if not dav_connected:
+                        dav = webdav.Client(**dav_data)
+                        dav_connected = True
 
+                    if not temp_create:
+                        dav.create_folder(self._temp_folder)
+                        temp_create = True
+
+                    if not upload_ok:
+                        upload_ok, error = dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
+
+                    # please don't change the following to else:
+                    if upload_ok:
+                        dav.move(temp_drive_file, final_name)
+                        break
+                    else:
+                        # check date or break
+                        self._get_backoff(dav, 'OneDrive: retry %s' % error)
+
+                except requests.exceptions.RequestException, e:
+                    # check date or raise
+                    self._get_backoff(dav, 'OneDrive: retry except %s', e)
+
+            if not upload_ok:
+                if error:
+                    raise Exception(error)
+                else:
+                    raise Exception('Unknown error')
+            temp_fileobj.close()
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:
                 progress_obj.write({'state': 'Done', 'name': 100, 'message': _('Backup successfully sent!')})

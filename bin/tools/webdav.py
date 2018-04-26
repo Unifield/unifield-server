@@ -15,8 +15,16 @@ import os
 class ConnectionFailed(Exception):
     pass
 
+class PasswordFailed(Exception):
+    pass
+
 class Client(object):
     def __init__(self, host, port=0, auth=None, username=None, password=None, protocol='http', path=None):
+        self.requests_timeout = 45
+        self.session_uuid = False
+        self.session_offset = -1
+        self.session_nb_error = 0
+
         if not port:
             port = 443 if protocol == 'https' else 80
         self.path = path or ''
@@ -38,7 +46,7 @@ class Client(object):
             if not ctx_auth.provider.FedAuth or not ctx_auth.provider.rtFa:
                 raise ConnectionFailed(ctx_auth.get_last_error())
         else:
-            raise ConnectionFailed(ctx_auth.get_last_error())
+            raise requests.exceptions.RequestException(ctx_auth.get_last_error())
 
     def create_folder(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
@@ -48,9 +56,9 @@ class Client(object):
         options.set_header("X-HTTP-Method", "POST")
         self.request.context.authenticate_request(options)
         self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
         if result.status_code not in (200, 201):
-            result = requests.post("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), data="", headers=options.headers, auth=options.auth)
+            result = requests.post("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
             if result.status_code not in (200, 201):
                 raise Exception(result.content)
         return True
@@ -63,7 +71,7 @@ class Client(object):
         options.set_header("X-HTTP-Method", "DELETE")
         self.request.context.authenticate_request(options)
         self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
         if result.status_code not in (200, 201):
             raise Exception(result.content)
         return True
@@ -78,13 +86,14 @@ class Client(object):
         options.set_header("X-HTTP-Method", "POST")
         self.request.context.authenticate_request(options)
         self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth)
+        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
         if result.status_code not in (200, 201):
             raise Exception(result.content)
         return True
 
     def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
-        iid = uuid.uuid1()
+        if not self.session_uuid:
+            self.session_uuid = uuid.uuid1()
 
         if progress_obj:
             log = True
@@ -96,9 +105,12 @@ class Client(object):
             except:
                 size = None
 
-        offset = -1
+        if self.session_offset != -1:
+            fileobj.seek(self.session_offset)
+
         if not buffer_size:
             buffer_size = 10* 1024 * 1024
+
         x = ""
         split_name = remote_path.split('/')
         new_file = split_name.pop()
@@ -107,43 +119,49 @@ class Client(object):
         if path[-1] != '/':
             path += '/'
         webUri = '%s%s' % (path, new_file)
+        s = requests.Session()
 
         while True:
-            if offset == -1:
+            if self.session_offset == -1:
+                # first loop create an empty file
                 request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
-                offset = 0
-            elif not offset:
-                if len(x) == buffer_size:
-                    request_url="%s/_api/web/getfilebyserverrelativeurl('%s')/startupload(uploadId=guid'%s')" % (self.baseurl, webUri, iid)
-                else:
-                    request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
-            elif len(x) == buffer_size:
-                request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/continueupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, iid, offset)
+                self.session_offset = 0
             else:
-                request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/finishupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, iid, offset)
+                x = fileobj.read(buffer_size)
+                if not x:
+                    break
+                if not self.session_offset:
+                    # 2nd loop
+                    if len(x) == buffer_size:
+                        # split needed
+                        request_url="%s/_api/web/getfilebyserverrelativeurl('%s')/startupload(uploadId=guid'%s')" % (self.baseurl, webUri, self.session_uuid)
+                    else:
+                        # file size < buffer: no need to split
+                        request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
+                elif len(x) == buffer_size:
+                    request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/continueupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
+                else:
+                    request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/finishupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
 
-            offset += len(x)
             options = RequestOptions(request_url)
             options.method = HttpMethod.Post
 
             self.request.context.authenticate_request(options)
             self.request.context.ensure_form_digest(options)
-            result = requests.post(url=request_url, data=x, headers=options.headers, auth=options.auth)
+            result = s.post(url=request_url, data=x, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
             if result.status_code not in (200, 201):
-                raise Exception(result.content)
+                return (False, result.content)
+            self.session_nb_error = 0
+            self.session_offset += len(x)
 
-            if log and offset and offset % (buffer_size*5) == 0:
+            if log and self.session_offset and self.session_offset % (buffer_size*5) == 0:
                 percent_txt = ''
                 if size:
-                    percent = round(offset*100/size)
+                    percent = round(self.session_offset*100/size)
                     percent_txt = '%d%%' % percent
                     if progress_obj:
                         progress_obj.write({'name': percent})
 
-                logger.info('OneDrive: %d bytes sent on %s bytes %s' % (offset, size or 'unknown', percent_txt))
-
-            x = fileobj.read(buffer_size)
-            if not x:
-                break
-        return True
+                logger.info('OneDrive: %d bytes sent on %s bytes %s' % (self.session_offset, size or 'unknown', percent_txt))
+        return (True, '')
 
