@@ -297,6 +297,41 @@ class composition_item(osv.osv):
 composition_item()
 
 
+class res_users(osv.osv):
+    _name = 'res.users'
+    _inherit = ['res.users', 'update.link']
+
+res_users()
+
+
+class res_groups(osv.osv):
+    _name = 'res.groups'
+    _inherit = ['res.groups', 'update.link']
+
+res_groups()
+
+
+class res_country(osv.osv):
+    _name = 'res.country'
+    _inherit = ['res.country', 'update.link']
+
+res_country()
+
+
+class sync_monitor(osv.osv):
+    _name = 'sync.monitor'
+    _inherit = ['sync.monitor', 'update.link']
+
+sync_monitor()
+
+
+class supplier_catalogue(osv.osv):
+    _name = 'supplier.catalogue'
+    _inherit = ['supplier.catalogue', 'update.link']
+
+supplier_catalogue()
+
+
 class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
