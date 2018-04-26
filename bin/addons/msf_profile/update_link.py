@@ -150,6 +150,13 @@ class msf_budget(osv.osv):
 msf_budget()
 
 
+class msf_budget_decision_moment(osv.osv):
+    _name = 'msf.budget.decision.moment'
+    _inherit = ['msf.budget.decision.moment', 'update.link']
+
+msf_budget_decision_moment()
+
+
 class cash_request(osv.osv):
     _name = 'cash.request'
     _inherit = ['cash.request', 'update.link']
@@ -157,18 +164,18 @@ class cash_request(osv.osv):
 cash_request()
 
 
-class account_account_type(osv.osv):
-    _name = 'account.account.type'
-    _inherit = ['account.account.type', 'update.link']
-
-account_account_type()
-
-
 class account_account(osv.osv):
     _name = 'account.account'
     _inherit = ['account.account', 'update.link']
 
 account_account()
+
+
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = ['account.account.type', 'update.link']
+
+account_account_type()
 
 
 class account_analytic_account(osv.osv):
@@ -220,6 +227,20 @@ class account_fiscalyear_state(osv.osv):
 account_fiscalyear_state()
 
 
+class account_tax(osv.osv):
+    _name = 'account.tax'
+    _inherit = ['account.tax', 'update.link']
+
+account_tax()
+
+
+class account_tax_code(osv.osv):
+    _name = 'account.tax.code'
+    _inherit = ['account.tax.code', 'update.link']
+
+account_tax_code()
+
+
 class res_currency(osv.osv):
     _name = 'res.currency'
     _inherit = ['res.currency', 'update.link']
@@ -239,6 +260,13 @@ class hr_employee(osv.osv):
     _inherit = ['hr.employee', 'update.link']
 
 hr_employee()
+
+
+class hr_department(osv.osv):
+    _name = 'hr.department'
+    _inherit = ['hr.department', 'update.link']
+
+hr_department()
 
 
 class financing_contract_contract(osv.osv):
@@ -262,18 +290,25 @@ class product_product(osv.osv):
 product_product()
 
 
-class account_tax(osv.osv):
-    _name = 'account.tax'
-    _inherit = ['account.tax', 'update.link']
+class product_list(osv.osv):
+    _name = 'product.list'
+    _inherit = ['product.list', 'update.link']
 
-account_tax()
+product_list()
 
 
-class account_tax_code(osv.osv):
-    _name = 'account.tax.code'
-    _inherit = ['account.tax.code', 'update.link']
+class product_nomenclature(osv.osv):
+    _name = 'product.nomenclature'
+    _inherit = ['product.nomenclature', 'update.link']
 
-account_tax_code()
+product_nomenclature()
+
+
+class supplier_catalogue(osv.osv):
+    _name = 'supplier.catalogue'
+    _inherit = ['supplier.catalogue', 'update.link']
+
+supplier_catalogue()
 
 
 class msf_instance(osv.osv):
@@ -309,27 +344,6 @@ class res_groups(osv.osv):
     _inherit = ['res.groups', 'update.link']
 
 res_groups()
-
-
-class res_country(osv.osv):
-    _name = 'res.country'
-    _inherit = ['res.country', 'update.link']
-
-res_country()
-
-
-class sync_monitor(osv.osv):
-    _name = 'sync.monitor'
-    _inherit = ['sync.monitor', 'update.link']
-
-sync_monitor()
-
-
-class supplier_catalogue(osv.osv):
-    _name = 'supplier.catalogue'
-    _inherit = ['supplier.catalogue', 'update.link']
-
-supplier_catalogue()
 
 
 class ir_values(osv.osv):
