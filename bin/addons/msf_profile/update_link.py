@@ -157,6 +157,13 @@ class cash_request(osv.osv):
 cash_request()
 
 
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = ['account.account.type', 'update.link']
+
+account_account_type()
+
+
 class account_account(osv.osv):
     _name = 'account.account'
     _inherit = ['account.account', 'update.link']
@@ -241,6 +248,13 @@ class financing_contract_contract(osv.osv):
 financing_contract_contract()
 
 
+class financing_contract_donor(osv.osv):
+    _name = 'financing.contract.donor'
+    _inherit = ['financing.contract.donor', 'update.link']
+
+financing_contract_donor()
+
+
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = ['product.product', 'update.link']
@@ -253,6 +267,60 @@ class account_tax(osv.osv):
     _inherit = ['account.tax', 'update.link']
 
 account_tax()
+
+
+class account_tax_code(osv.osv):
+    _name = 'account.tax.code'
+    _inherit = ['account.tax.code', 'update.link']
+
+account_tax_code()
+
+
+class msf_instance(osv.osv):
+    _name = 'msf.instance'
+    _inherit = ['msf.instance', 'update.link']
+
+msf_instance()
+
+
+class composition_kit(osv.osv):
+    _name = 'composition.kit'
+    _inherit = ['composition.kit', 'update.link']
+
+composition_kit()
+
+
+class composition_item(osv.osv):
+    _name = 'composition.item'
+    _inherit = ['composition.item', 'update.link']
+
+composition_item()
+
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        """
+        Hides the Links "Updates Sent" and "Updates Sent" in some views:
+        - Kit Composition & Kit Item: when the Composition type is NOT theoretical
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        model_names = [x[0] for x in models]
+        if key == 'action' and key2 == 'client_action_relate' and ('composition.kit' in model_names or 'composition.item' in model_names):
+            new_act = []
+            for v in values:
+                if v[1] in ['updates_sent', 'updates_received'] and context.get('composition_type', '') != 'theoretical':
+                    continue
+                else:
+                    new_act.append(v)
+            values = new_act
+        return values
+
+ir_values()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
