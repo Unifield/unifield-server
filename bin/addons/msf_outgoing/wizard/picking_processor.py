@@ -210,7 +210,7 @@ class stock_picking_processor(osv.osv):
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
 
                 # search for simulation done for this move, and if has pack info attached
-                sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], context=context)
+                sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], order='id desc', context=context)
                 for sm_in_proc in line_obj.browse(cr, uid, sm_in_proc, context=context):
                     if sm_in_proc.pack_info_id:
                         line_data.update({
