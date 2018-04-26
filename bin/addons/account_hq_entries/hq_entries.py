@@ -566,7 +566,7 @@ class hq_entries(osv.osv):
                             raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
                                                                  ' analytic accounts\".') % (hq_account.code, hq_account.name))
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         import os
         processed = []

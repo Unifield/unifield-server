@@ -1536,7 +1536,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             # Message ESC 2
             write_vals['message_esc2'] = values.get('message_esc2')
 
-            write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, context=context)
+            write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, warnings=warnings, context=context)
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
 
@@ -1559,6 +1559,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 error_msg += warn
 
             write_vals['error_msg'] = error_msg
+            context['job_comment'] = ['Line %s: %s' % (line.line_number, s) for s in warnings]
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
@@ -1589,7 +1590,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return True
 
-    def check_integrity_status(self, cr, uid, vals, context=None):
+    def check_integrity_status(self, cr, uid, vals, warnings=None, context=None):
         '''
         Return the integrity_status of the line
         '''
@@ -1613,6 +1614,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         if product.batch_management:
             if not prodlot_id and not prodlot_name and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_lot'
+            elif not prodlot_id and not prodlot_name and context.get('simulation_bypass_missing_lot', False) and warnings is not None:
+                warnings.append(_('Batch Number is Missing'))
 
             if prodlot_id and prodlot_id.type != 'standard':
                 return 'wrong_lot_type_need_standard'
@@ -1620,6 +1623,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         if product.perishable:
             if not exp_date and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_date'
+            elif not exp_date and context.get('simulation_bypass_missing_lot', False) and warnings is not None:
+                warnings.append(_('Expiry Date is Missing'))                
 
             if not product.batch_management and prodlot_id and prodlot_id.type != 'internal':
                 return 'wrong_lot_type_need_internal'

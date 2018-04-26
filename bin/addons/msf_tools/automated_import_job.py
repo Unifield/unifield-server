@@ -388,7 +388,7 @@ class automated_import_job(osv.osv):
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
                     job.import_id.function_id.method_to_call
-                )(cr, uid, oldest_file)
+                )(cr, uid, oldest_file, context=context)
                 if processed:
                     nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
 
@@ -414,6 +414,8 @@ class automated_import_job(osv.osv):
                                 msg += _('%s lines have been rejected') % nb_rejected
 
                             self.log(cr, uid, job.id, msg)
+                if context.get('job_comment'):
+                    error_message += context['job_comment']
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,

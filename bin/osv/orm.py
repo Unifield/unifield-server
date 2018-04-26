@@ -786,7 +786,7 @@ class orm_template(object):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
-    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=",", context=None):
         import base64
 
         import_obj = self.pool.get('import_data')
@@ -799,7 +799,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
