@@ -125,7 +125,7 @@
         'view/deleted_object_view.xml',
         "view/boad_accounting_view.xml",
         'view/communication_config.xml',
-        'view/open_update_view.xml',
+        'view/update_link_view.xml',
     ],
     "demo_xml": [
     ],

@@ -25,11 +25,12 @@ import tools
 from tools.translate import _
 
 
-class open_update(osv.osv):
+class update_link(osv.osv):
     """
     NOTE: this class is in msf_profile because it uses classes defined in modules loaded before this one
     """
-    _name = 'open.update'
+    _name = 'update.link'
+    _description = 'Handling of the Links to Updates Sent and Received'
 
     def _open_update_list(self, cr, uid, ids, model='', type='received', context=None):
         """
@@ -90,126 +91,168 @@ class open_update(osv.osv):
         """
         return self._open_update_list(cr, uid, ids, model=self._name, type='sent', context=context)
 
-open_update()
+update_link()
 
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
-    _inherit = ['account.move.line', 'open.update']
+    _inherit = ['account.move.line', 'update.link']
 
 account_move_line()
 
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
-    _inherit = ['account.analytic.line', 'open.update']
+    _inherit = ['account.analytic.line', 'update.link']
 
 account_analytic_line()
 
 
 class account_move(osv.osv):
     _name = 'account.move'
-    _inherit = ['account.move', 'open.update']
+    _inherit = ['account.move', 'update.link']
 
 account_move()
 
 
 class res_partner(osv.osv):
     _name = 'res.partner'
-    _inherit = ['res.partner', 'open.update']
+    _inherit = ['res.partner', 'update.link']
 
 res_partner()
 
 
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
-    _inherit = ['account.bank.statement', 'open.update']
+    _inherit = ['account.bank.statement', 'update.link']
 
 account_bank_statement()
 
 
 class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
-    _inherit = ['account.bank.statement.line', 'open.update']
+    _inherit = ['account.bank.statement.line', 'update.link']
 
 account_bank_statement_line()
 
 
 class hq_entries(osv.osv):
     _name = 'hq.entries'
-    _inherit = ['hq.entries', 'open.update']
+    _inherit = ['hq.entries', 'update.link']
 
 hq_entries()
 
 
 class msf_budget(osv.osv):
     _name = 'msf.budget'
-    _inherit = ['msf.budget', 'open.update']
+    _inherit = ['msf.budget', 'update.link']
 
 msf_budget()
 
 
 class cash_request(osv.osv):
     _name = 'cash.request'
-    _inherit = ['cash.request', 'open.update']
+    _inherit = ['cash.request', 'update.link']
 
 cash_request()
 
 
 class account_account(osv.osv):
     _name = 'account.account'
-    _inherit = ['account.account', 'open.update']
+    _inherit = ['account.account', 'update.link']
 
 account_account()
 
 
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
-    _inherit = ['account.analytic.account', 'open.update']
+    _inherit = ['account.analytic.account', 'update.link']
 
 account_analytic_account()
 
 
 class account_journal(osv.osv):
     _name = 'account.journal'
-    _inherit = ['account.journal', 'open.update']
+    _inherit = ['account.journal', 'update.link']
 
 account_journal()
 
 
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
-    _inherit = ['account.analytic.journal', 'open.update']
+    _inherit = ['account.analytic.journal', 'update.link']
 
 account_analytic_journal()
 
 
 class account_fiscalyear(osv.osv):
     _name = 'account.fiscalyear'
-    _inherit = ['account.fiscalyear', 'open.update']
+    _inherit = ['account.fiscalyear', 'update.link']
 
 account_fiscalyear()
 
 
 class account_period(osv.osv):
     _name = 'account.period'
-    _inherit = ['account.period', 'open.update']
+    _inherit = ['account.period', 'update.link']
 
 account_period()
 
 
 class account_period_state(osv.osv):
     _name = 'account.period.state'
-    _inherit = ['account.period.state', 'open.update']
+    _inherit = ['account.period.state', 'update.link']
 
 account_period_state()
 
 
 class account_fiscalyear_state(osv.osv):
     _name = 'account.fiscalyear.state'
-    _inherit = ['account.fiscalyear.state', 'open.update']
+    _inherit = ['account.fiscalyear.state', 'update.link']
 
 account_fiscalyear_state()
+
+
+class res_currency(osv.osv):
+    _name = 'res.currency'
+    _inherit = ['res.currency', 'update.link']
+
+res_currency()
+
+
+class res_currency_table(osv.osv):
+    _name = 'res.currency.table'
+    _inherit = ['res.currency.table', 'update.link']
+
+res_currency_table()
+
+
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = ['hr.employee', 'update.link']
+
+hr_employee()
+
+
+class financing_contract_contract(osv.osv):
+    _name = 'financing.contract.contract'
+    _inherit = ['financing.contract.contract', 'update.link']
+
+financing_contract_contract()
+
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = ['product.product', 'update.link']
+
+product_product()
+
+
+class account_tax(osv.osv):
+    _name = 'account.tax'
+    _inherit = ['account.tax', 'update.link']
+
+account_tax()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
