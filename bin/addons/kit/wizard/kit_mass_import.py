@@ -631,7 +631,7 @@ class kit_mass_import(osv.osv):
 
         if value not in cache:
             record_ids = self.pool.get(model).search(cr, uid, [
-                (field, '=', value),
+                (field, '=ilike', value),
             ])
             if record_ids:
                 cache[value] = record_ids[0]

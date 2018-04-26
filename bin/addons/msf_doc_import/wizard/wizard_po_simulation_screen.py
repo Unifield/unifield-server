@@ -1393,7 +1393,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     prod_id = PRODUCT_CODE_ID.get(values[2])
 
                 if not prod_id and values[2]:
-                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', values[2])], context=context)
                     if not prod_ids:
                         write_vals['type_change'] = 'error'
                         errors.append(_('Product not found in database'))
@@ -1421,7 +1421,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom'] = uom_ids[0]
                     else:
@@ -1458,8 +1458,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Currency
-            currency_value = values[7]
-            if tools.ustr(currency_value) == line.in_currency.name:
+            currency_value = values[7].lower()
+            if tools.ustr(currency_value) == line.in_currency.name.lower():
                 write_vals['imp_currency'] = line.in_currency.id
             elif line.in_currency.name:
                 err_msg = _('The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')

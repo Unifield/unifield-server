@@ -441,8 +441,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
                     if row.cells[nb].data and x[3] == 'int':
                         try:
-                            if row.cells[nb].type == 'float':
-                                raise
                             int(row.cells[nb].data)
                         except:
                             error.append(_('Line %s, column %s, integer expected, found %s') % (index, nb+1, row.cells[nb].data))
@@ -1325,7 +1323,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if not prod_id and values['product_code']:
                     stripped_product_code = values['product_code'].strip()
                     prod_ids = prod_obj.search(cr, uid,
-                                               [('default_code', '=', stripped_product_code)],
+                                               [('default_code', '=ilike', stripped_product_code)],
                                                context=context)
                     if not prod_ids:
                         # if we didn't manage to link our product code with existing product in DB, we cannot continue checks
@@ -1366,7 +1364,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             else:
                 uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom_id'] = uom_ids[0]
                     else:
@@ -1403,7 +1401,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
-                if tools.ustr(currency_value) != line_currency.name:
+                if tools.ustr(currency_value.lower()) != line_currency.name.lower():
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 

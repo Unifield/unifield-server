@@ -476,7 +476,7 @@ class abstract_wizard_import(osv.osv_memory):
         """
         p_obj = self.pool.get('product.product')
         p_ids = p_obj.search(cr, uid, [
-            ('default_code', '=', default_code),
+            ('default_code', '=ilike', default_code),
         ], limit=1, order='NO_ORDER', context=context)
         if not p_ids:
             raise UnifieldImportException(_('No product found for the code \'%s\'') % default_code)

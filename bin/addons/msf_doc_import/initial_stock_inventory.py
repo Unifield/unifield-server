@@ -735,7 +735,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 try:
                     location_name = loc_id.strip()
-                    loc_ids = location_obj.search(cr, uid, [('name', '=', location_name)], context=context)
+                    loc_ids = location_obj.search(cr, uid, [('name', '=ilike', location_name)], context=context)
                     if not loc_ids:
                         location_id = False
                         to_correct_ok = True

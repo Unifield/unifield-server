@@ -672,7 +672,7 @@ class PhysicalInventory(osv.osv):
         cs_to_reset = []
         uom_ids = product_uom_obj.search(cr, uid, [], context=context)
         for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
-            all_uom[uom['name']] = uom['id']
+            all_uom[uom['name'].lower()] = uom['id']
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
             # === Process header ===
@@ -690,7 +690,8 @@ class PhysicalInventory(osv.osv):
                 inventory_reference = row.cells[2].data  # Cell C5
                 inventory_location = row.cells[5].data  # Cell F5
                 # Check location
-                if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
+                if inventory_rec.location_id \
+                        and inventory_rec.location_id.name.lower() != (inventory_location or '').strip().lower():
                     add_error(_('Location is different to inventory location'), row_index, 5)
 
                 # Check reference
@@ -727,7 +728,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check product_code and type
             product_code = row.cells[1].data
-            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            product_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
             product_id = False
             if len(product_ids) == 1:
                 product_id = product_ids[0]
@@ -739,7 +740,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check UoM
             product_uom_id = False
-            product_uom = row.cells[3].data
+            product_uom = row.cells[3].data.lower()
             if product_uom not in all_uom:
                 add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
             else:
