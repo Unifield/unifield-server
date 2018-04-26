@@ -637,21 +637,36 @@ class stock_incoming_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
 
             families_data = {}
-            for line in wizard.move_ids:
-                key = 'f%st%s' % (line.from_pack, line.to_pack)
+            for sm_in_proc in wizard.move_ids:
+                key = 'f%st%s' % (sm_in_proc.from_pack, sm_in_proc.to_pack)
                 families_data.setdefault(key, {
                     'wizard_id': wizard.id,
                     'move_ids': [],
-                    'from_pack': line.from_pack,
-                    'to_pack': line.to_pack,
+                    'from_pack': sm_in_proc.from_pack,
+                    'to_pack': sm_in_proc.to_pack,
                 })
-
-                families_data[key]['move_ids'].append(line.id)
+                families_data[key]['move_ids'].append(sm_in_proc.id)
 
             for family_data in families_data.values():
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
+
+                total_weight = 0.0
+                total_height = 0.0
+                total_length = 0.0
+                total_width = 0.0
+                for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
+                    total_weight += move.weight
+                    total_height += move.height
+                    total_length += move.length
+                    total_width += move.width
+                family_data.update({
+                    'weight': total_weight,
+                    'height': total_height,
+                    'length': total_length,
+                    'width': total_width,
+                })
 
                 fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
                 if move_ids:
@@ -1089,6 +1104,11 @@ class stock_move_in_processor(osv.osv):
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'weight': fields.float('Weight', digits=(16,2)),
+        'volume': fields.float('Volume', digits=(16,2)),
+        'height': fields.float('Height', digits=(16,2)),
+        'length': fields.float('Length', digits=(16,2)),
+        'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'linked_to_out': fields.related('wizard_id', 'linked_to_out', string='Linked to OUT', readonly=True),

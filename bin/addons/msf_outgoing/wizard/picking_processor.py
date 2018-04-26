@@ -216,6 +216,11 @@ class stock_picking_processor(osv.osv):
                         line_data.update({
                             'from_pack': sm_in_proc.pack_info_id.parcel_from,
                             'to_pack': sm_in_proc.pack_info_id.parcel_to,
+                            'weight': sm_in_proc.pack_info_id.total_weight,
+                            'volume': sm_in_proc.pack_info_id.total_volume,
+                            'height': sm_in_proc.pack_info_id.total_height,
+                            'length': sm_in_proc.pack_info_id.total_length,
+                            'width': sm_in_proc.pack_info_id.total_width,
                         })
                         break
                 line_obj.create(cr, uid, line_data, context=context)
