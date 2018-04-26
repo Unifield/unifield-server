@@ -619,6 +619,8 @@ class account_move_line(osv.osv):
     _sql_constraints = [
         ('credit_debit1', 'CHECK (credit*debit=0)',  'Wrong credit or debit value in accounting entry !'),
         ('credit_debit2', 'CHECK (credit+debit>=0)', 'Wrong credit or debit value in accounting entry !'),
+        ('booking_credit_debit1', 'CHECK (credit_currency * debit_currency = 0)', 'Wrong credit or debit value in booking currency!'),
+        ('booking_credit_debit2', 'CHECK (credit_currency + debit_currency >= 0)', 'Wrong credit or debit value in booking currency!'),
     ]
 
     def _auto_init(self, cr, context=None):

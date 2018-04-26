@@ -107491,3 +107491,8 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #, python-format
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
+
+#. module: account
+#: sql_constraint:account.move.line:0
+msgid "Wrong credit or debit value in booking currency!"
+msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
