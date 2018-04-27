@@ -248,7 +248,7 @@ class finance_archive(finance_export.finance_archive):
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
 
-# request used for OCB VI and for Liquidity Balances report
+# request used for OCB VI, OCP VI and for Liquidity Balances report
 liquidity_sql = """
             SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,

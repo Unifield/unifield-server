@@ -228,6 +228,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
         excluded_journal_types = ['hq']  # journal types that should not be used to take lines
+        reg_types = ('cash', 'bank', 'cheque')
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -241,8 +242,12 @@ class hq_report_ocp(report_sxw.report_sxw):
         period = pool.get('account.period').browse(cr, uid, period_id, context=context,
                                                    fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start
+        last_day_of_period = period.date_stop
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
+        year = str(year_num)
+        month = '%02d' % (tm.tm_mon)
+        period_yyyymm = "{0}{1}".format(year, month)
 
         # US-822: if December is picked should:
         # - include Period 16 action 2 Year end PL RESULT entries
@@ -363,6 +368,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,
+            'liquidity': hq_report_ocb.liquidity_sql,
         }
         if plresult_ji_in_ids:
             # NOTE: for these entries: booking and functional ccy are the same
@@ -412,6 +418,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
         monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (instance_code, selected_period, current_time)
+        liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (instance_code, selected_period, current_time)
 
         processrequests = [
             {
@@ -441,6 +448,14 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
+            },
+            {
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance',
+                            'Closing balance', 'Currency'],
+                'filename': liquidity_balance_filename,
+                'key': 'liquidity',
+                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id,
+                                 reg_types, last_day_of_period, tuple(instance_ids)),
             },
         ]
         if plresult_ji_in_ids:
