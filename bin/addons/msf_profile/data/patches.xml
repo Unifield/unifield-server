@@ -6,6 +6,11 @@
             <field name="method">us_4481_monitor_set_null_size</field>
         </record>
 
+        <!-- UF8.2 -->
+        <record id="ud_trans" model="patch.scripts">
+            <field name="method">ud_trans</field>
+        </record>
+
         <!-- UF8.1 -->
         <record id="us-4454" model="patch.scripts">
             <field name="method">cancel_extra_empty_draft_po</field>

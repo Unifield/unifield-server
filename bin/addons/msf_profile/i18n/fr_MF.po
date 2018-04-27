@@ -107668,3 +107668,8 @@ msgstr "Total Général Devise Fonc."
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:632
 msgid "Grand Total Reg. Currency"
 msgstr "Total Général Devise du Reg."
+
+#. module: account
+#: sql_constraint:account.move.line:0
+msgid "Wrong credit or debit value in booking currency!"
+msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"

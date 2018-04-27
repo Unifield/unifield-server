@@ -58,6 +58,50 @@ class patch_scripts(osv.osv):
             cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
         return True
 
+    # UF8.2
+    def ud_trans(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        if level_current == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
+
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+
+            cr.execute("""
+                update ir_translation r set xml_id =
+                    (select d.name from ir_model_data d where model='product.product' and module='sd' and d.res_id=(select p.id from product_product p where p.product_tmpl_id=r.res_id))
+                    where r.name='product.template,name'
+            """)
+            self._logger.warn('HQ update xml_id no %d product trans' % (cr.rowcount,))
+
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
+                model='ir.translation' and
+                res_id in (
+                   select id from ir_translation where name='product.template,name' and res_id in (
+                        select p.product_tmpl_id from product_product p where p.international_status=%s
+                        )
+                )
+            """, (unidata_id,))
+            self._logger.warn('HQ touching %d UD trans' % (cr.rowcount,))
+
+            # send product on which UD has changed the name without any lang ctx, if there isn't any ir.trans record
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''name'']'
+                where model='product.product' and
+                res_id in (
+                    select id from product_product where product_tmpl_id in
+                        ( select id from product_template where id in
+                            (select res_id from audittrail_log_line where name='name' and object_id=128 and method='write')
+                          and id not in (select res_id from ir_translation where name='product.template,name' and lang='en_MF')
+                        )
+                )
+            """)
+            self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
     # UF8.1
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
         rule_obj = self.pool.get('sync.client.message_rule')
@@ -251,6 +295,7 @@ class patch_scripts(osv.osv):
             self._logger.warn('%s AJI updated.' % (cr.rowcount,))
             cr.execute(update_ji)
             self._logger.warn('%s JI updated.' % (cr.rowcount,))
+
 
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
@@ -2659,3 +2704,33 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something(osv.osv):
+    _name = 'sync.trigger.something'
+
+    _columns = {
+        'name': fields.char('Name', size=16),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
+            _logger = logging.getLogger('tigger')
+
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_to_delete = """from ir_translation where name='product.template,name'
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
+            """ % (unidata_id,)  # not_a_user_entry
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id  """ + trans_to_delete + """
+            )""")  # not_a_user_entry
+            _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
+            cr.execute("delete "+ trans_to_delete) # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        return super(sync_tigger_something, self).create(cr, uid, vals, context)
+
+sync_tigger_something()
