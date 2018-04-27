@@ -227,7 +227,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
-        excluded_journal_types = ['hq', 'cur_adj']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -276,7 +276,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # - key: name of the SQL request
         # - value: the SQL request to use
         sqlrequests = {
-            # Pay attention to take analytic lines that are not on HQ, MIGRATION and FXA journals.
+            # Pay attention to take analytic lines that are not on HQ and MIGRATION journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
                        CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
@@ -322,7 +322,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ, MIGRATION or FXA journal
+            # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
@@ -406,12 +406,12 @@ class hq_report_ocp(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly Export.csv (ex: KE1_201609_171116110306_Monthly Export.csv)
+        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv (ex: KE1_201609_171116110306_Monthly_Export.csv)
         inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
         instance_code = inst and inst.code[:3] or ''
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        monthly_export_filename = '%s_%s_%s_Monthly Export.csv' % (instance_code, selected_period, current_time)
+        monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (instance_code, selected_period, current_time)
 
         processrequests = [
             {
