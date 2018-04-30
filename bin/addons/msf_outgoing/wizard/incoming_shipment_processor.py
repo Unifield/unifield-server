@@ -28,6 +28,93 @@ from msf_outgoing import INTEGRITY_STATUS_SELECTION
 import threading
 
 
+
+class in_family_processor(osv.osv):
+    """
+    IN family that merge some stock moves into one pack
+    """
+    _name = 'in.family.processor'
+    _description = 'IN family'
+    _rec_name = 'from_pack'
+
+    _columns = {
+        'name': fields.char('IN family', size=64),
+        'wizard_id': fields.many2one(
+            'stock.incoming.processor',
+            string='Wizard',
+            required=True,
+            ondelete='cascade',
+            help="IN processing wizard",
+        ),
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'pack_type': fields.many2one(
+            'pack.type',
+            string='Pack Type',
+            ondelete='set null',
+        ),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        'integrity_status': fields.selection(
+            string='Integrity status',
+            selection=[
+                ('empty', ''),
+                ('missing_weight', 'Weight is missing'),
+            ],
+            readonly=True,
+        ),
+        'move_ids': fields.one2many(
+            'stock.move.in.processor',
+            'pack_id',
+            string='Moves',
+        ),
+    }
+
+    _defaults = {
+        'integrity_status': 'empty',
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if 'weight' in vals:
+            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
+        return super(in_family_processor, self).write(cr, uid, ids, vals, context=context)
+
+    """
+    Controller methods
+    """
+    def onchange_pack_type(self, cr, uid, ids, pack_type):
+        """
+        Update values of the in family from the stock pack selecetd
+        """
+        # Objects
+        p_type_obj = self.pool.get('pack.type')
+
+        res = {}
+
+        if pack_type :
+            # if 'pack_type' is not a list, turn it into list
+            if isinstance(pack_type, (int, long)):
+                pack_type = [pack_type]
+
+            p_type = p_type_obj.browse(cr, uid, pack_type[0])
+
+            res.update({
+                'value': {
+                    'length': p_type.length,
+                    'width': p_type.width,
+                    'height': p_type.height,
+                },
+            })
+
+        return res
+
+in_family_processor()
+
+
 class stock_incoming_processor(osv.osv):
     """
     Incoming shipment processing wizard
@@ -1196,92 +1283,6 @@ class stock_move_in_processor(osv.osv):
         return {'value': {'integrity_status': 'empty'}}
 
 stock_move_in_processor()
-
-
-class in_family_processor(osv.osv):
-    """
-    IN family that merge some stock moves into one pack
-    """
-    _name = 'in.family.processor'
-    _description = 'IN family'
-    _rec_name = 'from_pack'
-
-    _columns = {
-        'name': fields.char('IN family', size=64),
-        'wizard_id': fields.many2one(
-            'stock.incoming.processor',
-            string='Wizard',
-            required=True,
-            ondelete='cascade',
-            help="IN processing wizard",
-        ),
-        'from_pack': fields.integer(string='From p.'),
-        'to_pack': fields.integer(string='To p.'),
-        'pack_type': fields.many2one(
-            'pack.type',
-            string='Pack Type',
-            ondelete='set null',
-        ),
-        'length': fields.float(digits=(16, 2), string='Length [cm]'),
-        'width': fields.float(digits=(16, 2), string='Width [cm]'),
-        'height': fields.float(digits=(16, 2), string='Height [cm]'),
-        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
-        'integrity_status': fields.selection(
-            string='Integrity status',
-            selection=[
-                ('empty', ''),
-                ('missing_weight', 'Weight is missing'),
-            ],
-            readonly=True,
-        ),
-        'move_ids': fields.one2many(
-            'stock.move.in.processor',
-            'pack_id',
-            string='Moves',
-        ),
-    }
-
-    _defaults = {
-        'integrity_status': 'empty',
-    }
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if 'weight' in vals:
-            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
-        return super(in_family_processor, self).write(cr, uid, ids, vals, context=context)
-
-    """
-    Controller methods
-    """
-    def onchange_pack_type(self, cr, uid, ids, pack_type):
-        """
-        Update values of the in family from the stock pack selecetd
-        """
-        # Objects
-        p_type_obj = self.pool.get('pack.type')
-
-        res = {}
-
-        if pack_type :
-            # if 'pack_type' is not a list, turn it into list
-            if isinstance(pack_type, (int, long)):
-                pack_type = [pack_type]
-
-            p_type = p_type_obj.browse(cr, uid, pack_type[0])
-
-            res.update({
-                'value': {
-                    'length': p_type.length,
-                    'width': p_type.width,
-                    'height': p_type.height,
-                },
-            })
-
-        return res
-
-in_family_processor()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
