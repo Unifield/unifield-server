@@ -221,7 +221,7 @@ class stock_incoming_processor(osv.osv):
 
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
-                if line.integrity_status != 'empty':
+                if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
                     return {
                         'type': 'ir.actions.act_window',
                         'res_model': proc._name,
