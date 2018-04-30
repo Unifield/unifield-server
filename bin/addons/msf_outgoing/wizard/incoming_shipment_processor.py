@@ -1204,7 +1204,7 @@ class in_family_processor(osv.osv):
     """
     _name = 'in.family.processor'
     _description = 'IN family'
-    # _rec_name = 'from_pack'
+    _rec_name = 'from_pack'
 
     _columns = {
         'name': fields.char('IN family', size=64),
