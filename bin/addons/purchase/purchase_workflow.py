@@ -75,6 +75,34 @@ class purchase_order_line(osv.osv):
                 if linked_in_move:
                     self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
 
+                # update qty on linked sale.order.line if has:
+                if pol.original_line_id.linked_sol_id:
+                    self.pool.get('sale.order.line').write(cr, uid, [pol.original_line_id.linked_sol_id.id], {
+                        'product_uom_qty': new_qty,
+                        'product_uos_qty': new_qty,
+                    }, context=context)
+
+        return True
+
+
+    def cancel_related_in_moves(self, cr, uid, ids, context=None):
+        '''
+        check if PO line has related IN moves, if it is the case, then cancel them
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            related_in_moves = self.pool.get('stock.move').search(cr, uid, [
+                ('purchase_line_id', '=', pol.id),
+                ('type', '=', 'in'),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
+            if related_in_moves:
+                self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
+
         return True
 
 
@@ -355,6 +383,45 @@ class purchase_order_line(osv.osv):
 
         return pick_id
 
+    def create_counterpart_fo_for_external_partner_po(self, cr, uid, p_order, context=False):
+        '''
+        US-4165 : Create a Field Order as a loan Purchase Order's counterpart
+        '''
+        if context is None:
+            context = {}
+
+        company_obj = self.pool.get('res.company')
+        curr_obj = self.pool.get('res.currency')
+        pricelist_obj = self.pool.get('product.pricelist')
+
+        pol_ids = self.search(cr, uid, [('order_id', '=', p_order.id), ('state', 'not in', ['cancel', 'cancel_r'])],
+                              context=context)
+        company_currency_id = company_obj.browse(cr, uid, uid, fields_to_fetch=['currency_id'], context=context).currency_id.id
+        pricelist_id = pricelist_obj.search(cr, uid, [('currency_id', '=', company_currency_id), ('type', '=', 'sale')],
+                                            context=context)[0]
+        ftf = ['product_id', 'price_unit', 'product_uom', 'product_qty']
+        counterpart_data = {
+            'order_type': 'loan',
+            'origin': p_order.name,
+            'loan_id': p_order.id,
+            'loan_duration': p_order.loan_duration,
+            'is_a_counterpart': True,
+            'partner_id': p_order.partner_id.id,
+            'partner_order_id': p_order.partner_id.address[0].id,
+            'partner_shipping_id': p_order.partner_id.address[0].id,
+            'partner_invoice_id': p_order.partner_id.address[0].id,
+            'pricelist_id': pricelist_id,
+            'order_line': [(0, 0, {
+                'product_id': x.product_id.id,
+                'price_unit': curr_obj.compute(cr, uid, p_order.pricelist_id.currency_id.id, company_currency_id,
+                                               x.price_unit, round=False, context=context),
+                'product_uom': x.product_uom.id,
+                'product_uom_qty': x.product_qty,
+                'type': 'make_to_stock',
+            }) for x in self.browse(cr, uid, pol_ids, fields_to_fetch=ftf, context=context)],
+        }
+
+        return self.pool.get('sale.order').create(cr, uid, counterpart_data, context=context)
 
     def button_confirmed(self, cr, uid, ids, context=None):
         '''
@@ -393,8 +460,16 @@ class purchase_order_line(osv.osv):
         for pol_id in ids:
             wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
 
-        return True
+        # Create the counterpart FO to a loan PO with an external partner if non-cancelled lines have been confirmed
+        p_order = False
+        for pol in self.browse(cr, uid, ids, context=context):
+            p_order = pol.order_id
+            break
+        if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart\
+                and p_order.partner_type == 'external' and p_order.state == 'confirmed':
+            self.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
 
+        return True
 
     def action_validated_n(self, cr, uid, ids, context=None):
         '''
@@ -490,9 +565,9 @@ class purchase_order_line(osv.osv):
 
         self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-sy (if has)
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
 
@@ -563,7 +638,7 @@ class purchase_order_line(osv.osv):
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel']),
+                    ('state', 'not in', ['done', 'cancel', 'shipped']),
                     ('type', '=', 'in'),
                 ])
                 created = False
@@ -668,6 +743,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
@@ -680,7 +756,7 @@ class purchase_order_line(osv.osv):
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
-        Wkf method called when getting the cancel state
+        Wkf method called when getting the cancel_r state
         '''
         if context is None:
             context = {}
@@ -690,6 +766,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):

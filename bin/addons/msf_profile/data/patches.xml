@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF9.0 -->
+        <record id="us_4481_monitor_set_null_size" model="patch.scripts">
+            <field name="method">us_4481_monitor_set_null_size</field>
+        </record>
+
+        <!-- UF8.2 -->
+        <record id="ud_trans" model="patch.scripts">
+            <field name="method">ud_trans</field>
+        </record>
+
         <!-- UF8.1 -->
+        <record id="us-4454" model="patch.scripts">
+            <field name="method">cancel_extra_empty_draft_po</field>
+        </record>
+
         <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
             <field name="method">us_4430_set_puf_to_reversal</field>
         </record>
@@ -17,6 +31,10 @@
 
         <record id="us_4407_update_free_lines_ad" model="patch.scripts">
             <field name="method">us_4407_update_free_lines_ad</field>
+        </record>
+
+        <record id="us_4151_change_correct_out_currency" model="patch.scripts">
+            <field name="method">us_4151_change_correct_out_currency</field>
         </record>
 
         <!-- UF7.3 -->

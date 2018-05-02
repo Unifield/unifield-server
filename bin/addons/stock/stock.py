@@ -2080,6 +2080,7 @@ class stock_move(osv.osv):
         if default is None:
             default = {}
         default = default.copy()
+
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
 
     def _auto_init(self, cursor, context=None):

@@ -228,7 +228,29 @@ class background_report(osv.osv_memory):
             percent = 1.00
         self.write(cr, uid, ids, {'percent': percent})
 
-
+    def compute_percent(self, cr, uid, current_line_position, nb_lines, before=0, after=1, context=None):
+        """
+        Computes and updates the percentage of the Report Generation:
+        :param cr: DB cursor
+        :param uid: id of the current user
+        :param current_line_position: position of the current line starting from 1
+        :param nb_lines: total number of lines which will be handled
+        :param before: value of the loading percentage before the first call to this method (0 = the generation hasn't started yet)
+        :param after: value of the loading percentage expected after the last call to this method (1 = 100% of the report will be generated)
+        :param context: dictionary which must contain the background_id
+        :return: the percentage of the report Generation
+        """
+        if context is None:
+            context = {}
+        percent = 0.0
+        if context.get('background_id'):
+            if current_line_position == nb_lines:
+                percent = after
+                self.update_percent(cr, uid, [context['background_id']], percent)
+            elif current_line_position % 50 == 0:  # update percentage every 50 lines
+                percent = before + (current_line_position / float(nb_lines) * (after - before))
+                self.update_percent(cr, uid, [context['background_id']], percent)
+        return percent
 
 
 background_report()

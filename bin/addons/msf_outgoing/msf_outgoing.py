@@ -810,6 +810,8 @@ class shipment(osv.osv):
             log_flag = False
 
             for family in wizard.family_ids:
+                if not family.selected_number:
+                    continue
                 picking = family.draft_packing_id
                 draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
@@ -1066,7 +1068,6 @@ class shipment(osv.osv):
         return_info = {}
 
         counter = 0
-
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
@@ -5084,26 +5085,6 @@ class stock_move(osv.osv):
                     signal = 'cancel_r' if resource else 'cancel'
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
-                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                    ('purchase_line_id', '=', move.purchase_line_id.id),
-                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                    ('picking_id.type', '=', 'in'),
-                ], context=context)
-                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                    # all in lines processed or will be processed for this po line
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
-
-                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
-                    # check if the original PO line can be set to done
-                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
-                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                        ('picking_id.type', '=', 'in'),
-                    ], context=context)
-                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
-                        # all in lines processed or will be processed for this po line
-                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
-
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
@@ -5128,14 +5109,33 @@ class stock_move(osv.osv):
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
 
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
+                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
+                    # check if the original PO line can be set to done
+                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
+                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                        ('picking_id.type', '=', 'in'),
+                    ], context=context)
+                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                        # all in lines processed or will be processed for this po line
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
+
+
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
-                    if resource:
-                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
 
