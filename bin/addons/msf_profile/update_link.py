@@ -34,7 +34,7 @@ class update_link(osv.osv):
 
     def _open_update_list(self, cr, uid, ids, model='', type='received', context=None):
         """
-        Returns the Update Received or Sent View with the SD ref of the selected entry already filled in.
+        Returns the Update Received or Sent View with the SD ref and model of the selected entry already filled in.
         :param model: String, name of the model of the selected entry (ex: 'account.move.line').
         :param type: String. If 'received', will open the Update Received View. Else will open the Update Sent View.
         """
@@ -81,15 +81,16 @@ class update_link(osv.osv):
 
     def open_update_received(self, cr, uid, ids, context=None):
         """
-        Opens the Updates Received View with the SD ref of the selected entry already filled in
+        Opens the Updates Received View with the SD ref and model of the selected entry already filled in
         """
         return self._open_update_list(cr, uid, ids, model=self._name, type='received', context=context)
 
     def open_update_sent(self, cr, uid, ids, context=None):
         """
-        Opens the Updates Sent View with the SD ref of the selected entry already filled in
+        Opens the Updates Sent View with the SD ref and model of the selected entry already filled in
         """
         return self._open_update_list(cr, uid, ids, model=self._name, type='sent', context=context)
+
 
 update_link()
 
@@ -98,12 +99,14 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = ['account.move.line', 'update.link']
 
+
 account_move_line()
 
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = ['account.analytic.line', 'update.link']
+
 
 account_analytic_line()
 
@@ -112,12 +115,14 @@ class account_move(osv.osv):
     _name = 'account.move'
     _inherit = ['account.move', 'update.link']
 
+
 account_move()
 
 
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = ['res.partner', 'update.link']
+
 
 res_partner()
 
@@ -126,12 +131,14 @@ class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
     _inherit = ['account.bank.statement', 'update.link']
 
+
 account_bank_statement()
 
 
 class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
     _inherit = ['account.bank.statement.line', 'update.link']
+
 
 account_bank_statement_line()
 
@@ -140,12 +147,14 @@ class hq_entries(osv.osv):
     _name = 'hq.entries'
     _inherit = ['hq.entries', 'update.link']
 
+
 hq_entries()
 
 
 class msf_budget(osv.osv):
     _name = 'msf.budget'
     _inherit = ['msf.budget', 'update.link']
+
 
 msf_budget()
 
@@ -154,12 +163,14 @@ class msf_budget_decision_moment(osv.osv):
     _name = 'msf.budget.decision.moment'
     _inherit = ['msf.budget.decision.moment', 'update.link']
 
+
 msf_budget_decision_moment()
 
 
 class cash_request(osv.osv):
     _name = 'cash.request'
     _inherit = ['cash.request', 'update.link']
+
 
 cash_request()
 
@@ -168,12 +179,14 @@ class account_account(osv.osv):
     _name = 'account.account'
     _inherit = ['account.account', 'update.link']
 
+
 account_account()
 
 
 class account_account_type(osv.osv):
     _name = 'account.account.type'
     _inherit = ['account.account.type', 'update.link']
+
 
 account_account_type()
 
@@ -182,12 +195,14 @@ class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
     _inherit = ['account.analytic.account', 'update.link']
 
+
 account_analytic_account()
 
 
 class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = ['account.journal', 'update.link']
+
 
 account_journal()
 
@@ -196,12 +211,14 @@ class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
     _inherit = ['account.analytic.journal', 'update.link']
 
+
 account_analytic_journal()
 
 
 class account_fiscalyear(osv.osv):
     _name = 'account.fiscalyear'
     _inherit = ['account.fiscalyear', 'update.link']
+
 
 account_fiscalyear()
 
@@ -210,12 +227,14 @@ class account_period(osv.osv):
     _name = 'account.period'
     _inherit = ['account.period', 'update.link']
 
+
 account_period()
 
 
 class account_period_state(osv.osv):
     _name = 'account.period.state'
     _inherit = ['account.period.state', 'update.link']
+
 
 account_period_state()
 
@@ -224,12 +243,14 @@ class account_fiscalyear_state(osv.osv):
     _name = 'account.fiscalyear.state'
     _inherit = ['account.fiscalyear.state', 'update.link']
 
+
 account_fiscalyear_state()
 
 
 class account_tax(osv.osv):
     _name = 'account.tax'
     _inherit = ['account.tax', 'update.link']
+
 
 account_tax()
 
@@ -238,12 +259,14 @@ class account_tax_code(osv.osv):
     _name = 'account.tax.code'
     _inherit = ['account.tax.code', 'update.link']
 
+
 account_tax_code()
 
 
 class res_currency(osv.osv):
     _name = 'res.currency'
     _inherit = ['res.currency', 'update.link']
+
 
 res_currency()
 
@@ -252,12 +275,14 @@ class res_currency_table(osv.osv):
     _name = 'res.currency.table'
     _inherit = ['res.currency.table', 'update.link']
 
+
 res_currency_table()
 
 
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = ['hr.employee', 'update.link']
+
 
 hr_employee()
 
@@ -266,12 +291,14 @@ class hr_department(osv.osv):
     _name = 'hr.department'
     _inherit = ['hr.department', 'update.link']
 
+
 hr_department()
 
 
 class financing_contract_contract(osv.osv):
     _name = 'financing.contract.contract'
     _inherit = ['financing.contract.contract', 'update.link']
+
 
 financing_contract_contract()
 
@@ -280,12 +307,14 @@ class financing_contract_donor(osv.osv):
     _name = 'financing.contract.donor'
     _inherit = ['financing.contract.donor', 'update.link']
 
+
 financing_contract_donor()
 
 
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = ['product.product', 'update.link']
+
 
 product_product()
 
@@ -294,12 +323,14 @@ class product_list(osv.osv):
     _name = 'product.list'
     _inherit = ['product.list', 'update.link']
 
+
 product_list()
 
 
 class product_nomenclature(osv.osv):
     _name = 'product.nomenclature'
     _inherit = ['product.nomenclature', 'update.link']
+
 
 product_nomenclature()
 
@@ -308,12 +339,14 @@ class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _inherit = ['supplier.catalogue', 'update.link']
 
+
 supplier_catalogue()
 
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
     _inherit = ['msf.instance', 'update.link']
+
 
 msf_instance()
 
@@ -322,12 +355,14 @@ class composition_kit(osv.osv):
     _name = 'composition.kit'
     _inherit = ['composition.kit', 'update.link']
 
+
 composition_kit()
 
 
 class composition_item(osv.osv):
     _name = 'composition.item'
     _inherit = ['composition.item', 'update.link']
+
 
 composition_item()
 
@@ -336,12 +371,14 @@ class res_users(osv.osv):
     _name = 'res.users'
     _inherit = ['res.users', 'update.link']
 
+
 res_users()
 
 
 class res_groups(osv.osv):
     _name = 'res.groups'
     _inherit = ['res.groups', 'update.link']
+
 
 res_groups()
 
@@ -352,7 +389,7 @@ class ir_values(osv.osv):
 
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
         """
-        Hides the Links "Updates Sent" and "Updates Sent" in some views:
+        Hides the Links "Updates Received" and "Updates Sent" in some views:
         - Kit Composition & Kit Item: when the Composition type is NOT theoretical
         """
         if context is None:
@@ -368,6 +405,7 @@ class ir_values(osv.osv):
                     new_act.append(v)
             values = new_act
         return values
+
 
 ir_values()
 
