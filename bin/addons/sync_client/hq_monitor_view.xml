@@ -41,7 +41,7 @@
             <field name="name">Synchronisation Instances Monitor</field>
             <field name="res_model">sync.monitor</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">tree,form</field>
             <field name="domain">[('my_instance', '=', False)]</field>
             <field name="search_view_id" ref="sync_hq_monitor_search" />
             <field name="view_id" ref="sync_hq_monitor_tree" />
@@ -77,7 +77,7 @@
             <field name="name">Version Instances Monitor</field>
             <field name="res_model">sync.version.instance.monitor</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">tree,form</field>
             <field name="domain">[('instance_id', '!=', False)]</field>
             <field name="view_id" ref="sync_hq_instance_version_tree" />
         </record>
