@@ -77420,9 +77420,10 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "Original Qty"
 msgstr "Original Qty"
 
-#. module: sync_client
+#. modules: sync_client, msf_profile
 #: model:ir.actions.act_window,name:sync_client.update_to_send_action
 #: model:ir.ui.menu,name:sync_client.update_sent_menu
+#: code:addons/msf_profile/update_link.py:70
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
@@ -92525,9 +92526,10 @@ msgstr "Pays"
 msgid "res.request"
 msgstr "res.request"
 
-#. module: sync_client
+#. modules: sync_client, msf_profile
 #: model:ir.actions.act_window,name:sync_client.update_received_action
 #: model:ir.ui.menu,name:sync_client.update_received_menu
+#: code:addons/msf_profile/update_link.py:70
 msgid "Update Received Monitor"
 msgstr "Surveillance des Mises à jour Reçues"
 
@@ -107673,3 +107675,14 @@ msgstr "Total Général Devise du Reg."
 #: sql_constraint:account.move.line:0
 msgid "Wrong credit or debit value in booking currency!"
 msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
+
+#. module: msf_profile
+#: model:ir.model,name:msf_profile.model_update_link
+msgid "Handling of the Links to Updates Sent and Received"
+msgstr "Gestion des Liens vers les Mises à jour Reçues et Envoyées"
+
+#. module: msf_profile
+#: code:addons/msf_profile/update_link.py:48
+#, python-format
+msgid "This feature can only be used with one entry selected."
+msgstr "Cette fonctionnalité ne peut être utilisée qu'avec une seule entrée sélectionnée."
