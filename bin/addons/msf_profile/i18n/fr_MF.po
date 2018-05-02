@@ -46381,10 +46381,86 @@ msgstr "Valeur totale de l'inventaire"
 msgid "Technical field used to record the currency chosen by the user during a picking confirmation (when average price costing method is used)"
 msgstr "Champ technique utilisé pour enregistrer la devise choisie par l'utilisateur lors de la confirmation du Picking (lorsque la méthode tarifaire basée sur le prix moyen est utilisée)"
 
-#. module: sync_client
+#. modules: sync_client, msf_profile
 #: view:sync.client.update_received:0
+#: model:ir.actions.server,name:msf_profile.action_aal_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_account_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_account_type_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_analytic_account_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_analytic_journal_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_fiscalyear_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_fiscalyear_state_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_journal_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_period_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_period_state_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_tax_code_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_account_tax_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_am_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_aml_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_cash_request_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_composition_item_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_composition_kit_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_financing_contract_contract_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_financing_contract_donor_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_hq_entries_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_hr_department_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_hr_employee_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_msf_budget_decision_moment_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_msf_budget_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_msf_instance_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_partner_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_product_list_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_product_nomenclature_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_product_product_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_register_line_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_register_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_res_currency_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_res_currency_table_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_res_groups_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_res_users_open_update_received
+#: model:ir.actions.server,name:msf_profile.action_supplier_catalogue_open_update_received
 msgid "Updates Received"
 msgstr "Mises à jour Reçues"
+
+#. module: msf_profile
+#: model:ir.actions.server,name:msf_profile.action_aal_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_account_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_account_type_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_analytic_account_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_analytic_journal_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_fiscalyear_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_fiscalyear_state_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_journal_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_period_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_period_state_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_tax_code_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_account_tax_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_am_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_aml_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_cash_request_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_composition_item_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_composition_kit_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_financing_contract_contract_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_financing_contract_donor_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_hq_entries_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_hr_department_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_hr_employee_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_msf_budget_decision_moment_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_msf_budget_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_msf_instance_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_partner_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_product_list_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_product_nomenclature_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_product_product_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_register_line_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_register_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_res_currency_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_res_currency_table_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_res_groups_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_res_users_open_update_sent
+#: model:ir.actions.server,name:msf_profile.action_supplier_catalogue_open_update_sent
+msgid "Updates Sent"
+msgstr "Mises à jour Envoyées"
 
 #. module: consumption_calculation
 #: field:product.history.consumption.product,consumption_id:0
@@ -104082,11 +104158,6 @@ msgstr "Afficher le rapport uniquement pour des partenaires spécifiques"
 #: help:wizard.account.partner.balance.tree,account_ids:0
 msgid "Display the report for specific accounts only"
 msgstr "Afficher le rapport uniquement pour des comptes spécifiques"
-
-#. module: sync_client
-#: view:sync.client.update_received:0
-msgid "Updates Received"
-msgstr "Mises à jour Reçues"
 
 #. module: sync_client
 #: view:sync.client.update_to_send:0
