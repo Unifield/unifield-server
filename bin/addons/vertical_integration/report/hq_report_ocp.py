@@ -370,13 +370,16 @@ class hq_report_ocp(report_sxw.report_sxw):
                 """,
             'liquidity': hq_report_ocb.liquidity_sql,
             'account_balances_per_currency': """
-                SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+                SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
+                       c.name AS currency
                 FROM
                 (
-                    SELECT journal_id, account_id, currency_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
+                    SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
+                           SUM(col2) AS calculated, SUM(col3) AS closing
                     FROM (
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, aml.currency_id AS currency_id,
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
                             ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j ON aml.journal_id = j.id 
@@ -385,11 +388,13 @@ class hq_report_ocp(report_sxw.report_sxw):
                             WHERE acc.active = 't'
                             AND curr.active = 't'
                             AND aml.date < %s
-                            GROUP BY aml.journal_id, aml.account_id, aml.currency_id
+                            AND j.instance_id IN %s
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     UNION
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, aml.currency_id AS currency_id,
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
                             0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j ON aml.journal_id = j.id 
@@ -398,11 +403,13 @@ class hq_report_ocp(report_sxw.report_sxw):
                             WHERE acc.active = 't'
                             AND curr.active = 't'
                             AND aml.period_id = %s
-                            GROUP BY aml.journal_id, aml.account_id, aml.currency_id
+                            AND j.instance_id IN %s
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     UNION
                         (
-                            SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, aml.currency_id AS currency_id,
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
                             0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
                             FROM account_move_line AS aml 
                             LEFT JOIN account_journal j ON aml.journal_id = j.id 
@@ -411,18 +418,17 @@ class hq_report_ocp(report_sxw.report_sxw):
                             WHERE acc.active = 't'
                             AND curr.active = 't'
                             AND aml.date <= %s
-                            GROUP BY aml.journal_id, aml.account_id, aml.currency_id
+                            AND j.instance_id IN %s
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     ) AS ssreq
-                    GROUP BY journal_id, account_id, currency_id
-                    ORDER BY journal_id, account_id, currency_id
+                    GROUP BY instance_id, account_id, currency_id
+                    ORDER BY instance_id, account_id, currency_id
                 ) AS req
-                INNER JOIN account_journal j ON req.journal_id = j.id
-                INNER JOIN msf_instance i ON j.instance_id = i.id
                 INNER JOIN account_account acc ON req.account_id = acc.id
                 INNER JOIN res_currency c ON req.currency_id = c.id
-                WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0)
-                AND j.instance_id IN %s;
+                INNER JOIN msf_instance i ON req.instance_id = i.id
+                WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
                 """,
         }
         if plresult_ji_in_ids:
@@ -518,8 +524,8 @@ class hq_report_ocp(report_sxw.report_sxw):
                             'Closing balance', 'Booking Currency'],
                 'filename': account_balance_filename,
                 'key': 'account_balances_per_currency',
-                'query_params': (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period,
-                                 tuple(instance_ids)),
+                'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
+                                 tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
             },
         ]
         if plresult_ji_in_ids:
