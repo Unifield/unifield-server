@@ -80,6 +80,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Coordination')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('HQ Remarks')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Y/N')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -103,6 +104,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'state_to_display') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

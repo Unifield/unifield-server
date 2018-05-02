@@ -1084,6 +1084,7 @@ class stock_picking(osv.osv):
                                 context=context
                             )
                             out_values['price_unit'] = price_unit
+                            out_values['price_currency_id'] = out_move.price_currency_id.id
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
