@@ -150,9 +150,8 @@
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(getSelValue('purchase.order.line', 'state', line.get('state', '')))|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
     </Row>

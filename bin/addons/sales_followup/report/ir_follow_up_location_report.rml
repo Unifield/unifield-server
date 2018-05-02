@@ -191,7 +191,7 @@
                     <para style="Lines">[[ o.name ]]</para>
                 </td>
                 <td>
-                    <para style="Lines">Status: [[ getSel(o, 'state') ]]       Requestor: [[ o.requestor or '' ]]</para>
+                    <para style="Lines">Doc. Status: [[ getSel(o, 'state') ]]       Requestor: [[ o.requestor or '' ]]</para>
                 </td>
                 <td>
                     <para style="Lines">Location Requestor: [[ o.location_requestor_id.name ]]</para>
@@ -256,7 +256,7 @@
                     <para style="Lines"><i>Delivery Order</i></para>
                 </td>
 	    		<td>
-                    <para style="Lines"><i>Line status</i></para>
+                    <para style="Lines"><i>Line Status</i></para>
 	    		</td>
 	    		<td>
                     <para style="Lines"><i>CDD</i></para>
@@ -309,8 +309,8 @@
 	    			<para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and getSelValue('sale.order.line', 'state', line.get('state', '-')) or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and getSelValue('sale.order.line', 'state', line.get('state', '-')) or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and line.get('state_display', '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and line.get('state_display', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and (line.get('cdd', '') and formatLang(line['cdd'], date=True) or 'N/A') or removeParentNode('para') ]]</para>

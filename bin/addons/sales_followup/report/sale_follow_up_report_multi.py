@@ -132,7 +132,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 cdd = line.order_id.delivery_confirmed_date
 
             data = {
-                'state': line.state,
+                'state_display': line.state_to_display,
             }
 
             for move in line.move_ids:

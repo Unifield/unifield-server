@@ -214,7 +214,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 line_moves, int_name = self._get_move_from_line(line, line.product_id.id, line.order_id.name)
 
             data = {
-                'state': line.state,
+                'state_display': line.state_to_display,
             }
 
             if len(line.move_ids) > 0:

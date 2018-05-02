@@ -107541,7 +107541,7 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
 #: report:ir.follow.up.location.report_pdf:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:231
 #: report:sales.follow.up.multi.report_pdf:0
-msgid "Line status"
+msgid "Line Status"
 msgstr "Statut de la ligne"
 
 #. module: sales_followup
@@ -107799,3 +107799,16 @@ msgstr "Total Général Devise du Reg."
 #: sql_constraint:account.move.line:0
 msgid "Wrong credit or debit value in booking currency!"
 msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:281
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:230
+msgid "Doc. Status"
+msgstr "Statut du Doc."
+
+#. modules: msf_supply_doc_export, sales_followup
+#: report:po.follow.up_rml:0
+#: report:ir.follow.up.location.report_pdf:0
+#: report:sales.follow.up.multi.report_pdf:0
+msgid "Doc. Status:"
+msgstr "Statut du Doc.:"

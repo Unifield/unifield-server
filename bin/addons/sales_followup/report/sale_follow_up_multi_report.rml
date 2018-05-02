@@ -175,10 +175,10 @@
                     <para style="Lines">Order ref:</para>
                 </td>
                 <td>
-                    <para style="Lines">[[ o.name ]]       Status: [[ getSel(o, 'state') ]]</para>
+                    <para style="Lines">[[ o.name ]]       </para>
                 </td>
                 <td>
-                    <para style="Lines"></para>
+                    <para style="Lines">Doc. Status: [[ getSel(o, 'state') ]]</para>
                 </td>
                 <td>
                     <para style="Lines">Received: [[ formatLang(o.date_order, date=True) ]]</para>
@@ -240,7 +240,7 @@
                     <para style="Lines"><i>Qty to deliver</i></para>
                 </td>
                 <td>
-                    <para style="Lines"><i>Line status</i></para>
+                    <para style="Lines"><i>Line Status</i></para>
                 </td>
                 <td>
                     <para style="Lines"><i>Transport</i></para>
@@ -286,7 +286,7 @@
                     <para style="LinesBlue">[[ line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
 	    		</td>
                 <td>
-	    			<para style="LinesBlue">[[ getSelValue('sale.order.line', 'state', line.get('state', '-')) ]]</para>
+	    			<para style="LinesBlue">[[ line.get('state_display', '-') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('transport', '') and getSel(line['transport'], 'transport_type') or '' ]]</para>
