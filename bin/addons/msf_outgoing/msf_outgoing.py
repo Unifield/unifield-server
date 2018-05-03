@@ -4589,11 +4589,18 @@ class stock_picking(osv.osv):
                     ], context=context)
                     if sad_move:
                         if ppl_processor_wiz.draft_step1 or ppl_processor_wiz.draft_step2:
-                            sad_move = self.pool.get('ppl.move.processor').browse(cr, uid, sad_move[0], context=context)
-                            if sad_move.quantity - return_qty <= 0:
-                                self.pool.get('ppl.move.processor').unlink(cr, uid, [sad_move.id], context=context)
-                            else:
-                                self.pool.get('ppl.move.processor').write(cr, uid, [sad_move.id], {'quantity': sad_move.quantity - return_qty}, context=context)
+                            remaining_qty_to_return = return_qty
+                            for sad_move in self.pool.get('ppl.move.processor').browse(cr, uid, sad_move, context=context):
+                                if remaining_qty_to_return <= 0:
+                                    break
+                                if sad_move.quantity > remaining_qty_to_return:
+                                    self.pool.get('ppl.move.processor').write(cr, uid, [sad_move.id], {
+                                        'quantity': sad_move.quantity - remaining_qty_to_return,
+                                    }, context=context)
+                                    remaining_qty_to_return = 0
+                                else: # sad_move.quantity <= remaining_qty_to_return
+                                    self.pool.get('ppl.move.processor').unlink(cr, uid, [sad_move.id], context=context)
+                                    remaining_qty_to_return -= sad_move.quantity
 
                             if ppl_processor_wiz.draft_step2:
                                 self.pool.get('ppl.processor').write(cr, uid, [ppl_processor_wiz.id], {'draft_step2': False})
