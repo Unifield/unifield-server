@@ -25,7 +25,6 @@ import pooler
 import time
 from time import strftime
 from time import strptime
-import re
 
 from account_override import finance_export
 import hq_report_ocb
@@ -36,6 +35,8 @@ from report import report_sxw
 class finance_archive(finance_export.finance_archive):
     """
     Extend existing class with new methods for this particular export.
+
+    Note: this report has NOT been translated: headers of all reports for OCP VI remain in English whatever the language selected
     """
 
     _journal_types = None
@@ -63,7 +64,7 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
-        - instance: becomes 'EAUD' if this matches the first 4 characters of the original HQ entry, or 'SIEG' by default
+        - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """
@@ -109,7 +110,7 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
-        - instance: becomes 'EAUD' if this matches the first 4 characters of the original HQ entry, or 'SIEG' by default
+        - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """

@@ -33,6 +33,11 @@ import hq_report_ocb_matching
 from report import report_sxw
 
 class finance_archive(finance_export.finance_archive):
+    """
+    Extends existing class with new methods for OCP Matching Export.
+
+    Note: this report has NOT been translated: headers of all reports for OCP VI remain in English whatever the language selected
+    """
 
     def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """
