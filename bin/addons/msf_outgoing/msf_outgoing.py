@@ -837,7 +837,9 @@ class shipment(osv.osv):
                     ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
                     related_draft_fam = False
                     for fam in ship_processor_wiz.family_ids:
-                        if family.from_pack == fam.from_pack:
+                        # family = return
+                        # fam = SaD
+                        if family.ppl_id.id == fam.ppl_id.id and family.from_pack == fam.from_pack:
                             if related_draft_fam:
                                 # if we enter there, it means that we have found 2 related draft family
                                 # so it's wrong, we stop the searcing
