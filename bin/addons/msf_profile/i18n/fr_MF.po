@@ -2655,8 +2655,8 @@ msgstr "Compte- Code"
 
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
-msgid "Please confirm that you want to cancel all lines of this PO"
-msgstr "Please confirm that you want to cancel all lines of this PO"
+msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
+msgstr "Veuillez confirmer que vous voulez annuler toutes les lignes non-confirmées du BC"
 
 #. module: register_accounting
 #: view:wizard.transfer.with.change:0
@@ -107642,3 +107642,34 @@ msgstr "Sélecteur non trouvé."
 #: report:addons/account_mcdb/report/combined_journals_report.mako:181
 msgid "SELECTION"
 msgstr "SÉLECTION"
+
+#. modules: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
+#, python-format
+msgid "Status"
+msgstr "Statut"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#: code:addons/msf_doc_import/wizard/__init__.py:83
+#, python-format
+msgid "state"
+msgstr "Statut"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:655
+msgid "Grand Total Func. Currency"
+msgstr "Total Général Devise Fonc."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/liquidity_position_xls.mako:632
+msgid "Grand Total Reg. Currency"
+msgstr "Total Général Devise du Reg."
+
+#. module: account
+#: sql_constraint:account.move.line:0
+msgid "Wrong credit or debit value in booking currency!"
+msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
