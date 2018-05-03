@@ -214,7 +214,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
-        excluded_journal_types = ['hq']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
         reg_types = ('cash', 'bank', 'cheque')
         # Fetch data from wizard
         if not data.get('form', False):

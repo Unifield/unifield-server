@@ -130,7 +130,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         instance_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        excluded_journal_types = ['hq']
+        excluded_journal_types = ['hq', 'migration']
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
