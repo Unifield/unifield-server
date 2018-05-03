@@ -321,7 +321,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
-        excluded_journal_types = ['hq'] # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
