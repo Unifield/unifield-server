@@ -64,7 +64,7 @@ class finance_archive(finance_export.finance_archive):
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'EAUD' if this matches the first 4 characters of the original HQ entry, or 'SIEG' by default
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
+        - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -100,16 +100,7 @@ class finance_archive(finance_export.finance_archive):
                 if od_hq_entry:
                     original_ref = corr_aml.ref or ''
                     line_list[instance_code] = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
-                    # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
-                    descr = ''
-                    if re.match('^COR\d - ', line_list[description]):
-                        descr = line_list[description][7:]
-                    elif re.match('^REV - COR\d - ', line_list[description]):
-                        descr = line_list[description][13:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
-                    line_list[journal] = descr and descr[10:13] or ''
+                    line_list[journal] = original_ref[8:11] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -119,7 +110,7 @@ class finance_archive(finance_export.finance_archive):
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'EAUD' if this matches the first 4 characters of the original HQ entry, or 'SIEG' by default
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
+        - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -155,16 +146,7 @@ class finance_archive(finance_export.finance_archive):
                 if od_hq_entry:
                     original_ref = corr_aal.ref or ''
                     line_list[instance_code] = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
-                    # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
-                    descr = ''
-                    if re.match('^COR\d - ', line_list[description]):
-                        descr = line_list[description][7:]
-                    elif re.match('^REV - COR\d - ', line_list[description]):
-                        descr = line_list[description][13:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
-                    line_list[journal] = descr and descr[10:13] or ''
+                    line_list[journal] = original_ref[8:11] or ''
             new_data.append(tuple(line_list))
         return new_data
 
