@@ -164,9 +164,11 @@ class purchase_order_line_sync(osv.osv):
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
                     raise Exception, "Original PO line not found when trying to split the PO line"
-                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state'], context=context)
+                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state', 'analytic_distribution_id'], context=context)
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
+                if orig_pol_info.analytic_distribution_id:
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_pol_info.analytic_distribution_id.id, {}, context=context)
                 if orig_pol_info.linked_sol_id:
                     pol_values['origin'] = orig_pol_info.origin
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
