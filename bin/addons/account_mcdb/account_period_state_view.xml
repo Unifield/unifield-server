@@ -25,11 +25,11 @@
             <field name="model">account.period.state</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <data >
+                <tree noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="period_id" />
                     <field name="state" />
-                </data>
+                </tree>
             </field>
         </record>
 
@@ -84,11 +84,11 @@
             <field name="model">account.fiscalyear.state</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <data >
+                <tree noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="fy_id" />
                     <field name="state" />
-                </data>
+                </tree>
             </field>
         </record>
 

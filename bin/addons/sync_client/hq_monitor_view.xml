@@ -57,7 +57,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
-                <tree hide_edit_button="1" hide_delete_button="1">
+                <tree hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="version" />
                     <field name="backup_date" />
