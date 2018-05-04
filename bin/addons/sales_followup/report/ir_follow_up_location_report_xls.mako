@@ -306,7 +306,7 @@
         % for o in getOrders(r):
             % for line in getLines(o):
             <Row ss:Height="11.25">
-                %if line.get('current_line_state', '') == 'cancel':
+                %if line.get('state', '') in ['cancel', 'cancel_r']:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.location_requestor_id.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.requestor or ''|x}</Data></Cell>
