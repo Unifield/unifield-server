@@ -2771,7 +2771,7 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
         <record id="ir_aal_related_entries_search" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">account.analytic.line</field>
-            <field name="name">Related Entries</field>
+            <field name="name">related_entries</field>
             <field eval="'ir.actions.server,%d'%action_aal_related_entries" name="value"/>
             <field eval="True" name="object"/>
             <field name="sequence" eval="105"/>

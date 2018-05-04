@@ -149,7 +149,7 @@ class account_analytic_line(osv.osv):
         2) those having the same reference as one of the AJIs found in 1)
         3) those having an Entry Sequence matching exactly with the reference of one of the AJIs found in 1)
         4) those whose reference contains EXACTLY the Entry Sequence of the selected AJI
-        5) those having the same Entry Sequence as one of the JIs found in 2), 3), or 4)
+        5) those having the same Entry Sequence as one of the AJIs found in 2), 3), or 4)
         """
         if context is None:
             context = {}
