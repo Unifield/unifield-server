@@ -18660,6 +18660,7 @@ msgstr "Transfert (interne)"
 
 #. module: account
 #: model:ir.actions.server,name:account.action_aml_related_entries
+#: model:ir.actions.server,name:account.action_aal_related_entries
 msgid "Related Entries"
 msgstr "Ecritures associées"
 
@@ -47968,6 +47969,7 @@ msgstr "Nom Centre de Coût"
 
 #. module: account
 #: code:addons/account/account_move_line.py:1366
+#: code:addons/account/account_analytic_line.py:196
 #, python-format
 msgid "Related entries: Entry Sequence %s"
 msgstr "Ecritures associées : Entrée Comptable %s"
@@ -104687,17 +104689,6 @@ msgid "Open Items at"
 msgstr "Écritures ouvertes à"
 
 #. module: account
-#: model:ir.actions.server,name:account.action_aml_related_entries
-msgid "Related Entries"
-msgstr "Ecritures associées"
-
-#. module: account
-#: code:addons/account/account_move_line.py:1369
-#, python-format
-msgid "Related entries: Entry Sequence %s"
-msgstr "Ecritures associées : Entrée Comptable %s"
-
-#. module: account
 #: code:addons/account/account_move_line.py:1330
 #, python-format
 msgid "The related entries feature can only be used with one Journal Item."
@@ -107673,3 +107664,9 @@ msgstr "Total Général Devise du Reg."
 #: sql_constraint:account.move.line:0
 msgid "Wrong credit or debit value in booking currency!"
 msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
+
+#. module: account
+#: code:addons/account/account_analytic_line.py:161
+#, python-format
+msgid "The related entries feature can only be used with one Analytic Journal Item."
+msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule ligne d'Ecriture Analytique."
