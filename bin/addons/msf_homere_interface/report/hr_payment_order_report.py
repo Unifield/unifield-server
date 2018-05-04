@@ -72,34 +72,34 @@ class hr_payment_order_report(report_sxw.rml_parse):
         employee_ids = employee_obj.search(self.cr, self.uid, [('employee_type', '=', 'local'),
                                                                ('payment_method_id', '=', self.payment_method_id)],
                                            order='name', context=self.context)
+        account_ids = account_obj.search(self.cr, self.uid,
+                                         [('user_type_code', 'in', ['receivables', 'payables'])],
+                                         order='NO_ORDER', context=self.context)
+        dom = [('move_state', '=', 'posted'),
+               ('reconcile_id', '=', False),
+               ('account_id', 'in', account_ids)]
+        if self.period_id:
+            dom.append(('period_id', '=', self.period_id))
+        aml_ids = aml_obj.search(self.cr, self.uid, dom, order='NO_ORDER', context=self.context)
         current_line_position = 0
-        for employee in employee_obj.browse(self.cr, self.uid, employee_ids,
-                                            fields_to_fetch=['name', 'identification_id', 'bank_name', 'bank_account_number'],
-                                            context=self.context):
+        for employee in employee_obj.read(self.cr, self.uid, employee_ids,
+                                          ['name', 'identification_id', 'bank_name', 'bank_account_number'], context=self.context):
             current_line_position += 1
-            account_ids = account_obj.search(self.cr, self.uid,
-                                             [('user_type_code', 'in', ['receivables', 'payables'])],
-                                             order='NO_ORDER', context=self.context)
-            dom = [('move_state', '=', 'posted'),
-                   ('reconcile_id', '=', False),
-                   ('employee_id', '=', employee.id),
-                   ('account_id', 'in', account_ids)]
-            if self.period_id:
-                dom.append(('period_id', '=', self.period_id))
-            aml_ids = aml_obj.search(self.cr, self.uid, dom, order='currency_id', context=self.context)
+            employee_aml_ids = aml_obj.search(self.cr, self.uid,
+                                              [('id', 'in', aml_ids), ('employee_id', '=', employee['id'])],
+                                              order='currency_id', context=self.context)
             curr = {}
-            for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=['amount_currency', 'currency_id'],
-                                      context=self.context):
-                if aml.currency_id:
-                    if aml.currency_id.name not in curr:
-                        curr[aml.currency_id.name] = 0.0
-                    curr[aml.currency_id.name] += aml.amount_currency or 0.0
+            for aml in aml_obj.read(self.cr, self.uid, employee_aml_ids, ['amount_currency', 'currency_id'], context=self.context):
+                if aml['currency_id'] and len(aml['currency_id']) == 2:
+                    if aml['currency_id'][1] not in curr:
+                        curr[aml['currency_id'][1]] = 0.0
+                    curr[aml['currency_id'][1]] += aml['amount_currency'] or 0.0
             for c in curr:
                 employee_dict = {
-                    'employee_name': employee.name,
-                    'employee_id': employee.identification_id or '',
-                    'bank_name': employee.bank_name or '',
-                    'bank_account_number': employee.bank_account_number or '',
+                    'employee_name': employee['name'],
+                    'employee_id': employee['identification_id'] or '',
+                    'bank_name': employee['bank_name'] or '',
+                    'bank_account_number': employee['bank_account_number'] or '',
                     'net_to_pay': curr[c],
                     'currency': c,
                 }
