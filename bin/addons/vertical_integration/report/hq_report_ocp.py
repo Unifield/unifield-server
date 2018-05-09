@@ -356,6 +356,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 ORDER BY aml.id;
                 """,
             'liquidity': hq_report_ocb.liquidity_sql,
+            # Migration journals ONLY are excluded from the Account Balances
             'account_balances_per_currency': """
                 SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
                        c.name AS currency
@@ -376,6 +377,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                             AND curr.active = 't'
                             AND aml.date < %s
                             AND j.instance_id IN %s
+                            AND j.type != 'migration'
                             GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     UNION
@@ -391,6 +393,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                             AND curr.active = 't'
                             AND aml.period_id = %s
                             AND j.instance_id IN %s
+                            AND j.type != 'migration'
                             GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     UNION
@@ -406,6 +409,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                             AND curr.active = 't'
                             AND aml.date <= %s
                             AND j.instance_id IN %s
+                            AND j.type != 'migration'
                             GROUP BY aml.instance_id, aml.account_id, aml.currency_id
                         )
                     ) AS ssreq
