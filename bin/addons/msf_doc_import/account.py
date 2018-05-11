@@ -175,10 +175,6 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Prepare some values
         # Do changes because of YAML tests
         cr = pooler.get_db(dbname).cursor()
-        try:
-            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_fp_id = 0
         created = 0
         processed = 0
         errors = []
@@ -441,8 +437,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. %s is a VIEW type Cost Center!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         # Check Funding Pool (added since UTP-1082)
-                        r_fp = msf_fp_id
-                        if line[cols['Funding Pool']]:
+                        if not line[cols['Funding Pool']]:
+                            errors.append(_('Line %s. No Funding Pool specified!') % (current_line_num,))
+                            continue
+                        else:
                             fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['Funding Pool']]), ('code', '=', line[cols['Funding Pool']])])
                             if not fp_ids:
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))

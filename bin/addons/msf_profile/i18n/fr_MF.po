@@ -107519,3 +107519,9 @@ msgstr "Id du modèle chargé"
 #, python-format
 msgid "You have to load the template first."
 msgstr "Vous devez d'abord charger le modèle."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:441
+#, python-format
+msgid "Line %s. No Funding Pool specified!"
+msgstr "Ligne %s. Aucun Funding Pool précisé !"
