@@ -107668,5 +107668,5 @@ msgstr "Valeur de crédit ou débit erronée en devise d'enregistrement !"
 #. module: account
 #: code:addons/account/account_analytic_line.py:161
 #, python-format
-msgid "The related entries feature can only be used with one Analytic Journal Item."
-msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule ligne d'Ecriture Analytique."
+msgid "The related entries feature can only be used with one Analytic Line."
+msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule Ligne Analytique."
