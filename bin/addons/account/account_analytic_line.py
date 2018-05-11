@@ -200,9 +200,11 @@ class account_analytic_line(osv.osv):
         domain = [('id', 'in', list(related_aals))]
         # same views whatever the category displayed (FP or Free1/2)
         view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_tree')
-        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_filter')
         view_id = view_id and view_id[1] or False
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_filter')
         search_view_id = search_view_id and search_view_id[1] or False
+        if selected_category == 'FUNDING':
+            context.update({'display_fp': True})
         return {
             'name': _('Related entries: Entry Sequence %s') % selected_entry_seq,
             'type': 'ir.actions.act_window',
