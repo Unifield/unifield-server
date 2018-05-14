@@ -27,21 +27,27 @@
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6" attrs="{'readonly': [('state', '=', 'paid')]}">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type','=','purchase')]"/>
-                        <field name="number" readonly="1"/>
+                        <field name="journal_id"
+                               attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}"
+                               domain="[('is_current_instance','=',True), ('type','=','purchase')]"/>
+                        <field name="number" attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}"/>
                         <field name="type" invisible="1"/>
-                        <field name="currency_id" readonly="1" />
+                        <field name="currency_id"
+                               attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}" />
                         <newline/>
                         <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,'1')" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
                         <field name="document_date" required="1" attrs="{'readonly': [('state', '=', 'paid')]}"/>
-                        <field name="date_invoice" required="1" readonly="1"/>
-                        <field name="register_posting_date" required="1" readonly="1"/>
+                        <field name="date_invoice" required="1"
+                               attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}"/>
+                        <field name="register_posting_date" required="1"
+                               attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}"/>
                         <field name="reference" />
                         <newline/>
                         <label string="" colspan="4"/>
-                        <field name="amount_total"/>
+                        <field name="amount_total"
+                               attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}"/>
                     </group>
                     <group colspan="8" col="8"
                            attrs="{'invisible': [('analytic_distribution_id', '=', False)], 'readonly': [('state', '=', 'paid')]}">
