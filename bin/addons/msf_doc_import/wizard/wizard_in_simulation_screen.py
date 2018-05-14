@@ -587,6 +587,9 @@ the date has a wrong format: %s') % (index+1, str(e)))
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
+                if context.get('auto_import_ok') and file_parse_errors:
+                    raise Exception('\n'.join(file_parse_errors))
+
                 '''
                 We check for each line if the number of columns is consistent
                 with the expected number of columns :
