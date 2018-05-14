@@ -556,14 +556,19 @@ class shipment(osv.osv):
             )
 
         for shipment in self.browse(cr, uid, ids, context=context):
-            # Create the shipment processor wizard
-            ship_proc_vals = {
-                'shipment_id': shipment.id,
-                'address_id': shipment.address_id.id,
-                'transport_type': shipment.transport_type,
-            }
-            ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-            ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
+            # search for an existing shipment saved as draft ... :
+            wiz_ids = self.pool.get('shipment.processor').search(cr, uid, [('shipment_id', '=', shipment.id), ('draft', '=', True)], context=context)
+            if wiz_ids:
+                ship_proc_id = wiz_ids[0]
+            else:
+                # ... not found so create a new shipment processor wizard
+                ship_proc_vals = {
+                    'shipment_id': shipment.id,
+                    'address_id': shipment.address_id.id,
+                    'transport_type': shipment.transport_type,
+                }
+                ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
+                ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -825,6 +830,35 @@ class shipment(osv.osv):
                     if picking_processor_wiz:
                         picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
 
+                # reset "save as draft" wizard if has:
+                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
+                    ('shipment_id', '=', shipment.id),
+                    ('draft', '=', True),
+                ], context=context)
+                if ship_processor_wiz and family.selected_number:
+                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
+                    related_draft_fam = False
+                    for fam in ship_processor_wiz.family_ids:
+                        # family = return
+                        # fam = SaD
+                        if family.ppl_id.id == fam.ppl_id.id and family.from_pack == fam.from_pack:
+                            if related_draft_fam:
+                                # if we enter there, it means that we have found 2 related draft family
+                                # so it's wrong, we stop the searcing
+                                related_draft_fam = False
+                                break
+                            else:
+                                related_draft_fam = fam
+
+                    if related_draft_fam:
+                        if family.selected_number < related_draft_fam.selected_number: # partial
+                            self.pool.get('shipment.family.processor').write(cr, uid, [related_draft_fam.id], {
+                                'selected_number': related_draft_fam.selected_number - family.selected_number,
+                                'to_pack': related_draft_fam.to_pack - family.selected_number,
+                            }, context=context)
+                        elif family.selected_number >= related_draft_fam.selected_number: # delete all line
+                            self.pool.get('shipment.family.processor').unlink(cr, uid, [related_draft_fam.id], context=context)
+
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
                     'name': draft_picking.name,
@@ -1079,6 +1113,14 @@ class shipment(osv.osv):
                 if family.return_from == 0 and family.return_to == 0:
                     continue
 
+                # reset "save as draft" wizard if has:
+                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
+                    ('shipment_id', '=', shipment.id),
+                    ('draft', '=', True),
+                ], context=context)
+                if ship_processor_wiz:
+                    self.pool.get('shipment.processor').write(cr, uid, ship_processor_wiz, {'draft': False}, context=context)
+
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
                     'name': family.ppl_id.name,
@@ -1107,6 +1149,33 @@ class shipment(osv.osv):
                         # In the middle, two now tuple in stay
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
+
+                ### update save as draft move if has ###
+                # get the linked "save as draft" wizard:
+                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
+                    ('shipment_id', '=', draft_shipment_id),
+                    ('draft', '=', True),
+                ], context=context)
+                if ship_processor_wiz:
+                    # create "save as draft" lines with returned qty:
+                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
+                    family_vals = {
+                        'wizard_id': ship_processor_wiz.id,
+                        'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
+                        'from_pack': family.from_pack,
+                        'to_pack': family.to_pack,
+                        'selected_number': family.num_of_packs,
+                        'pack_type': family.pack_type and family.pack_type.id or False,
+                        'length': family.length,
+                        'width': family.width,
+                        'height': family.height,
+                        'weight': family.weight,
+                        'draft_packing_id': draft_packing and draft_packing.id or False,
+                        'ppl_id': family.ppl_id and family.ppl_id.id or False,
+                        'comment': family.comment,
+                    }
+                    self.pool.get('shipment.family.processor').create(cr, uid, family_vals, context=context)
+
 
                 move_data = {}
                 for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -1272,7 +1341,6 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             # shipment state should be 'packed'
-            #assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
             if shipment.state != 'packed':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
                                      _('Cannot process a Shipment which is in an incorrect state'))
@@ -4068,8 +4136,13 @@ class stock_picking(osv.osv):
                 _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
             )
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # search for an existing shipment saved as draft ... :
+        wiz_ids = self.pool.get('ppl.processor').search(cr, uid, [('picking_id', 'in', ids), ('draft_step1', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 
@@ -4112,6 +4185,12 @@ class stock_picking(osv.osv):
                     _('Error'),
                     _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
                 )
+
+            if wizard.draft_step2:
+                continue
+            else:
+                fam_ids = self.pool.get('ppl.family.processor').search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
+                self.pool.get('ppl.family.processor').unlink(cr, uid, fam_ids, context=context)
 
             families_data = {}
 
@@ -4416,7 +4495,7 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
 
-            # get the linked "save as draft" wizard if has:
+            # get the linked "save as draft" create.picking.processor wizard if has:
             picking_processor_wiz = []
             if draft_picking_id:
                 picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
@@ -4425,6 +4504,15 @@ class stock_picking(osv.osv):
                 ], context=context)
                 if picking_processor_wiz:
                     picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
+
+            # get the linked "save as draft" ppl.processor wizard if has:
+            ppl_processor_wiz = self.pool.get('ppl.processor').search(cr, uid, [
+                ('picking_id', '=', picking.id),
+                '|', ('draft_step1', '=', True),
+                ('draft_step2', '=', True),
+            ], context=context)
+            if ppl_processor_wiz:
+                ppl_processor_wiz = self.pool.get('ppl.processor').browse(cr, uid, ppl_processor_wiz[0], context=context)
 
             for line in wizard.move_ids:
                 return_qty = line.quantity
@@ -4496,6 +4584,29 @@ class stock_picking(osv.osv):
                                 'ordered_quantity': sad_move.ordered_quantity + return_qty,
                                 'quantity': sad_move.quantity + return_qty,
                             }, context=context)
+
+                if ppl_processor_wiz:
+                    sad_move = self.pool.get('ppl.move.processor').search(cr, uid, [
+                        ('wizard_id', '=', ppl_processor_wiz.id),
+                        ('move_id', '=', line.move_id.id),
+                    ], context=context)
+                    if sad_move:
+                        if ppl_processor_wiz.draft_step1 or ppl_processor_wiz.draft_step2:
+                            remaining_qty_to_return = return_qty
+                            for sad_move in self.pool.get('ppl.move.processor').browse(cr, uid, sad_move, context=context):
+                                if remaining_qty_to_return <= 0:
+                                    break
+                                if sad_move.quantity > remaining_qty_to_return:
+                                    self.pool.get('ppl.move.processor').write(cr, uid, [sad_move.id], {
+                                        'quantity': sad_move.quantity - remaining_qty_to_return,
+                                    }, context=context)
+                                    remaining_qty_to_return = 0
+                                else: # sad_move.quantity <= remaining_qty_to_return
+                                    self.pool.get('ppl.move.processor').unlink(cr, uid, [sad_move.id], context=context)
+                                    remaining_qty_to_return -= sad_move.quantity
+
+                            if ppl_processor_wiz.draft_step2:
+                                self.pool.get('ppl.processor').write(cr, uid, [ppl_processor_wiz.id], {'draft_step2': False})
 
             # Log message for PPL
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
