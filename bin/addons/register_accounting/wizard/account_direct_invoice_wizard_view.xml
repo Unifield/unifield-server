@@ -104,8 +104,10 @@
                                 <group col="4" colspan="4" attrs="{'readonly': [('state', 'not in', ['open', 'paid'])]}">
                                     <separator colspan="4" string="Refund" attrs="{'invisible': [('state', 'not in', ['open', 'paid'])]}"/>
                                     <field name="state" attrs="{'readonly': [('state', 'in', ['draft', 'open', 'paid', 'cancel'])]}" colspan="2"/>
+                                    <field name="original_invoice_id" invisible="1"/>
                                     <button name="%(action_direct_invoice_refund)d" type='action' string='Refund'
-                                            states='open,paid' icon="gtk-execute" colspan="2"/>
+                                            states='open,paid' icon="gtk-execute" colspan="2"
+                                            context="{'dir_invoice_id': original_invoice_id}"/>
                                 </group>
                             </page>
                             <page string="Other Info">
