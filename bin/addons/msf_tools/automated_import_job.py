@@ -77,6 +77,8 @@ def get_oldest_filename(job, ftp_connec=None, sftp=None):
         with sftp.cd(job.import_id.src_path):
             for fileattr in sftp.listdir_attr():
                 if sftp.isfile(fileattr.filename) and fileattr.st_mtime > latest:
+                    if job.import_id.function_id.startswith and not fileattr.filename.startswith(job.import_id.function_id.startswith):
+                        continue
                     latest = fileattr.st_mtime
                     latestfile = fileattr.filename
         return os.path.join(job.import_id.src_path, latestfile) if latestfile else False
