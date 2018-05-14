@@ -3435,6 +3435,7 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
             new_picking_id = False
             processed_moves = []
+            new_split_move = {}
             move_data = {}
             for line in wizard.move_ids:
                 move = line.move_id
@@ -3446,6 +3447,7 @@ class stock_picking(osv.osv):
                     move_data.setdefault(move.id, {
                         'original_qty': move.product_qty,
                         'processed_qty': 0.00,
+                        'total_qty': move.product_qty,
                     })
 
                 if line.quantity <= 0.00:
@@ -3491,10 +3493,15 @@ class stock_picking(osv.osv):
                     # Create a new move
                     new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                     processed_moves.append(new_move_id)
+                    new_split_move[new_move_id] = True
+
                     # Update the original move
+
+                    # here we can't use move.product_qty bc this value is bowser_record cached on not flush with the following write
+                    move_data[move.id]['total_qty'] -= quantity
                     wr_vals = {
-                        'product_qty': move.product_qty - quantity,
-                        'product_uos_qty': move.product_qty - quantity,
+                        'product_qty': move_data[move.id]['total_qty'],
+                        'product_uos_qty': move_data[move.id]['total_qty'],
                     }
                     move_obj.write(cr, uid, [move.id], wr_vals, context=context)
                 else:
@@ -3517,8 +3524,8 @@ class stock_picking(osv.osv):
             # If not, create a backorder
             need_new_picking = False
             for move in picking.move_lines:
-                if move.state not in ('done', 'cancel') and (not move_data.get(move.id, False) or \
-                                                             move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']):
+                if not new_split_move.get(move.id) and move.state not in ('done', 'cancel') and (not move_data.get(move.id, False) or \
+                                                                                                 move_data[move.id]['original_qty'] != move_data[move.id]['processed_qty']):
                     need_new_picking = True
                     break
 
