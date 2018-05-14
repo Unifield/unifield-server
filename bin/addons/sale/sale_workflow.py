@@ -318,7 +318,7 @@ class sale_order_line(osv.osv):
 
         if pick_to_use:
             # if PICK found above has already been synched, then ignore it:
-            already_synched = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+            already_synched = self.pool.get('sync.client.message_to_send').search_exist(cr, 1, [
                 ('identifier', 'ilike', '%%stock_picking/%s_%%' % pick_to_use[0]),
             ], context=context)
             if already_synched:

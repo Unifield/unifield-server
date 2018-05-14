@@ -775,13 +775,14 @@ class so_po_common(osv.osv_memory):
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner, context,usb=False):
+    def create_message_with_object_and_partner(self, cr, real_uid, rule_sequence, object_id, partner, context,usb=False):
 
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
         # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
         #
         ##############################################################################
+        uid = 1
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
 
@@ -820,7 +821,8 @@ class so_po_common(osv.osv_memory):
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
-    def create_invalid_recovery_message(self, cr, uid, partner_name, name, context):
+    def create_invalid_recovery_message(self, cr, real_uid, partner_name, name, context):
+        uid = 1
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, 1003, context)
         if not rule:

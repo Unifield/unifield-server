@@ -58,7 +58,7 @@ class purchase_order_line_sync(osv.osv):
                 res[pol.id] = False
             elif pol.state.startswith('validated'):
                 pol_identifier = self.get_sd_ref(cr, uid, pol.id, context=context)
-                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, 1, [
                     ('sent', '=', True),
                     ('remote_call', '=', 'sale.order.line.create_so_line'),
                     ('identifier', 'like', pol_identifier),
@@ -375,7 +375,7 @@ class purchase_order_sync(osv.osv):
             if po.state == 'validated' and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
-                    cr, uid,
+                    cr, 1,
                     [('sent', '=', True),
                      ('remote_call', '=', 'sale.order.create_so'),
                      ('identifier', 'like', po_identifier),
