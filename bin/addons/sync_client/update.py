@@ -572,16 +572,24 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    values.append(row)
-                    update_ids.append(update.id)
-                    versions.append( (update.sdref, update.version) )
+                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
+                        self.write(cr, uid, update.id, {
+                            'run': True,
+                            'editable': False,
+                            'execution_date': datetime.now(),
+                            'log': 'Set as Run because this employee already exists in the instance',
+                        })
+                    else:
+                        values.append(row)
+                        update_ids.append(update.id)
+                        versions.append( (update.sdref, update.version) )
 
-                    #1 conflict detection
-                    if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                        #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                        index_id = eval(update.fields).index('id')
-                        sd_ref = eval(update.values)[index_id]
-                        logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                        #1 conflict detection
+                        if self._conflict(cr, uid, update.sdref, update.version, context=context):
+                            #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                            index_id = eval(update.fields).index('id')
+                            sd_ref = eval(update.values)[index_id]
+                            logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
                     self._set_not_run(cr, uid, [update.id],
                                       log=result['error_message'],
@@ -911,7 +919,7 @@ class update_received(osv.osv,fv_formatter):
                 except ValueError:
                     try:
                         #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
-                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line) 
+                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line)
                         if 'account_move_line' in xmlid:
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
