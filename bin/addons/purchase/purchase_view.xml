@@ -233,6 +233,7 @@
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
+                                    <field name="esc_confirmed" readonly="1" invisible="context.get('partner_type', False) != 'esc'" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="inactive_product" invisible="1"/>
