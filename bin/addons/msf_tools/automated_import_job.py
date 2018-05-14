@@ -418,6 +418,8 @@ class automated_import_job(osv.osv):
                             self.log(cr, uid, job.id, msg)
                 if context.get('job_comment'):
                     error_message += context['job_comment']
+                    for mess in error_message:
+                        self.log(cr, uid, job.id, mess)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
