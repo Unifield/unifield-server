@@ -4,6 +4,7 @@ import base64
 import time
 from dateutil.parser import parse
 import math
+import tools
 
 import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -1149,7 +1150,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
                 location_id = product_dict[line['product_id'][0]]['stock_inventory']
                 value = {
-                    'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                    'name': 'INV:' + tools.ustr(inv['id']) + ':' + inv['name'],
                     'product_id': line['product_id'][0],
                     'product_uom': line['product_uom_id'][0],
                     'prodlot_id': lot_id,
