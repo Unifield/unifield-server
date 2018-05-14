@@ -762,8 +762,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 # Nothing to do
 
                 # Line 19: Message ESC Header
-                if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(19, [])[1]
+                if values.get(19, False):
+                    header_values['imp_message_esc'] = values.get(19)[1]
 
                 # Line 20: Sourcing group
                 # Nothing to do
