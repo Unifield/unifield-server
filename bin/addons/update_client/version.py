@@ -8,10 +8,7 @@ Created on 9 juil. 2012
 from osv import osv
 from osv import fields
 from tools.translate import _
-import tools
-from tools import config
-import os
-from updater import *
+from updater import base_version, server_version, isset_lock
 import calendar
 import time
 import logging
@@ -22,19 +19,18 @@ import tarfile
 from base64 import b64decode, b64encode
 
 IMPORT_PATCH_SUCCESS, \
-IMPORT_PATCH_INVALID, \
-IMPORT_PATCH_UNKNOWN, \
-IMPORT_PATCH_IGNORED, \
-= range(4)
+    IMPORT_PATCH_INVALID, \
+    IMPORT_PATCH_UNKNOWN, \
+    IMPORT_PATCH_IGNORED, \
+    = range(4)
 
 class version(osv.osv):
-    
+
     _name = "sync_client.version"
-    
+
     def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
         cr.execute("""\
-            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % \
-            self._table, [tuple(ids)])
+            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     _columns = {
@@ -47,13 +43,13 @@ class version(osv.osv):
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
         'need_download' : fields.function(_patch_needs_to_be_downloaded,
-            type='boolean', method=True, readonly=True),
+                                          type='boolean', method=True, readonly=True),
     }
-    
+
     _defaults = {
         'state' : 'not-installed',
     }
-    
+
     _sql_constraints = [
         ('unique_sum', 'unique(sum)', "Patches must be unique!"),
         ('sync_client_version_applied_check', '''check (state = 'installed' and applied is not null or state != 'installed')''', "Patches marked as 'installed' must have an application date"),
@@ -74,22 +70,22 @@ class version(osv.osv):
                 for s_ver in server_version:
                     if rev == s_ver['md5sum']:
                         versions_id[rev] = self.create(cr, 1,
-                            {'sum':rev,
-                             'state':'installed',
-                             'applied':now,
-                             'version':version,
-                             'name':s_ver['name'],
-                             'date':s_ver['date']})
+                                                       {'sum':rev,
+                                                        'state':'installed',
+                                                        'applied':now,
+                                                        'version':version,
+                                                        'name':s_ver['name'],
+                                                           'date':s_ver['date']})
                         break
             # Update existing ones
             self.write(cr, 1, [x['id'] for x in current_versions \
                                if x['sum'] in server_version_keys and not x['state'] == 'installed'], \
-                              {'state':'installed','applied':now})
+                       {'state':'installed','applied':now})
             # Set last revision (assure last update has the last applied date)
             time.sleep(1)
             if len(server_version_keys) > 1:
                 self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
-        except BaseException, e:
+        except BaseException:
             self._logger.exception("version init failure!")
 
     def _need_restart(self, cr, uid, context=None):
@@ -116,7 +112,7 @@ class version(osv.osv):
     def _is_outdated(self, cr, uid, force_recalculate=False, exact_version=False, context=None):
         if hasattr(self, 'version_check') and not force_recalculate:
             return bool(self.version_check)
-        current = self._get_last_revision(cr, uid, context=context) 
+        current = self._get_last_revision(cr, uid, context=context)
         where = [('state','!=','installed')]
         if exact_version:
             where.append(('importance','=','required'))
@@ -136,8 +132,8 @@ class version(osv.osv):
         Search installed patches since given date.
         """
         return self.search(cr, uid,
-            [('state','=','installed'),('applied','>',since_date)],
-            context=context)
+                           [('state','=','installed'),('applied','>',since_date)],
+                           context=context)
 
     def import_patch(self, cr, uid, patch=None, decoded=None, context=None):
         """import patch file or tarball of patch files by providing a base64 encoded string or the decoded string"""
@@ -179,12 +175,12 @@ class version(osv.osv):
         tar_fh.seek(0)
         if action_on_missing == 'raise' and missing:
             raise osv.except_osv(_("Error!"),
-                _("Can not find patches for revisions:") + ' ' +
-                ", ".join(["%(sum)s (id=%(id)d)" % rec for rec in missing]))
+                                 _("Can not find patches for revisions:") + ' ' +
+                                 ", ".join(["%(sum)s (id=%(id)d)" % rec for rec in missing]))
         return b64encode(tar_fh.read())
 
     _order = 'date desc'
-    
+
 version()
 
 class entity(osv.osv):
@@ -213,8 +209,8 @@ class entity(osv.osv):
             res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)
         except osv.except_osv, e:
             if all(substr in e.value
-                   for substr in 
-                       ('sync_manager', 'object has no attribute', 'get_next_revisions')):
+                   for substr in
+                   ('sync_manager', 'object has no attribute', 'get_next_revisions')):
                 return (False, "The server doesn't seems to have the module update_server installed!")
             else:
                 raise

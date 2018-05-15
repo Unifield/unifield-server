@@ -131,6 +131,24 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def has_to_create_resourced_line(self, cr, uid, ids, context=None):
+        '''
+        in case of sol set to cancel_r, do we have to create the resourced line ?
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sol = self.browse(cr, uid, ids[0], context=context)
+        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+        if not related_pol:
+            return True
+        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], context=context)
+        if not related_pol.original_line_id:
+            return True
+        return (not related_pol.original_line_id.block_resourced_line_creation)
+
 
     def create_resource_line(self, cr, uid, ids, context=None):
         '''
@@ -145,14 +163,15 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-            new_sol_id = self.copy(cr, uid, sol.id, {
-                'resourced_original_line': sol.id,
-                'resourced_original_remote_line': sol.sync_linked_pol,
-                'resourced_at_state': sol.state,
-                'is_line_split': False,
-                'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-            }, context=context)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
+            if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
+                new_sol_id = self.copy(cr, uid, sol.id, {
+                    'resourced_original_line': sol.id,
+                    'resourced_original_remote_line': sol.sync_linked_pol,
+                    'resourced_at_state': sol.state,
+                    'is_line_split': False,
+                    'analytic_distribution_id': sol.analytic_distribution_id.id or False,
+                }, context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
 
@@ -365,7 +384,8 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        wf_service = netsvc.LocalService("workflow")
+        pick_to_check = set()
         for sol in self.browse(cr, uid, ids, context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
                 ('sale_line_id', '=', sol.id),
@@ -374,7 +394,15 @@ class sale_order_line(osv.osv):
             ], context=context)
 
             if out_moves_to_cancel:
+                context.update({'not_resource_move': out_moves_to_cancel})
                 self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+                context.pop('not_resource_move')
+                for move in self.pool.get('stock.move').browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
+                    pick_to_check.add(move.picking_id.id)
+
+        # maybe the stock picking needs to be closed/cancelled :
+        for pick in list(pick_to_check):
+            wf_service.trg_write(uid, 'stock.picking', pick, cr)
 
         return True
 
@@ -604,8 +632,9 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         # generate sync message for resourced line:
-        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
-                                                                              'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        if resourced_sol:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

@@ -51,12 +51,19 @@ class msf_import_export(osv.osv_memory):
     def _get_model_list(self, cr, uid, context=None):
         """The list of available model depend on the menu entry selected
         """
+
         if context is None:
             context = {}
+
+        realuser = hasattr(uid, 'realUid') and uid.realUid or uid
         domain_type = None
+        result_list = []
         if 'domain_type' in context:
             domain_type = context['domain_type']
-        result_list = [(key, _(value['name'])) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
+        for key, value in MODEL_DICT.items():
+            if value['domain_type'] == domain_type:
+                if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
+                    result_list.append((key, _(value['name'])))
         return [('', '')] + sorted(result_list, key=lambda a: a[0])
 
     _columns = {
@@ -628,7 +635,7 @@ class msf_import_export(osv.osv_memory):
 
         # Manage errors
         import_errors = {}
-
+        allow_partial = MODEL_DICT[import_brw.model_list_selection].get('partial')
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -733,6 +740,9 @@ class msf_import_export(osv.osv_memory):
             if value is None or field not in fields_def:
                 return
             if '.' not in field:
+                if fields_def[field]['type'] == 'char' and value and isinstance(value, basestring) and len(value.splitlines()) > 1 and ( field != 'name' or impobj != 'res.partner'):
+                    raise osv.except_osv(_('Warning !'), _("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field, tools.ustr(value)))
+
                 if fields_def[field]['type'] == 'selection':
                     if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
@@ -872,8 +882,8 @@ class msf_import_export(osv.osv_memory):
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
                                                              data['msfid'])], order='NO_ORDER')
                 elif impobj._name == 'product.category':
-                    ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                                                             data['msfid'])], order='NO_ORDER')
+                    ids_to_update = impobj.search(cr, uid, [('family_id', '=',
+                                                             data['family_id'])], order='NO_ORDER')
                 elif impobj._name == 'supplier.catalogue':
                     ids_to_update = impobj.search(cr, uid, [
                         ('name', '=', data['name']),
@@ -952,6 +962,8 @@ class msf_import_export(osv.osv_memory):
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
+                    if allow_partial:
+                        cr.commit()
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
@@ -960,10 +972,10 @@ class msf_import_export(osv.osv_memory):
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
                 cr.rollback()
-                logging.getLogger('import data').info('Error %s' % e)
-                save_error(e, row_index)
+                logging.getLogger('import data').info('Error %s' % tools.ustr(e))
+                save_error(tools.ustr(e), row_index)
                 nb_error += 1
-                rejected.append((row_index+1, line_data, e))
+                rejected.append((row_index+1, line_data, tools.ustr(e)))
             else:
                 nb_imported_lines += 1
 
@@ -985,12 +997,14 @@ class msf_import_export(osv.osv_memory):
                 if not err_msg.endswith('\n'):
                     err_msg += '\n'
 
-        if err_msg:
+        if err_msg and not allow_partial:
             cr.rollback()
 
         info_msg = _('''Processing of file completed in %s second(s)!
 - Total lines to import: %s
 - Total lines %s: %s %s
+- Total lines updated: %s
+- Total lines created: %s
 - Total lines deleted: %s
 - Total lines with errors: %s %s
 %s
@@ -1002,10 +1016,12 @@ class msf_import_export(osv.osv_memory):
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
                 len(import_warnings.keys()) or '',
             ),
+            nb_update_success,
+            nb_succes,
             nb_lines_deleted,
             err_msg and len(import_errors.keys()) or 0,
             err_msg and _('(see error messages below)'),
-            err_msg and _("no data will be imported until all the error messages are corrected") or '',
+            err_msg and not allow_partial and _("no data will be imported until all the error messages are corrected") or '',
         )
 
         self.write(cr, uid, [import_brw.id], {

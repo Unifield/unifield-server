@@ -126,9 +126,15 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
             context = {}
         context['lang'] = 'en_MF'
         super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
+        self.cr = cr
+        self.uid = uid
         self.localcontext.update({
             'time': time,
             'maxADLines': self.get_max_ad_lines,
+            'getInstanceName': self.getInstanceName,
+            'getCustomerAddress': self.getCustomerAddress,
+            'getInstanceAddress': self.getInstanceAddress,
+            'getContactName': self.getContactName,
         })
 
     def set_context(self, objects, data, ids, report_type = None):
@@ -144,6 +150,29 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
 
         return max_ad_lines
 
+    def getInstanceName(self):
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
+
+    def getInstanceAddress(self):
+        part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
+        part_addr = False
+        if part_addr_id:
+            part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
+        return part_addr.name if part_addr else ''
+
+    def getCustomerAddress(self, customer_id):
+        part_addr_obj = self.pool.get('res.partner.address')
+        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id)], limit=1)[0]
+
+        return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
+
+    def getContactName(self, addr_id):
+        res = ''
+        if addr_id:
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
+        return res
+
+
 SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
 
 # VALIDATE PURCHASE ORDER (Pure XML)
@@ -153,9 +182,15 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
             context = {}
         context['lang'] = 'en_MF'
         super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
+        self.cr = cr
+        self.uid = uid
         self.localcontext.update({
             'time': time,
             'maxADLines': self.get_max_ad_lines,
+            'getInstanceName': self.getInstanceName,
+            'getCustomerAddress': self.getCustomerAddress,
+            'getContactName': self.getContactName,
+            'getInstanceAddress': self.getInstanceAddress,
         })
 
     def set_context(self, objects, data, ids, report_type = None):
@@ -170,6 +205,29 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
                     max_ad_lines = len(line.analytic_distribution_id.cost_center_lines)
 
         return max_ad_lines
+
+    def getInstanceName(self):
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
+
+    def getCustomerAddress(self, customer_id):
+        part_addr_obj = self.pool.get('res.partner.address')
+        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id)], limit=1)[0]
+
+        return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
+
+    def getContactName(self, addr_id):
+        res = ''
+        if addr_id:
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
+        return res
+
+    def getInstanceAddress(self):
+        part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
+        part_addr = False
+        if part_addr_id:
+            part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
+        return part_addr.name if part_addr else ''
+
 
 class validated_purchase_order_report_xml(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -410,7 +468,7 @@ class po_follow_up_mixin(object):
         po_header['deldate'] = 'Confirmed delivery date: ' + obj.delivery_confirmed_date
         po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
         po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
-        line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount'] 
+        line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount']
         return line
 
     def getRunParms(self):

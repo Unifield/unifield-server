@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF8.1 -->
+        <record id="us-4454" model="patch.scripts">
+            <field name="method">cancel_extra_empty_draft_po</field>
+        </record>
+
+        <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
+            <field name="method">us_4430_set_puf_to_reversal</field>
+        </record>
+
         <!-- UF8.0 -->
         <record id="set_sequence_main_nomen" model="patch.scripts">
             <field name="method">set_sequence_main_nomen</field>
@@ -8,6 +17,10 @@
 
         <record id="us_3734_rename_partners_with_new_lines" model="patch.scripts">
             <field name="method">us_3734_rename_partners_with_new_lines</field>
+        </record>
+
+        <record id="us_4407_update_free_lines_ad" model="patch.scripts">
+            <field name="method">us_4407_update_free_lines_ad</field>
         </record>
 
         <!-- UF7.3 -->

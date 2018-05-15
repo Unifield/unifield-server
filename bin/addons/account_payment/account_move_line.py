@@ -71,7 +71,7 @@ class account_move_line(osv.osv):
                 WHERE type=%s AND active)
             AND reconcile_id IS null
             AND credit > 0
-            AND ''' + where + ' and ' + query), ('payable',)+sql_args )
+            AND ''' + where + ' and ' + query), ('payable',)+sql_args )  # not_a_user_entry
 
         res = cr.fetchall()
         if not res:
@@ -91,7 +91,7 @@ class account_move_line(osv.osv):
         if not ids:
             return {}
         bank_type = payment_mode_obj.suitable_bank_types(cr, uid, payment_type,
-                context=context)
+                                                         context=context)
         for line in self.browse(cr, uid, ids, context=context):
             line2bank[line.id] = False
             if line.invoice and line.invoice.partner_bank_id:
@@ -112,7 +112,7 @@ class account_move_line(osv.osv):
 
     _columns = {
         'amount_to_pay': fields.function(amount_to_pay, method=True,
-            type='float', string='Amount to pay', fnct_search=_to_pay_search),
+                                         type='float', string='Amount to pay', fnct_search=_to_pay_search),
     }
 
 account_move_line()

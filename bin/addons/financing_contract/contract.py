@@ -107,7 +107,7 @@ class financing_contract_funding_pool_line(osv.osv):
         if context is None:
             context = {}
 
-        # US-180: Check if it comes from the sync update, and if any contract  
+        # US-180: Check if it comes from the sync update, and if any contract
         if context.get('sync_update_execution') and vals.get('format_id', False):
             # Check if this format line belongs to any financing contract/format
             ctr_obj = self.pool.get('financing.contract.contract')
@@ -250,7 +250,7 @@ class financing_contract_contract(osv.osv):
                 # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
                 if analytic_domain:
-                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error! 
+                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error!
                         # if there exist already previous view, just add an OR operator
                         analytic_domain = ['|'] + analytic_domain + temp
                 else:
@@ -656,7 +656,7 @@ class financing_contract_contract(osv.osv):
 
         res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
-            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
@@ -777,7 +777,7 @@ class financing_contract_contract(osv.osv):
 
         return False
 
-    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync 
+    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync
     def unlink(self, cr, uid, ids, context=None):
         format_obj = self.pool.get('financing.contract.format')
         format_line_obj = self.pool.get('financing.contract.format.line')
