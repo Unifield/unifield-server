@@ -1480,7 +1480,8 @@ class purchase_order_line(osv.osv):
                 info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
                                                                      info_price.price, round=False, context=context)
                 if info_price.min_order_qty and qty < info_price.min_order_qty:
-                    res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
+                    if qty > info_price.min_quantity:
+                        res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
                     res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), ' \
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
