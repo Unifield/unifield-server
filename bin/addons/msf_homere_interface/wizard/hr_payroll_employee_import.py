@@ -654,7 +654,6 @@ class hr_payroll_employee_import(osv.osv_memory):
         context.update({'from': 'employee_import'})
 
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context)
-
         return {
             'name': 'Employee Import Confirmation',
             'type': 'ir.actions.act_window',

@@ -185,7 +185,7 @@
 
         <section>
 
-        <blockTable colWidths="30.0,60.0,220.0,130.0,50.0,50.0,40.0,70.0,70.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,95.0,210.0,115.0,50.0,50.0,40.0,70.0,70.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line No.</para>
@@ -217,6 +217,7 @@
             </tr>
             <tr>
             [[ repeatIn(req.order_line, 'line', 'tr') ]]
+                [[ line.state not in ['cancel', 'cancel_r'] or removeParentNode('tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>

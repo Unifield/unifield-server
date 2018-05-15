@@ -390,8 +390,8 @@ class purchase_order_line(osv.osv):
             res[line.id] = a
         return res
 
-
     _columns = {
+        'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
@@ -506,6 +506,7 @@ class purchase_order_line(osv.osv):
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
         'set_as_validated_n': lambda *a: False,
+        'block_resourced_line_creation': lambda *a: False,
         'change_price_manually': lambda *a: False,
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,
@@ -978,7 +979,7 @@ class purchase_order_line(osv.osv):
         product_uom = vals.get('product_uom')
         order = po_obj.browse(cr, uid, order_id, context=context)
 
-        # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the 
+        # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the
         # line as non-really validated. It avoids the PO to go back in draft state.
         if order.state.startswith('validated'):
             vals.update({'set_as_validated_n': True})
@@ -1238,7 +1239,7 @@ class purchase_order_line(osv.osv):
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
         so_ids = self.pool.get('sale.order').search(cr, uid, [
-            ('name', '=', origin), 
+            ('name', '=', origin),
             ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_v']),
         ], context=context)
         context['procurement_request'] = tmp_proc_context
@@ -1368,7 +1369,7 @@ class purchase_order_line(osv.osv):
             fo = self.pool.get('sale.order').read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
             return {
                 'value': {
-                    'origin': fo['name'], 
+                    'origin': fo['name'],
                     'display_sync_ref': len(fo['sourced_references']) and True or False,
                 }
             }
@@ -1627,9 +1628,13 @@ class purchase_order_line(osv.osv):
 
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
+        import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
         for pol in self.browse(cr, uid, ids, context=context):
             # only create CV for external and ESC partners:
             if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+                return False
+
+            if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)

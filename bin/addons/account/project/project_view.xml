@@ -249,6 +249,7 @@
                         <group>
                             <field name="amount" select="1"/>
                             <field name="amount_currency"/>
+                            <field name="currency_id" domain="[('active', '=', True)]"/>
                         </group>
                     </group>
                     <newline/>

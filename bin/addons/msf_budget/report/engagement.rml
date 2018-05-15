@@ -267,9 +267,6 @@
         <para style="P5">
             <font color="white"/>
         </para>
-        <blockTable style="Table9">
-            <tr>
-                <td>
                     <blockTable
                         colWidths="115.0,115.0,40.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
                         <tr>
@@ -331,9 +328,6 @@
                             </td>
                         </tr>
                     </blockTable>
-                </td>
-            </tr>
-        </blockTable>
         <para style="P5">
             <font color="white"/>
         </para>

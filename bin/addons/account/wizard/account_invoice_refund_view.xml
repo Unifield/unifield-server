@@ -12,7 +12,7 @@
                     <group colspan="4" >
                          <field name="description"/>
                          <field name="journal_id"/>
-                         <field name="date"/>
+                         <field name="date" required="1"/>
                          <field name="period"/>
                          <field name="filter_refund"/>
                     </group>

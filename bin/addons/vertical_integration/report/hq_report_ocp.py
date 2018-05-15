@@ -324,17 +324,18 @@ class hq_report_ocp(report_sxw.report_sxw):
                 """,
             # Exclude lines that come from a HQ, MIGRATION or FXA journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
-            # The subrequest enables to disallow lines that have analytic lines. This is to not retrieve expense/income accounts
+            # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
                 SELECT aml.id
-                FROM account_move_line AS aml, account_account AS aa, account_journal AS j
+                FROM account_move_line AS aml
+                INNER JOIN account_account AS aa ON aml.account_id = aa.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                LEFT JOIN account_analytic_line aal ON aml.id = aal.move_id
                 WHERE aml.period_id = %s
-                AND aml.account_id = aa.id
-                AND aml.journal_id = j.id
-                AND j.type not in %s
+                AND j.type NOT IN %s
                 AND aa.shrink_entries_for_hq = 't'
-                AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
-                AND aml.instance_id in %s;
+                AND aal.id IS NULL
+                AND aml.instance_id IN %s;
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
@@ -344,30 +345,21 @@ class hq_report_ocp(report_sxw.report_sxw):
                        a.code, aml.partner_txt, '', SUBSTR(i.code, 1, 3), '', aml.debit_currency, aml.credit_currency, c.name,
                        ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id,
                        hr.name_resource as hr_name, j.type
-                FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
-                     account_account AS a, 
-                     res_currency AS c, 
-                     account_move AS m, 
-                     res_company AS e, 
-                     account_journal AS j, 
-                     res_currency AS cc, 
-                     msf_instance AS i
-                WHERE aml.account_id = a.id
-                AND aml.id not in (
-                  SELECT amla.id
-                  FROM account_analytic_line al, account_move_line amla
-                  WHERE al.move_id = amla.id
-                )
-                AND aml.move_id = m.id
-                AND aml.currency_id = c.id
-                AND aml.company_id = e.id
-                AND aml.journal_id = j.id
-                AND e.currency_id = cc.id
-                AND aml.instance_id = i.id
+                FROM account_move_line aml 
+                LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                INNER JOIN account_account AS a ON aml.account_id = a.id
+                INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                INNER JOIN account_move AS m ON aml.move_id = m.id
+                INNER JOIN res_company AS e ON aml.company_id = e.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                INNER JOIN res_currency AS cc ON e.currency_id = cc.id
+                INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                WHERE aal.id IS NULL
                 AND aml.period_id = %s
                 AND a.shrink_entries_for_hq != 't'
-                AND j.type not in %s
-                AND aml.instance_id in %s
+                AND j.type NOT IN %s
+                AND aml.instance_id IN %s
                 AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,

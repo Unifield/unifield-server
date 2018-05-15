@@ -134,6 +134,15 @@ class purchase_order_line_sync(osv.osv):
                         if resourced_sol_id:
                             pol_values['linked_sol_id'] = resourced_sol_id[0]
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
+            elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split'):
+                orig_line_ids = self.search(cr, uid, [
+                    ('order_id', '=', pol_values['order_id']),
+                    ('sync_linked_sol', 'ilike', '%%%s' % sol_dict['original_line_id']['id'].split('/')[-1])
+                ], context=context)
+                if orig_line_ids:
+                    orig_line = self.browse(cr, uid, orig_line_ids[0], context=context)
+                    pol_values['link_so_id'] = orig_line.link_so_id.id
+                    self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
 
         # search the PO line to update:
         pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
@@ -146,6 +155,7 @@ class purchase_order_line_sync(osv.osv):
         pol_updated = False
         if not pol_id: # then create new PO line
             kind = 'new line'
+            pol_values['line_number'] = sol_dict['line_number']
             if sol_dict['is_line_split']:
                 sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
                 if not sync_linked_sol:
@@ -161,7 +171,6 @@ class purchase_order_line_sync(osv.osv):
                     pol_values['origin'] = orig_pol_info.origin
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
                 # in case of FO from missing/replacement claim
-                pol_values['line_number'] = sol_dict['line_number']
                 pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
@@ -503,7 +512,7 @@ class purchase_order_sync(osv.osv):
         header_result['push_fo'] = True
         header_result['origin'] = so_dict.get('name', False)
 
-        partner_type = so_po_common.get_partner_type(cr, uid, source, context)  
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type == 'section':
             #US-620: If the FO type is donation or loan, then remove the analytic distribution
             if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):

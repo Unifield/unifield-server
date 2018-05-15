@@ -872,6 +872,7 @@ class return_claim(osv.osv):
             readonly=True,
             multi='get_vals_claim',
         ),
+        'old_version': fields.boolean('Claim in old version with no sync', internal=True),
     }
 
     def _get_default_src_loc_id(self, cr, uid, context=None):
@@ -898,6 +899,7 @@ class return_claim(osv.osv):
         'fake_state_return_claim': 'draft',
         'po_id_return_claim': False,
         'so_id_return_claim': False,
+        'old_version': False,
     }
 
     def _check_claim(self, cr, uid, ids, context=None):

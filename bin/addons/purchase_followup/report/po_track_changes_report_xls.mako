@@ -263,11 +263,11 @@
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.product_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.product_uom.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.original_qty or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.original_qty or line.product_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.original_uom.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.price_unit|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.currency_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.original_price or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.original_price or line.price_unit|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.original_currency_id and line.original_currency_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${computeCurrency(line, False)|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${computeCurrency(line, True)|x}</Data></Cell>
