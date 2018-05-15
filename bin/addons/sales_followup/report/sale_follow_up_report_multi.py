@@ -234,6 +234,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             fl_index = m_index
                         m_index += 1
 
+                    # reset the data to prevent delivered_qty problem when line is split in PICK
+                    data = {}
+
             # No move found
             if first_line:
                 data.update({
