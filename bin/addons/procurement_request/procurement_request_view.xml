@@ -112,7 +112,7 @@
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
-                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)], 'invisible': ['|', ('draft_cancelled', '=', True), ('state', 'not in', ['draft', 'draft_p'])]}"/>
+                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
