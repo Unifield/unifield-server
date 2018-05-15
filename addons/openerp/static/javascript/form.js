@@ -319,7 +319,7 @@ function get_sidebar_status(args, noterp) {
     }
 }
 
-function submit_form(action, src, target){
+function submit_form(action, src, target, test_double){
 
     if (openobject.http.AJAX_COUNT > 0) {
         callLater(1, submit_form, action, src, target);
@@ -357,10 +357,18 @@ function submit_form(action, src, target){
 
     // Cant use $form.attr due to http://dev.jquery.com/ticket/3113 as there is a form with a field called
     // action when creating an activity
+
     $form[0].setAttribute('action', action);
     previous_target = $form.attr("target");
     $form.attr("target", target);
-    $form.submit();
+    if (!test_double) {
+        $form.submit();
+    } else {
+        if (!$form[0].issubmitted) {
+            $form[0].issubmitted = true;
+            $form.submit();
+        }
+    }
     $form.attr("target", previous_target);
 }
 
@@ -390,9 +398,11 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         '_terp_button/id': id
     };
 
+    // if works as expected can be extended to other buttons
+    test_double = name == 'import_file' && btype == 'object' && model == 'initial.stock.inventory'
     if (!context || context == "{}") {
         var act = get_form_action(btype == 'cancel' ? 'cancel' : 'save', params);
-        submit_form(act, null, target);
+        submit_form(act, null, target, test_double);
         return;
     }
 
@@ -405,7 +415,7 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         params['_terp_button/context'] = obj.context || 0;
 
         var act = get_form_action(btype == 'cancel' ? 'cancel' : 'save', params);
-        submit_form(act, null, target);
+        submit_form(act, null, target, test_double);
     });
 }
 
