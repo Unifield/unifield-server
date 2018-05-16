@@ -14841,11 +14841,6 @@ msgid "Real average consumption"
 msgstr "Consommations Moyennes Réelles"
 
 #. module: stock_override
-#: report:delivery.order:0
-msgid "CommentS"
-msgstr "CommentS"
-
-#. module: stock_override
 #: view:change.dest.location:0
 msgid "Change destination location"
 msgstr "Changer la zone de destination"
@@ -19763,12 +19758,13 @@ msgstr "Could not cancel this sales order !"
 msgid "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 msgstr "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 
-#. modules: msf_field_access_rights, financing_contract, register_accounting
+#. modules: msf_field_access_rights, financing_contract, register_accounting, stock_override
 #: view:financing.contract.contract:0
 #: view:msf_field_access_rights.field_access_rule:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,comments:0
 #: field:account.bank.statement,notes:0
+#: report:delivery.order:0
 msgid "Comments"
 msgstr "Commentaires"
 
@@ -20472,7 +20468,6 @@ msgid "Third party is required in order to hard post a transfer with change regi
 msgstr "Un Tiers est nécessaire de facon à comptabiliser définitivement un transfert avec changement de lignes de registre!"
 
 #. module: stock_override
-#: report:delivery.order:0
 #: report:internal.move:0
 msgid "Product Name"
 msgstr "Nom du Produit"
@@ -78386,11 +78381,12 @@ msgstr "Lignes d'Ecritures Analytiques"
 msgid "Kind of Node"
 msgstr "Sorte de Node"
 
-#. modules: product, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import
+#. modules: product, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, stock_override
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:70
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
 #: report:product.likely.expire.report_pdf:0
+#: report:delivery.order:0
 #: code:addons/kit/wizard/kit_mass_import.py:132
 #: code:addons/msf_doc_import/wizard/__init__.py:30
 #: code:addons/msf_doc_import/wizard/__init__.py:57
