@@ -529,10 +529,22 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        obj_data = self.pool.get('ir.model.data')
+
         self.check_fo_tax(cr, uid, ids, context=context)
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
+            if not sol.product_uom \
+                    or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
+                raise osv.except_osv(_('Error'),
+                                     _('Line #%s: You cannot validate a line with no UoM.') % (sol.line_number,))
+            elif not self.pool.get('uom.tools').check_uom(cr, uid, sol.product_id.id, sol.product_uom.id, context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
+                    % (sol.line_number,)
+                )
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
             if not sol.order_id.procurement_request:  # in case of FO

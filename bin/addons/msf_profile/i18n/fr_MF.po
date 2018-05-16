@@ -107695,3 +107695,15 @@ msgstr "Import interrompu, l'Origine (%s) n'est pas la même que dans la Livrais
 #: help:multiple.sourcing.wizard,supplier_id:0
 msgid "If you chose lines coming from Field Orders, External/ESC suppliers will be available for Internal/Inter-section/Intermission customers and Internal/External/Inter-section/Intermission/ESC suppliers will be available for External customers"
 msgstr "Si vous aviez choisi des lignes venant de Commandes de Terrain, des fournisseurs Externe/ESC seront disponibles pour des clients Interne/Inter-section/Intermission et des fournisseurs Interne/Externe/Inter-section/Intermission/ESC seront disponibles pour des clients Externe"
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:541
+#, python-format
+msgid "Line #%s: You cannot validate a line with no UoM."
+msgstr "Ligne #%s: Vous ne pouvez pas valider de ligne sans UdM."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:545
+#, python-format
+msgid "Line #%s: You have to select a product UoM in the same category than the UoM of the product."
+msgstr "Ligne #%s: Vous devez sélectionner une UdM de produit dans la même catégorie que l'UdM du produit."
