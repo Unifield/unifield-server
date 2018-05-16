@@ -1098,70 +1098,14 @@ function open_search_window(relation, domain, context, source, kind, text){
     });
 }
 
-function makeContextMenu(id, kind, relation, val, hide_default_menu){
-    var act = get_form_action('get_context_menu');
+function makeContextMenu(rec_id, init_value){
+        sd = $('#sidebar');
 
-    var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) : '';
-    if ((prefix.split('/')[0]) == '_terp_listfields') {
-        prefix = (prefix.split('/')[1]);
-    }
-
-    var model = prefix ? openobject.dom.get(prefix + '/_terp_model').value : openobject.dom.get('_terp_model').value;
-
-    openobject.http.postJSON(act, {
-        'model': model,
-        'field': id,
-        'kind': kind,
-        'relation': relation,
-        'value': val,
-        'hide_default_menu': hide_default_menu
-    }).addCallback(function(obj){
-        var $tbody = jQuery('<tbody>');
-        jQuery.each(obj.defaults, function (_, default_) {
-
-            jQuery('<tr>').append(jQuery('<td>').append(
-                jQuery('<span>').click(function () {
-                    hideContextMenu();
-                    return eval(default_.action);
-                }).text(default_.text))).appendTo($tbody);
-        });
-        if (obj.actions.length) {
-            $tbody.append('<hr>');
-            jQuery.each(obj.actions, function (_, action) {
-                jQuery('<tr>').append(jQuery('<td>').append(
-                    jQuery('<span>', {'field': action.field || '', 'relation': action.relation || ''})
-                        .attr('class', action.action ? '' : 'disabled')
-                        .click(function () {
-                            if(action.action) {
-                                hideContextMenu();
-                                return eval(action.action);
-                            }
-                        }).text(action.text))).appendTo($tbody);
-            });
-        }
-        if (obj.relates.length) {
-            $tbody.append('<hr>');
-
-            jQuery.each(obj.relates, function (_, relate) {
-                jQuery('<tr>').append(jQuery('<td>').append(
-                    jQuery('<span>',
-                        {
-                            'class': relate.action ? '' : 'disabled',
-                            'domain': relate.domain,
-                            'context': relate.domain,
-                            'field': relate.field || '',
-                            'relation': relate.relation || ''
-                        }).click(function () {
-                            if(relate.action) {
-                                hideContextMenu();
-                                return eval(relate.action);
-                            }
-                        }).text(relate.text))).appendTo($tbody);
-            });
-        }
         var $menu = jQuery('#contextmenu');
+        $menu.attr('rec_id', rec_id);
+        $menu.attr('init_value', init_value);
         $menu.empty().append(
-            jQuery('<table cellpadding="0" cellspacing="0">').append($tbody));
+            jQuery('<table cellpadding="0" cellspacing="0">').append(sd.html()));
 
         var menu_width = $menu.width();
         var body_width = jQuery(document.body).width();
@@ -1169,7 +1113,6 @@ function makeContextMenu(id, kind, relation, val, hide_default_menu){
             $menu.css({left: body_width - menu_width - 10 + 'px'});
         }
         showContextMenu();
-    });
 }
 
 function showContextMenu(){
@@ -1189,6 +1132,11 @@ function showContextMenu(){
 
 function hideContextMenu(){
     jQuery('#contextmenu, #contextmenu_frm').hide();
+    ctx = jQuery('#contextmenu')
+    if (ctx.attr('init_value') == 'false') {
+        new ListView('_terp_list').onBooleanClicked(true, ctx.attr('rec_id'));
+        jQuery('#_terp_list\\/'+ctx.attr('rec_id'))[0].checked = false;
+    }
 }
 
 function set_to_default(field_id, model){
@@ -1362,8 +1310,26 @@ function on_context_menu(evt, target){
     var $target = jQuery(target || targetDammit(evt));
 
     var kind = $target.attr('kind');
+    sidebar = false;
     if (!(kind && $target.is(':input, :enabled'))) {
-        return;
+        if (!$target.parents('#_terp_list').length) {
+            return;
+        }
+        grid = $target.parents('.grid-row')
+        if (!grid.length || !grid.attr('record')) {
+            return;
+        }
+        tick_box = grid.find('#_terp_list\\/'+grid.attr('record'))
+        if (!tick_box.length || tick_box.disabled) {
+            return;
+        }
+        sidebar = true;
+        checked = true;
+        if (!tick_box[0].checked) {
+            new ListView('_terp_list').onBooleanClicked(false, grid.attr('record'))
+            tick_box[0].checked=true;
+            checked = false;
+        }
     }
     var $menu = jQuery('#contextmenu').show();
 
@@ -1390,8 +1356,12 @@ function on_context_menu(evt, target){
     $menu.offset({top: 0, left: 0});
     $menu.offset({top: click_position.y - 5, left: click_position.x - 5});
     $menu.hide();
-    makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
 
+    if (sidebar) {
+        makeContextMenu(grid.attr('record'), checked);
+    } else {
+        makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
+    }
     stopEventDammit(evt);
 }
 
