@@ -107792,3 +107792,27 @@ msgstr "est confirmé."
 #, python-format
 msgid "is done."
 msgstr "est terminé."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:441
+#, python-format
+msgid "Line %s. No Funding Pool specified!"
+msgstr "Ligne %s. Aucun Funding Pool précisé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:454
+#, python-format
+msgid "Line %s. The destination %s is not compatible with the account %s."
+msgstr "Ligne %s. La destination %s n'est pas compatible avec le compte %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:465
+#, python-format
+msgid "Line %s. The combination \"account %s and destination %s\" is not compatible with the Funding Pool %s."
+msgstr "Ligne %s. La combinaison \"compte %s et destination %s\" n'est pas compatible avec le Funding Pool %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:471
+#, python-format
+msgid "Line %s. The Cost Center %s is not compatible with the Funding Pool %s."
+msgstr "Ligne %s. Le Centre de Coût %s n'est pas compatible avec le Funding Pool %s."
