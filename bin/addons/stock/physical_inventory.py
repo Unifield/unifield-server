@@ -1154,6 +1154,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     'product_uom': line['product_uom_id'][0],
                     'prodlot_id': lot_id,
                     'date': inv['date'],
+                    'not_chained': True,
                 }
                 if change > 0:
                     value.update({
