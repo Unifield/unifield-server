@@ -981,7 +981,6 @@ class update_link(osv.osv_memory):
             ids = context.get('active_ids')
 
         model = context.get('model')
-        obj_names = []
         if model and isinstance(model, basestring):
             ir_model_obj = self.pool.get('ir.model.data')
             ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
@@ -989,11 +988,12 @@ class update_link(osv.osv_memory):
                                                               ('res_id', 'in', ids)], context=context)
 
             # get the names of all the selected entries if possible, else the name of the object
+            model_obj = self.pool.get(model)
             try:
-                obj_names = self.pool.get(model).name_get(cr, uid, ids, context=context)
+                obj_names = model_obj.name_get(cr, uid, ids, context=context)
                 descr = ' / '.join([x[1] for x in obj_names])
             except KeyError:
-                descr = self.pool.get(model)._description or ''
+                descr = model_obj._description or model_obj._name or ''
 
             if ir_model_data_ids:
                 sdrefs = ir_model_obj.browse(cr, uid, ir_model_data_ids, fields_to_fetch=['name'],
