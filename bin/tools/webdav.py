@@ -48,32 +48,59 @@ class Client(object):
         else:
             raise requests.exceptions.RequestException(ctx_auth.get_last_error())
 
+    def format_request(self, url, method='POST', data="", session=False):
+        assert(method in ['POST', 'DELETE'])
+        r_meth = {
+            'POST': HttpMethod.Post,
+            'DELETE': HttpMethod.Delete,
+        }
+        options = RequestOptions(url)
+        options.method = r_meth[method]
+        options.set_header("X-HTTP-Method", method)
+        options.set_header('Accept', 'application/json')
+        options.set_header('Content-Type', 'application/json')
+
+        self.request.context.authenticate_request(options)
+        self.request.context.ensure_form_digest(options)
+
+        if session:
+            return session.post(url, data=data, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+
+        return requests.post(url, data=data, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+
+    def parse_error(self, result):
+        try:
+            if 'application/json' in result.headers.get('Content-Type'):
+                resp_content = result.json()
+                msg = resp_content['odata.error']['message']
+                error = []
+                if isinstance(msg, dict):
+                    error = [msg['value']]
+                else:
+                    error = [msg]
+                if resp_content['odata.error'].get('code'):
+                    error.append('Code: %s' % resp_content['odata.error']['code'])
+                return ' '.join(error)
+        except:
+            pass
+        return result.content
+
     def create_folder(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
         request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')" % (self.baseurl, webUri)
-        options = RequestOptions(request_url)
-        options.method = HttpMethod.Post
-        options.set_header("X-HTTP-Method", "POST")
-        self.request.context.authenticate_request(options)
-        self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+        result = self.format_request(request_url, 'POST')
         if result.status_code not in (200, 201):
-            result = requests.post("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+            result = self.format_request("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), 'POST')
             if result.status_code not in (200, 201):
-                raise Exception(result.content)
+                raise Exception(self.parse_error(result))
         return True
 
     def delete(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
         request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')" % (self.baseurl, webUri)
-        options = RequestOptions(request_url)
-        options.method = HttpMethod.Delete
-        options.set_header("X-HTTP-Method", "DELETE")
-        self.request.context.authenticate_request(options)
-        self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+        result = self.format_request(request_url, 'DELETE')
         if result.status_code not in (200, 201):
-            raise Exception(result.content)
+            raise Exception(self.parse_error(result))
         return True
 
     def move(self, remote_path, dest):
@@ -81,14 +108,9 @@ class Client(object):
         destUri = '%s%s' % (self.path, dest)
         # falgs=1 to overwrite existing file
         request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
-        options = RequestOptions(request_url)
-        options.method = HttpMethod.Post
-        options.set_header("X-HTTP-Method", "POST")
-        self.request.context.authenticate_request(options)
-        self.request.context.ensure_form_digest(options)
-        result = requests.post(url=request_url, data="", headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+        result = self.format_request(request_url, 'POST')
         if result.status_code not in (200, 201):
-            raise Exception(result.content)
+            raise Exception(self.parse_error(result))
         return True
 
     def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
@@ -143,14 +165,9 @@ class Client(object):
                 else:
                     request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/finishupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
 
-            options = RequestOptions(request_url)
-            options.method = HttpMethod.Post
-
-            self.request.context.authenticate_request(options)
-            self.request.context.ensure_form_digest(options)
-            result = s.post(url=request_url, data=x, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
+            result = self.format_request(request_url, method='POST', data=x, session=s)
             if result.status_code not in (200, 201):
-                return (False, result.content)
+                return (False, self.parse_error(result))
             self.session_nb_error = 0
             self.session_offset += len(x)
 
