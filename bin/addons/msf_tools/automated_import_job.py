@@ -294,7 +294,7 @@ class automated_import_job(osv.osv):
 
             ftp_connec = None
             sftp = None
-            context.update({'no_raise_if_ok': True})
+            context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
             if job.import_id.ftp_ok and job.import_id.ftp_protocol == 'ftp':
                 ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
             elif job.import_id.ftp_ok and job.import_id.ftp_protocol == 'sftp':

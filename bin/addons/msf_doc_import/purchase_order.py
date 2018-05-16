@@ -276,6 +276,11 @@ class purchase_order(osv.osv):
             if nb_pol_confirmed:
                 self.log(cr, uid, po.id, _('%s: %s lines have been confirmed') % (po.name, nb_pol_confirmed))
 
+            for line_number_not_confirmed in [pol.line_number for pol in po.order_line if pol.state != 'confirmed']:
+                job_comment = context.get('job_comment', [])
+                job_comment.append(_('PO line #%s cannot be confirmed') % line_number_not_confirmed)
+                context['job_comment'] = job_comment
+
         return res
 
 
