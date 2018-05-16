@@ -378,7 +378,8 @@ def act_window(action, data):
 def server(action, data):
     context = dict(data.get('context', {}),
                    active_id=data.get('id', False),
-                   active_ids=data.get('ids', [])
+                   active_ids=data.get('ids', []),
+                   model=data.get('model', False),
                    )
     action_result = rpc.RPCProxy('ir.actions.server').run([action['id']], context)
     if action_result:
