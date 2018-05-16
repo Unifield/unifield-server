@@ -1017,6 +1017,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                                  _("Please remove non-stockable from the discrepancy report to validate:\n%s") % ("\n".join(error),)
                                  )
 
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            message = _('Physical Inventory') + " '" + inv.name + "' " + _("is validated.")
+            self.log(cr, uid, inv.id, message)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
@@ -1176,7 +1179,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 move_ids.append(move_id)
                 discrepancy_to_move[line_id] = move_id
 
-            message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
+            message = _('Physical Inventory') + " '" + inv['name'] + "' " + _("is confirmed.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {
                 'state': 'confirmed',
