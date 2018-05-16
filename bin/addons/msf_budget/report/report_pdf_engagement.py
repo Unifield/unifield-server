@@ -240,8 +240,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     values = cost_center_data[expense_account_id]
                     cost_center = pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
                     expense_account = pool.get('account.account').browse(cr, uid, expense_account_id, context=context)
-                    formatted_line = [cost_center.name]
-                    formatted_line += [expense_account.code + " " + expense_account.name]
+                    formatted_line = ["%s - %s" % (cost_center.code or ' ', cost_center.name)]
+                    formatted_line += ["%s - %s" % (expense_account.code, expense_account.name)]
                     if values[0] != 'Budget missing':
                         total_values = [round(sum(pair)) for pair in zip(values, total_values)]
                         formatted_line += [values[0]]
