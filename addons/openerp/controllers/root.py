@@ -26,7 +26,6 @@ from openerp.utils import rpc, cache, TinyDict
 
 from openobject.tools import url, expose, redirect
 from openobject.tools.ast import literal_eval
-from actions import restart_pooler_if_new_module
 
 _MAXIMUM_NUMBER_WELCOME_MESSAGES = 3
 
@@ -182,7 +181,6 @@ class Root(SecuredController):
         target = kw.get('target') or '/'
         if target.startswith('/openerp/do_login'):
             target = '/'
-        restart_pooler_if_new_module()
         raise redirect(target)
 
     @expose(allow_json=True)

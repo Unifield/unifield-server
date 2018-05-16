@@ -135,6 +135,7 @@ def start():
         cherrypy.engine.console_control_handler.subscribe()
 
     cherrypy.engine.start()
+    openobject.pooler.get_pool()
     cherrypy.engine.block()
 
 def stop():
