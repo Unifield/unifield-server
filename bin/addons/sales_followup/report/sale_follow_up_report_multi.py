@@ -230,21 +230,41 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             fl_index = m_index
                         m_index += 1
 
-            # No move found
+            # No move found or DPO
             if first_line:
-                data = {
-                    'line_number': line.line_number,
-                    'po_name': po_name,
-                    'product_code': line.product_id.default_code,
-                    'product_name': line.product_id.name,
-                    'uom_id': line.product_uom.name,
-                    'ordered_qty': line.product_uom_qty,
-                    'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
-                    'delivered_qty': 0.00,
-                    'delivered_uom': '',
-                    'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
-                    'cdd': cdd,
-                }
+                if linked_pol and linked_pol.order_type == 'direct' and linked_pol.state == 'done':
+                    data = {
+                        'line_number': line.line_number,
+                        'po_name': po_name,
+                        'cdd': cdd,
+                        'rts': line.state not in ('draft', 'validated', 'validated_n', 'cancel', 'cancel_r')
+                        and line.order_id.ready_to_ship_date or '',
+                        'product_name': line.product_id.name,
+                        'product_code': line.product_id.code,
+                        'backordered_qty': 0.00,
+                        'uom_id': line.product_uom.name,
+                        'ordered_qty': line.product_uom_qty,
+                        'delivered_uom': line.product_uom.name,
+                        'delivered_qty': line.product_uom_qty,
+                        'first_line': True,
+                        'is_delivered': True,
+                    }
+                    bo_qty -= line.product_uom_qty
+                    first_line = False
+                else:
+                    data = {
+                        'line_number': line.line_number,
+                        'po_name': po_name,
+                        'product_code': line.product_id.default_code,
+                        'product_name': line.product_id.name,
+                        'uom_id': line.product_uom.name,
+                        'ordered_qty': line.product_uom_qty,
+                        'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
+                        'delivered_qty': 0.00,
+                        'delivered_uom': '',
+                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'cdd': cdd,
+                    }
                 lines.append(data)
 
             # Put the backorderd qty on the first line
