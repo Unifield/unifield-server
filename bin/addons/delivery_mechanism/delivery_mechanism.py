@@ -1140,6 +1140,7 @@ class stock_picking(osv.osv):
                             }
                             # search for sol that match with the updated move:
                             sol_to_relink = self.pool.get('sale.order.line').search(cr, uid, [
+                                ('order_id', '=', out_move.sale_line_id.order_id.id),
                                 ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
                                 ('line_number', '=', out_move.sale_line_id.line_number),
                             ], context=context)
