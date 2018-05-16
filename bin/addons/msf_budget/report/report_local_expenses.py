@@ -38,6 +38,17 @@ class report_local_expenses(WebKitParser):
         report_xml.webkit_header.html = "${_debug or ''|n}"
         return super(report_local_expenses, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
 
+    def _cmp_account_code(self, a, b):
+        """
+        Comparison function to sort by account code in ALPHABETICAL order,
+        i.e. 60, 600, 60000, 60010, (...) 601, 60100, 60110, etc.
+        """
+        if a.code > b.code:
+            return 1
+        elif a.code < b.code:
+            return -1
+        return 0
+
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
         # fill domain for lines, depending on the data['form']
@@ -113,7 +124,11 @@ class report_local_expenses(WebKitParser):
             total_amount = 0
             # Search the chart of account account (those that have no parent_id
             parent_view_id = pool.get('account.account').search(cr, uid, [('parent_id', '=', False)])
-            for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
+
+            account_list = pool.get('account.account').browse(cr, uid, expenses.keys(), context=context)
+            account_list.sort(self._cmp_account_code)
+
+            for expense_account in account_list:
                 expense_values = expenses[expense_account.id][month_start - 1:month_stop]
                 if expense_account.type != 'view':
                     total_amount += sum(expense_values)
