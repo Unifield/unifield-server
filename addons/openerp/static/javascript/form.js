@@ -1098,7 +1098,81 @@ function open_search_window(relation, domain, context, source, kind, text){
     });
 }
 
-function makeContextMenu(rec_id, init_value){
+function makeContextMenu(id, kind, relation, val, hide_default_menu){
+    var act = get_form_action('get_context_menu');
+
+    var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) : '';
+    if ((prefix.split('/')[0]) == '_terp_listfields') {
+        prefix = (prefix.split('/')[1]);
+    }
+
+    var model = prefix ? openobject.dom.get(prefix + '/_terp_model').value : openobject.dom.get('_terp_model').value;
+
+    openobject.http.postJSON(act, {
+        'model': model,
+        'field': id,
+        'kind': kind,
+        'relation': relation,
+        'value': val,
+        'hide_default_menu': hide_default_menu
+    }).addCallback(function(obj){
+        var $tbody = jQuery('<tbody>');
+        jQuery.each(obj.defaults, function (_, default_) {
+
+            jQuery('<tr>').append(jQuery('<td>').append(
+                jQuery('<span>').click(function () {
+                    hideContextMenu();
+                    return eval(default_.action);
+                }).text(default_.text))).appendTo($tbody);
+        });
+        if (obj.actions.length) {
+            $tbody.append('<hr>');
+            jQuery.each(obj.actions, function (_, action) {
+                jQuery('<tr>').append(jQuery('<td>').append(
+                    jQuery('<span>', {'field': action.field || '', 'relation': action.relation || ''})
+                        .attr('class', action.action ? '' : 'disabled')
+                        .click(function () {
+                            if(action.action) {
+                                hideContextMenu();
+                                return eval(action.action);
+                            }
+                        }).text(action.text))).appendTo($tbody);
+            });
+        }
+        if (obj.relates.length) {
+            $tbody.append('<hr>');
+
+            jQuery.each(obj.relates, function (_, relate) {
+                jQuery('<tr>').append(jQuery('<td>').append(
+                    jQuery('<span>',
+                        {
+                            'class': relate.action ? '' : 'disabled',
+                            'domain': relate.domain,
+                            'context': relate.domain,
+                            'field': relate.field || '',
+                            'relation': relate.relation || ''
+                        }).click(function () {
+                            if(relate.action) {
+                                hideContextMenu();
+                                return eval(relate.action);
+                            }
+                        }).text(relate.text))).appendTo($tbody);
+            });
+        }
+        var $menu = jQuery('#contextmenu');
+        $menu.empty().append(
+            jQuery('<table cellpadding="0" cellspacing="0">').append($tbody));
+
+        var menu_width = $menu.width();
+        var body_width = jQuery(document.body).width();
+        if (parseInt($menu.css("left")) + menu_width > body_width) {
+            $menu.css({left: body_width - menu_width - 10 + 'px'});
+        }
+        showContextMenu();
+    });
+}
+
+function makeListContextMenu(rec_id, init_value){
         sd = $('#sidebar');
 
         var $menu = jQuery('#contextmenu');
@@ -1358,7 +1432,7 @@ function on_context_menu(evt, target){
     $menu.hide();
 
     if (sidebar) {
-        makeContextMenu(grid.attr('record'), checked);
+        makeListContextMenu(grid.attr('record'), checked);
     } else {
         makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
     }
