@@ -1134,7 +1134,7 @@ function hideContextMenu(){
     jQuery('#contextmenu, #contextmenu_frm').hide();
     ctx = jQuery('#contextmenu')
     if (ctx.attr('init_value') == 'false') {
-        new ListView('_terp_list').onBooleanClicked(true, ctx.attr('rec_id'));
+        new ListView('_terp_list').onBooleanClicked(true, ctx.attr('rec_id'), true);
         jQuery('#_terp_list\\/'+ctx.attr('rec_id'))[0].checked = false;
     }
 }
@@ -1326,7 +1326,7 @@ function on_context_menu(evt, target){
         sidebar = true;
         checked = true;
         if (!tick_box[0].checked) {
-            new ListView('_terp_list').onBooleanClicked(false, grid.attr('record'))
+            new ListView('_terp_list').onBooleanClicked(false, grid.attr('record'), true)
             tick_box[0].checked=true;
             checked = false;
         }
