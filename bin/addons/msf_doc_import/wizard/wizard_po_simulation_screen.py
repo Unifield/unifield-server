@@ -288,7 +288,13 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context.get('button') in ('go_to_simulation', 'print_simulation_report', 'return_to_po'):
             return True
 
-        return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        try:
+            return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        except Exception, e:
+            if e[0] == 'ConcurrencyException':
+                return True
+            else:
+                raise e
 
     '''
     Action buttons
@@ -1073,6 +1079,18 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
+
+        # To prevent adding multiple lines by clicking multiple times on the import button
+        if active_wiz.state != 'simu_done':
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order',
+                    'res_id': active_wiz.order_id.id,
+                    'view_type': 'form',
+                    'view_mode': 'form, tree',
+                    'target': 'crush',
+                    'context': context}
+
         self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
         for wiz in self.browse(cr, uid, ids, context=context):
             filename = wiz.filename.split('\\')[-1]
@@ -1088,7 +1106,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         else:
             return {'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order',
-                    'res_id': self.browse(cr, uid, ids, context=context)[0].order_id.id,
+                    'res_id': active_wiz.order_id.id,
                     'view_type': 'form',
                     'view_mode': 'form, tree',
                     'target': 'crush',
