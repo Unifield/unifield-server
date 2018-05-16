@@ -18674,7 +18674,7 @@ msgstr "Liste pas trouvée !"
 #: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocp
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocp
 msgid "Export to HQ system (OCP)"
-msgstr "Export to HQ system (OCP)"
+msgstr "Export au système HQ (OCP)"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1313
@@ -30429,7 +30429,7 @@ msgstr "Produit Spécifique"
 #: field:wizard.hq.report.ocg,fiscalyear_id:0
 #, python-format
 msgid "Fiscal year"
-msgstr "Fiscal year"
+msgstr "Exercice comptable"
 
 #. module: account
 #: help:account.installer.modules,account_voucher:0
@@ -78254,7 +78254,7 @@ msgstr "Résultat Remplacement Stock"
 #: field:wizard.hq.report.ocg,period_id:0
 #, python-format
 msgid "Period"
-msgstr "Period"
+msgstr "Période"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/lang_tools.py:26
