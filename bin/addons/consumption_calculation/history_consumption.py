@@ -499,7 +499,9 @@ class product_product(osv.osv):
             new_separator = """<separator orientation="vertical" />"""
             separator_node = etree.fromstring(new_separator)
             xml_view.insert(0, separator_node)
-            new_filter = """<filter string="Av.%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('average','>',0.)]" />""" % (context.get('amc', 'AMC'),)
+            product_ids = self.pool.get('product.history.consumption').get_data(cr, uid, [context.get('obj_id')], context=context)[0]
+            product_ids = self.pool.get('product.product').search(cr, uid, [('id', 'in', product_ids), ('average', '>', 0)], context=context)
+            new_filter = """<filter string="Av.%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (context.get('amc', 'AMC'), product_ids)
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
