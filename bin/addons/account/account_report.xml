@@ -104,5 +104,24 @@
             file="account/report/account_liquidity_balance.mako"
             report_type="webkit"
             string="Liquidity Balance"/>
+
+        <!-- Combined Journals Report -->
+        <report id="combined_journals_report_xls"
+                string="Combined Journals Report XLS"
+                model="account.mcdb"
+                name="combined.journals.report.xls"
+                file="account_mcdb/report/combined_journals_report.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="False"/>
+        <report id="combined_journals_report_pdf"
+                string="Combined Journals Report PDF"
+                model="account.mcdb"
+                name="combined.journals.report.pdf"
+                rml="account_mcdb/report/combined_journals_report.rml"
+                header="True"
+                auto="False"
+                menu="False"/>
     </data>
 </openerp>

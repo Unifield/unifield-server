@@ -810,6 +810,8 @@ class shipment(osv.osv):
             log_flag = False
 
             for family in wizard.family_ids:
+                if not family.selected_number:
+                    continue
                 picking = family.draft_packing_id
                 draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
@@ -1066,7 +1068,6 @@ class shipment(osv.osv):
         return_info = {}
 
         counter = 0
-
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             shipment = wizard.shipment_id
             shipment_ids.append(shipment.id)
