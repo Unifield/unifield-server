@@ -115,16 +115,16 @@ class ir_followup_location_wizard(osv.osv_memory):
         state_domain = []
 
         if wizard.draft_ok:
-            state_domain.append('draft')
+            state_domain.append(['draft', 'draft_p'])
 
         if wizard.validated_ok:
-            state_domain.extend(['validated', 'waiting_date'])
+            state_domain.extend(['validated', 'validated_p', 'waiting_date'])
 
         if wizard.sourced_ok:
-            state_domain.append('sourced')
+            state_domain.append(['sourced', 'sourced_p'])
 
         if wizard.confirmed_ok:
-            state_domain.extend(['manual', 'progress'])
+            state_domain.extend(['confirmed', 'confirmed_p'])
 
         if wizard.exception_ok:
             state_domain.extend(['shipping_except', 'invoice_except'])
@@ -136,7 +136,6 @@ class ir_followup_location_wizard(osv.osv_memory):
             state_domain.append('cancel')
 
         return state_domain
-
 
     def get_values(self, cr, uid, ids, context=None):
         '''
