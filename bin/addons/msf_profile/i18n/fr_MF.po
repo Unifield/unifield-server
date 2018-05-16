@@ -22064,6 +22064,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:addons/account/report/account_liquidity_balance.mako:162
 #: field:cash.request,name:0
 #: field:msf.instance.cloud,name:0
+#: field:hr.payment.method,name:0
 #: report:addons/account_override/report/account_chart_export.mako:136
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:146
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:50
@@ -25954,6 +25955,8 @@ msgstr "Wizard to split processor lines"
 #: field:wizard.register.creation,period_id:0
 #: field:wizard.register.creation.lines,period_id:0
 #: field:wizard.register.import.lines,period_id:0
+#: field:hr.payment.order,period_id:0
+#: report:hr.payment.order.report:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -56838,10 +56841,12 @@ msgstr "Certificat ?"
 msgid "ESC Message 1"
 msgstr "ESC Message 1"
 
-#. modules: hr, account, register_accounting
+#. modules: hr, account, register_accounting, msf_homere_interface
 #: field:account.journal,bank_account_number:0
 #: field:hr.employee,bank_account_id:0
 #: field:account.bank.statement,bank_account_number:0
+#: field:hr.employee,bank_account_number:0
+#: report:hr.payment.order.report:0
 msgid "Bank Account Number"
 msgstr "Numéro de Compte Bancaire"
 
@@ -58875,9 +58880,13 @@ msgstr "Référence de la Commande"
 msgid "Inventory counter Name"
 msgstr "Responsable Inventaire"
 
-#. module: account_payment
+#. modules: account_payment, msf_homere_interface
 #: model:ir.actions.act_window,name:account_payment.action_payment_order_tree
 #: model:ir.ui.menu,name:account_payment.menu_action_payment_order_form
+#: view:hr.payment.order:0
+#: model:ir.actions.act_window,name:msf_homere_interface.action_payment_orders
+#: model:ir.model,name:msf_homere_interface.model_hr_payment_order
+#: report:hr.payment.order.report:0
 msgid "Payment Orders"
 msgstr "Ordres de Paiement"
 
@@ -58946,11 +58955,12 @@ msgstr "Autres Types"
 msgid "Logistic"
 msgstr "Logistique"
 
-#. modules: msf_doc_import, account, consumption_calculation
+#. modules: msf_doc_import, account, consumption_calculation, msf_homere_interface
 #: model:ir.actions.report.xml,name:account.account_invoices
 #: view:weekly.forecast.report:0
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
+#: view:hr.payment.order:0
 msgid "Print report"
 msgstr "Imprimer Rapport"
 
@@ -100317,6 +100327,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:ocp.matching.export.wizard:0
 #: view:wizard.hq.report.oca:0
 #: view:wizard.import.mapping:0
+#: view:hr.payment.order:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -106114,7 +106125,7 @@ msgstr "Export Excel du Suivi des Changements des Bons de Commande"
 msgid "Price in functional currency"
 msgstr "Prix dans la devise fonctionnelle"
 
-#. modules: purchase_followup, finance
+#. modules: purchase_followup, finance, msf_homere_interface
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:242
 #: field:cash.request.expense,currency_id:0
 #: view:cash.request.liquidity.bank:0
@@ -106122,6 +106133,7 @@ msgstr "Prix dans la devise fonctionnelle"
 #: view:cash.request.liquidity.cheque:0
 #: field:cash.request.total.transfer.line,currency_id:0
 #: field:cash.request.transfer.currency,currency_id:0
+#: report:hr.payment.order.report:0
 msgid "Currency"
 msgstr "Devise"
 
@@ -107576,6 +107588,61 @@ msgstr "Registre Fermé par"
 #: help:account.bank.statement,register_closed_by:0
 msgid "Name and position of the person who closes the register"
 msgstr "Nom et poste de la personne qui ferme le registre"
+
+#. module: hr
+#: field:hr.employee,contract_start_date:0
+msgid "Contract Start Date"
+msgstr "Date de Début de Contrat"
+
+#. module: hr
+#: field:hr.employee,contract_end_date:0
+msgid "Contract End Date"
+msgstr "Date de Fin de Contrat"
+
+#. module: msf_homere_interface
+#: field:hr.employee,payment_method_id:0
+#: field:hr.payment.order,payment_method_id:0
+#: model:ir.model,name:msf_homere_interface.model_hr_payment_method
+#: report:hr.payment.order.report:0
+msgid "Payment Method"
+msgstr "Mode de Paiement"
+
+#. module: hr
+#: model:ir.actions.act_window,name:hr.open_payment_method
+#: model:ir.ui.menu,name:hr.menu_hr_payment_method
+msgid "Payment methods"
+msgstr "Modes de paiement"
+
+#. module: hr
+#: view:hr.payment.method:0
+msgid "Payment method"
+msgstr "Mode de paiement"
+
+#. module: msf_homere_interface
+#: sql_constraint:hr.payment.method:0
+msgid "The payment method name must be unique."
+msgstr "Le nom du mode de paiement doit être unique."
+
+#. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Employee Name"
+msgstr "Nom de l'Employé"
+
+#. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Employee ID"
+msgstr "ID de l'Employé"
+
+#. module: msf_homere_interface
+#: report:hr.payment.order.report:0
+msgid "Net to Pay"
+msgstr "Net à Payer"
+
+#. module: msf_homere_interface
+#: field:hr.employee,bank_name:0
+#: report:hr.payment.order.report:0
+msgid "Bank Name"
+msgstr "Nom de la Banque"
 
 #. module: account_mcdb
 #: report:addons/account_mcdb/report/combined_journals_report.mako:8

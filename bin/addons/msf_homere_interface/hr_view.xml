@@ -63,6 +63,14 @@
                             <separator string="Position" colspan="2"/>
                             <field name="job_id" domain="[('state','!=','old')]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="coach_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_start_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_end_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Payment Information" colspan="2"/>
+                            <field name="payment_method_id" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="bank_name" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="bank_account_number" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
                         </group>
                     </page>
                     <page string="Categories">
