@@ -30,6 +30,7 @@ from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 class account_period_state(osv.osv):
     _name = "account.period.state"
+    _description = "Period States"
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
@@ -126,6 +127,7 @@ account_period_state()
 class account_fiscalyear_state(osv.osv):
     # model since US-822
     _name = "account.fiscalyear.state"
+    _description = "Fiscal Year States"
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',

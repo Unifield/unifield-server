@@ -988,7 +988,13 @@ class update_link(osv.osv_memory):
                                                               ('model', '=', model),
                                                               ('res_id', 'in', ids)], context=context)
 
-            obj_names = self.pool.get(model).name_get(cr, uid, ids, context=context)
+            # get the names of all the selected entries if possible, else the name of the object
+            try:
+                obj_names = self.pool.get(model).name_get(cr, uid, ids, context=context)
+                descr = ' / '.join([x[1] for x in obj_names])
+            except KeyError:
+                descr = self.pool.get(model)._description or ''
+
             if ir_model_data_ids:
                 sdrefs = ir_model_obj.browse(cr, uid, ir_model_data_ids, fields_to_fetch=['name'],
                                             context=context)
@@ -1002,7 +1008,7 @@ class update_link(osv.osv_memory):
         search_view_id = search_view_id and search_view_id[1] or False
         res_model = update_type == 'received' and 'sync.client.update_received' or 'sync.client.update_to_send'
         return {
-            'name': '%s %s' % (update_type == 'received' and _('Update Received Monitor') or _('Update Sent Monitor'), ' / '.join([x[1] for x in obj_names])),
+            'name': '%s %s' % (update_type == 'received' and _('Update Received Monitor') or _('Update Sent Monitor'), descr),
             'type': 'ir.actions.act_window',
             'res_model': res_model,
             'view_type': 'form',
