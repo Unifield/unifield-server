@@ -192,7 +192,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'shipment': shipment,
                             'is_delivered': is_delivered,
                             'delivered_qty': not only_bo and (is_shipment_done or is_delivered) and move.product_qty or 0.00,
-                            'delivered_uom': not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name or '-',
+                            'delivered_uom': (not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name)
+                                             or (not only_bo and ppl_not_shipped and move.product_uom.name) or '-',
                             'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
@@ -226,6 +227,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 if not grouped or (grouped and line.line_number == key[3]):
                                     rline.update({
                                         'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
+                                        'backordered_qty': rline['backordered_qty'] + data['backordered_qty'],
                                     })
                     else:
                         keys.append(key)
