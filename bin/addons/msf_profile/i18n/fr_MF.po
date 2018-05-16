@@ -107703,3 +107703,10 @@ msgstr "Ligne #%s: Vous ne pouvez pas valider de ligne sans UdM."
 #, python-format
 msgid "Line #%s: You have to select a product UoM in the same category than the UoM of the product."
 msgstr "Ligne #%s: Vous devez sélectionner une UdM de produit dans la même catégorie que l'UdM du produit."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:327
+#: code:addons/msf_config_locations/stock_configuration.py:352
+#, python-format
+msgid "A location with a similar name already exists."
+msgstr "Une zone avec un nom similaire existe déjà."
