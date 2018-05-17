@@ -5253,7 +5253,7 @@ class stock_move(osv.osv):
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
-                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or False
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.id not in context.get('not_resource_move', []):

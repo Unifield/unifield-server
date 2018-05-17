@@ -187,6 +187,8 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
+        if sol.state.startswith('cancel'):
+            return False
 
         if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
             # case the sol has no OUT moves but its normal, so don't close the sol in this case:
