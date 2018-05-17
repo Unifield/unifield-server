@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2018 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,8 +20,7 @@
 #
 ##############################################################################
 
-import purchase_allocation_report
-import report
-import wizard
+import wizard_po_allocation_report
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
