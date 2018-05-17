@@ -112,10 +112,10 @@ class report_pdf_engagement(report_sxw.rml_parse):
         b = b.split('_')
         if len(a) != 2 or len(b) != 2 or not a[0] or not b[0] or not a[1] or not b[1]:
             return 0
-        a_cc = analytic_acc_obj.read(self.cr, self.uid, int(a[0]), ['code'])['code']
-        a_dest = analytic_acc_obj.read(self.cr, self.uid, int(a[1]), ['code'])['code']
-        b_cc = analytic_acc_obj.read(self.cr, self.uid, int(b[0]), ['code'])['code']
-        b_dest = analytic_acc_obj.read(self.cr, self.uid, int(b[1]), ['code'])['code']
+        a_cc = analytic_acc_obj.read(self.cr, self.uid, int(a[0]), ['code'])['code'].upper()
+        a_dest = analytic_acc_obj.read(self.cr, self.uid, int(a[1]), ['code'])['code'].upper()
+        b_cc = analytic_acc_obj.read(self.cr, self.uid, int(b[0]), ['code'])['code'].upper()
+        b_dest = analytic_acc_obj.read(self.cr, self.uid, int(b[1]), ['code'])['code'].upper()
         if a_cc > b_cc:
             return 1
         elif a_cc < b_cc:
