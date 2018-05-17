@@ -22,6 +22,7 @@
 import time
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class order_line_allocation(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -41,6 +42,9 @@ report_sxw.report_sxw('report.purchase.order.allocation.report',
                       'purchase.order.line.allocation.report', 
                       'addons/purchase_allocation_report/report/order_line_allocation.rml', 
                       parser=order_line_allocation, header="landscape")
+
+SpreadsheetReport('report.po.allocation.report.xls', 'purchase.order',
+                  'addons/purchase_allocation_report/report/po_allocation_report.mako', parser=order_line_allocation)
 
 
 class po_line_allocation_report(report_sxw.rml_parse):

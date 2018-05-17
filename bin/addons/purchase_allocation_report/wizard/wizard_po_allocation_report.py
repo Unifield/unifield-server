@@ -48,14 +48,19 @@ class wizard_po_allocation_report(osv.osv_memory):
             'model': context.get('active_model', 'ir.ui.menu'),
             'context': context,
         }
-        if wiz_data.get('export_type', None) == 'pdf':
-            return {
+        if wiz_data.get('export_type', '') == 'excel':
+            report = {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'po.allocation.report.xls',
+                'datas': data
+            }
+        else:
+            report = {
                 'type': 'ir.actions.report.xml',
                 'report_name': 'po.line.allocation.report',
                 'datas': data
             }
-        else:
-            pass  # TODO
+        return report
 
 
 wizard_po_allocation_report()
