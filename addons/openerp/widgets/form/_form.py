@@ -921,7 +921,7 @@ class Form(TinyInputWidget):
                     attrs['force_readonly'] = True
                     attrs['ro_by_trans'] = True
 
-            if self.noteditable:
+            if self.noteditable and not attrs.get('force_editable'):
                 attrs['readonly'] = True
                 attrs['force_readonly'] = True
                 if 'attrs' in attrs and attrs['attrs'] and 'readonly' in attrs['attrs']:
