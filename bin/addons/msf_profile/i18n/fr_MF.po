@@ -12168,6 +12168,7 @@ msgstr "Audit"
 #: view:account.invoice.report:0
 #: report:account.invoice2:0
 #: model:ir.actions.act_window,name:account.action_account_invoice_refund
+#: view:account.direct.invoice.wizard:0
 #: view:account.invoice:0
 #: view:account.invoice:0
 #: view:account.invoice.refund:0
