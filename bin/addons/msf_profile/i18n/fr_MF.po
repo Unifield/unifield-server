@@ -77431,6 +77431,8 @@ msgstr "Original Qty"
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.update_to_send_action
 #: model:ir.ui.menu,name:sync_client.update_sent_menu
+#: code:addons/sync_client/update.py:1005
+#, python-format
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
@@ -92537,6 +92539,8 @@ msgstr "res.request"
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.update_received_action
 #: model:ir.ui.menu,name:sync_client.update_received_menu
+#: code:addons/sync_client/update.py:1005
+#, python-format
 msgid "Update Received Monitor"
 msgstr "Surveillance des Mises à jour Reçues"
 
@@ -107816,3 +107820,28 @@ msgstr "Ligne %s. La combinaison \"compte %s et destination %s\" n'est pas compa
 #, python-format
 msgid "Line %s. The Cost Center %s is not compatible with the Funding Pool %s."
 msgstr "Ligne %s. Le Centre de Coût %s n'est pas compatible avec le Funding Pool %s."
+
+#. module: sync_client
+#: model:ir.actions.server,name:sync_client.action_open_updates_sent
+msgid "Updates Sent"
+msgstr "Mises à jour Envoyées"
+
+#. module: sync_client
+#: model:ir.actions.server,name:sync_client.action_open_updates_received
+msgid "Updates Received"
+msgstr "Mises à jour Reçues"
+
+#. module: account_mcdb
+#: model:ir.model,name:account_mcdb.model_account_fiscalyear_state
+msgid "Fiscal Year States"
+msgstr "Statuts des Exercices Comptables"
+
+#. module: account_mcdb
+#: model:ir.model,name:account_mcdb.model_account_period_state
+msgid "Period States"
+msgstr "Statuts des Périodes"
+
+#. module: sync_client
+#: model:ir.model,name:sync_client.model_update_link
+msgid "Handling of the Links to Updates Sent and Received"
+msgstr "Gestion des Liens vers les Mises à jour Reçues et Envoyées"

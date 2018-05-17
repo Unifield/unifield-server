@@ -51,6 +51,7 @@ OBJ_TO_RECREATE = [
     'ir.rule',
 ]
 
+
 class fv_formatter:
     def fmt(self, cr, uid, ids, field_name, arg, context):
         res = {}
@@ -964,8 +965,75 @@ class update_received(osv.osv,fv_formatter):
             values[i] = ','.join(res_val) if res_val else False
         return result
 
+
     _order = 'id desc'
 
 update_received()
+
+
+class update_link(osv.osv_memory):
+    _name = 'update.link'
+    _description = 'Handling of the Links to Updates Sent and Received'
+
+    def _open_update_list(self, cr, uid, ids, update_type='received', context=None):
+        """
+        Returns the Update Received or Sent View for the selected entries.
+        :param update_type: String. If 'received', will open the Update Received View. Else will open the Update Sent View.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context.get('active_ids'):
+            ids = context.get('active_ids')
+
+        model = context.get('model')
+        if model and isinstance(model, basestring):
+            ir_model_obj = self.pool.get('ir.model.data')
+            ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
+                                                              ('model', '=', model),
+                                                              ('res_id', 'in', ids)], context=context)
+
+            # get the names of all the selected entries if possible, else the name of the object
+            model_obj = self.pool.get(model)
+            try:
+                obj_names = model_obj.name_get(cr, uid, ids, context=context)
+                descr = ' / '.join([x[1] for x in obj_names])
+            except KeyError:
+                descr = model_obj._description or model_obj._name or ''
+
+            if ir_model_data_ids:
+                sdrefs = ir_model_obj.browse(cr, uid, ir_model_data_ids, fields_to_fetch=['name'],
+                                             context=context)
+
+                domain = [('sdref', 'in', [sdref.name for sdref in sdrefs])]
+        tree_view = update_type == 'received' and 'update_received_tree_view' or 'sync_client_update_to_send_tree_view'
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', tree_view)
+        view_id = view_id and view_id[1] or False
+        search_view = update_type == 'received' and 'update_received_search_view' or 'update_sent_search_view'
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', search_view)
+        search_view_id = search_view_id and search_view_id[1] or False
+        res_model = update_type == 'received' and 'sync.client.update_received' or 'sync.client.update_to_send'
+        return {
+            'name': '%s %s' % (update_type == 'received' and _('Update Received Monitor') or _('Update Sent Monitor'), descr),
+            'type': 'ir.actions.act_window',
+            'res_model': res_model,
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+    def open_updates_received(self, cr, uid, ids, context):
+        return self._open_update_list(cr, uid, ids, update_type='received', context=context)
+
+    def open_updates_sent(self, cr, uid, ids, context):
+        return self._open_update_list(cr, uid, ids, update_type='sent', context=context)
+
+update_link()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
