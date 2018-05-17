@@ -1142,6 +1142,7 @@ class stock_picking(osv.osv):
                                 ('order_id', '=', out_move.sale_line_id.order_id.id),
                                 ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
                                 ('line_number', '=', out_move.sale_line_id.line_number),
+                                ('order_id', '=', out_move.picking_id.sale_id.id),
                             ], context=context)
                             if sol_to_relink:
                                 move_values.update({'sale_line_id': sol_to_relink[0],})
