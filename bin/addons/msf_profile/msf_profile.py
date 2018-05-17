@@ -67,6 +67,20 @@ class patch_scripts(osv.osv):
                     """)
         return True
 
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
     # UF8.2
     def ud_trans(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
