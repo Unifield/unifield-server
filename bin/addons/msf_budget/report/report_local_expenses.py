@@ -116,6 +116,7 @@ class report_local_expenses(WebKitParser):
 
             account_list = pool.get('account.account').browse(cr, uid, expenses.keys(), context=context)
 
+            # sorting by account code in ALPHABETICAL order, i.e. 60, 600, 60000, 60010, (...) 601, 60100, 60110, etc.
             for expense_account in sorted(account_list, key=lambda x: x.code):
                 expense_values = expenses[expense_account.id][month_start - 1:month_stop]
                 if expense_account.type != 'view':
