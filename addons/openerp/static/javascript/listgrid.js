@@ -67,7 +67,11 @@ ListView.prototype = {
         if (previous_field) {
             sel = previous_field.val() || "";
             if (!sel) {return []};
-            return sel.split(',').map(function(b) {return parseInt(b, 10)});
+            var listids = sel.split(',').map(function(b) {return parseInt(b, 10)});
+            if ($('#contextmenu').is(':visible')) {
+                return listids.reverse();
+            }
+            return listids
         }
         return [];
     },
