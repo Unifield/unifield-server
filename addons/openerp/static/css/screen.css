@@ -2023,6 +2023,32 @@ td.tertiary div.wrap {
     text-shadow: #fff 0 1px 0;
 }
 
+#contextmenu ul,#contextmenu form {
+    list-style: none;
+    margin: 6px 5px 6px 10px;
+    padding: 0;
+}
+
+#contextmenu li,#contextmenu label {
+    margin: 0 0 5px;
+    color: #5b5b5b;
+}
+
+#contextmenu .sideheader-a {
+    position: relative;
+    padding-right: 2px;
+    border-top: 0px;
+    border-bottom: 0px;
+    background: url();
+}
+
+#contextmenu .sideheader-a h2 {
+    text-shadow: none;
+    color: #FFF;
+    border-bottom: 1px solid #FFF;
+    font-size: 10px;
+}
+
 #sidebar label {
     margin: 5px 0 0;
 }

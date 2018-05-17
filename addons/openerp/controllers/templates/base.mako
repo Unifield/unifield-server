@@ -10,7 +10,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form.js?v=9.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=7.0"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=7.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=9.0"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=7.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=7.0"></script>
@@ -25,7 +25,7 @@
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/menu.css?v=2.7b1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/tips.css?v=7.0"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/waitbox.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=7.0"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=9.0"/>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/jscal/calendar-blue.css"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/dashboard.css"/>

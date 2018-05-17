@@ -67,7 +67,11 @@ ListView.prototype = {
         if (previous_field) {
             sel = previous_field.val() || "";
             if (!sel) {return []};
-            return sel.split(',').map(function(b) {return parseInt(b, 10)});
+            var listids = sel.split(',').map(function(b) {return parseInt(b, 10)});
+            if ($('#contextmenu').is(':visible')) {
+                return listids.reverse();
+            }
+            return listids
         }
         return [];
     },
@@ -198,23 +202,27 @@ ListView.prototype = {
     },
 
     onBooleanClicked: function() {
-        if (arguments.length == 2) {
+        var nosidebar = false;
+        if (arguments.length >= 2) {
             var clicked = !arguments[0];
             var id = arguments[1];
+            nosidebar = arguments[2];
             if (clicked) {
                 this.add_previously_selected(id);
             } else {
                 this.remove_previously_selected(id);
             }
         }
-        var $sidebar = jQuery('.toggle-sidebar');
-        if ($sidebar.is('.closed')) {
-            $sidebar.click()
-        }
-        if(!this.getSelectedRecords().length) {
-            $sidebar.click();
-        }
 
+        if (!nosidebar) {
+            var $sidebar = jQuery('.toggle-sidebar');
+            if ($sidebar.is('.closed')) {
+                $sidebar.click()
+            }
+            if(!this.getSelectedRecords().length) {
+                $sidebar.click();
+            }
+        }
            this.selectedRow_sum();
     },
 
