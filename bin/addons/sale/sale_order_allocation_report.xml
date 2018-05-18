@@ -2,6 +2,17 @@
 <openerp>
     <data>
 
+        <!-- FO allocation report XLS -->
+        <report id="fo_allocation_report_xls"
+                string="Allocation report"
+                model="sale.order"
+                name="fo.allocation.report.xls"
+                file="sale/report/fo_allocation_report.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="False"/>
+
         <report
             auto="False"
             id="sale_order_allocation_report"
@@ -10,7 +21,41 @@
             target_filename="Allocation Report_${name}_%(year)s%(month)s%(day)s"
             rml="sale/report/sale_order_allocation_report.rml"
             header="False"
+            menu="False"
             string="Allocation report" />
+
+        <record id="action_fo_allocation_report_menu" model="ir.actions.act_window">
+            <field name="name">Allocation report</field>
+            <field name="res_model">wizard.fo.allocation.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <record model="ir.values" id="action_fo_allocation_report_values">
+            <field name="object" eval="1" />
+                <field name="name">allocation.report</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_fo_allocation_report_menu'))" />
+            <field name="key">action</field>
+            <field name="model">sale.order</field>
+            <field name="sequence" eval="110"/>
+        </record>
+
+        <!-- FO allocation report Wizard -->
+        <record id="wizard_fo_allocation_report_view" model="ir.ui.view">
+            <field name="name">Allocation Report</field>
+            <field name="model">wizard.fo.allocation.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group colspan="4">
+                        <field colspan="4" name="export_type"/>
+                        <button colspan="2" string="Cancel" icon='gtk-cancel' special="cancel"/>
+                        <button colspan="2" name="button_fo_allocation_report" string="Print" type="object" icon="gtk-print"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>
