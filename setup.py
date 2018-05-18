@@ -252,6 +252,7 @@ setup(name=name,
           'certifi==2018.1.18',
           'chardet==3.0.4',
           'requests==2.18.4',
+          'pysftp==0.2.9',
       ],
       **py2exe_keywords
       )

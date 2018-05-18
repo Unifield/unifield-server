@@ -1651,6 +1651,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'confirmed_delivery_date': line.imp_dcd or False,
                             'esc_confirmed': True if line.imp_dcd else False,
                         })
+                        if context.get('auto_import_ok'):
+                            line_vals.update({
+                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                            })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:

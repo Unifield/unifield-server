@@ -723,8 +723,8 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <button name="enter_reason"
-                                    states="assigned,confirmed,draft,shipped"
-                                    attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped']), ('progress_memory_not_done', '!=', False)]}"
+                                    states="assigned,confirmed,draft,shipped,updated"
+                                    attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False)]}"
                                     string="Cancel"
                                     type="object"
                                     icon="gtk-cancel"
@@ -733,8 +733,8 @@
                                     />
                                 <field name="from_wkf_sourcing" invisible="1" />
                                 <button name="enter_reason"
-                                    states="assigned,confirmed,draft,shipped"
-                                    attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
+                                    states="assigned,confirmed,draft,shipped,updated"
+                                    attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
@@ -749,8 +749,8 @@
                                      To go to simulation screen, click on Process then Simulate button on the opened wizard
                                      <button name="go_to_simulation_screen" states="assigned,shipped" string="Simulate" type="object" icon="gtk-execute" attrs="{'invisible': [('is_esc', '=', False)]}" />-->
                                 <field name="progress_memory" invisible="1" />
-                                <button name="go_to_processing_wizard" states="assigned,shipped" string="Open processing wizard" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory', '=', -1), ('progress_memory_not_done', '=', False)]}" context="{'progress_wizard': True}" />
-                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped']), ('progress_memory_not_done', '=', True)]}" context="{'from_button': True}"/>
+                                <button name="go_to_processing_wizard" states="assigned,shipped,updated" string="Open processing wizard" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'shipped','updated']), ('progress_memory', '=', -1), ('progress_memory_not_done', '=', False)]}" context="{'progress_wizard': True}" />
+                                <button name="action_process" states="assigned,shipped,updated" string="Process" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', 'not in', ['assigned', 'shipped','updated']), ('progress_memory_not_done', '=', True)]}" context="{'from_button': True}"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>

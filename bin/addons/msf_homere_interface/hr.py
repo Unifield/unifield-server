@@ -375,7 +375,7 @@ class hr_employee(osv.osv):
 
         return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         import os
         processed = []

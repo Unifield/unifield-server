@@ -958,7 +958,7 @@ class stock_picking(osv.osv):
             sync_in = False
 
         in_out_updated = True
-        if sync_in:
+        if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
 
         backorder_id = False
@@ -1010,8 +1010,7 @@ class stock_picking(osv.osv):
                 average_values = {}
                 move_sptc_values = []
 
-                for line in move_proc_obj.browse(cr, uid, proc_ids,
-                                                 context=context):
+                for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
@@ -1324,7 +1323,12 @@ class stock_picking(osv.osv):
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     else:
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
-
+                    return backorder_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, backorder_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return backorder_id
 
                 self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
@@ -1382,6 +1386,12 @@ class stock_picking(osv.osv):
                         self.write(cr, uid, [picking_id], {'in_dpo': True}, context=context)
                     else:
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
+                    return picking_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', picking_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return picking_id
                 else:
                     # Cancel missing IN instead of processing
