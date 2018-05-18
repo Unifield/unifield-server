@@ -83,11 +83,11 @@
       <NumberFormat ss:Format="Short Date" />
     </Style>
     <Style ss:ID="short_date2">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
       <NumberFormat ss:Format="Short Date" />
     </Style>
     <Style ss:ID="pop">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
     </Style>
     <Style ss:ID="s25">
       <Borders>
@@ -101,6 +101,7 @@
     <Style ss:ID="s25c" />
     <Style ss:ID="s25b">
       <Font ss:Bold="1" />
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" />
     </Style>
 
     <Style ss:ID="s26" >
@@ -237,7 +238,7 @@
     </Style>
 
     <Style ss:ID="s52">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -251,21 +252,22 @@
 
   <Worksheet ss:Name="Liquidity position">
     <Table >
-      <Column ss:AutoFitWidth="0" ss:Width="110.5"/>
-      <Column ss:AutoFitWidth="0" ss:Width="102.75" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
-      <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
-      <Column ss:AutoFitWidth="0" ss:Width="82" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="161.25"/>
+      <Column ss:AutoFitWidth="0" ss:Width="40.5"/>
+      <Column ss:AutoFitWidth="0" ss:Width="138.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="57"/>
+      <Column ss:AutoFitWidth="0" ss:Width="60.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="2"/>
+      <Column ss:AutoFitWidth="0" ss:Width="57"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="1"/>
+      <Column ss:AutoFitWidth="0" ss:Width="55.5"/>
 
       <% period = getPeriod() %>
       <Row>
         <Cell ss:StyleID="s25b" >
           <Data ss:Type="String">${_('LIQUIDITY POSITION')|x}</Data>
         </Cell>
-        <Cell ss:StyleID="s25b" >
+        <Cell ss:StyleID="s25b" ss:MergeAcross="1">
           <Data ss:Type="String">${period.name|x}</Data>
         </Cell>
       </Row>
@@ -275,7 +277,7 @@
           <Data ss:Type="String">${_('Period end date:')|x}</Data>
         </Cell>
         % if isDate(period.date_stop):
-        <Cell ss:StyleID="short_date2">
+        <Cell ss:StyleID="short_date2" ss:MergeAcross="1">
           <Data ss:Type="DateTime">${period.date_stop|n}T00:00:00.000</Data>
         </Cell>
         % else:
@@ -288,7 +290,7 @@
         <Cell>
           <Data ss:Type="String">${_('Prop Instance: ')|x}</Data>
         </Cell>
-        <Cell ss:StyleID="pop">
+        <Cell ss:StyleID="pop" ss:MergeAcross="1">
           <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
         </Cell>
       </Row>
@@ -296,7 +298,7 @@
         <Cell>
           <Data ss:Type="String">${_('Report date:')}</Data>
         </Cell>
-        <Cell ss:StyleID="short_date2">
+        <Cell ss:StyleID="short_date2" ss:MergeAcross="1">
           <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
         </Cell>
       </Row>
@@ -497,7 +499,7 @@
       </Row>
 
       <% pending_cheques = getPendingCheques() %>
-      % for journal in pending_cheques['registers']:
+      % for journal in getChqJournalCodes():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ pending_cheques['registers'][journal]['instance'] |x }</Data>
@@ -529,6 +531,37 @@
         </Cell>
         <Cell ss:MergeAcross="1" ss:StyleID="s26">
           <Data ss:Type="Number">${ pending_cheques['registers'][journal]['amount_func_currency'] or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
+        </Cell>
+      </Row>
+      % endfor
+
+      <!-- REVALUATION LINES -->
+      % for rev_cur in getRevaluationLines():
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['prop_instance']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['journal_code']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ getRevaluationLines()[rev_cur]['journal_name']|x }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s25"/>
+        <Cell ss:StyleID="s26">
+          <Data ss:Type="Number">${ getRevaluationLines()[rev_cur]['booking_amount'] or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s25">
+          <Data ss:Type="String">${ str(rev_cur)|x }</Data>
+        </Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="s26">
+          <Data ss:Type="Number">${ getRevaluationLines()[rev_cur]['functional_amount'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
@@ -597,7 +630,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:MergeAcross="1" ss:StyleID="s52">
-          <Data ss:Type="String">Grand Total Register Currency</Data>
+          <Data ss:Type="String">${_('Grand Total Reg. Currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in register currency -->
@@ -620,7 +653,7 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:MergeAcross="1" ss:StyleID="s52">
-          <Data ss:Type="String">Grand Total Functional Currency</Data>
+          <Data ss:Type="String">${_('Grand Total Func. Currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in func. currency -->

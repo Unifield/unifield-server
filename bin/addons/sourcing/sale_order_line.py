@@ -1401,6 +1401,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 po_values.update({
                     'order_type': 'direct',
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
+                    'dest_address_id': sourcing_line.order_id.partner_shipping_id.id,
                 })
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
@@ -1582,8 +1583,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # update SO line with good state:
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
-                    if sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
-                        wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
 
                 elif sourcing_line.type == 'make_to_order':
                     if sourcing_line.po_cft in ('po', 'dpo'):

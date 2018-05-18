@@ -262,27 +262,25 @@ class product_product(osv.osv):
         date_str = date_str and ' AND %s '% date_str or ''
         if 'in' in what:
             # all moves from a location out of the set to a location in the set
-            cr.execute(
-                'select sum(product_qty), product_id, product_uom '\
-                'from stock_move '\
-                'where location_id NOT IN %s '\
-                'and location_dest_id IN %s '\
-                'and product_id IN %s '\
-                '' + prodlot_id_str + ' '\
-                'and state IN %s ' + date_str +' '\
-                'group by product_id,product_uom',tuple(where))
+            cr.execute("""
+                select sum(product_qty), product_id, product_uom
+                from stock_move
+                where location_id NOT IN %%s
+                and location_dest_id IN %%s
+                and product_id IN %%s %s
+                and state in %%s %s
+                group by product_id,product_uom""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
         if 'out' in what:
             # all moves from a location in the set to a location out of the set
-            cr.execute(
-                'select sum(product_qty), product_id, product_uom '\
-                'from stock_move '\
-                'where location_id IN %s '\
-                'and location_dest_id NOT IN %s '\
-                'and product_id  IN %s '\
-                '' + prodlot_id_str + ' '\
-                'and state in %s ' + date_str + ' '\
-                'group by product_id,product_uom',tuple(where))
+            cr.execute("""
+                select sum(product_qty), product_id, product_uom
+                from stock_move
+                where location_id IN %%s
+                and location_dest_id NOT IN %%s
+                and product_id IN %%s %s
+                and state in %%s %s
+                group by product_id,product_uom""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
             results2 = cr.fetchall()
 
         if results or results2:

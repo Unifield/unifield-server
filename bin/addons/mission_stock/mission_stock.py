@@ -189,7 +189,7 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
-    logger = logging.getLogger('MSR') 
+    logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the mission stock report is a local report or not
@@ -822,7 +822,7 @@ class stock_mission_report(osv.osv):
                                 FROM
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
-                            ''' % report['id'])
+                            ''', (report['id'],))
                 for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
                     line_obj.create(cr, uid, {
                         'product_id': product,
@@ -982,11 +982,10 @@ class stock_mission_report(osv.osv):
                         FROM stock_move
                         WHERE state = 'done'
                         AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''' % (report_id))
+            ''', (report_id,))
             res = cr.fetchall()
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
-                           (report_id, move[0]))
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)', (report_id, move[0]))
                 product = product_obj.browse(cr, uid, move[1],
                                              fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
@@ -1321,7 +1320,8 @@ class stock_mission_report_line_location(osv.osv):
 
     def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
         # set instance and location name to process received updates
-        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id))
+        assert name in ('instance_id', 'location_name'), 'Bad query'
+        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id)) # not_a_user_entry
         return True
 
     _columns = {
@@ -1604,7 +1604,7 @@ class stock_mission_report_line(osv.osv):
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
                     wh_qty=%s
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
-                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id))
+                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id)) # not_a_user_entry
         return True
 
 stock_mission_report_line()

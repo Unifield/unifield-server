@@ -1014,10 +1014,9 @@ class stock_picking(osv.osv):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
-
                     # Check if we must re-compute the price of the product
-                    compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method
-                    if values.get('location_dest_id', False):
+                    compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
+                    if not sync_in and values.get('location_dest_id', False):
                         compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
@@ -1083,6 +1082,7 @@ class stock_picking(osv.osv):
                                 context=context
                             )
                             out_values['price_unit'] = price_unit
+                            out_values['price_currency_id'] = out_move.price_currency_id.id
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
                         if out_move.picking_id.type == 'out' \
@@ -1132,10 +1132,23 @@ class stock_picking(osv.osv):
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                             context['keepLineNumber'] = False
                             remaining_out_qty = 0.00
-                            move_obj.write(cr, uid, [out_move.id], {
+                            move_values = {
                                 'product_qty': out_move.product_qty - uom_partial_qty,
                                 'product_uos_qty': out_move.product_qty - uom_partial_qty,
-                            }, context=context)
+                            }
+                            # search for sol that match with the updated move:
+                            sol_to_relink = self.pool.get('sale.order.line').search(cr, uid, [
+                                ('order_id', '=', out_move.sale_line_id.order_id.id),
+                                ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
+                                ('line_number', '=', out_move.sale_line_id.line_number),
+                                ('order_id', '=', out_move.picking_id.sale_id.id),
+                            ], context=context)
+                            if sol_to_relink:
+                                move_values.update({'sale_line_id': sol_to_relink[0],})
+                            move_obj.write(cr, uid, [out_move.id], move_values, context=context)
+                            if sol_to_relink:
+                                if self.pool.get('sale.order.line').browse(cr, uid, sol_to_relink[0], context=context).state.startswith('cancel'):
+                                    move_obj.action_cancel(cr, uid, [out_move.id], context=context)
                             processed_out_moves.append(new_out_move_id)
                         elif uom_partial_qty == out_move.product_qty:
                             out_values.update({
@@ -1184,7 +1197,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line.product_id.id))
                     if not sync_in:
                         # decrement qty of linked INTernal move:
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
@@ -1194,7 +1207,7 @@ class stock_picking(osv.osv):
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
                         track_changes_to_create.append({
-                            'product_id': move.product_id.id,
+                            'product_id': line.product_id.id,
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
@@ -1257,9 +1270,9 @@ class stock_picking(osv.osv):
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
-                for bo_move, bo_qty, av_values, data_back, move_sptc_values in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back, move_sptc_values, p_id in backordered_moves:
                     for sptc_values in move_sptc_values:
-                        sptc_obj.track_change(cr, uid, move.product_id.id,
+                        sptc_obj.track_change(cr, uid, p_id,
                                               _('Reception %s') % backorder_name,
                                               sptc_values, context=context)
                     if bo_move.product_qty != bo_qty:

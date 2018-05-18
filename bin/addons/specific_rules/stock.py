@@ -170,6 +170,8 @@ class initial_stock_inventory(osv.osv):
                 prod_obj.write(cr, uid, move.product_id.id, {'standard_price': new_std_price}, context=context)
                 move_obj.action_done(cr, uid, move.id, context=context)
 
+            message = _('Inventory') + " '" + inv.name + "' " + _("is done.")
+            self.log(cr, uid, inv.id, message)
             self.write(cr, uid, [inv.id], {'state':'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
             self.infolog(cr, uid, 'The Initial stock inventory id:%s (%s) has been validated' % (

@@ -28,7 +28,7 @@ class so_po_common(osv.osv_memory):
     _name = "so.po.common"
     _description = "Common methods for SO - PO"
 
-    # exact copy-pasted from @msf_outgoing/msf_outgoing.py, class stock_picking 
+    # exact copy-pasted from @msf_outgoing/msf_outgoing.py, class stock_picking
     CENTRAL_PLATFORM= "central_platform"
     REMOTE_WAREHOUSE="remote_warehouse"
 
@@ -170,7 +170,7 @@ class so_po_common(osv.osv_memory):
         seq_tools = self.pool.get('sequence.tools')
 
         # Make sure that even if the FO/PO has no line, then the default value is 1
-        cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id))
+        cr.execute("select max(line_number) from " + order_line_object + " where order_id = " + str(order_id)) # not_a_user_entry
         for x in cr.fetchall():
             # For the FO without any line
             val = 1
@@ -286,7 +286,7 @@ class so_po_common(osv.osv_memory):
             ana_id = self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
             if ana_id:
                 return ana_id
-            # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run 
+            # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run
             raise Exception, "Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!"
         return False
 
@@ -336,7 +336,7 @@ class so_po_common(osv.osv_memory):
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
 
         price_list = False
-        # US-379: Fixed the price list retrieval 
+        # US-379: Fixed the price list retrieval
         if 'pricelist_id' in header_info:
             price_list = header_info.get('pricelist_id')
             if price_list:
@@ -512,7 +512,7 @@ class so_po_common(osv.osv_memory):
                 split_cancel_line.setdefault(src_values.get('line_number'), [])
                 split_cancel_line[src_values.get('line_number')].append(src_values.get('cancel_split_ok'))
 
-        if src_values.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
+        if src_values.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one
             res['rw_xmlid'] = order_line.id.replace('sd.','')
 
         # UTP-952: set empty AD for lines if the partner is intermission or section
@@ -653,7 +653,7 @@ class so_po_common(osv.osv_memory):
                     split_cancel_line.setdefault(line_dict.get('line_number'), [])
                     split_cancel_line[line_dict.get('line_number')].append(line_dict.get('cancel_split_ok'))
 
-            if line_dict.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
+            if line_dict.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one
                 values['rw_xmlid'] = line.id.replace('sd.','')
 
             # UTP-952: set empty AD for lines if the partner is intermission or section
@@ -740,7 +740,7 @@ class so_po_common(osv.osv_memory):
                         else:
                             line_result.append((2, existing_line))
 
-        return line_result 
+        return line_result
 
 
     def create_rw_xml_for_line(self, cr, uid, line_obj, line, context):
@@ -751,7 +751,7 @@ class so_po_common(osv.osv_memory):
         '''
         line_id = line_obj.create(cr, uid, line, context=context)
         rw_xmlid = line.get('rw_xmlid', False)
-        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, line_obj, rw_xmlid, line_id, context=context)        
+        self.pool.get('ir.model.data').manual_create_sdref(cr, uid, line_obj, rw_xmlid, line_id, context=context)
 
     def get_uom_id(self, cr, uid, uom_name, context=None):
         if not context:
@@ -775,13 +775,14 @@ class so_po_common(osv.osv_memory):
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner, context,usb=False):
+    def create_message_with_object_and_partner(self, cr, real_uid, rule_sequence, object_id, partner, context,usb=False):
 
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
         # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner
         #
         ##############################################################################
+        uid = 1
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
 
@@ -820,7 +821,8 @@ class so_po_common(osv.osv_memory):
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
-    def create_invalid_recovery_message(self, cr, uid, partner_name, name, context):
+    def create_invalid_recovery_message(self, cr, real_uid, partner_name, name, context):
+        uid = 1
         rule_obj = self.pool.get("sync.client.message_rule")
         rule = rule_obj.get_rule_by_sequence(cr, uid, 1003, context)
         if not rule:

@@ -185,7 +185,7 @@
                                 <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                                 <field name="partner_type"/>
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft'])]}" widget="char"/>
+                                <field name="origin" readonly="1" widget="char"/>
                                 <field name="internal_type" string="Zone"/>
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="2" col="3">
@@ -243,6 +243,7 @@
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
+                                    <field name="esc_confirmed" readonly="1" invisible="context.get('partner_type', False) != 'esc'" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="inactive_product" invisible="1"/>
@@ -252,7 +253,7 @@
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
+                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc'])]}"/>
                                 </tree>
                                 <!-- default form view -->
                             </field>
@@ -386,7 +387,7 @@
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': [('state', 'not in', ['draft']), ('partner_type', 'not in', ('external', 'esc'))]}" string="Cancel" icon="gtk-cancel"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward"/>
                         <button name="confirm_lines" states="validated,validated_p" string="Confirm lines" icon="gtk-go-forward" type="object"/>
@@ -587,8 +588,8 @@
                             <field name="from_fo" invisible="1"/>
                             <field name="tender_id" invisible="1"/>
                             <group colspan="2" col="3">
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="display_sync_ref" invisible="1"/>
                                 <field name="instance_sync_order_ref" attrs="{'required': [('display_sync_ref', '=', True)], 'invisible': [('display_sync_ref', '=', False)]}" domain="[('order_id.name', '=', origin)]"/>

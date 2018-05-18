@@ -1981,6 +1981,12 @@ class claim_event(osv.osv):
                                                               field='type_claim_event',
                                                               key=event.type_claim_event,
                                                               context=context)
+            # Cancel created INT backorder in case of claim from scratch
+            if not event.from_picking_wizard_claim_event and event.event_picking_id_claim_event.type == 'internal' \
+                    and event.type_claim_event in ('return', 'surplus'):
+                # To cancel the created INT
+                netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', event.event_picking_id_claim_event.id,
+                                                             'button_cancel', cr)
             log_msgs.append((event.id, _('%s Event %s has been processed.') % (event_type_name, event.name)))
             claim_ids.add(event.return_claim_id_claim_event.id)
 
