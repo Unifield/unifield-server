@@ -242,13 +242,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
                 <Data ss:Type="String">${ line.line_number or '' |x}</Data>
             </Cell>
             <Cell ss:StyleID="ssBorder" ss:MergeAcross="1">
-                <Data ss:Type="String">${ line.product_id and '[%s] %s' % (line.product_id.default_code or '', line.product_id.name or '') |x}</Data>
+                <Data ss:Type="String">${ line.product_id and '[%s] %s' % (line.product_id.default_code or '', line.product_id.name or '') or '' |x}</Data>
             </Cell>
             <Cell ss:StyleID="ssNumber">
                 <Data ss:Type="Number">${ line.product_uom_qty or 0.0 }</Data>
             </Cell>
             <Cell ss:StyleID="ssBorder">
-                <Data ss:Type="String">${ line.product_uom.name |x}</Data>
+                <Data ss:Type="String">${ line.product_uom.name or '' |x}</Data>
             </Cell>
             <Cell ss:StyleID="ssNumber">
                 <Data ss:Type="Number">${ line.price_unit or 0.0 }</Data>
