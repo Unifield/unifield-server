@@ -283,13 +283,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('TOTAL')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeaderNumber">
         <Data ss:Type="Number">${ get_total_amount(o) or 0.0 }</Data>
     </Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
