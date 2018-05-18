@@ -344,13 +344,19 @@ class sale_order_line(osv.osv):
 
         picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
 
+        if picking_data['subtype'] == 'standard':
+            # simple OUT
+            state_dom = ['draft', 'confirmed', 'assigned']
+        else:
+            state_dom = ['draft']
+
         # build domain:
         domain = [
             ('type', '=', picking_data['type']),
             ('subtype', '=', picking_data['subtype']),
             ('sale_id', '=', picking_data['sale_id']),
             ('partner_id2', '=', sol.order_partner_id.id),
-            ('state', 'in', ['draft', 'confirmed', 'assigned']),
+            ('state', 'in', state_dom),
         ]
 
         # ... and search:
