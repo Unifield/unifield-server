@@ -50169,7 +50169,7 @@ msgstr "Zone Fournisseur Client"
 msgid "Liquidity Position Bank"
 msgstr "Point de Trésorerie Banque"
 
-#. modules: financing_contract, consumption_calculation, register_accounting, account_mcdb
+#. modules: financing_contract, consumption_calculation, register_accounting, account_mcdb, purchase_allocation_report, sale
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: report:account.move.line:0
@@ -50178,6 +50178,8 @@ msgstr "Point de Trésorerie Banque"
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:546
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
 #: report:combined.journals.report.pdf:0
+#: report:addons/purchase_allocation_report/report/po_allocation_report.mako:299
+#: report:addons/sale/report/fo_allocation_report.mako:287
 msgid "TOTAL"
 msgstr "TOTAL"
 
