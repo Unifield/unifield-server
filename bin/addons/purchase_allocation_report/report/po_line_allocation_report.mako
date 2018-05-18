@@ -139,7 +139,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('PO lines allocation report')}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="13"/>
+<Column ss:AutoFitWidth="1" ss:Width="57" ss:Span="16"/>
 
 <!-- TABLE HEADER -->
 <Row>
