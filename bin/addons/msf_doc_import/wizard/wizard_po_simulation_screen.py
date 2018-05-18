@@ -1636,7 +1636,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'line_number': line.in_line_number,
                             'confirmed_delivery_date': line.imp_dcd or False,
                         })
-                        if context.get('auto_import_ok'):
+                        if context.get('auto_import_ok') and line.parent_line_id.po_line_id.analytic_distribution_id:
                           line_vals.update({
                             'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
                           })
