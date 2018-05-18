@@ -19,6 +19,7 @@
 #
 ##############################################################################
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import locale
 import pooler
 import datetime
@@ -285,4 +286,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)
+
+SpreadsheetReport('report.order.impact.vs.budget.xls', 'purchase.order',
+                  'addons/msf_budget/report/order_impact_vs_budget.mako', parser=report_pdf_engagement)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
