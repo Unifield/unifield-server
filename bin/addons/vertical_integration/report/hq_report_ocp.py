@@ -25,7 +25,6 @@ import pooler
 import time
 from time import strftime
 from time import strptime
-import re
 
 from account_override import finance_export
 import hq_report_ocb
@@ -36,6 +35,8 @@ from report import report_sxw
 class finance_archive(finance_export.finance_archive):
     """
     Extend existing class with new methods for this particular export.
+
+    Note: this report has NOT been translated: headers of all reports for OCP VI remain in English whatever the language selected
     """
 
     _journal_types = None
@@ -63,8 +64,8 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
-        - instance: becomes 'SIEG'
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
+        - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
+        - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -74,7 +75,6 @@ class finance_archive(finance_export.finance_archive):
         id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
         instance_code = 1
         journal = 2
-        description = 4
         journal_type = 22
         for line in data:
             line_list = list(line)
@@ -97,17 +97,9 @@ class finance_archive(finance_export.finance_archive):
                     if corr_aml.journal_id.type == 'hq':
                         od_hq_entry = True
                 if od_hq_entry:
-                    line_list[instance_code] = 'SIEG'
-                    # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
-                    descr = ''
-                    if re.match('^COR\d - ', line_list[description]):
-                        descr = line_list[description][7:]
-                    elif re.match('^REV - COR\d - ', line_list[description]):
-                        descr = line_list[description][13:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
-                    line_list[journal] = descr and descr[10:13] or ''
+                    original_ref = corr_aml.ref or ''
+                    line_list[instance_code] = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
+                    line_list[journal] = original_ref[8:11] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -116,8 +108,8 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
         2) Modifies it for all OD entries that originate from HQ entry corrections:
-        - instance: becomes 'SIEG'
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
+        - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
+        - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -127,7 +119,6 @@ class finance_archive(finance_export.finance_archive):
         id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
         instance_code = 1
         journal = 2
-        description = 4
         journal_type = 22
         for line in data:
             line_list = list(line)
@@ -150,17 +141,9 @@ class finance_archive(finance_export.finance_archive):
                     if corr_aal.journal_id.type == 'hq':
                         od_hq_entry = True
                 if od_hq_entry:
-                    line_list[instance_code] = 'SIEG'
-                    # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
-                    descr = ''
-                    if re.match('^COR\d - ', line_list[description]):
-                        descr = line_list[description][7:]
-                    elif re.match('^REV - COR\d - ', line_list[description]):
-                        descr = line_list[description][13:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
-                    line_list[journal] = descr and descr[10:13] or ''
+                    original_ref = corr_aal.ref or ''
+                    line_list[instance_code] = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
+                    line_list[journal] = original_ref[8:11] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -227,7 +210,8 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
-        excluded_journal_types = ['hq', 'cur_adj']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
+        reg_types = ('cash', 'bank', 'cheque')
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -241,8 +225,12 @@ class hq_report_ocp(report_sxw.report_sxw):
         period = pool.get('account.period').browse(cr, uid, period_id, context=context,
                                                    fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start
+        last_day_of_period = period.date_stop
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
+        year = str(year_num)
+        month = '%02d' % (tm.tm_mon)
+        period_yyyymm = "{0}{1}".format(year, month)
 
         # US-822: if December is picked should:
         # - include Period 16 action 2 Year end PL RESULT entries
@@ -276,7 +264,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # - key: name of the SQL request
         # - value: the SQL request to use
         sqlrequests = {
-            # Pay attention to take analytic lines that are not on HQ, MIGRATION and FXA journals.
+            # Pay attention to take analytic lines that are not on HQ and MIGRATION journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
                        CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
@@ -322,7 +310,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ, MIGRATION or FXA journal
+            # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
@@ -362,6 +350,72 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND aml.instance_id IN %s
                 AND m.state = 'posted'
                 ORDER BY aml.id;
+                """,
+            'liquidity': hq_report_ocb.liquidity_sql,
+            # Migration journals ONLY are excluded from the Account Balances
+            'account_balances_per_currency': """
+                SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
+                       c.name AS currency
+                FROM
+                (
+                    SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
+                           SUM(col2) AS calculated, SUM(col3) AS closing
+                    FROM (
+                        (
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
+                            ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                            LEFT JOIN account_account acc ON aml.account_id = acc.id
+                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                            WHERE acc.active = 't'
+                            AND curr.active = 't'
+                            AND aml.date < %s
+                            AND j.instance_id IN %s
+                            AND j.type != 'migration'
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
+                            0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                            LEFT JOIN account_account acc ON aml.account_id = acc.id
+                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                            WHERE acc.active = 't'
+                            AND curr.active = 't'
+                            AND aml.period_id = %s
+                            AND j.instance_id IN %s
+                            AND j.type != 'migration'
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+                        )
+                    UNION
+                        (
+                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                                   aml.currency_id AS currency_id,
+                            0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
+                            FROM account_move_line AS aml 
+                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                            LEFT JOIN account_account acc ON aml.account_id = acc.id
+                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                            WHERE acc.active = 't'
+                            AND curr.active = 't'
+                            AND aml.date <= %s
+                            AND j.instance_id IN %s
+                            AND j.type != 'migration'
+                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+                        )
+                    ) AS ssreq
+                    GROUP BY instance_id, account_id, currency_id
+                    ORDER BY instance_id, account_id, currency_id
+                ) AS req
+                INNER JOIN account_account acc ON req.account_id = acc.id
+                INNER JOIN res_currency c ON req.currency_id = c.id
+                INNER JOIN msf_instance i ON req.instance_id = i.id
+                WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
                 """,
         }
         if plresult_ji_in_ids:
@@ -406,12 +460,14 @@ class hq_report_ocp(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly Export.csv (ex: KE1_201609_171116110306_Monthly Export.csv)
+        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly_Export.csv (ex: KE1_201609_171116110306_Monthly_Export.csv)
         inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
         instance_code = inst and inst.code[:3] or ''
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        monthly_export_filename = '%s_%s_%s_Monthly Export.csv' % (instance_code, selected_period, current_time)
+        monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (instance_code, selected_period, current_time)
+        liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (instance_code, selected_period, current_time)
+        account_balance_filename = '%s_%s_%s_Account_Balances.csv' % (instance_code, selected_period, current_time)
 
         processrequests = [
             {
@@ -441,6 +497,22 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
+            },
+            {
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance',
+                            'Closing balance', 'Currency'],
+                'filename': liquidity_balance_filename,
+                'key': 'liquidity',
+                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id,
+                                 reg_types, last_day_of_period, tuple(instance_ids)),
+            },
+            {
+                'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Opening balance', 'Calculated balance',
+                            'Closing balance', 'Booking Currency'],
+                'filename': account_balance_filename,
+                'key': 'account_balances_per_currency',
+                'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
+                                 tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
             },
         ]
         if plresult_ji_in_ids:

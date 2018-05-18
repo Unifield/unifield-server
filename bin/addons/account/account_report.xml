@@ -105,6 +105,16 @@
             report_type="webkit"
             string="Liquidity Balance"/>
 
+        <!-- Employees Payment Order Report -->
+        <report id="hr_payment_order_report"
+                string="Payment Orders Report"
+                model="hr.payroll.msf"
+                name="hr.payment.order.report"
+                rml="msf_homere_interface/report/hr_payment_order_report.rml"
+                header="True"
+                auto="False"
+                menu="False"/>
+
         <!-- Combined Journals Report -->
         <report id="combined_journals_report_xls"
                 string="Combined Journals Report XLS"
@@ -119,9 +129,7 @@
                 string="Combined Journals Report PDF"
                 model="account.mcdb"
                 name="combined.journals.report.pdf"
-                rml="account_mcdb/report/combined_journals_report.rml"
-                header="True"
-                auto="False"
-                menu="False"/>
+                rml="account_mcdb/report/combined_journals_report.rml"/>
+
     </data>
 </openerp>

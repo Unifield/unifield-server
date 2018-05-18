@@ -55,7 +55,7 @@ LINES_COLUMNS = [
 HEADER_COLUMNS = [
     (1, _('Freight'), 'optionnal'),
     (2, _('Picking Reference'), 'optionnal'),
-    (1, _('Origin'), 'optionnal'),
+    (1, _('Origin'), 'mandatory'),
     (4, _('Supplier'), 'optionnal'),
     (5, _('Transport mode'), 'optionnal'),
     (6, _('Notes'), 'optionnal'),
@@ -441,8 +441,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
                     if row.cells[nb].data and x[3] == 'int':
                         try:
-                            if row.cells[nb].type == 'float':
-                                raise
                             int(row.cells[nb].data)
                         except:
                             error.append(_('Line %s, column %s, integer expected, found %s') % (index, nb+1, row.cells[nb].data))
@@ -622,8 +620,15 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
+                if origin != wiz.origin:
+                    message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
+                        % (origin, wiz.picking_id.name, wiz.origin)
+                    self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                    res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                    cr.commit()
+                    cr.close(True)
+                    return res
                 header_values['imp_origin'] = origin
-
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]

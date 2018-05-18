@@ -248,7 +248,7 @@ class finance_archive(finance_export.finance_archive):
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
 
-# request used for OCB VI and for Liquidity Balances report
+# request used for OCB VI, OCP VI and for Liquidity Balances report
 liquidity_sql = """
             SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
@@ -321,7 +321,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
-        excluded_journal_types = ['hq'] # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))

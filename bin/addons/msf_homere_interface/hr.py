@@ -26,6 +26,23 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 
+
+class hr_payment_method(osv.osv):
+    _name = 'hr.payment.method'
+    _description = 'Payment Method'
+    _columns = {
+        'name': fields.char(size=128, string='Name', required=True, select=1),
+    }
+
+    _order = 'name'
+
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The payment method name must be unique.')
+    ]
+
+hr_payment_method()
+
+
 class hr_employee(osv.osv):
     _name = 'hr.employee'
     _inherit = 'hr.employee'
@@ -105,6 +122,9 @@ class hr_employee(osv.osv):
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
         'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
+        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False),
+        'bank_name': fields.char('Bank Name', size=256, required=False),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
     }
 
     _defaults = {
@@ -115,6 +135,27 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
     }
+
+    def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
+        if not data.get('identification_id') or not data.get('name'):
+            return False
+
+        employee_name = data['name'].strip()
+        existing_id = self.find_sd_ref(cr, uid, sdref)
+        if not existing_id:
+            # never run, but exists with the same id and name => ignore
+            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)]):
+                return True
+
+        else:
+            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)])
+            if same_ids and existing_id not in same_ids:
+                # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
+                return True
+
+        return False
+
+
 
     def _check_unicity(self, cr, uid, ids, context=None):
         """

@@ -490,6 +490,7 @@ class purchase_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
+        'esc_confirmed': fields.boolean(string='ESC confirmed'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -1105,7 +1106,7 @@ class purchase_order_line(osv.osv):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False})
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -1129,7 +1130,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1478,10 +1479,12 @@ class purchase_order_line(osv.osv):
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
                 info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
                                                                      info_price.price, round=False, context=context)
-                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
-                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
-                                                                            'for a minimal quantity of %s (the min quantity of the price list), ' \
-                                                                            'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.min_order_qty and qty < info_price.min_order_qty:
+                    if qty > info_price.min_quantity:
+                        res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+                                                                                'for a minimal quantity of %s (the min quantity of the price list), ' \
+                                                                                'it might change at the supplier confirmation.') % info_price.min_quantity}})
                 if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
                                 'this product, you should than modify ' \

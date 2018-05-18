@@ -25,11 +25,11 @@
             <field name="model">account.period.state</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <data >
+                <tree noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="period_id" />
                     <field name="state" />
-                </data>
+                </tree>
             </field>
         </record>
 
@@ -44,6 +44,20 @@
                     <field name="period_id" />
                     <field name="state" />
                 </search>
+            </field>
+        </record>
+
+        <!-- READ-ONLY FORM FOR PERIOD STATES -->
+        <record id="account_period_state_form" model="ir.ui.view">
+            <field name="name">account.period.state.form</field>
+            <field name="model">account.period.state</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <field name="instance_id"/>
+                    <field name="period_id"/>
+                    <field name="state"/>
+                </form>
             </field>
         </record>
 
@@ -70,11 +84,11 @@
             <field name="model">account.fiscalyear.state</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <data >
+                <tree noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="fy_id" />
                     <field name="state" />
-                </data>
+                </tree>
             </field>
         </record>
 
@@ -89,6 +103,20 @@
                     <field name="fy_id" />
                     <field name="state" />
                 </search>
+            </field>
+        </record>
+
+        <!-- READ-ONLY FORM FOR FISCAL YEAR STATES -->
+        <record id="account_fiscalyear_state_form" model="ir.ui.view">
+            <field name="name">account.fiscalyear.state.form</field>
+            <field name="model">account.fiscalyear.state</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <field name="instance_id"/>
+                    <field name="fy_id"/>
+                    <field name="state"/>
+                </form>
             </field>
         </record>
 

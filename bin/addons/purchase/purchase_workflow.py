@@ -82,6 +82,18 @@ class purchase_order_line(osv.osv):
                         'product_uos_qty': new_qty,
                     }, context=context)
 
+                    if pol.linked_sol_id:
+                        # cancel OUT move if has:
+                        out_move_to_cancel = self.pool.get('stock.move').search(cr, uid, [
+                            ('type', '=', 'out'),
+                            ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                            ('product_qty', '=', pol.product_qty),
+                        ], context=context)
+                        if out_move_to_cancel:
+                            if pol.linked_sol_id:
+                                self.pool.get('stock.move').write(cr, uid, out_move_to_cancel, {'sale_line_id': pol.linked_sol_id.id}, context=context)
+                            self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
+
         return True
 
 

@@ -6,6 +6,14 @@
             <field name="method">us_4481_monitor_set_null_size</field>
         </record>
 
+        <record id="us_3319_product_track_price" model="patch.scripts">
+            <field name="method">us_3319_product_track_price</field>
+        </record>
+
+        <record id="us_3015_remove_whitespaces_product_description" model="patch.scripts">
+            <field name="method">us_3015_remove_whitespaces_product_description</field>
+        </record>
+
         <!-- UF8.2 -->
         <record id="ud_trans" model="patch.scripts">
             <field name="method">ud_trans</field>

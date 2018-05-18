@@ -65,6 +65,36 @@
 
        <menuitem action="open_module_tree_department" id="menu_hr_department_tree" parent="hr.menu_hr_management" sequence="6" />
 
+        <!-- Payment method -->
+        <record id="view_payment_method_tree" model="ir.ui.view">
+            <field name="name">hr.payment.method.tree</field>
+            <field name="model">hr.payment.method</field>
+            <field name="type">tree</field>
+            <field name="priority">14</field>
+            <field name="arch" type="xml">
+                <tree hide_delete_button="1" hide_new_button="1" hide_edit_button="1">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="view_payment_method_form">
+            <field name="name">hr.payment.method.form</field>
+            <field name="type">form</field>
+            <field name="priority">14</field>
+            <field name="model">hr.payment.method</field>
+            <field name="arch" type="xml">
+                <form string="Payment method" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="name"/>
+                </form>
+            </field>
+        </record>
+        <record id="open_payment_method" model="ir.actions.act_window">
+            <field name="name">Payment methods</field>
+            <field name="res_model">hr.payment.method</field>
+            <field name="view_type">form</field>
+        </record>
+        <menuitem action="open_payment_method" id="menu_hr_payment_method" parent="hr.menu_hr_management" sequence="9" />
+
        <record model="ir.ui.view" id="view_users_form_inherit">
             <field name="name">res.users.form</field>
             <field name="type">form</field>

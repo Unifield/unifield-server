@@ -441,13 +441,37 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. %s is a VIEW type Cost Center!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         # Check Funding Pool (added since UTP-1082)
-                        r_fp = msf_fp_id
-                        if line[cols['Funding Pool']]:
+                        if not line[cols['Funding Pool']]:
+                            errors.append(_('Line %s. No Funding Pool specified!') % (current_line_num,))
+                            continue
+                        else:
                             fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['Funding Pool']]), ('code', '=', line[cols['Funding Pool']])])
                             if not fp_ids:
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
                                 continue
                             r_fp = fp_ids[0]
+                        if r_destination not in [d.id for d in account.destination_ids]:
+                            errors.append(_('Line %s. The destination %s is not compatible with the account %s.') %
+                                          (current_line_num, line[cols['Destination']], line[cols['G/L Account']]))
+                            continue
+                        # if the Fund. Pool used is NOT "PF" check the compatibility with the (account, dest) and the CC
+                        if r_fp != msf_fp_id:
+                            fp_fields = ['tuple_destination_account_ids', 'cost_center_ids']
+                            fp = self.pool.get('account.analytic.account').browse(cr, uid, r_fp,
+                                                                                  fields_to_fetch=fp_fields, context=context)
+                            if (account.id, r_destination) not in \
+                                [t.account_id and t.destination_id and (t.account_id.id, t.destination_id.id)
+                                 for t in fp.tuple_destination_account_ids if not t.disabled]:
+                                errors.append(_('Line %s. The combination "account %s and destination %s" is not '
+                                                'compatible with the Funding Pool %s.') %
+                                              (current_line_num, line[cols['G/L Account']], line[cols['Destination']],
+                                               line[cols['Funding Pool']]))
+                                continue
+                            if cc.id not in [c.id for c in fp.cost_center_ids]:
+                                errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
+                                              (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
+                                continue
+
                     # US-937: use period of import file
                     if line[cols['Period']].startswith('Period 16'):
                         raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
