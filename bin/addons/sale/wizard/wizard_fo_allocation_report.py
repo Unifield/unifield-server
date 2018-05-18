@@ -46,7 +46,7 @@ class wizard_fo_allocation_report(osv.osv_memory):
         wiz_data = self.read(cr, uid, ids, ['export_type'])[0]
         fo_obj = self.pool.get('sale.order')
         active_ids = context.get('active_ids', [])
-        order_name = active_ids and len(active_ids) > 0 and fo_obj.read(cr, uid, ids[0], ['name'], context=context)['name'] or ''
+        order_name = active_ids and len(active_ids) > 0 and fo_obj.read(cr, uid, active_ids[0], ['name'], context=context)['name'] or ''
         filename = "Allocation Report_%s_%s" % (order_name, time.strftime('%Y%m%d'))
         data = {
             'ids': active_ids,
