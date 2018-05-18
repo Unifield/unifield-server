@@ -1562,7 +1562,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 error_msg += warn
 
             write_vals['error_msg'] = error_msg
-            context['job_comment'] = ['Line %s: %s' % (line.line_number, s) for s in warnings]
+            job_comment = context.get('job_comment', [])
+            job_comment += ['Line %s: %s' % (line.line_number, s) for s in warnings]
+            context['job_comment'] = job_comment
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
