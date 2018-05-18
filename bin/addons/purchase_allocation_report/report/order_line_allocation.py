@@ -46,6 +46,9 @@ report_sxw.report_sxw('report.purchase.order.allocation.report',
 SpreadsheetReport('report.po.allocation.report.xls', 'purchase.order',
                   'addons/purchase_allocation_report/report/po_allocation_report.mako', parser=order_line_allocation)
 
+SpreadsheetReport('report.po.line.allocation.report.xls', 'purchase.order.line.allocation.report',
+                  'addons/purchase_allocation_report/report/po_line_allocation_report.mako', parser=order_line_allocation)
+
 
 class po_line_allocation_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):

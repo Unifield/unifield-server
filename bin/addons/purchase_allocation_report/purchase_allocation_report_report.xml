@@ -2,12 +2,23 @@
 <openerp>
     <data>
 
-        <!-- PO allocation report XLS -->
+        <!-- PO allocation report XLS declaration -->
         <report id="po_allocation_report_xls"
                 string="Allocation report"
                 model="purchase.order"
                 name="po.allocation.report.xls"
                 file="purchase_allocation_report/report/po_allocation_report.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="False"/>
+
+        <!-- PO LINE allocation report XLS declaration -->
+        <report id="po_line_allocation_report_xls"
+                string="Allocation report"
+                model="purchase.order.line"
+                name="po.line.allocation.report.xls"
+                file="purchase_allocation_report/report/po_line_allocation_report.mako"
                 report_type="webkit"
                 header="False"
                 auto="False"
@@ -31,8 +42,10 @@
             name="purchase.order.allocation.report"
             rml="purchase_allocation_report/report/order_line_allocation.rml"
             header="False"
+            menu="False"
             string="Allocation report" />
 
+        <!-- PO allocation report menu -->
         <record id="action_po_allocation_report_menu" model="ir.actions.act_window">
             <field name="name">Allocation report</field>
             <field name="res_model">wizard.po.allocation.report</field>
@@ -50,6 +63,24 @@
             <field name="sequence" eval="110"/>
         </record>
 
+        <!-- PO LINE allocation report menu -->
+        <record id="action_po_line_allocation_report_menu" model="ir.actions.act_window">
+            <field name="name">Allocation report</field>
+            <field name="res_model">wizard.po.line.allocation.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <record model="ir.values" id="action_po_line_allocation_report_values">
+            <field name="object" eval="1" />
+            <field name="name">po.line.allocation.report</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_po_line_allocation_report_menu'))" />
+            <field name="key">action</field>
+            <field name="model">purchase.order.line.allocation.report</field>
+            <field name="sequence" eval="110"/>
+        </record>
+
         <!-- PO allocation report Wizard -->
         <record id="wizard_po_allocation_report_view" model="ir.ui.view">
             <field name="name">Allocation Report</field>
@@ -61,6 +92,22 @@
                         <field colspan="4" name="export_type"/>
                         <button colspan="2" string="Cancel" icon='gtk-cancel' special="cancel"/>
                         <button colspan="2" name="button_po_allocation_report" string="Print" type="object" icon="gtk-print"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- PO LINE allocation report Wizard -->
+        <record id="wizard_po_line_allocation_report_view" model="ir.ui.view">
+            <field name="name">Allocation Report</field>
+            <field name="model">wizard.po.line.allocation.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group colspan="4">
+                        <field colspan="4" name="export_type"/>
+                        <button colspan="2" string="Cancel" icon='gtk-cancel' special="cancel"/>
+                        <button colspan="2" name="button_po_line_allocation_report" string="Print" type="object" icon="gtk-print"/>
                     </group>
                 </form>
             </field>

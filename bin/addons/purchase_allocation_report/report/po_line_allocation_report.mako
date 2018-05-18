@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>${_('PO allocation report')}</Title>
+<Title>${_('PO lines allocation report')}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssCell">
@@ -137,67 +137,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="General Date" />
 </Style>
 </Styles>
-% for o in objects:
-<Worksheet ss:Name="${ o.name or ''|x}">
+<Worksheet ss:Name="${_('PO lines allocation report')}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="13"/>
 
-<!-- HEADER -->
-<Row>
-    <Cell ss:StyleID="ssTitle" ss:MergeAcross="14">
-       <Data ss:Type="String">${_('PURCHASE ORDER LINES ALLOCATION REPORT')}</Data>
-    </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-</Row>
-<Row>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Purchase Order')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Order Type')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Order Category')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Priority')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Creator')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('State')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="3"><Data ss:Type="String">${_('Details')}</Data></Cell>
-</Row>
-
-<Row>
-     <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-        <Data ss:Type="String">${ o.name or ''|x}</Data>
-     </Cell>
-     <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-        <Data ss:Type="String">${ o.partner_id.name or ''|x}</Data>
-     </Cell>
-     <Cell ss:StyleID="ssHeaderCell">
-        <Data ss:Type="String">${ getSel(o, 'order_type') or ''|x}</Data>
-     </Cell>
-    <Cell ss:StyleID="ssHeaderCell">
-        <Data ss:Type="String">${ getSel(o, 'categ') or ''|x}</Data>
-     </Cell>
-     <Cell ss:StyleID="ssHeaderCell">
-        <Data ss:Type="String">${ getSel(o, 'priority') or ''|x}</Data>
-     </Cell>
-    <Cell ss:StyleID="ssHeaderDateCell">
-        <Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data>
-     </Cell>
-    <Cell ss:StyleID="ssHeaderCell">
-        <Data ss:Type="String">${ o.create_uid.name or ''|x}</Data>
-     </Cell>
-    <Cell ss:StyleID="ssHeaderCell">
-        <Data ss:Type="String">${ getSel(o, 'state') or ''|x}</Data>
-     </Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="3">
-        <Data ss:Type="String">${ o.details or ''|x}</Data>
-     </Cell>
-</Row>
-<Row>
-    <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
-</Row>
-
 <!-- TABLE HEADER -->
 <Row>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('PO')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Type')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Cat.')}</Data>
+    </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('O. l.')}</Data>
     </Cell>
@@ -242,80 +196,68 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Cell>
 </Row>
 
-% for line in o.allocation_report_lines:
+% for o in objects:
 <Row>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.line_number or '' |x}</Data>
+        <Data ss:Type="String">${ o.order_id.name or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ '[%s] %s' % (line.product_id.default_code or '', line.product_id.name or '') |x}</Data>
+        <Data ss:Type="String">${ getSel(o, 'order_type') or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ getSel(o, 'order_category') or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ o.line_number or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ '[%s] %s' % (o.product_id.default_code or '', o.product_id.name or '') or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${ line.product_qty or 0.0 }</Data>
+        <Data ss:Type="Number">${ o.product_qty or 0.0 }</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.uom_id.name |x}</Data>
+        <Data ss:Type="String">${ o.uom_id.name or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${ line.unit_price or 0.0 }</Data>
+        <Data ss:Type="Number">${ o.unit_price or 0.0 }</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${ line.percentage or 0.0 }</Data>
+        <Data ss:Type="Number">${ o.percentage or 0.0 }</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${ line.subtotal or 0.0 }</Data>
+        <Data ss:Type="Number">${ o.subtotal or 0.0 }</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.currency_id.name or ''|x}</Data>
+        <Data ss:Type="String">${ o.currency_id.name or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ "%s %s" % (line.account_id.code or '', line.account_id.name or '') |x}</Data>
+        <Data ss:Type="String">${ "%s %s" % (o.account_id.code, o.account_id.name) |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.destination_id.code or '' |x}</Data>
+        <Data ss:Type="String">${ o.destination_id.code or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.cost_center_id.code  or '' |x}</Data>
+        <Data ss:Type="String">${ o.cost_center_id.code or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.source_doc or '' |x}</Data>
+        <Data ss:Type="String">${ o.source_doc or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.partner_id.name or '' |x}</Data>
+        <Data ss:Type="String">${ o.partner_id.name or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.partner_doc or '' |x}</Data>
+        <Data ss:Type="String">${ o.partner_doc or '' |x}</Data>
     </Cell>
 </Row>
+
 % endfor
-
-<Row>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('TOTAL')}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssHeaderNumber">
-        <Data ss:Type="Number">${ get_total_amount(o) or 0.0 }</Data>
-    </Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
-</Row>
-
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14PO allocation report"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14PO lines allocation report"/>
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
@@ -336,5 +278,4 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
 </Worksheet>
-% endfor
 </Workbook>

@@ -137,7 +137,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="General Date" />
 </Style>
 </Styles>
-<Worksheet ss:Name="${_('FO allocation report')}">
+% for o in objects:
+<Worksheet ss:Name="${o.name|x}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="13"/>
 
@@ -162,7 +163,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="3"><Data ss:Type="String">${_('Details')}</Data></Cell>
 </Row>
 <Row>
-% for o in objects:
      <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
         <Data ss:Type="String">${ o.name or ''|x}</Data>
      </Cell>
@@ -297,7 +297,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
 </Row>
 
-% endfor
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <FitToPage/>
@@ -324,4 +323,5 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <ProtectScenarios>False</ProtectScenarios>
 </WorksheetOptions>
 </Worksheet>
+% endfor
 </Workbook>
