@@ -22,6 +22,7 @@
 
 from osv import osv
 from osv import fields
+import time
 
 
 class wizard_fo_allocation_report(osv.osv_memory):
@@ -43,10 +44,15 @@ class wizard_fo_allocation_report(osv.osv_memory):
         if context is None:
             context = {}
         wiz_data = self.read(cr, uid, ids, ['export_type'])[0]
+        fo_obj = self.pool.get('sale.order')
+        active_ids = context.get('active_ids', [])
+        order_name = active_ids and len(active_ids) > 0 and fo_obj.read(cr, uid, ids[0], ['name'], context=context)['name'] or ''
+        filename = "Allocation Report_%s_%s" % (order_name, time.strftime('%Y%m%d'))
         data = {
-            'ids': context.get('active_ids', []),
+            'ids': active_ids,
             'model': context.get('active_model', 'ir.ui.menu'),
             'context': context,
+            'target_filename': filename,
         }
         if wiz_data.get('export_type', '') == 'excel':
             report = {
