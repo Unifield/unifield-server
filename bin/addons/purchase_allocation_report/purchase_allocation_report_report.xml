@@ -16,7 +16,7 @@
         <!-- PO LINE allocation report XLS declaration -->
         <report id="po_line_allocation_report_xls"
                 string="Allocation report"
-                model="purchase.order.line"
+                model="purchase.order.line.allocation.report"
                 name="po.line.allocation.report.xls"
                 file="purchase_allocation_report/report/po_line_allocation_report.mako"
                 report_type="webkit"

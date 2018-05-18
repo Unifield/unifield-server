@@ -211,7 +211,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${ o.line_number or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ '[%s] %s' % (o.product_id.default_code or '', o.product_id.name or '') or '' |x}</Data>
+        <Data ss:Type="String">${ '[%s] %s' % (o.product_id.default_code or '', o.product_id.name or '') |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${ o.product_qty or 0.0 }</Data>

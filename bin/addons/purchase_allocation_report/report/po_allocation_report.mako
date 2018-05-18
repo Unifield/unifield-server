@@ -254,7 +254,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="Number">${ line.product_qty or 0.0 }</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.uom_id.name |x}</Data>
+        <Data ss:Type="String">${ line.uom_id.name or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${ line.unit_price or 0.0 }</Data>
