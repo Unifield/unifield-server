@@ -64439,7 +64439,6 @@ msgstr "Tél. :"
 #: field:purchase.report,order_type:0
 #: report:addons/purchase_allocation_report/report/po_allocation_report.mako:157
 #: report:addons/sale/report/fo_allocation_report.mako:157
-#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:162
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -108080,4 +108079,4 @@ msgstr "Rapport d'Allocation des Lignes du BdC"
 #. module: sale
 #: report:addons/sale/report/fo_allocation_report.mako:8
 msgid "FO allocation report"
-msgstr "Rapport d'Allocation de la CDT"
+msgstr "Rapport d'Allocation de la CdT"
