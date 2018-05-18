@@ -55,7 +55,7 @@
         </record>
         <record model="ir.values" id="action_po_allocation_report_values">
             <field name="object" eval="1" />
-            <field name="name">po.lallocation.report</field>
+            <field name="name">po.allocation.report</field>
             <field name="key2">client_print_multi</field>
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_po_allocation_report_menu'))" />
             <field name="key">action</field>

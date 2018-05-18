@@ -2131,7 +2131,7 @@ class ir_values(osv.osv):
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)',
                                                      'Purchase Order',
-                                                     'po.lallocation.report',
+                                                     'po.allocation.report',
                                                      'order.impact.vs.budget'],
                               'client_action_relate': ['ir_open_product_list_export_view',
                                                        'View_log_purchase.order',
