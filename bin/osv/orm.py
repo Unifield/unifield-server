@@ -3282,7 +3282,7 @@ class orm(orm_template):
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
-                                if not self.pool.get(f._obj):
+                                if not self.pool.get(f._obj) or not cr.table_exists(self.pool.get(f._obj)._table):
                                     missing_fk.setdefault(f._obj, [])
                                     missing_fk[f._obj].append((self, k, f, False))
                                 else:
