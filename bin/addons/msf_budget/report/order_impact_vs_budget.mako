@@ -276,63 +276,67 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 % for line in get_report_lines(o):
 
-        <Row>
+    <Row>
+        % if line[0] == 'TOTALS':
+            <Cell ss:StyleID="ssBorderBold">
+                <Data ss:Type="String">${ _('TOTALS') |x}</Data>
+            </Cell>
+        % else:
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${ line[0] or '' |x}</Data>
+            </Cell>
+        % endif
+        <Cell ss:StyleID="ssBorder">
+            <Data ss:Type="String">${ line[1] or '' |x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ssBorder">
+            <Data ss:Type="String">${ line[7] or '' |x}</Data>
+        </Cell>
+        % if line[2] == 'Budget missing':
+            <Cell ss:StyleID="ssBorderRed">
+                <Data ss:Type="String">${ _('Budget missing') |x}</Data>
+            </Cell>
+        % elif line[0] == 'TOTALS':
+            <Cell ss:StyleID="ssNumberBold">
+                <Data ss:Type="Number">${ line[2] or 0.0 }</Data>
+            </Cell>
+        % elif not line[2]:
+            <Cell ss:StyleID="ssNumber"></Cell>
+        % else:
+            <Cell ss:StyleID="ssNumber">
+                <Data ss:Type="Number">${ line[2] or 0.0 }</Data>
+            </Cell>
+        % endif
+        % if line[3] == line[4] == line[5] == '':
+            <!-- empty lines used as separator... -->
+            <Cell ss:StyleID="ssNumber"></Cell>
+            <Cell ss:StyleID="ssNumber"></Cell>
+            <Cell ss:StyleID="ssNumber"></Cell>
+        % elif line[0] == 'TOTALS':
+            <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[3] or 0.0 }</Data></Cell>
+            <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[4] or 0.0 }</Data></Cell>
+            <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[5] or 0.0 }</Data></Cell>
+        % else:
+            <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[3] or 0.0 }</Data></Cell>
+            <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[4] or 0.0 }</Data></Cell>
+            <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[5] or 0.0 }</Data></Cell>
+        % endif
+        % if not line[6]:
+            <Cell ss:StyleID="ssNumber"></Cell>
+        % elif isPos(line[6]):
             % if line[0] == 'TOTALS':
-                <Cell ss:StyleID="ssBorderBold">
-                    <Data ss:Type="String">${ _('TOTALS') |x}</Data>
-                </Cell>
+                <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
             % else:
-                <Cell ss:StyleID="ssBorder">
-                    <Data ss:Type="String">${ line[0] or '' |x}</Data>
-                </Cell>
+                <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
             % endif
-            <Cell ss:StyleID="ssBorder">
-                <Data ss:Type="String">${ line[1] or '' |x}</Data>
-            </Cell>
-            <Cell ss:StyleID="ssBorder">
-                <Data ss:Type="String">${ line[7] or '' |x}</Data>
-            </Cell>
-            % if line[2] == 'Budget missing':
-                <Cell ss:StyleID="ssBorderRed">
-                    <Data ss:Type="String">${ _('Budget missing') |x}</Data>
-                </Cell>
-            % elif not line[2]:
-                <Cell ss:StyleID="ssBorder"><Data ss:Type="String"></Data></Cell>
+        % else:
+            % if line[0] == 'TOTALS':
+                <Cell ss:StyleID="ssNumberRedBold"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
             % else:
-                <Cell ss:StyleID="ssNumber">
-                    <Data ss:Type="Number">${ line[2] or 0.0 }</Data>
-                </Cell>
+                <Cell ss:StyleID="ssNumberRed"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
             % endif
-            % if line[3] == line[4] == line[5] == '':
-                <!-- empty lines used as separator... -->
-                <Cell ss:StyleID="ssNumber"></Cell>
-                <Cell ss:StyleID="ssNumber"></Cell>
-                <Cell ss:StyleID="ssNumber"></Cell>
-            % elif line[0] == 'TOTALS':
-                <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[3] or 0.0 }</Data></Cell>
-                <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[4] or 0.0 }</Data></Cell>
-                <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[5] or 0.0 }</Data></Cell>
-            % else:
-                <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[3] or 0.0 }</Data></Cell>
-                <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[4] or 0.0 }</Data></Cell>
-                <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[5] or 0.0 }</Data></Cell>
-            % endif
-            % if not line[6]:
-                <Cell ss:StyleID="ssNumber"></Cell>
-            % elif isPos(line[6]):
-                % if line[0] == 'TOTALS':
-                    <Cell ss:StyleID="ssNumberBold"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
-                % else:
-                    <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
-                % endif
-            % else:
-                % if line[0] == 'TOTALS':
-                    <Cell ss:StyleID="ssNumberRedBold"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
-                % else:
-                    <Cell ss:StyleID="ssNumberRed"><Data ss:Type="Number">${ line[6] or 0.0 }</Data></Cell>
-                % endif
-            % endif
-        </Row>
+        % endif
+    </Row>
 
 % endfor
 
