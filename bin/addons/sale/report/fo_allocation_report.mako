@@ -144,7 +144,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 <!-- HEADER -->
 <Row>
-    <Cell ss:StyleID="ssTitle" ss:MergeAcross="14">
+    <Cell ss:StyleID="ssTitle" ss:MergeAcross="13">
        <Data ss:Type="String">${_('FIELD ORDER LINES ALLOCATION REPORT')}</Data>
     </Cell>
 </Row>

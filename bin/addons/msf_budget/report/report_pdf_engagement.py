@@ -85,7 +85,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
         # 3 cases:
         # 1. header distribution or distribution on all lines; return True
         # 2. no header distribution and distribution on not all lines; return False
-        # 3. no header distribution and no distribution on lines; raise error
+        # 3. no header distribution and no distribution on lines; return False
         has_one_distribution = False
         has_all_distribution = True
         if purchase_order.analytic_distribution_id:
@@ -98,11 +98,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 else:
                     has_all_distribution = False
 
-        if has_one_distribution and has_all_distribution:
+        if (has_one_distribution and has_all_distribution) or not has_one_distribution:
             return has_one_distribution
-
-        elif not has_one_distribution:
-            raise osv.except_osv(_('Error'), _('No distribution found in PO %s.') % (purchase_order.name))
 
     def _cmp_cc_dest(self, a, b):
         """
@@ -280,9 +277,9 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     res.append(formatted_line)
 
                 # empty line between cost centers
-                res.append([''] * 7)
+                res.append([''] * 8)
             # append formatted total
-            res.append(['TOTALS', ''] + map(int, total_values))
+            res.append(['TOTALS', ''] + map(int, total_values) + [''])
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)
