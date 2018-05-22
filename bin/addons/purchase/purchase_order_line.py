@@ -502,6 +502,7 @@ class purchase_order_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
+        'created_by_vi_import': fields.boolean('Line created by VI PO import'),
     }
 
     _defaults = {
@@ -524,6 +525,7 @@ class purchase_order_line(osv.osv):
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': False,
         'have_analytic_distribution_from_header': lambda *a: True,
+        'created_by_vi_import': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1126,7 +1128,7 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import']:
             if field not in default:
                 default[field] = False
 
