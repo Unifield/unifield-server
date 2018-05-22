@@ -425,6 +425,12 @@ class msf_instance(osv.osv):
         self.write(cr, uid, ids, {'state': 'inactive'}, context=context)
         return True
 
+    def button_activate(self, cr, uid, ids, context=None):
+        """
+        (Re)activate the instances
+        """
+        return self.write(cr, uid, ids, {'state': 'active'}, context=context)
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Override the tree view to display historical prices according to context
