@@ -8436,12 +8436,6 @@ msgstr "Month 09"
 msgid "Target Node"
 msgstr "Noeud Cible"
 
-#. module: msf_budget
-#: code:addons/msf_budget/report/report_pdf_engagement.py:104
-#, python-format
-msgid "No distribution found in PO %s."
-msgstr "Pas de distribution trouvée sous le BC %s."
-
 #. module: procurement
 #: view:stock.warehouse.orderpoint:0
 msgid "Quantity Rules"
@@ -18561,8 +18555,17 @@ msgstr "CCY"
 
 #. module: msf_budget
 #: model:ir.actions.report.xml,name:msf_budget.pdf_engagement
+#: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:8
+#: model:ir.actions.act_window,name:msf_budget.action_order_impact_vs_budget_menu
+#: model:ir.actions.report.xml,name:msf_budget.order_impact_vs_budget_xls
 msgid "Order impact vs. Budget"
 msgstr "Répercussion de la commande sur Budget"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:205
+msgid "ORDER IMPACT VS. BUDGET"
+msgstr "RÉPERCUSSION DE LA COMMANDE SUR BUDGET"
 
 #. module: vertical_integration
 #: selection:ocb.export.wizard,selection:0
@@ -22804,6 +22807,7 @@ msgstr "Envoyé?"
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:267
 msgid "Remaining Budget"
 msgstr "Budget Restant"
 
@@ -29150,7 +29154,7 @@ msgstr "2. Les règles de groupe sont coordonnées par un ET logique"
 msgid "XML Identifier"
 msgstr "Identifiant XML"
 
-#. modules: product, stock_forecast, account, order_types, stock_move_tracking, purchase_allocation_report, sale
+#. modules: product, stock_forecast, account, order_types, stock_move_tracking, purchase_allocation_report, sale, msf_budget
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
 #: view:account.analytic.balance:0
@@ -29166,6 +29170,7 @@ msgstr "Identifiant XML"
 #: view:wizard.po.allocation.report:0
 #: view:wizard.po.line.allocation.report:0
 #: view:wizard.fo.allocation.report:0
+#: view:wizard.order.impact.vs.budget:0
 msgid "Print"
 msgstr "Imprimer"
 
@@ -30517,8 +30522,9 @@ msgstr "Février"
 msgid "Import Translations request"
 msgstr "Import Translations request"
 
-#. module: purchase_followup
+#. modules: purchase_followup, msf_budget
 #: field:purchase.order.followup,delivery_confirmed_date:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:213
 msgid "Delivery confirmed date"
 msgstr "Date confirmée de livraison"
 
@@ -39568,6 +39574,7 @@ msgstr "Code du Journal de Banque :"
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:270
 msgid "PO amount"
 msgstr "Bon de Commande - Montant"
 
@@ -45986,11 +45993,6 @@ msgstr " and %s"
 msgid "Compute"
 msgstr "Calculer"
 
-#. module: msf_budget
-#: report:msf.pdf.engagement:0
-msgid "Order impact vs. budget"
-msgstr "Répercussion de la commande sur Budget"
-
 #. module: purchase
 #: model:ir.actions.act_window,name:purchase.action_purchase_order_report_graph
 #: view:purchase.report:0
@@ -46383,6 +46385,7 @@ msgstr "kit.selection.line"
 
 #. module: msf_budget
 #: field:msf.budget.line,actual_amount:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:264
 msgid "Actual amount"
 msgstr "Montant réel"
 
@@ -53564,8 +53567,9 @@ msgstr "Rapport de Suivi de Bon de Commande"
 msgid "Days"
 msgstr "Days"
 
-#. module: purchase_followup
+#. modules: purchase_followup, msf_budget
 #: field:purchase.order.followup.from.menu,order_id:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:214
 msgid "PO reference"
 msgstr "Référence du BC"
 
@@ -56097,6 +56101,7 @@ msgstr "Balance Agée Partenaire"
 #: report:addons/purchase_allocation_report/report/po_allocation_report.mako:226
 #: report:addons/purchase_allocation_report/report/po_line_allocation_report.mako:180
 #: report:addons/sale/report/fo_allocation_report.mako:225
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:255
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -63343,6 +63348,7 @@ msgstr "Wizard d'import de lignes d'inventaire physique"
 #. module: msf_budget
 #: field:msf.budget.line,budget_amount:0
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:261
 msgid "Budget amount"
 msgstr "Montant du Budget"
 
@@ -68464,6 +68470,7 @@ msgstr "Is Controlled subst."
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:258
 msgid "Dest."
 msgstr "Dest."
 
@@ -73413,6 +73420,11 @@ msgstr "Vue"
 msgid "Delivery requested date:"
 msgstr "Date de Livraison souhaitée: "
 
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:212
+msgid "Delivery requested date"
+msgstr "Date de livraison souhaitée"
+
 #. module: msf_outgoing
 #: report:invoice:0
 msgid "Your Ref:"
@@ -73563,6 +73575,11 @@ msgstr "Numéro de Taxe sur la Valeur Ajoutée. Cochez cette case si le partenai
 #, python-format
 msgid "Report date:"
 msgstr "Rapport - date:"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:217
+msgid "Report date"
+msgstr "Rapport - date"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -77505,6 +77522,7 @@ msgstr "Imported Invoices"
 #: field:account.period.create,fiscalyear:0
 #: field:wizard.account.partner.balance.tree,fiscalyear_id:0
 #: field:wizard.local.expenses,fiscalyear_id:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:215
 msgid "Fiscal year"
 msgstr "Exercice Comptable"
 
@@ -79322,11 +79340,12 @@ msgstr "Le Solde du Registre de Banque n'est pas égal au Solde Calculé "
 msgid "Late"
 msgstr "En retard"
 
-#. modules: supplier_catalogue, specific_rules, account_mcdb, unifield_setup
+#. modules: supplier_catalogue, specific_rules, account_mcdb, unifield_setup, msf_budget
 #: field:account.mcdb,functional_currency_id:0
 #: field:initial.stock.inventory.line,currency_id:0
 #: field:res.currency,is_section_currency:0
 #: field:currency.setup,functional_id:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:216
 msgid "Functional currency"
 msgstr "Devise fonctionnelle"
 
@@ -81812,11 +81831,12 @@ msgstr "Automated import functions"
 msgid "You must assign an asset"
 msgstr "Vous devez assignez un Actif"
 
-#. modules: register_accounting, purchase_allocation_report, sale
+#. modules: register_accounting, purchase_allocation_report, sale, msf_budget
 #: field:wizard.liquidity.position,export_type:0
 #: field:wizard.po.allocation.report,export_type:0
 #: field:wizard.po.line.allocation.report,export_type:0
 #: field:wizard.fo.allocation.report,export_type:0
+#: field:wizard.order.impact.vs.budget,export_type:0
 msgid "Export type"
 msgstr "Type d'export"
 
@@ -96052,6 +96072,7 @@ msgstr "Crédit Devise d'enreg."
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:273
 msgid "PO impact"
 msgstr "Bon de Commande - Répercussion"
 
@@ -100408,6 +100429,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.po.allocation.report:0
 #: view:wizard.po.line.allocation.report:0
 #: view:wizard.fo.allocation.report:0
+#: view:wizard.order.impact.vs.budget:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -107864,9 +107886,10 @@ msgstr "Rapport des Journaux Agrégés XLS"
 msgid "Both Journal Items and Analytic Journal Items"
 msgstr "À la fois les Lignes d'Ecritures Comptables et les Lignes d'Ecritures Analytiques"
 
-#. module: account_mcdb
+#. modules: account_mcdb, msf_budget
 #: report:addons/account_mcdb/report/combined_journals_report.mako:230
 #: report:combined.journals.report.pdf:0
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:252
 msgid "Cost Centre"
 msgstr "Centre de Coût"
 
@@ -108082,3 +108105,23 @@ msgstr "Rapport d'Allocation des Lignes du BdC"
 #: report:addons/sale/report/fo_allocation_report.mako:8
 msgid "FO allocation report"
 msgstr "Rapport d'Allocation de la CdT"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:282
+msgid "TOTALS"
+msgstr "TOTAUX"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:245
+msgid "WARNING: analytic distribution for this PO is not complete!"
+msgstr "ATTENTION : la distribution analytique pour ce BdC n'est pas complète !"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:348
+msgid "Actual amounts in this report include confirmed POs (commitments) but not open / validated POs."
+msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engagements) mais pas ceux ouverts/validés."
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
+msgid "Budget missing"
+msgstr "Budget manquant"
