@@ -107560,6 +107560,232 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
 
+#. module: msf_tools
+#: view:automated.export:0
+#: field:automated.export.job,export_id:0
+msgid "Automated export"
+msgstr "Export automatisé"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_menu
+msgid "Automated exports"
+msgstr "Export automatisés"
+
+#. module: msf_tools
+#: view:automated.export.function:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_function_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_function_menu
+msgid "Automated export functions"
+msgstr "Fonctions d'export automatisé"
+
+#. module: msf_tools
+#: view:automated.export.function:0
+msgid "Automated export function"
+msgstr "Fonction d'export automatisé"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:449
+#, python-format
+msgid "Copy is not allowed for Automated exports!"
+msgstr "La copie d'un export automatisé n'est pas autorisé!"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:436
+#, python-format
+msgid "Please delete the automated export jobs that are linked to the Automatic export you try to delete!"
+msgstr "Merci de supprimer les procedures d'export automatisé liées"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:147
+#: sql_constraint:automated.export:0
+#, python-format
+msgid "Another Automated export with same name already exists (maybe inactive). Automated export name must be unique. Please select an other name."
+msgstr "Un autre export automatisé avec le même nom existe déjà (peut être inactif). Le nom des exports automatisés doivent être unique. Merci de choisir un autre nom."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:334
+#, python-format
+msgid "[Automated export] %s"
+msgstr "[Export automatisé] %s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:152
+#: sql_constraint:automated.export:0
+#, python-format
+msgid "Another Automated export with same functionality already exists (maybe inactive). Only one automated export must be created for a same functionality. Please select an other functionality."
+msgstr "Un autre export automatisé avec la même fonction existe déjà (peut être inactif). La fonciton d'un export automatisé doit être unique. Merci de choisir une autre fonction."
+
+#. module: msf_tools
+#: view:automated.export.job:0
+msgid "Automated export job"
+msgstr "Procedure d'export automatisé"
+
+#. module: msf_tools
+#: view:automated.export.job:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_job_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_job_menu
+msgid "Export job reports"
+msgstr "Rapport d'export"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: view:automated.import:0
+msgid "FTP server"
+msgstr "Serveur FTP"
+
+#. module: msf_tools
+#: help:automated.export,ftp_ok:0
+#: help:automated.import,ftp_ok:0
+msgid "Enable FTP server if you want to read or write from a remote FTP server"
+msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
+
+#. module: msf_tools
+#: field:automated.export,ftp_ok:0
+#: field:automated.import,ftp_ok:0
+msgid "Enable FTP server"
+msgstr "Activer serveur FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_url:0
+#: field:automated.import,ftp_url:0
+msgid "FTP server address"
+msgstr "Adresse serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:304
+#, python-format
+msgid "You cannot manually select a file to import if given source path is set on FTP server"
+msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si le chemin source est situé sur le serveur FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_dest_fail_ok:0
+#: field:automated.export,ftp_dest_ok:0
+#: field:automated.export,ftp_report_ok:0
+#: field:automated.import,ftp_dest_fail_ok:0
+#: field:automated.import,ftp_dest_ok:0
+#: field:automated.import,ftp_report_ok:0
+#: field:automated.import,ftp_source_ok:0
+msgid "on FTP server"
+msgstr "sur le serveur FTP"
+
+#. module: msf_tools
+#: help:automated.export,ftp_dest_fail_ok:0
+#: help:automated.export,ftp_dest_ok:0
+#: help:automated.export,ftp_report_ok:0
+#: help:automated.import,ftp_dest_fail_ok:0
+#: help:automated.import,ftp_dest_ok:0
+#: help:automated.import,ftp_report_ok:0
+#: help:automated.import,ftp_source_ok:0
+msgid "Is given path is located on FTP server ?"
+msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:185
+#: code:addons/msf_tools/automated_import.py:193
+#, python-format
+msgid "Not able to connect to FTP server at location %s"
+msgstr "Impossible de se connecter au serveur FTP à l'adresse %s"
+
+#. module: msf_tools
+#: field:automated.export,ftp_port:0
+#: field:automated.import,ftp_port:0
+msgid "FTP server port"
+msgstr "Port FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_password:0
+#: field:automated.import,ftp_password:0
+msgid "FTP password"
+msgstr "Mot de passe FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:195
+#: code:addons/msf_tools/automated_import.py:203
+#, python-format
+msgid "FTP connection succeeded"
+msgstr "Connection au serveur FTP réussie !"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export_job.py:215
+#: code:addons/msf_tools/automated_import_job.py:419
+#, python-format
+msgid "FTP connection issue"
+msgstr "Problème de connection au serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:184
+#: code:addons/msf_tools/automated_export.py:189
+#: code:addons/msf_tools/automated_import.py:192
+#: code:addons/msf_tools/automated_import.py:197
+#, python-format
+msgid "%s :: FTP connection failed"
+msgstr "%s :: FTP connection échouée"
+
+#. module: msf_tools
+#: field:automated.import,dest_path:0
+msgid "Destination Path (success)"
+msgstr "Chemin de destination (succès)"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:190
+#: code:addons/msf_tools/automated_import.py:198
+#, python-format
+msgid "Unable to connect with given login and password"
+msgstr "Impossible de se connecter avec le login/mot de passe donné"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:193
+#: code:addons/msf_tools/automated_import.py:201
+#, python-format
+msgid "Connection succeeded"
+msgstr "Connection succeeded"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:315
+#, python-format
+msgid "%s :: New export job created"
+msgstr "%s :: Nouvelle procédure d'export automatisée créée"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: view:automated.import:0
+msgid "Test connection"
+msgstr "Tester la connection"
+
+#. module: msf_tools
+#: field:automated.export,dest_path_failure:0
+#: field:automated.import,dest_path_failure:0
+msgid "Destination Path (failure)"
+msgstr "Chemin de destination (échec)"
+
+#. module: msf_tools
+#: field:automated.import.function,startswith:0
+msgid "Starts with"
+msgstr "Commence par"
+
+#. module: msf_tools
+#: view:automated.import.files.available:0
+#: field:automated.import.files.available,display_info:0
+#: model:ir.actions.act_window,name:msf_tools.automated_import_available_action
+#: model:ir.ui.menu,name:msf_tools.automated_import_file_available
+msgid "Files available"
+msgstr "Fichiers disponibles"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:100
+#, python-format
+msgid "No files available under \"%s\" (%s folder)"
+msgstr "Pas de fichier à importer dans \"%s\" (%s dossier)"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:84
+#, python-format
+msgid "Files available under \"%s\" (%s folder):\n"
+""
+msgstr "Fichiers disponibles sous \"%s\" (%s dossier):\n"
+
 #. modules: msf_supply_doc_export, sales_followup
 #: report:po.follow.up_rml:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:280
@@ -108001,228 +108227,3 @@ msgstr "Statut du Doc."
 msgid "Doc. Status:"
 msgstr "Statut du Doc.:"
 
-#. module: msf_tools
-#: view:automated.export:0
-#: field:automated.export.job,export_id:0
-msgid "Automated export"
-msgstr "Export automatisé"
-
-#. module: msf_tools
-#: view:automated.export:0
-#: model:ir.actions.act_window,name:msf_tools.automated_export_action
-#: model:ir.ui.menu,name:msf_tools.automated_export_menu
-msgid "Automated exports"
-msgstr "Export automatisés"
-
-#. module: msf_tools
-#: view:automated.export.function:0
-#: model:ir.actions.act_window,name:msf_tools.automated_export_function_action
-#: model:ir.ui.menu,name:msf_tools.automated_export_function_menu
-msgid "Automated export functions"
-msgstr "Fonctions d'export automatisé"
-
-#. module: msf_tools
-#: view:automated.export.function:0
-msgid "Automated export function"
-msgstr "Fonction d'export automatisé"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:449
-#, python-format
-msgid "Copy is not allowed for Automated exports!"
-msgstr "La copie d'un export automatisé n'est pas autorisé!"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:436
-#, python-format
-msgid "Please delete the automated export jobs that are linked to the Automatic export you try to delete!"
-msgstr "Merci de supprimer les procedures d'export automatisé liées"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:147
-#: sql_constraint:automated.export:0
-#, python-format
-msgid "Another Automated export with same name already exists (maybe inactive). Automated export name must be unique. Please select an other name."
-msgstr "Un autre export automatisé avec le même nom existe déjà (peut être inactif). Le nom des exports automatisés doivent être unique. Merci de choisir un autre nom."
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:334
-#, python-format
-msgid "[Automated export] %s"
-msgstr "[Export automatisé] %s"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:152
-#: sql_constraint:automated.export:0
-#, python-format
-msgid "Another Automated export with same functionality already exists (maybe inactive). Only one automated export must be created for a same functionality. Please select an other functionality."
-msgstr "Un autre export automatisé avec la même fonction existe déjà (peut être inactif). La fonciton d'un export automatisé doit être unique. Merci de choisir une autre fonction."
-
-#. module: msf_tools
-#: view:automated.export.job:0
-msgid "Automated export job"
-msgstr "Procedure d'export automatisé"
-
-#. module: msf_tools
-#: view:automated.export.job:0
-#: model:ir.actions.act_window,name:msf_tools.automated_export_job_action
-#: model:ir.ui.menu,name:msf_tools.automated_export_job_menu
-msgid "Export job reports"
-msgstr "Rapport d'export"
-
-#. module: msf_tools
-#: view:automated.export:0
-#: view:automated.import:0
-msgid "FTP server"
-msgstr "Serveur FTP"
-
-#. module: msf_tools
-#: help:automated.export,ftp_ok:0
-#: help:automated.import,ftp_ok:0
-msgid "Enable FTP server if you want to read or write from a remote FTP server"
-msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
-
-#. module: msf_tools
-#: field:automated.export,ftp_ok:0
-#: field:automated.import,ftp_ok:0
-msgid "Enable FTP server"
-msgstr "Activer serveur FTP"
-
-#. module: msf_tools
-#: field:automated.export,ftp_url:0
-#: field:automated.import,ftp_url:0
-msgid "FTP server address"
-msgstr "Adresse serveur FTP"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_import_job.py:304
-#, python-format
-msgid "You cannot manually select a file to import if given source path is set on FTP server"
-msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si le chemin source est situé sur le serveur FTP"
-
-#. module: msf_tools
-#: field:automated.export,ftp_dest_fail_ok:0
-#: field:automated.export,ftp_dest_ok:0
-#: field:automated.export,ftp_report_ok:0
-#: field:automated.import,ftp_dest_fail_ok:0
-#: field:automated.import,ftp_dest_ok:0
-#: field:automated.import,ftp_report_ok:0
-#: field:automated.import,ftp_source_ok:0
-msgid "on FTP server"
-msgstr "sur le serveur FTP"
-
-#. module: msf_tools
-#: help:automated.export,ftp_dest_fail_ok:0
-#: help:automated.export,ftp_dest_ok:0
-#: help:automated.export,ftp_report_ok:0
-#: help:automated.import,ftp_dest_fail_ok:0
-#: help:automated.import,ftp_dest_ok:0
-#: help:automated.import,ftp_report_ok:0
-#: help:automated.import,ftp_source_ok:0
-msgid "Is given path is located on FTP server ?"
-msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:185
-#: code:addons/msf_tools/automated_import.py:193
-#, python-format
-msgid "Not able to connect to FTP server at location %s"
-msgstr "Impossible de se connecter au serveur FTP à l'adresse %s"
-
-#. module: msf_tools
-#: field:automated.export,ftp_port:0
-#: field:automated.import,ftp_port:0
-msgid "FTP server port"
-msgstr "Port FTP"
-
-#. module: msf_tools
-#: field:automated.export,ftp_password:0
-#: field:automated.import,ftp_password:0
-msgid "FTP password"
-msgstr "Mot de passe FTP"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:195
-#: code:addons/msf_tools/automated_import.py:203
-#, python-format
-msgid "FTP connection succeeded"
-msgstr "Connection au serveur FTP réussie !"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export_job.py:215
-#: code:addons/msf_tools/automated_import_job.py:419
-#, python-format
-msgid "FTP connection issue"
-msgstr "Problème de connection au serveur FTP"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:184
-#: code:addons/msf_tools/automated_export.py:189
-#: code:addons/msf_tools/automated_import.py:192
-#: code:addons/msf_tools/automated_import.py:197
-#, python-format
-msgid "%s :: FTP connection failed"
-msgstr "%s :: FTP connection échouée"
-
-#. module: msf_tools
-#: field:automated.import,dest_path:0
-msgid "Destination Path (success)"
-msgstr "Chemin de destination (succès)"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:190
-#: code:addons/msf_tools/automated_import.py:198
-#, python-format
-msgid "Unable to connect with given login and password"
-msgstr "Impossible de se connecter avec le login/mot de passe donné"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:193
-#: code:addons/msf_tools/automated_import.py:201
-#, python-format
-msgid "Connection succeeded"
-msgstr "Connection succeeded"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_export.py:315
-#, python-format
-msgid "%s :: New export job created"
-msgstr "%s :: Nouvelle procédure d'export automatisée créée"
-
-#. module: msf_tools
-#: view:automated.export:0
-#: view:automated.import:0
-msgid "Test connection"
-msgstr "Tester la connection"
-
-#. module: msf_tools
-#: field:automated.export,dest_path_failure:0
-#: field:automated.import,dest_path_failure:0
-msgid "Destination Path (failure)"
-msgstr "Chemin de destination (échec)"
-
-#. module: msf_tools
-#: field:automated.import.function,startswith:0
-msgid "Starts with"
-msgstr "Commence par"
-
-#. module: msf_tools
-#: view:automated.import.files.available:0
-#: field:automated.import.files.available,display_info:0
-#: model:ir.actions.act_window,name:msf_tools.automated_import_available_action
-#: model:ir.ui.menu,name:msf_tools.automated_import_file_available
-msgid "Files available"
-msgstr "Fichiers disponibles"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_import_files_available.py:100
-#, python-format
-msgid "No files available under \"%s\" (%s folder)"
-msgstr "Pas de fichier à importer dans \"%s\" (%s dossier)"
-
-#. module: msf_tools
-#: code:addons/msf_tools/automated_import_files_available.py:84
-#, python-format
-msgid "Files available under \"%s\" (%s folder):\n"
-""
-msgstr "Fichiers disponibles sous \"%s\" (%s dossier):\n"
