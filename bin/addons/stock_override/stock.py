@@ -303,6 +303,7 @@ class stock_picking(osv.osv):
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
             ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
+            ('updated', 'Available Updated'),
             ('done', 'Closed'),
             ('cancel', 'Cancelled'),
             ('import', 'Import in progress'),
@@ -1014,6 +1015,18 @@ You cannot choose this supplier because some destination locations are not avail
                     move_obj.action_assign(cr, uid, not_assigned_move)
 
         return True
+
+
+    def action_updated_wkf(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'updated'}, context=context)
+
+        return True
+
 
     @check_cp_rw
     def change_all_location(self, cr, uid, ids, context=None):

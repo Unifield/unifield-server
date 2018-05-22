@@ -103,10 +103,25 @@
                     <group col="6" colspan="4">
                         <field name="requested_date_in_past" invisible="1"/>
                         <field name="update_in_progress" invisible="1" readonly="1"/>
+                        <field name="is_validated_and_synced" invisible="1"/>
                         <group colspan="6">
                             <html>
                                 <p id="view_order_requested_in_past" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                    <translate>WARNING: The requested date of this purchase order is in the past.</translate>
+                                    <translate>
+                                        WARNING: The requested date of this purchase order is in the past.
+                                    </translate>
+                                    <br/>
+                                </p>
+                                <p id="view_purchase_order_form_inherit_is_validated_and_synced" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                    <translate>
+                                        WARNING: This PO has already been synched, any modifications you make will not be considered.
+                                    </translate>
+                                    <br/>
+                                </p>
+                                <p id="view_purchase_order_already_auto_exported" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                    <translate>
+                                        WARNING: This PO has already been exported for Vertical Integration; any changes you make will not be sent to the ESC, please contact Supplier directly.
+                                    </translate>
                                     <br/>
                                 </p>
                                 <script language="javascript">
@@ -115,22 +130,17 @@
                                         msg_dom = $('#view_order_requested_in_past');
                                         msg_dom.show();
                                     }
+                                    var is_synced = $('#is_validated_and_synced').val();
+                                    if (is_synced == "1") {
+                                        msg_dom = $('#view_purchase_order_form_inherit_is_validated_and_synced')
+                                        msg_dom.show();
+                                    }
+                                    var is_exported = $('#auto_exported_ok').val();
+                                    if (is_exported == "1") {
+                                        msg_dom = $('#view_purchase_order_already_auto_exported')
+                                        msg_dom.show();
+                                    }
                                 </script>
-                            </html>
-                        </group>
-                        <field name="is_validated_and_synced" invisible="1"/>
-                        <group colspan="6">
-                            <html>
-                                <p id="view_purchase_order_form_inherit_is_validated_and_synced" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                                WARNING: This PO has already been synched, any modifications you make will not be considered.
-                                </p>
-                                <script language="javascript">
-                                var is_synced = $('#is_validated_and_synced').val();
-                                if (is_synced == "1") {
-                                    msg_dom = $('#view_purchase_order_form_inherit_is_validated_and_synced')
-                                    msg_dom.show();
-                                }
-                            </script>
                             </html>
                         </group>
                         <field name="name"/>
@@ -332,6 +342,7 @@
                         </page>
                         <page string="Notes">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
+                            <field name="auto_exported_ok" readonly="1"/>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
                             <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}"/>

@@ -103,6 +103,30 @@ class report_pdf_engagement(report_sxw.rml_parse):
         elif not has_one_distribution:
             raise osv.except_osv(_('Error'), _('No distribution found in PO %s.') % (purchase_order.name))
 
+    def _cmp_cc_dest(self, a, b):
+        """
+        Comparison function to sort by cost center code and then destination code
+        """
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        a = a.split('_')
+        b = b.split('_')
+        if len(a) != 2 or len(b) != 2 or not a[0] or not b[0] or not a[1] or not b[1]:
+            return 0
+        a_cc = analytic_acc_obj.read(self.cr, self.uid, int(a[0]), ['code'])['code'].upper()
+        a_dest = analytic_acc_obj.read(self.cr, self.uid, int(a[1]), ['code'])['code'].upper()
+        b_cc = analytic_acc_obj.read(self.cr, self.uid, int(b[0]), ['code'])['code'].upper()
+        b_dest = analytic_acc_obj.read(self.cr, self.uid, int(b[1]), ['code'])['code'].upper()
+        if a_cc > b_cc:
+            return 1
+        elif a_cc < b_cc:
+            return -1
+        else:
+            if a_dest > b_dest:
+                return 1
+            elif a_dest < b_dest:
+                return -1
+        return 0
+
     def get_report_lines(self, purchase_order):
         # Input: a purchase order
         # temp_data: a dict of dict of list {cost_center_name: {expense_account: [budget_amount, ...],
@@ -226,22 +250,24 @@ class report_pdf_engagement(report_sxw.rml_parse):
 
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
-            cost_center_ids = sorted(temp_data.keys())
+            cost_center_ids = temp_data.keys()
+            cost_center_ids.sort(self._cmp_cc_dest)
+
             for cost_dest in cost_center_ids:
 
                 split = cost_dest.split('_')
                 cost_center_id = split[0] and int(split[0])
                 destination_id = split[1] and int(split[1])
 
-
                 cost_center_data = temp_data[str(cost_center_id)+'_'+str(destination_id)]
-                expense_account_ids = sorted(cost_center_data.keys())
-                for expense_account_id in expense_account_ids:
-                    values = cost_center_data[expense_account_id]
+                expense_account_ids = cost_center_data.keys()
+
+                expense_accounts = pool.get('account.account').browse(cr, uid, expense_account_ids, context=context)
+                for expense_account in sorted(expense_accounts, key=lambda a: a.code):
+                    values = cost_center_data[expense_account.id]
                     cost_center = pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
-                    expense_account = pool.get('account.account').browse(cr, uid, expense_account_id, context=context)
-                    formatted_line = [cost_center.name]
-                    formatted_line += [expense_account.code + " " + expense_account.name]
+                    formatted_line = ["%s - %s" % (cost_center.code or ' ', cost_center.name)]
+                    formatted_line += ["%s - %s" % (expense_account.code, expense_account.name)]
                     if values[0] != 'Budget missing':
                         total_values = [round(sum(pair)) for pair in zip(values, total_values)]
                         formatted_line += [values[0]]
@@ -249,7 +275,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         total_values = [round(sum(pair)) for pair in zip([0] + values[1:], total_values)]
                         formatted_line += [values[0]]
                     formatted_line += values[1:]
-                    formatted_line += [ temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id] ]
+                    formatted_line += [ temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account.id] ]
                     res.append(formatted_line)
 
                 # empty line between cost centers

@@ -2422,7 +2422,7 @@ msgstr "Rechercher Réclamation"
 #. module: msf_tools
 #: view:automated.import.function:0
 msgid "Automated import function"
-msgstr "Automated import function"
+msgstr "Fonction d'import automatisé"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_hard_posting
@@ -5272,7 +5272,7 @@ msgstr "Ré-evaluation"
 #: model:ir.actions.act_window,name:msf_tools.automated_import_job_action
 #: model:ir.ui.menu,name:msf_tools.automated_import_job_menu
 msgid "Import job reports"
-msgstr "Import job reports"
+msgstr "Rapports d'import automatisé"
 
 #. module: base
 #: selection:res.widget.wizard,widgets_list:0
@@ -13150,6 +13150,7 @@ msgstr "Table name not found for the given object: %s"
 #: selection:purchase.report,priority:0
 #: view:tender:0
 #: selection:tender,priority:0
+#: field:automated.export,priority:0
 msgid "Priority"
 msgstr "Priorité"
 
@@ -15408,9 +15409,10 @@ msgid "Sierra Leone"
 msgstr "Sierra Leone"
 
 #. module: msf_tools
+#: field:automated.export.job,end_time:0
 #: field:automated.import.job,end_time:0
 msgid "End time"
-msgstr "End time"
+msgstr "Date fin"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:104
@@ -21917,7 +21919,10 @@ msgstr "Note de débit"
 msgid "Sync order line DB Id of the splitted line"
 msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 
-#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance, account_override, procurement_request
+#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance, account_override, procurement_request, msf_tools
+#: field:automated.export,name:0
+#: field:automated.export.function,name:0
+#: field:automated.export.job,name:0
 #: field:account.account,name:0
 #: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
@@ -23048,9 +23053,10 @@ msgid "My Logs"
 msgstr "Mes journaux"
 
 #. module: msf_tools
+#: field:automated.export.job,start_time:0
 #: field:automated.import.job,start_time:0
 msgid "Start time"
-msgstr "Start time"
+msgstr "Date début"
 
 #. modules: procurement_cycle, threshold_value
 #: field:stock.warehouse.order.cycle.line,expiry_before:0
@@ -23999,9 +24005,11 @@ msgstr "Ancien code"
 msgid "Chaining Lead Time"
 msgstr "Délai d'enchaînement"
 
-#. modules: base, procurement_report
+#. modules: base, procurement_report, msf_tools
 #: field:ir.cron,interval_type:0
 #: field:procurement.batch.cron,interval_type:0
+#: field:automated.export,interval_unit:0
+#: field:automated.import,interval_unit:0
 msgid "Interval Unit"
 msgstr "Unité Intervalle"
 
@@ -25199,8 +25207,9 @@ msgstr "Export Files in Excel Format"
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Activate"
-msgstr "Activate"
+msgstr "Activer"
 
 #. module: account_payment
 #: report:payment.order:0
@@ -26378,8 +26387,9 @@ msgstr "Dominican Republic"
 
 #. module: msf_tools
 #: field:automated.import,function_id:0
+#: field:automated.export,function_id:0
 msgid "Functionality"
-msgstr "Functionality"
+msgstr "Fonctionnalité"
 
 #. module: base
 #: code:addons/base/module/module.py:257
@@ -27324,9 +27334,10 @@ msgid "This is the list of all delivery orders that have to be prepared, accordi
 msgstr "Ceci est la liste de tous les bons de livraison à préparer, d'après vos différentes commandes clients et de vos règles logistiques."
 
 #. module: msf_tools
+#: field:automated.export.job,nb_rejected_records:0
 #: field:automated.import.job,nb_rejected_records:0
 msgid "# of rejected records"
-msgstr "# of rejected records"
+msgstr "Lignes rejetées"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_selection.py:104
@@ -35977,9 +35988,11 @@ msgstr "Approvisionnement- Détails"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:68
+#: code:addons/msf_tools/automated_export.py:58
+#: code:addons/msf_tools/automated_import.py:69
 #, python-format
 msgid "Before activation, the different paths should be set."
-msgstr "Before activation, the different paths should be set."
+msgstr "Avant l'activation, les différents chemins doivent être définis"
 
 #. module: stock
 #: code:addons/stock/stock.py:1724
@@ -40922,9 +40935,11 @@ msgstr "Année"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:189
+#: code:addons/msf_tools/automated_export.py:228
+#: code:addons/msf_tools/automated_import.py:236
 #, python-format
 msgid "Path '%s' doesn't exist!"
-msgstr "Path '%s' doesn't exist!"
+msgstr "Le chemin'%s' n'existe pas !"
 
 #. module: procurement
 #: field:procurement.order,message:0
@@ -42686,9 +42701,10 @@ msgid "Budgeted expenses for the period M+1"
 msgstr "Dépenses budgétisées pour la période M+1"
 
 #. module: msf_tools
+#: field:automated.export.job,nb_processed_records:0
 #: field:automated.import.job,nb_processed_records:0
 msgid "# of processed records"
-msgstr "# of processed records"
+msgstr "Lignes importées"
 
 #. modules: account, stock
 #: code:addons/account/account_move_line.py:849
@@ -43838,14 +43854,14 @@ msgstr "May"
 msgid "Analytic Journal Items"
 msgstr "Analytic Journal Items"
 
-#. modules: msf_supply_doc_export, account
+#. modules: msf_supply_doc_export, account, msf_tools
 #: field:account.balance.report,export_format:0
 #: field:account.bs.report,export_format:0
 #: field:account.pl.report,export_format:0
 #: field:account.report.general.ledger,export_format:0
 #: field:po.follow.up,export_format:0
 msgid "Export format"
-msgstr "Export format"
+msgstr "Format d'export"
 
 #. module: stock
 #: view:stock.location:0
@@ -49507,8 +49523,9 @@ msgstr "Assistant pour traiter les Mouvements Internes"
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Run job manually"
-msgstr "Run job manually"
+msgstr "Lancer la procédure manuellement"
 
 #. module: msf_budget
 #: model:ir.model,name:msf_budget.model_wizard_budget_import_confirm
@@ -52552,7 +52569,7 @@ msgstr "import.cell.data"
 #: sql_constraint:automated.import:0
 #, python-format
 msgid "Interval number cannot be negative !"
-msgstr "Interval number cannot be negative !"
+msgstr "L'interval ne peut pas être négatif !"
 
 #. module: product_attributes
 #: field:product.product,manufacturer_txt:0
@@ -55285,6 +55302,7 @@ msgstr "Local"
 
 #. module: msf_tools
 #: field:automated.import,dest_path:0
+#: field:automated.export,dest_path:0
 msgid "Destination Path"
 msgstr "Chemin de Destination"
 
@@ -61088,6 +61106,8 @@ msgstr "Ligne %s. Funding Pool %s non trouvé !"
 
 #. module: msf_tools
 #: constraint:automated.import:0
+#: code:addons/msf_tools/automated_export.py:163
+#: code:addons/msf_tools/automated_import.py:171
 msgid "There is a problem with paths"
 msgstr "Il y a un problème avec le chemin"
 
@@ -65872,6 +65892,7 @@ msgstr "Source de l'action"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:193
+#: code:addons/msf_tools/automated_export.py:232
 #, python-format
 msgid "Write is not allowed on '%s'!"
 msgstr "Il n'est pas permis d'Editer sur '%s'!"
@@ -70458,9 +70479,11 @@ msgstr "Code produit"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:191
+#: code:addons/msf_tools/automated_export.py:230
+#: code:addons/msf_tools/automated_import.py:238
 #, python-format
 msgid "Read is not allowed on '%s'!"
-msgstr "Read is not allowed on '%s'!"
+msgstr "Lecture non autorisée sur '%s'!"
 
 #. module: account
 #: field:account.fiscalyear.close,journal_id:0
@@ -72974,10 +72997,12 @@ msgstr "Show Inactive"
 msgid "msf.instance"
 msgstr "msf.instance"
 
-#. module: sync_client
+#. module: sync_client, msf_tools
 #: field:sync.client.message_received,remote_call:0
 #: field:sync.client.message_rule,remote_call:0
 #: field:sync.client.message_to_send,remote_call:0
+#: field:automated.export.function,method_to_call:0
+#: field:automated.import.function,method_to_call:0
 msgid "Method to call"
 msgstr "Méthode à utiliser"
 
@@ -78645,7 +78670,7 @@ msgstr "Planning de Réapprovisionnement"
 #. module: msf_tools
 #: view:automated.import.job:0
 msgid "Import job report"
-msgstr "Import job report"
+msgstr "Rapport d'import automatisé"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -80808,11 +80833,6 @@ msgstr "Etat Civil"
 msgid "Address name"
 msgstr "Address name"
 
-#. module: msf_tools
-#: field:automated.import,interval_unit:0
-msgid "Interval Unit"
-msgstr "Interval Unit"
-
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:749
 #: report:addons/msf_budget/report/monthly_budget.mako:279
@@ -81527,9 +81547,10 @@ msgid "Purchase Dashboard"
 msgstr "Achat - Tableau de bord"
 
 #. module: msf_tools
+#: field:automated.export,interval:0
 #: field:automated.import,interval:0
 msgid "Interval number"
-msgstr "Interval number"
+msgstr "Valeur de l'intervalle"
 
 #. module: procurement_auto
 #: model:ir.actions.act_window,help:procurement_auto.action_automatic_supply_tree
@@ -81756,7 +81777,7 @@ msgstr "Object"
 #: model:ir.actions.act_window,name:msf_tools.automated_import_function_action
 #: model:ir.ui.menu,name:msf_tools.automated_import_function_menu
 msgid "Automated import functions"
-msgstr "Automated import functions"
+msgstr "Fonctions d'import automatisé"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/consumption_calculation.py:629
@@ -83817,8 +83838,9 @@ msgstr "Objet de base"
 
 #. module: msf_tools
 #: field:automated.import,start_time:0
+#: field:automated.export,start_time:0
 msgid "Date and time of first planned execution"
-msgstr "Date and time of first planned execution"
+msgstr "Date et heure de la première execution plannifiée"
 
 #. module: purchase
 #: field:purchase.order,unallocation_ok:0
@@ -87562,7 +87584,12 @@ msgstr "Le prix unitaire doit être supérieure à 0.00"
 #: view:automated.import:0
 #: field:automated.import.job,import_id:0
 msgid "Automated import"
-msgstr "Automated import"
+msgstr "Import automatisé"
+
+#. module: msf_tools
+#: field:automated.import.files.available,import_id:0
+msgid "Automated Import"
+msgstr "Import Automatisé"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.track_line_old
@@ -88659,12 +88686,6 @@ msgstr "Pack Info"
 msgid "Account override"
 msgstr "Account override"
 
-#. module: msf_tools
-#: code:addons/msf_tools/automated_import.py:157
-#, python-format
-msgid "There is a problem with paths"
-msgstr "There is a problem with paths"
-
 #. module: sales_followup
 #: field:sale.followup.multi.wizard,only_bo:0
 msgid "Pending order lines only (PDF)"
@@ -89176,11 +89197,6 @@ msgstr "Enfants consolidés"
 #, python-format
 msgid "Nomen Family"
 msgstr "Nomen Famille"
-
-#. module: msf_tools
-#: field:automated.import.function,method_to_call:0
-msgid "Method to call"
-msgstr "Method to call"
 
 #. modules: account, hr, export_import_lang, procurement, base, analytic_distribution
 #: view:account.analytic.account:0
@@ -101776,6 +101792,7 @@ msgstr "Télécharger fichier"
 
 #. module: msf_tools
 #: field:automated.import,report_path:0
+#: field:automated.export,report_path:0
 msgid "Report Path"
 msgstr "Chemin du Rapport"
 
@@ -103715,6 +103732,7 @@ msgstr "OpenERP ajoutera automatiquement quelques '0' à gauche du 'Prochain Num
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "Scheduler configuration"
 msgstr "Configuration du planificateur"
 
@@ -107982,3 +108000,229 @@ msgstr "Statut du Doc."
 #: report:sales.follow.up.multi.report_pdf:0
 msgid "Doc. Status:"
 msgstr "Statut du Doc.:"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: field:automated.export.job,export_id:0
+msgid "Automated export"
+msgstr "Export automatisé"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_menu
+msgid "Automated exports"
+msgstr "Export automatisés"
+
+#. module: msf_tools
+#: view:automated.export.function:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_function_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_function_menu
+msgid "Automated export functions"
+msgstr "Fonctions d'export automatisé"
+
+#. module: msf_tools
+#: view:automated.export.function:0
+msgid "Automated export function"
+msgstr "Fonction d'export automatisé"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:449
+#, python-format
+msgid "Copy is not allowed for Automated exports!"
+msgstr "La copie d'un export automatisé n'est pas autorisé!"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:436
+#, python-format
+msgid "Please delete the automated export jobs that are linked to the Automatic export you try to delete!"
+msgstr "Merci de supprimer les procedures d'export automatisé liées"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:147
+#: sql_constraint:automated.export:0
+#, python-format
+msgid "Another Automated export with same name already exists (maybe inactive). Automated export name must be unique. Please select an other name."
+msgstr "Un autre export automatisé avec le même nom existe déjà (peut être inactif). Le nom des exports automatisés doivent être unique. Merci de choisir un autre nom."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:334
+#, python-format
+msgid "[Automated export] %s"
+msgstr "[Export automatisé] %s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:152
+#: sql_constraint:automated.export:0
+#, python-format
+msgid "Another Automated export with same functionality already exists (maybe inactive). Only one automated export must be created for a same functionality. Please select an other functionality."
+msgstr "Un autre export automatisé avec la même fonction existe déjà (peut être inactif). La fonciton d'un export automatisé doit être unique. Merci de choisir une autre fonction."
+
+#. module: msf_tools
+#: view:automated.export.job:0
+msgid "Automated export job"
+msgstr "Procedure d'export automatisé"
+
+#. module: msf_tools
+#: view:automated.export.job:0
+#: model:ir.actions.act_window,name:msf_tools.automated_export_job_action
+#: model:ir.ui.menu,name:msf_tools.automated_export_job_menu
+msgid "Export job reports"
+msgstr "Rapport d'export"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: view:automated.import:0
+msgid "FTP server"
+msgstr "Serveur FTP"
+
+#. module: msf_tools
+#: help:automated.export,ftp_ok:0
+#: help:automated.import,ftp_ok:0
+msgid "Enable FTP server if you want to read or write from a remote FTP server"
+msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
+
+#. module: msf_tools
+#: field:automated.export,ftp_ok:0
+#: field:automated.import,ftp_ok:0
+msgid "Enable FTP server"
+msgstr "Activer serveur FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_url:0
+#: field:automated.import,ftp_url:0
+msgid "FTP server address"
+msgstr "Adresse serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:304
+#, python-format
+msgid "You cannot manually select a file to import if given source path is set on FTP server"
+msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si le chemin source est situé sur le serveur FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_dest_fail_ok:0
+#: field:automated.export,ftp_dest_ok:0
+#: field:automated.export,ftp_report_ok:0
+#: field:automated.import,ftp_dest_fail_ok:0
+#: field:automated.import,ftp_dest_ok:0
+#: field:automated.import,ftp_report_ok:0
+#: field:automated.import,ftp_source_ok:0
+msgid "on FTP server"
+msgstr "sur le serveur FTP"
+
+#. module: msf_tools
+#: help:automated.export,ftp_dest_fail_ok:0
+#: help:automated.export,ftp_dest_ok:0
+#: help:automated.export,ftp_report_ok:0
+#: help:automated.import,ftp_dest_fail_ok:0
+#: help:automated.import,ftp_dest_ok:0
+#: help:automated.import,ftp_report_ok:0
+#: help:automated.import,ftp_source_ok:0
+msgid "Is given path is located on FTP server ?"
+msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:185
+#: code:addons/msf_tools/automated_import.py:193
+#, python-format
+msgid "Not able to connect to FTP server at location %s"
+msgstr "Impossible de se connecter au serveur FTP à l'adresse %s"
+
+#. module: msf_tools
+#: field:automated.export,ftp_port:0
+#: field:automated.import,ftp_port:0
+msgid "FTP server port"
+msgstr "Port FTP"
+
+#. module: msf_tools
+#: field:automated.export,ftp_password:0
+#: field:automated.import,ftp_password:0
+msgid "FTP password"
+msgstr "Mot de passe FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:195
+#: code:addons/msf_tools/automated_import.py:203
+#, python-format
+msgid "FTP connection succeeded"
+msgstr "Connection au serveur FTP réussie !"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export_job.py:215
+#: code:addons/msf_tools/automated_import_job.py:419
+#, python-format
+msgid "FTP connection issue"
+msgstr "Problème de connection au serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:184
+#: code:addons/msf_tools/automated_export.py:189
+#: code:addons/msf_tools/automated_import.py:192
+#: code:addons/msf_tools/automated_import.py:197
+#, python-format
+msgid "%s :: FTP connection failed"
+msgstr "%s :: FTP connection échouée"
+
+#. module: msf_tools
+#: field:automated.import,dest_path:0
+msgid "Destination Path (success)"
+msgstr "Chemin de destination (succès)"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:190
+#: code:addons/msf_tools/automated_import.py:198
+#, python-format
+msgid "Unable to connect with given login and password"
+msgstr "Impossible de se connecter avec le login/mot de passe donné"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:193
+#: code:addons/msf_tools/automated_import.py:201
+#, python-format
+msgid "Connection succeeded"
+msgstr "Connection succeeded"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:315
+#, python-format
+msgid "%s :: New export job created"
+msgstr "%s :: Nouvelle procédure d'export automatisée créée"
+
+#. module: msf_tools
+#: view:automated.export:0
+#: view:automated.import:0
+msgid "Test connection"
+msgstr "Tester la connection"
+
+#. module: msf_tools
+#: field:automated.export,dest_path_failure:0
+#: field:automated.import,dest_path_failure:0
+msgid "Destination Path (failure)"
+msgstr "Chemin de destination (échec)"
+
+#. module: msf_tools
+#: field:automated.import.function,startswith:0
+msgid "Starts with"
+msgstr "Commence par"
+
+#. module: msf_tools
+#: view:automated.import.files.available:0
+#: field:automated.import.files.available,display_info:0
+#: model:ir.actions.act_window,name:msf_tools.automated_import_available_action
+#: model:ir.ui.menu,name:msf_tools.automated_import_file_available
+msgid "Files available"
+msgstr "Fichiers disponibles"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:100
+#, python-format
+msgid "No files available under \"%s\" (%s folder)"
+msgstr "Pas de fichier à importer dans \"%s\" (%s dossier)"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_files_available.py:84
+#, python-format
+msgid "Files available under \"%s\" (%s folder):\n"
+""
+msgstr "Fichiers disponibles sous \"%s\" (%s dossier):\n"

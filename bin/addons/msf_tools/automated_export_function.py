@@ -25,8 +25,8 @@ from osv import fields
 from tools.translate import _
 
 
-class automated_import_function(osv.osv):
-    _name = 'automated.import.function'
+class automated_export_function(osv.osv):
+    _name = 'automated.export.function'
 
     _columns = {
         'name': fields.char(
@@ -44,11 +44,10 @@ class automated_import_function(osv.osv):
             string='Method to call',
             required=True,
         ),
-        'startswith': fields.char('Starts with', size=56),
     }
 
     _defaults = {
-        'method_to_call': lambda *a: 'import_data_from_csv',
+        'method_to_call': lambda *a: 'export_data_from_csv',
     }
 
     _order = 'name'
@@ -77,19 +76,19 @@ class automated_import_function(osv.osv):
         :param uid: ID of the res.users that calls this method
         :param vals: Values to put on the new record
         :param context: Context of the call
-        :return: ID of the new automated.import.function
+        :return: ID of the new automated.export.function
         """
         if vals.get('model_id') and vals.get('method_to_call'):
             self.check_method_to_call(cr, uid, vals.get('model_id'), vals.get('method_to_call'))
 
-        return super(automated_import_function, self).create(cr, uid, vals, context=context)
+        return super(automated_export_function, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
         Run the check on method to call before update the record(s)
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
-        :param ids: List of ID of automated.import.function record to update
+        :param ids: List of ID of automated.export.function record to update
         :param vals: Values to put on the new record
         :param context: Context of the call
         :return: True
@@ -107,6 +106,6 @@ class automated_import_function(osv.osv):
                 func = vals.get('method_to_call', rec.method_to_call)
                 self.check_method_to_call(cr, uid, model, func)
 
-        return super(automated_import_function, self).write(cr, uid, ids, vals, context=context)
+        return super(automated_export_function, self).write(cr, uid, ids, vals, context=context)
 
-automated_import_function()
+automated_export_function()
