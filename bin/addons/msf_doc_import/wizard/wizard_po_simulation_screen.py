@@ -1681,6 +1681,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                              'set_as_validated_n': True,
+                             'display_sync_ref': True,
+                             'created_by_vi_import': True,
                              }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
