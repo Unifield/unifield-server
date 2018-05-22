@@ -725,7 +725,8 @@ class ppl_move_processor(osv.osv):
             vals['to_pack'] = 1
 
         if vals.get('wizard_id', False):
-            self.pool.get('ppl.processor').write(cr, uid, [vals['wizard_id']], {'draft_step2': False}, context=context)
+            rel_obj = self._columns['wizard_id']._obj
+            self.pool.get(rel_obj).write(cr, uid, [vals['wizard_id']], {'draft_step2': False}, context=context)
 
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
