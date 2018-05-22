@@ -61,7 +61,7 @@ if os.name == 'nt':
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
-                "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput"
+                "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp"
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
