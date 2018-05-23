@@ -196,7 +196,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
-                            'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type,
+                            'transport': not only_bo and move.picking_id.shipment_id
+                                 and self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, move.picking_id.shipment_id, 'transport_type', self.localcontext),
                         })
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':

@@ -301,8 +301,8 @@
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('state_display', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('transport', '') and getSel(line['transport'], 'transport_type') or '-') or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('transport', '') and getSel(line['transport'], 'transport_type') or '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('transport', '') or '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('transport', '') or '-') or removeParentNode('para') ]]</para>
 	    		</td>
                 <td>
                     <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (not line.get('is_delivered') and line.get('shipment', '') or removeParentNode('para')) or removeParentNode('para') ]]</para>
