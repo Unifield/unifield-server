@@ -1071,7 +1071,7 @@ class purchase_order_line(osv.osv):
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
-                self.pool.get('expected.sale.order.line').create(cr, uid, {
+                self.pool.get('expected.sale.order.line').create(cr, 1, {
                     'order_id': so_id,
                     'po_line_id': po_line_id,
                 }, context=context)

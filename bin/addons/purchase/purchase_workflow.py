@@ -5,7 +5,7 @@ import netsvc
 from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+from msf_button_access_rights.osv_override import fakeUid
 
 
 class purchase_order_line(osv.osv):
@@ -273,6 +273,7 @@ class purchase_order_line(osv.osv):
         So we have to create the sale.order.line from the given purchase.order.line
         @param fo_id: id of sale.order (int)
         '''
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -483,10 +484,16 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def action_validated_n(self, cr, uid, ids, context=None):
+    def action_validated_n(self, cr, real_uid, ids, context=None):
         '''
         wkf method to validate the PO line
         '''
+
+        if real_uid == 1:
+            uid = real_uid
+        else:
+            uid = fakeUid(1, real_uid)
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

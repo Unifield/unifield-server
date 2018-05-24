@@ -581,7 +581,6 @@ class ir_model_access(osv.osv):
                 'create': _("You can not create this document (%s) ! Be sure your user belongs to one of these groups: %s."),
                 'unlink': _("You can not delete this document (%s) ! Be sure your user belongs to one of these groups: %s."),
             }
-
             raise except_orm(_('AccessError'), msgs[mode] % (model_name, groups) )
         return r
 
