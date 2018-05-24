@@ -1700,8 +1700,8 @@ class purchase_order(osv.osv):
         elif order_type == 'direct':
             v['cross_docking_ok'] = False
 
-        #if order_type == 'regular' and v['invoice_method'] == 'picking':
-        #    v['cross_docking_ok'] = True
+        if order_type == 'regular' and v['invoice_method'] == 'picking' and delivery_requested_date:
+            v['cross_docking_ok'] = True
 
         if order_type == 'purchase_list' and delivery_requested_date:
             v.update({'delivery_confirmed_date': delivery_requested_date})
