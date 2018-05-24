@@ -60214,8 +60214,8 @@ msgstr "Mon tableau"
 
 #. module: msf_instance
 #: view:msf.instance:0
-msgid "You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?"
-msgstr "Vous êtes sur le point de désactiver une instance propriétaire. Cette action n'est pas réversible, voulez-vous continuer?"
+msgid "You are about to deactivate this proprietary instance. Do you want to proceed?"
+msgstr "Vous êtes sur le point de désactiver cette instance propriétaire. Voulez-vous continuer ?"
 
 #. module: base
 #: model:ir.model,name:base.model_workflow_instance
@@ -108226,3 +108226,13 @@ msgstr "Pas de fichier à importer dans \"%s\" (%s dossier)"
 msgid "Files available under \"%s\" (%s folder):\n"
 ""
 msgstr "Fichiers disponibles sous \"%s\" (%s dossier):\n"
+
+#. module: msf_instance
+#: view:msf.instance:0
+msgid "You are about to reactivate this proprietary instance. Do you want to proceed?"
+msgstr "Vous êtes sur le point de réactiver cette instance propriétaire. Voulez-vous continuer ?"
+
+#. module: msf_instance
+#: view:msf.instance:0
+msgid "Reactivate"
+msgstr "Réactiver"
