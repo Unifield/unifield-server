@@ -110,6 +110,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         if only_bo:
             grouped = True
 
+
+        transport_info = self.pool.get('shipment').fields_get(self.cr, self.uid, ['transport_type'], context=self.localcontext).get('transport_type', {}).get('selection', {})
+        transport_dict = dict(transport_info)
         if not isinstance(order_id, int):
             order_id = order_id.id
 
@@ -196,7 +199,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
-                            'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type,
+                            'transport': not only_bo and move.picking_id.shipment_id and transport_dict.get(move.picking_id.shipment_id.transport_type, ''),
                         })
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
