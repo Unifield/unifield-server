@@ -83,7 +83,7 @@
             <field name="priority">14</field>
             <field name="model">hr.payment.method</field>
             <field name="arch" type="xml">
-                <form string="Payment method" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <form string="Payment method" noteditable="1" hide_delete_button="1" hide_new_button="1" hide_save_button="1">
                     <field name="name"/>
                 </form>
             </field>
