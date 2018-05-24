@@ -774,6 +774,7 @@ class ir_values(osv.osv):
                     if v[2].get('report_name', False) == 'msf.sale.order' \
                         or v[2].get('report_name', False) == 'sale.order_xls' \
                         or v[2].get('report_name', False) == 'sale.order.allocation.report' \
+                        or v[1] == 'allocation.report' \
                             or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 values = new_act
