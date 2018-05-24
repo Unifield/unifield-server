@@ -129,7 +129,10 @@
                 string="Combined Journals Report PDF"
                 model="account.mcdb"
                 name="combined.journals.report.pdf"
-                rml="account_mcdb/report/combined_journals_report.rml"/>
+                rml="account_mcdb/report/combined_journals_report.rml"
+                header="True"
+                auto="False"
+                menu="False"/>
 
     </data>
 </openerp>
