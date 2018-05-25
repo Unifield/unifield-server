@@ -54,9 +54,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
-                    <field name="instance_id"/>
-                    <field name="period_id"/>
-                    <field name="state"/>
+                    <field name="instance_id" readonly="1"/>
+                    <field name="period_id" readonly="1"/>
+                    <field name="state" readonly="1"/>
                 </form>
             </field>
         </record>
@@ -113,9 +113,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
-                    <field name="instance_id"/>
-                    <field name="fy_id"/>
-                    <field name="state"/>
+                    <field name="instance_id" readonly="1"/>
+                    <field name="fy_id" readonly="1"/>
+                    <field name="state" readonly="1"/>
                 </form>
             </field>
         </record>
