@@ -4770,7 +4770,19 @@ class orm(orm_template):
                     else:
                         order_by_elements.append("%s %s" % (end_inner_clause, order_direction))
             if order_by_elements:
-                order_by_clause = ",".join(order_by_elements)
+                tr_element = [elem for elem in order_by_elements if 'ir_translation' in elem]
+                if tr_element and len(order_by_elements) > 1:
+                    order_by_clause = ''
+                    for index, elem in enumerate(order_by_elements):
+                        if index == 0:
+                            order_by_clause += 'COALESCE(%s, ' % elem.rsplit(' ')[0]
+                        elif index == 1:
+                            elem_split = elem.rsplit(' ')
+                            order_by_clause += '%s) %s' % (elem_split[0], elem_split[1])
+                        else:
+                            order_by_clause += ', %s' % elem
+                else:
+                    order_by_clause = ",".join(order_by_elements)
 
         return order_by_clause and (' ORDER BY %s ' % order_by_clause) or '', from_order_clause
 
@@ -4811,7 +4823,7 @@ class orm(orm_template):
             res = cr.fetchall()
             return res[0][0]
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                                from_clause, where_str, order_by,limit_str, offset_str))
+                                from_clause, where_str, order_by, limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
