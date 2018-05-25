@@ -414,8 +414,8 @@ class automated_import_job(osv.osv):
                                 msg += _(' and ')
                         if nb_rejected:
                             msg += _('%s lines have been rejected') % nb_rejected
-
                         self.log(cr, uid, job.id, msg)
+                        
                 if context.get('job_comment'):
                     error_message += context['job_comment']
                     for mess in error_message:
