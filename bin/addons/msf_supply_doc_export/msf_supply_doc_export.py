@@ -485,6 +485,7 @@ class po_follow_up_mixin(object):
             report_line['order_ref'] = ''
             report_line['order_created'] = ''
             report_line['order_confirmed_date'] = ''
+            report_line['raw_state'] = analytic_line.get('raw_state')
             report_line['line_status'] = ''
             report_line['state'] = ''
             report_line['order_status'] = ''
@@ -542,6 +543,7 @@ class po_follow_up_mixin(object):
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'raw_state': line.state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
                     'order_status': self._get_states().get(order.state, ''),
@@ -567,6 +569,7 @@ class po_follow_up_mixin(object):
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -598,6 +601,7 @@ class po_follow_up_mixin(object):
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -629,6 +633,7 @@ class po_follow_up_mixin(object):
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -657,7 +662,7 @@ class po_follow_up_mixin(object):
             dist_id = po_line.order_id.analytic_distribution_id.id  # get it from the header
         ccdl_ids = ccdl_obj.search(self.cr, self.uid, [('distribution_id','=',dist_id)])
         ccdl_rows = ccdl_obj.browse(self.cr, self.uid, ccdl_ids)
-        dist_lines = [{'cost_center': ccdl.analytic_id.code,'destination': ccdl.destination_id.code} for ccdl in ccdl_rows]
+        dist_lines = [{'cost_center': ccdl.analytic_id.code,'destination': ccdl.destination_id.code, 'raw_state': po_line.state} for ccdl in ccdl_rows]
         if not dist_lines:
             dist_lines = [{'cost_center': '','destination': ''}]
         return dist_lines
@@ -690,7 +695,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Line State', 'Order State', 'Destination','Cost Center']
+        return ['Order Ref', 'Item', 'Code', 'Description', 'Qty ordered', 'UoM', 'Qty received', 'IN', 'Qty backorder', 'Unit Price', 'IN unit price', 'Created', 'Confirmed Delivery', 'Doc. Status', 'Line Status', 'Destination', 'Cost Center']
 
 
 
@@ -769,6 +774,7 @@ class ir_values(osv.osv):
                     if v[2].get('report_name', False) == 'msf.sale.order' \
                         or v[2].get('report_name', False) == 'sale.order_xls' \
                         or v[2].get('report_name', False) == 'sale.order.allocation.report' \
+                        or v[1] == 'allocation.report' \
                             or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 values = new_act

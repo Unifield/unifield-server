@@ -750,6 +750,10 @@ stock moves will be posted in this account. If not set on the product, the one f
                 else:
                     raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
                                          % vals['nomenclature_description'])
+
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
+
         return super(product_template, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -760,6 +764,9 @@ stock moves will be posted in this account. If not set on the product, the one f
             return True
         if vals.get('nomen_manda_2'):
             vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
+
         return super(product_template, self).write(cr, uid, ids, vals, context)
 
 product_template()

@@ -46,7 +46,69 @@ class ppl_processor(osv.osv):
             string='Families',
             help="Pack of products",
         ),
+        'draft_step1': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
+        'draft_step2': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
     }
+
+    _defaults = {
+        'draft_step1': lambda *a: False,
+        'draft_step2': lambda *a: False,
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'move_ids' in vals:
+            vals['draft_step2'] = False
+        return super(ppl_processor, self).write(cr, uid, ids, vals, context=context)
+
+    def do_reset_step1(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+    def do_save_draft_step1(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'draft_step1': True}, context=context)
+
+        return {}
+
+    def do_reset_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft_step2': False}, context=context) #TODO Do not reset step 1 ?
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+    def do_save_draft_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'draft_step2': True, 'draft_step1': True}, context=context)
+
+        return {}
+
+
 
     def do_check_ppl(self, cr, uid, ids, context=None):
         """
@@ -190,8 +252,10 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
-        family_no_weight = []
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
 
+        family_no_weight = []
         for wizard in self.browse(cr, uid, ids, context=context):
             treated_moves = []
             for family in wizard.family_ids:
@@ -255,10 +319,6 @@ class ppl_processor(osv.osv):
         """
         # Objects
         data_obj = self.pool.get('ir.model.data')
-        family_obj = self.pool.get('ppl.family.processor')
-
-        family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
-        family_obj.unlink(cr, uid, family_to_unlink, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 
@@ -415,6 +475,7 @@ class ppl_move_processor(osv.osv):
             ondelete='cascade',
             help="PPL processor wizard",
         ),
+        'move_id': fields.many2one('stock.move', string='Stock move', readonly=True),
         'from_pack': fields.integer(string='From p.', required=True),
         'to_pack': fields.integer(string='To p.', required=True),
         'num_of_packs': fields.function(
@@ -663,6 +724,10 @@ class ppl_move_processor(osv.osv):
         if not vals.get('to_pack', False):
             vals['to_pack'] = 1
 
+        if vals.get('wizard_id', False):
+            rel_obj = self._columns['wizard_id']._obj
+            self.pool.get(rel_obj).write(cr, uid, [vals['wizard_id']], {'draft_step2': False}, context=context)
+
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -696,6 +761,7 @@ class ppl_move_processor(osv.osv):
             'width': move.width,
             'height': move.height,
             'weight': move.weight,
+            'move_id': move.id,
         })
 
         return res

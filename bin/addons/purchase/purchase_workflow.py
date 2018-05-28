@@ -5,7 +5,7 @@ import netsvc
 from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+from msf_button_access_rights.osv_override import fakeUid
 
 
 class purchase_order_line(osv.osv):
@@ -81,6 +81,18 @@ class purchase_order_line(osv.osv):
                         'product_uom_qty': new_qty,
                         'product_uos_qty': new_qty,
                     }, context=context)
+
+                    if pol.linked_sol_id:
+                        # cancel OUT move if has:
+                        out_move_to_cancel = self.pool.get('stock.move').search(cr, uid, [
+                            ('type', '=', 'out'),
+                            ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                            ('product_qty', '=', pol.product_qty),
+                        ], context=context)
+                        if out_move_to_cancel:
+                            if pol.linked_sol_id:
+                                self.pool.get('stock.move').write(cr, uid, out_move_to_cancel, {'sale_line_id': pol.linked_sol_id.id}, context=context)
+                            self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
 
         return True
 
@@ -261,6 +273,7 @@ class purchase_order_line(osv.osv):
         So we have to create the sale.order.line from the given purchase.order.line
         @param fo_id: id of sale.order (int)
         '''
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -471,10 +484,16 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def action_validated_n(self, cr, uid, ids, context=None):
+    def action_validated_n(self, cr, real_uid, ids, context=None):
         '''
         wkf method to validate the PO line
         '''
+
+        if real_uid == 1:
+            uid = real_uid
+        else:
+            uid = fakeUid(1, real_uid)
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

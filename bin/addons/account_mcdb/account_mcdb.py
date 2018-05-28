@@ -1270,7 +1270,9 @@ class account_mcdb(osv.osv):
             template_name = data['template_name']
             if not template_name:
                 raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
-            if self.search_exist(cr, uid, [('description', '=', template_name), ('user', '=', uid)], context=context):
+            if self.search_exist(cr, uid, [('description', '=', template_name),
+                                           ('user', '=', uid),
+                                           ('model', '=', data.get('model', ''))], context=context):
                 raise osv.except_osv(_('Error'), _('This template name already exists for the current user. Please choose another name.'))
             self._format_data(data)
             data.update({'description': template_name})  # store the name chosen as the "Query name"

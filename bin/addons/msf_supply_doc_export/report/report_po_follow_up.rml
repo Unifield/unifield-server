@@ -34,8 +34,11 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P4Grey" textColor="#747474" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
     <paraStyle name="P4Center" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P4CenterGrey" textColor="#747474" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4Left" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P4LeftGrey" textColor="#747474" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -60,7 +63,7 @@
         <td><para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para></td>
         <td><para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para></td>
         <td><para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para></td>
-        <td><para style="P2">PO State: [[getRunParmsRML('state')]]</para></td>
+        <td><para style="P2">Doc. Status: [[getRunParmsRML('state')]]</para></td>
         <td><para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para></td>	      		
       </tr>    
     </blockTable>
@@ -119,49 +122,62 @@
           <para style="P3">Cost Center</para>
         </td>
         <td>
-          <para style="P3">State</para>
+          <para style="P3">Line Status</para>
         </td>
       </tr>
       <tr>
          <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
         <td>
-          <para style="P4Center">[[ line['item'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Left">[[ line['code'] ]]</para>
+          <para style="P4Left">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['code'] or removeParentNode('para') ]]</para>
+          <para style="P4LeftGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['code'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Left">[[ line['description'] ]]</para>
+          <para style="P4Left">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['description'] or removeParentNode('para') ]]</para>
+          <para style="P4LeftGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['description'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['qty_ordered'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['qty_ordered'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['qty_ordered'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['uom'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['uom'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['uom'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['qty_received'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['qty_received'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['qty_received'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['in'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['in'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['in'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['qty_backordered'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['qty_backordered'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['qty_backordered'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['unit_price'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['unit_price'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['unit_price'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['in_unit_price'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['in_unit_price'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['in_unit_price'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['destination'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['destination'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['destination'] or removeParentNode('para') ]]</para>
         </td>
         <td>
-          <para style="P4Center">[[ line['cost_centre'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
        </td>
         <td>
-          <para style="P4Center">[[ line['state'] ]]</para>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
        </td>
      </tr>
     

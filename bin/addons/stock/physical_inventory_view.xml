@@ -62,7 +62,7 @@
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
                                 attrs="{'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
-                                <tree string="Counting lines" editable="bottom">
+                                <tree string="Counting lines" editable="bottom" hide_delete_button="1">
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
                                     <field name="product_uom_id" domain="[('uom_by_stock_product', '=', product_id)]"/>

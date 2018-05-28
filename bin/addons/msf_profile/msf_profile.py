@@ -58,6 +58,29 @@ class patch_scripts(osv.osv):
             cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
         return True
 
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+        return True
+
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
     # UF8.2
     def ud_trans(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
@@ -101,6 +124,8 @@ class patch_scripts(osv.osv):
                 )
             """)
             self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
+        return True
 
     # UF8.1
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):

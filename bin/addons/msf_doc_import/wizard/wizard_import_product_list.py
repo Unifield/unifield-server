@@ -27,6 +27,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 import threading
 import pooler
+import tools
 
 import time
 from msf_doc_import import check_line
@@ -163,7 +164,7 @@ class wizard_import_product_list(osv.osv_memory):
 
                     # Cell 1: Product Description
                     if not to_write.get('product_id'):
-                        product_ids = product_obj.search(cr, uid, [('name', '=', str(row[1]))], context=context)
+                        product_ids = product_obj.search(cr, uid, [('name', '=', tools.ustr(row[1]))], context=context)
                         if product_ids:
                             to_write.update({'product_id': product_ids[0]})
                         else:
@@ -242,7 +243,7 @@ class wizard_import_product_list(osv.osv_memory):
 
         error_log += '\n'.join(error_list)
         end_time = time.time()
-        total_time = str(round(end_time-start_time)) + _(' second(s)')
+        total_time = tools.ustr(round(end_time-start_time)) + _(' second(s)')
         final_message = _('''
 Importation completed in %s!
 # of imported linse: %s on %s lines
