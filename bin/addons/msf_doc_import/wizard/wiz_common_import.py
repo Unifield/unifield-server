@@ -96,7 +96,7 @@ class wiz_common_import(osv.osv_memory):
             upper_translated_headers = [_(f).upper() for f in real_columns]
         for k,v in header_index.items():
             upper_k = k
-            if origin == 'FO' or ignore_case:
+            if k and (origin == 'FO' or ignore_case):
                 upper_k = k.upper()
             if upper_k not in upper_translated_headers:
                 if origin:

@@ -170,12 +170,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         import_cell_data_obj = self.pool.get('import.cell.data')
 
         context = context is None and {} or context
-
-        # Don't create a new cursor if we are in unit test
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
+        cr = pooler.get_db(dbname).cursor()
 
         # Variables
         context.update({'import_in_progress': True, 'noraise': True})
@@ -350,8 +345,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                                                               header_index=header_index)
                     wizard_vals.update(file_to_export)
                 self.write(cr, uid, ids, wizard_vals, context=context)
-                # we reset the state of the FO to draft (initial state)
-                pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False},
+                # we reset the state of the PPL to assigned (initial state)
+                pick_obj.write(cr, uid, picking.id, {'state': 'assigned', 'import_in_progress': False},
                                context)
 
         cr.commit()
@@ -401,9 +396,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            pick_obj.write(cr, uid, picking_id, {'state': 'import', 'import_in_progress': True,
-                                                 'state_before_import': wiz_read.picking_id.state}, context)
+
+            pick_obj.write(cr, uid, picking_id, {'state': 'import', 'import_in_progress': True}, context)
 
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
