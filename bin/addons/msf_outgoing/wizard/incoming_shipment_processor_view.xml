@@ -85,7 +85,7 @@
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
-                        <button name="process_to_ship" attrs="{'invisible': [('linked_to_out', '!=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
+                        <button name="process_to_ship" attrs="{'invisible': [('display_process_to_ship_button', '!=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
             </field>

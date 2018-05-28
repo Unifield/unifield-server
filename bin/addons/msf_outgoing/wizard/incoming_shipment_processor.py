@@ -131,8 +131,7 @@ class stock_incoming_processor(osv.osv):
         res = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
-            attach_ok = self.check_if_has_import_file_in_attachment(cr, uid, [wiz.id], context=context)
-            if attach_ok and wiz.picking_id and wiz.picking_id.origin and wiz.picking_id.origin.find('/FO') != -1:
+            if wiz.picking_id and wiz.picking_id.state == 'updated' and wiz.linked_to_out:
                 res[wiz.id] = True
 
         return res
