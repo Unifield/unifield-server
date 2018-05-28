@@ -191,6 +191,32 @@ class stock_picking(osv.osv):
         return processed, rejected, [x[0] for x in IN_LINES_COLUMNS]
 
 
+    def xml_has_pack_info(self, cr, uid, file_content, context=None):
+        '''
+        if given XML has pack info filled return True
+        '''
+        if context is None:
+            context = {}
+        if not file_content:
+            return False
+
+        root = ET.fromstring(file_content)
+        parcel_from = root.findall('.//field[@name="parcel_from"]')
+        parcel_to = root.findall('.//field[@name="parcel_to"]')
+        total_weight = root.findall('.//field[@name="total_weight"]')
+        if parcel_from:
+            parcel_from = parcel_from[0].text or ''
+            parcel_from = parcel_from.strip()
+        if parcel_to:
+            parcel_to = parcel_to[0].text or ''
+            parcel_to = parcel_to.strip()
+        if total_weight:
+            total_weight = total_weight[0].text or ''
+            total_weight = total_weight.strip()
+
+        return parcel_from and parcel_to and total_weight and True or False
+
+
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
         '''
         Method called by automated.imports feature
@@ -210,7 +236,11 @@ class stock_picking(osv.osv):
             # create stock.incoming.processor and its stock.move.in.processor:
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
-            self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context)
+            if filetype == 'xml' and not self.xml_has_pack_info(cr, uid, file_content, context=context):
+                self.pool.get('stock.incoming.processor').launch_simulation(cr, uid, in_processor, context=context)
+            else:
+                self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context)
+
             simu_id = context.get('simu_id')
 
             # create simulation screen to get the simulation report:
