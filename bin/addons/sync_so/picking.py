@@ -128,7 +128,7 @@ class stock_picking(osv.osv):
         batch_values = data['prodlot_id']
         if batch_values and product_id:
             # us-838: WORK IN PROGRESS ..................................
-            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN 
+            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN
             prodlot_obj = self.pool.get('stock.production.lot')
             prod = prod_obj.browse(cr, uid,product_id,context=context)
 
@@ -161,7 +161,7 @@ class stock_picking(osv.osv):
                 if prod.perishable and not prod.batch_management:
                     # In case it's a EP only product, then search for date and product, no need to search for batch name
                     if 'life_date' in batch_values:
-                        # If name exists in the sync message, search by name and product, not by xmlid 
+                        # If name exists in the sync message, search by name and product, not by xmlid
                         life_date = batch_values['life_date']
                         # US-838: use different way to retrieve the EP object
                         batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
@@ -354,7 +354,9 @@ class stock_picking(osv.osv):
                     .search(cr, uid, [('name', '=', in_name_goods_return), ('purchase_id', '=', po_id), ('state', '=', 'assigned')], limit=1, context=context)[0]
             else:
                 # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned', 'shipped'], context)
+                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+                if not in_id:
+                    in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['shipped'], context)
         else:
             # locations
             warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
@@ -453,7 +455,7 @@ class stock_picking(osv.osv):
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
-                    #US-1294: But still no move line with exact qty as the amount shipped 
+                    #US-1294: But still no move line with exact qty as the amount shipped
                     if not move_ids:
                         #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
@@ -907,50 +909,6 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-    def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
-        # Check if the given object is valid for the rule
-        model_obj = self.pool.get(rule.model)
-        domain = rule.domain and eval(rule.domain) or []
-        domain.insert(0, '&')
-        domain.append(('id', '=', ids[0]))  # add also this id to short-list only the given object
-        return model_obj.search(cr, uid, domain, context=context)
-
-    def create_manual_message(self, cr, uid, ids, context):
-        rule_obj = self.pool.get("sync.client.message_rule")
-
-        ##############################################################################
-        # Define the message rule to be fixed, or by given a name for it
-        #
-        ##############################################################################
-        rule = rule_obj.get_rule_by_sequence(cr, uid, 1000, context)
-
-        if not rule or not ids or not ids[0]:
-            return
-
-        valid_ids = self.check_valid_to_generate_message(cr, uid, ids, rule, context)
-        if not valid_ids:
-            return  # the current object is not valid for creating message
-        valid_id = valid_ids[0]
-
-        model_obj = self.pool.get(rule.model)
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-
-        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
-        arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
-        call = rule.remote_call
-
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, ids, rule.server_id, context=context)
-        if not identifiers or not update_destinations:
-            return
-
-        xml_id = identifiers[valid_id]
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context)
-        if not existing_message_id:  # if similar message does not exist in the system, then do nothing
-            return
-
-        # make a change on the message only now
-        msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
-
 
     # UF-1617: Override the hook method to create sync messages manually for some extra objects once the OUT/Partial is done
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
@@ -1139,6 +1097,7 @@ class stock_picking(osv.osv):
             'claim_name_goods_return': source + '.' + stock_picking.claim_name,
             'pricelist_id': pricelist_obj.search(cr, uid, [('name', '=', po_info.pricelist_id.name)], limit=1, context=context)[0],
             'analytic_distribution_id': po_analytic_distrib,
+            'procurement_request': False,
         }
 
         fo_id = sale_obj.create(cr, uid, fo_data, context=context)

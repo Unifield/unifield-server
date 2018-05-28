@@ -46,7 +46,10 @@ class import_data(osv.osv_memory):
 
         if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
-            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
+            if isinstance(data['parent_id'], (int, long)):
+                parent_ids = [data['parent_id']]
+            else:
+                parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
             if parent_ids:
                 parent_id = parent_ids[0]
 
@@ -65,21 +68,27 @@ class import_data(osv.osv_memory):
         aa_obj = self.pool.get('account.account')
         context = {}
 
-        family_msfid = data.get('family_id', False)
-        if family_msfid:
-            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', family_msfid)], limit=1, context=context)
+        msfid = data.get('msfid', False)
+        if msfid and not data.get('family_id'):
+            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', msfid)], limit=1, context=context)
             if nomen_ids:
                 data['family_id'] = nomen_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
-                                     % (family_msfid))
+                                     % (msfid))
+        elif data.get('family_id'):
+            data['msfid'] = n_obj.read(cr, uid, data['family_id'], ['msfid'])['msfid']
         else:
             raise osv.except_osv(_('Warning !'),
                                  _('Product category MSFID required'))
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:
+            if isinstance(paec_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paec_code)
+                if re_res:
+                    paec_code = re_res[0]
             paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
             if paec_ids:
                 data['property_account_expense_categ'] = paec_ids[0]
@@ -92,6 +101,10 @@ class import_data(osv.osv_memory):
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
+            if isinstance(paic_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paic_code)
+                if re_res:
+                    paic_code = re_res[0]
             paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
             if paic_ids:
                 data['property_account_income_categ'] = paic_ids[0]
@@ -104,6 +117,10 @@ class import_data(osv.osv_memory):
 
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
+            if isinstance(dea_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', dea_code)
+                if re_res:
+                    dea_code = re_res[0]
             dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
             if dea_ids:
                 data['donation_expense_account'] = dea_ids[0]
@@ -178,7 +195,7 @@ class import_data(osv.osv_memory):
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
             ('product.supplierinfo', 'Supplier Info'),
-            ], 'Object' ,required=True),
+        ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
         'import_mode': fields.selection([('update', 'Update'), ('create', 'Create')], string='Update or create ?'),
     }
@@ -243,42 +260,27 @@ class import_data(osv.osv_memory):
                                    'product.asset.type': {'name': {}},
                                    'product.international.status': {'name': {}},
                                    }
-            # Product nomenclature
-            cr.execute('SELECT name, id FROM product_nomenclature;')
+            # Product nomenclature and complete name
+            temp_nomen_by_id = {}
+            cr.execute('''
+                SELECT n.id, coalesce(t.value,n.name), n.parent_id 
+                FROM product_nomenclature n 
+                LEFT JOIN ir_translation t ON t.lang='en_MF' AND t.name='product.nomenclature,name' AND t.res_id=n.id 
+                ORDER BY n.level;
+            ''')
             for nv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['name'].update({nv['name']: nv['id']})
+                self._cache[dbname]['product.nomenclature']['name'].update({nv['coalesce']: nv['id']})
+                if nv['parent_id'] and temp_nomen_by_id.get(nv['parent_id'], False):
+                    temp_full_name = temp_nomen_by_id[nv['parent_id']] + ' | ' + nv['coalesce']
+                    temp_nomen_by_id.update({nv['id']: temp_full_name})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({temp_full_name.lower(): nv['id']})
+                else:
+                    temp_nomen_by_id.update({nv['id']: nv['coalesce']})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({nv['coalesce'].lower(): nv['id']})
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
                 self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
-            # Product nomenclature complete name
-            cr.execute('''SELECT id, name FROM
-(
-(SELECT
-    n0.id, n0.name AS name
-FROM product_nomenclature n0
-WHERE n0.level = 0)
-UNION
-(SELECT n1.id, n0.name ||' | '|| n1.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-WHERE n1.level = 1)
-UNION
-(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-WHERE n2.level = 2)
-UNION
-(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id
-WHERE n3.level = 3)
-) AS cn''')
-            for cnv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
             # Product UoM
             cr.execute('SELECT name, id FROM product_uom;')
             for uv in cr.dictfetchall():
@@ -308,13 +310,13 @@ WHERE n3.level = 3)
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
             relation = fields_def[list_obj[0]]['relation']
-            if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
-                return self._cache[dbname][relation][list_obj[1]][value]
+            if impobj._name == 'product.product' and value.lower() in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
+                return self._cache[dbname][relation][list_obj[1]][value.lower()]
             new_obj = self.pool.get(relation)
-            newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
+            newids = new_obj.search(cr, uid, [(list_obj[1], '=ilike', value)], limit=1)
             if not newids:
                 # no obj
-                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(tools.ustr(value),))
 
             if impobj._name == 'product.product':
                 self._cache[dbname].setdefault(relation, {})
@@ -334,7 +336,7 @@ WHERE n3.level = 3)
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
                     else:
                         for key, val in fields_def[field]['selection']:
-                            if value.lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
+                            if tools.ustr(value).lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
                                 value = key
                                 if impobj == 'product.product':
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
@@ -358,6 +360,9 @@ WHERE n3.level = 3)
         def write_error_row(row, index, error=""):
             if not auto_import and writer:
                 row.append(error)
+                # change data into right format
+                for row_i, row_data in enumerate(row):
+                    row[row_i] = tools.ustr(row_data).encode('utf-8')
                 writer.writerow(row)
             else:
                 rejected.append((index, row, error))
@@ -461,13 +466,13 @@ WHERE n3.level = 3)
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code',
-                            '=', data['xmlid_code'])], order='NO_ORDER')
+                                                                 '=', data['xmlid_code'])], order='NO_ORDER')
                     elif impobj._name == 'product.nomenclature':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
                     elif impobj._name == 'product.category':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
@@ -523,13 +528,14 @@ WHERE n3.level = 3)
 
             request_obj = self.pool.get('res.request')
             req_id = request_obj.create(cr, uid,
-                {'name': "%s %s"%(import_type, objname,),
-                'act_from': uid,
-                'act_to': uid,
-                'body': summary,
-                })
+                                        {'name': "%s %s"%(import_type, objname,),
+                                         'act_from': uid,
+                                         'act_to': uid,
+                                         'body': summary,
+                                         })
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
+                request_obj.request_close(cr, uid, [req_id])
 
             if nb_error:
                 errorfile.seek(0)
@@ -574,7 +580,7 @@ class import_product(osv.osv_memory):
     def import_csv(self, cr, uid, ids, context=None):
         # UFTP-327
         fg = self.pool.get('product.product').fields_get(cr, uid,
-            fields=['default_code', 'xmlid_code'], context=context)
+                                                         fields=['default_code', 'xmlid_code'], context=context)
         if fg and 'default_code' in fg and 'size' in fg['default_code']:
             context['import_data_field_max_size'] = {
                 'default_code': fg['default_code']['size'],

@@ -119,7 +119,7 @@
                     <field name="has_linked_line" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm that you want to cancel all lines of this PO</translate></h3>
+                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm that you want to cancel all non-confirmed lines of this PO</translate></h3>
                         </html>
                     </group>
                     <group colspan="4" col="1" attrs="{'invisible': [('has_linked_line', '=', False)]}">

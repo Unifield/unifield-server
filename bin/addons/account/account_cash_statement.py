@@ -61,7 +61,7 @@ class account_cashbox_line(osv.osv):
         'subtotal': fields.function(_sub_total, method=True, string='Sub Total', type='float', digits_compute=dp.get_precision('Account')),
         'starting_id': fields.many2one('account.bank.statement', ondelete='cascade'),
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
-     }
+    }
 
 account_cashbox_line()
 
@@ -115,7 +115,7 @@ class account_cash_statement(osv.osv):
         for statement in self.browse(cr, uid, ids, context=context):
             encoding_total=0.0
             for line in statement.line_ids:
-               encoding_total += line.amount
+                encoding_total += line.amount
             res2[statement.id] = encoding_total
         return res2
 
@@ -125,7 +125,7 @@ class account_cash_statement(osv.osv):
         res = {}
 
         company_currency_id = res_users_obj.browse(cursor, user, user,
-                context=context).company_id.currency_id.id
+                                                   context=context).company_id.currency_id.id
 
         statements = self.browse(cursor, user, ids, context=context)
         for statement in statements:
@@ -136,14 +136,14 @@ class account_cash_statement(osv.osv):
                     if line.account_id.id == \
                             statement.journal_id.default_debit_account_id.id:
                         res[statement.id] += res_currency_obj.compute(cursor,
-                                user, company_currency_id, currency_id,
-                                line.debit, context=context)
+                                                                      user, company_currency_id, currency_id,
+                                                                      line.debit, context=context)
                 else:
                     if line.account_id.id == \
                             statement.journal_id.default_credit_account_id.id:
                         res[statement.id] -= res_currency_obj.compute(cursor,
-                                user, company_currency_id, currency_id,
-                                line.credit, context=context)
+                                                                      user, company_currency_id, currency_id,
+                                                                      line.credit, context=context)
 
             if statement.state in ('draft', 'open'):
                 for line in statement.line_ids:
@@ -221,8 +221,8 @@ class account_cash_statement(osv.osv):
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm': [('readonly', True)]}, help="closing balance entered by the cashbox verifier"),
         'state': fields.selection(
             [('draft', 'Draft'),
-            ('confirm', 'Closed'),
-            ('open','Open')], 'State', required=True, states={'confirm': [('readonly', True)]}, readonly="1"),
+             ('confirm', 'Closed'),
+             ('open','Open')], 'State', required=True, states={'confirm': [('readonly', True)]}, readonly="1"),
         'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=True, string="Cash Transaction", help="Total cash transactions"),
         'closing_date': fields.datetime("Closed On"),
         'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', help="Closing balance based on Starting Balance and Cash Transactions"),
@@ -238,12 +238,12 @@ class account_cash_statement(osv.osv):
         'user_id': lambda self, cr, uid, context=None: uid,
         'starting_details_ids': _get_cash_open_box_lines,
         'ending_details_ids': _get_default_cash_close_box_lines
-     }
+    }
 
     def create(self, cr, uid, vals, context=None):
         sql = [
-                ('journal_id', '=', vals.get('journal_id', False)),
-                ('state', '=', 'open')
+            ('journal_id', '=', vals.get('journal_id', False)),
+            ('state', '=', 'open')
         ]
         open_jrnl = self.search(cr, uid, sql)
         if open_jrnl:
@@ -255,10 +255,10 @@ class account_cash_statement(osv.osv):
                 for start in vals.get('starting_details_ids'):
                     dict_val = start[2]
                     for end in open_close['end']:
-                       if end[2]['pieces'] == dict_val['pieces']:
-                           end[2]['number'] += dict_val['number']
+                        if end[2]['pieces'] == dict_val['pieces']:
+                            end[2]['number'] += dict_val['number']
             vals.update({
-#                'ending_details_ids': open_close['start'],
+                #                'ending_details_ids': open_close['start'],
                 'starting_details_ids': open_close['end']
             })
         else:
@@ -308,8 +308,11 @@ class account_cash_statement(osv.osv):
         return super(account_cash_statement, self).onchange_journal_id(cr, uid, statement_id, journal_id, context=context)
 
     def _equal_balance(self, cr, uid, cash_id, context=None):
+        if context is None:
+            context = {}
         statement = self.browse(cr, uid, cash_id, context=context)
-        self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end})
+        context.update({'from_cash_statement_equal_balance': True})
+        self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end}, context=context)
         statement.balance_end_real = statement.balance_end
         if abs(statement.balance_end - statement.balance_end_cash) > 10**-4:
             return False

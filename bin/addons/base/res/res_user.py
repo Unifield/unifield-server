@@ -920,6 +920,7 @@ class users(osv.osv):
         if new_passwd:
             cr = pooler.get_db(db_name).cursor()
             try:
+                login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
                               WHERE login=%s AND active=%s""",

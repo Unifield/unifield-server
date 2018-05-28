@@ -75,7 +75,7 @@ class ir_translation(osv.osv):
         for idx in ['ir_translation_ltns', 'ir_translation_lts', 'ir_translation_src_hash_idx']:
             cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', (idx,))
             if cr.fetchone():
-                query = 'DROP INDEX %s' % (idx,)
+                query = 'DROP INDEX %s' % (idx,) # not_a_user_entry
                 cr.execute(query)
                 cr.commit()
 
