@@ -94,6 +94,29 @@ class purchase_order_line(osv.osv):
                                 self.pool.get('stock.move').write(cr, uid, out_move_to_cancel, {'sale_line_id': pol.linked_sol_id.id}, context=context)
                             self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
 
+            elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
+                    pol.original_line_id.linked_sol_id.order_id.procurement_request:
+                # split the sol:
+                split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                    'sale_line_id': pol.original_line_id.linked_sol_id.id,
+                    'original_qty': pol.original_line_id.linked_sol_id.product_uom_qty + pol.product_qty,
+                    'old_line_qty': pol.original_line_id.linked_sol_id.product_uom_qty,
+                    'new_line_qty': pol.product_qty,
+                }, context=context)
+                context.update({'return_new_line_id': True})
+                new_sol_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+                context.update({'return_new_sol_id': True})
+                self.write(cr, uid, pol.id, {'linked_sol_id': new_sol_id}, context=context)
+
+                linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                    ('type', '=', 'out')],
+                    context=context)
+                if len(linked_out_moves) > 1:
+                    for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                        if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == pol.product_qty:
+                            self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol_id}, context=context)
+
         return True
 
 
