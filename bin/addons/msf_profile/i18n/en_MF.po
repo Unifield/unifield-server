@@ -984,3 +984,11 @@ msgstr "Size (w x l x h) (cm)"
 #, python-format
 msgid "ppl_import_update_pack_t"
 msgstr "Pack Type"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#: code:addons/msf_doc_import/wizard/__init__.py:83
+#, python-format
+msgid "state"
+msgstr "Status"

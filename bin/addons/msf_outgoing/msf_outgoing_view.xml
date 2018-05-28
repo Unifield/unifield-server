@@ -1238,7 +1238,7 @@
 							<field name="name" readonly="1"/>
 							<field name="date" readonly="True" />
 							<field name="shipment_actual_date" />
-							<field name="shipment_expected_date" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
+							<field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
                             <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
 							<field name="backshipment_id" readonly="True" />
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"

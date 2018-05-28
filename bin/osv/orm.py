@@ -786,7 +786,7 @@ class orm_template(object):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
-    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=",", context=None):
         import base64
 
         import_obj = self.pool.get('import_data')
@@ -799,7 +799,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -3282,7 +3282,7 @@ class orm(orm_template):
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
-                                if not self.pool.get(f._obj):
+                                if not self.pool.get(f._obj) or not cr.table_exists(self.pool.get(f._obj)._table):
                                     missing_fk.setdefault(f._obj, [])
                                     missing_fk[f._obj].append((self, k, f, False))
                                 else:

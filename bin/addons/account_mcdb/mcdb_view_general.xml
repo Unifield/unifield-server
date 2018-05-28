@@ -4,7 +4,7 @@
                         <field name="display_mcdb_load_button" invisible="1" />
                         <field name="template" on_change="onchange_template()" string="Select an existing template"
                                domain="[('description', '!=', False), ('description', '!=', ''),
-                                        ('model', '=', context.get('from', '') == 'account.analytic.line' and 'account.analytic.line' or 'account.move.line')]"/>
+                                        ('model', '=', context.get('from', 'account.move.line'))]"/>
                         <button icon="gtk-save" name="load_mcdb_template" string="Load" type="object"
                                 attrs="{'invisible': [('display_mcdb_load_button', '=', False)]}" />
                         <button icon="gtk-edit" name="edit_mcdb_template" string="Replace" type="object"
@@ -17,7 +17,9 @@
                     </group>
 
                     <separator string="General" colspan="4" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
-                    <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
+                    <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')],
+                                                        'required': [('model', 'in', ('account.analytic.line', 'combined.line'))]}"
+                           colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
@@ -74,6 +76,6 @@
                     <group colspan="2" col="2">
                         <field name="document_date_to" string="to"/>
                         <field name="posting_date_to" string="to"/>
-                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '=', 'account.analytic.line')]}"/>
                     </group>
 

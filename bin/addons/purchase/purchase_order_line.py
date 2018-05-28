@@ -390,7 +390,6 @@ class purchase_order_line(osv.osv):
             res[line.id] = a
         return res
 
-
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -491,6 +490,7 @@ class purchase_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
+        'esc_confirmed': fields.boolean(string='ESC confirmed'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -502,6 +502,7 @@ class purchase_order_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
+        'created_by_vi_import': fields.boolean('Line created by VI PO import'),
     }
 
     _defaults = {
@@ -524,6 +525,7 @@ class purchase_order_line(osv.osv):
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': False,
         'have_analytic_distribution_from_header': lambda *a: True,
+        'created_by_vi_import': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1069,7 +1071,7 @@ class purchase_order_line(osv.osv):
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
-                self.pool.get('expected.sale.order.line').create(cr, uid, {
+                self.pool.get('expected.sale.order.line').create(cr, 1, {
                     'order_id': so_id,
                     'po_line_id': po_line_id,
                 }, context=context)
@@ -1106,7 +1108,7 @@ class purchase_order_line(osv.osv):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False})
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -1126,11 +1128,11 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import']:
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1479,10 +1481,12 @@ class purchase_order_line(osv.osv):
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
                 info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
                                                                      info_price.price, round=False, context=context)
-                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
-                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
-                                                                            'for a minimal quantity of %s (the min quantity of the price list), ' \
-                                                                            'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.min_order_qty and qty < info_price.min_order_qty:
+                    if qty > info_price.min_quantity:
+                        res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+                                                                                'for a minimal quantity of %s (the min quantity of the price list), ' \
+                                                                                'it might change at the supplier confirmation.') % info_price.min_quantity}})
                 if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
                                 'this product, you should than modify ' \
