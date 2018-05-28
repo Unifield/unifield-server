@@ -452,6 +452,10 @@ class automated_import_job(osv.osv):
                 move_to_process_path(job.import_id, ftp_connec, sftp, filename, success=False)
                 self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
 
+        if 'row' in context:
+            # causing LmF when running job manually
+            context.pop('row')
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
