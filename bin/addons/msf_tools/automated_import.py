@@ -218,7 +218,9 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         for obj in self.browse(cr, uid, ids, context=context):
             sftp = None
             try:
-                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password)
+                cnopts = pysftp.CnOpts()
+                cnopts.hostkeys = None
+                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
             except:
                 self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
