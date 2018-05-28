@@ -4775,7 +4775,7 @@ class orm(orm_template):
                     order_by_clause = ''
                     for index, elem in enumerate(order_by_elements):
                         if index == 0:
-                            order_by_clause += 'COALESCE(%s, ' % elem.rsplit(' ')[0]
+                            order_by_clause += 'COALESCE(%s, ' % tr_element[0].rsplit(' ')[0]
                         elif index == 1:
                             elem_split = elem.rsplit(' ')
                             order_by_clause += '%s) %s' % (elem_split[0], elem_split[1])
