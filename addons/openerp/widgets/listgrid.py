@@ -43,7 +43,7 @@ class List(TinyWidget):
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
               'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
-              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs' ]
+              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs', 'bothedit' ]
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -71,6 +71,7 @@ class List(TinyWidget):
     hide_new_button = False
     hide_delete_button = False
     hide_edit_button = False
+    bothedit = False
 
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
@@ -288,7 +289,8 @@ class List(TinyWidget):
                 except:
                     pass
 
-        if self.editable and attrs.get('editable') in ('top', 'bottom'):
+        if self.editable and attrs.get('editable') in ('top', 'bottom', 'both'):
+            self.bothedit = attrs.get('editable') == 'both'
             for f, fa in self.headers:
                 if not isinstance(fa, int):
                     fa['prefix'] = '_terp_listfields' + ((self.name != '_terp_list' or '') and '/' + self.name)
