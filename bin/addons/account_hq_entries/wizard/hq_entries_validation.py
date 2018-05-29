@@ -254,7 +254,9 @@ class hq_entries_validation(osv.osv_memory):
         original_lines = set()
         original_move_ids = []
         ana_line_obj = self.pool.get('account.analytic.line')
-        od_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        od_journal_ids = self.pool.get('account.journal').search(cr, uid,
+                                                                 [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                 order='id', limit=1)
         if not od_journal_ids:
             raise osv.except_osv(_('Error'), _('No correction journal found!'))
         od_journal_id = od_journal_ids[0]
@@ -331,7 +333,9 @@ class hq_entries_validation(osv.osv_memory):
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
             original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date, context=context)
-            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
+                                                                                [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                                order='id', limit=1)
             if not acor_journal_ids:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             acor_journal_id = acor_journal_ids[0]
@@ -397,7 +401,8 @@ class hq_entries_validation(osv.osv_memory):
             # Search an analytic correction journal
             acor_journal_id = False
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                          ('is_current_instance', '=', True)])
+                                                                                          ('is_current_instance', '=', True)],
+                                                                                order='id', limit=1)
             if acor_journal_ids:
                 acor_journal_id = acor_journal_ids[0]
             # Tag active_ids as user validated
@@ -529,7 +534,9 @@ class hq_entries_validation(osv.osv_memory):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
 
-                gl_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                gl_journal_ids = self.pool.get('account.journal').search(cr, uid,
+                                                                         [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                         order='id', limit=1)
                 if not gl_journal_ids:
                     self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Error'), _('No correction journal found!'))
