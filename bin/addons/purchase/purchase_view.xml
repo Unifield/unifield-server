@@ -214,20 +214,25 @@
                                 filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
                                 o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
-                                    <field name="line_number"/>
-                                    <field name="default_code"/>
-                                    <field name="default_name"/>
+                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                    <field name="line_number" readonly="1"/>
+                                    <field name="default_code" displayon="noteditable"/>
+                                    <field name="default_name" displayon="noteditable"/>
+                                    <field name="comment" readonly="1" displayon="noteditable"/>
+                                    <field name="nomenclature_description" readonly="1" displayon="noteditable"/>
+                                    <field name="supplier_code" displayon="noteditable"/>
+
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" displayon="editable" required="1"/>
                                     <field name="inactive_error" invisible="1"/>
-                                    <field name="comment"/>
-                                    <field name="nomenclature_description"/>
                                     <field name="internal_code" invisible="True"/>
                                     <field name="internal_name" invisible="True"/>
-                                    <field name="supplier_code"/>
                                     <field name="supplier_name" invisible="True"/>
-                                    <field name="product_qty"/>
+                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,'','', context)"/>
                                     <field name="original_changed" readonly="1"/>
-                                    <field name="product_uom"/>
+                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
+                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"/>
+                                    <field name="change_price_ok" invisible="1"/>
+                                    <field name="old_price_unit" invisible="1"/>
                                     <field name="date_planned"/>
                                     <field name="confirmed_delivery_date"/>
                                     <field name="kc_dg"/>

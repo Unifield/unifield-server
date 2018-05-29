@@ -1100,7 +1100,8 @@ class purchase_order_line(osv.osv):
                 data.update({'partner_id': context.get('partner_id')})
             if context.get('categ'):
                 data.update({'categ': context.get('categ')})
-            self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
+            # FIXME
+            #self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
 
         return super(purchase_order_line, self).default_get(cr, uid, fields, context=context)
 
