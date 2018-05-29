@@ -171,9 +171,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             FROM account_journal
             WHERE type = %s 
             AND is_current_instance = true
-            AND id = (SELECT MIN(id) FROM account_journal WHERE type = %s AND is_current_instance = true);
+            ORDER BY id
+            LIMIT 1;
             """
-        cr.execute(journal_sql, (jtype, jtype))
+        cr.execute(journal_sql, (jtype,))
         journal_sql_res = cr.fetchone()
         journal_id = journal_sql_res[0]
         code = journal_sql_res[1]
