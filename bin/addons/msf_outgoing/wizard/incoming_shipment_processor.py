@@ -1197,7 +1197,6 @@ class stock_move_in_processor(osv.osv):
         'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
-        'linked_to_out': fields.related('wizard_id', 'linked_to_out', string='Linked to OUT', readonly=True),
     }
 
     """
