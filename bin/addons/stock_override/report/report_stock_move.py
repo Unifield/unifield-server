@@ -561,6 +561,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'destination': get_src_dest(move, 'location_dest_id'),
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or '',
+                'date_done': move.picking_id and move.picking_id.date_done or False,
             }
             if move.type in ('in', 'out') and (
                 move.location_id.usage in ['customer', 'supplier'] or
