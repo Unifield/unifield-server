@@ -180,6 +180,7 @@ if cols < 0:
 <Cell ss:StyleID="header" ><Data ss:Type="String">Available Qty</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Qty</Data></Cell>
 </Row>
+% for d, d_str in dates:
 % for il in getMonthItemLines(o, d):
 % if isExpiredDate(il.expired_date) and il.available_qty == il.expired_qty:
 <Row>
@@ -192,6 +193,7 @@ if cols < 0:
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
 </Row>
 % endif
+% endfor
 % endfor
 </Table>
 <x:WorksheetOptions/>
