@@ -155,6 +155,32 @@ class stock_location(osv.osv):
                         result[loc_id][f] += amount
         return result
 
+
+    def _get_initial_stock_inv_display(self, cr, uid, ids, name, args, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        loc_to_hide = [
+            'msf_cross_docking_stock_location_input',
+            'stock_stock_location_stock',
+            'stock_stock_location_output', 
+            'msf_outgoing_stock_location_packing',
+            'msf_outgoing_stock_location_dispatch',
+            'msf_outgoing_stock_location_distribution',
+        ]
+
+        loc_ids_to_hide = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.location'), ('res_id', 'in', ids), ('name', 'in', loc_to_hide), ], context=context)
+        loc_ids_to_hide = [x.get('res_id') for x in self.pool.get('ir.model.data').read(cr, uid, loc_ids_to_hide, ['res_id'], context=context)]
+
+        for _id in ids:
+            res[_id] = True 
+            if _id in loc_ids_to_hide:
+                res[_id] = False
+
+        return res
+
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -214,6 +240,7 @@ class stock_location(osv.osv):
         'scrap_location': fields.boolean('Scrap Location', help='Check this box to allow using this location to put scrapped/damaged goods.'),
         'valuation_in_account_id': fields.many2one('account.account', 'Stock Input Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as destination, instead of the stock output account from the product.'),
         'valuation_out_account_id': fields.many2one('account.account', 'Stock Output Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as source, instead of the stock input account from the product.'),
+        'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=True, string='Display in Initial stock inventory', readonly=True),
     }
     _defaults = {
         'active': True,

@@ -51,7 +51,7 @@
                                            on_change="product_change(product_id, location_id, 'product_id', True,  prod_lot_id)" />
                                     <field name="average_cost" />
                                     <field name="currency_id" />
-                                    <field name="location_id" domain="[('usage', '=', 'internal')]" on_change="product_change(product_id, location_id, 'location_id', prod_lot_id)" required="True" />
+                                    <field name="location_id" domain="['&amp;', ('usage', '=', 'internal'), ('initial_stock_inv_display', '!=', False)]" on_change="product_change(product_id, location_id, 'location_id', prod_lot_id)" required="True" />
                                     <field name="prodlot_name"
                                         attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
                                     <field name="expiry_date"
