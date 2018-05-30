@@ -79,9 +79,17 @@ class packing_list(report_sxw.rml_parse):
         for key in sort_keys:
             result.append(res.get(key))
 
-        result[-1]['last'] = True
+        filtered_result = [] # remove empty PPL
+        for data in result:
+            if data.get('pf'):
+                filtered_result.append(data)
 
-        return result
+        if filtered_result:
+            filtered_result[-1]['last'] = True
+        else:
+            raise osv.except_osv(_('Error'), _('No PPL to export !'))
+
+        return filtered_result
 
     def _get_parcel(self, list_of_parcels):
         '''
