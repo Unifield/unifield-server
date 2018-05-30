@@ -256,7 +256,7 @@ def pack_move_value_for_update(cr, uid, ids, **kwargs):
     import_cell_data_obj = kwargs['import_cell_data_obj']
     line_num = kwargs['line_num']
     context = kwargs['context']
-    move = move_obj.browse(cr, uid, kwargs['move_id'])
+    move = kwargs['move']
     # Tender does not have product_qty, it is set to 0
     weight = kwargs['to_write'].get('weight', 0.00)
     width = kwargs['to_write'].get('width', 0.00)

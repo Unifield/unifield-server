@@ -23360,6 +23360,7 @@ msgstr "Le message d'enregistrement"
 #: view:wizard.import.supplier.catalogue:0
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
+#: view:wizard.import.ppl.to.create.ship:0
 #: view:automated.import.job:0
 #: view:procurement.request.import:0
 msgid "Import file"
@@ -25705,6 +25706,7 @@ msgstr "Afficher Bouton Retour"
 #: field:pricelist.partnerinfo,comment:0
 #: field:tender.line,comment:0
 #: field:sync_client.version,comment:0
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:256
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -50467,6 +50469,7 @@ msgstr "Justification / Notes"
 #: code:addons/msf_doc_import/wizard/stock_partial_picking.py:785
 #: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:88
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:162
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:370
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:577
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:509
 #: code:addons/register_accounting/wizard/wizard_register_import.py:258
@@ -60153,6 +60156,7 @@ msgstr "Prix"
 #. module: msf_doc_import
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
+#: view:wizard.import.ppl.to.create.ship:0
 msgid "Purchase information"
 msgstr "Information Achat"
 
@@ -63842,6 +63846,8 @@ msgstr "Albania"
 #: field:stock.forecast.line,reference:0
 #: view:stock.move:0
 #: field:threshold.value,name:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:189
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -78893,7 +78899,7 @@ msgstr "Sale Refund"
 msgid "List of Funding pools associated for earmarked costs"
 msgstr "Liste des Funding pools associés aux coûts réservés"
 
-#. modules: msf_doc_import, transport_mgmt
+#. modules: msf_doc_import, msf_outgoing, transport_mgmt
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:139
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:60
 #: field:wizard.import.in.simulation.screen,imp_transport_mode:0
@@ -78903,6 +78909,8 @@ msgstr "Liste des Funding pools associés aux coûts réservés"
 #: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
 #: field:purchase.order,transport_mode:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:73
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:243
 #, python-format
 msgid "Transport mode"
 msgstr "Mode de transport"
@@ -94204,6 +94212,7 @@ msgstr "Signe Code de Base"
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:406
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:215
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:235
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:336
 #, python-format
 msgid " second(s)"
 msgstr " seconde(s)"
@@ -94326,6 +94335,7 @@ msgstr "Order ref:"
 #: field:wizard.import.po.simulation.screen,import_error_ok:0
 #: field:wizard.import.stock.warehouse.orderpoint.line,import_error_ok:0
 #: field:wizard.import.threshold.value.line,import_error_ok:0
+#: field:wizard.import.ppl.to.create.ship,import_error_ok:0
 msgid "Error at import"
 msgstr "Erreur à l'import"
 
@@ -108393,3 +108403,662 @@ msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engage
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
 msgid "Budget missing"
 msgstr "Budget manquant"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:137
+#, python-format
+msgid " The quantity per pack must be an integer for this UoM."
+msgstr " La quantité par paquet doit être un entier pour cette UdM."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:142
+#, python-format
+msgid " The quantity per pack must not have more decimals than the UoM's rounding."
+msgstr " La quantité par paquet ne doit pas avoir plus de décimales que l'arrondi de l'UdM."
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid " Update Packing with import "
+msgstr " Mettre à jour le Colisage avec un import "
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Update Packing with import"
+msgstr "Mettre à jour le Colisage avec un import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/__init__.py:42
+#, python-format
+msgid "        The file should be in XML 2003 format.\n"
+"For the main header, the first 8 lines of the column 1 must have these values: Reference, Date, Requester Ref, Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the line 1 of the column 4 and 7 must have these values: Shipper, Consignee.\n"
+"There should also be a blank line between the main header and the lines header.\n"
+"The lines columns at the line 10 should be in this values:"
+msgstr "        Le fichier doit être dans le format XML 2003.\n"
+"Pour l'entête, les 8 premières lignes de la colonne 1 doivent avoir ces valeurs: Référence, Date, Réf du Demandeur, Notre Réf, Date de Commande de Terrain, Date de Colisage, Date de Livraison Prévue, Mode de Transport. Et la ligne 1 des colonnes 4 et 7 doivent avoir ces valeurs: Expéditeur, Destinataire.\n"
+"Il doit aussi y avoir une ligne vide entre l'entête et l'entête des lignes.\n"
+"Les colonnes des lignes à la ligne 10 doivent être dans ces valeurs:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_code"
+msgstr "Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_dg"
+msgstr "DG"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_weight"
+msgstr "Poids par colis (kg)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_cs"
+msgstr "CS"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_batch"
+msgstr "Numéro de Lot"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_comment"
+msgstr "Commentaire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_kc"
+msgstr "KC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_from_p"
+msgstr "Du colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_to_p"
+msgstr "Vers colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_description"
+msgstr "Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_packed"
+msgstr "Qté Emballée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_tot_qty"
+msgstr "Qté Totale à emballer"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:137
+#, python-format
+msgid "ppl_import_update_pack_t"
+msgstr "Type de Colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_expiry"
+msgstr "Date d'Expiration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_item"
+msgstr "Article"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_size"
+msgstr "Taille (lar x lon x h) (cm)"
+
+#. module: msf_doc_import
+#: view:wizard.import.ppl.to.create.ship:0
+msgid "PPL Import"
+msgstr "Import de Pré-Colisage"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:272
+#, python-format
+msgid " The line number (%s) is not the same as in %s (%s)."
+msgstr " Le numéro de ligne (%s) n'est pas le même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:290
+#, python-format
+msgid " The Total Qty to pack (%s) is not the same as in %s (%s)."
+msgstr " La Qté Totale à emballer (%s) n'est pas la même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:281
+#, python-format
+msgid " The Product Code (%s) is not the same as in %s (%s)."
+msgstr " Le Code Produit (%s) n'est pas le même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:302
+#, python-format
+msgid " The Batch Number (%s) is not the same as in %s (%s)."
+msgstr " Le Numéro de Lot (%s) n'est pas le même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:308
+#, python-format
+msgid " The Expiry Date (%s) is not the same as in %s (%s)."
+msgstr " La Date d'Expiration (%s) n'est pas la même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:277
+#, python-format
+msgid " The Line Number has to be defined."
+msgstr " Le Numéro de Ligne doit être défini."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:275
+#, python-format
+msgid " The Line Number has to be an integer."
+msgstr " Le Numéro de Ligne doit être un nombre entier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:286
+#, python-format
+msgid " The Product Code has to be defined."
+msgstr " Le Code Produit doit être défini."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:284
+#, python-format
+msgid " The Product Code has to be a string."
+msgstr " Le Code Produit doit être une chaîne de caractères."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:295
+#, python-format
+msgid " The Total Qty to Pack has to be defined."
+msgstr " La Qté Totale à Coliser doit être définie."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:290
+#, python-format
+msgid " The Total Qty to pack (%s) is not the same as in %s (%s)."
+msgstr " La Qté Totale à emballer (%s) n'est pas la même que dans %s (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:293
+#, python-format
+msgid " The Total Qty to pack has to be an integer or a float."
+msgstr " La Qté Totale à emballer doit être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:300
+#, python-format
+msgid " The Batch Number has to be a string."
+msgstr " Le Numéro de Lot doit être une chaîne de caractères."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:311
+#, python-format
+msgid " The Expiry Date (%s) does not have a good date format."
+msgstr " La Date d'Expiration (%s) n'a pas un bon format de date."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:313
+#, python-format
+msgid " No Batch Number or Expiry Date to be defined for this line."
+msgstr " Aucun Numéro de Lot ou Date d'Expiration ne doit être défini pour cette ligne."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:315
+#, python-format
+msgid " The Batch Number and its Expiry Date to be defined together."
+msgstr " Le Numéro de Lot et sa Date d'Expiration doivent être définis ensemble."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:326
+#, python-format
+msgid " From pack and To pack to be defined and over 0, set to 1 by default."
+msgstr " Du colis et Vers colis doivent être définis et supérieur à 0, mis à 1 par défaut."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:322
+#, python-format
+msgid " From pack and To pack have to be integers."
+msgstr " Du colis et Vers colis doivent être des entiers."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:331
+#, python-format
+msgid " Weight per pack has to be an float."
+msgstr " Le Poids par colis doit être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:333
+#, python-format
+msgid " Weight per pack has to be defined and over 0."
+msgstr " Le Poids par colis doit être défini et au dessus de 0."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:345
+#, python-format
+msgid " This Pack Type doesn't exists."
+msgstr " Ce Type de Colis n'existe pas."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:347
+#, python-format
+msgid " Pack Type has to be a string."
+msgstr " Le Type de Colis doit être une chaîne de caractères."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:350
+#, python-format
+msgid "No move found for this line."
+msgstr "Aucun mouvement n'a été trouvé pour cette ligne."
+
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_ppl_to_create_ship
+msgid "Import Pack Lines from Excel sheet to create a Shipment"
+msgstr "Import des Lignes de Colisage depuis Excel pour créer une Expédition"
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
+#, python-format
+msgid "Packing Date"
+msgstr "Date de Colisage"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:81
+#, python-format
+msgid "\n"
+"The line 1 of the column 7 must be named \"Consignee\" in the file."
+msgstr "\n"
+"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier.
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:113
+#, python-format
+msgid " Our Ref (origin) is mandatory."
+msgstr " Notre Ref (origine) est obligatoire."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:157
+#, python-format
+msgid "To pack must be greater than From pack on line %s.\n"
+""
+msgstr "Vers colis doit être plus grand que Du colis %s.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:242
+#, python-format
+msgid "Line %s in the Excel file: You should have exactly %s columns in this order: %s \n"
+""
+msgstr "Ligne %s du fichier Excel: Vous devriez avoir exactement %s colonnes dans cet ordre: %s \n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:91
+#, python-format
+msgid "\n"
+"The line 6 of the column 1 must be named \"Packing Date\" in the file."
+msgstr "\n"
+"La ligne 6 de la colonne 1 doit être nommée \"Date de Colisage\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:330
+#, python-format
+msgid "From pack - To pack sequences errors : \n"
+""
+msgstr "Erreurs des séquences Du colis - Vers colis : \n"
+""
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:73
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:233
+#, python-format
+msgid "RTS Date"
+msgstr "Date de Livraison Prévue"
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:207
+#, python-format
+msgid "Our Ref"
+msgstr "Notre Réf"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:87
+#, python-format
+msgid "\n"
+"The line 4 of the column 1 must be named \"Our Ref\" in the file."
+msgstr "\n"
+"La ligne 4 de la colonne 1 doit être nommée \"Notre Réf\" dans le fichier."
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:201
+#, python-format
+msgid "Requester Ref"
+msgstr "Réf du Demandeur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:292
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:304
+#, python-format
+msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
+msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes en erreur, une erreur est survenue. Details : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:323
+#, python-format
+msgid "There is %s lines in the file and %s lines in %s. Please import the same number of lines.\n"
+""
+msgstr "Il y a %s lignes dans le fichier et %s lignes dans %s. Veuillez importer le même nombre de lignes.\n"
+""
+
+#. module: msf_doc_import
+#: view:wizard.import.ppl.to.create.ship:0
+msgid "Close window"
+msgstr "Fermer la fenêtre"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:83
+#, python-format
+msgid "\n"
+"The line 2 of the column 1 must be named \"Date\" in the file."
+msgstr "\n"
+"La ligne 2 de la colonne 1 doit être nommée \"Date\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:148
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:152
+#, python-format
+msgid "The sequence From pack - To Pack of line %s overlaps a previous one.\n"
+""
+msgstr "La séquence Du colis - Vers colis de la ligne %s empiète sur une précédente.\n"
+""
+
+#. module: msf_doc_import
+#: field:wizard.import.ppl.to.create.ship,file:0
+msgid "Lines to import"
+msgstr "Lignes à importer"
+
+#. modules: msf_doc_import
+#: view:wizard.import.ppl.to.create.ship:0
+msgid "Cancel"
+msgstr "Annuler"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:154
+#, python-format
+msgid "A gap exists with the sequence From pack - To Pack of line %s.\n"
+""
+msgstr "Un écart existe avec la séquence Du colis - Vers colis ligne %s.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:95
+#, python-format
+msgid "\n"
+"The line 8 of the column 1 must be named \"Transport mode\" in the file."
+msgstr "\n"
+"La ligne 8 de la colonne 1 doit être nommée \"Mode de Transport\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:79
+#, python-format
+msgid "\n"
+"The line 1 of the column 4 must be named \"Shipper\" in the file."
+msgstr "\n"
+"La ligne 1 de la colonne 4 doit être nommée \"Expéditeur\" dans le fichier."
+
+#. modules: msf_doc_import
+#: view:wizard.import.ppl.to.create.ship:0
+msgid "Update"
+msgstr "Mettre à jour"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:337
+#, python-format
+msgid "    Importation completed in %s!\n"
+"    # of lines without error : %s of %s lines\n"
+"    # of lines to correct: %s\n"
+"    %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+msgstr "    Importation terminée en %s!\n"
+"    # de lignes sans erreur : %s sur %s lignes\n"
+"    # de lignes à corriger : %s\n"
+"    %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:89
+#, python-format
+msgid "\n"
+"The line 5 of the column 1 must be named \"FO Date\" in the file."
+msgstr "\n"
+"La ligne 5 de la colonne 1 doit être nommée \"Date de Commande de Terrain\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:77
+#, python-format
+msgid "\n"
+"The line 1 of the column 1 must be named \"Reference\" in the file."
+msgstr "\n"
+"La ligne 1 de la colonne 1 doit être nommée \"Référence\" dans le fichier."
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:213
+#, python-format
+msgid "FO Date"
+msgstr "Date de Commande de Terrain"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:116
+#, python-format
+msgid " Our Ref (origin) in the file doesn't match the one from the Pre-Packing header."
+msgstr " Notre Ref (origine) dans le fichier ne correspond pas à celle de l'entête du Pré-Colisage."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:425
+#, python-format
+msgid " Import in progress... \n"
+" Please wait that the import is finished before editing %s."
+msgstr " Import en cours... \n"
+" Veuillez attendre la fin de l'import avant d'éditer %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:297
+#, python-format
+msgid "Line %s in the Excel file: %s: %s\n"
+""
+msgstr "Ligne %s dans le fichier Excel: %s: %s\n"
+""
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:192
+#: view:shipment:0
+#, python-format
+msgid "Consignee"
+msgstr "Destinataire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:304
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:314
+#, python-format
+msgid "An error is occurred. Details : %s"
+msgstr "Une erreur est survenue. Détails : %s"
+
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_ppl_to_create_ship
+msgid "Import Pack Lines from Excel sheet to create a Shipment"
+msgstr "Import des Lignes de Colisage depuis Excel pour créer une Expédition"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:319
+#, python-format
+msgid "Reported errors : \n"
+""
+msgstr "Erreurs reportées : \n"
+""
+
+#. module: msf_doc_import
+#: field:wizard.import.ppl.to.create.ship,percent_completed:0
+msgid "% completed"
+msgstr "% terminés"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:85
+#, python-format
+msgid "\n"
+"The line 3 of the column 1 must be named \"Requester Ref\" in the file."
+msgstr "\n"
+"La ligne 3 de la colonne 1 doit être nommée \"Réf du Demandeur\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:108
+#, python-format
+msgid " The Packing reference is mandatory."
+msgstr " La référence du Colisage est obligatoire."
+
+#. module: msf_doc_import
+#: view:wizard.import.ppl.to.create.ship:0
+msgid "File to import"
+msgstr "Fichier à importer"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:93
+#, python-format
+msgid "\n"
+"The line 7 of the column 1 must be named \"RTS Date\" in the file."
+msgstr "\n"
+"La ligne 7 de la colonne 1 doit être nommée \"Date de Livraison Prévue\" dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:137
+#, python-format
+msgid "The first From pack must be equal to 1.\n"
+""
+msgstr "Le premier Du colis doit être égal à 1.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:111
+#, python-format
+msgid " The Packing reference in the file doesn't match the one from the Pre-Packing header."
+msgstr " La référence de Colisage dans le fichier ne correspond pas à celle de l'entête du Pré-Colisage."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:382
+#, python-format
+msgid "Please select a file with the same model as the PPL Excel Export"
+msgstr "Veuillez sélectionner un fichier avec le même modèle que l'Export Excel du pré-colisage"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:409
+#, python-format
+msgid "Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.\n"
+"Otherwise, you can continue to use Unifield."
+msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur le bouton 'Mise à jour' lorsque vous pensez que l'import est fait.\n"
+"Sinon, vous pouvez continuer à utiliser Unifield."
+
+#. modules: msf_doc_import, msf_outgoing
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:191
+#: view:shipment:0
+#, python-format
+msgid "Shipper"
+msgstr "Expéditeur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:282
+#, python-format
+msgid "Line %s:"
+msgstr "Ligne %s:"
+
+#. module: msf_outgoing
+#: model:ir.actions.report.xml,name:msf_outgoing.pre_packing_excel_export
+msgid "Pre-Packing Excel Export"
+msgstr "Export Excel du pré-colisage"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:266
+#: report:empty.picking.ticket:0
+msgid "Weight per pack (kg)"
+msgstr "Poids par colis (kg)"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:268
+msgid "Pack Type"
+msgstr "Type de Colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:257
+msgid "Total Qty to pack"
+msgstr "Qté Totale à emballer"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:253
+msgid "Item"
+msgstr "Article"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:263
+msgid "Qty Packed"
+msgstr "Qté Emballée"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:264
+msgid "From pack"
+msgstr "Du colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:258
+msgid "Batch #"
+msgstr "Numéro de Lot"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:265
+msgid "To pack"
+msgstr "Vers colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:267
+msgid "Size (w x l x h) (cm)"
+msgstr "Taille (lar x lon x h) (cm)"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:259
+msgid "Expiry Date #"
+msgstr "Date d'Expiration"

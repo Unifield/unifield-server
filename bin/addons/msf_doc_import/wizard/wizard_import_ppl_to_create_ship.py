@@ -120,6 +120,29 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
         return True
 
+    def check_qty_pp(self, cr, uid, move, from_pack, to_pack, context=False):
+        '''
+        Check quantities per pack integrity with UoM
+        '''
+        if context is None:
+            context = {}
+
+        uom_obj = self.pool.get('product.uom')
+
+        error_msg = ''
+        num_of_packs = to_pack - from_pack + 1 if to_pack else 0
+        move_qty_pp = move.product_qty / num_of_packs if num_of_packs else 0
+        if move.product_uom.rounding == 1:
+            if move.product_qty % int(num_of_packs) != 0:
+                error_msg = _(' The quantity per pack must be an integer for this UoM.')
+        else:
+            rounded_qty_pp = uom_obj._compute_round_up_qty(cr, uid, move.product_uom.id, move_qty_pp, context=context)
+            if abs(move_qty_pp - rounded_qty_pp) < move.product_uom.rounding \
+                    and abs(move_qty_pp - rounded_qty_pp) != 0:
+                error_msg = _(' The quantity per pack must not have more decimals than the UoM\'s rounding.')
+
+        return error_msg
+
     def _check_from_to_pack_integrity(self, sequences=None, context=None):
         '''
         Check if nothing is wrong with from_pack and to_pack
@@ -252,11 +275,17 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             continue
 
                         # Stock Move
+                        move = move_obj.browse(cr, uid, move_ids[i], context=context)
                         m_value = check_line.pack_move_value_for_update(cr, uid, ids, move_obj=move_obj, row=row,
                                                                         to_write=to_update, pack_type_obj=pack_type_obj,
                                                                         import_cell_data_obj=import_cell_data_obj,
-                                                                        move_id=move_ids[i], line_num=line_num,
+                                                                        move=move, line_num=line_num,
                                                                         context=context)
+
+                        # Check quantity per pack
+                        qty_pp_error = self.check_qty_pp(cr, uid, move, m_value['from_pack'], m_value['to_pack'], context=context)
+                        if qty_pp_error:
+                            m_value['error_list'].append(qty_pp_error)
 
                         to_update.update({'error_list': m_value['error_list'], 'from_pack': m_value['from_pack'],
                                           'to_pack': m_value['to_pack'], 'weight': m_value['weight'],
