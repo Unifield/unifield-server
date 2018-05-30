@@ -46,7 +46,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
 NB_OF_HEADER_LINES = 20
-NB_LINES_COLUMNS = 19
+NB_LINES_COLUMNS = 20
 
 
 PRODUCT_CODE_ID = {}
@@ -80,8 +80,8 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
 HEADER_COLUMNS = [(1, _('Order Reference'), 'mandatory'),
                   (5, _('Supplier Reference'), 'optionnal'),
                   (9, _('Ready To Ship Date'), 'optionnal'),
-                  (16, _('Shipment Date'), 'optionnal'),
-                  (20, _('Message ESC'), 'optionnal')
+                  (14, _('Shipment Date'), 'optionnal'),
+                  (18, _('Message ESC'), 'optionnal')
                   ]
 
 
@@ -288,7 +288,13 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context.get('button') in ('go_to_simulation', 'print_simulation_report', 'return_to_po'):
             return True
 
-        return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        try:
+            return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        except Exception, e:
+            if e[0] == 'ConcurrencyException':
+                return True
+            else:
+                raise e
 
     '''
     Action buttons
@@ -448,7 +454,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                  'product_code', 'product_name',
                                  'product_qty', 'product_uom',
                                  'price_unit', 'currency_id',
-                                 'origin', 'comment', 'date_planned',
+                                 'origin', 'stock_take_date','comment', 'date_planned',
                                  'confirmed_delivery_date',
                                  'nomen_manda_0', 'nomen_manda_1',
                                  'nomen_manda_2',
@@ -687,11 +693,14 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 # Line 6: Details
                 # Nothing to do
 
-                # Line 7: Delivery Requested Date
+                # Line 7: Stock take date
                 # Nothing to do
 
-                # Line 8: Transport mode
-                transport_mode = values.get(8, [])[1]
+                # Line 8: Delivery Requested Date
+                # Nothing to do
+
+                # Line 9: Transport mode
+                transport_mode = values.get(9, [])[1]
                 if transport_mode:
                     transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
                     for x in transport_select['imp_transport_mode']['selection']:
@@ -700,13 +709,13 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                             break
                     else:
                         possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
-                        err_msg = _('Line 8 of the file: The transport mode \'%s\' is not \
+                        err_msg = _('Line 9 of the file: The transport mode \'%s\' is not \
 a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
                         values_header_errors.append(err_msg)
 
 
-                # Line 9: RTS Date
-                rts_date = values.get(9, [])[1]
+                # Line 10: RTS Date
+                rts_date = values.get(10, [])[1]
                 if rts_date:
                     if type(rts_date) == type(DateTime.now()):
                         rts_date = rts_date.strftime('%Y-%m-%d')
@@ -716,30 +725,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(rts_date, '%Y-%m-%d')
                             header_values['imp_ready_to_ship_date'] = rts_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 10 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                             values_header_errors.append(err_msg)
 
-                # Line 10: Address name
+                # Line 11: Delivery address name
                 # Nothing to do
 
-                # Line 11: Address street
+                # Line 12: Delivery address
                 # Nothing to do
 
-                # Line 12: Address street 2
+                # Line 13: Customer address name
                 # Nothing to do
 
-                # Line 13: Zip
+                # Line 14: Customer address
                 # Nothing to do
 
-                # Line 14: City
-                # Nothing to do
-
-                # Line 15: Country
-                # Nothing to do
-
-                # Line 16: Shipment date
-                shipment_date = values.get(16, [])[1]
+                # Line 15: Shipment date
+                shipment_date = values.get(15, [])[1]
                 if shipment_date:
                     if type(shipment_date) == type(DateTime.now()):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
@@ -749,25 +752,27 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(shipment_date, '%Y-%m-%d')
                             header_values['imp_shipment_date'] = shipment_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 15 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                             values_header_errors.append(err_msg)
 
-                # Line 17: Notes
+                # Line 16: Notes
                 # UFTP-59
                 if wiz.filetype != 'excel':
-                    header_values['imp_notes'] = values.get(17, [])[1]
+                    header_values['imp_notes'] = values.get(16, [])[1]
 
-                # Line 18: Origin
+                # Line 17: Origin
                 # Nothing to do
 
-                # Line 19: Project Ref.
+                # Line 18: Project Ref.
                 # Nothing to do
 
-                # Line 20: Message ESC Header
-                if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(20, [])[1]
+                # Line 19: Message ESC Header
+                if values.get(19, False):
+                    header_values['imp_message_esc'] = values.get(19)[1]
 
+                # Line 20: Sourcing group
+                # Nothing to do
 
                 '''
                 The header values have been imported, start the importation of
@@ -1074,6 +1079,18 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
+
+        # To prevent adding multiple lines by clicking multiple times on the import button
+        if active_wiz.state != 'simu_done':
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order',
+                    'res_id': active_wiz.order_id.id,
+                    'view_type': 'form',
+                    'view_mode': 'form, tree',
+                    'target': 'crush',
+                    'context': context}
+
         self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
         for wiz in self.browse(cr, uid, ids, context=context):
             filename = wiz.filename.split('\\')[-1]
@@ -1089,7 +1106,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         else:
             return {'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order',
-                    'res_id': self.browse(cr, uid, ids, context=context)[0].order_id.id,
+                    'res_id': active_wiz.order_id.id,
                     'view_type': 'form',
                     'view_mode': 'form, tree',
                     'target': 'crush',
@@ -1303,6 +1320,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
+        'esc_conf': fields.boolean(string='ESC Confirmed', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
         'imp_comment': fields.text(string='Comment', readonly=True),
@@ -1351,7 +1369,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
 
             # Comment
-            write_vals['imp_comment'] = values[14] and values[14].strip()
+            write_vals['imp_comment'] = values[15] and values[15].strip()
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1486,7 +1504,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
-            drd_value = values[9]
+            drd_value = values[10]
             if drd_value and type(drd_value) == type(DateTime.now()):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
@@ -1503,7 +1521,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Delivery Confirmed Date
-            dcd_value = values[10]
+            dcd_value = values[11]
             if dcd_value and type(dcd_value) == type(DateTime.now()):
                 write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
             elif dcd_value and isinstance(dcd_value, str):
@@ -1519,13 +1537,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
+            # ESC Confirmed
+            if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
+                write_vals['esc_conf'] = True
+
             # Project Ref.
-            write_vals['imp_project_ref'] = values[16]
+            write_vals['imp_project_ref'] = values[17]
 
             # Message ESC1
-            write_vals['imp_esc1'] = values[17]
+            write_vals['imp_esc1'] = values[18]
             # Message ESC2
-            write_vals['imp_esc2'] = values[18]
+            write_vals['imp_esc2'] = values[19]
 
             if line.error_msg:
                 write_vals['type_change'] = 'error'
@@ -1627,11 +1649,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'order_id': line.simu_id.order_id.id,
                             'line_number': line.in_line_number,
                             'confirmed_delivery_date': line.imp_dcd or False,
+                            'esc_confirmed': True if line.imp_dcd else False,
                         })
+                        if context.get('auto_import_ok'):
+                            line_vals.update({
+                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                            })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:
                             line_vals['confirmed_delivery_date'] = line.imp_dcd
+                            line_vals['esc_confirmed'] = line.esc_conf
                         line_obj.write(cr, uid, [new_po_line_id], line_vals,
                                        context=context)
 
@@ -1653,6 +1681,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                              'set_as_validated_n': True,
+                             'display_sync_ref': True,
+                             'created_by_vi_import': True,
                              }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
@@ -1662,6 +1692,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
                 line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
@@ -1679,6 +1711,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)

@@ -88,19 +88,21 @@ class hq_entries_validation(osv.osv_memory):
         return view
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
-    def create_distribution_id(self, cr, uid, currency_id, line, account):
+    def create_distribution_id(self, cr, uid, currency_id, line, account, split=False):
         current_date = strftime('%Y-%m-%d')
         line_cc_first = line.cost_center_id_first_value and line.cost_center_id_first_value.id or False
         line_cc_id = line.cost_center_id and line.cost_center_id.id  or False
         line_account_first = line.account_id_first_value and line.account_id_first_value.id or False
 
-        cc_id = line_cc_first or line_cc_id or False
+        # if split is True the line is a split line: use the current values instead of the original ones
+        cc_id = (not split and line_cc_first) or line_cc_id or False
         fp_id = line.analytic_id and line.analytic_id.id or False
-        if line_cc_id != line_cc_first or line_account_first != line.account_id.id:
+        if not split and (line_cc_id != line_cc_first or line_account_first != line.account_id.id):
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         f1_id = line.free_1_id and line.free_1_id.id or False
         f2_id = line.free_2_id and line.free_2_id.id or False
-        destination_id = line.destination_id_first_value and line.destination_id_first_value.id or account.default_destination_id and account.default_destination_id.id or False
+        destination_id = (split and line.destination_id.id) or line.destination_id_first_value.id or \
+                         (account.default_destination_id and account.default_destination_id.id) or False
         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
         if distrib_id:
             common_vals = {'distribution_id':distrib_id,
@@ -124,10 +126,12 @@ class hq_entries_validation(osv.osv_memory):
         return distrib_id
 
     def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
-                    date=None, journal=None, orig_acct=None, doc_date=None, context=None):
+                    date=None, journal=None, orig_acct=None, doc_date=None, split=False, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
+        Note: if split is True, the lines handled are split lines => the account used is the last given by the user and
+        not the account_id_first_value
         """
         # Some verifications
         if context is None:
@@ -173,9 +177,10 @@ class hq_entries_validation(osv.osv_memory):
                 if not line.account_id_first_value:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
                 # create new distribution (only for expense accounts)
-                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line.account_id_first_value)
+                line_account = split and line.account_id or line.account_id_first_value
+                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
                 vals = {
-                    'account_id': line.account_id_first_value.id,
+                    'account_id': line_account.id,
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.date,
@@ -261,10 +266,10 @@ class hq_entries_validation(osv.osv_memory):
         #+ original ones
         #+ split ones
         for line in lines:
-            if line.is_original:
+            if line.is_original and line.split_ids:
                 original_lines.add(line)
                 all_lines.add(line.id)
-            elif line.is_split:
+            elif line.is_split and line.original_id:
                 original_lines.add(line.original_id)
                 all_lines.add(line.original_id.id)
         # Create the original line as it is (and its reverse)
@@ -284,7 +289,9 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
-            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, journal=od_journal_id, orig_acct=original_account_id)
+            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id,
+                                            line.currency_id.id, date=line.date, doc_date=line.document_date,
+                                            journal=od_journal_id, orig_acct=original_account_id, split=True, context=context)
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
@@ -349,7 +356,7 @@ class hq_entries_validation(osv.osv_memory):
                 ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
             # also write the OD entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
-            cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
+            cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (aal.entry_sequence, res_reverse[0]))
 
         # US-1333/1 - BKLG-12 pure AD correction flag marker for splitted lines
         # (do this bypassing model write)
@@ -434,7 +441,7 @@ class hq_entries_validation(osv.osv_memory):
                     self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
                 # UTP-760: Do other modifications for split lines
-                if line.is_original or line.is_split:
+                if (line.is_original and line.split_ids) or (line.is_split and line.original_id):
                     split_change.append(line)
                     continue
                 if not line.user_validated:
@@ -498,14 +505,14 @@ class hq_entries_validation(osv.osv_memory):
                     continue
 
                 # UTP-1118: posting date should be those from initial HQ entry line
-                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id, 
+                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id,
                             'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
 
                 # US-1347: Use the entry sequence of HQ for reference, not the description
                 entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
                 if entry_seq and entry_seq[0]:
                     entry_seq = entry_seq[0].get('ref')
-                    vals_cor.update({'ref': entry_seq}) 
+                    vals_cor.update({'ref': entry_seq})
 
                 cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], vals_cor)
                 # update new ana line

@@ -20,7 +20,6 @@
                         <field name="validated_ok" />
                         <field name="sourced_ok" />
                         <field name="confirmed_ok" />
-                        <field name="exception_ok" />
                         <field name="closed_ok" />
                         <field name="cancel_ok" />
                     </group>

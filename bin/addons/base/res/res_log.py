@@ -48,8 +48,7 @@ class res_log(osv.osv):
         cr.execute('SELECT 1 FROM pg_indexes WHERE indexname=%s',
                    (self._index_name,))
         if not cr.fetchone():
-            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' %
-                       self._index_name)
+            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' % self._index_name)  # not_a_user_entry
 
     def create(self, cr, uid, vals, context=None):
         create_context = context and dict(context) or {}
