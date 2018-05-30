@@ -107656,6 +107656,20 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
 
+#. modules: msf_doc_import, msf_outgoing
+#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
+#: selection:ppl.move.processor,integrity_status:0
+#: selection:return.ppl.move.processor,integrity_status:0
+msgid "The quantity per pack must be an integer for this UoM"
+msgstr "La quantité par paquet doit être un entier pour cette UdM"
+
+#. modules: msf_doc_import, msf_outgoing
+#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
+#: selection:ppl.move.processor,integrity_status:0
+#: selection:return.ppl.move.processor,integrity_status:0
+msgid "The quantity per pack must not have more decimals than the UoM's rounding"
+msgstr "La quantité par paquet ne doit pas avoir plus de décimales que l'arrondi de l'UdM"
+
 #. modules: msf_supply_doc_export, sales_followup
 #: report:po.follow.up_rml:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:280
