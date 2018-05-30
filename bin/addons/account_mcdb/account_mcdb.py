@@ -286,8 +286,6 @@ class account_mcdb(osv.osv):
             # First MANY2MANY fields
             m2m_fields = [
                 ('period_ids', 'period_id'),
-                ('journal_ids', 'journal_id'),
-                ('analytic_journal_ids', 'journal_id'),
                 ('analytic_account_fp_ids', 'account_id'),
                 ('analytic_account_cc_ids', 'cost_center_id'),
                 ('analytic_account_f1_ids', 'account_id'),
@@ -296,6 +294,18 @@ class account_mcdb(osv.osv):
                 ('instance_ids', 'instance_id'),
                 ('top_prop_instance_ids', 'instance_id'),
             ]
+            # Journals
+            if res_model == 'account.analytic.line':
+                if context.get('from', '') == 'combined.line':
+                    # for the AJIs in the Combined Journals Report: distinguish between G/L and Analytic Journals
+                    m2m_fields.append(('journal_ids', 'gl_journal_id'))
+                    m2m_fields.append(('analytic_journal_ids', 'analytic_journal_id'))
+                else:
+                    # for the other AJIs: only handle analytic journals
+                    m2m_fields.append(('analytic_journal_ids', 'journal_id'))
+            else:
+                # for the JIs: only handle G/L journals
+                m2m_fields.append(('journal_ids', 'journal_id'))
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
                 m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
