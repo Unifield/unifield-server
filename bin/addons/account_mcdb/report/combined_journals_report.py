@@ -139,7 +139,8 @@ class combined_journals_report(report_sxw.rml_parse):
         for ml in amls:
             current_line_position += 1
             # if the JI has no related Analytic lines, store it directly
-            search_aal_domain = [('move_id', '=', ml['id'])]
+            # check Entry Seq. matching to exclude REV/COR AJI linked to the original JI in case of a pure AD correction
+            search_aal_domain = [('move_id', '=', ml['id']), ('entry_sequence', '=', ml['entry_sequence'])]
             category = (self.analytic_axis == 'f1' and 'FREE1') or (self.analytic_axis == 'f2' and 'FREE2') or 'FUNDING'
             analytic_account_ids = analytic_acc_obj.search(self.cr, self.uid,
                                                            [('category', '=', category), ('type', '=', 'normal')],
