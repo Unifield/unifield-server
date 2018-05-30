@@ -60306,6 +60306,7 @@ msgstr "(Location, Product) must be unique"
 #: model:ir.ui.menu,name:account.account_def_analytic_journal
 #: view:account.mcdb:0
 #: code:addons/msf_doc_import/msf_import_export_conf.py:71
+#: code:addons/account_mcdb/report/combined_journals_report.py:248
 msgid "Analytic Journals"
 msgstr "Journaux analytiques"
 

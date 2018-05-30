@@ -33,6 +33,7 @@ class combined_journals_report(report_sxw.rml_parse):
         self.selector_id = False
         self.aml_domain = []
         self.aal_domain = []
+        self.analytic_journal_ids = []
         self.analytic_axis = 'fp'  # 'fp', 'f1' or 'f2'
         self.total_booking_debit = 0.0
         self.total_booking_credit = 0.0
@@ -231,6 +232,7 @@ class combined_journals_report(report_sxw.rml_parse):
         Returns a String corresponding to the criteria selected
         """
         selector_obj = self.pool.get('account.mcdb')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
         # first get the Analytic axis
         category = (self.analytic_axis == 'f1' and 'Free 1') or (self.analytic_axis == 'f2' and 'Free 2') or 'Funding Pool'
         criteria = 'Display: %s' % category
@@ -239,6 +241,13 @@ class combined_journals_report(report_sxw.rml_parse):
         aml_selection = selector_obj.get_selection_from_domain(self.cr, self.uid, self.aml_domain, model, context=self.context)
         if aml_selection:
             criteria = '%s ; %s' % (criteria, aml_selection)
+        # finally get the Analytic Journal list
+        if self.analytic_journal_ids:
+            analytic_journals = analytic_journal_obj.read(self.cr, self.uid, self.analytic_journal_ids, ['code'],
+                                                          context=self.context)
+            journal_selection = '%s: %s' % (_('Analytic Journals'),
+                                            ', '.join([analytic_journal['code'] for analytic_journal in analytic_journals]))
+            criteria = '%s ; %s' % (criteria, journal_selection)
         # truncate the string if it is too long
         if len(criteria) > 4000:
             criteria = "%s..." % criteria[:4000]
@@ -296,6 +305,7 @@ class combined_journals_report(report_sxw.rml_parse):
                         analytic_journal_ids.add(gl_journal.analytic_journal_id.id)
             # add the Analytic Journals selected if any
             elif t[0] == 'analytic_journal_id':
+                self.analytic_journal_ids.extend(t[2])  # store the journals selected in the Analytic Journals filter (only)
                 analytic_journal_ids.update(t[2])
             # exclude Entry Status
             elif t[0] != 'move_id.state':
