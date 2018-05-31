@@ -814,6 +814,14 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
+                    if context.get('auto_import_confirm_pol'):
+                        delivery_confirmed_date = values.get(x, [None]*11)[10]
+                        if delivery_confirmed_date:
+                            if line_number:
+                                context['line_number_to_confirm'] = context.get('line_number_to_confirm', []) + [line_number]
+                            elif ext_ref:
+                                context['ext_ref_to_confirm'] = context.get('ext_ref_to_confirm', []) + [ext_ref]
+
                     if not line_number and not ext_ref:
                         not_ok = True
                         err1 = _('The line must have either the line number or the external ref. set')
@@ -1651,10 +1659,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'confirmed_delivery_date': line.imp_dcd or False,
                             'esc_confirmed': True if line.imp_dcd else False,
                         })
-                        if context.get('auto_import_ok'):
-                            line_vals.update({
-                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
-                            })
+                        if context.get('auto_import_ok') and line.parent_line_id.po_line_id.analytic_distribution_id:
+                          line_vals.update({
+                            'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                          })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:
