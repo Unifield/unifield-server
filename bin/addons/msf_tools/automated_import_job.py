@@ -415,7 +415,7 @@ class automated_import_job(osv.osv):
                         if nb_rejected:
                             msg += _('%s lines have been rejected') % nb_rejected
                         if nb_processed or nb_rejected:
-                            self.log(cr, uid, job.id, msg)
+                            self.pool.get('purchase.order').log(cr, uid, po_id, msg)
 
                 if context.get('job_comment'):
                     error_message += context['job_comment']
