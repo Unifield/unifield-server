@@ -815,7 +815,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
                     if context.get('auto_import_confirm_pol'):
-                        delivery_confirmed_date = values.get(x, [None]*11)[10]
+                        delivery_confirmed_date = values.get(x, [None]*12)[11]
                         if delivery_confirmed_date:
                             if line_number:
                                 context['line_number_to_confirm'] = context.get('line_number_to_confirm', []) + [line_number]
