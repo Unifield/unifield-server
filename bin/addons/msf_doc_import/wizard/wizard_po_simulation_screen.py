@@ -1684,6 +1684,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     }
                     line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
                                    line_vals, context=context)
+
+                    job_comment = context.get('job_comment', [])
+                    job_comment += ['Line #%s has been split.' % line.parent_line_id.po_line_id.line_number]
+                    context['job_comment'] = job_comment
             elif line.type_change == 'new':
                 line_vals = {'order_id': line.simu_id.order_id.id,
                              'product_id': line.imp_product_id.id,
@@ -1705,7 +1709,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['external_ref'] = line.imp_external_ref
                 if line.esc_conf:
                     line_vals['esc_confirmed'] = line.esc_conf
-                line_obj.create(cr, uid, line_vals, context=context)
+                new_line_id = line_obj.create(cr, uid, line_vals, context=context)
+                new_line_numb = line_obj.read(cr, uid, new_line_id, ['line_number'], context=context)['line_number']
+                job_comment = context.get('job_comment', [])
+                job_comment += ['New line #%s created.' % new_line_numb]
+                context['job_comment'] = job_comment
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
                              'product_uom': line.imp_uom.id,
