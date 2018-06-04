@@ -274,7 +274,11 @@ class purchase_order(osv.osv):
                         cr.rollback()
                         self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
                         job_comment = context.get('job_comment', [])
-                        job_comment.append(_('%s line #%s cannot be confirmed') % (po.name, pol.line_number) )
+                        job_comment.append({
+                            'res_model': 'purchase.order',
+                            'res_id': po.id,
+                            'msg': _('%s line #%s cannot be confirmed') % (po.name, pol.line_number),
+                        })
                         context['job_comment'] = job_comment
 
             if nb_pol_confirmed:
