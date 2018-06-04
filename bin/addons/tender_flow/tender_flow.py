@@ -98,11 +98,23 @@ class tender(osv.osv):
             res[tender.id] = retour
         return res
 
+    def _diff_nb_rfq_supplier(self, cr, uid, ids, field, args, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        for tender in self.browse(cr, uid, ids, context=context):
+            diff_number = False
+            if len(tender.rfq_ids) != len(tender.supplier_ids):
+                diff_number = True
+            res[tender.id] = diff_number
+        return res
+
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
-                                                 states={'draft': [('readonly', False)]}, readonly=True,
+                                                 states={'draft': [('readonly', False)], 'comparison': [('readonly', False)]}, readonly=True,
                                                  context={'search_default_supplier': 1, }),
                 'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft': [('readonly', False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
                 'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
@@ -120,6 +132,7 @@ class tender(osv.osv):
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
                 'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
                 'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
+                'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
                 }
 
     _defaults = {'categ': 'other',
@@ -321,68 +334,69 @@ class tender(osv.osv):
             if not tender_line_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
-                # create a purchase order for each supplier
-                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
-                if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!') % (supplier.name,))
-                pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
-                          'rfq_ok': True,
-                          'partner_id': supplier.id,
-                          'partner_address_id': address_id,
-                          'location_id': tender.location_id.id,
-                          'pricelist_id': pricelist_id,
-                          'company_id': tender.company_id.id,
-                          'fiscal_position': supplier.property_account_position and supplier.property_account_position.id or False,
-                          'tender_id': tender.id,
-                          'warehouse_id': tender.warehouse_id.id,
-                          'categ': tender.categ,
-                          'priority': tender.priority,
-                          'details': tender.details,
-                          'delivery_requested_date': tender.requested_date,
-                          'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
-                          }
-                # create the rfq - dic is udpated for default partner_address_id at purchase.order level
-                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
-
-                for line in tender.tender_line_ids:
-                    if line.line_state == 'cancel':
-                        continue
-
-                    if line.qty <= 0.00:
-                        raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
-
-                    if line.product_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
-                        raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
-                    newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
-                    values = {'name': line.product_id.partner_ref,
-                              'product_qty': line.qty,
-                              'product_id': line.product_id.id,
-                              'product_uom': line.product_uom.id,
-                              'price_unit': 0.0,  # was price variable - uf-607
-                              'date_planned': newdate.strftime('%Y-%m-%d'),
-                              'notes': line.product_id.description_purchase,
-                              'order_id': po_id,
-                              'tender_line_id': line.id,
-                              'comment': line.comment,
+                if not po_obj.search_exist(cr,  uid, [('tender_id', '=', tender.id), ('partner_id', '=', supplier.id)], context=context):
+                    # create a purchase order for each supplier
+                    address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
+                    if not address_id:
+                        raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!') % (supplier.name,))
+                    pricelist_id = supplier.property_product_pricelist_purchase.id
+                    values = {'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
+                              'rfq_ok': True,
+                              'partner_id': supplier.id,
+                              'partner_address_id': address_id,
+                              'location_id': tender.location_id.id,
+                              'pricelist_id': pricelist_id,
+                              'company_id': tender.company_id.id,
+                              'fiscal_position': supplier.property_account_position and supplier.property_account_position.id or False,
+                              'tender_id': tender.id,
+                              'warehouse_id': tender.warehouse_id.id,
+                              'categ': tender.categ,
+                              'priority': tender.priority,
+                              'details': tender.details,
+                              'delivery_requested_date': tender.requested_date,
+                              'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
                               }
-                    # create purchase order line
-                    pol_obj.create(cr, uid, values, context=context)
-                    message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
-                    # create the log message
-                    self.pool.get('res.log').create(cr, uid,
-                                                    {'name': message,
-                                                     'res_model': po_obj._name,
-                                                     'secondary': False,
-                                                     'res_id': po_id,
-                                                     'domain': [('rfq_ok', '=', True)],
-                                                     }, context={'rfq_ok': True})
-                self.infolog(cr, uid, "The RfQ id:%s (%s) has been generated from tender id:%s (%s)" % (
-                    po_id,
-                    po_obj.read(cr, uid, po_id, ['name'], context=context)['name'],
-                    tender.id,
-                    tender.name,
-                ))
+                    # create the rfq - dic is udpated for default partner_address_id at purchase.order level
+                    po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
+
+                    for line in tender.tender_line_ids:
+                        if line.line_state == 'cancel':
+                            continue
+
+                        if line.qty <= 0.00:
+                            raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
+
+                        if line.product_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
+                            raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
+                        newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
+                        values = {'name': line.product_id.partner_ref,
+                                  'product_qty': line.qty,
+                                  'product_id': line.product_id.id,
+                                  'product_uom': line.product_uom.id,
+                                  'price_unit': 0.0,  # was price variable - uf-607
+                                  'date_planned': newdate.strftime('%Y-%m-%d'),
+                                  'notes': line.product_id.description_purchase,
+                                  'order_id': po_id,
+                                  'tender_line_id': line.id,
+                                  'comment': line.comment,
+                                  }
+                        # create purchase order line
+                        pol_obj.create(cr, uid, values, context=context)
+                        message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
+                        # create the log message
+                        self.pool.get('res.log').create(cr, uid,
+                                                        {'name': message,
+                                                         'res_model': po_obj._name,
+                                                         'secondary': False,
+                                                         'res_id': po_id,
+                                                         'domain': [('rfq_ok', '=', True)],
+                                                         }, context={'rfq_ok': True})
+                    self.infolog(cr, uid, "The RfQ id:%s (%s) has been generated from tender id:%s (%s)" % (
+                        po_id,
+                        po_obj.read(cr, uid, po_id, ['name'], context=context)['name'],
+                        tender.id,
+                        tender.name,
+                    ))
 
         self.write(cr, uid, ids, {'state': 'comparison'}, context=context)
         return True
@@ -460,7 +474,9 @@ class tender(osv.osv):
         '''
         if len(ids) > 1:
             raise osv.except_osv(_('Warning !'), _('Cannot compare rfqs of more than one tender at a time!'))
+
         wiz_obj = self.pool.get('wizard.compare.rfq')
+
         for tender in self.browse(cr, uid, ids, context=context):
             # check if corresponding rfqs are in the good state
             rfq_ids = self.tender_integrity(cr, uid, tender, context=context)
@@ -642,12 +658,15 @@ class tender(osv.osv):
             context = {}
 
         t_line_obj = self.pool.get('tender.line')
+        po_obj = self.pool.get('purchase.order')
 
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
+            # search for the rfqs
+            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('rfq_ok', '=', True)], context=context)
             # trigger all related rfqs
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
+            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)

@@ -50,7 +50,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
+                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'comparison'])]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />
@@ -79,9 +79,10 @@
                     <group col="13" colspan="4">
                         <field name="state" />
                         <field name="internal_state" invisible="True"/>
+                        <field name="diff_nb_rfq_supplier" invisible="True"/>
                         <button name="cancel_tender" type="object" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('state', 'in', ['cancel', 'done'])]}" />
-                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
-                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
+                        <button name="button_generate" string="Generate RfQs" icon="gtk-convert" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'comparison']), '&amp;', ('state', '=', 'comparison'), ('diff_nb_rfq_supplier', '=', False)]}"/>
+                        <button name="compare_rfqs" string="Compare RfQs" type="object" icon="gtk-find" attrs="{'invisible': ['|', ('state', '!=', 'comparison'), ('diff_nb_rfq_supplier', '=', True)]}" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit"
                             attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
                         <button name="continue_sourcing" states="comparison" type="object" string="Continue Sourcing Process" icon="gtk-go-forward"
