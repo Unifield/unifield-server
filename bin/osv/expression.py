@@ -48,20 +48,19 @@ class expression(object):
         res = []
         if ids:
             if op in ['<','>','>=','<=']:
-                cr.execute('SELECT "%s"'    \
-                           '  FROM "%s"'    \
-                           ' WHERE "%s" %s %%s' % (s, f, w, op), (ids[0],))
+                cr.execute("""SELECT "%s"
+                              FROM "%s"
+                              WHERE "%s" %s %%s""" % (s, f, w, op), (ids[0],))  # not_a_user_entry
                 res.extend([r[0] for r in cr.fetchall()])
             else:
                 for i in range(0, len(ids), cr.IN_MAX):
                     subids = ids[i:i+cr.IN_MAX]
-                    cr.execute('SELECT "%s"'    \
-                               '  FROM "%s"'    \
-                               '  WHERE "%s" IN %%s' % (s, f, w),(tuple(subids),))
+                    cr.execute("""SELECT "%s"
+                                  FROM "%s"
+                                  WHERE "%s" IN %%s""" % (s, f, w),(tuple(subids),))  # not_a_user_entry
                     res.extend([r[0] for r in cr.fetchall()])
         else:
-            cr.execute('SELECT distinct("%s")'    \
-                       '  FROM "%s" where "%s" is not null'  % (s, f, s)),
+            cr.execute('SELECT distinct("%s")  FROM "%s" where "%s" is not null'  % (s, f, s))   # not_a_user_entry
             res.extend([r[0] for r in cr.fetchall()])
         return res
 
@@ -87,8 +86,8 @@ class expression(object):
 
         def _rec_get(ids, table, parent=None, left='id', prefix=''):
             if table._parent_store and (not table.pool._init):
-# TODO: Improve where joins are implemented for many with '.', replace by:
-# doms += ['&',(prefix+'.parent_left','<',o.parent_right),(prefix+'.parent_left','>=',o.parent_left)]
+                # TODO: Improve where joins are implemented for many with '.', replace by:
+                # doms += ['&',(prefix+'.parent_left','<',o.parent_right),(prefix+'.parent_left','>=',o.parent_left)]
                 doms = []
                 for o in table.browse(cr, uid, ids, context=context):
                     if doms:
@@ -382,10 +381,10 @@ class expression(object):
                     else:
                         query1 += '     AND value ' + operator + instr +   \
                             ') UNION ('                \
-                             '  SELECT id'              \
-                             '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + instr + "" \
-                             '     AND id NOT IN ' + query1 + '))'
+                            '  SELECT id'              \
+                            '    FROM "' + working_table._table + '"'       \
+                            '   WHERE "' + left + '" ' + operator + instr + "" \
+                            '     AND id NOT IN ' + query1 + '))'
 
                     query2 = [working_table._name + ',' + left,
                               context.get('lang', False) or 'en_US',

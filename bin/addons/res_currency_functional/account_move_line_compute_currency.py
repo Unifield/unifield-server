@@ -173,7 +173,7 @@ class account_move_line_compute_currency(osv.osv):
                                               base_date_dt.month, 1, )
             period_ids = period_obj.search(cr, uid, [
                 ('date_start', '>=', period_from),
-                ('state', '=', 'draft'),  # first opened period since 
+                ('state', '=', 'draft'),  # first opened period since
                 ('number', 'not in', [0, 16]),
             ], limit=1, order='date_start, number', context=context)
             if not period_ids:
@@ -429,6 +429,7 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+                        self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True
 
     def update_amounts(self, cr, uid, ids):

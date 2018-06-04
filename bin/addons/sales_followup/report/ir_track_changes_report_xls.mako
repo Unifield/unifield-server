@@ -251,10 +251,10 @@
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.product_uom_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.product_uom.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.original_qty or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="Number">${line.original_qty or line.product_uom_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.original_uom.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.price_unit|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.original_price or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.original_price or line.price_unit|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.price_unit * line.product_uom_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line.original_price * line.original_qty|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.modification_comment or ''|x}</Data></Cell>

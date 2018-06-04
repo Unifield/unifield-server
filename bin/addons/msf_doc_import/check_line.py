@@ -29,6 +29,7 @@ import logging
 import pooler
 import tools
 
+
 def get_xml(value):
     new_value = []
     for v in list(value):
@@ -114,7 +115,7 @@ def compute_asset_value(cr, uid, **kwargs):
     asset_id = None
     asset_name = None
     msg = ''
-    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+    if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
             asset_name = row.cells[cell_nb].data.strip()
             if asset_name and product_id:
@@ -142,7 +143,7 @@ def compute_batch_value(cr, uid, **kwargs):
     prodlot_id = None
     expired_date = False
     msg = ''
-    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+    if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
             prodlot_name = row.cells[cell_nb].data.strip()
             if prodlot_name and product_id:
@@ -171,7 +172,7 @@ def compute_kit_value(cr, uid, **kwargs):
     kit_id = None
     kit_name = None
     msg = ''
-    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+    if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
             kit_name = row.cells[cell_nb].data.strip()
             if kit_name and product_id:
@@ -586,7 +587,6 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     return {'prodlot_id': batch_number, 'expired_date': expiry_date, 'error_list': error_list, 'warning_list': warning_list}
 
 
-
 def compute_currency_value(cr, uid, **kwargs):
     """
     Retrieves Currency from Excel file or take the one from the parent
@@ -689,7 +689,6 @@ def line_number_value(**kwargs):
     return {'line_number': line_number, 'error_list': error_list}
 
 
-
 def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     """
     check rows currency
@@ -706,7 +705,7 @@ def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
             else:
                 cell = row.cells[ccy_col_index]
                 if cell.type == 'str':
-                    if str(cell).upper() != ccy_expected_code.upper():
+                    if tools.ustr(cell).upper() != ccy_expected_code.upper():
                         res += 1
                 else:
                     res += 1
