@@ -399,8 +399,6 @@ class Database(BaseController):
                 ('instance', 'prop_instance_code'),
                 ('reconfigure', 'address_contact_name'),
                 ('reconfigure', 'address_street'),
-                ('reconfigure', 'address_street2'),
-                ('reconfigure', 'address_zip'),
                 ('reconfigure', 'address_city'),
                 ('reconfigure', 'address_country'),
                 ('reconfigure', 'address_phone'),
@@ -420,15 +418,6 @@ class Database(BaseController):
                 ('partner', 'external_account_payable'),
                 ('partner', 'internal_account_receivable'),
                 ('partner', 'internal_account_payable'),
-                ('company', 'default_counterpart'),
-                ('company', 'salaries_default_account'),
-                ('company', 'rebilling_intersection_account'),
-                ('company', 'intermission_counterpart'),
-                ('company', 'counterpart_bs_debit_balance'),
-                ('company', 'counterpart_bs_crebit_balance'),
-                ('company', 'debit_account_pl_positive'),
-                ('company', 'credit_account_pl_negative'),
-                ('company', 'scheduler_range_days'),
             )
             for section, option in not_empty_int_option_list:
                 self.check_mandatory_int(config, section, option)

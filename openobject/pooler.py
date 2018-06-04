@@ -66,7 +66,7 @@ pool_dict = {}
 
 def restart_pool():
 
-    db_name = cherrypy.session['db']
+    db_name = None #cherrypy.session['db']
     
     if db_name in pool_dict:
         import addons
@@ -81,10 +81,6 @@ def get_pool():
     config = cherrypy.request.app.config
     db_name = None
 
-    try:
-        db_name = cherrypy.session['db']
-    except Exception, e:
-        pass
 
     if db_name in pool_dict:
         pool = pool_dict[db_name]

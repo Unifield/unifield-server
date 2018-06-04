@@ -109,7 +109,6 @@ div.contextmenu {
 
 div.contextmenu a,
 div.contextmenu span {
-    display: block;
     text-align: left;
     text-decoration: none;
     white-space: nowrap;

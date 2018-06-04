@@ -5,7 +5,7 @@ import itertools
 
 import cherrypy
 import openobject.tools.ast
-from openobject import errors, paths
+from openobject import paths
 
 
 class Graph(dict):
@@ -210,16 +210,6 @@ def load_addons(db_name, config):
 
     graph = create_graph(base_addons)
     load_module_graph(db_name, graph, config)
-
-    try:
-        obj = pooler.get_pool().get_controller("/openerp/modules")
-        new_modules = obj.get_new_modules()
-    except errors.AuthenticationError:
-        new_modules = []
-
-    new_modules_in_graph = upgrade_graph(graph, new_modules)
-    if new_modules_in_graph:
-        load_module_graph(db_name, graph, config)
 
     cherrypy.request.loading_addons = False
 

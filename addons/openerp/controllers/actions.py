@@ -34,33 +34,9 @@ from openobject import tools
 from selection import Selection
 from tree import Tree
 from wizard import Wizard
-from openobject.errors import AuthenticationError
 import urllib
 import unicodedata
 import os
-
-def restart_pooler_if_new_module():
-    from openobject import pooler
-    autoreloader_enabled = bool(
-        getattr(cherrypy.engine.autoreload, 'thread', None))
-    if autoreloader_enabled:
-        # stop (actually don't listen to) the auto-reloader the process
-        # doesn't restart due to downloading new add-ons or refreshing
-        # existing ones
-        cherrypy.engine.autoreload.unsubscribe()
-    try:
-        obj = pooler.get_pool().get_controller("/openerp/modules")
-        if not obj:
-            raise RuntimeError(
-                "Cannot find controller for /openerp/modules")
-        if obj.has_new_modules():
-            pooler.restart_pool()
-    except AuthenticationError:
-        pass
-
-    if autoreloader_enabled:
-        # re-enable auto-reloading if it was enabled before
-        cherrypy.engine.autoreload.subscribe()
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
@@ -105,11 +81,6 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
     else:
         if params.context.get('_terp_view_name'):
             del params.context['_terp_view_name']
-
-    # if it's the end of module installation, restart the pool
-    # to be able to use this new modules
-    if model == 'base.module.upgrade':
-        restart_pooler_if_new_module()
 
     if params.ids and not isinstance(params.ids, list):
         params.ids = [params.ids]
@@ -378,7 +349,8 @@ def act_window(action, data):
 def server(action, data):
     context = dict(data.get('context', {}),
                    active_id=data.get('id', False),
-                   active_ids=data.get('ids', [])
+                   active_ids=data.get('ids', []),
+                   model=data.get('model', False),
                    )
     action_result = rpc.RPCProxy('ir.actions.server').run([action['id']], context)
     if action_result:
