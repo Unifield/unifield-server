@@ -82,9 +82,14 @@ class wizard_interactive_report(osv.osv_memory):
         return max_parent_hierarchy
 
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
+        if context is None:
+            context = {}
         has_round, format_str = self._get_amount_format(context)
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
+        bg_obj = self.pool.get('memory.background.report')
+        bg_id = context.get('background_id', False)
+
         # Context updated with wizard's value
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
 
@@ -119,9 +124,15 @@ class wizard_interactive_report(osv.osv_memory):
         actual_line_ids = [x.id for x in contract.actual_line_ids]
 
         allocated_budget_list = line_obj._get_budget_amount(cr, uid, actual_line_ids, 'allocated_budget', context=context)
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.10)  # 10% of the total process
         project_budget_list = line_obj._get_budget_amount(cr, uid, actual_line_ids, 'project_budget', context=context)
-        allocated_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'allocated_real', context=context)
-        project_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'project_real', context=context)
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.20)  # 20% of the total process
+        allocated_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'allocated_real',
+                                                          context=context)  # 50% of the total process (see _get_actual_amount method)
+        project_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'project_real',
+                                                        context=context)  # 80% of the total process
         line_amount_list = {}
         for id in actual_line_ids:
             line_amount_list[id] = {'allocated_budget': allocated_budget_list[id],
@@ -184,6 +195,8 @@ class wizard_interactive_report(osv.osv_memory):
                 final_line += temp_line[6:9]
             analytic_data.append(final_line)
 
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.90)  # 90% of the total process
         if context.get('mako',False):
             return analytic_data
         data = header_data + [[]] + analytic_data + [[]] + footer_data

@@ -320,6 +320,7 @@ class financing_contract_format_line(osv.osv):
             Method to compute the allocated budget/amounts, depending on the information in the line
         """
         res = {}
+        bg_obj = self.pool.get('memory.background.report')
         # 1st step: get the real list of actual lines to compute
         actual_line_ids = []
         overhead = self._is_overhead_present(cr, uid, ids, context=context)
@@ -330,7 +331,18 @@ class financing_contract_format_line(osv.osv):
             actual_line_ids = self._get_actual_line_ids(cr, uid, ids, context=context)
 
         # 2nd step: retrieve values for all actual lines above
+        nb_lines = len(actual_line_ids)
+        if field_name == 'allocated_real':
+            # for the 'allocated_real' lines: update the % of the process (cf report run in BG) from 20 to 50%
+            before = 0.20
+            after = 0.50
+        else:
+            # for the 'project_real' lines: update the % from 50 to 80%
+            before = 0.50
+            after = 0.80
+        current_line_position = 0
         for line in self.browse(cr, uid, actual_line_ids, context=context):
+            current_line_position += 1
             # default value
             res[line.id] = 0.0
             if line.line_type:
@@ -380,6 +392,7 @@ class financing_contract_format_line(osv.osv):
                         # Invert the result from the lines (positive for out, negative for in)
                         real_sum = -real_sum
                         res[line.id] = real_sum
+            bg_obj.compute_percent(cr, uid, current_line_position, nb_lines, before=before, after=after, refresh_rate=1, context=context)
 
         # 3rd step: compute all remaining lines from the retrieved results
         total_actual_costs = 0.0
