@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,11 +15,13 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 # Win32 python extensions modules
+import sys
+sys.dont_write_bytecode=True
 import win32serviceutil
 import win32service
 import win32event
@@ -27,7 +29,6 @@ import win32api
 import win32process
 import servicemanager
 
-import sys
 import subprocess
 import os
 import thread
