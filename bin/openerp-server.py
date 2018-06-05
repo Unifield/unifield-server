@@ -29,6 +29,8 @@ GNU Public Licence.
 
 (c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
 """
+import sys
+sys.dont_write_bytecode=True
 
 import updater
 updater.do_update()
@@ -39,7 +41,6 @@ updater.do_update()
 import logging
 import os
 import signal
-import sys
 import threading
 import traceback
 
@@ -189,7 +190,7 @@ if tools.config["translate_in"]:
     cr = pooler.get_db(dbname).cursor()
     try:
         tools.trans_load(cr,
-                         tools.config["translate_in"], 
+                         tools.config["translate_in"],
                          tools.config["language"],
                          context=context)
         tools.trans_update_res_ids(cr)
