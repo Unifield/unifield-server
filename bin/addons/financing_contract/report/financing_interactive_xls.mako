@@ -452,7 +452,7 @@
 </Row>
 <Row>
 <Cell>
-<Data ss:Type="String">${( getLines(o) and '' or '')|x}</Data>
+<Data ss:Type="String">''</Data>
 </Cell>
 </Row>
 

@@ -254,13 +254,13 @@ class financing_contract_format_line(osv.osv):
         return False
 
     def _get_actual_line_ids(self, cr, uid, ids, context={}):
-        actual_line_ids = []
+        actual_line_ids = set()
         for line in self.browse(cr, uid, ids, context=context):
             if line.line_type == 'view':
-                actual_line_ids += self._get_actual_line_ids(cr, uid, [x.id for x in line.child_ids], context=context)
+                actual_line_ids.update(self._get_actual_line_ids(cr, uid, [x.id for x in line.child_ids], context=context))
             elif line.line_type in ['actual', 'consumption']:
-                actual_line_ids.append(line.id)
-        return actual_line_ids
+                actual_line_ids.add(line.id)
+        return list(actual_line_ids)
 
     def _get_view_amount(self, browse_line, total_costs, retrieved_lines):
         if browse_line.line_type == 'view':
