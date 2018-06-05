@@ -1624,7 +1624,9 @@ class purchase_order(osv.osv):
             if not rfq.rfq_ok:
                 continue
             for rfq_line in rfq.order_line:
-                wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+                if (rfq_line.order_id.partner_type in ('external', 'esc') and rfq_line.state in ('draft', 'validated', 'validated_n'))\
+                        or (rfq_line.order_id.partner_type not in ('external', 'esc') and rfq_line.state == 'draft'):
+                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
 
@@ -2129,8 +2131,8 @@ class ir_values(osv.osv):
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)',
                                                      'Purchase Order',
-                                                     'Allocation report',
-                                                     'Order impact vs. Budget'],
+                                                     'po.allocation.report',
+                                                     'order.impact.vs.budget'],
                               'client_action_relate': ['ir_open_product_list_export_view',
                                                        'View_log_purchase.order',
                                                        'Allocation report'],

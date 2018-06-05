@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<document filename="payment_orders_report.pdf">
+
+  <template pageSize="(595.0,842.0)" title="Payment Orders Report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="57.0" y1="57.0" width="481" height="728"/>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+    <blockTableStyle id="Table_Company_Name">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="terp_header_Centre" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_Centre_8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_tblheader_General_Centre" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="terp_tblheader_Details_Centre" fontName="Helvetica-Bold" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <blockTableStyle id="TableHeader">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="1,1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="1,-1" thickness="0.5"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+    <blockTableStyle id="TableData">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="5,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="5,-1" thickness="0.5"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+  </stylesheet>
+
+  <story>
+
+    <blockTable colWidths="540.0" style="Table_Company_Name">
+      <tr>
+        <td>
+          <para style="terp_header_Centre">Payment Orders</para>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="terp_default_8">
+      <font color="white"> </font>
+    </para>
+
+    <blockTable colWidths="270.0,270.0" style="TableHeader">
+        <tr>
+          <td><parawrap style="terp_tblheader_General_Centre">Payment Method</parawrap></td>
+          <td><parawrap style="terp_tblheader_General_Centre">Period</parawrap></td>
+        </tr>
+        <tr>
+          <td><parawrap style="terp_default_Centre_8">[[ payment_method_selected() ]]</parawrap></td>
+          <td><parawrap style="terp_default_Centre_8">[[ period_selected() ]]</parawrap></td>
+        </tr>
+    </blockTable>
+
+    <para style="terp_default_8">
+      <font color="white"> </font>
+    </para>
+
+    <blockTable style="TableData" colWidths="90.0,90.0,90.0,90.0,90.0,90.0">
+      <tr>
+        <td>
+          <parawrap style="P3">Employee Name</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Employee ID</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Bank Name</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Bank Account Number</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Net to Pay</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Currency</parawrap>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3">[[ repeatIn(lines(), 'line') ]]</para>
+          <parawrap style="P3">[[ line['employee_name'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['employee_id'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['bank_name'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['bank_account_number'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['net_to_pay'] or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['currency'] ]]</parawrap>
+        </td>
+      </tr>
+    </blockTable>
+
+  </story>
+</document>

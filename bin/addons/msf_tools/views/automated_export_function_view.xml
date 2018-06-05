@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="automated_export_function_search_view" model="ir.ui.view">
+            <field name="name">automated.export.function.search.view</field>
+            <field name="model">automated.export.function</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Automated export functions">
+                    <field name="name" />
+                    <field name="model_id" />
+                    <field name="method_to_call" />
+                </search>
+            </field>
+        </record>
+
+        <record id="automated_export_function_tree_view" model="ir.ui.view">
+            <field name="name">automated.export.function.tree.view</field>
+            <field name="model">automated.export.function</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Automated export functions">
+                    <field name="name" />
+                    <field name="model_id" />
+                    <field name="method_to_call" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="automated_export_function_form_view" model="ir.ui.view">
+            <field name="name">automated.export.function.form.view</field>
+            <field name="model">automated.export.function</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Automated export function">
+                    <field name="name" />
+                    <newline />
+                    <field name="model_id" />
+                    <field name="method_to_call" />
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_export_function_action" model="ir.actions.act_window">
+            <field name="name">Automated export functions</field>
+            <field name="res_model">automated.export.function</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="automated_export_function_menu"
+            action="automated_export_function_action"
+            parent="automated_export_menu" />
+
+    </data>
+</openerp>

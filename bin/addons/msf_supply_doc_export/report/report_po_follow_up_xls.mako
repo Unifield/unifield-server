@@ -64,6 +64,17 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+
+    <Style ss:ID="line_grey">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Font ss:Color="#747474"/>
+    </Style>
     
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -107,6 +118,8 @@
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Delivery Confirmed (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    # Status (line)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Status (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Destination
@@ -135,22 +148,43 @@
     
     % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+        % else:
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+        %endif
     </Row>
     % endfor
  % endfor   

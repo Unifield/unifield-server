@@ -909,50 +909,6 @@ class stock_picking(osv.osv):
         self._logger.info(message)
         return message
 
-    def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
-        # Check if the given object is valid for the rule
-        model_obj = self.pool.get(rule.model)
-        domain = rule.domain and eval(rule.domain) or []
-        domain.insert(0, '&')
-        domain.append(('id', '=', ids[0]))  # add also this id to short-list only the given object
-        return model_obj.search(cr, uid, domain, context=context)
-
-    def create_manual_message(self, cr, uid, ids, context):
-        rule_obj = self.pool.get("sync.client.message_rule")
-
-        ##############################################################################
-        # Define the message rule to be fixed, or by given a name for it
-        #
-        ##############################################################################
-        rule = rule_obj.get_rule_by_sequence(cr, uid, 1000, context)
-
-        if not rule or not ids or not ids[0]:
-            return
-
-        valid_ids = self.check_valid_to_generate_message(cr, uid, ids, rule, context)
-        if not valid_ids:
-            return  # the current object is not valid for creating message
-        valid_id = valid_ids[0]
-
-        model_obj = self.pool.get(rule.model)
-        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-
-        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
-        arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
-        call = rule.remote_call
-
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, ids, rule.server_id, context=context)
-        if not identifiers or not update_destinations:
-            return
-
-        xml_id = identifiers[valid_id]
-        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context)
-        if not existing_message_id:  # if similar message does not exist in the system, then do nothing
-            return
-
-        # make a change on the message only now
-        msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
-
 
     # UF-1617: Override the hook method to create sync messages manually for some extra objects once the OUT/Partial is done
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):

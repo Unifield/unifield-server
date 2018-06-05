@@ -88,6 +88,11 @@
                                 <group col="6" colspan="4">
                                     <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
                                     <button name="invoice_create_wizard" string="Validate" icon="terp-camera_test" type="object"/>
+                                    <field name="original_invoice_id" invisible="1"/>
+                                    <button name="%(action_direct_invoice_refund)d" type='action' string='Refund'
+                                            states='open,paid' icon="gtk-execute" colspan="2"
+                                            context="{'dir_invoice_id': original_invoice_id}"
+                                            force_editable="1"/>
                                 </group>
                             </group>
                         </page>
