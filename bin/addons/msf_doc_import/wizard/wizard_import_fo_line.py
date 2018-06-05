@@ -98,6 +98,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 categ_log = ''
                 line_num = 0
                 header_index = context['header_index']
+                mandatory_col_count = 8  # ignore Status column
 
                 file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
 
@@ -113,19 +114,21 @@ class wizard_import_fo_line(osv.osv_memory):
                 header_row = rows.next()
                 header_error = False
 
-                if len(header_row) != len(columns_for_fo_line_import):
+                if len(header_row) != mandatory_col_count and len(header_row) != len(columns_for_fo_line_import):
                     header_row = False
                     header_error = True
                     error_list.append(_("\n\tNumber of columns is not equal to %s") % len(columns_for_fo_line_import))
 
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
-                        tr_header_row = _(tools.ustr(header_row[i]))
-                        tr_h_name = _(h_name)
-                        if len(header_row) > i and tr_header_row != tr_h_name:
-                            header_error = True
-                            if tr_header_row.upper() == tr_h_name.upper():
-                                error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
+                        # To be able to import without Status column
+                        if h_name != 'state' or len(header_row) != mandatory_col_count:
+                            tr_header_row = _(tools.ustr(header_row[i]))
+                            tr_h_name = _(h_name)
+                            if len(header_row) > i and tr_header_row != tr_h_name:
+                                header_error = True
+                                if tr_header_row.upper() == tr_h_name.upper():
+                                    error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
 
                 if header_error:
                     msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join([_(x) for x in columns_for_fo_line_import])
@@ -172,7 +175,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
                         col_count = len(row)
                         template_col_count = len(header_index.items())
-                        if col_count != template_col_count:
+                        if col_count != template_col_count and col_count != mandatory_col_count:
                             message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_fo_line_import))
                             line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                             ignore_lines += 1

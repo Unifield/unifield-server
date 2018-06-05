@@ -37080,11 +37080,12 @@ msgstr "External"
 msgid "cancel_voucher - (account.voucher)"
 msgstr "cancel_voucher - (account.voucher)"
 
-#. modules: sales_followup, register_accounting, finance
+#. modules: msf_doc_import, sales_followup, register_accounting, finance
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
 #: field:cash.request.liquidity.cheque,status:0
+#: code:addons/msf_doc_import/wizard/__init__.py:83
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:173
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:322
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:474
