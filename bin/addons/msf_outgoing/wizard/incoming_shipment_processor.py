@@ -1197,7 +1197,14 @@ class stock_move_in_processor(osv.osv):
         'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
+        'split_move_ok': fields.boolean(string='Is split move ?'),
     }
+
+
+    _defaults = {
+        'split_move_ok': lambda *a: False,
+    }
+
 
     """
     Model methods

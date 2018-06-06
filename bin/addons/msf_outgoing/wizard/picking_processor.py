@@ -212,6 +212,20 @@ class stock_picking_processor(osv.osv):
                 if line_obj._name == 'stock.move.in.processor':
                     # search for simulation done for this move, and if has pack info attached
                     sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], order='id desc', context=context)
+
+                    if not sm_in_proc:
+                        # search stock.incoming.processor for the move.picking_id
+                        in_proc_ids = self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', '=', move.picking_id.id)], order='id desc', context=context)
+                        for in_proc_id in in_proc_ids:
+                            # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
+                            sm_in_proc = line_obj.search(cr, uid, [
+                                ('wizard_id', '=', in_proc_id), 
+                                ('line_number', '=', move.line_number),
+                                ('split_move_ok', '=', True), ]
+                            , order='id desc', context=context)
+                            if sm_in_proc:
+                                break
+
                     for sm_in_proc in line_obj.browse(cr, uid, sm_in_proc, context=context):
                         if sm_in_proc.pack_info_id:
                             line_data.update({
