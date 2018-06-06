@@ -66,6 +66,9 @@ class enter_reason(osv.osv_memory):
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
 
+            if context.get('do_resource', False):
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'has_to_be_resourced': True}, context=context)
+
             self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in obj.move_lines], context=context)
 
             # cancel the IN
@@ -74,7 +77,7 @@ class enter_reason(osv.osv_memory):
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received') % (obj.purchase_id.name, round(obj.purchase_id.shipped_rate, 2)))
 
             self.infolog(cr, uid, "The Incoming shipment id:%s (%s) has been canceled%s." % (
                 obj.id, obj.name, cancel_type != 'update_out' and ' and resourced' or '',

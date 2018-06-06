@@ -139,7 +139,7 @@
                 <field name="period" position="replace"/>
                 <field name="date" position="replace">
                     <field name="document_date"/>
-                    <field name="date"/>
+                    <field name="date" required="1"/>
                 </field>
             </field>
         </record>

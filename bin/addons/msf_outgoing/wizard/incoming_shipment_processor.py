@@ -28,6 +28,93 @@ from msf_outgoing import INTEGRITY_STATUS_SELECTION
 import threading
 
 
+
+class in_family_processor(osv.osv):
+    """
+    IN family that merge some stock moves into one pack
+    """
+    _name = 'in.family.processor'
+    _description = 'IN family'
+    _rec_name = 'from_pack'
+
+    _columns = {
+        'name': fields.char('IN family', size=64),
+        'wizard_id': fields.many2one(
+            'stock.incoming.processor',
+            string='Wizard',
+            required=True,
+            ondelete='cascade',
+            help="IN processing wizard",
+        ),
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'pack_type': fields.many2one(
+            'pack.type',
+            string='Pack Type',
+            ondelete='set null',
+        ),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        'integrity_status': fields.selection(
+            string='Integrity status',
+            selection=[
+                ('empty', ''),
+                ('missing_weight', 'Weight is missing'),
+            ],
+            readonly=True,
+        ),
+        'move_ids': fields.one2many(
+            'stock.move.in.processor',
+            'pack_id',
+            string='Moves',
+        ),
+    }
+
+    _defaults = {
+        'integrity_status': 'empty',
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if 'weight' in vals:
+            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
+        return super(in_family_processor, self).write(cr, uid, ids, vals, context=context)
+
+    """
+    Controller methods
+    """
+    def onchange_pack_type(self, cr, uid, ids, pack_type):
+        """
+        Update values of the in family from the stock pack selecetd
+        """
+        # Objects
+        p_type_obj = self.pool.get('pack.type')
+
+        res = {}
+
+        if pack_type :
+            # if 'pack_type' is not a list, turn it into list
+            if isinstance(pack_type, (int, long)):
+                pack_type = [pack_type]
+
+            p_type = p_type_obj.browse(cr, uid, pack_type[0])
+
+            res.update({
+                'value': {
+                    'length': p_type.length,
+                    'width': p_type.width,
+                    'height': p_type.height,
+                },
+            })
+
+        return res
+
+in_family_processor()
+
+
 class stock_incoming_processor(osv.osv):
     """
     Incoming shipment processing wizard
@@ -36,11 +123,31 @@ class stock_incoming_processor(osv.osv):
     _inherit = 'stock.picking.processor'
     _description = 'Wizard to process an incoming shipment'
 
+
+    def _get_display_process_to_ship_button(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = False
+            if wiz.picking_id and wiz.picking_id.state == 'updated' and wiz.linked_to_out:
+                res[wiz.id] = True
+
+        return res
+
+
     _columns = {
         'move_ids': fields.one2many(
             'stock.move.in.processor',
             'wizard_id',
             string='Moves',
+        ),
+        'family_ids': fields.one2many(
+            'in.family.processor',
+            'wizard_id',
+            string='Families',
+            help="Pack of products",
         ),
         'dest_type': fields.selection([
             ('to_cross_docking', 'To Cross Docking'),
@@ -89,6 +196,7 @@ class stock_incoming_processor(osv.osv):
         'claim_description': fields.text(
             string='Claim Description',
         ),
+        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
     }
 
     _defaults = {
@@ -119,10 +227,11 @@ class stock_incoming_processor(osv.osv):
         cr.execute("""
             select so.id from
             stock_move m
+            left join stock_picking p on m.picking_id = p.id
             left join purchase_order_line pol on m.purchase_line_id = pol.id
-            left join sale_order_line sol on sol.id = pol.sale_order_line_id
+            left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            where m.picking_id = %s and so.procurement_request = 'f'
+            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:
@@ -198,7 +307,7 @@ class stock_incoming_processor(osv.osv):
 
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
-                if line.integrity_status != 'empty':
+                if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
                     return {
                         'type': 'ir.actions.act_window',
                         'res_model': proc._name,
@@ -447,6 +556,7 @@ class stock_incoming_processor(osv.osv):
             picking_id = wizard.picking_id.id
 
             simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, }, context=context)
+            context.update({'simu_id': simu_id})
             for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
                 if move.state not in ('draft', 'cancel', 'done'):
                     line_obj.create(cr, uid, {'move_id': move.id,
@@ -468,11 +578,272 @@ class stock_incoming_processor(osv.osv):
                 'res_id': simu_id,
                 'context': context}
 
+
+    def check_if_has_import_file_in_attachment(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        in_id = self.read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id'][0]
+
+        attach_ids = self.pool.get('ir.attachment').search(cr, uid, [
+            ('res_model', '=', 'stock.picking'),
+            ('res_id', '=', in_id),
+            ('name', 'like', 'SHPM_%%'),
+        ], context=context)
+
+        if len(attach_ids) > 1:
+            raise osv.except_osv(_('Error'), _('Too many import files in attachment for the same IN, only 1 import file prefixed with "SHPM_" is allowed'))
+
+        attach_data = False
+        if attach_ids:
+            attach_data = self.pool.get('ir.attachment').read(cr, uid, attach_ids[0], ['name', 'datas'], context=context)
+
+        return attach_data
+
+
     def launch_simulation_pack(self, cr, uid, ids, context=None):
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
         data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
+
+        file_attached = self.check_if_has_import_file_in_attachment(cr, uid, ids, context=context)
+        if file_attached:
+            self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {
+                'file_to_import': file_attached['datas'], # base64
+                'filetype': self.pool.get('stock.picking').get_import_filetype(cr, uid, file_attached['name'], context=context),
+            }, context=context)
+            self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, data['res_id'], context=context)
+            self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
         return data
+
+
+    def check_sequences(self, cr, uid, sequences, in_move_obj, context=None):
+        """
+        check pack sequences integrity
+        sequences is a list of tuples: [(from, to, internal_id), ...]
+        """
+        if context is None:
+            context = {}
+
+        missing_ids = []
+        to_smaller_ids = []
+        overlap_ids = []
+        gap_ids = []
+        # Sort the sequence according to from value
+        sequences = sorted(sequences, key=lambda seq: seq[0])
+
+        # Rule #1, the first from value must be equal o 1
+        if sequences[0][0] != 1:
+            missing_ids.append(sequences[0][2])
+
+        # Go through the list of sequences applying the rules
+        for i in range(len(sequences)):
+            seq = sequences[i]
+            # Rules #2-#3 applies from second element
+            if i > 0:
+                # Previous sequence
+                seqb = sequences[i - 1]
+                # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+                if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
+                    overlap_ids.append(seq[2])
+                # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+                if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
+                    if seq[0] < seqb[1] + 1:
+                        overlap_ids.append(seq[2])
+                    if seq[0] > seqb[1] + 1:
+                        gap_ids.append(seq[2])
+            # rule #4: to[i] >= from[i]
+            if not (seq[1] >= seq[0]):
+                to_smaller_ids.append(seq[2])
+
+        in_move_ids = [s[2] for s in sequences]
+        in_move_obj.write(cr, uid, in_move_ids, {'sequence_issue': 'empty'}, context=context)
+
+        ok = True
+        if missing_ids:
+            in_move_obj.write(cr, uid, missing_ids, {'sequence_issue': 'missing_1'}, context=context)
+            ok = False
+        if to_smaller_ids:
+            in_move_obj.write(cr, uid, to_smaller_ids, {'sequence_issue': 'to_smaller_than_from'}, context=context)
+            ok = False
+        if overlap_ids:
+            in_move_obj.write(cr, uid, overlap_ids, {'sequence_issue': 'overlap'}, context=context)
+            ok = False
+        if gap_ids:
+            in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'gap'}, context=context)
+            ok = False
+
+        return ok
+
+
+    def check_before_creating_pack_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        sequence_ok_ids = []
+        sequence_ok = True
+        for wizard in self.browse(cr, uid, ids, context=context):
+            total_qty = 0
+            sequences = []
+            for move in wizard.move_ids:
+                total_qty += move.quantity
+                sequences.append((move.from_pack, move.to_pack, move.id))
+                sequence_ok_ids.append(move.id)
+                if move.integrity_status and move.integrity_status != 'empty':
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Please correct red lines before processing')
+                    )
+
+            if not total_qty:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _("You have to enter the quantities you want to process before processing the move")
+                )
+            if not sequences:
+                return False
+            sequence_ok = sequence_ok and self.check_sequences(cr, uid, sequences, self.pool.get('stock.move.in.processor'))
+            if not sequence_ok:
+                return False
+
+        return True
+
+
+    def create_pack_family_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Create the different pack families according to values in stock moves
+        for wizard in self.browse(cr, uid, ids, context=context):
+
+            families_data = {}
+            for sm_in_proc in wizard.move_ids:
+                key = 'f%st%s' % (sm_in_proc.from_pack, sm_in_proc.to_pack)
+                families_data.setdefault(key, {
+                    'wizard_id': wizard.id,
+                    'move_ids': [],
+                    'from_pack': sm_in_proc.from_pack,
+                    'to_pack': sm_in_proc.to_pack,
+                })
+                families_data[key]['move_ids'].append(sm_in_proc.id)
+
+            for family_data in families_data.values():
+                move_ids = family_data.get('move_ids', [])
+                if 'move_ids' in family_data:
+                    del family_data['move_ids']
+
+                total_weight = 0.0
+                total_height = 0.0
+                total_length = 0.0
+                total_width = 0.0
+                for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
+                    total_weight += move.weight
+                    total_height += move.height
+                    total_length += move.length
+                    total_width += move.width
+                family_data.update({
+                    'weight': total_weight,
+                    'height': total_height,
+                    'length': total_length,
+                    'width': total_width,
+                })
+
+                fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
+                if move_ids:
+                    self.pool.get('stock.move.in.processor').write(cr, uid, move_ids, {'pack_id': fam_id}, context=context)
+        return False # TODO
+
+
+    def process_to_ship(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if not self.check_before_creating_pack_lines(cr, uid, ids, context=context):
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
+            return {
+                'name': _('Products to Process'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.incoming.processor',
+                'res_id': ids[0],
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+            }
+
+        # delete previous fam if has:
+        pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
+        self.pool.get('in.family.processor').unlink(cr, uid, pack_fam_to_del, context=context)
+        # then create new:
+        self.create_pack_family_lines(cr, uid, ids, context=context)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'incoming_shipment_processor_step2_form_view')[1]
+        return {
+            'name': _('PPL Information - step 2'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.incoming.processor',
+            'res_id': ids[0],
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+
+    def do_in_back(self, cr, uid, ids, context=None):
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+        }
+
+    def do_in_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for in_proc in self.browse(cr, uid, ids, context=context):
+            for fam in in_proc.family_ids:
+                # fill fields 'pack_info_id' with new 'wizard.import.in.pack.simulation.screen':
+                pack_info = {
+                    # 'wizard_id':,
+                    'parcel_from': fam.from_pack,
+                    'parcel_to': fam.to_pack,
+                    # 'parcel_qty': ,
+                    'total_weight': fam.weight,
+                    # 'total_volume': ,
+                    'total_height': fam.height,
+                    'total_length': fam.length,
+                    'total_width': fam.width,
+                    'integrity_status': fam.integrity_status,
+                }
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
+                    if not pack_info.get(manda_field):
+                        raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
+                pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
+                self.pool.get('stock.move.in.processor').write(cr, uid, [m.id for m in fam.move_ids], {'pack_info_id': pack_info_id}, context=context)
+
+            new_picking = self.pool.get('stock.picking').do_incoming_shipment(cr, uid, [in_proc.id], context=context)
+
+        return new_picking
+
 
 stock_incoming_processor()
 
@@ -492,7 +863,11 @@ class stock_move_in_processor(osv.osv):
         return super(stock_move_in_processor, self)._get_product_info(cr, uid, ids, field_name, args, context=context)
 
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
-        return super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        res = super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
+        for move in self.browse(cr, uid, ids, context=context):
+            if res.get(move.id, '') == 'empty' and move.sequence_issue and move.sequence_issue != 'empty':
+                res[move.id] = move.sequence_issue
+        return res
 
     def _get_batch_location_ids(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -583,7 +958,7 @@ class stock_move_in_processor(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"  # not_a_user_entry
             cr.execute(sql, (value, ml_id))
         return True
 
@@ -692,7 +1067,7 @@ class stock_move_in_processor(osv.osv):
             store={
                 'stock.move.in.processor': (
                     lambda self, cr, uid, ids, c=None: ids,
-                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date'],
+                    ['product_id', 'wizard_id', 'quantity', 'asset_id', 'prodlot_id', 'expiry_date', 'sequence_issue'],
                     20
                 ),
             },
@@ -813,6 +1188,15 @@ class stock_move_in_processor(osv.osv):
             help="Ticked if the product is a Controlled Substance",
         ),
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'weight': fields.float('Weight', digits=(16,2)),
+        'volume': fields.float('Volume', digits=(16,2)),
+        'height': fields.float('Height', digits=(16,2)),
+        'length': fields.float('Length', digits=(16,2)),
+        'width': fields.float('Width', digits=(16,2)),
+        'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
+        'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
     }
 
     """
@@ -837,6 +1221,19 @@ class stock_move_in_processor(osv.osv):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
 
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
+
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if 'from_pack' in vals or 'to_pack' in vals:
+            vals['sequence_issue'] = 'empty'
+
+        return super(stock_move_in_processor, self).write(cr, uid, ids, vals, context=context)
+
 
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
@@ -875,6 +1272,15 @@ class stock_move_in_processor(osv.osv):
 
         return res
 
+    def onchange_from_pack_to_pack(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        return {'value': {'integrity_status': 'empty'}}
+
 stock_move_in_processor()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

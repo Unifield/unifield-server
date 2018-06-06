@@ -70,7 +70,7 @@
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Description" colspan="2"/>
-                            <field name="name" string="Description"/>
+                            <field name="name" string="Description" />
                             <field name="old_code"/>
                             <field name="sale_ok" invisible="1" />
                             <field name="purchase_ok" invisible="1" />

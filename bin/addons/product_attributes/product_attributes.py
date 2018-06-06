@@ -318,19 +318,19 @@ class product_attributes(osv.osv):
                             touched='[''%s'']'
                         WHERE model = 'product.product'
                         AND res_id IN (%s)
-        ''' % (new_column, ids_req))
+        ''' % (new_column, ids_req))  # not_a_user_entry
 
         # Make the migration
         if new_column == 'standard_ok':
-            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'dangerous_goods':
-            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'short_shelf_life':
-            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'controlled_substance':
@@ -339,7 +339,7 @@ class product_attributes(osv.osv):
                               controlled_substance = 'True',
                               is_cs = True,
                               cs_txt = 'X'
-                            WHERE %s = True OR narcotic = True''' % moved_column
+                            WHERE %s = True OR narcotic = True''' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         return
@@ -1237,12 +1237,17 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
+                if any(char.islower() for char in vals['default_code']):
+                    vals['default_code'] = vals['default_code'].upper()
+
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
                     _('Error'),
                     _('White spaces are not allowed in XML ID code'),
                 )
+            if not context.get('sync_update_execution') and any(char.islower() for char in vals['xmlid_code']):
+                vals['xmlid_code'] = vals['xmlid_code'].upper()
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1314,6 +1319,8 @@ class product_attributes(osv.osv):
                             _('Error'),
                             _('White spaces are not allowed in product code'),
                         )
+                if any(char.islower() for char in vals['default_code']):
+                    vals['default_code'] = vals['default_code'].upper()
 
         # update local stock mission report lines :
         if 'state' in vals:
@@ -1780,7 +1787,7 @@ class product_attributes(osv.osv):
         '''
         res = {}
         if default_code:
-            cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
+            cr.execute("SELECT * FROM product_product pp where pp.default_code = %s", (default_code,))
             duplicate = cr.fetchall()
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
@@ -2042,7 +2049,7 @@ class product_uom(osv.osv):
                 uom_id = data_obj.get_object_reference(
                     cr, uid, 'msf_doc_import', data_id)[1]
                 if uom_id in ids:
-                    uom_name = self.read(cr, uid, uom_id, ['name'])['name'] 
+                    uom_name = self.read(cr, uid, uom_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
                         _('''The UoM '%s' is an Unifield internal

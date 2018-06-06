@@ -198,10 +198,14 @@ class report_fully_report(report_sxw.rml_parse):
         """
         db = pooler.get_pool(self.cr.dbname)
         aml_obj = db.get('account.move.line')
+        period_obj = db.get('account.period')
+        # Don't get the dates directly from the o.period_id, otherwise it would have the type
+        # "report.report_sxw._date_format" and would be interpreted differently depending on language settings
+        period = period_obj.browse(self.cr, self.uid, o.period_id.id, fields_to_fetch=['date_start', 'date_stop'])
         aml_ids = aml_obj.search(self.cr, self.uid, [('journal_id', '=', o.journal_id.id),
                                                      ('status_move', '=', 'manu'),
-                                                     ('date', '>=', o.period_id.date_start),
-                                                     ('date', '<=', o.period_id.date_stop)])
+                                                     ('date', '>=', period.date_start),
+                                                     ('date', '<=', period.date_stop)])
         amls = aml_obj.browse(self.cr, self.uid, aml_ids)
         return [aml for aml in amls]
 

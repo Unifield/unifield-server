@@ -222,17 +222,17 @@ class account_analytic_account(osv.osv):
             if isinstance(ids, (long, int)):
                 ids = [ids]
             res = dict.fromkeys(ids, False)
-            for id in ids:
-                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s" % (id))
+            for account_id in ids:
+                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s", (account_id,))
                 instance_ids = [x[0] for x in cr.fetchall()]
                 if len(instance_ids) > 0:
                     res_temp = []
                     for instance_id in instance_ids:
-                        cr.execute("select instance from msf_instance where id = %s and state = 'active'" % (instance_id))
+                        cr.execute("select instance from msf_instance where id = %s and state = 'active'", (instance_id,))
                         result = cr.fetchone()
                         if result:
                             res_temp.append(result[0])
-                    res[id] = res_temp
+                    res[account_id] = res_temp
             return res
 
         # UFTP-2: Get the children of the given instance and create manually sync updates for them, only when it is Coordo

@@ -78,7 +78,7 @@ PO Coordo,transport_mgmt.field_purchase_order_shipment_transport_ids,FALSE,FALSE
 PO Coordo,sale.field_sale_order_shipped,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/78
 PO Coordo,purchase.field_purchase_order_shipped_rate,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/79
 PO Coordo,product.field_product_template_state,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/80
-PO Coordo,tender_flow.field_purchase_order_tender_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/81
+PO Coordo,tender_flow.field_purchase_order_tender_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/81
 PO Coordo,transport_mgmt.field_purchase_order_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/82
 PO Coordo,transport_mgmt.field_purchase_order_transport_cost,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/83
 PO Coordo,transport_mgmt.field_purchase_order_transport_currency_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/84
@@ -145,7 +145,7 @@ PO Project,procurement_request.field_sale_order_notes,TRUE,FALSE,FALSE,msf_profi
 PO Project,sale.field_sale_order_order_line,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/146
 PO Project,sale.field_sale_order_order_type,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/147
 PO Project,sale.field_sale_order_origin,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/148
-PO Project,tender_flow.field_purchase_order_origin_tender_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/149
+PO Project,tender_flow.field_purchase_order_origin_tender_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/149
 PO Project,purchase.field_purchase_order_partner_address_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/150
 PO Project,sale.field_sale_order_partner_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/151
 PO Project,product.field_product_product_partner_ref,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/152
@@ -4281,7 +4281,7 @@ Products at HQ Supplier tab access only,product_asset.field_product_product_asse
 Products at HQ Supplier tab access only,product_asset.field_product_template_asset_type_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30086
 Products at HQ Supplier tab access only,product_manufacturer.field_product_product_attribute_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30087
 Products at HQ Supplier tab access only,product_attributes.field_product_product_available_for_restriction,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30088
-Products at HQ Supplier tab access only,product_attributes.field_product_product_batch_management,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30089
+Products at HQ Supplier tab access only,product_attributes.field_product_product_batch_management,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/30089
 Products at HQ Supplier tab access only,supplier_catalogue.field_product_product_catalogue_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30090
 Products at HQ Supplier tab access only,product.field_product_template_categ_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30091
 Products at HQ Supplier tab access only,product_attributes.field_product_product_closed_article,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30092
@@ -4370,7 +4370,7 @@ Products at HQ Supplier tab access only,product_attributes.field_product_product
 Products at HQ Supplier tab access only,product.field_product_product_outgoing_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30175
 Products at HQ Supplier tab access only,product.field_product_product_packaging,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30176
 Products at HQ Supplier tab access only,product.field_product_product_partner_ref,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30177
-Products at HQ Supplier tab access only,product_attributes.field_product_product_perishable,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30178
+Products at HQ Supplier tab access only,product_attributes.field_product_product_perishable,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/30178
 Products at HQ Supplier tab access only,return_claim.field_product_product_picking_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30179
 Products at HQ Supplier tab access only,product.field_product_product_price,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30180
 Products at HQ Supplier tab access only,product.field_product_product_price_extra,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30181

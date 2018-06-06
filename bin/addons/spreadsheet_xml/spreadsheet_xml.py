@@ -5,6 +5,8 @@ from mx import DateTime
 from tools.translate import _
 from osv import osv
 import csv
+from . import UNIT_SEPARATOR
+import fileinput
 
 
 # example to read a Excel XML file in consumption_calculation/wizard/wizard_import_rac.py
@@ -126,9 +128,16 @@ class SpreadsheetRow(SpreadsheetTools):
 
 class SpreadsheetXML(SpreadsheetTools):
 
-    def __init__(self, xmlfile=False, xmlstring=False):
+    def __init__(self, xmlfile=False, xmlstring=False, context=None):
+        if context is None:
+            context = {}
         try:
             if xmlfile:
+                if context.get('from_je_import', False):
+                    # replace the unit separator code by an arbitrary string (cf &#31; is invalid in XML 1.0 used by etree)
+                    unit_separator_code = '&#31;'
+                    for line in fileinput.input(xmlfile, inplace=1):
+                        print line.replace(unit_separator_code, UNIT_SEPARATOR)
                 self.xmlobj = etree.parse(xmlfile)
             else:
                 self.xmlobj = etree.XML(xmlstring)

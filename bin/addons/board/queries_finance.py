@@ -60,9 +60,11 @@ JOIN account_account ON account_account.id = account_move_line.account_id
 JOIN account_journal ON account_journal.id = account_move.journal_id
 JOIN account_period ON account_move.period_id = account_period.id
 LEFT JOIN account_analytic_line on account_analytic_line.move_id = account_move_line.id
+LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account_analytic_account.id
 WHERE
 account_journal.type not in ('system', 'revaluation', 'cur_adj') AND
-account_account.is_analytic_addicted = 't'
+account_account.is_analytic_addicted = 't' AND
+account_analytic_account.category not in ('FREE1', 'FREE2')
 GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start, account_account.code
 HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) > 0.00001
 ORDER BY account_period.date_start, account_move.name"""
@@ -84,9 +86,11 @@ JOIN account_account ON account_account.id = account_move_line.account_id
 JOIN account_journal ON account_move.journal_id = account_journal.id
 JOIN account_period ON account_period.id = account_move.period_id
 LEFT JOIN account_analytic_line ON account_analytic_line.move_id = account_move_line.id
+LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account_analytic_account.id
 WHERE
 account_journal.type in ('revaluation', 'cur_adj') AND
-account_account.is_analytic_addicted = 't'
+account_account.is_analytic_addicted = 't' AND
+account_analytic_account.category not in ('FREE1', 'FREE2')
 GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start, account_account.code
 HAVING abs(avg(account_move_line.credit-account_move_line.debit) - sum(COALESCE(account_analytic_line.amount, 0))) > 0.00001
 order by account_period.date_start, account_move.name"""
