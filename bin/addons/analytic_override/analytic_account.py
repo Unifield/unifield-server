@@ -418,6 +418,16 @@ class analytic_account(osv.osv):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
+        if context is None:
+            context = {}
+
+        # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
+        if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
+            param = self.pool.get('ir.config_parameter')
+            init_cc_fx_gain = param.get_param(cr, 1, 'INIT_CC_FX_GAIN')
+            if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
+                vals['for_fx_gain_loss'] = True
+                param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
         return super(analytic_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):

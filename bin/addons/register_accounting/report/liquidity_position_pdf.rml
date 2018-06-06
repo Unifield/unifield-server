@@ -130,7 +130,7 @@
           <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
-          [[ repeatIn(getPendingCheques()['registers'], 'journal') ]]
+          [[ repeatIn(getChqJournalCodes(), 'journal') ]]
           <td><para style="text">[[ getPendingCheques()['registers'][journal]['instance'] ]]</para></td>
           <td><para style="text">[[ journal ]] - [[ getPendingCheques()['registers'][journal]['journal_name'] ]]</para></td>
           <td><para style="text">[[ getPendingCheques()['registers'][journal]['state'] ]]</para></td>
