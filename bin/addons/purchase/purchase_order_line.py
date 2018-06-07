@@ -1199,6 +1199,16 @@ class purchase_order_line(osv.osv):
                     _('You can not have an order line with a negative or zero quantity')
                 )
 
+            if vals.get('origin') \
+                    and not so_obj.search_exist(cr, uid, [('name', '=', vals.get('origin')),
+                                                          ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p'])],
+                                                context=context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') \
+                    % vals.get('origin')
+                )
+
             # try to fill "link_so_id":
             if not line.link_so_id and not vals.get('link_so_id'):
                 linked_so = False
