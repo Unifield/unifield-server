@@ -1334,7 +1334,7 @@ class purchase_order_line(osv.osv):
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
-            self.update_fo_lines(cr, uid, [pol.id], context=context)
+            self.update_fo_lines(cr, uid, [pol.id, new_po_line], context=context)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'
