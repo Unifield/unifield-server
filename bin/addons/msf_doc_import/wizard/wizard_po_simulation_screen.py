@@ -1656,6 +1656,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
+                    if line.imp_stock_take_date:
+                        line_vals['stock_take_date'] = line.imp_stock_take_date,
 
                     # UF-2537 after split reinject import qty computed in
                     # simu for import consistency versus simu

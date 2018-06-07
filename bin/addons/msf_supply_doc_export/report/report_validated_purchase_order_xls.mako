@@ -129,9 +129,9 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address name')}</Data></Cell>
         % if o.order_type == 'direct':
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.partner_address_id and getContactName(o.partner_address_id.id)) or (o.dest_address_id and getContactName(o.dest_address_id.id)) or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getContactName(o.dest_address_id.id) or ''|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.partner_address_id and o.partner_address_id.name) or (o.dest_address_id and o.dest_address_id.name) or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.name or ''|x}</Data></Cell>
         % endif
     </Row>
     <Row>
@@ -144,7 +144,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address name')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress() or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress()|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address')}</Data></Cell>
