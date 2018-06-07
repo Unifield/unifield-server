@@ -743,16 +743,13 @@ class stock_incoming_processor(osv.osv):
                 total_length = 0.0
                 total_width = 0.0
                 for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
-                    total_weight += move.weight
-                    total_height += move.height
-                    total_length += move.length
-                    total_width += move.width
-                family_data.update({
-                    'weight': total_weight,
-                    'height': total_height,
-                    'length': total_length,
-                    'width': total_width,
-                })
+                    family_data.update({
+                        'weight': move.weight,
+                        'height': move.height,
+                        'length': move.length,
+                        'width': move.width,
+                    })
+                    break
 
                 fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
                 if move_ids:
