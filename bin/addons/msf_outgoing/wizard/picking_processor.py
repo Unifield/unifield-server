@@ -240,6 +240,7 @@ class stock_picking_processor(osv.osv):
                                 'height': sm_in_proc.pack_info_id.total_height,
                                 'length': sm_in_proc.pack_info_id.total_length,
                                 'width': sm_in_proc.pack_info_id.total_width,
+                                'cost': sm_in_proc.cost,
                             })
                             if link_data:
                                 line_obj.write(cr, uid, [sm_in_proc.id], link_data, context=context)
