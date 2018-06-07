@@ -81951,8 +81951,7 @@ msgid "XML Export"
 msgstr "XML Export"
 
 #. module: purchase
-#: code:addons/purchase/purchase_order_line.py:1208
-#: code:addons/purchase/purchase_order_line.py:1404
+#: code:addons/purchase/purchase_order_line.py:1394
 #, python-format
 msgid "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
 msgstr "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
