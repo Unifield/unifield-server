@@ -452,7 +452,7 @@
 </Row>
 <Row>
 <Cell>
-<Data ss:Type="String">''</Data>
+<Data ss:Type="String"></Data>
 </Cell>
 </Row>
 
