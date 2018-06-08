@@ -400,7 +400,7 @@
 <Data ss:Type="String">${_('Reporting currency:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">${(  o.reporting_currency and o.reporting_currency.name or '')|x}</Data>
+<Data ss:Type="String">${ getReportingCurrency(o) |x}</Data>
 </Cell>
 </Row>
 <Row>

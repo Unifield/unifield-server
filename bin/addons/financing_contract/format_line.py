@@ -284,6 +284,9 @@ class financing_contract_format_line(osv.osv):
             Method to compute the allocated budget/amounts, depending on the information in the line
         """
         res = {}
+        if context is None:
+            context = {}
+        curr_obj = self.pool.get('res.currency')
         # 1st step: get the real list of actual lines to compute
         actual_line_ids = []
         overhead = self._is_overhead_present(cr, uid, ids, context=context)
@@ -313,6 +316,19 @@ class financing_contract_format_line(osv.osv):
             if line.id not in res:
                 self._get_view_amount(line, total_budget_costs, res)
 
+        # convert the amounts from the reporting currency of the contract to the output currency selected in the wizard
+        res_in_curr = {}
+        if 'contract_date' in context and 'contract_currency_id' in context and 'reporting_currency' in context and \
+                context['contract_currency_id'] != context['reporting_currency']:
+            date_context = context.copy()
+            date_context.update({'date': context['contract_date']})  # use the rate at .... date  / TODO: indicate the right date used
+            for r_id in res:
+                if res[r_id] == 0.0:
+                    res_in_curr[r_id] = 0.0
+                else:
+                    res_in_curr[r_id] = curr_obj.compute(cr, uid, context['contract_currency_id'], context['reporting_currency'],
+                                                         res[r_id] or 0.0, round=False, context=date_context)
+            res = res_in_curr
         return res
 
     def _get_actual_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):

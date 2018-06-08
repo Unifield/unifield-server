@@ -8,12 +8,14 @@ class report_interactive(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_interactive, self).__init__(cr, uid, name, context=context)
         self.context = {}
+        self.out_currency = False
         self.tot = []
         self.lines = []
         self.localcontext.update({
             'getLines':self.getLines,
             'getTot':self.getTot,
             'getCostCenter':self.getCostCenter,
+            'getReportingCurrency': self.getReportingCurrency,
             'checkType':self.checkType,
             'checkType2':self.checkType2,
         })
@@ -44,6 +46,18 @@ class report_interactive(report_sxw.rml_parse):
         for cc in obj.cost_center_ids:
             ccs += [cc.code]
         return ', '.join(ccs)
+
+    def getReportingCurrency(self, obj):
+        """
+        Returns the name of the currency in which the report is displayed
+        """
+        if hasattr(self, 'datas') and 'out_currency' in self.datas:
+            curr_obj = self.pool.get('res.currency')
+            curr_id = self.datas['out_currency']
+            currency = curr_obj.read(self.cr, self.uid, curr_id, ['name'])['name']
+        else:
+            currency = obj.reporting_currency and obj.reporting_currency.name
+        return currency
 
     def getTot(self,o):
         if self.tot[o]:
