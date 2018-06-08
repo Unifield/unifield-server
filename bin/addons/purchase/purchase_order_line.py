@@ -1396,6 +1396,7 @@ class purchase_order_line(osv.osv):
                 res['value'] = {
                     'display_sync_ref': False,
                     'instance_sync_order_ref': '',
+                    'origin': '',
                 }
             else:
                 res['value'] = {
