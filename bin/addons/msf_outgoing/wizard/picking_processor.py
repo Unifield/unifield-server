@@ -210,10 +210,12 @@ class stock_picking_processor(osv.osv):
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
 
                 if line_obj._name == 'stock.move.in.processor':
-                    in_proc_ids = self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', '=', move.picking_id.id)], order='id desc', context=context)
 
                     # search for simulation done for this move, and if has pack info attached
-                    sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id), ('wizard_id', 'in', in_proc_ids)], order='id desc', context=context)
+                    sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], order='id desc', context=context)
+                    
+                    wiz_ids = [data['wizard_id'] for data in line_obj.read(cr, uid, sm_in_proc, ['wizard_id'])]
+                    in_proc_ids = sorted(list(set(wiz_ids)), reverse=True)
 
                     link_data = {}
                     if not sm_in_proc:
