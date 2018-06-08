@@ -52,6 +52,22 @@ class patch_scripts(osv.osv):
     }
 
     # UF9.0
+    def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
+        data = self.pool.get('ir.model.data')
+        seq_id = False
+        try:
+            seq_id = data.get_object_reference(cr, uid, 'sale', 'seq_sale_order')[1]
+        except:
+            return True
+
+        if seq_id:
+            seq_obj = self.pool.get('ir.sequence')
+            seq_id = seq_obj.search(cr, uid, [('id', '=', seq_id), ('implementation', '=', 'psql')])
+            if seq_id:
+                seq_obj.write(cr, uid, seq_id[0], {'implementation': 'no_gap'})
+                self._logger.warn('Change FO seq to no_gap')
+        return True
+
     def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
         if self.pool.get('sync.version.instance.monitor'):
             cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
