@@ -464,6 +464,7 @@
 <Data ss:Type="String">${_('Name')}</Data>
 </Cell>
 
+<% lines = getLines(o) %>
 % if checkType2():
 	<Cell ss:StyleID="s27">
 	<Data ss:Type="String">${_('Earmarked - Budget')}</Data>
@@ -493,9 +494,6 @@
 </Cell>
 </Row>
 
-
-<% line = False %>
-<% lines = getLines(o) %>
 % for line in lines:
 <Row>
 <Cell ss:StyleID="s29">
