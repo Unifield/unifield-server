@@ -1720,6 +1720,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,

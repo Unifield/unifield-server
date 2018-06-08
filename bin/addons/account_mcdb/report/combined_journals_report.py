@@ -33,6 +33,7 @@ class combined_journals_report(report_sxw.rml_parse):
         self.selector_id = False
         self.aml_domain = []
         self.aal_domain = []
+        self.analytic_journal_ids = []
         self.analytic_axis = 'fp'  # 'fp', 'f1' or 'f2'
         self.total_booking_debit = 0.0
         self.total_booking_credit = 0.0
@@ -139,7 +140,8 @@ class combined_journals_report(report_sxw.rml_parse):
         for ml in amls:
             current_line_position += 1
             # if the JI has no related Analytic lines, store it directly
-            search_aal_domain = [('move_id', '=', ml['id'])]
+            # check Entry Seq. matching to exclude REV/COR AJI linked to the original JI in case of a pure AD correction
+            search_aal_domain = [('move_id', '=', ml['id']), ('entry_sequence', '=', ml['entry_sequence'])]
             category = (self.analytic_axis == 'f1' and 'FREE1') or (self.analytic_axis == 'f2' and 'FREE2') or 'FUNDING'
             analytic_account_ids = analytic_acc_obj.search(self.cr, self.uid,
                                                            [('category', '=', category), ('type', '=', 'normal')],
@@ -230,6 +232,7 @@ class combined_journals_report(report_sxw.rml_parse):
         Returns a String corresponding to the criteria selected
         """
         selector_obj = self.pool.get('account.mcdb')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
         # first get the Analytic axis
         category = (self.analytic_axis == 'f1' and 'Free 1') or (self.analytic_axis == 'f2' and 'Free 2') or 'Funding Pool'
         criteria = 'Display: %s' % category
@@ -238,6 +241,13 @@ class combined_journals_report(report_sxw.rml_parse):
         aml_selection = selector_obj.get_selection_from_domain(self.cr, self.uid, self.aml_domain, model, context=self.context)
         if aml_selection:
             criteria = '%s ; %s' % (criteria, aml_selection)
+        # finally get the Analytic Journal list
+        if self.analytic_journal_ids:
+            analytic_journals = analytic_journal_obj.read(self.cr, self.uid, self.analytic_journal_ids, ['code'],
+                                                          context=self.context)
+            journal_selection = '%s: %s' % (_('Analytic Journals'),
+                                            ', '.join([analytic_journal['code'] for analytic_journal in analytic_journals]))
+            criteria = '%s ; %s' % (criteria, journal_selection)
         # truncate the string if it is too long
         if len(criteria) > 4000:
             criteria = "%s..." % criteria[:4000]
@@ -268,6 +278,7 @@ class combined_journals_report(report_sxw.rml_parse):
         """
         selector_obj = self.pool.get('account.mcdb')
         journal_obj = self.pool.get('account.journal')
+        aal_obj = self.pool.get('account.analytic.line')
         self.context = data.get('context', {})
         self.selector_id = data.get('selector_id', False)
         if not self.selector_id:
@@ -280,23 +291,41 @@ class combined_journals_report(report_sxw.rml_parse):
         # get the domain for the Analytic Journal Items
         aal_context = self.context.copy()
         aal_context.update({'selector_model': 'account.analytic.line'})
-        aal_domain = selector_obj._get_domain(self.cr, self.uid, self.selector_id, context=aal_context)
-        # exclude Entry Status and get the Analytic Journals matching the G/L journals selected
-        for t in aal_domain:
-            if t[0] == 'journal_id':
-                journal_dom = [('id', t[1], t[2])]  # ex: ('journal_id', 'not in', (9,)) ==> [('id', 'not in', (9,))]
+        original_aal_domain = selector_obj._get_domain(self.cr, self.uid, self.selector_id, context=aal_context)
+        aal_domain = []
+        analytic_journal_ids = set()
+        for t in original_aal_domain:
+            # get the Analytic Journals matching the G/L journals selected
+            if t[0] == 'gl_journal_id':
+                journal_dom = [('id', t[1], t[2])]  # ex: ('gl_journal_id', 'not in', (9,)) ==> [('id', 'not in', (9,))]
                 gl_journal_ids = journal_obj.search(self.cr, self.uid, journal_dom, context=self.context)
-                analytic_journal_ids = []
                 for gl_journal in journal_obj.browse(self.cr, self.uid, gl_journal_ids,
                                                      fields_to_fetch=['analytic_journal_id'], context=self.context):
                     if gl_journal.analytic_journal_id:
-                        analytic_journal_ids.append(gl_journal.analytic_journal_id.id)
-                if analytic_journal_ids:
-                    self.aal_domain.append(('journal_id', 'in', analytic_journal_ids))
+                        analytic_journal_ids.add(gl_journal.analytic_journal_id.id)
+            # add the Analytic Journals selected if any
+            elif t[0] == 'analytic_journal_id':
+                self.analytic_journal_ids.extend(t[2])  # store the journals selected in the Analytic Journals filter (only)
+                analytic_journal_ids.update(t[2])
+            # exclude Entry Status
             elif t[0] != 'move_id.state':
-                self.aal_domain.append(t)
-        # only take into account AJIs which are NOT linked to a JIs
-        self.aal_domain.append(('move_id', '=', False))
+                aal_domain.append(t)
+        if analytic_journal_ids:
+            aal_domain.append(('journal_id', 'in', list(analytic_journal_ids)))
+        # only take into account AJIs which are NOT linked to a JI i.e. without move_id
+        # Particular case: AJIs generated by a pure AD correction have the original JI as move_id
+        analytic_line_ids = aal_obj.search(self.cr, self.uid, aal_domain, context=self.context)
+        aji_ids = []
+        aji_fields = ['move_id', 'journal_id', 'last_corrected_id', 'reversal_origin']
+        for aji in aal_obj.browse(self.cr, self.uid, analytic_line_ids, fields_to_fetch=aji_fields, context=self.context):
+            if not aji.move_id:
+                aji_ids.append(aji.id)
+            elif aji.journal_id.type == 'correction':
+                corrected_aal = aji.last_corrected_id or aji.reversal_origin or False
+                corrected_aml = corrected_aal and corrected_aal.move_id or False
+                if corrected_aml and corrected_aml.last_cor_was_only_analytic and corrected_aml.id == aji.move_id.id:
+                    aji_ids.append(aji.id)
+        self.aal_domain = [('id', 'in', aji_ids)]
         return super(combined_journals_report, self).set_context(objects, data, ids, report_type)
 
 
