@@ -2575,12 +2575,13 @@ msgstr "Débit/Crédit"
 msgid "Billing"
 msgstr "Facturation"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mm
 msgid "Myanmar"
-msgstr "Myanmar"
+msgstr "Birmanie"
 
 #. modules: purchase_override, sale
 #: field:split.purchase.order.line.wizard,new_line_qty:0
@@ -3374,12 +3375,13 @@ msgstr "Sous-flux de Commande de Terrain généré."
 msgid "Create"
 msgstr "Créer"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.lc
 msgid "Saint Lucia"
-msgstr "Saint Lucia"
+msgstr "Sainte-Lucie"
 
 #. modules: msf_budget, account, finance, account_mcdb, account_period_closing_level, sync_so, analytic_distribution
 #: report:account.account.balance:0
@@ -3743,12 +3745,13 @@ msgstr "Quand la valorisation en temps réel est activée sur un produit, ce com
 msgid "Flag for controlling sync actions on the period state."
 msgstr "Flag for controlling sync actions on the period state."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.km
 msgid "Comoros"
-msgstr "Comoros"
+msgstr "Comores"
 
 #. modules: purchase, purchase_override, sale, procurement_request
 #: field:purchase.order.line,modification_comment:0
@@ -3888,11 +3891,6 @@ msgstr "Importation de la Liste"
 #: field:ir.filters,context:0
 msgid "Context Value"
 msgstr "Valeur du contexte"
-
-#. module: base
-#: model:res.country,name:base.sj
-msgid "Svalbard and Jan Mayen Islands"
-msgstr "Svalbard et îles Jan Mayen"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_journal_form
@@ -5137,12 +5135,13 @@ msgstr "Facture en Attente"
 msgid "Unrecorded expenses:"
 msgstr "Dépenses non enregistrées :"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.br
 msgid "Brazil"
-msgstr "Brazil"
+msgstr "Brésil"
 
 #. modules: base, msf_outgoing
 #: model:ir.ui.menu,name:base.menu_custom
@@ -5563,11 +5562,6 @@ msgstr "Not consistent parent list"
 msgid "Desc"
 msgstr "Desc"
 
-#. module: base
-#: model:res.country,name:base.jm
-msgid "Jamaica"
-msgstr "Jamaïque"
-
 #. module: sync_client
 #: selection:sync.client.sync_manager,state:0
 msgid "Init"
@@ -5637,11 +5631,6 @@ msgstr "Lignes contiennent Commandes du terrain"
 #: model:ir.actions.act_window,name:consumption_calculation.action_new_monthly_review_consumption
 msgid "New real monthly consumption"
 msgstr "Nouveau report des consommations réelles"
-
-#. module: base
-#: model:res.country,name:base.bh
-msgid "Bahrain"
-msgstr "Bahreïn"
 
 #. module: delivery_mechanism
 #: code:addons/delivery_mechanism/delivery_mechanism.py:650
@@ -5857,11 +5846,6 @@ msgstr "Entrées Siège Défractionner"
 #: view:res.company:0
 msgid "P&L result accounts"
 msgstr "Comptes de revenu et dépense "
-
-#. module: base
-#: model:res.country,name:base.tm
-msgid "Turkmenistan"
-msgstr "Turkménistan"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_tax_chart
@@ -6157,12 +6141,13 @@ msgstr "Description"
 msgid "Family"
 msgstr "Famille"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.pe
 msgid "Peru"
-msgstr "Peru"
+msgstr "Pérou"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2413
@@ -6561,11 +6546,6 @@ msgid "Payment Ref"
 msgstr "Réf. de Paiement"
 
 #. module: base
-#: model:res.country,name:base.pe
-msgid "Peru"
-msgstr "Pérou"
-
-#. module: base
 #: model:ir.actions.act_window,help:base.action_country_state
 msgid "If you are working on the American market, you can manage the different federal states you are working on from here. Each state is attached to one country."
 msgstr "Si vous travaillez sur le marché américain, vous pouvez gérer les différents états fédéraux avec lesquels vous travaillez à partir d'ici. Chaque état est lié à un pays."
@@ -6669,11 +6649,6 @@ msgstr "Astuces du Menu"
 #, python-format
 msgid "following # lines with account/partner are not compatible:"
 msgstr "les lignes # suivantes avec les comptes/ partenaires ne sont pas compatibles"
-
-#. module: base
-#: model:res.country,name:base.tj
-msgid "Tajikistan"
-msgstr "Tadjikistan"
 
 #. module: base
 #: help:ir.actions.act_window,limit:0
@@ -6863,11 +6838,6 @@ msgstr "FTP login"
 #: model:res.currency,currency_name:base.RUB
 msgid "RUSSIAN ROUBLE"
 msgstr "RUSSIAN ROUBLE"
-
-#. module: base
-#: model:res.country,name:base.sb
-msgid "Solomon Islands"
-msgstr "Iles Salomon"
 
 #. module: stock
 #: help:stock.move,date_expected:0
@@ -7135,12 +7105,13 @@ msgstr "une Commande Terrain"
 msgid "One accounting code is missing!"
 msgstr "Un code comptable est manquant!"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ug
 msgid "Uganda"
-msgstr "Uganda"
+msgstr "Ouganda"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -7543,12 +7514,13 @@ msgstr "Synchroniser cet Utilisateur vers le bas"
 msgid "This line does not have an analytic domain!"
 msgstr "Cette ligne n'a pas de domaine analytique!"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.th
 msgid "Thailand"
-msgstr "Thailand"
+msgstr "Thaïlande"
 
 #. module: msf_doc_import
 #: view:msf.import.export:0
@@ -7975,11 +7947,6 @@ msgstr "\n"
 msgid "Aggregated Amount curency"
 msgstr "Aggregated Amount curency"
 
-#. module: base
-#: model:res.country,name:base.rs
-msgid "Serbia"
-msgstr "Serbie"
-
 #. modules: report_webkit, msf_doc_import
 #: report:addons/msf_doc_import/report/export_generic.mako:58
 #: report:addons/msf_doc_import/report/export_user_access.mako:64
@@ -8030,12 +7997,13 @@ msgstr "System"
 msgid "You can not confirm purchase order without Purchase Order Lines."
 msgstr "You can not confirm purchase order without Purchase Order Lines."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gn
 msgid "Guinea"
-msgstr "Guinea"
+msgstr "Guinée"
 
 #. module: report_webkit
 #: selection:ir.header_webkit,format:0
@@ -9085,12 +9053,13 @@ msgstr "! - Requires national export license"
 msgid "Cancelled-r"
 msgstr "Cancelled-r"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ng
 msgid "Nigeria"
-msgstr "Nigeria"
+msgstr "Nigéria"
 
 #. module: purchase
 #: field:purchase.order.line,fnct_project_ref:0
@@ -9257,11 +9226,6 @@ msgstr "Nomenclatures"
 #: field:wizard.journal.items.corrections.lines,currency_id:0
 msgid "Book. Curr."
 msgstr "Enreg.Devise"
-
-#. module: base
-#: model:res.country,name:base.gm
-msgid "Gambia"
-msgstr "Gambie"
 
 #. module: stock
 #: field:physical.inventory,date_confirmed:0
@@ -9604,16 +9568,6 @@ msgstr "Lignes de Catalogue Fournisseur"
 msgid "Future Stock"
 msgstr "Stock futur"
 
-#. module: base
-#: model:res.country,name:base.sn
-msgid "Senegal"
-msgstr "Sénégal"
-
-#. module: base
-#: model:res.country,name:base.gy
-msgid "Guyana"
-msgstr "Guyane"
-
 #. modules: return_claim, msf_outgoing, stock, stock_override, kit, msf_doc_import
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:create.picking.move.processor,integrity_status:0
@@ -9658,12 +9612,13 @@ msgstr "Pas Disponible"
 msgid "Africa/Lagos"
 msgstr "Africa/Lagos"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tz
 msgid "Tanzania"
-msgstr "Tanzania"
+msgstr "Tanzanie"
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/project_expenses_xls.mako:357
@@ -9699,12 +9654,13 @@ msgstr "Inventaire - Propriétés"
 msgid "Multiple Qty"
 msgstr "Qté Multiple"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.nc
 msgid "New Caledonia (French)"
-msgstr "Nouvelle Calédonie (française)"
+msgstr "Nouvelle Calédonie (Française)"
 
 #. module: purchase
 #: model:process.node,name:purchase.process_node_confirmpurchaseorder0
@@ -10205,11 +10161,6 @@ msgstr "Quand la mesure à été collectée."
 msgid "Output Currency"
 msgstr "Devise de sortie"
 
-#. module: base
-#: model:res.country,name:base.uk
-msgid "United Kingdom"
-msgstr "Royaume-Uni"
-
 #. module: msf_profile
 #: code:addons/msf_profile/msf_profile.py:2629
 #, python-format
@@ -10225,11 +10176,6 @@ msgstr "Cash Request - Export PDF"
 #: view:account.move.reconcile:0
 msgid "Journal Entry Reconcile"
 msgstr "Ecriture de Lettrage du Journal"
-
-#. module: base
-#: model:res.country,name:base.br
-msgid "Brazil"
-msgstr "Brésil"
 
 #. module: account
 #: view:account.payment.term.line:0
@@ -10669,12 +10615,13 @@ msgstr "Consistency OK"
 msgid "Waiting ?"
 msgstr "Waiting ?"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sd
 msgid "Sudan"
-msgstr "Sudan"
+msgstr "Soudan"
 
 #. module: mission_stock
 #: field:stock.mission.report.line,mission_report_id:0
@@ -11234,12 +11181,13 @@ msgstr "Registres à créer"
 msgid "Delivery Information"
 msgstr "Information sur Livraison"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mq
 msgid "Martinique (French)"
-msgstr "Martinique (French)"
+msgstr "Martinique (Française)"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:683
@@ -11356,11 +11304,6 @@ msgstr "Confirmer l'Assemblage de Kit"
 #, python-format
 msgid "You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !"
 msgstr "Vous ne pouvez pas modifier une écriture comptable validée. Vous pouvez juste modifier quelques champs non-critiques !"
-
-#. module: base
-#: model:res.country,name:base.gp
-msgid "Guadeloupe (French)"
-msgstr "Gouadeloupe (Française)"
 
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_ir_followup_location_wizard
@@ -11825,11 +11768,6 @@ msgstr "Importer le produit dans la liste"
 msgid "You cannot 'Close' a Request for Quotation attached to a tender. Please make the tender %s to 'Closed' before !"
 msgstr "You cannot 'Close' a Request for Quotation attached to a tender. Please make the tender %s to 'Closed' before !"
 
-#. module: base
-#: model:res.country,name:base.np
-msgid "Nepal"
-msgstr "Népal"
-
 #. module: stock_override
 #: help:stock.picking,fake_type:0
 msgid "Shipping type specify, goods coming in or going out."
@@ -11891,20 +11829,21 @@ msgstr "Produit - Période de Retrait "
 #: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:305
 #, python-format
 msgid "No booking amount found!"
-msgstr "No booking amount found!"
+msgstr "Aucun montant d'enregistrement trouvé !"
 
 #. module: purchase_followup
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:212
 #: report:purchase.follow.up.report_pdf:0
 msgid "STATE"
-msgstr "STATE"
+msgstr "ÉTAT"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gq
 msgid "Equatorial Guinea"
-msgstr "Equatorial Guinea"
+msgstr "Guinée Equatoriale"
 
 #. module: base
 #: help:ir.model.fields,relation:0
@@ -11988,14 +11927,15 @@ msgstr "Mauvais format: cela devrait être sous Tableur XML 2003"
 #: code:addons/msf_doc_import/sale_order.py:285
 #, python-format
 msgid "You have to define a valid UOM, i.e. not \"To be defined\"."
-msgstr "You have to define a valid UOM, i.e. not \"To be defined\"."
+msgstr "Vous devez indiquer une UdM valide, i.e. pas \"À définir\"."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ky
 msgid "Cayman Islands"
-msgstr "Cayman Islands"
+msgstr "Îles Caïmans"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_register_opening_confirmation
@@ -12199,11 +12139,6 @@ msgstr "Sourcing Logs"
 #: view:stock.move.split:0
 msgid "Split in lots"
 msgstr "Diviser en lots"
-
-#. module: base
-#: model:res.country,name:base.uz
-msgid "Uzbekistan"
-msgstr "Ouzbékistan"
 
 #. modules: account_subscription, account_journal
 #: code:addons/account_subscription/account_use_model.py:37
@@ -12993,12 +12928,13 @@ msgstr "Période des consommations"
 msgid "Second Choice & specific programme. The article must only be used if the first choice. is not available or cannot be used in a specific context. The article must be used only in a properly designed programme."
 msgstr "Second Choice & specific programme. The article must only be used if the first choice. is not available or cannot be used in a specific context. The article must be used only in a properly designed programme."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.dz
 msgid "Algeria"
-msgstr "Algeria"
+msgstr "Algérie"
 
 #. module: msf_doc_import
 #: report:po.simulation.screen:0
@@ -14011,12 +13947,13 @@ msgstr "Kit - Produit"
 msgid "Products Nomenclature"
 msgstr "Nomenclature Produits"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.fm
 msgid "Micronesia"
-msgstr "Micronesia"
+msgstr "Micronésie"
 
 #. modules: stock_forecast, procurement
 #: selection:procurement.order,state:0
@@ -14851,19 +14788,21 @@ msgstr "is shipped."
 msgid "Purchase order per month"
 msgstr "Bons de Commande par mois"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.jo
 msgid "Jordan"
-msgstr "Jordan"
+msgstr "Jordanie"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.fo
 msgid "Faroe Islands"
-msgstr "Faroe Islands"
+msgstr "Iles Féroé"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2637
@@ -14888,12 +14827,13 @@ msgstr "Expected product to receive"
 msgid "Shipping Unit"
 msgstr "Unité d'Expédition"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.uz
 msgid "Uzbekistan"
-msgstr "Uzbekistan"
+msgstr "Ouzbékistan"
 
 #. module: account
 #: help:res.partner,last_reconciliation_date:0
@@ -15790,12 +15730,13 @@ msgstr "Fonctions d'export automatisé"
 msgid "Type"
 msgstr "Type"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.so
 msgid "Somalia"
-msgstr "Somalia"
+msgstr "Somalie"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -15811,11 +15752,6 @@ msgstr "Produit - Durée d'utilisation "
 #: field:sync.client.log_sale_purchase,is_product_price_modified:0
 msgid "Product price changed"
 msgstr "Le prix du produit a changé"
-
-#. module: base
-#: model:res.country,name:base.id
-msgid "Indonesia"
-msgstr "Indonésie"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -15909,12 +15845,13 @@ msgstr "Import Automatic supply lines from Excel sheet"
 msgid "Date Order"
 msgstr "Date de Commande"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bb
 msgid "Barbados"
-msgstr "Barbados"
+msgstr "Barbade"
 
 #. module: base
 #: model:ir.ui.menu,name:base.ir_ui_menu_attachmentconfig
@@ -16036,11 +15973,6 @@ msgstr "Total Selection"
 #: view:sale.order.change.currency:0
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
-
-#. module: base
-#: model:res.country,name:base.ma
-msgid "Morocco"
-msgstr "Maroc"
 
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:422
@@ -16299,11 +16231,6 @@ msgstr "Ce rapport permet d'imprimer ou de générer un document PDF de votre ba
 #: field:res.company,lib_path:0
 msgid "Webkit Executable Path"
 msgstr "Webkit - Chemin fichier exécutable "
-
-#. module: base
-#: model:res.country,name:base.sd
-msgid "Sudan"
-msgstr "Soudan"
 
 #. module: account
 #: view:res.partner:0
@@ -16581,12 +16508,13 @@ msgstr "Responsable"
 msgid "Proprietary instance"
 msgstr "Instance propriétaire"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.nu
 msgid "Niue"
-msgstr "Niue"
+msgstr "Niué"
 
 #. module: stock_override
 #: help:stock.move,linked_incoming_move:0
@@ -16715,11 +16643,6 @@ msgstr "To be synced for RW for Shipment - for sync only"
 #: selection:ir.actions.server,trigger_name:0
 msgid "invoice_open - (account.invoice)"
 msgstr "invoice_open - (account.invoice)"
-
-#. module: base
-#: model:res.country,name:base.nz
-msgid "New Zealand"
-msgstr "Nouvelle-Zélande"
 
 #. module: msf_outgoing
 #: field:stock.incoming.processor,already_processed:0
@@ -17403,8 +17326,9 @@ msgstr "Europe/Rome"
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.is
 msgid "Iceland"
-msgstr "Iceland"
+msgstr "Islande"
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule_line:0
@@ -17505,8 +17429,9 @@ msgstr "Instance - Formulaire "
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tr
 msgid "Turkey"
-msgstr "Turkey"
+msgstr "Turquie"
 
 #. module: product_attributes
 #: field:product.product,cs_txt:0
@@ -17825,12 +17750,13 @@ msgstr "Filtres"
 msgid "Date on which sales order is confirmed."
 msgstr "Date à laquelle la commande terrain est confirmée."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.st
 msgid "Saint Tome (Sao Tome) and Principe"
-msgstr "Saint Tome (Sao Tome) and Principe"
+msgstr "Sao Tomé et Principe"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.action_res_company_tree
@@ -17866,12 +17792,13 @@ msgstr "Vous ne pouvez pas modifier la société de cette période parce que l'e
 msgid "Open document"
 msgstr "Open document"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.td
 msgid "Chad"
-msgstr "Chad"
+msgstr "Tchad"
 
 #. module: account
 #: view:board.board:0
@@ -18095,11 +18022,6 @@ msgstr "Pas de partenaire défini sur la ligne d'écriture"
 #: field:ir.model.data,is_deleted:0
 msgid "The record exists in database?"
 msgstr "The record exists in database?"
-
-#. module: base
-#: model:res.country,name:base.by
-msgid "Belarus"
-msgstr "Biélorussie"
 
 #. module: product_attributes
 #: field:product.product,single_use:0
@@ -19841,11 +19763,6 @@ msgstr "\n"
 "\n"
 ""
 
-#. module: base
-#: model:res.country,name:base.lc
-msgid "Saint Lucia"
-msgstr "Sainte-Lucie"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:216
 #, python-format
@@ -20370,11 +20287,6 @@ msgstr "Réclamation - Origine"
 msgid "Payroll Analytic reallocation"
 msgstr "Paie - Réallocation Analytique"
 
-#. module: base
-#: model:res.country,name:base.ch
-msgid "Switzerland"
-msgstr "Suisse"
-
 #. modules: mission_stock, product
 #: view:stock.mission.report.line:0
 #: view:product.product:0
@@ -20791,11 +20703,6 @@ msgstr "Instance Source"
 #: model:process.node,note:sale.process_node_deliveryorder0
 msgid "Outgoing Products."
 msgstr "Produits Sortants"
-
-#. module: base
-#: model:res.country,name:base.mu
-msgid "Mauritius"
-msgstr "Île Maurice"
 
 #. module: account_payment
 #: help:payment.line,amount_currency:0
@@ -21240,8 +21147,9 @@ msgstr "Inter-section"
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.eg
 msgid "Egypt"
-msgstr "Egypt"
+msgstr "Egypte"
 
 #. module: account
 #: field:account.account,is_child_of_coa:0
@@ -22408,10 +22316,11 @@ msgstr "Envoyé?"
 msgid "Remaining Budget"
 msgstr "Budget Restant"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cv
 msgid "Cape Verde"
 msgstr "Cap Vert"
 
@@ -22581,16 +22490,6 @@ msgstr "Délai de Livraison"
 #: model:ir.model,name:account_hq_entries.model_hq_entries_split_lines
 msgid "HQ entries split lines"
 msgstr "Entrées Siège lignes scindées"
-
-#. module: base
-#: model:res.country,name:base.si
-msgid "Slovenia"
-msgstr "Slovénie"
-
-#. module: base
-#: model:res.country,name:base.pg
-msgid "Papua New Guinea"
-msgstr "Papouasie-Nouvelle-Guinée"
 
 #. module: financing_contract
 #: code:addons/financing_contract/contract.py:757
@@ -22954,11 +22853,6 @@ msgid "Import file"
 msgstr "Importer le fichier"
 
 #. module: base
-#: model:res.country,name:base.pr
-msgid "Puerto Rico"
-msgstr "Porto Rico"
-
-#. module: base
 #: model:res.widget,title:base.google_maps_widget
 msgid "Google Maps"
 msgstr "Google Maps (Cartes Google)"
@@ -23094,12 +22988,7 @@ msgstr "Mettre sous statut brouillon"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:143
 #, python-format
 msgid "No field found!"
-msgstr "          ; these options on"
-
-#. module: base
-#: model:res.country,name:base.cx
-msgid "Christmas Island"
-msgstr "Île Christmas"
+msgstr "Aucun champ trouvé"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -23107,11 +22996,6 @@ msgstr "Île Christmas"
 #: selection:base.setup.company,ship_state_id:0
 msgid "New Hampshire"
 msgstr "New Hampshire"
-
-#. module: base
-#: model:res.country,name:base.tp
-msgid "East Timor"
-msgstr "Timor Oriental"
 
 #. module: res_currency_functional
 #: code:addons/res_currency_functional/account_move_compute_currency.py:88
@@ -23179,11 +23063,6 @@ msgstr "Nouvelle UdM"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Imported notes"
 msgstr "Notes importées"
-
-#. module: base
-#: model:res.country,name:base.do
-msgid "Dominican Republic"
-msgstr "République Dominicaine"
 
 #. module: sales_followup
 #: selection:sale.order.followup,choose_type:0
@@ -23445,11 +23324,6 @@ msgstr "Stock cards"
 msgid "The current instance should be used as Proprietary Instance for the journal %s."
 msgstr "L'instance actuelle devrait être utilisée comme Instance Propriétaire pour le journal %s."
 
-#. module: base
-#: model:res.country,name:base.us
-msgid "United States"
-msgstr "Etats Unis"
-
 #. module: account
 #: view:account.tax:0
 msgid "Tax Declaration: Credit Notes"
@@ -23553,7 +23427,7 @@ msgstr "- type,name,res_id,src,value"
 #: help:stock.move.processor,uom_id:0
 #: help:validate.move.processor,uom_id:0
 msgid "Received UoM"
-msgstr "Received UoM"
+msgstr "UdM Reçue"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:389
@@ -23561,12 +23435,13 @@ msgstr "Received UoM"
 msgid "Line %s: Double amount, IN and OUT. Use only one!"
 msgstr "Ligne %s: Montant double, IN et OUT. N'en utilisez qu'un !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.lt
 msgid "Lithuania"
-msgstr "Lithuania"
+msgstr "Lituanie"
 
 #. module: order_types
 #: view:stock.move:0
@@ -23594,11 +23469,6 @@ msgstr "Ancien code"
 #: field:stock.location,chained_delay:0
 msgid "Chaining Lead Time"
 msgstr "Délai d'enchaînement"
-
-#. module: base
-#: model:res.country,name:base.gf
-msgid "French Guyana"
-msgstr "Guyane Française"
 
 #. modules: account, register_accounting
 #: code:addons/account/account_bank_statement.py:335
@@ -23759,12 +23629,13 @@ msgstr "res.country.restriction.memory"
 msgid "Silent Upgrade"
 msgstr "Mise à jour silencieuse"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ci
 msgid "Ivory Coast (Cote D'Ivoire)"
-msgstr "Ivory Coast (Cote D'Ivoire)"
+msgstr "Cote d'Ivoire"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:512
@@ -23891,12 +23762,13 @@ msgstr "Pré-requis"
 msgid "America/Costa_Rica"
 msgstr "America/Costa_Rica"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bj
 msgid "Benin"
-msgstr "Benin"
+msgstr "Bénin"
 
 #. module: product
 #: help:product.supplierinfo,name:0
@@ -24405,11 +24277,6 @@ msgstr "La copie d'un export automatisé n'est pas autorisé!"
 msgid "Europe/Prague"
 msgstr "Europe/Prague"
 
-#. module: base
-#: model:res.country,name:base.me
-msgid "Montenegro"
-msgstr "Monténégro"
-
 #. modules: tender_flow,  mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:54
 #: field:tender.line,func_currency_id:0
@@ -24767,23 +24634,19 @@ msgstr "Compte utilisé dans ce journal"
 msgid "Currency Setup Configuration"
 msgstr "Configuration de l'Installation Devise"
 
-#. module: base
-#: model:res.country,name:base.bv
-msgid "Bouvet Island"
-msgstr "Île Bouvet"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:156
 #, python-format
 msgid "Product not allowed."
 msgstr "Product not allowed."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.pn
 msgid "Pitcairn Island"
-msgstr "Pitcairn Island"
+msgstr "Iles Pitcairn"
 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:398
@@ -25005,7 +24868,10 @@ msgstr "Set as true to block resourced line creation in case of cancelled-r line
 msgid "Analytic journal items"
 msgstr "Analytic journal items"
 
-#. module: base
+#. modules: base_setup, unifield_setup, base
+#: selection:base.setup.company,country_id:0
+#: selection:base.setup.company,bill_country_id:0
+#: selection:base.setup.company,ship_country_id:0
 #: model:res.country,name:base.ae
 msgid "United Arab Emirates"
 msgstr "Emirats Arabes Unis"
@@ -25641,11 +25507,6 @@ msgstr "Montant de Taxe"
 msgid "Refund Invoice"
 msgstr "Facture d'Avoirs"
 
-#. module: base
-#: model:res.country,name:base.tw
-msgid "Taiwan"
-msgstr "Taïwan"
-
 #. modules: account_override, register_accounting
 #: field:account.invoice,purchase_list:0
 #: field:wizard.account.invoice,purchase_list:0
@@ -25791,12 +25652,13 @@ msgstr "Cannot close this period at the mission level. All previous periods must
 msgid "Tax/Base Amount"
 msgstr "Taxe / Montant de Base"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tw
 msgid "Taiwan"
-msgstr "Taiwan"
+msgstr "Taïwan"
 
 #. module: procurement
 #: help:stock.warehouse.orderpoint,qty_multiple:0
@@ -25949,12 +25811,13 @@ msgstr "Mise à jour du statut des Lignes d'Ecritures Comptables..."
 msgid "funding.pool.distribution.line"
 msgstr "funding.pool.distribution.line"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.do
 msgid "Dominican Republic"
-msgstr "Dominican Republic"
+msgstr "République Dominicaine"
 
 #. module: msf_tools
 #: field:automated.import.job,start_time:0
@@ -26365,12 +26228,13 @@ msgstr "Code du Compte pour Virement :"
 msgid "Check this to view the newly added internal print action after creating it (technical view) "
 msgstr "Cochez cette vue pour voir l'action d'impression interne récemment ajoutée, après l'avoir créée (vue technique)."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gy
 msgid "Guyana"
-msgstr "Guyana"
+msgstr "Guyane"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:517
@@ -26518,12 +26382,13 @@ msgstr "Nombre à Expédier"
 msgid "Booking Debit"
 msgstr "Débit Devise d'enreg."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gd
 msgid "Grenada"
-msgstr "Grenada"
+msgstr "Grenade"
 
 #. modules: account_voucher, account_hq_entries
 #: field:hq.entries.split,original_amount:0
@@ -26594,11 +26459,6 @@ msgstr "Ecrire Identifiant"
 #: model:ir.actions.report.xml,name:consumption_calculation.report_monthly_consumption_xls
 msgid "Monthly Consumption Excel Export"
 msgstr "Export Excel des consommation mensuelle"
-
-#. module: base
-#: model:res.country,name:base.fj
-msgid "Fiji"
-msgstr "Iles Fidji"
 
 #. module: object_query
 #: field:object.query,tree_view_id:0
@@ -26854,12 +26714,13 @@ msgstr "Ecritures Par Ligne"
 msgid "Asia/Yakutsk"
 msgstr "Asia/Yakutsk"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mx
 msgid "Mexico"
-msgstr "Mexico"
+msgstr "Mexique"
 
 #. module: base_report_designer
 #: model:ir.model,name:base_report_designer.model_base_report_designer_installer
@@ -26918,12 +26779,13 @@ msgstr "Picking Connexe"
 msgid "No data found with these parameters"
 msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tf
 msgid "French Southern Territories"
-msgstr "French Southern Territories"
+msgstr "Terres Australes Françaises"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:121
@@ -26936,12 +26798,13 @@ msgstr "Pas de Destination par défaut définie pour le compte de charge: %s"
 msgid "sale.order.followup.test"
 msgstr "sale.order.followup.test"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.am
 msgid "Armenia"
-msgstr "Armenia"
+msgstr "Arménie"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2058
@@ -27299,11 +27162,6 @@ msgstr "Calculer les Planificateurs"
 msgid "Employees Structure"
 msgstr "Structure des Employés"
 
-#. module: base
-#: model:res.country,name:base.au
-msgid "Australia"
-msgstr "Australie"
-
 #. module: msf_outgoing
 #: field:change.product.move.processor,processor_line_id:0
 #: field:split.move.processor,processor_line_id:0
@@ -27531,12 +27389,13 @@ msgstr "Numéro de Sécurité Sociale"
 msgid "Column 9 :: 'Product UoM' is not set - Forced to the default UoM of the product"
 msgstr "Column 9 :: 'Product UoM' is not set - Forced to the default UoM of the product"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cn
 msgid "China"
-msgstr "China"
+msgstr "Chine"
 
 #. module: account_mcdb
 #: code:addons/account_mcdb/wizard/output_currency_for_export.py:194
@@ -28228,12 +28087,13 @@ msgstr "Maisons de ventes aux enchères"
 msgid "Origin ref :"
 msgstr "Réf de l'Origine :"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tc
 msgid "Turks and Caicos Islands"
-msgstr "Turks and Caicos Islands"
+msgstr "Iles Turques et Caïques"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_distribution.py:105
@@ -28913,12 +28773,13 @@ msgstr "Sous-Départements"
 msgid "Your Order:"
 msgstr "Votre commande:"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.az
 msgid "Azerbaijan"
-msgstr "Azerbaijan"
+msgstr "Azerbaïdjan"
 
 #. modules: stock_batch_recall, specific_rules, stock
 #: code:addons/specific_rules/report/report_stock_virtual.py:85
@@ -29548,12 +29409,13 @@ msgstr "Réallocation Analytique"
 msgid "Asia/Damascus"
 msgstr "Asia/Damascus"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sz
 msgid "Swaziland"
-msgstr "Swaziland"
+msgstr "Souaziland"
 
 #. module: procurement_request
 #: report:procurement.request.report:0
@@ -30028,12 +29890,13 @@ msgstr "Délai de Paiement par Défaut"
 msgid "Result fields"
 msgstr "Champs - Résultat"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.vi
 msgid "Virgin Islands (USA)"
-msgstr "Virgin Islands (USA)"
+msgstr "Iles Vierges (USA)"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -30211,11 +30074,6 @@ msgstr "Cette phrase apparaîtra en pied du rapport.\n"
 msgid "Updated state of request for quotation."
 msgstr "Statut mis à jour de la Demande de devis."
 
-#. module: base
-#: model:res.country,name:base.ve
-msgid "Venezuela"
-msgstr "Vénézuela"
-
 #. module: account_override
 #: model:ir.actions.act_window,help:account_override.action_account_coa
 msgid "Display your company chart of accounts per fiscal year and filter by period. Have a complete tree view fo all journal items per account code by clicking on an account."
@@ -30327,11 +30185,6 @@ msgstr "Devise (FX)"
 #: field:stock.frequence,start_date:0
 msgid "Start date"
 msgstr "Date de Début"
-
-#. module: base
-#: model:res.country,name:base.so
-msgid "Somalia"
-msgstr "Somalie"
 
 #. module: order_types
 #: field:stock.picking,attach_cert:0
@@ -30602,11 +30455,6 @@ msgstr "don"
 #: field:sale.order.line,source_sync_line_id:0
 msgid "Sync DB id of the PO origin line"
 msgstr "Sync DB id of the PO origin line"
-
-#. module: base
-#: model:res.country,name:base.cc
-msgid "Cocos (Keeling) Islands"
-msgstr "Îles Cocos (Keeling)"
 
 #. module: stock
 #: field:stock.inventory.line.split,use_exist:0
@@ -31069,11 +30917,6 @@ msgstr " (copier)"
 msgid "Already Syncing..."
 msgstr "Already Syncing..."
 
-#. module: base
-#: model:res.country,name:base.bt
-msgid "Bhutan"
-msgstr "Bhoutan"
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:418
 #, python-format
@@ -31511,11 +31354,6 @@ msgstr "Vietnamese / Tiếng Việt"
 msgid "Synchronization server host name"
 msgstr "Nom d'Hôte du Serveur de Synchronisation"
 
-#. module: base
-#: model:res.country,name:base.mh
-msgid "Marshall Islands"
-msgstr "Iles Marshall"
-
 #. module: msf_doc_import
 #: field:stock.picking,filetype:0
 #: field:wizard.import.in.simulation.screen,filetype:0
@@ -31571,11 +31409,6 @@ msgstr "Budget Summary PDF Export"
 msgid "Is configured"
 msgstr "Est configuré"
 
-#. module: base
-#: model:res.country,name:base.vi
-msgid "Virgin Islands (USA)"
-msgstr "Iles Vierges (USA)"
-
 #. modules: object_query, base
 #: selection:ir.translation,type:0
 #: field:ir.model.fields,help:0
@@ -31620,11 +31453,6 @@ msgstr "Responsable"
 #: model:ir.model,name:finance.model_account_report_general_ledger
 msgid "General Ledger Report"
 msgstr "Rapport du Grand Livre Général"
-
-#. module: base
-#: model:res.country,name:base.am
-msgid "Armenia"
-msgstr "Arménie"
 
 #. module: product_asset
 #: report:product.asset:0
@@ -32284,11 +32112,6 @@ msgstr "Is this Journal Entry imported?"
 msgid "RFQ - closed"
 msgstr "Demande de Devis- fermé"
 
-#. module: base
-#: model:res.country,name:base.gl
-msgid "Greenland"
-msgstr "Groënland"
-
 #. module: product_expiry
 #: help:product.product,use_time:0
 msgid "The number of months before a production lot starts deteriorating without becoming dangerous."
@@ -32541,11 +32364,6 @@ msgstr "Closed shipped lines"
 msgid "Full name"
 msgstr "Full name"
 
-#. module: base
-#: model:res.country,name:base.gu
-msgid "Guam (USA)"
-msgstr "Guam (E.U.A.)"
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:217
 #, python-format
@@ -32564,11 +32382,6 @@ msgstr "Criticité"
 #, python-format
 msgid "You must select a quantity to return before performing the return."
 msgstr "You must select a quantity to return before performing the return."
-
-#. module: base
-#: model:res.country,name:base.wf
-msgid "Wallis and Futuna Islands"
-msgstr "Wallis et Futuna"
 
 #. module: product
 #: help:product.category,sequence:0
@@ -32630,11 +32443,6 @@ msgstr "Date d'expiration manquante pour %s."
 #: field:sale.order,sourcing_trace_ok:0
 msgid "Display sourcing logs"
 msgstr "Messages du sourcing"
-
-#. module: base
-#: model:res.country,name:base.kw
-msgid "Kuwait"
-msgstr "Koweït"
 
 #. module: msf_config_locations
 #: help:stock.location,picking_ticket_src:0
@@ -32753,12 +32561,13 @@ msgstr "Forcer à recréer l'entrée"
 msgid "Cannot delete Sales Order(s) which are already confirmed !"
 msgstr "Cannot delete Sales Order(s) which are already confirmed !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.id
 msgid "Indonesia"
-msgstr "Indonesia"
+msgstr "Indonésie"
 
 #. module: stock
 #: help:stock.location,active:0
@@ -33025,12 +32834,13 @@ msgstr "Asia/Almaty"
 msgid "French / Français"
 msgstr "French / Français"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.my
 msgid "Malaysia"
-msgstr "Malaysia"
+msgstr "Malaisie"
 
 #. module: msf_instance
 #: field:msf.instance.cloud,cloud_login:0
@@ -33269,11 +33079,6 @@ msgstr "Sorry, no Shipment with the name %s in state %s found !"
 msgid "Brazil/DeNoronha"
 msgstr "Brazil/DeNoronha"
 
-#. module: base
-#: model:res.country,name:base.ye
-msgid "Yemen"
-msgstr "Yémen"
-
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2628
 #, python-format
@@ -33287,24 +33092,26 @@ msgstr "Cet Assistant n'accepte qu'UNE ligne d'avance."
 msgid "Parent line"
 msgstr "Ligne Parent"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.pg
 msgid "Papua New Guinea"
-msgstr "Papua New Guinea"
+msgstr "Papouasie-Nouvelle-Guinée"
 
 #. module: financing_contract
 #: report:financing.contract:0
 msgid "Contract information:"
 msgstr "Contrat - Information:"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.et
 msgid "Ethiopia"
-msgstr "Ethiopia"
+msgstr "Ethiopie"
 
 #. module: msf_config_locations
 #: field:stock.remove.location.wizard,move_from_to:0
@@ -33511,11 +33318,6 @@ msgstr "Etes-vous certain de vouloir annuler le lettrage de cet enregistrement ?
 #: selection:res.users,context_tz:0
 msgid "America/St_Barthelemy"
 msgstr "America/St_Barthelemy"
-
-#. module: base
-#: model:res.country,name:base.hk
-msgid "Hong Kong"
-msgstr "Hong-Kong"
 
 #. module: account_corrections
 #: help:account.move.line,reversal_line_id:0
@@ -33791,12 +33593,13 @@ msgstr "Zone Requérante :"
 msgid "File is empty."
 msgstr "File is empty."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ch
 msgid "Switzerland"
-msgstr "Switzerland"
+msgstr "Suisse"
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
@@ -34096,11 +33899,6 @@ msgstr "Donation (normale)"
 msgid "Composition List without Batch Management Product needs Reference."
 msgstr "Liste de Composition - sans Gestion des produits par lots- a besoin d'une Référence"
 
-#. module: base
-#: model:res.country,name:base.eh
-msgid "Western Sahara"
-msgstr "Sahara Occidental"
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/hr.py:255
 #, python-format
@@ -34272,12 +34070,13 @@ msgstr "%s: Ce bon de commande est la contrepartie d'un prêt. Vous ne pouvez pa
 msgid "Manage commitments corresponding to international order through specific import ?"
 msgstr "Manage commitments corresponding to international order through specific import ?"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.fj
 msgid "Fiji"
-msgstr "Fiji"
+msgstr "Iles Fidji"
 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:272
@@ -34835,11 +34634,6 @@ msgstr "Nom de l'Inventaire"
 msgid "The creation of a new invoice failed."
 msgstr "The creation of a new invoice failed."
 
-#. module: base
-#: model:res.country,name:base.ar
-msgid "Argentina"
-msgstr "Argentine"
-
 #. module: product_attributes
 #: view:product.deactivation.error:0
 msgid "Error documents"
@@ -34948,12 +34742,13 @@ msgstr "Inventaires"
 msgid "Foreseen expenses"
 msgstr "Dépenses prévues"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.aq
 msgid "Antarctica"
-msgstr "Antarctica"
+msgstr "Antarctique"
 
 #. modules: sales_followup, msf_doc_import, purchase_followup, sale, stock_schedule
 #: field:stock.frequence,calculated_end_date:0
@@ -35019,11 +34814,6 @@ msgstr "Rapport des Journaux Agrégés PDF"
 #, python-format
 msgid "Invalid analytic distribution!"
 msgstr "Distribution analytique non valide!"
-
-#. module: base
-#: model:res.country,name:base.fk
-msgid "Falkland Islands"
-msgstr "Îles Malouines"
 
 #. module: sourcing
 #: view:sale.order.line:0
@@ -35128,12 +34918,13 @@ msgstr "Display Button"
 msgid "Selected Number"
 msgstr "Selected Number"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.kp
 msgid "North Korea"
-msgstr "North Korea"
+msgstr "Corée du Nord"
 
 #. module: finance
 #: view:cash.request.liquidity.bank:0
@@ -35462,12 +35253,13 @@ msgstr "Asia/Famagusta"
 msgid "Discrepancy line"
 msgstr "Ligne d'Écarts"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.nf
 msgid "Norfolk Island"
-msgstr "Norfolk Island"
+msgstr "Ile Norfolk"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:1102
@@ -35781,11 +35573,6 @@ msgstr "D'une commande de terrain"
 msgid "Etc/GMT-8"
 msgstr "Etc/GMT-8"
 
-#. module: base
-#: model:res.country,name:base.cn
-msgid "China"
-msgstr "Chine"
-
 #. module: account
 #: field:wizard.multi.charts.accounts,seq_journal:0
 msgid "Separated Journal Sequences"
@@ -35971,12 +35758,13 @@ msgstr "Reçu"
 msgid "Location Distribution"
 msgstr "Zone Distribution"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.co
 msgid "Colombia"
-msgstr "Colombia"
+msgstr "Colombie"
 
 #. module: base
 #: selection:ir.ui.view,type:0
@@ -36263,11 +36051,6 @@ msgstr "Position Fiscale"
 #: report:cash.request.export:0
 msgid "Instance code / Place of payment:"
 msgstr "Code de l'Instance / Lieu du paiement :"
-
-#. module: base
-#: model:res.country,name:base.se
-msgid "Sweden"
-msgstr "Suède"
 
 #. module: product_expiry
 #: field:stock.production.lot,removal_date:0
@@ -36767,7 +36550,10 @@ msgstr "Check Partner Type On SO"
 msgid "Journal View"
 msgstr "Vue du Journal"
 
-#. module: base
+#. modules: base_setup, unifield_setup, base
+#: selection:base.setup.company,country_id:0
+#: selection:base.setup.company,bill_country_id:0
+#: selection:base.setup.company,ship_country_id:0
 #: model:res.country,name:base.cf
 msgid "Central African Republic"
 msgstr "République Centre-Africaine"
@@ -36820,11 +36606,6 @@ msgid "Return To"
 msgstr "Retour Vers/A"
 
 #. module: base
-#: model:res.country,name:base.bn
-msgid "Brunei Darussalam"
-msgstr "Brunéi Darussalam"
-
-#. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
 msgid "Asia/Anadyr"
@@ -36835,12 +36616,13 @@ msgstr "Asia/Anadyr"
 msgid "Manual Commitment Voucher"
 msgstr "Manual Commitment Voucher"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cd
 msgid "Congo, The Democratic Republic of the"
-msgstr "Congo, The Democratic Republic of the"
+msgstr "République Démocratique du Congo"
 
 #. module: stock
 #: view:stock.move.split:0
@@ -38277,12 +38059,13 @@ msgstr "Sélectionner les Plans de Comptes"
 msgid "Default PF Funding Pool not found"
 msgstr "Default PF Funding Pool not found"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mo
 msgid "Macau"
-msgstr "Macau"
+msgstr "Macao"
 
 #. modules: purchase, account, finance, account_mcdb, procurement_request, purchase_override, sale, account_override, purchase_allocation_report, register_accounting, msf_supply_doc_export
 #: field:account.invoice.line,price_subtotal:0
@@ -38335,11 +38118,6 @@ msgstr "UNITED ARAB EMIRATES DIRHAM"
 #: field:stock.remove.location.wizard,location_id:0
 msgid "Location to remove"
 msgstr "Zone à supprimer"
-
-#. module: base
-#: model:res.country,name:base.ie
-msgid "Ireland"
-msgstr "Irlande"
 
 #. module: account
 #: model:ir.model,name:account.model_account_move_bank_reconcile
@@ -38500,12 +38278,13 @@ msgstr "Sur commande"
 msgid "US/Aleutian"
 msgstr "US/Aleutian"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.kr
 msgid "South Korea"
-msgstr "South Korea"
+msgstr "Corée du Sud"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -38730,11 +38509,6 @@ msgstr "Arabe / الْعَرَبيّة"
 #: field:sync.client.message_to_send,sent_date:0
 msgid "Sent Date"
 msgstr "Date d'Envoi"
-
-#. module: base
-#: model:res.country,name:base.zr
-msgid "Zaire"
-msgstr "Zaïre"
 
 #. module: account
 #: field:account.tax.code,sum:0
@@ -39197,11 +38971,6 @@ msgstr "Appel d'Offres - comparaison"
 msgid "America/Porto_Velho"
 msgstr "Amériques/Porto_Velho"
 
-#. module: base
-#: model:res.country,name:base.mq
-msgid "Martinique (French)"
-msgstr "Martinique (Française)"
-
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:414
 #, python-format
@@ -39334,12 +39103,13 @@ msgstr "Livraison en attente"
 msgid "button_done - (stock.picking)"
 msgstr "button_done - (stock.picking)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.me
 msgid "Montenegro"
-msgstr "Montenegro"
+msgstr "Monténégro"
 
 #. module: kit
 #: code:addons/kit/kit.py:820
@@ -39473,11 +39243,6 @@ msgstr "product.history.consumption.product"
 #: selection:instance.auto.creation,state:0
 msgid "Instance registered."
 msgstr "Instance registered."
-
-#. module: base
-#: model:res.country,name:base.ee
-msgid "Estonia"
-msgstr "Estonie"
 
 #. module: msf_doc_import
 #: field:wizard.import.in.line.simulation.screen,external_ref:0
@@ -39866,11 +39631,6 @@ msgstr "Ref."
 #: view:hr.payroll.import.confirmation:0
 msgid "Error List"
 msgstr "Liste d'erreurs"
-
-#. module: base
-#: model:res.country,name:base.et
-msgid "Ethiopia"
-msgstr "Ethiopie"
 
 #. module: msf_partner
 #: field:res.partner,is_coordo:0
@@ -40812,14 +40572,15 @@ msgstr "Classe ABC"
 #: code:addons/msf_doc_import/account.py:330
 #, python-format
 msgid "Line %s. Journal Code not found: %s."
-msgstr "Line %s. Journal Code not found: %s."
+msgstr "Ligne %s. Code du Journal non trouvé: %s."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bv
 msgid "Bouvet Island"
-msgstr "Bouvet Island"
+msgstr "Île Bouvet"
 
 #. modules: msf_doc_import, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/__init__.py:32
@@ -41303,16 +41064,6 @@ msgstr "Lignes des écarts"
 msgid "Etc/GMT-3"
 msgstr "Etc/GMT-3"
 
-#. module: base
-#: model:res.country,name:base.kn
-msgid "Saint Kitts & Nevis Anguilla"
-msgstr "Saint Christophe et Niévès"
-
-#. module: base
-#: model:res.country,name:base.cv
-msgid "Cape Verde"
-msgstr "Cap-Vert"
-
 #. module: sourcing
 #: view:multiple.sourcing.wizard:0
 msgid "Source default"
@@ -41409,12 +41160,13 @@ msgstr "Deleted Object ID"
 msgid "You can't have inactive supplier! Please remove: %s"
 msgstr "Vous ne pouvez pas avoir de fournisseur inactif! Veuillez enlever: %s"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.fk
 msgid "Falkland Islands"
-msgstr "Falkland Islands"
+msgstr "Îles Malouines"
 
 #. modules: product_attributes, kit
 #: field:composition.kit,composition_batch_check:0
@@ -41480,12 +41232,13 @@ msgstr "Mise à jour"
 msgid "Register Closed by"
 msgstr "Registre Fermé par"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.af
 msgid "Afghanistan, Islamic State of"
-msgstr "Afghanistan, Islamic State of"
+msgstr "République Islamique d'Afghanistan"
 
 #. module: base
 #: selection:ir.translation,lang:0
@@ -41516,11 +41269,6 @@ msgstr "Africa/Tripoli"
 #: view:sync.client.update_to_send:0
 msgid "Synchronization"
 msgstr "Synchronisation"
-
-#. module: base
-#: model:res.country,name:base.hu
-msgid "Hungary"
-msgstr "Hongrie"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.mc
@@ -41879,12 +41627,13 @@ msgstr "sequence.tools"
 msgid "Mass Reallocation Search"
 msgstr "Recherche de Réallocation Groupée"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.as
 msgid "American Samoa"
-msgstr "American Samoa"
+msgstr "Samoa Américaines"
 
 #. module: base
 #: help:ir.rule,global:0
@@ -42071,11 +41820,6 @@ msgstr "Close FY"
 #, python-format
 msgid "Trial Balance"
 msgstr "Balance des Comptes"
-
-#. module: base
-#: model:res.country,name:base.af
-msgid "Afghanistan, Islamic State of"
-msgstr "République Islamique d'Afghanistan"
 
 #. module: sale
 #: field:sale.order.line,resourced_at_state:0
@@ -42602,12 +42346,13 @@ msgstr "Autres informations"
 msgid "You must first select a partner !"
 msgstr "Vous devez d'abord sélectionner un partenaire !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gf
 msgid "French Guyana"
-msgstr "French Guyana"
+msgstr "Guyane Française"
 
 #. module: sale
 #: model:ir.model,name:sale.model_sale_installer
@@ -42846,12 +42591,13 @@ msgstr "Ligne de Régularisation"
 msgid "Name of the new list"
 msgstr "Nom de la nouvelle liste"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mh
 msgid "Marshall Islands"
-msgstr "Marshall Islands"
+msgstr "Iles Marshall"
 
 #. module: useability_dashboard_and_menu
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.config_adresses
@@ -43346,12 +43092,13 @@ msgstr "0.9cm 0.5cm 20.0cm 0.5cm"
 msgid "Partner Ref"
 msgstr "Réf Partenaire"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.eh
 msgid "Western Sahara"
-msgstr "Western Sahara"
+msgstr "Sahara Occidental"
 
 #. module: msf_tools
 #: view:export.report.inconsistencies:0
@@ -43593,12 +43340,13 @@ msgstr "Numéro de Révision"
 msgid "Total Qty"
 msgstr "Qté Totale"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ro
 msgid "Romania"
-msgstr "Romania"
+msgstr "Roumanie"
 
 #. module: purchase
 #: field:purchase.order,empty_po_cancelled:0
@@ -43720,11 +43468,6 @@ msgstr "Une erreur est survenue sur la vérification de la transaction acompte. 
 #: view:res.lang:0
 msgid "%I - Hour (12-hour clock) [01,12]."
 msgstr "%I - Heure (Affichage 12h) [01,12]."
-
-#. module: base
-#: model:res.country,name:base.be
-msgid "Belgium"
-msgstr "Belgique"
 
 #. module: account_reconciliation
 #: code:addons/account_reconciliation/wizard/account_reconcile.py:186
@@ -43916,11 +43659,6 @@ msgid "Confirmed delivery"
 msgstr "Livraison prévue"
 
 #. module: base
-#: model:res.country,name:base.sa
-msgid "Saudi Arabia"
-msgstr "Arabie Saoudite"
-
-#. module: base
 #: model:res.currency,currency_name:base.TMT
 msgid "TURKMENISTANI MANAT"
 msgstr "MANAT DU TURKMENISTAN"
@@ -44019,12 +43757,13 @@ msgstr "Date Réelle d'Expédition"
 msgid "Aruba"
 msgstr "Aruba"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.an
 msgid "Netherlands Antilles"
-msgstr "Netherlands Antilles"
+msgstr "Antilles Néerlandaises"
 
 #. modules: account, finance
 #: field:account.common.partner.report,account_domain:0
@@ -44483,12 +44222,13 @@ msgstr "Dernier approvisionnement"
 msgid "Display type"
 msgstr "Type d'affichage"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.hr
 msgid "Croatia"
-msgstr "Croatia"
+msgstr "Croatie"
 
 #. modules: base, report_webkit
 #: view:res.company:0
@@ -45189,11 +44929,6 @@ msgstr "Analytic Accounts with a past deadline."
 msgid "From closed to delivered."
 msgstr "De fermé à livré."
 
-#. module: base
-#: model:res.country,name:base.th
-msgid "Thailand"
-msgstr "Thaïlande"
-
 #. module: unifield_setup
 #: code:addons/unifield_setup/installer/project_leadtime.py:62
 #, python-format
@@ -45801,11 +45536,6 @@ msgstr "La facture peut être basée sur les quantités livrées ou commandées 
 msgid "Ref"
 msgstr "Réf."
 
-#. module: base
-#: model:res.country,name:base.ng
-msgid "Nigeria"
-msgstr "Nigéria"
-
 #. module: procurement
 #: model:process.node,name:procurement.process_node_procure_exception
 msgid "Proc - exception"
@@ -45837,12 +45567,13 @@ msgstr "Employé - Contrat "
 msgid "Related Menu"
 msgstr "Menu Associé"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.re
 msgid "Reunion (French)"
-msgstr "Reunion (French)"
+msgstr "Ile de la Réunion (Française)"
 
 #. module: financing_contract
 #: field:financing.contract.contract,reporting_currency:0
@@ -45975,11 +45706,6 @@ msgstr "FACTURES OUVERTES"
 #: field:stock.move.memory.returnproducts,kit_mem_check:0
 msgid "Kit Mem Check"
 msgstr "Kit - Mem Vérification"
-
-#. module: base
-#: model:res.country,name:base.kg
-msgid "Kyrgyz Republic (Kyrgyzstan)"
-msgstr "République Kirghize (Kirghizistan)"
 
 #. module: account_mcdb
 #: report:account.bank.statement.line:0
@@ -46608,11 +46334,6 @@ msgstr "Contrôles d'accès"
 msgid "DG"
 msgstr "MD (DG)"
 
-#. module: base
-#: model:res.country,name:base.gw
-msgid "Guinea Bissau"
-msgstr "Guinée Bissau"
-
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_sale_order_followup_from_menu
 msgid "Sale order followup menu entry"
@@ -46738,12 +46459,13 @@ msgstr "Code Produit"
 msgid "Internal Picking Dest. Loc."
 msgstr "Zone de destination du picking interne."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ai
 msgid "Anguilla"
-msgstr "Anguilla"
+msgstr "Anguille"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:388
@@ -46903,12 +46625,13 @@ msgstr "Stock Card"
 msgid "You must have one and only one reference by UoM Category"
 msgstr "You must have one and only one reference by UoM Category"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cy
 msgid "Cyprus"
-msgstr "Cyprus"
+msgstr "Chypre"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1631
@@ -47219,12 +46942,13 @@ msgstr "Le partenaire ne peut pas être enregistré car il existe déjà sous le
 msgid "Asia/Phnom_Penh"
 msgstr "Asia/Phnom_Penh"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.nz
 msgid "New Zealand"
-msgstr "New Zealand"
+msgstr "Nouvelle-Zélande"
 
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
@@ -47780,12 +47504,13 @@ msgstr "Quantité-3"
 msgid "All selected journal entries will be validated and posted. It means you won't be able to modify their accounting fields anymore."
 msgstr "Toutes les écritures comptables sélectionnées vont être validées et comptabilisées : il ne sera plus possible de modifier les champs contenant ces informations comptables."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bn
 msgid "Brunei Darussalam"
-msgstr "Brunei Darussalam"
+msgstr "Brunéi Darussalam"
 
 #. module: msf_audittrail
 #: report:msf.log.line:0
@@ -48039,12 +47764,13 @@ msgstr "Le type du numéro de lot doit être 'Standard' ou 'Interne'"
 msgid "Identifier"
 msgstr "Identifiant"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gw
 msgid "Guinea Bissau"
-msgstr "Guinea Bissau"
+msgstr "Guinée Bissau"
 
 #. module: msf_audittrail
 #: view:audittrail.rule:0
@@ -48262,11 +47988,6 @@ msgstr "Bien manquant"
 msgid "Initial Amount should be superior to Amount Left"
 msgstr "Montant Initial devrait être supérieur au Montant Restant"
 
-#. module: base
-#: model:res.country,name:base.my
-msgid "Malaysia"
-msgstr "Malaisie"
-
 #. module: sync_client
 #: code:addons/sync_client/orm.py:777
 #, python-format
@@ -48340,12 +48061,13 @@ msgstr "Ligne du bon de commande d'origine"
 msgid "Spanish (PR) / Español (PR)"
 msgstr "Spanish (PR) / Español (PR)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bd
 msgid "Bangladesh"
-msgstr "Bangladesh"
+msgstr "Bengladesh"
 
 #. modules: account, msf_instance, finance, register_accounting
 #: field:account.analytic.journal,name:0
@@ -48406,11 +48128,6 @@ msgstr "Pacific/Saipan"
 #, python-format
 msgid "Non compatible entries found: %s"
 msgstr "Non compatible entries found: %s"
-
-#. module: base
-#: model:res.country,name:base.bd
-msgid "Bangladesh"
-msgstr "Bengladesh"
 
 #. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, stock, product, reason_types_moves, account_payment, consumption_calculation, register_accounting, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, resource, procurement_auto, msf_config_locations, sale, account_override, sourcing, sync_so, res_currency_functional
 #: code:addons/account/account.py:445
@@ -49158,12 +48875,13 @@ msgstr "IR"
 msgid "Stock Input Account"
 msgstr "Stock - Compte de produits"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ye
 msgid "Yemen"
-msgstr "Yemen"
+msgstr "Yémen"
 
 #. module: base
 #: view:res.request.link:0
@@ -49515,11 +49233,6 @@ msgstr "Account code %s doesn't exist!"
 msgid "Wizard to split processor lines"
 msgstr "Wizard to split processor lines"
 
-#. module: base
-#: model:res.country,name:base.dz
-msgid "Algeria"
-msgstr "Algérie"
-
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1013
 #, python-format
@@ -49772,8 +49485,9 @@ msgstr "Point de Trésorerie - Banque"
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.jp
 msgid "Japan"
-msgstr "Japan"
+msgstr "Japon"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.md
@@ -50171,12 +49885,13 @@ msgstr "Is the IN has been received at Project side ?"
 msgid "Original Subtotal (functional currency)"
 msgstr "Sous-Total d'Origine (devise fonctionnelle)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.um
 msgid "USA Minor Outlying Islands"
-msgstr "USA Minor Outlying Islands"
+msgstr "Iles Mineures éloignées des Etats-Unis"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -50325,11 +50040,6 @@ msgstr "PPL family"
 #: help:purchase.order,picking_ids:0
 msgid "This is the list of picking list that have been generated for this purchase"
 msgstr "Ceci est la liste des listes de Picking qui ont été générées pour cet achat"
-
-#. module: base
-#: model:res.country,name:base.st
-msgid "Saint Tome (Sao Tome) and Principe"
-msgstr "Sao Tomé et Principe"
 
 #. modules: product_asset, useability_dashboard_and_menu
 #: model:ir.actions.act_window,name:product_asset.asset_type_normal_action
@@ -50535,12 +50245,13 @@ msgstr "Lettrage manuel"
 msgid "Partner Balance Tree"
 msgstr "Balance des Tiers"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bt
 msgid "Bhutan"
-msgstr "Bhutan"
+msgstr "Bhoutan"
 
 #. module: stock_schedule
 #: view:stock.frequence:0
@@ -50909,11 +50620,6 @@ msgstr "Zone"
 #: field:process.to.consume.line,qty_available_process_to_consume:0
 msgid "Available Qty"
 msgstr "Qté Disponible"
-
-#. module: base
-#: model:res.country,name:base.aq
-msgid "Antarctica"
-msgstr "Antarctique"
 
 #. module: sale
 #: help:sale.donation.stock.moves,partner_id:0
@@ -51753,11 +51459,6 @@ msgid "Expiry date selected (with its internal batch).\n"
 msgstr "Expiry date selected (with its internal batch).\n"
 ""
 
-#. module: base
-#: model:res.country,name:base.gd
-msgid "Grenada"
-msgstr "Grenade"
-
 #. module: msf_instance
 #: model:ir.model,name:msf_instance.model_wizard_add_cost_centers
 #: view:wizard.add.cost.centers:0
@@ -52508,11 +52209,6 @@ msgstr "Nomenclature du Produit"
 msgid "Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied."
 msgstr "Le bon de picking en mode brouillon correspondant est clôturé. Il est impossible de copier ce bon de picking."
 
-#. module: base
-#: model:res.country,name:base.ru
-msgid "Russian Federation"
-msgstr "Fédération de Russie"
-
 #. module: sales_followup
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
@@ -52645,11 +52341,6 @@ msgstr "Valeur totale"
 #: selection:res.users,context_tz:0
 msgid "Africa/Addis_Ababa"
 msgstr "Africa/Addis_Ababa"
-
-#. module: base
-#: model:res.country,name:base.mm
-msgid "Myanmar"
-msgstr "Birmanie"
 
 #. modules: sale, stock_override, procurement_request
 #: report:procurement.request.report:0
@@ -52808,11 +52499,6 @@ msgstr "Commandes partenaires ESC"
 #: view:stock.certificate.picking:0
 msgid "Validate the attachment"
 msgstr "Valider la pièce jointe"
-
-#. module: base
-#: model:res.country,name:base.vg
-msgid "Virgin Islands (British)"
-msgstr "Iles Vierges (Britanniques)"
 
 #. module: register_accounting
 #: view:account.direct.invoice.wizard:0
@@ -53125,12 +52811,13 @@ msgstr "Modifier la facture : Annule la facture en cours et créée une nouvelle
 msgid "Bad operand : You can only give False or the id of a category"
 msgstr "Bad operand : Vous ne pouvez indiquer que Faux ou l'id d'une catégorie"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ee
 msgid "Estonia"
-msgstr "Estonia"
+msgstr "Estonie"
 
 #. module: procurement
 #: help:procurement.order,origin:0
@@ -54509,11 +54196,6 @@ msgid "Activated"
 msgstr "Activé"
 
 #. module: base
-#: model:res.country,name:base.as
-msgid "American Samoa"
-msgstr "Samoa Américaines"
-
-#. module: base
 #: wizard_view:server.action.create,step_1:0
 #: wizard_field:server.action.create,step_1,report:0
 msgid "Select Report"
@@ -54597,11 +54279,6 @@ msgstr "Exception"
 #: field:cash.request.payable,balance:0
 msgid "Balance in functional currency"
 msgstr "Solde en devise fonctionnelle"
-
-#. module: base
-#: model:res.country,name:base.bm
-msgid "Bermuda"
-msgstr "Bermudes"
 
 #. module: export_import_lang
 #: view:msf.language.import:0
@@ -55051,12 +54728,13 @@ msgstr "Statut validé de la commande de terrain"
 msgid "Internal Use Only"
 msgstr "Internal Use Only"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.va
 msgid "Holy See (Vatican City State)"
-msgstr "Holy See (Vatican City State)"
+msgstr "Saint-Siège (Etat du Vatican)"
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:393
@@ -55592,12 +55270,13 @@ msgstr "Consommation Moyenne Mensuelle"
 msgid "The view to which this rule applies"
 msgstr "The view to which this rule applies"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.nl
 msgid "Netherlands"
-msgstr "Netherlands"
+msgstr "Pays-Bas"
 
 #. module: base
 #: field:ir.actions.act_window,auto_refresh:0
@@ -55960,23 +55639,19 @@ msgstr "Vérification du fichier…"
 msgid "Closed"
 msgstr "Clôturé"
 
-#. module: base
-#: model:res.country,name:base.is
-msgid "Iceland"
-msgstr "Islande"
-
 #. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:945
 #, python-format
 msgid "One AJI related to the entry %s has already been corrected."
 msgstr "Une entrée analytique liée à l'écriture %s a déjà été corrigée."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.kn
 msgid "Saint Kitts & Nevis Anguilla"
-msgstr "Saint Kitts & Nevis Anguilla"
+msgstr "Saint Christophe et Niévès"
 
 #. module: base
 #: help:ir.actions.server,action_id:0
@@ -56250,11 +55925,6 @@ msgstr "The Est. Transport Lead Time %s has a wrong value. Details: %s."
 msgid "Pacific/Honolulu"
 msgstr "Pacific/Honolulu"
 
-#. module: base
-#: model:res.country,name:base.ss
-msgid "South Sudan"
-msgstr "Sud Soudan"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:225
 #, python-format
@@ -56263,12 +55933,13 @@ msgid "The column \"%s\" is not taken into account. Please remove it. The list o
 msgstr "The column \"%s\" is not taken into account. Please remove it. The list of columns accepted is: \n"
 " %s"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gp
 msgid "Guadeloupe (French)"
-msgstr "Guadeloupe (French)"
+msgstr "Gouadeloupe (Française)"
 
 #. module: supplier_catalogue
 #: field:res.currency,is_po_functional:0
@@ -56924,12 +56595,13 @@ msgstr "Nettoyer Factures"
 msgid "base.update.translations"
 msgstr "base.update.translations"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.lv
 msgid "Latvia"
-msgstr "Latvia"
+msgstr "Lettonie"
 
 #. module: base
 #: selection:instance.auto.creation,state:0
@@ -57032,12 +56704,13 @@ msgstr "Panama"
 msgid "Imported invoices"
 msgstr "Factures importées"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sv
 msgid "El Salvador"
-msgstr "El Salvador"
+msgstr "Salvador"
 
 #. module: analytic_distribution
 #: model:ir.model,name:analytic_distribution.model_int_commitment_export_wizard
@@ -57665,11 +57338,6 @@ msgstr "Une table temporaire utilisée pour la vue Tableau de Bord"
 msgid "INVOICE LINES ALLOCATION REPORT"
 msgstr "INVOICE LINES ALLOCATION REPORT"
 
-#. module: base
-#: model:res.country,name:base.kp
-msgid "North Korea"
-msgstr "Corée du Nord"
-
 #. module: stock
 #: view:stock.inventory:0
 msgid "Products "
@@ -57713,12 +57381,13 @@ msgstr "Décocher le champ \"actif\" si défini comme Faux, cela vous permettra 
 msgid "Hide export 3 entries button"
 msgstr "Hide export 3 entries button"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.pm
 msgid "Saint Pierre and Miquelon"
-msgstr "Saint Pierre and Miquelon"
+msgstr "Saint Pierre et Miquelon"
 
 #. modules: return_claim, purchase_followup, sourcing, sale
 #: field:purchase.order.followup,order_id:0
@@ -57899,8 +57568,9 @@ msgstr "financing.contract.donor.reporting.line"
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.jm
 msgid "Jamaica"
-msgstr "Jamaica"
+msgstr "Jamaïque"
 
 #. module: msf_outgoing
 #: model:process.node,note:msf_outgoing.process_node_draft_pick_done
@@ -58867,12 +58537,13 @@ msgstr "Zone Source d'un Kit"
 msgid "7z is not installed on the server. Please install the package p7zip-full"
 msgstr "7z is not installed on the server. Please install the package p7zip-full"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.uk
 msgid "United Kingdom"
-msgstr "United Kingdom"
+msgstr "Royaume-Uni"
 
 #. modules: msf_outgoing, kit
 #: code:addons/kit/wizard/split_move.py:55
@@ -58944,11 +58615,6 @@ msgstr "Prix"
 #: view:wizard.import.po.line:0
 msgid "Purchase information"
 msgstr "Information Achat"
-
-#. module: base
-#: model:res.country,name:base.mo
-msgid "Macau"
-msgstr "Macao"
 
 #. module: reason_types_moves
 #: model:stock.reason.type,name:reason_types_moves.reason_type_external_supply
@@ -59074,11 +58740,6 @@ msgstr "Jour de la semaine"
 #: view:msf.budget:0
 msgid "Budgets that use a cost center which is the 'top cost center for budget' from a Project instance."
 msgstr "Budgets that use a cost center which is the 'top cost center for budget' from a Project instance."
-
-#. module: base
-#: model:res.country,name:base.hr
-msgid "Croatia"
-msgstr "Croatie"
 
 #. module: specific_rules
 #: view:report.stock.inventory:0
@@ -59810,11 +59471,6 @@ msgstr "Écritures de paie à valider"
 msgid "You must assign a positive \"to pack\" value."
 msgstr "Vous devez attribuer un poids au colis."
 
-#. module: base
-#: model:res.country,name:base.sm
-msgid "San Marino"
-msgstr "Saint-Marin"
-
 #. module: order_types
 #: model:ir.actions.report.xml,name:order_types.donation_certificate
 #: report:order.type.donation.certificate:0
@@ -59961,12 +59617,13 @@ msgstr "Entrée"
 msgid "Decision Moment Order"
 msgstr "Moment de Décision Commande"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sa
 msgid "Saudi Arabia"
-msgstr "Saudi Arabia"
+msgstr "Arabie Saoudite"
 
 #. module: base_setup
 #: help:base.setup.installer,knowledge:0
@@ -60783,12 +60440,13 @@ msgstr "Libellé"
 msgid "Company related to this journal"
 msgstr "Société connexe à ce journal"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bh
 msgid "Bahrain"
-msgstr "Bahrain"
+msgstr "Bahreïn"
 
 #. modules: msf_doc_import, msf_supply_doc_export
 #: field:wizard.import.po.simulation.screen.line,imp_stock_take_date:0
@@ -60935,11 +60593,6 @@ msgstr "\n"
 "        Hide delete buttons according to the state.\n"
 "    "
 
-#. module: base
-#: model:res.country,name:base.es
-msgid "Spain"
-msgstr "Espagne"
-
 #. modules: object_query, base, msf_homere_interface
 #: field:ir.property,fields_id:0
 #: selection:ir.translation,type:0
@@ -61004,12 +60657,13 @@ msgstr "L'Utilisateur n'est pas déjà marqué comme \"Synchronisable\""
 msgid "Purchase Orders belong to the same supplier and the same currency"
 msgstr "Les bons de Commande appartiennent au même fournisseur et à la même devise"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.in
 msgid "India"
-msgstr "India"
+msgstr "Inde"
 
 #. module: msf_outgoing
 #: selection:stock.picking,subtype:0
@@ -61375,12 +61029,13 @@ msgstr "Cost center %s is not active at this date: %s"
 msgid "Monthly consumption"
 msgstr "Consommation Mensuelle"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bo
 msgid "Bolivia"
-msgstr "Bolivia"
+msgstr "Bolivie"
 
 #. modules: account, analytic_distribution
 #: view:account.analytic.account:0
@@ -61649,11 +61304,6 @@ msgstr "Wizard line to process a move"
 msgid "Indian/Comoro"
 msgstr "Indian/Comoro"
 
-#. module: base
-#: model:res.country,name:base.ec
-msgid "Ecuador"
-msgstr "Equateur"
-
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.tg
 #: selection:base.setup.company,country_id:0
@@ -61711,11 +61361,6 @@ msgstr "Activité Hebdomadaire Globale"
 #: selection:ir.actions.act_window,target:0
 msgid "Current Window"
 msgstr "Fenêtre active"
-
-#. module: base
-#: model:res.country,name:base.ai
-msgid "Anguilla"
-msgstr "Anguille"
 
 #. module: stock
 #: view:physical.inventory:0
@@ -61893,11 +61538,6 @@ msgstr "La devise %s n'est pas définie dans l'ensemble principal !"
 #: field:ir.actions.report.xml,target_filename:0
 msgid "Target filename"
 msgstr "Cibler le nom de fichier"
-
-#. module: base
-#: model:res.country,name:base.er
-msgid "Eritrea"
-msgstr "Erythrée"
 
 #. module: documents_done
 #: field:documents.done.problem.line,doc_id:0
@@ -62222,12 +61862,13 @@ msgstr "Ordre de Paiement"
 msgid "Close IN"
 msgstr "Close IN"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.io
 msgid "British Indian Ocean Territory"
-msgstr "British Indian Ocean Territory"
+msgstr "Territoire Britannique de l'Océan Indien"
 
 #. modules: sales_followup, purchase_followup
 #: code:addons/purchase_followup/purchase_followup.py:98
@@ -62605,11 +62246,6 @@ msgstr "res.country.restriction"
 msgid "ROMANIAN NEW LEU"
 msgstr "ROMANIAN NEW LEU"
 
-#. module: base
-#: model:res.country,name:base.nc
-msgid "New Caledonia (French)"
-msgstr "Nouvelle Calédonie (Française)"
-
 #. module: account
 #: model:ir.model,name:account.model_account_automatic_reconcile
 msgid "Automatic Reconcile"
@@ -62725,12 +62361,13 @@ msgstr "Laisser vide si vous ne voulez pas que l'utilisateur puisse se connecter
 msgid "Supplier Ref."
 msgstr "Réf. Fournisseur"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.al
 msgid "Albania"
-msgstr "Albania"
+msgstr "Albanie"
 
 #. modules: financing_contract, account_hq_entries, account_override, mission_stock, procurement_cycle, msf_accrual, finance, return_claim, account_mcdb, stock_override, stock_forecast, msf_doc_import, stock, product, account_payment, msf_homere_interface, consumption_calculation, register_accounting, specific_rules, kit, base, procurement_report, threshold_value, account_corrections, account, msf_outgoing, product_attributes, procurement_auto, documents_done, procurement, purchase
 #: view:account.analytic.line:0
@@ -62999,16 +62636,6 @@ msgstr "Source lines with new options selected on the wizard"
 msgid "You must assign an expiry date"
 msgstr "You must assign an expiry date"
 
-#. module: base
-#: model:res.country,name:base.sh
-msgid "Saint Helena"
-msgstr "Sainte Hélène"
-
-#. module: base
-#: model:res.country,name:base.no
-msgid "Norway"
-msgstr "Norvège"
-
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_in_simulation_screen
 msgid "wizard.import.in.simulation.screen"
@@ -63182,12 +62809,13 @@ msgstr "Ceci est la liste de tous les numéros de lot que vous avez enregistrés
 msgid "You can not remove the model '%s' !"
 msgstr "Vous ne pouvez pas supprimer le model '%s' !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.vg
 msgid "Virgin Islands (British)"
-msgstr "Virgin Islands (British)"
+msgstr "Iles Vierges (Britanniques)"
 
 #. modules: msf_doc_import, kit
 #: code:addons/kit/wizard/kit_mass_import.py:210
@@ -63730,11 +63358,6 @@ msgstr "Pas de registre trouvé. Vous pouvez effacer ce journal manuellement."
 msgid "Did you import and validate HQ entries (ONLY FOR COORDO)?"
 msgstr "Did you import and validate HQ entries (ONLY FOR COORDO)?"
 
-#. module: base
-#: model:res.country,name:base.io
-msgid "British Indian Ocean Territory"
-msgstr "Territoire Britannique de l'Océan Indien"
-
 #. module: sale
 #: code:addons/sale/sale_order.py:2176
 #, python-format
@@ -63923,12 +63546,13 @@ msgstr "Clôturer une Période"
 msgid "A5  9   148 x 210 mm"
 msgstr "A5 9 148 x 210 mm"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.zr
 msgid "Zaire"
-msgstr "Zaire"
+msgstr "Zaïre"
 
 #. module: stock
 #: view:stock.picking:0
@@ -64015,11 +63639,6 @@ msgstr "Info!"
 #, python-format
 msgid "Entry journal"
 msgstr "Entry journal"
-
-#. module: base
-#: model:res.country,name:base.hm
-msgid "Heard and McDonald Islands"
-msgstr "Iles Heard et McDonald"
 
 #. module: account_payment
 #: view:account.payment.make.payment:0
@@ -64473,11 +64092,6 @@ msgstr "Lettrage"
 msgid "Sent state of request for quotation."
 msgstr "Statut envoyé de la Demande de Devis."
 
-#. module: base
-#: model:res.country,name:base.co
-msgid "Colombia"
-msgstr "Colombie"
-
 #. modules: sync_client, update_client
 #: view:backup.download:0
 #: view:sync.client.logs:0
@@ -64624,15 +64238,16 @@ msgstr "Devise sortante"
 msgid "Additional Advance amount"
 msgstr "Montant supplémentaire avancé"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,state_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,bill_state_id:0
 #: selection:base.setup.company,ship_country_id:0
 #: selection:base.setup.company,ship_state_id:0
+#: model:res.country,name:base.ge
 msgid "Georgia"
-msgstr "Georgia"
+msgstr "Georgie"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -64787,11 +64402,6 @@ msgstr "Enregistrement"
 msgid "Accrual Account"
 msgstr "Compte de Régularisation"
 
-#. module: base
-#: model:res.country,name:base.ht
-msgid "Haiti"
-msgstr "Haïti"
-
 #. module: account
 #: view:account.chart.template:0
 #: field:product.category,property_account_income_categ:0
@@ -64853,12 +64463,13 @@ msgstr "Approvisionnement"
 msgid "Street2"
 msgstr "Rue (suite)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.iq
 msgid "Iraq"
-msgstr "Iraq"
+msgstr "Irak"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:798
@@ -64969,12 +64580,6 @@ msgstr "Changer le mode d'écriture"
 msgid "Please confirm again to delete ALL international commitments entries. Continue ?"
 msgstr "Please confirm again to delete ALL international commitments entries. Continue ?"
 
-#. module: base
-#: model:res.country,name:base.gs
-msgid "S. Georgia & S. Sandwich Isls."
-msgstr "St. Georges & les îles Sandwich."
-
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:3111
 #, python-format
@@ -65039,12 +64644,13 @@ msgstr "Danemark"
 msgid "Selected list to process cannot be empty."
 msgstr "La liste sélectionnée à traiter ne peut être vide."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bz
 msgid "Belize"
-msgstr "Belize"
+msgstr "Le Belize"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/picking_processor.py:784
@@ -65499,11 +65105,6 @@ msgstr "Tableau de bord de l'Entrepôt"
 msgid "Purchase Management"
 msgstr "Gestion des Achats"
 
-#. module: base
-#: model:res.country,name:base.bj
-msgid "Benin"
-msgstr "Bénin"
-
 #. module: purchase
 #: model:ir.actions.act_window,help:purchase.purchase_rfq
 msgid "You can create a request for quotation when you want to buy products to a supplier but the purchase is not confirmed yet. Use also this menu to review requests for quotation created automatically based on your logistic rules (minimum stock, MTO, etc). You can convert the request for quotation into a purchase order once the order is confirmed. If you use the extended interface (from user's preferences), you can select the way to control your supplier invoices: based on the order, based on the receptions or manual encoding."
@@ -65686,12 +65287,13 @@ msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est d�
 msgid "America/Montreal"
 msgstr "America/Montreal"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ht
 msgid "Haiti"
-msgstr "Haiti"
+msgstr "Haïti"
 
 #. module: msf_outgoing
 #: help:ppl.family.processor,wizard_id:0
@@ -65986,11 +65588,6 @@ msgid "Quantity-2"
 msgstr "Quantité-2"
 
 #. module: base
-#: model:res.country,name:base.nu
-msgid "Niue"
-msgstr "Niué"
-
-#. module: base
 #: code:addons/base/ir/ir_model.py:579
 #, python-format
 msgid "You can not read this document (%s) ! Be sure your user belongs to one of these groups: %s."
@@ -66015,11 +65612,6 @@ msgstr "Numéro de ligne"
 #: model:ir.actions.report.xml,name:purchase_followup.report_purchase_follow_up_pdf
 msgid "Purchase Order Follow Up PDF Export"
 msgstr "Export PDF Suivi Bon de Commande"
-
-#. module: base
-#: model:res.country,name:base.jo
-msgid "Jordan"
-msgstr "Jordanie"
 
 #. module: export_import_lang
 #: view:base.language.import:0
@@ -66051,11 +65643,6 @@ msgstr "Montrer inactifs"
 #: model:ir.model,name:msf_config_locations.model_stock_remove_location_wizard
 msgid "stock.remove.location.wizard"
 msgstr "stock.remove.location.wizard"
-
-#. module: base
-#: model:res.country,name:base.pn
-msgid "Pitcairn Island"
-msgstr "Iles Pitcairn"
 
 #. module: msf_budget
 #: field:imported.msf.budget.line,month11:0
@@ -66171,11 +65758,6 @@ msgstr "_Subscribe"
 #, python-format
 msgid "Future P&L"
 msgstr "PP futur"
-
-#. module: base
-#: model:res.country,name:base.sv
-msgid "El Salvador"
-msgstr "Salvador"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -66939,11 +66521,6 @@ msgid "Draft Requests for Quotation"
 msgstr "Brouillon de Demandes de Devis"
 
 #. module: base
-#: model:res.country,name:base.sk
-msgid "Slovak Republic"
-msgstr "République Slovaque"
-
-#. module: base
 #: model:ir.model,name:base.model_base_module_update
 msgid "Update Module"
 msgstr "Mise à jour du module"
@@ -66985,12 +66562,13 @@ msgstr "Rapport Destruction"
 msgid "You cannot change the G/L account since it is used in a closed financing contract."
 msgstr "Vous ne pouvez pas modifier le compte du Grand livre parce qu'il est utilisé dans un contrat de financement clôturé."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ec
 msgid "Ecuador"
-msgstr "Ecuador"
+msgstr "Equateur"
 
 #. module: export_import_lang
 #: model:ir.actions.act_window,name:export_import_lang.action_view_msf_import_language
@@ -67041,12 +66619,13 @@ msgstr "Registres de Banque"
 msgid "Original HQ entries"
 msgstr "Original HQ entries"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sy
 msgid "Syria"
-msgstr "Syria"
+msgstr "Syrie"
 
 #. module: purchase
 #: field:purchase.installer,purchase_analytic_plans:0
@@ -67523,11 +67102,6 @@ msgstr "Montant Sortant"
 #: field:account.chart,is_initial_balance_available:0
 msgid "Is initial balance filter available ?"
 msgstr "Is initial balance filter available ?"
-
-#. module: base
-#: model:res.country,name:base.mp
-msgid "Northern Mariana Islands"
-msgstr "Îles Mariannes du Nord"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:995
@@ -68267,11 +67841,6 @@ msgid "Verify"
 msgstr "Vérifier"
 
 #. module: base
-#: model:res.country,name:base.ro
-msgid "Romania"
-msgstr "Roumanie"
-
-#. module: base
 #: view:res.partner.address:0
 msgid "Search Contact"
 msgstr "Rechercher Contact"
@@ -68291,10 +67860,11 @@ msgstr "URL - Aide"
 msgid "In : "
 msgstr "Dans : "
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cz
 msgid "Czech Republic"
 msgstr "République Tchèque"
 
@@ -68578,11 +68148,6 @@ msgstr "Processing done"
 msgid "wizard.hq.report.ocg"
 msgstr "wizard.hq.report.ocg"
 
-#. module: base
-#: model:res.country,name:base.fo
-msgid "Faroe Islands"
-msgstr "Iles Féroé"
-
 #. modules: procurement_auto, procurement_cycle, consumption_calculation, product_list, threshold_value
 #: view:monthly.review.consumption:0
 #: view:real.average.consumption:0
@@ -68635,12 +68200,13 @@ msgstr "Réf de Commande:"
 msgid "Validation"
 msgstr "Validation"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
+#: model:res.country,name:base.ie
 #: selection:base.setup.company,ship_country_id:0
 msgid "Ireland"
-msgstr "Ireland"
+msgstr "Irlande"
 
 #. module: account_mcdb
 #: field:account.mcdb,document_state:0
@@ -68712,12 +68278,13 @@ msgstr "The expiry date doesn't match with the expiry date of the batch. Expiry 
 msgid "Lines not imported"
 msgstr "Lignes non importées"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.rs
 msgid "Serbia"
-msgstr "Serbia"
+msgstr "Serbie"
 
 #. module: msf_config_locations
 #: model:ir.actions.act_window,name:msf_config_locations.action_stock_location_configuration_wizard
@@ -69096,12 +68663,13 @@ msgstr "Integrity Status"
 msgid "Variant Price Extra"
 msgstr "Variante Supplément Prix"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gm
 msgid "Gambia"
-msgstr "Gambia"
+msgstr "Gambie"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/consumption_calculation.py:392
@@ -69412,12 +68980,13 @@ msgstr "Sauvegardez en tant que Pièce Jointe au Préfix"
 msgid "from.supplier.choose.catalogue"
 msgstr "from.supplier.choose.catalogue"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.it
 msgid "Italy"
-msgstr "Italy"
+msgstr "Italie"
 
 #. module: analytic_override
 #: help:cost.center.distribution.line,source_date:0
@@ -69450,11 +69019,6 @@ msgstr "Id No"
 #, python-format
 msgid "No period found for given date: %s."
 msgstr "No period found for given date: %s."
-
-#. module: base
-#: model:res.country,name:base.ba
-msgid "Bosnia-Herzegovina"
-msgstr "Bosnie-Herzégovine"
 
 #. module: base
 #: view:ir.translation:0
@@ -69856,11 +69420,6 @@ msgstr "You must enter the number of packs you want to return before performing 
 msgid "Display the report for specific proprietary instances only"
 msgstr "Afficher le rapport uniquement pour des instances propriétaires spécifiques"
 
-#. module: base
-#: model:res.country,name:base.ly
-msgid "Libya"
-msgstr "Libye"
-
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_oca.py:182
 #: code:addons/vertical_integration/report/hq_report_ocb.py:355
@@ -69883,11 +69442,6 @@ msgstr "Pré-remplir les Numéros de Lot"
 #: field:report.aged.receivable,name:0
 msgid "Month Range"
 msgstr "Plage Mensuelle"
-
-#. module: base
-#: model:res.country,name:base.va
-msgid "Holy See (Vatican City State)"
-msgstr "Saint-Siège (Etat du Vatican)"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:281
@@ -70678,12 +70232,13 @@ msgstr "Affichage du Graphique"
 msgid "Incoming Shipments"
 msgstr "Livraisons Entrantes"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ru
 msgid "Russian Federation"
-msgstr "Russian Federation"
+msgstr "Fédération de Russie"
 
 #. module: product
 #: field:product.supplierinfo,product_name:0
@@ -70755,17 +70310,13 @@ msgstr "Automatically filled with UniData information."
 msgid "Error ! You can not create recursive nomenclature."
 msgstr "Erreur ! Vous ne pouvez pas créer de nomenclature récursive."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tp
 msgid "East Timor"
-msgstr "East Timor"
-
-#. module: base
-#: model:res.country,name:base.de
-msgid "Germany"
-msgstr "Allemagne"
+msgstr "Timor Oriental"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.action_model_data
@@ -71271,12 +70822,13 @@ msgstr "Field Order that haven't yet been confirmed"
 msgid "Parent list"
 msgstr "Liste parente"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.er
 msgid "Eritrea"
-msgstr "Eritrea"
+msgstr "Erythrée"
 
 #. module: analytic_distribution
 #: selection:account.commitment,type:0
@@ -72584,11 +72136,6 @@ msgstr "Asia/Rangoon"
 msgid "Batch Number %s has been created."
 msgstr "Numéro de Lot %s a été créé"
 
-#. module: base
-#: model:res.country,name:base.mx
-msgid "Mexico"
-msgstr "Mexique"
-
 #. module: product
 #: help:product.supplierinfo,delay:0
 msgid "Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning."
@@ -72834,11 +72381,6 @@ msgstr "ED management"
 msgid "Work Days"
 msgstr "Jours Ouvrés"
 
-#. module: base
-#: model:res.country,name:base.lt
-msgid "Lithuania"
-msgstr "Lituanie"
-
 #. module: product_attributes
 #: field:product.product,cold_chain:0
 msgid "Cold Chain"
@@ -72902,14 +72444,15 @@ msgstr "Australia/NSW"
 #: code:addons/sync_client/sync_client.py:1658
 #, python-format
 msgid "Automatic Synchronization must be activated to perform Silent Upgrade"
-msgstr "Automatic Synchronization must be activated to perform Silent Upgrade"
+msgstr "La synchro automatique doit être activée pour pouvoir faire une Mise à Jour Silencieuse"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.pr
 msgid "Puerto Rico"
-msgstr "Puerto Rico"
+msgstr "Porto Rico"
 
 #. module: procurement_request
 #: field:procurement.request.sourcing.document,sourcing_lines:0
@@ -72939,8 +72482,9 @@ msgstr "Système de Paie Générique."
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.il
 msgid "Israel"
-msgstr "Israel"
+msgstr "Israël"
 
 #. module: res_currency_tables
 #: code:addons/res_currency_tables/wizard/import_currencies.py:51
@@ -75617,13 +75161,6 @@ msgstr "NO PACK FAMILIES IN THIS PPL"
 msgid "Austria"
 msgstr "Autriche"
 
-#. modules: base_setup, unifield_setup
-#: selection:base.setup.company,country_id:0
-#: selection:base.setup.company,bill_country_id:0
-#: selection:base.setup.company,ship_country_id:0
-msgid "Dominica"
-msgstr "Dominica"
-
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_request_for_quotation_xls
 msgid "Request For Quotation Excel Export"
@@ -75639,12 +75176,13 @@ msgstr "Délai d'Exécution (Jours)"
 msgid "International customer"
 msgstr "Client International"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.no
 msgid "Norway"
-msgstr "Norway"
+msgstr "Norvège"
 
 #. modules: msf_cross_docking, reason_types_moves, stock_override, service_purchasing, consumption_calculation, msf_config_locations, kit, specific_rules, specific_locations, stock
 #: constraint:stock.location:0
@@ -75783,11 +75321,6 @@ msgstr "Our ref:"
 msgid "Warning"
 msgstr "Attention"
 
-#. module: base
-#: model:res.country,name:base.ky
-msgid "Cayman Islands"
-msgstr "Îles Caïmans"
-
 #. module: kit
 #: selection:kit.mass.import,state:0
 msgid "Complete"
@@ -75873,12 +75406,13 @@ msgstr "La quantité facultative correspondant à cette ligne, par exemple le no
 msgid "Number of Modules"
 msgstr "Nombre de Modules"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
+#: model:res.country,name:base.mn
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Mongolia"
-msgstr "Mongolia"
+msgstr "Mongolie"
 
 #. module: msf_order_date
 #: model:ir.module.module,shortdesc:msf_order_date.module_meta_information
@@ -76395,11 +75929,6 @@ msgstr "America/Matamoros"
 #: field:email.configuration,email_from:0
 msgid "Email From"
 msgstr "Email From"
-
-#. module: base
-#: model:res.country,name:base.eg
-msgid "Egypt"
-msgstr "Egypte"
 
 #. module: product_nomenclature
 #: field:product.nomenclature,parent_id:0
@@ -76976,12 +76505,13 @@ msgstr "Quantity error"
 msgid "No \"id_unique\" found for employee %s!"
 msgstr "Le système n'a pas trouvé d'\"id_unique\" pour le travailleur %s !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tj
 msgid "Tajikistan"
-msgstr "Tajikistan"
+msgstr "Tadjikistan"
 
 #. module: finance
 #: view:purchase.order:0
@@ -77039,11 +76569,6 @@ msgstr "Ligne %d: Le type d'ajustement est manquant"
 msgid "Aged Partner Balance is a more detailed report of your receivables by intervals. When opening that report, OpenERP asks for the name of the company, the fiscal period and the size of the interval to be analyzed (in days). OpenERP then calculates a table of credit balance by period. So if you request an interval of 30 days OpenERP generates an analysis of creditors for the past month, past two months, and so on. "
 msgstr "La Balance Agée Partenaire est un rapport plus détaillé de vos créances par période. Quand vous ouvrez ce rapport, OpenERP vous demande le nom de la société, la période fiscale et la période à analyser (en jours). OpenERP calcule ensuite une table avec les balances des crédits par période. Si vous demandez une période de 50 jours, OpenERP génèrera une analyse des créditeurs pour le mois précédent, les 2 mois précédents, et ainsi de suite. "
 
-#. module: base
-#: model:res.country,name:base.sy
-msgid "Syria"
-msgstr "Syrie"
-
 #. module: msf_instance
 #: field:account.period,child_mission_closed:0
 msgid "Child Mission Closed"
@@ -77067,11 +76592,6 @@ msgstr "Free 2 \"%s\" n'existe pas!"
 #, python-format
 msgid "The Shipment %s is set to delivered!"
 msgstr "The Shipment %s is set to delivered!"
-
-#. module: base
-#: model:res.country,name:base.bz
-msgid "Belize"
-msgstr "Le Belize"
 
 #. module: account
 #: view:account.journal:0
@@ -77125,11 +76645,6 @@ msgstr "Line %s of the Excel file updated the PO %s."
 #: selection:sync.client.register_entity,oc:0
 msgid "OCA"
 msgstr "OCA"
-
-#. module: base
-#: model:res.country,name:base.bo
-msgid "Bolivia"
-msgstr "Bolivie"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/monthly_budget.mako:275
@@ -77185,11 +76700,6 @@ msgstr "Expense"
 #: view:sale.installer:0
 msgid "Sales Application Configuration"
 msgstr "Configuration de l'application des Commandes de terrain"
-
-#. module: base
-#: model:res.country,name:base.jp
-msgid "Japan"
-msgstr "Japon"
 
 #. module: base
 #: selection:ir.actions.server,trigger_name:0
@@ -77465,11 +76975,6 @@ msgstr "Exporter le rapport des écarts au format XLS"
 #: selection:sale.order,split_type_sale_order:0
 msgid "3"
 msgstr "3"
-
-#. module: base
-#: model:res.country,name:base.kh
-msgid "Cambodia, Kingdom of"
-msgstr "République du Cambodge"
 
 #. module: sales_followup
 #: view:sale.followup.multi.wizard:0
@@ -77970,12 +77475,13 @@ msgstr "Centre de coût principal (consolidation budgétaire) "
 msgid "Low"
 msgstr "Faible"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ba
 msgid "Bosnia-Herzegovina"
-msgstr "Bosnia-Herzegovina"
+msgstr "Bosnie-Herzégovine"
 
 #. module: sale
 #: view:sale.installer:0
@@ -78101,12 +77607,13 @@ msgstr "To avoid server timeout when trying to upload large file, please zip the
 msgid "Comm."
 msgstr "Comm."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.wf
 msgid "Wallis and Futuna Islands"
-msgstr "Wallis and Futuna Islands"
+msgstr "Wallis et Futuna"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:389
@@ -78346,11 +77853,6 @@ msgstr "#Colis"
 msgid "DP create"
 msgstr "DP create"
 
-#. module: base
-#: model:res.country,name:base.td
-msgid "Chad"
-msgstr "Tchad"
-
 #. module: account
 #: model:ir.model,name:account.model_report_account_receivable
 msgid "Receivable accounts"
@@ -78379,12 +77881,13 @@ msgstr "Vues de l historique des données "
 msgid "Demo data"
 msgstr "Données de démo"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.au
 msgid "Australia"
-msgstr "Australia"
+msgstr "Australie"
 
 #. modules: account_override, register_accounting, msf_instance, finance, sale, account_voucher, order_types
 #: view:account.journal:0
@@ -78442,12 +77945,13 @@ msgstr "Images Disponibles"
 msgid "Maps to the ir_model_data for which this translation is provided."
 msgstr "Pointe vers le ir_model_data pour lequel cette traduction est fournie."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.si
 msgid "Slovenia"
-msgstr "Slovenia"
+msgstr "Slovénie"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:477
@@ -78705,12 +78209,13 @@ msgstr "Ligne de Projet"
 msgid "Internal Header/Footer"
 msgstr "En-tête / pied de page Interne"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gs
 msgid "S. Georgia & S. Sandwich Isls."
-msgstr "S. Georgia & S. Sandwich Isls."
+msgstr "St. Georges & les îles Sandwich."
 
 #. module: hr
 #: model:process.transition,note:hr.process_transition_contactofemployee0
@@ -79142,11 +78647,6 @@ msgstr "Linked FO"
 msgid "Enter Reason for Cancellation"
 msgstr "Saisir Raison de l'Annulation"
 
-#. module: base
-#: model:res.country,name:base.ug
-msgid "Uganda"
-msgstr "Ouganda"
-
 #. module: msf_outgoing
 #: field:stock.picking,already_shipped:0
 msgid "The shipment is done"
@@ -79185,11 +78685,6 @@ msgstr "Activité Source"
 #: view:change.dest.location:0
 msgid "Change location"
 msgstr "Changer la zone"
-
-#. module: base
-#: model:res.country,name:base.mt
-msgid "Malta"
-msgstr "Malte"
 
 #. module: account
 #: view:account.tax.code:0
@@ -79282,11 +78777,6 @@ msgstr "The export process could take quite a long time. The file will be attach
 #: field:purchase.order,has_confirmed_line:0
 msgid "Has a confirmed line"
 msgstr "A une ligne confirmée"
-
-#. module: base
-#: model:res.country,name:base.kr
-msgid "South Korea"
-msgstr "Corée du Sud"
 
 #. module: product_attributes
 #: field:product.product,product_catalog_page:0
@@ -79424,12 +78914,13 @@ msgstr "No line selected"
 msgid "PO Date From:"
 msgstr "PO Date From:"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mu
 msgid "Mauritius"
-msgstr "Mauritius"
+msgstr "Île Maurice"
 
 #. module: finance
 #: report:cash.request.export:0
@@ -79585,11 +79076,6 @@ msgstr "Cette devise ne peut être trouvée ou n'est pas activée: %s"
 #: field:purchase.order.merged.line,account_4_distribution:0
 msgid "Account for analytical distribution"
 msgstr "Compte pour distribution analytique"
-
-#. module: base
-#: model:res.country,name:base.sg
-msgid "Singapore"
-msgstr "Singapour"
 
 #. module: sales_followup
 #: view:ir.followup.location.wizard:0
@@ -80009,12 +79495,13 @@ msgstr "Etapes d'installation et de configuration"
 msgid "International PO"
 msgstr "Bon de Commande Internationale"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.by
 msgid "Belarus"
-msgstr "Belarus"
+msgstr "Biélorussie"
 
 #. module: msf_order_date
 #: code:addons/msf_order_date/order_dates.py:185
@@ -80568,11 +80055,6 @@ msgstr "Catégorie Instrument Medical "
 msgid "You cannot convert %s delivery orders"
 msgstr "You cannot convert %s delivery orders"
 
-#. module: base
-#: model:res.country,name:base.ge
-msgid "Georgia"
-msgstr "Georgie"
-
 #. module: account
 #: model:ir.model,name:account.model_account_bs_report
 msgid "Account Balance Sheet Report"
@@ -80958,7 +80440,10 @@ msgstr "Demandes Internes"
 msgid "Spanish (AR) / Español (AR)"
 msgstr "Spanish (AR) / Español (AR)"
 
-#. module: base
+#. modules: base_setup, unifield_setup, base
+#: selection:base.setup.company,country_id:0
+#: selection:base.setup.company,bill_country_id:0
+#: selection:base.setup.company,ship_country_id:0
 #: model:res.country,name:base.mr
 msgid "Mauritania"
 msgstr "Mauritanie"
@@ -81450,12 +80935,13 @@ msgstr "Sync Order line DB ID of the new created line"
 msgid "Add all Destinations"
 msgstr "Ajouter toutes les Destinations"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.be
 msgid "Belgium"
-msgstr "Belgium"
+msgstr "Belgique"
 
 #. module: product_expiry
 #: help:stock.production.lot,life_date:0
@@ -81670,11 +81156,6 @@ msgstr "contract_soft_closed - (financing.contract.contract)"
 #, python-format
 msgid "The default revaluation account must have a default destination SUP"
 msgstr "The default revaluation account must have a default destination SUP"
-
-#. module: base
-#: model:res.country,name:base.tc
-msgid "Turks and Caicos Islands"
-msgstr "Iles Turques et Caïques"
 
 #. module: register_accounting
 #: code:addons/register_accounting/register_tools.py:308
@@ -82059,12 +81540,13 @@ msgstr "Please delete the automated import jobs that are linked to the Automatic
 msgid "Packing (debug)"
 msgstr "Colisage (debogage)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.es
 msgid "Spain"
-msgstr "Spain"
+msgstr "Espagne"
 
 #. module: account
 #: model:ir.model,name:account.model_account_fiscal_position_template
@@ -82076,12 +81558,13 @@ msgstr "Modèle pour Position Fiscale"
 msgid "Created Date"
 msgstr "Date de création"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
+#: model:res.country,name:base.pf
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Polynesia (French)"
-msgstr "Polynésie (Francaise)"
+msgstr "Polynésie (Française)"
 
 #. module: analytic_distribution
 #: selection:analytic.distribution.wizard.f1.lines,type:0
@@ -82373,13 +81856,6 @@ msgstr "Incrémenter le Numéro"
 #: model:ir.ui.menu,name:product_attributes.menu_international_status_product
 msgid "Product creators"
 msgstr "Product creators"
-
-#. modules: base_setup, unifield_setup
-#: selection:base.setup.company,country_id:0
-#: selection:base.setup.company,bill_country_id:0
-#: selection:base.setup.company,ship_country_id:0
-msgid "Trinidad and Tobago"
-msgstr "Trinidad and Tobago"
 
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,volume:0
@@ -82929,12 +82405,13 @@ msgid "%s line%s sourced on %s.\n"
 msgstr "%s line%s sourced on %s.\n"
 ""
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.bm
 msgid "Bermuda"
-msgstr "Bermuda"
+msgstr "Bermudes"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_internal_move_processor
@@ -83237,11 +82714,6 @@ msgstr "\n"
 #: field:stock.picking,location_dest_id:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
-
-#. module: base
-#: model:res.country,name:base.cz
-msgid "Czech Republic"
-msgstr "République tchèque"
 
 #. module: account_reconciliation
 #: model:ir.module.module,description:account_reconciliation.module_meta_information
@@ -83791,12 +83263,13 @@ msgstr "Generic import wizard"
 msgid "Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"
 msgstr "Champ technique utilisé pour enregistrer le coût du produit défini par l'utilisateur lors de la confirmation du Picking (lorsque la méthode tarifaire basée sur le prix moyen est utilisée)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ve
 msgid "Venezuela"
-msgstr "Venezuela"
+msgstr "Vénézuela"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -84441,12 +83914,13 @@ msgstr "Produit"
 msgid "Line %s of the Excel file updated the PO line %s with the product %s."
 msgstr "Line %s of the Excel file updated the PO line %s with the product %s."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sb
 msgid "Solomon Islands"
-msgstr "Solomon Islands"
+msgstr "Iles Salomon"
 
 #. module: analytic_distribution
 #: report:funding.pool:0
@@ -85226,12 +84700,13 @@ msgstr "Code Postal"
 msgid "Asia/Chongqing"
 msgstr "Asia/Chongqing"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ma
 msgid "Morocco"
-msgstr "Morocco"
+msgstr "Maroc"
 
 #. modules: account, msf_outgoing, stock_override, consumption_calculation, purchase_followup, order_types, stock
 #: report:account.journal.period.print:0
@@ -85848,17 +85323,13 @@ msgstr "Options"
 msgid "SO line"
 msgstr "SO line"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
+#: model:res.country,name:base.gu
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Guam (USA)"
 msgstr "Guam (USA)"
-
-#. module: base
-#: model:res.country,name:base.tr
-msgid "Turkey"
-msgstr "Turquie"
 
 #. module: analytic_override
 #: field:account.analytic.account,tuple_destination_summary:0
@@ -86076,12 +85547,13 @@ msgstr "There is no expense account defined for this line: %s (id:%d)"
 msgid "Invalid Analytic Distribution !"
 msgstr "Distribution analytique non valable !"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sn
 msgid "Senegal"
-msgstr "Senegal"
+msgstr "Sénégal"
 
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:278
@@ -86240,8 +85712,9 @@ msgstr "Line %s of the Excel file produced a split for the line %s."
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ly
 msgid "Libya"
-msgstr "Libya"
+msgstr "Libye"
 
 #. modules: purchase, product, stock
 #: model:ir.actions.act_window,name:product.product_category_action_form
@@ -86505,10 +85978,11 @@ msgstr "Field name of the link between lines and original doc"
 msgid "Line %s in the Excel file : The product qty multiple has been set to 1 because the value in Excel file was 0.00"
 msgstr "Ligne %s du fichier Excel: la qtté multiple du produit a été mis à 1 parce que la valeur dans le fichier Excel était 0.00"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.us
 msgid "United States"
 msgstr "États-Unis"
 
@@ -87139,11 +86613,6 @@ msgstr "Bilan des Qtés"
 msgid "Recurring Lines"
 msgstr "Lignes périodiques"
 
-#. module: base
-#: model:res.country,name:base.mn
-msgid "Mongolia"
-msgstr "Mongolie"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:54
 #, python-format
@@ -87159,11 +86628,6 @@ msgstr "Initialisation…"
 #, python-format
 msgid "LOG nomenclature Main Type not found"
 msgstr "LOG nomenclature Type Principale non trouvé"
-
-#. module: base
-#: model:res.country,name:base.cd
-msgid "Congo, The Democratic Republic of the"
-msgstr "République Démocratique du Congo"
 
 #. module: sales_followup
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:229
@@ -87327,24 +86791,26 @@ msgstr "char"
 msgid "Line #%s: You cannot validate a line with no UoM."
 msgstr "Ligne #%s: Vous ne pouvez pas valider de ligne sans UdM."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.hm
 msgid "Heard and McDonald Islands"
-msgstr "Heard and McDonald Islands"
+msgstr "Iles Heard et McDonald"
 
 #. module: stock
 #: field:physical.inventory.import.wizard,inventory_id:0
 msgid "PI"
 msgstr "PI"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sh
 msgid "Saint Helena"
-msgstr "Saint Helena"
+msgstr "Sainte Hélène"
 
 #. modules: delivery_mechanism, msf_doc_import, msf_outgoing
 #: field:stock.move,pack_info_id:0
@@ -87489,11 +86955,6 @@ msgstr "\n"
 "    "
 
 #. module: base
-#: model:res.country,name:base.az
-msgid "Azerbaijan"
-msgstr "Azerbaïdjan"
-
-#. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
 msgid "Europe/Ljubljana"
@@ -87547,11 +87008,6 @@ msgstr "America/Montevideo"
 #: field:res.company,header_webkit:0
 msgid "Available html"
 msgstr "Html Disponible"
-
-#. module: base
-#: model:res.country,name:base.um
-msgid "USA Minor Outlying Islands"
-msgstr "Iles Mineures éloignées des Etats-Unis"
 
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_internal_request_xls
@@ -87665,12 +87121,13 @@ msgstr "Facture Directe Fournisseur"
 msgid "Search Working Period Leaves"
 msgstr "Chercher les Congés durant Période de Travail"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.tm
 msgid "Turkmenistan"
-msgstr "Turkmenistan"
+msgstr "Turkménistan"
 
 #. modules: vertical_integration, account
 #: view:account.export.mapping:0
@@ -87699,12 +87156,13 @@ msgstr "Méthode de Valorisation"
 msgid "Exported"
 msgstr "Exported"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
+#: model:res.country,name:base.kh
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Cambodia, Kingdom of"
-msgstr "Cambodia, Kingdom of"
+msgstr "République du Cambodge"
 
 #. module: account
 #: view:report.hr.timesheet.invoice.journal:0
@@ -87841,11 +87299,6 @@ msgstr "Fichier CSV"
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:763
 msgid "Total Balance"
 msgstr "Balance Total"
-
-#. module: base
-#: model:res.country,name:base.gn
-msgid "Guinea"
-msgstr "Guinée"
 
 #. module: sale
 #: view:sale.order:0
@@ -88296,7 +87749,7 @@ msgstr "Vérification Cachée des Expirés "
 #, python-format
 msgid "Line %s of the imported file: Batch Number [%s] not found.\n"
 ""
-msgstr "Line %s of the imported file: Batch Number [%s] not found.\n"
+msgstr "Ligne %s du fichier importé: Lot [%s] non trouvé.\n"
 ""
 
 #. module: account
@@ -88310,12 +87763,13 @@ msgstr "Comptes à Renouveler"
 msgid "You can not change the Purchase Default Currency of this partner"
 msgstr "Vous ne pouvez pas modifier la devise par défaut des achats de ce partenaire"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cx
 msgid "Christmas Island"
-msgstr "Christmas Island"
+msgstr "Île Christmas"
 
 #. module: msf_outgoing
 #: field:stock.move,backmove_packing_id:0
@@ -88421,19 +87875,13 @@ msgstr "substitute.item.mirror"
 msgid "Actual Pack Date"
 msgstr "Date Réelle de Colisage"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.np
 msgid "Nepal"
-msgstr "Nepal"
-
-#. modules: base_setup, unifield_setup
-#: selection:base.setup.company,country_id:0
-#: selection:base.setup.company,bill_country_id:0
-#: selection:base.setup.company,ship_country_id:0
-msgid "Central African Republic"
-msgstr "République Centrale Africaine"
+msgstr "Népal"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:566
@@ -88527,11 +87975,6 @@ msgstr "Rapport d'allocation de la ligne du BC"
 #, python-format
 msgid "No product in this location."
 msgstr "Aucun produit dans cette localisation."
-
-#. module: base
-#: model:res.country,name:base.in
-msgid "India"
-msgstr "Inde"
 
 #. module: specific_rules
 #: model:ir.actions.act_window,name:specific_rules.export_report_stock_inventory_action
@@ -88798,11 +88241,6 @@ msgstr "Invisible expiry date"
 #: report:stock.forecast.report:0
 msgid "Short Shelf Life"
 msgstr "Durée de Conservation Limitée "
-
-#. module: base
-#: model:res.country,name:base.pm
-msgid "Saint Pierre and Miquelon"
-msgstr "Saint Pierre et Miquelon"
 
 #. modules: tender_flow, base, msf_outgoing, account_voucher, kit
 #: report:voucher.print:0
@@ -89819,12 +89257,13 @@ msgstr "Montant Réel"
 msgid "fo_import_product_description"
 msgstr "Description Produit"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.kg
 msgid "Kyrgyz Republic (Kyrgyzstan)"
-msgstr "Kyrgyz Republic (Kyrgyzstan)"
+msgstr "République Kirghize (Kirghizistan)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:304
@@ -89941,11 +89380,6 @@ msgstr "Bad parameter"
 #, python-format
 msgid "Import can be run only on draft wizard."
 msgstr "L'importation ne peut être effectuée que sur des assistants en état 'Non démarré'"
-
-#. module: base
-#: model:res.country,name:base.km
-msgid "Comoros"
-msgstr "Comores"
 
 #. module: base
 #: field:res.company,child_ids:0
@@ -90400,11 +89834,6 @@ msgstr "Taxes :"
 msgid "Import invoice that come from the default account given in Company configuration ('Import invoice default account for Debit Note')"
 msgstr "Import invoice that come from the default account given in Company configuration ('Import invoice default account for Debit Note')"
 
-#. module: base
-#: model:res.country,name:base.ci
-msgid "Ivory Coast (Cote D'Ivoire)"
-msgstr "Cote d'Ivoire"
-
 #. modules: account, finance
 #: selection:account.account,type:0
 #: selection:account.account.template,type:0
@@ -90582,11 +90011,6 @@ msgstr "Informations de Connexion"
 msgid "Products Value"
 msgstr "Valeur des Produits"
 
-#. module: base
-#: model:res.country,name:base.nf
-msgid "Norfolk Island"
-msgstr "Ile Norfolk"
-
 #. module: sync_client
 #: view:backup.config:0
 msgid "Test Cloud"
@@ -90610,11 +90034,6 @@ msgstr "Délai Moyen d'Arriéré"
 #: help:ir.header_webkit,format:0
 msgid "Select Proper Paper size"
 msgstr "Sélectionner Format de Papier Correct"
-
-#. module: base
-#: model:res.country,name:base.nl
-msgid "Netherlands"
-msgstr "Pays-Bas"
 
 #. modules: msf_field_access_rights, msf_button_access_rights
 #: help:msf_button_access_rights.button_access_rule,comment:0
@@ -91209,11 +90628,6 @@ msgid "m³"
 msgstr "m³"
 
 #. module: base
-#: model:res.country,name:base.re
-msgid "Reunion (French)"
-msgstr "Ile de la Réunion (Française)"
-
-#. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
 msgid "Indian/Kerguelen"
@@ -91492,12 +90906,13 @@ msgstr "Numéro (Mouvement)"
 msgid "Australia/Brisbane"
 msgstr "Australia/Brisbane"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.hk
 msgid "Hong Kong"
-msgstr "Hong Kong"
+msgstr "Hong-Kong"
 
 #. modules: procurement_auto, procurement, procurement_report, procurement_cycle, threshold_value
 #: model:ir.model,name:procurement.model_procurement_order_compute_all
@@ -91797,11 +91212,6 @@ msgstr "Note de débit annulée"
 #: field:sync.client.sync_server_connection,host:0
 msgid "Host"
 msgstr "Hôte"
-
-#. module: base
-#: model:res.country,name:base.an
-msgid "Netherlands Antilles"
-msgstr "Antilles Néerlandaises"
 
 #. module: msf_profile
 #: model:ir.model,name:msf_profile.model_user_access_results_groups_line
@@ -92205,12 +91615,13 @@ msgstr "Poste :"
 msgid "Make to Order"
 msgstr "Production sur Commande"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.hu
 msgid "Hungary"
-msgstr "Hungary"
+msgstr "Hongrie"
 
 #. module: stock_override
 #: model:ir.model,name:stock_override.model_stock_move_cancel_wizard
@@ -92504,12 +91915,13 @@ msgstr "Free 1/Free 2"
 msgid " "
 msgstr " "
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.se
 msgid "Sweden"
-msgstr "Sweden"
+msgstr "Suède"
 
 #. modules: account, register_accounting
 #: code:addons/account/invoice.py:397
@@ -93027,23 +92439,19 @@ msgstr "Commande de Terrain créée pour ressourcer la Commande de Terrain en ex
 msgid "6 months"
 msgstr "6 mois"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sk
 msgid "Slovak Republic"
-msgstr "Slovak Republic"
+msgstr "République Slovaque"
 
 #. module: register_accounting
 #: field:account.bank.statement,balance_gap:0
 #: field:account.bank.statement,closing_gap:0
 msgid "Gap"
 msgstr "Écart"
-
-#. module: base
-#: model:res.country,name:base.iq
-msgid "Iraq"
-msgstr "Irak"
 
 #. modules: register_accounting, analytic_distribution
 #: field:account.invoice.line,inactive_product:0
@@ -93181,11 +92589,6 @@ msgstr "Ligne %s. La monnaie n'est pas active : %s"
 #: view:sync.client.entity_manager:0
 msgid "Registration Status"
 msgstr "Statut Enregistrement"
-
-#. module: base
-#: model:res.country,name:base.fm
-msgid "Micronesia"
-msgstr "Micronésie"
 
 #. module: account
 #: view:account.tax.chart:0
@@ -93488,12 +92891,13 @@ msgstr "Quel genre de décompte."
 msgid "Transaction name"
 msgstr "Transaction name"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
+#: model:res.country,name:base.mt
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Malta"
-msgstr "Malta"
+msgstr "Malte"
 
 #. module: account_override
 #: help:account.bank.statement,next_reg_id:0
@@ -93557,12 +92961,13 @@ msgstr "Exécuter manuellement"
 msgid "No Purchase Orders match the specified criteria."
 msgstr "No Purchase Orders match the specified criteria."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.de
 msgid "Germany"
-msgstr "Germany"
+msgstr "Allemagne"
 
 #. module: product
 #: help:product.template,seller_qty:0
@@ -93705,11 +93110,6 @@ msgstr "Zone - Adresse"
 #: view:board.board:0
 msgid "Purchase Orders Waiting Confirmation"
 msgstr "Bons de Commandes en attente de Confirmation"
-
-#. module: base
-#: model:res.country,name:base.pf
-msgid "Polynesia (French)"
-msgstr "Polynésie (Française)"
 
 #. modules: purchase, analytic_distribution, purchase_override
 #: field:account.commitment,line_ids:0
@@ -93881,11 +93281,6 @@ msgstr "GMDN - Description"
 #: model:ir.model,name:specific_rules.model_product_uom
 msgid "Product Unit of Measure"
 msgstr "Produit - Unité de Mesure"
-
-#. module: base
-#: model:res.country,name:base.gq
-msgid "Equatorial Guinea"
-msgstr "Guinée Equatoriale"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:62
@@ -94843,20 +94238,10 @@ msgstr "Stock Négatif"
 msgid "Theoretical Kit Item"
 msgstr "Kit Théorique - Article"
 
-#. module: base
-#: model:res.country,name:base.sz
-msgid "Swaziland"
-msgstr "Souaziland"
-
 #. module: msf_accrual
 #: view:msf.accrual.line:0
 msgid "Are you sure you want to cancel this accrual line ?"
 msgstr "Etes-vous sûr de vouloir annuler cette ligne de régularisation ?"
-
-#. module: base
-#: model:res.country,name:base.ck
-msgid "Cook Islands"
-msgstr "Îles Cook"
 
 #. module: account
 #: field:account.account,parent_left:0
@@ -95172,12 +94557,13 @@ msgstr "The UoM '%s' was not found."
 msgid "MSF Outgoing Management"
 msgstr "MSF Outgoing Management"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.mp
 msgid "Northern Mariana Islands"
-msgstr "Iles du Nord de Mariana"
+msgstr "Îles Mariannes du Nord"
 
 #. module: account
 #: report:account.partner.balance:0
@@ -95456,12 +94842,13 @@ msgstr "Mention nécessaire d'un numéro de lot (Standard) mais pas d'une date d
 msgid "(w x l x h) (cm)"
 msgstr "(w x l x h) (cm)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ss
 msgid "South Sudan"
-msgstr "South Sudan"
+msgstr "Sud Soudan"
 
 #. module: base_setup
 #: model:ir.model,name:base_setup.model_base_setup_installer
@@ -95543,11 +94930,6 @@ msgstr "Configuration Contrôle HQ"
 #: field:stock.move,price_currency_id:0
 msgid "Currency for average price"
 msgstr "Devise pour prix moyen"
-
-#. module: base
-#: model:res.country,name:base.il
-msgid "Israel"
-msgstr "Israël"
 
 #. modules: return_claim, msf_outgoing
 #: selection:create.picking.processor,claim_type:0
@@ -96518,12 +95900,13 @@ msgstr "\n"
 msgid "Inverted Analytic Balance"
 msgstr "Solde Analytique Inversée"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sj
 msgid "Svalbard and Jan Mayen Islands"
-msgstr "Svalbard and Jan Mayen Islands"
+msgstr "Svalbard et îles Jan Mayen"
 
 #. module: product
 #: help:product.uom,factor:0
@@ -96643,11 +96026,6 @@ msgstr "Titres Partenaires (juridiques)"
 #: report:internal.move:0
 msgid "Actual Receipt Date :"
 msgstr "Actual Receipt Date :"
-
-#. module: base
-#: model:res.country,name:base.bb
-msgid "Barbados"
-msgstr "Barbade"
 
 #. module: base
 #: code:addons/base/module/module.py:274
@@ -96970,13 +96348,14 @@ msgid "Widget"
 msgstr "Widget "
 
 #. modules: base, base_setup, unifield_setup
+#: model:res.country,name:base.sg
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
 msgid "Singapore"
-msgstr "Singapore"
+msgstr "Singapour"
 
 #. module: msf_homere_interface
 #: view:hr.employee:0
@@ -97012,12 +96391,13 @@ msgstr "Incoterm, qui est la contraction de \"International Commercial terms\" (
 msgid "You can not import this file because it contains line(s) with currency (Column G) not of the order currency (%s)"
 msgstr "Vous ne pouvez pas importer ce fichier car il contient des lignes avec une devise (colonne G) qui n'est pas la devise de la commande (%s)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.gl
 msgid "Greenland"
-msgstr "Greenland"
+msgstr "Groënland"
 
 #. module: purchase
 #: report:purchase.order:0
@@ -97051,11 +96431,6 @@ msgstr "Process to ship"
 #: field:substitute.item.mirror,item_id_mirror:0
 msgid "Id of original Item"
 msgstr "Identifiant de l'article d'origine"
-
-#. module: base
-#: model:res.country,name:base.tz
-msgid "Tanzania"
-msgstr "Tanzanie"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1246
@@ -97578,12 +96953,13 @@ msgstr "Livrer"
 msgid "SSN No"
 msgstr "Numéro de Sécurité Sociale (NSS)"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.kw
 msgid "Kuwait"
-msgstr "Kuwait"
+msgstr "Koweït"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:63
@@ -97965,12 +97341,13 @@ msgstr "Backup configuration..."
 msgid "The 'To Date' should be greater than 'From Date'"
 msgstr "La  'Date jusqu'à' doit être plus grande que la 'Date à partir de'"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.sm
 msgid "San Marino"
-msgstr "San Marino"
+msgstr "Saint-Marin"
 
 #. module: purchase
 #: view:purchase.order.line_invoice:0
@@ -98477,12 +97854,13 @@ msgstr "Envoyer Courriel"
 msgid "Knowledge Management"
 msgstr "Gestion des connaissances"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ar
 msgid "Argentina"
-msgstr "Argentina"
+msgstr "Argentine"
 
 #. module: unifield_setup
 #: field:project.leadtime.setup,shipment_leadtime:0
@@ -98765,13 +98143,6 @@ msgstr "Rechercher Lignes non-facturées"
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
-
-#. modules: base_setup, unifield_setup
-#: selection:base.setup.company,country_id:0
-#: selection:base.setup.company,bill_country_id:0
-#: selection:base.setup.company,ship_country_id:0
-msgid "Mauritania"
-msgstr "Mauritania"
 
 #. module: msf_outgoing
 #: model:process.node,name:msf_outgoing.process_node_out_assigned
@@ -99310,11 +98681,6 @@ msgstr "Line has been created further and has to be created back in preceding do
 msgid "At"
 msgstr "Á"
 
-#. module: base
-#: model:res.country,name:base.al
-msgid "Albania"
-msgstr "Albanie"
-
 #. modules: financing_contract, sync_so
 #: model:ir.model,name:financing_contract.model_financing_contract_funding_pool_line
 #: model:ir.model,name:sync_so.model_financing_contract_funding_pool_line
@@ -99511,7 +98877,10 @@ msgstr "Sync Date"
 msgid "Content:"
 msgstr "Content:"
 
-#. module: base
+#. modules: base_setup, unifield_setup, base
+#: selection:base.setup.company,country_id:0
+#: selection:base.setup.company,bill_country_id:0
+#: selection:base.setup.company,ship_country_id:0
 #: model:res.country,name:base.dm
 msgid "Dominica"
 msgstr "Dominique"
@@ -99708,12 +99077,13 @@ msgstr "Vous ne pouvez pas modifier/effacer un journal avec des écritures pour 
 msgid "Month 01"
 msgstr "Month 01"
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.ck
 msgid "Cook Islands"
-msgstr "Cook Islands"
+msgstr "Îles Cook"
 
 #. module: msf_accrual
 #: model:ir.model,name:msf_accrual.model_wizard_accrual_reversal
@@ -100287,13 +99657,6 @@ msgstr "\n"
 msgid "Incoming shipment of a DPO"
 msgstr "Incoming shipment of a DPO"
 
-#. modules: base_setup, unifield_setup
-#: selection:base.setup.company,country_id:0
-#: selection:base.setup.company,bill_country_id:0
-#: selection:base.setup.company,ship_country_id:0
-msgid "United Arab Emirates"
-msgstr "United Arab Emirates"
-
 #. module: account_override
 #: code:addons/account_override/invoice.py:938
 #, python-format
@@ -100676,7 +100039,10 @@ msgstr "Mercredi"
 msgid "The reversal period wasn't found in the system!"
 msgstr "The reversal period wasn't found in the system!"
 
-#. module: base
+#. modules: base_setup, unifield_setup, base
+#: selection:base.setup.company,country_id:0
+#: selection:base.setup.company,bill_country_id:0
+#: selection:base.setup.company,ship_country_id:0
 #: model:res.country,name:base.tt
 msgid "Trinidad and Tobago"
 msgstr "Trinité et Tobago"
@@ -100829,11 +100195,6 @@ msgstr "Les propriétés des champs de base ne peuvent être modifiées de cette
 #: field:msf_field_access_rights.field_access_rule,family_model_ids:0
 msgid "Family Model IDs"
 msgstr "Family Model IDs"
-
-#. module: base
-#: model:res.country,name:base.it
-msgid "Italy"
-msgstr "Italie"
 
 #. module: account
 #: view:account.move.reconcile:0
@@ -101511,12 +100872,13 @@ msgstr "Valorisation"
 msgid "Optional Nomenclature Filters..."
 msgstr "Filtres de Nomenclature Optionnelles..."
 
-#. modules: base_setup, unifield_setup
+#. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
 #: selection:base.setup.company,ship_country_id:0
+#: model:res.country,name:base.cc
 msgid "Cocos (Keeling) Islands"
-msgstr "Cocos (Keeling) Islands"
+msgstr "Îles Cocos (Keeling)"
 
 #. modules: msf_order_date, purchase
 #: help:sale.order,arrival_date:0
@@ -101688,11 +101050,6 @@ msgstr "Show Balances"
 #: field:stock.partial.picking,direct_incoming:0
 msgid "Direct to Stock ?"
 msgstr "Direct to Stock ?"
-
-#. module: base
-#: model:res.country,name:base.lv
-msgid "Latvia"
-msgstr "Lettonie"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:159
@@ -101867,11 +101224,6 @@ msgid "Physical Inventory Discrepancy Line"
 msgstr "Ligne d'Écarts de l'Inventaire Physique"
 
 #. module: base
-#: model:res.country,name:base.cy
-msgid "Cyprus"
-msgstr "Chypre"
-
-#. module: base
 #: selection:instance.auto.creation,state:0
 msgid "Reconfigure done."
 msgstr "Reconfigure done."
@@ -101987,11 +101339,6 @@ msgstr "Qté déjà allouée"
 #: view:account.installer.modules:0
 msgid "Add extra Accounting functionalities to the ones already installed."
 msgstr "Ajouter des fonctionnalités de Comptabilité supplémentaires à celles déjà installées."
-
-#. module: base
-#: model:res.country,name:base.tf
-msgid "French Southern Territories"
-msgstr "Terres Australes Françaises"
 
 #. module: account
 #: code:addons/account/invoice.py:1182
