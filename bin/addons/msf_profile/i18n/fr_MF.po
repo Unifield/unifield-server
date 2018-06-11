@@ -79863,12 +79863,6 @@ msgstr "Ce rapport vous permet d'avoir une vue globale des montants facturés à
 msgid "A product has"
 msgstr "Un produit a"
 
-#. modules: account_override, vertical_integration
-#: report:addons/account_override/report/open_invoices_xls.mako:341
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:296
-msgid "Due Date"
-msgstr "Date attendue"
-
 #. module: sale
 #: view:sale.order.line:0
 msgid "Save and Close"
@@ -82805,7 +82799,151 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: tender_flow, financing_contract, account_hq_entries, account_override, register_accounting, msf_doc_import, account_mcdb, supplier_catalogue, stock_override, msf_supply_doc_export, stock, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, base, update_client, msf_tools, purchase, account, msf_outgoing, vertical_integration, sale
+#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, account_payment, vertical_integration, account_voucher, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement
+#: view:account.bank.statement:0
+#: field:account.bank.statement,state:0
+#: field:account.entries.report,move_state:0
+#: view:account.fiscalyear:0
+#: field:account.fiscalyear,state:0
+#: view:account.invoice:0
+#: field:account.invoice,state:0
+#: view:account.invoice.report:0
+#: field:account.journal.period,state:0
+#: field:account.move,state:0
+#: view:account.move.line:0
+#: field:account.move.line,state:0
+#: field:account.period,state:0
+#: view:account.subscription:0
+#: field:account.subscription,state:0
+#: field:report.invoice.created,state:0
+#: report:account.bank.statement.line:0
+#: report:account.bank.statement.line_csv:0
+#: report:account.move.line:0
+#: report:account.move.line_csv:0
+#: code:addons/account_mcdb/report/account_mcdb_export.py:67
+#: code:addons/account_mcdb/report/account_mcdb_export.py:278
+#: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: view:account.invoice:0
+#: view:payment.order:0
+#: field:payment.order,state:0
+#: field:account.move.line.reconcile,state:0
+#: view:account.voucher:0
+#: field:account.voucher,state:0
+#: view:sale.receipt.report:0
+#: field:account.analytic.account,state:0
+#: field:account.commitment,state:0
+#: field:analytic.distribution.wizard,state:0
+#: field:mass.reallocation.wizard,state:0
+#: field:ir.actions.todo,state:0
+#: view:ir.module.module:0
+#: field:ir.module.module,state:0
+#: field:ir.module.module.dependency,state:0
+#: field:publisher_warranty.contract,state:0
+#: field:res.bank,state:0
+#: view:res.country.state:0
+#: field:res.partner.bank,state_id:0
+#: view:res.request:0
+#: field:res.request,state:0
+#: field:workflow.instance,state:0
+#: field:workflow.workitem,state:0
+#: field:documents.done.problem.line,doc_state_str:0
+#: field:documents.done.wizard,display_state:0
+#: field:documents.done.wizard,state:0
+#: view:res.request:0
+#: field:cash.request,state:0
+#: field:financing.contract.contract,state:0
+#: view:hr.job:0
+#: field:hr.job,state:0
+#: field:composition.item,state:0
+#: view:composition.kit:0
+#: field:composition.kit,state:0
+#: view:kit.creation:0
+#: field:kit.creation,state:0
+#: field:kit.creation.to.consume,state:0
+#: view:audittrail.rule:0
+#: field:audittrail.rule,state:0
+#: field:msf.budget,state:0
+#: field:wizard.import.fo.line,state:0
+#: field:wizard.import.ir.line,state:0
+#: field:wizard.import.po.line,state:0
+#: field:wizard.import.tender.line,state:0
+#: field:hr.payroll.import.confirmation,state:0
+#: field:hr.payroll.msf,state:0
+#: field:hr.payroll.validation,state:0
+#: field:msf.instance,state:0
+#: field:pack.family.memory,state:0
+#: view:shipment:0
+#: field:shipment,state:0
+#: view:stock.picking:0
+#: field:stock.picking,state_hidden:0
+#: selection:process.node,kind:0
+#: view:procurement.order:0
+#: field:procurement.order,state:0
+#: view:sale.order:0
+#: field:sale.order.line,fake_state:0
+#: view:purchase.order:0
+#: view:purchase.order.line:0
+#: field:purchase.order.line,fake_state:0
+#: field:purchase.order.line,state:0
+#: view:purchase.report:0
+#: report:addons/purchase_allocation_report/report/po_allocation_report.mako:162
+#: report:po.line.allocation.report:0
+#: view:purchase.order.line.allocation.report:0
+#: field:purchase.order.line.allocation.report,state:0
+#: field:purchase.order.followup.line,move_state:0
+#: field:purchase.order.merged.line,state:0
+#: view:account.bank.statement:0
+#: field:wizard.account.invoice,state:0
+#: field:wizard.down.payment,state:0
+#: field:wizard.import.cheque,state:0
+#: field:wizard.import.invoice,state:0
+#: field:wizard.invoice.date,state:0
+#: field:wizard.register.creation,state:0
+#: field:wizard.register.import,state:0
+#: field:wizard.transfer.with.change,state:0
+#: field:res.currency.table,state:0
+#: field:claim.event,state:0
+#: view:return.claim:0
+#: field:return.claim,state:0
+#: report:addons/sale/report/fo_allocation_report.mako:162
+#: view:sale.order:0
+#: field:sale.order,state_hidden_sale_order:0
+#: report:sale.order.allocation.report:0
+#: view:sale.order.line:0
+#: field:sale.order.line,state:0
+#: view:sale.report:0
+#: view:sale.order.line.followup:0
+#: field:initial.stock.inventory,state:0
+#: field:initial.stock.inventory.line,state:0
+#: field:stock.cost.reevaluation,state:0
+#: view:report.stock.inventory:0
+#: field:report.stock.inventory,state:0
+#: view:report.stock.move:0
+#: field:report.stock.move,state:0
+#: view:stock.inventory:0
+#: field:stock.inventory,state:0
+#: field:stock.inventory.line,state:0
+#: view:stock.move:0
+#: field:stock.move,state:0
+#: view:stock.picking:0
+#: field:stock.picking,state:0
+#: field:stock.forecast.line,state:0
+#: report:stock.forecast.report:0
+#: view:stock.move:0
+#: field:msf.instance.cloud.progress,state:0
+#: field:sync.client.child_entity,state:0
+#: field:sync.client.entity,state:0
+#: field:sync.client.entity_manager,state:0
+#: field:sync.client.register_entity,state:0
+#: field:sync.client.sync_manager,state:0
+#: field:sync.client.sync_server_connection,state:0
+#: view:purchase.order:0
+#: view:tender:0
+#: field:tender,state:0
+#: field:tender.line,state:0
+#: field:international.transport.cost.report,order_state:0
+#: view:sale.order:0
 #: selection:account.journal.column,field:0
 #: field:hq.entries.split.lines,state:0
 #: field:account.fiscalyear.state,state:0
@@ -84273,154 +84411,6 @@ msgstr "This cost centre is already defined as target in another proprietary ins
 msgid "Booking currency"
 msgstr "Devise d'enregistrement"
 
-#. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, account_override, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, finance, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, msf_doc_import, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, documents_done, sale, sales_followup, procurement, msf_audittrail, stock
-#: view:account.bank.statement:0
-#: field:account.bank.statement,state:0
-#: field:account.entries.report,move_state:0
-#: view:account.fiscalyear:0
-#: field:account.fiscalyear,state:0
-#: view:account.invoice:0
-#: field:account.invoice,state:0
-#: view:account.invoice.report:0
-#: field:account.journal.period,state:0
-#: field:account.move,state:0
-#: view:account.move.line:0
-#: field:account.move.line,state:0
-#: field:account.period,state:0
-#: view:account.subscription:0
-#: field:account.subscription,state:0
-#: field:report.invoice.created,state:0
-#: report:account.bank.statement.line:0
-#: report:account.bank.statement.line_csv:0
-#: report:account.move.line:0
-#: report:account.move.line_csv:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:67
-#: code:addons/account_mcdb/report/account_mcdb_export.py:278
-#: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
-#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
-#: view:account.invoice:0
-#: view:payment.order:0
-#: field:payment.order,state:0
-#: field:account.move.line.reconcile,state:0
-#: view:account.voucher:0
-#: field:account.voucher,state:0
-#: view:sale.receipt.report:0
-#: field:account.analytic.account,state:0
-#: field:account.commitment,state:0
-#: field:analytic.distribution.wizard,state:0
-#: field:mass.reallocation.wizard,state:0
-#: field:ir.actions.todo,state:0
-#: view:ir.module.module:0
-#: field:ir.module.module,state:0
-#: field:ir.module.module.dependency,state:0
-#: field:publisher_warranty.contract,state:0
-#: field:res.bank,state:0
-#: view:res.country.state:0
-#: field:res.partner.bank,state_id:0
-#: view:res.request:0
-#: field:res.request,state:0
-#: field:workflow.instance,state:0
-#: field:workflow.workitem,state:0
-#: field:documents.done.problem.line,doc_state_str:0
-#: field:documents.done.wizard,display_state:0
-#: field:documents.done.wizard,state:0
-#: view:res.request:0
-#: field:cash.request,state:0
-#: field:financing.contract.contract,state:0
-#: view:hr.job:0
-#: field:hr.job,state:0
-#: field:composition.item,state:0
-#: view:composition.kit:0
-#: field:composition.kit,state:0
-#: view:kit.creation:0
-#: field:kit.creation,state:0
-#: field:kit.creation.to.consume,state:0
-#: view:audittrail.rule:0
-#: field:audittrail.rule,state:0
-#: field:msf.budget,state:0
-#: field:wizard.import.fo.line,state:0
-#: field:wizard.import.ir.line,state:0
-#: field:wizard.import.po.line,state:0
-#: field:wizard.import.tender.line,state:0
-#: field:hr.payroll.import.confirmation,state:0
-#: field:hr.payroll.msf,state:0
-#: field:hr.payroll.validation,state:0
-#: field:msf.instance,state:0
-#: field:pack.family.memory,state:0
-#: view:shipment:0
-#: field:shipment,state:0
-#: view:stock.picking:0
-#: field:stock.picking,state_hidden:0
-#: selection:process.node,kind:0
-#: view:procurement.order:0
-#: field:procurement.order,state:0
-#: view:sale.order:0
-#: field:sale.order.line,fake_state:0
-#: view:purchase.order:0
-#: view:purchase.order.line:0
-#: field:purchase.order.line,fake_state:0
-#: field:purchase.order.line,state:0
-#: view:purchase.report:0
-#: report:addons/purchase_allocation_report/report/po_allocation_report.mako:162
-#: report:po.line.allocation.report:0
-#: view:purchase.order.line.allocation.report:0
-#: field:purchase.order.line.allocation.report,state:0
-#: field:purchase.order.followup.line,move_state:0
-#: field:purchase.order.merged.line,state:0
-#: view:account.bank.statement:0
-#: field:wizard.account.invoice,state:0
-#: field:wizard.down.payment,state:0
-#: field:wizard.import.cheque,state:0
-#: field:wizard.import.invoice,state:0
-#: field:wizard.invoice.date,state:0
-#: field:wizard.register.creation,state:0
-#: field:wizard.register.import,state:0
-#: field:wizard.transfer.with.change,state:0
-#: field:res.currency.table,state:0
-#: field:claim.event,state:0
-#: view:return.claim:0
-#: field:return.claim,state:0
-#: report:addons/sale/report/fo_allocation_report.mako:162
-#: view:sale.order:0
-#: field:sale.order,state_hidden_sale_order:0
-#: report:sale.order.allocation.report:0
-#: view:sale.order.line:0
-#: field:sale.order.line,state:0
-#: view:sale.report:0
-#: view:sale.order.line.followup:0
-#: field:initial.stock.inventory,state:0
-#: field:initial.stock.inventory.line,state:0
-#: field:stock.cost.reevaluation,state:0
-#: view:report.stock.inventory:0
-#: field:report.stock.inventory,state:0
-#: view:report.stock.move:0
-#: field:report.stock.move,state:0
-#: view:stock.inventory:0
-#: field:stock.inventory,state:0
-#: field:stock.inventory.line,state:0
-#: view:stock.move:0
-#: field:stock.move,state:0
-#: view:stock.picking:0
-#: field:stock.picking,state:0
-#: field:stock.forecast.line,state:0
-#: report:stock.forecast.report:0
-#: view:stock.move:0
-#: field:msf.instance.cloud.progress,state:0
-#: field:sync.client.child_entity,state:0
-#: field:sync.client.entity,state:0
-#: field:sync.client.entity_manager,state:0
-#: field:sync.client.register_entity,state:0
-#: field:sync.client.sync_manager,state:0
-#: field:sync.client.sync_server_connection,state:0
-#: view:purchase.order:0
-#: view:tender:0
-#: field:tender,state:0
-#: field:tender.line,state:0
-#: field:international.transport.cost.report,order_state:0
-#: view:sale.order:0
-#, python-format
-msgid "State"
-msgstr "Statut"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -88317,8 +88307,9 @@ msgstr " Qté Receptionée"
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_labels_tree
 #: model:ir.ui.menu,name:msf_outgoing.menu_report_custo_labels
+#: model:ir.actions.report.xml,name:msf_outgoing.labels
 msgid "Labels"
-msgstr "Etiquettes"
+msgstr "Étiquettes"
 
 #. module: sync_client
 #: code:addons/sync_client/special_handling.py:225
@@ -96693,11 +96684,6 @@ msgstr "MALDIVIAN RUFIYAA"
 msgid "account.analytic.coa"
 msgstr "account.analytic.coa"
 
-#. module: msf_outgoing
-#: model:ir.actions.report.xml,name:msf_outgoing.labels
-msgid "Labels"
-msgstr "Étiquettes"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:104
 #, python-format
@@ -96900,7 +96886,7 @@ msgstr "Une zone existante mais inactive existe déjà avec les mêmes paramètr
 msgid "1st Transport Lead Time"
 msgstr "1er Délai de Transport"
 
-#. modules: account_override, account, register_accounting, account_payment, account_voucher
+#. modules: account_override, account, register_accounting, account_payment, account_voucher, vertical_integration
 #: view:account.invoice:0
 #: field:account.invoice,date_due:0
 #: view:account.invoice.report:0
@@ -96915,8 +96901,10 @@ msgstr "1er Délai de Transport"
 #: field:sale.receipt.report,date_due:0
 #: field:wizard.account.invoice,date_due:0
 #: field:wizard.import.cheque.lines,date_maturity:0
+#: report:addons/account_override/report/open_invoices_xls.mako:341
+#: report:addons/vertical_integration/report/open_invoices_xls.mako:296
 msgid "Due Date"
-msgstr "Date d'Echéance"
+msgstr "Date d'Échéance"
 
 #. module: consumption_calculation
 #: field:monthly.review.consumption.line,last_reviewed2:0
