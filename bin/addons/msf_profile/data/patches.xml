@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        <!-- UF10.0 -->
-        <record id="us_4668_set_trad_for_loc" model="patch.scripts">
-            <field name="method">us_4668_set_trad_for_loc</field>
-        </record>
-
         <!-- UF9.0 -->
         <record id="us_4481_monitor_set_null_size" model="patch.scripts">
             <field name="method">us_4481_monitor_set_null_size</field>

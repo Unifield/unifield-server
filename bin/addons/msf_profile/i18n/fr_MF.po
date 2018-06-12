@@ -108014,7 +108014,9 @@ msgstr "Ligne #%s: Vous devez sélectionner une UdM de produit dans la même cat
 
 #. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:327
-#: code:addons/msf_config_locations/stock_configuration.py:352
+#: code:addons/msf_config_locations/stock_configuration.py:330
+#: code:addons/msf_config_locations/stock_configuration.py:362
+#: code:addons/msf_config_locations/stock_configuration.py:365
 #, python-format
 msgid "A location with a similar name already exists."
 msgstr "Une zone avec un nom similaire existe déjà."
@@ -108380,10 +108382,3 @@ msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engage
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
 msgid "Budget missing"
 msgstr "Budget manquant"
-
-#. module: msf_config_locations
-#: code:addons/msf_config_locations/stock_configuration.py:332
-#: code:addons/msf_config_locations/stock_configuration.py:381
-#, python-format
-msgid "A location with a similar name already exists in a different language."
-msgstr "Une zone avec un nom similaire existe déjà dans une autre langue."

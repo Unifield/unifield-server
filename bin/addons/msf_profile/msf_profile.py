@@ -51,37 +51,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    # UF10.0
-    def us_4668_set_trad_for_loc(self, cr, uid, *a, **b):
-        '''
-        Create missing translations for locations
-        '''
-        lang_obj = self.pool.get('res.lang')
-        tr_obj = self.pool.get('ir.translation')
-
-        lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)])
-        if lang_ids:
-            lang_codes = [lang.code for lang in lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'])]
-            cr.execute('''SELECT id, name FROM stock_location''')
-            for loc in cr.fetchall():
-                cr.execute('''SELECT id FROM ir_translation WHERE res_id = %s and name = 'stock.location,name'
-                            GROUP BY id HAVING COUNT(res_id) < %s''', (loc[0], len(lang_codes)))
-                if cr.fetchall():
-                    for lang in lang_codes:
-                        if not tr_obj.search_exist(cr, uid, [('lang', '=', lang), ('res_id', '=', loc[0]), ('name', '=', 'stock.location,name')]):
-                            tr_vals = {
-                                'lang': lang,
-                                'src': loc[1],
-                                'name': 'stock.location,name',
-                                'res_id': loc[0],
-                                'module': 'stock',
-                                'value': loc[1],
-                                'type': 'model',
-                            }
-                            tr_obj.create(cr, uid, tr_vals)
-
-        return True
-
     # UF9.0
     def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
         if self.pool.get('sync.version.instance.monitor'):
