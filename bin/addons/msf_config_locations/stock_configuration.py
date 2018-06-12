@@ -330,7 +330,7 @@ class stock_location(osv.osv):
                     raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
             vals['name'] = loc_name
 
-        return True
+        return super(stock_location, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals=None, context=None):
         """
