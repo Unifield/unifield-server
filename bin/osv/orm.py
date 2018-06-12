@@ -2517,7 +2517,7 @@ class orm_memory(orm_template):
                 order_field = order_split[0].strip()
                 order_direction = order_split[1].strip().lower() if len(order_split) == 2 else 'asc'
                 if order_field == 'id':
-                    getter = lambda d, i: d[0]
+                    getter = lambda d, i, o_field: d[0]
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     # OEB-79: Patch provided by Xavier
@@ -2527,11 +2527,11 @@ class orm_memory(orm_template):
                         continue
 
                     if order_column._classic_read:
-                        getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
+                        getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
                     elif order_column._type == 'many2one':
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
-                            getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
+                            getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
                         else:
                             # use the fact the read follow object standard _parent_order/_order to get many2one ordered
                             dest_model = self.pool.get(order_column._obj)
@@ -2543,18 +2543,18 @@ class orm_memory(orm_template):
                             if dest_ids_has_false:
                                 ordered_ids.insert(0, False) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i: i.get(order_field) and len(d) > 1 and d[1].get(order_field) and i.get(order_field).index(d[1].get(order_field)) or False
+                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or False
                 else:
                     raise NotImplementedError()
-                order_parts_getters.append((getter, order_direction))
+                order_parts_getters.append((getter, order_direction, order_field))
             # create an inline sort method that fullfill 'cmp' specification
             def in_memory_sort(x, y):
                 i = order_info
-                for (getter, direction) in order_parts_getters:
+                for (getter, direction, o_field) in order_parts_getters:
                     if direction == 'asc': # normal sort order
-                        v = cmp(getter(x, i), getter(y, i))
+                        v = cmp(getter(x, i, o_field), getter(y, i, o_field))
                     elif direction == 'desc':
-                        v = cmp(getter(y, i), getter(x, i))
+                        v = cmp(getter(y, i, o_field), getter(x, i, o_field))
                     if v == 0:
                         # at this level item equals,
                         # continue to next order field
