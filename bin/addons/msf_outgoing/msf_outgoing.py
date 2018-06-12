@@ -4523,8 +4523,12 @@ class stock_picking(osv.osv):
             if ppl_processor_wiz:
                 ppl_processor_wiz = self.pool.get('ppl.processor').browse(cr, uid, ppl_processor_wiz[0], context=context)
 
+            move_to_unlink = set()
             for line in wizard.move_ids:
                 return_qty = line.quantity
+
+                if not return_qty:
+                    continue
 
                 if line.move_id.state != 'assigned':
                     raise osv.except_osv(
@@ -4555,7 +4559,10 @@ class stock_picking(osv.osv):
                     """
                     move_values['state'] = 'done'
 
-                move_obj.write(cr, uid, [line.move_id.id], move_values, context=context)
+                if initial_qty:
+                    move_obj.write(cr, uid, [line.move_id.id], move_values, context=context)
+                else:
+                    move_to_unlink.add(line.move_id.id)
 
                 """
                 Create a back move with the quantity to return to the good location.
@@ -4616,6 +4623,11 @@ class stock_picking(osv.osv):
 
                             if ppl_processor_wiz.draft_step2:
                                 self.pool.get('ppl.processor').write(cr, uid, [ppl_processor_wiz.id], {'draft_step2': False})
+
+            if move_to_unlink:
+                context.update({'call_unlink': True})
+                move_obj.unlink(cr, uid, list(move_to_unlink), context=context)
+                context.pop('call_unlink')
 
             # Log message for PPL
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
