@@ -622,7 +622,10 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
+								default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  
+								attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" 
+								filter_selector="[('Hide closed', ('state', 'not in', ['done'])), ('Show all', '')]">
 								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
