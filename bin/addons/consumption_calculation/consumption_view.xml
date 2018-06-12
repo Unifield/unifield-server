@@ -22,6 +22,7 @@
                         <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
                         <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="details" colspan="4"/>
                         <separator colspan="6" string="Period of consumption" />
                         <field name="period_from" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <field name="period_to" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
@@ -130,6 +131,7 @@
                         <separator orientation="vertical"/>
                         <field name="cons_location_id"/>
                         <field name="activity_id"/>
+                        <field name="details"/>
                         <field name="period_from"/>
                         <field name="period_to"/>
                     </group>
