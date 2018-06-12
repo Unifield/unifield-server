@@ -212,6 +212,42 @@ class stock_picking_processor(osv.osv):
                 if line_obj._name == 'stock.move.in.processor':
                     # search for simulation done for this move, and if has pack info attached
                     sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], order='id desc', context=context)
+
+                    link_data = {}
+                    if not sm_in_proc:
+                        # search stock.incoming.processor for the move.picking_id
+                        stock_move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', move.purchase_line_id.id)], context=context)
+                        picking_ids = [data['picking_id'][0] for data in self.pool.get('stock.move').read(cr, uid, stock_move_ids, ['picking_id'])]
+                        picking_ids = list(set(picking_ids))
+
+                        for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
+                            # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
+                            sm_in_proc = line_obj.search(cr, uid, [
+                                ('wizard_id', '=', in_proc_id),
+                                ('line_number', '=', move.line_number),
+                                ('split_move_ok', '=', False),
+                                ('pack_info_id', '!=', False),
+                            ], order='id asc', context=context)
+                            if sm_in_proc and context.get('picking_type') == 'incoming_shipment':
+                                link_data = {'move_id': move.id}
+                                break
+
+                        if not sm_in_proc and context.get('picking_type') == 'incoming_shipment':
+                            # search backorder
+                            picking_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', move.picking_id.origin), ('id', '!=', move.picking_id.id)])
+
+                            for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
+                                # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
+                                sm_in_proc = line_obj.search(cr, uid, [
+                                    ('wizard_id', '=', in_proc_id),
+                                    ('line_number', '=', move.line_number),
+                                    ('split_move_ok', '=', False),
+                                    ('pack_info_id', '!=', False),
+                                ], order='id asc', context=context)
+                                if sm_in_proc and context.get('picking_type') == 'incoming_shipment':
+                                    link_data = {'move_id': move.id}
+                                    break
+
                     for sm_in_proc in line_obj.browse(cr, uid, sm_in_proc, context=context):
                         if sm_in_proc.pack_info_id:
                             line_data.update({
@@ -222,7 +258,10 @@ class stock_picking_processor(osv.osv):
                                 'height': sm_in_proc.pack_info_id.total_height,
                                 'length': sm_in_proc.pack_info_id.total_length,
                                 'width': sm_in_proc.pack_info_id.total_width,
+                                'cost': sm_in_proc.cost,
                             })
+                            if link_data:
+                                line_obj.write(cr, uid, [sm_in_proc.id], link_data, context=context)
                             break
                 line_obj.create(cr, uid, line_data, context=context)
 
