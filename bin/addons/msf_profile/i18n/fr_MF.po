@@ -100566,7 +100566,6 @@ msgstr "Langues"
 #: field:stock.move.processor,asset_id:0
 #: field:validate.move.processor,asset_check:0
 #: field:validate.move.processor,asset_id:0
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:69
 #, python-format
 msgid "Asset"
@@ -101265,3 +101264,8 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. modules: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:74
+#, python-format
+msgid "Asset"
+msgstr "Actifs"
