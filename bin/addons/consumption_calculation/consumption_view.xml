@@ -136,6 +136,7 @@
                     <group col="10" colspan="4">
                         <filter icon="terp-check" string="Closed" domain="[('created_ok','=',True)]"/>
                         <separator orientation="vertical"/>
+                        <field name="name"/>
                         <field name="cons_location_id"/>
                         <field name="activity_id"/>
                         <field name="details"/>
