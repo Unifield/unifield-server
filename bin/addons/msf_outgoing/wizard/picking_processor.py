@@ -217,7 +217,7 @@ class stock_picking_processor(osv.osv):
                     if not sm_in_proc:
                         # search stock.incoming.processor for the move.picking_id
                         stock_move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', move.purchase_line_id.id)], context=context)
-                        picking_ids = [data['picking_id'][0] for data in self.pool.get('stock.move').read(cr, uid, stock_move_ids, ['picking_id'])]
+                        picking_ids = [data['picking_id'][0] for data in self.pool.get('stock.move').read(cr, uid, stock_move_ids, ['picking_id']) if data['picking_id']]
                         picking_ids = list(set(picking_ids))
 
                         for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
