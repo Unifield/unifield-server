@@ -344,6 +344,8 @@ class ppl_family_processor(osv.osv):
     _description = 'PPL family'
     _rec_name = 'from_pack'
 
+    _order = 'from_pack'
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
