@@ -690,6 +690,49 @@ You cannot choose this supplier because some destination locations are not avail
             ))
         return res
 
+    def check_availability_manually(self, cr, uid, ids, context=None):
+        '''
+        US-2677 : Cancel assigned moves' availability and re-check it
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        prodlot_obj = self.pool.get('stock.production.lot')
+
+        moves_ids_to_reassign = []
+        product_data = {}
+        qties = {}
+        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'assigned')], context=context)
+        if move_ids:
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
+                prodlot_id = move.prodlot_id and move.prodlot_id.id or False
+                key = (move.product_id.id, move.location_id.id, prodlot_id)
+
+                if key in product_data:
+                    product_data[key] += uom_obj._compute_qty(cr, uid, move.product_uom.id,
+                                                                       move.product_qty, move.product_id.uom_id.id)
+                else:
+                    product_data[key] = uom_obj._compute_qty(cr, uid, move.product_uom.id,
+                                                                      move.product_qty, move.product_id.uom_id.id)
+
+                if key not in qties:
+                    if prodlot_id:
+                        qties[key] = prodlot_obj.read(cr, uid, prodlot_id, ['stock_available'],
+                                                         context={'location_id': move.location_id.id})['stock_available']
+                    else:
+                        qties[key] = prod_obj.read(cr, uid, move.product_id.id, ['qty_available'],
+                                                      context={'location_id': move.location_id.id})['qty_available']
+
+                if product_data[key] > qties[key]:
+                    moves_ids_to_reassign.append(move.id)
+
+        if moves_ids_to_reassign:
+            move_obj.cancel_assign(cr, uid, moves_ids_to_reassign, context=context)
+
+        return self.action_assign(cr, uid, ids, context=context)
 
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):

@@ -2470,10 +2470,10 @@ class stock_move(osv.osv):
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
                 res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
                 if res:
-                    #_product_available_test depends on the next status for correct functioning
-                    #the test does not work correctly if the same product occurs multiple times
-                    #in the same order. This is e.g. the case when using the button 'split in two' of
-                    #the stock outgoing form
+                    # _product_available_test depends on the next status for correct functioning
+                    # the test does not work correctly if the same product occurs multiple times
+                    # in the same order. This is e.g. the case when using the button 'split in two' of
+                    # the stock outgoing form
                     move_to_assign.add(move.id)
                     done.append(move.id)
                     pickings[move.picking_id.id] = 1
@@ -2481,8 +2481,6 @@ class stock_move(osv.osv):
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
                     done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
-        if not move_to_assign:
-            self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
         count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
