@@ -51177,7 +51177,7 @@ msgstr "Sélecteur - Analytique"
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.fully_report
 msgid "Full Report"
-msgstr "Full Report"
+msgstr "Rapport Complet"
 
 #. module: stock
 #: field:stock.location,child_ids:0
