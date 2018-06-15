@@ -416,29 +416,31 @@ class stock_mission_report(osv.osv):
     def generate_full_xls(self, cr, uid, xls_name):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
-        instance_ids = instance_obj.search(cr, uid, [])
+        instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
 
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
             instance_dict[x['id']] = x['name']
 
-
         instance_loc = {}
-        cr.execute('select distinct remote_location_name, remote_instance_id from stock_mission_report_line_location where remote_instance_id is not null order by remote_location_name')
+        cr.execute("""
+            select distinct s.remote_location_name, s.remote_instance_id 
+            from stock_mission_report_line_location s
+            left join msf_instance i on (s.remote_instance_id=i.id)
+            where s.remote_instance_id is not null and i.state != 'inactive' 
+            order by remote_location_name
+        """)
         for x in cr.fetchall():
             instance_loc.setdefault(x[1], []).append(x[0])
 
         all_instances = instance_loc.keys()
         all_instances.insert(0, local_instance.id)
         cr.execute("""
-            select distinct location.name from
-            stock_mission_report_line_location l,
-            stock_location location
-            where
-                location.id=l.location_id and
-                remote_instance_id is null and
-                location.usage = 'internal'
+            select distinct location.name 
+            from stock_mission_report_line_location l, stock_location location, msf_instance i
+            where location.id=l.location_id and l.remote_instance_id=i.id 
+                and remote_instance_id is null and location.usage = 'internal' and i.state != 'inactive'
             order by location.name
         """)
         for x in cr.fetchall():
@@ -563,14 +565,16 @@ class stock_mission_report(osv.osv):
         cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
-        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom from
-            stock_mission_report_line_location l
+        cr1.execute("""
+            select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom 
+            from stock_mission_report_line_location l
             inner join product_product p on p.id = l.product_id
             inner join product_template t on t.id = p.product_tmpl_id
             left join stock_location location on location.id = l.location_id
-            where
-                (location.usage = 'internal' or location.id is null)
-            order by p.default_code''')
+            left join msf_instance i on (l.remote_instance_id=i.id) 
+            where (location.usage = 'internal' or location.id is null) and i.state != 'inactive'
+            order by p.default_code
+        """)
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
@@ -1568,6 +1572,9 @@ class stock_mission_report_line(osv.osv):
                        LEFT JOIN
                           product_template t
                        ON p.product_tmpl_id = t.id
+                       LEFT JOIN
+                          msf_instance i
+                       ON l.instance_id = i.id
                      WHERE m.full_view = False
                        AND (l.internal_qty != 0.00
                        OR l.stock_qty != 0.00
@@ -1577,6 +1584,7 @@ class stock_mission_report_line(osv.osv):
                        OR l.cu_qty != 0.00
                        OR l.in_pipe_qty != 0.00
                        OR l.in_pipe_coor_qty != 0.00)
+                       AND i.state != 'inactive'
                      GROUP BY l.product_id, t.standard_price'''
 
         cr.execute(request)
