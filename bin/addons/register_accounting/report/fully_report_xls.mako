@@ -853,7 +853,7 @@
         </Cell>
       </Row>
 % if hasattr(inv_line, 'analytic_lines'):
-% for ana_line in sorted(getAnalyticLines([x.id for x in inv_line.analytic_lines]), key=lambda x: x.id):
+% for ana_line in getAnalyticLines([x.id for x in inv_line.analytic_lines]):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
@@ -917,7 +917,7 @@ for adv_return_l in adv_return_aal:
         adv_return_free_lines.append(adv_return_l)
     else:
         adv_return_fp_lines.append(adv_return_l)
-if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
     a_lines = adv_return_fp_lines or line.fp_analytic_lines
 %>
 % if a_lines:
@@ -976,7 +976,7 @@ endif
 <!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
 <%
 a_lines = False
-if line.free_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+if not line.invoice_id and not line.imported_invoice_line_ids and line.free_analytic_lines:
     a_lines = adv_return_free_lines or line.free_analytic_lines
 %>
 % if a_lines:

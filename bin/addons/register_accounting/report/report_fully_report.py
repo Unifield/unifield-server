@@ -41,11 +41,12 @@ class report_fully_report(report_sxw.rml_parse):
         })
 
         self._cache_move = {}
+        self._cache_ana = {}
 
     def update_percent(self, nbloop, tot):
         bk_id = self.localcontext.get('background_id')
         if bk_id:
-            self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.9, max(0.1,nbloop/tot))})
+            self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.9, max(0.1,nbloop/float(tot)))})
 
     def getRegRef(self, reg_line):
         if reg_line.direct_invoice_move_id:
@@ -90,19 +91,18 @@ class report_fully_report(report_sxw.rml_parse):
             return res
 
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        to_sort = []
-        for x in move_ids:
-            if x not in self._cache_move:
-                domain = [
-                    ('move_id', '=', x),
-                    ('is_counterpart', '=', False)
-                ]
-                aml_ids = aml_obj.search(self.cr, self.uid, domain)
-                if aml_ids:
-                    self._cache_move[x] = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
-            to_sort += self._cache_move[x]
-        # US_297: Sort by invoice.number instead line_number
-        return sorted(to_sort, key=lambda x: (x.invoice.number, x.line_number))
+        key = tuple(move_ids)
+
+        if key not in self._cache_move:
+            domain = [
+                ('move_id', 'in', move_ids),
+                ('is_counterpart', '=', False)
+            ]
+            aml_ids = aml_obj.search(self.cr, self.uid, domain)
+            if aml_ids:
+                res = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
+            self._cache_move[key] = sorted(res, key=lambda x: (x.invoice.number, x.line_number))
+        return self._cache_move[key]
 
     def getMoveLines(self, move_brs, regline_br):
         """
@@ -146,13 +146,19 @@ class report_fully_report(report_sxw.rml_parse):
         res = []
         if not analytic_ids:
             return res
+
         if isinstance(analytic_ids, (int, long)):
             analytic_ids = [analytic_ids]
-        al_obj = pooler.get_pool(self.cr.dbname).get('account.analytic.line')
-        al_ids = al_obj.get_corrections_history(self.cr, self.uid, analytic_ids)
-        if al_ids:
-            res = al_obj.browse(self.cr, self.uid, al_ids, context={'lang': self.localcontext.get('lang')})
-        return res
+
+        key = tuple(analytic_ids)
+        if key not in self._cache_ana:
+            al_obj = pooler.get_pool(self.cr.dbname).get('account.analytic.line')
+            al_ids = al_obj.get_corrections_history(self.cr, self.uid, analytic_ids)
+            if al_ids:
+                res = sorted(al_obj.browse(self.cr, self.uid, al_ids, context={'lang': self.localcontext.get('lang')}), key=lambda x: x.id)
+            self._cache_ana[key] = res
+
+        return self._cache_ana[key]
 
     def getFreeRef(self, acc_move_line):
         '''
