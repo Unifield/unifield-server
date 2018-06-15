@@ -403,7 +403,7 @@ msgstr "Extraction des Données Ok"
 #: code:addons/register_accounting/wizard/register_reopen.py:45
 #, python-format
 msgid "This action is only applied to closed registers!"
-msgstr "This action is only applied to closed registers!"
+msgstr "Cette action n'est effectuée que sur les registres fermés!"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_returnproducts
@@ -1221,7 +1221,8 @@ msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur 
 msgid "America/Sao_Paulo"
 msgstr "America/Sao_Paulo"
 
-#. module: account
+#. modules: account, register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:575
 #: view:account.analytic.line:0
 msgid "CC"
 msgstr "CC"
@@ -2050,7 +2051,7 @@ msgstr "Did you generate and post all recurring entries?"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:743
 msgid "Payable Entry"
-msgstr "Payable Entry"
+msgstr "Entrée Fournisseur"
 
 #. module: procurement_report
 #: model:ir.model,name:procurement_report.model_order_cycle_rules_report
@@ -7674,7 +7675,7 @@ msgstr "No purchase journal found!"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Register closing date:"
-msgstr "Register closing date:"
+msgstr "Date de clôture du registre:"
 
 #. module: base
 #: selection:ir.property,value_reference:0
@@ -7865,6 +7866,7 @@ msgstr "Africa/Mbabane"
 #: field:sync.client.rule,sequence_number:0
 #: view:sync.client.update_received:0
 #: field:sync.client.update_received,sequence_number:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:543
 #, python-format
 msgid "Sequence"
 msgstr "Séquence"
@@ -11113,7 +11115,7 @@ msgstr "Draft Vouchers"
 #. module: register_accounting
 #: field:account.bank.statement,period_number:0
 msgid "Period number"
-msgstr "Period number"
+msgstr "Numéro de période"
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_order_cycle_line
@@ -15444,7 +15446,7 @@ msgstr "Importer Devises"
 #: field:account.invoice.line,is_corrected:0
 #: field:wizard.account.invoice.line,is_corrected:0
 msgid "Have been corrected?"
-msgstr "Have been corrected?"
+msgstr "A été corrigé?"
 
 #. module: product
 #: help:product.supplierinfo,product_name:0
@@ -15948,7 +15950,7 @@ msgstr "Référence du document à l'origine de cette facture."
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Register opening date:"
-msgstr "Register opening date:"
+msgstr "Date d'ouverture du registre:"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:278
@@ -26013,7 +26015,7 @@ msgstr "Listes/Sous-Listes"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:673
 msgid "REV - Down Payment"
-msgstr "REV - Down Payment"
+msgstr "REV - Acompte"
 
 #. module: procurement
 #: view:procurement.order:0
@@ -27277,7 +27279,7 @@ msgstr "Réf Origin:"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Register state:"
-msgstr "Register state:"
+msgstr "État du Registre:"
 
 #. module: sync_so
 #: field:sale.order,received:0
@@ -30289,7 +30291,7 @@ msgstr "Consommation"
 #. module: register_accounting
 #: report:addons/register_accounting/report/open_advances_xls.mako:156
 msgid "Functional Debit"
-msgstr "Functional Debit"
+msgstr "Débit Fonctionnel"
 
 #. modules: register_accounting, analytic_distribution, account_subscription
 #: help:account.direct.invoice.wizard.line,analytic_distribution_state_recap:0
@@ -36151,6 +36153,7 @@ msgstr "cancel_voucher - (account.voucher)"
 #: field:sync_client.upgrade,state:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:232
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
+#: report:addons/register_accounting/report/fully_report_xls.mako:590
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -38559,9 +38562,9 @@ msgid "Server Action"
 msgstr "Serveur - Action"
 
 #. module: register_accounting
-#. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2951
 #: view:wizard.transfer.with.change:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:601
 #, python-format
 msgid "Transfer with change"
 msgstr "Transfert avec changement de devise"
@@ -38902,6 +38905,7 @@ msgstr "Générique"
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:139
 #: report:addons/register_accounting/report/open_advances_xls.mako:139
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:195
+#: report:addons/register_accounting/report/fully_report_xls.mako:426
 msgid "Report Date:"
 msgstr "Date du rapport:"
 
@@ -40502,6 +40506,7 @@ msgstr "Exportation en Excel de la liste de produits"
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:131
 #: code:addons/register_accounting/wizard/wizard_register_import.py:545
 #: field:wizard.register.import.lines,free_2_id:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:584
 #, python-format
 msgid "Free 2"
 msgstr "Option 2"
@@ -43918,7 +43923,7 @@ msgstr "Importation des travailleurs expatriés"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:469
 msgid "CHEQUE REGISTER"
-msgstr "CHEQUE REGISTER"
+msgstr "REGISTRE DE CHÈQUE"
 
 #. modules: account, finance
 #: view:account.move:0
@@ -45539,8 +45544,9 @@ msgstr "Lignes de Taxe"
 msgid "Depending on the Invoicing control of the sales order, the invoice can be based on delivered or on ordered quantities. Thus, a sales order can generates an invoice or a delivery order as soon as it is confirmed by the salesman."
 msgstr "La facture peut être basée sur les quantités livrées ou commandées et ce en fonction du contrôle de la facturation de la commande terrain . Par conséquent, une commande terrain peut générer une facture ou un bon de livraison dès qu'il a été confirmé par le Fournisseur."
 
-#. module: account
+#. modules: account, register_accounting
 #: report:account.journal.period.print:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:549
 msgid "Ref"
 msgstr "Réf."
 
@@ -46053,7 +46059,7 @@ msgstr "Vous avez quelques Bons de Picking, Listes de Colisage ou des Expéditio
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:1207
 msgid "Deleted Entry"
-msgstr "Deleted Entry"
+msgstr "Entrée Supprimée"
 
 #. module: msf_audittrail
 #: constraint:audittrail.rule:0
@@ -49078,7 +49084,7 @@ msgstr "Paramètres de la requête"
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:78
 #, python-format
 msgid "Negative amount are forbidden!"
-msgstr "Negative amount are forbidden!"
+msgstr "Montant négatif interdit!"
 
 #. module: account_mcdb
 #: report:account.analytic.line:0
@@ -50541,7 +50547,7 @@ msgstr "Export PDF Suivi Commande Terrain par Client"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Direct Payment"
-msgstr "Direct Payment"
+msgstr "Paiement Direct"
 
 #. module: kit
 #: code:addons/kit/kit.py:813
@@ -55623,7 +55629,7 @@ msgstr "Sélectionner la Fenêtre d'Action, le Rapport, l'Assistant qui doit êt
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Imported Cheque"
-msgstr "Imported Cheque"
+msgstr "Chèque Importé"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:430
@@ -58362,10 +58368,11 @@ msgstr "Are you sure you want to reopen this FY ?"
 msgid "Import Intl Commitments"
 msgstr "Import des Engagements"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, register_accounting
 #: report:po.follow.up_rml:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:566
 msgid "IN"
-msgstr "IN"
+msgstr "ENTRANT"
 
 #. module: sync_client
 #: sql_constraint:operations.count:0
@@ -59417,7 +59424,7 @@ msgstr "Delivery address name"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:469
 msgid "CASH REGISTER"
-msgstr "CASH REGISTER"
+msgstr "REGISTRE DE CAISSE"
 
 #. module: account
 #: code:addons/account/wizard/account_move_journal.py:104
@@ -69215,7 +69222,7 @@ msgstr "FROM:"
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:277
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:183
 msgid "Period end date:"
-msgstr "Period end date:"
+msgstr "Date de fin de période:"
 
 #. module: msf_doc_import
 #: view:wizard.import.supplier.catalogue:0
@@ -71276,6 +71283,11 @@ msgstr "Frais"
 #: report:cash.inventory:0
 msgid "Closing balance"
 msgstr "Solde de clôture"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:508
+msgid "Closing balance:"
+msgstr "Solde de clôture :"
 
 #. modules: account, finance, account_voucher, account_override, analytic, register_accounting, msf_doc_import
 #: report:account.account.balance:0
@@ -76251,6 +76263,11 @@ msgstr "Ligne %s. %s non trouvé : %s"
 msgid "Calculated balance"
 msgstr "Solde calculé (théorique)"
 
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:516
+msgid "Calculated balance:"
+msgstr "Solde calculé (théorique) :"
+
 #. module: base
 #: view:res.lang:0
 msgid "%j - Day of the year [001,366]."
@@ -78423,6 +78440,7 @@ msgstr "L'écriture \"%s\" n'est pas valide !"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:484
 msgid "Period:"
 msgstr "Période:"
 
@@ -78941,7 +78959,7 @@ msgstr "Le système n'a pas trouvé de \"code_staff\" pour le travailleur %s !"
 #. module: register_accounting
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:230
 msgid "Func. CCY"
-msgstr "Func. CCY"
+msgstr "Devise Fonc."
 
 #. module: product
 #: field:product.template,mes_type:0
@@ -80794,7 +80812,7 @@ msgstr "Honduras"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Transfer"
-msgstr "Transfer"
+msgstr "Transfert"
 
 #. modules: stock, product_attributes
 #: field:product.deactivation.error.line,doc_id:0
@@ -86207,9 +86225,10 @@ msgstr "7e"
 msgid "Commitment Lines"
 msgstr "Lignes d'Engagement"
 
-#. modules: account_voucher, finance
+#. modules: account_voucher, finance, register_accounting
 #: report:voucher.print:0
 #: report:cash.request.export:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:492
 msgid "Currency:"
 msgstr "Devise :"
 
@@ -87902,7 +87921,7 @@ msgstr "Date Dernière Synchronisation"
 #: code:addons/register_accounting/account_bank_statement.py:1256
 #, python-format
 msgid "No line selected!"
-msgstr "No line selected!"
+msgstr "Aucune ligne n'est sélectionnée!"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:556
@@ -91509,12 +91528,13 @@ msgstr "Cette catégorie de commande n'est pas cohérente avec le(s) produit(s) 
 msgid "Kit Creation"
 msgstr "Création d'un Kit "
 
-#. modules: account_override, vertical_integration, board, finance
+#. modules: account_override, vertical_integration, board, finance, register_accounting
 #: report:addons/account_override/report/open_invoices_xls.mako:272
 #: report:addons/board/report/integrity.mako:78
 #: field:cash.request.expense,prop_instance_id:0
 #: field:cash.request.recap.expense,instance_id:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:257
+#: report:addons/register_accounting/report/fully_report_xls.mako:434
 msgid "Prop. Instance"
 msgstr "Instance Prop."
 
@@ -94845,6 +94865,7 @@ msgstr "Information Complémentaire"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:225
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,partner_type2:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:563
 msgid "Third Parties"
 msgstr "Tiers"
 
@@ -95031,7 +95052,7 @@ msgstr "La duplication des événements d'une instance n'est pas autorisé."
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:469
 msgid "BANK REGISTER"
-msgstr "BANK REGISTER"
+msgstr "REGISTRE DE BANQUE"
 
 #. module: account
 #: view:account.tax.code.template:0
@@ -95085,7 +95106,7 @@ msgstr "Customer Invoices And Refunds"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Imported Invoice"
-msgstr "Imported Invoice"
+msgstr "Facture Importée"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:60
@@ -95965,6 +95986,7 @@ msgstr "No default Destination defined for this account: %s"
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:131
 #: code:addons/register_accounting/wizard/wizard_register_import.py:533
 #: field:wizard.register.import.lines,free_1_id:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:581
 #, python-format
 msgid "Free 1"
 msgstr "Option 1"
@@ -100582,9 +100604,10 @@ msgstr "N° Employé"
 msgid "Prop Instance: "
 msgstr "Instance prop.: "
 
-#. modules: account_voucher, finance
+#. modules: account_voucher, finance, register_accounting
 #: report:voucher.print:0
 #: report:cash.request.export:0
+#: report:addons/register_accounting/report/fully_report_xls.mako:524
 msgid "State:"
 msgstr "Statut :"
 
@@ -101264,4 +101287,54 @@ msgstr "Mission reopen available ?"
 #: view:purchase.report:0
 msgid "Not Invoice"
 msgstr "Pas de Facture"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:560
+msgid "Acct"
+msgstr "Cmpt"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:500
+msgid "Starting balance:"
+msgstr "Solde d'ouverture:"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:469
+msgid "REPORT"
+msgstr "RAPPORT"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:556
+msgid "Chk num"
+msgstr "Num chq"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:587
+msgid "Rec?"
+msgstr "Lett?"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:569
+msgid "OUT"
+msgstr "SORTANT"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:534
+msgid "Entry type"
+msgstr "Type d'Entrée"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:552
+msgid "Free Ref"
+msgstr "Réf Libre"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:418
+msgid "REGISTER REPORT"
+msgstr "RAPPORT DE REGISTRE"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:540
+msgid "Post Date"
+msgstr "Date comptab."
 

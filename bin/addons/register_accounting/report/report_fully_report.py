@@ -37,7 +37,15 @@ class report_fully_report(report_sxw.rml_parse):
             'getManualAjis': self.getManualAjis,
             'getManualFreeLines': self.getManualFreeLines,
             'getManualAalColor': self.getManualAalColor,
+            'update_percent': self.update_percent,
         })
+
+        self._cache_move = {}
+
+    def update_percent(self, nbloop, tot):
+        bk_id = self.localcontext.get('background_id')
+        if bk_id:
+            self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.9, max(0.1,nbloop/tot))})
 
     def getRegRef(self, reg_line):
         if reg_line.direct_invoice_move_id:
@@ -78,19 +86,23 @@ class report_fully_report(report_sxw.rml_parse):
         # We need move lines linked to the given move ID. Except the invoice counterpart.
         #+ Lines that have is_counterpart to True is the invoice counterpart. We do not need it.
         res = []
-        if  not move_ids:
+        if not move_ids:
             return res
 
         aml_obj = pooler.get_pool(self.cr.dbname).get('account.move.line')
-        domain = [
-            ('move_id', 'in', move_ids),
-            ('is_counterpart', '=', False)
-        ]
-        aml_ids = aml_obj.search(self.cr, self.uid, domain)
-        if aml_ids:
-            res = aml_obj.browse(self.cr, self.uid, aml_ids)
+        to_sort = []
+        for x in move_ids:
+            if x not in self._cache_move:
+                domain = [
+                    ('move_id', '=', x),
+                    ('is_counterpart', '=', False)
+                ]
+                aml_ids = aml_obj.search(self.cr, self.uid, domain)
+                if aml_ids:
+                    self._cache_move[x] = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
+            to_sort += self._cache_move[x]
         # US_297: Sort by invoice.number instead line_number
-        return sorted(res, key=lambda x: (x.invoice.number, x.line_number))
+        return sorted(to_sort, key=lambda x: (x.invoice.number, x.line_number))
 
     def getMoveLines(self, move_brs, regline_br):
         """
@@ -139,7 +151,7 @@ class report_fully_report(report_sxw.rml_parse):
         al_obj = pooler.get_pool(self.cr.dbname).get('account.analytic.line')
         al_ids = al_obj.get_corrections_history(self.cr, self.uid, analytic_ids)
         if al_ids:
-            res = al_obj.browse(self.cr, self.uid, al_ids)
+            res = al_obj.browse(self.cr, self.uid, al_ids, context={'lang': self.localcontext.get('lang')})
         return res
 
     def getFreeRef(self, acc_move_line):
@@ -156,7 +168,7 @@ class report_fully_report(report_sxw.rml_parse):
             acc_move = acc_move_line.move_id
             inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
             if inv_id:
-                inv = acc_inv.browse(self.cr, self.uid, inv_id)
+                inv = acc_inv.browse(self.cr, self.uid, inv_id, context={'lang': self.localcontext.get('lang')})
                 free_ref = inv and inv[0].reference
             if not free_ref:
                 # display the free ref if it is different from the "standard" ref
@@ -176,7 +188,7 @@ class report_fully_report(report_sxw.rml_parse):
         if reg_line and reg_line.account_id.type_for_register == 'down_payment' and reg_line.first_move_line_id and reg_line.first_move_line_id.move_id:
             acc_move = reg_line.first_move_line_id.move_id
             acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('move_id', '=', acc_move.id), ('id', '!=', reg_line.first_move_line_id.id)])
-            acc_move_line = acc_move_line_obj.browse(self.cr, self.uid, acc_move_line_id)
+            acc_move_line = acc_move_line_obj.browse(self.cr, self.uid, acc_move_line_id, context={'lang': self.localcontext.get('lang')})
             # totally reconciled
             reconcile_id = acc_move_line[0] and acc_move_line[0].reconcile_id or False
             if reconcile_id:
@@ -187,7 +199,7 @@ class report_fully_report(report_sxw.rml_parse):
                 if reconcile_partial_id:
                     second_acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('reconcile_partial_id', '=', reconcile_partial_id.id), ('id', '!=', acc_move_line[0].id)])
             if second_acc_move_line_id:
-                dp_reversals = acc_move_line_obj.browse(self.cr, self.uid, second_acc_move_line_id)
+                dp_reversals = acc_move_line_obj.browse(self.cr, self.uid, second_acc_move_line_id, context={'lang': self.localcontext.get('lang')})
         return dp_reversals
 
     def getManualAmls(self, o):
@@ -206,7 +218,7 @@ class report_fully_report(report_sxw.rml_parse):
                                                      ('status_move', '=', 'manu'),
                                                      ('date', '>=', period.date_start),
                                                      ('date', '<=', period.date_stop)])
-        amls = aml_obj.browse(self.cr, self.uid, aml_ids)
+        amls = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
         return [aml for aml in amls]
 
     def getManualAjis(self, aml, free=False):
@@ -219,7 +231,7 @@ class report_fully_report(report_sxw.rml_parse):
         db = pooler.get_pool(self.cr.dbname)
         aji_obj = db.get('account.analytic.line')
         aji_ids = aji_obj.search(self.cr, self.uid, [('move_id', '=', aml.id), ('free_account', '=', free)])
-        ajis = aji_obj.browse(self.cr, self.uid, aji_ids)
+        ajis = aji_obj.browse(self.cr, self.uid, aji_ids, context={'lang': self.localcontext.get('lang')})
         return [aji for aji in ajis]
 
     def getManualFreeLines(self, aml, free=False):
