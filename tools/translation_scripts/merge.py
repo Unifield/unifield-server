@@ -19,8 +19,8 @@ def main():
     master_po = sys.argv[2]
     output_po = master_po + ".merged"
 
-    my_po = sort_po(polib.pofile(my_po))
-    master_po = polib.pofile(master_po)
+    my_po = sort_po(polib.pofile(my_po, wrapwidth=0))
+    master_po = polib.pofile(master_po, wrapwidth=0)
 
     #display_untranslated_strings()
     display_existing_translations()

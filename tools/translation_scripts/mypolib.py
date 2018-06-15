@@ -236,10 +236,10 @@ def escape(st):
     the given string ``st`` and returns it.
     """
     return st.replace('\\', r'\\')\
-             .replace('\t', r'\t')\
              .replace('\r', r'\r')\
              .replace('\n', r'\n')\
              .replace('\"', r'\"')
+#             .replace('\t', r'\t')\
 # }}}
 # function unescape() {{{
 
@@ -253,8 +253,8 @@ def unescape(st):
         m = m.group(1)
         if m == 'n':
             return '\n'
-        if m == 't':
-            return '\t'
+        #if m == 't':
+        #    return '\t'
         if m == 'r':
             return '\r'
         if m == '\\':
@@ -885,7 +885,8 @@ class _BaseEntry(object):
                    wrapwidth=78):
         lines = field.splitlines(True)
         if len(lines) > 1:
-            lines = [''] + lines  # start with initial empty line
+            pass
+            #lines = [''] + lines # start with initial empty line
         else:
             escaped_field = escape(field)
             specialchars_count = 0
@@ -910,6 +911,9 @@ class _BaseEntry(object):
         if fieldname.startswith('previous_'):
             # quick and dirty trick to get the real field name
             fieldname = fieldname[9:]
+
+        if lines and lines[-1] and lines[-1][-1:] == "\n":
+            lines += ['']
 
         ret = ['%s%s%s "%s"' % (delflag, fieldname, plural_index,
                                 escape(lines.pop(0)))]
