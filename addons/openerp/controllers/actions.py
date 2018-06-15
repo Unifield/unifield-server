@@ -194,22 +194,12 @@ def execute_report(name, **data):
                 ctx['search_domain'].extend(ctx['original_domain'])
             if ctx.get('new_filter_domain', False):
                 ctx['search_domain'].extend(ctx['new_filter_domain'])
-        report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
-        state = False
-        attempt = 0
-        val = None
+
         bg_report = False
         background_id = ctx.get('background_id')
         max_attempt = ctx.get('background_time', 600)
         report_name = 'report'
 
-        if name != 'custom':
-            proxy = rpc.RPCProxy('ir.actions.report.xml')
-            res = proxy.search([('report_name','=', name)])
-            if res:
-                read_ctx = datas.copy()
-                read_ctx.setdefault('context', {}).update(ctx)
-                report_name = proxy.read(res[0], ['filename'], read_ctx)['filename']
 
         report_name = report_name.replace('Print ', '')
         if not ids or not datas.get('id') or not datas.get('model'):
@@ -217,6 +207,27 @@ def execute_report(name, **data):
                 report_name = datas['target_filename']
             elif datas.get('context', {}).get('_terp_view_name'):
                 report_name = datas['context']['_terp_view_name']
+        if name != 'custom':
+            proxy = rpc.RPCProxy('ir.actions.report.xml')
+            res = proxy.search([('report_name','=', name)])
+            if res:
+                read_ctx = datas.copy()
+                read_ctx.setdefault('context', {}).update(ctx)
+                report_info = proxy.read(res[0], ['filename', 'run_in_background'], read_ctx)
+                if not background_id and report_info['run_in_background']:
+                    background_id = rpc.session.execute('object', 'execute', 'memory.background.report', 'create',  {
+                                                'file_name': datas.get('target_filename') or report_info['filename'],
+                                                'report_name': report_info['filename'],
+                                            })
+                    ctx['background_id'] = background_id
+                    if 'background_time' not in ctx:
+                        max_attempt = 2
+                report_name = report_info['filename']
+
+        report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
+        state = False
+        attempt = 0
+        val = None
         attachment = ''
         if datas.get('force_attach'):
             attachment = 'attachment;'
