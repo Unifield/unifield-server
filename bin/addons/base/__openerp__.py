@@ -41,6 +41,7 @@
     'update_xml': [
         'base_update.xml',
         'ir/wizard/wizard_menu_view.xml',
+        'ir/wizard/change_uom.xml',
         'ir/ir_attachment_config.xml',
         'ir/ir.xml',
         'ir/workflow/workflow_view.xml',

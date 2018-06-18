@@ -340,7 +340,7 @@ class ir_model_fields(osv.osv):
                 if not (obj and obj._name == item.model):
                     obj = self.pool.get(item.model)
 
-                if item.state != 'manual':
+                if item.state != 'manual' and not context.get('allow_uom_write'):
                     raise except_orm(_('Error!'),
                                      _('Properties of base fields cannot be altered in this manner! '
                                        'Please modify them through Python code, '
@@ -413,6 +413,32 @@ class ir_model_fields(osv.osv):
                     setattr(obj._columns[col_name], col_prop, val)
                 obj._auto_init(cr, ctx)
         return res
+
+
+    def change_uom(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to change the currency and update lines
+        '''
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for field in self.browse(cr, uid, ids, context=context):
+            data = {
+                'field_id': field.id,
+                'uom_id': field.uom_id.id,
+            }
+            new_wiz_id = self.pool.get('ir.model.fields.change.uom').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'ir.model.fields.change.uom',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': new_wiz_id,
+                    'target': 'new'}
+
+        return True
+
 
     def get_browse_selection(self, cr, uid, obj, field, context=None):
         value = getattr(obj, field)

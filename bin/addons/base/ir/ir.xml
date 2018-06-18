@@ -1250,6 +1250,7 @@
                                 <field name="translate"/>
                                 <field name="on_delete" attrs="{'readonly': [('ttype','!=','many2one')]}"/>
                                 <field name="modules"/>
+                                <button name="change_uom" string="Change UoM" type="object" icon="gtk-go-back-rtl" colspan="2" />
                             </group>
                         </page>
                         <page string="Security">
