@@ -1096,8 +1096,7 @@ class return_claim(osv.osv):
             event_obj.create(cr, uid, event_values, context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.'
-                    % (name, claim_info.name, source))
+        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.') % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message
@@ -1120,8 +1119,7 @@ class return_claim(osv.osv):
         self.write(cr, uid, claim_id, ({'state': 'done'}), context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s."
-                    % (name, claim_info.name, source))
+        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s.") % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message

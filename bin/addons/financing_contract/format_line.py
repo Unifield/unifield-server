@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-import pooler
 from analytic_distribution.destination_tools import many2many_sorted
 from account_override import ACCOUNT_RESTRICTED_AREA
 
@@ -40,8 +39,8 @@ class financing_contract_format_line(osv.osv):
             actual_line_id integer NOT NULL,
             account_quadruplet_id integer NOT NULL
         )'''
-        )
-        res = super(financing_contract_format_line, self)._auto_init(cr, context)
+                       )
+        super(financing_contract_format_line, self)._auto_init(cr, context)
         if not table_exists:
             cr.execute('''
             ALTER TABLE ONLY financing_contract_actual_account_quadruplets
@@ -69,8 +68,8 @@ class financing_contract_format_line(osv.osv):
             return False # Just make this condition to False
         elif len(account_destination_list) == 1:
             temp_domain = ['&',
-                    ('general_account_id', '=', account_destination_list[0].account_id.id),
-                    ('destination_id', '=', account_destination_list[0].destination_id.id)]
+                           ('general_account_id', '=', account_destination_list[0].account_id.id),
+                           ('destination_id', '=', account_destination_list[0].destination_id.id)]
 
             return temp_domain
         else:
@@ -116,7 +115,7 @@ class financing_contract_format_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-                    #account_quadruplet_domain = ['&',('funding_pool_id', 'in', (36,40))]
+            #account_quadruplet_domain = ['&',('funding_pool_id', 'in', (36,40))]
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = line.child_ids and len(line.child_ids) or 0
@@ -254,13 +253,13 @@ class financing_contract_format_line(osv.osv):
         return False
 
     def _get_actual_line_ids(self, cr, uid, ids, context={}):
-        actual_line_ids = []
+        actual_line_ids = set()
         for line in self.browse(cr, uid, ids, context=context):
             if line.line_type == 'view':
-                actual_line_ids += self._get_actual_line_ids(cr, uid, [x.id for x in line.child_ids], context=context)
+                actual_line_ids.update(self._get_actual_line_ids(cr, uid, [x.id for x in line.child_ids], context=context))
             elif line.line_type in ['actual', 'consumption']:
-                actual_line_ids.append(line.id)
-        return actual_line_ids
+                actual_line_ids.add(line.id)
+        return list(actual_line_ids)
 
     def _get_view_amount(self, browse_line, total_costs, retrieved_lines):
         if browse_line.line_type == 'view':
@@ -320,6 +319,7 @@ class financing_contract_format_line(osv.osv):
             Method to compute the allocated budget/amounts, depending on the information in the line
         """
         res = {}
+        bg_obj = self.pool.get('memory.background.report')
         # 1st step: get the real list of actual lines to compute
         actual_line_ids = []
         overhead = self._is_overhead_present(cr, uid, ids, context=context)
@@ -330,7 +330,18 @@ class financing_contract_format_line(osv.osv):
             actual_line_ids = self._get_actual_line_ids(cr, uid, ids, context=context)
 
         # 2nd step: retrieve values for all actual lines above
+        nb_lines = len(actual_line_ids)
+        if field_name == 'allocated_real':
+            # for the 'allocated_real' lines: update the % of the process (cf report run in BG) from 20 to 50%
+            before = 0.20
+            after = 0.50
+        else:
+            # for the 'project_real' lines: update the % from 50 to 80%
+            before = 0.50
+            after = 0.80
+        current_line_position = 0
         for line in self.browse(cr, uid, actual_line_ids, context=context):
+            current_line_position += 1
             # default value
             res[line.id] = 0.0
             if line.line_type:
@@ -380,6 +391,7 @@ class financing_contract_format_line(osv.osv):
                         # Invert the result from the lines (positive for out, negative for in)
                         real_sum = -real_sum
                         res[line.id] = real_sum
+            bg_obj.compute_percent(cr, uid, current_line_position, nb_lines, before=before, after=after, refresh_rate=1, context=context)
 
         # 3rd step: compute all remaining lines from the retrieved results
         total_actual_costs = 0.0
