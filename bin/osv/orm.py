@@ -1312,6 +1312,15 @@ class orm_template(object):
         for parent in self._inherits:
             res.update(self.pool.get(parent).fields_get(cr, user, allfields, context))
 
+        cr.execute('''
+            SELECT f.name
+            FROM ir_model_fields f, product_uom uom
+            WHERE f.uom_id = uom.id 
+            AND f.model = %s
+            AND display_qty_as = 'integer';
+        ''', (self._name,))
+        fields_to_truncate = [x[0] for x in cr.fetchall()]
+
         if self._columns.keys():
             for f in self._columns.keys():
                 field_col = self._columns[f]
@@ -1382,6 +1391,9 @@ class orm_template(object):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain
                     res[f]['context'] = field_col._context
+
+                if f in fields_to_truncate:
+                    res[f]['truncate_qty'] = True
         else:
             #TODO : read the fields from the database
             pass
@@ -1391,6 +1403,7 @@ class orm_template(object):
             for r in res.keys():
                 if r not in allfields:
                     del res[r]
+
         return res
 
     #

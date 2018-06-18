@@ -120,6 +120,7 @@ class product_uom(osv.osv):
         'uom_type': fields.selection([('bigger','Bigger than the reference UoM'),
                                       ('reference','Reference UoM for this category'),
                                       ('smaller','Smaller than the reference UoM')],'UoM Type', required=1),
+        'display_qty_as': fields.selection([('float', 'Float'), ('integer', 'Integer')], 'Display quantity as'),
     }
 
     _defaults = {

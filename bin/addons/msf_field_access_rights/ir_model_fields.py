@@ -1,7 +1,11 @@
-from osv import osv, orm
+from osv import osv, orm, fields
 
 class ir_model_field(osv.osv):
     _inherit = 'ir.model.fields'
+
+    _columns = {
+        'uom_id': fields.many2one('product.uom', 'UoM'),
+    }
     
     def _modify_search_args(self, args):
         if hasattr(args, '__iter__'):
