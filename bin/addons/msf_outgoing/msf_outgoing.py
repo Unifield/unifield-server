@@ -1839,9 +1839,20 @@ class shipment2(osv.osv):
 
             v.update({'address_id': addr})
 
+        if self.search_exist(cr, uid, [('partner_id2', '=', partner_id), ('state', '=', 'draft')], context=context):
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('Another Draft Shipment exists with this Customer.')
+                }
+            }
+        else:
+            warning = {
+                'title': _('Warning'),
+                'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
+            }
 
-        return {'value': v,
-                'domain': d}
+        return {'value': v, 'domain': d, 'warning': warning or False}
 
     _columns = {
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'shipment_id', string='Memory Families'),
