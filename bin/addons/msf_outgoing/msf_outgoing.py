@@ -5200,7 +5200,8 @@ class stock_move(osv.osv):
                 # cancel the linked PO line partially or fully:
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
                 partially_cancelled = False
-                if move.purchase_line_id.product_qty - move.product_qty != 0:
+                pol_product_qty = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty'])['product_qty'] # because value in move.purchase_line_id.product_qty has changed since
+                if pol_product_qty - move.product_qty != 0:
                     self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
                     partially_cancelled = True
                 else:
