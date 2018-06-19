@@ -182,7 +182,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.order_id.delivery_confirmed_date
-                cancel_in_moves = self.cancel_in_line(linked_pol.order_id.id, line.product_id.id)
+                if line.product_id:
+                    cancel_in_moves = self.cancel_in_line(linked_pol.order_id.id, line.product_id.id)
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 

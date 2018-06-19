@@ -752,7 +752,7 @@ class res_partner(osv.osv):
                         if x:
                             # throw access denied error
                             raise osv.except_osv(_('Access Denied'),
-                                                 _('You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % (x[0], ))
+                                                 _('You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.') % (x[0], )
                                                  )
 
         return new_id
