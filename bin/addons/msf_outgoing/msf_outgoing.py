@@ -1826,7 +1826,6 @@ class shipment2(osv.osv):
         else:
             d.update({'address_id': [('partner_id', '=', partner_id)]})
 
-
         if address_id:
             addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
 
@@ -1839,20 +1838,39 @@ class shipment2(osv.osv):
 
             v.update({'address_id': addr})
 
-        if self.search_exist(cr, uid, [('partner_id2', '=', partner_id), ('state', '=', 'draft')], context=context):
-            return {
-                'warning': {
-                    'title': _('Warning'),
-                    'message': _('Another Draft Shipment exists with this Customer.')
-                }
-            }
-        else:
-            warning = {
+        warning = {
+            'title': _('Warning'),
+            'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
+        }
+
+        return {'value': v, 'domain': d, 'warning': warning}
+
+    def on_change_shipper_name(self, cr, uid, ids, shipper_name):
+        return {
+            'value': {'shipper_name': shipper_name},
+            'warning': {
                 'title': _('Warning'),
                 'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
             }
+        }
 
-        return {'value': v, 'domain': d, 'warning': warning or False}
+    def on_change_consignee_name(self, cr, uid, ids, consignee_name, context=None):
+        if context is None:
+            context = {}
+
+        message = _('The field you are modifying may impact the shipment mechanism, please check the correct process.')
+        if ids and self.search_exist(cr, uid, [('id', '!=', ids[0]), ('consignee_name', '=', consignee_name),
+                                               ('state', '=', 'draft')], context=context):
+            consignee_name = self.read(cr, uid, ids[0], ['consignee_name'], context=context)['consignee_name']
+            message = _('Another Draft Shipment exists with this Consignee.')
+
+        return {
+            'value': {'consignee_name': consignee_name},
+            'warning': {
+                'title': _('Warning'),
+                'message': message,
+            }
+        }
 
     _columns = {
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'shipment_id', string='Memory Families'),

@@ -1340,7 +1340,7 @@
 						<page string="Transport Information">
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Shipper" colspan="2" />
-                                <field name="shipper_name" />
+                                <field name="shipper_name" on_change="on_change_shipper_name(shipper_name)" />
                                 <field name="shipper_contact" />
 								<field name="shipper_address" />
 								<field name="shipper_phone" />
@@ -1360,7 +1360,7 @@
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Consignee" colspan="2" />
-                                <field name="consignee_name" />
+                                <field name="consignee_name" on_change="on_change_consignee_name(consignee_name)" />
                                 <field name="consignee_contact" />
 								<field name="consignee_address" />
 								<field name="consignee_phone" />
