@@ -319,7 +319,7 @@ class import_commitment_wizard(osv.osv_memory):
                                 " compatible for entry name:'%s', ref:'%s'" \
                                 " reason: '%s'")
                         raise osv.except_osv(_('Error'), msg % (
-                            vals.get('name', ''), vals.get('ref', ''),
+                            tools.ustr(vals.get('name', '')), tools.ustr(vals.get('ref', '')),
                             no_compat[2] or '', )
                         )
 
