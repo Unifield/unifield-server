@@ -1000,10 +1000,6 @@ class tender_line(osv.osv):
         if context.get('update_or_cancel_line_not_delete', False):
             del context['update_or_cancel_line_not_delete']
 
-        # Update the FO state
-        # for so in so_to_update:
-        #    wf_service.trg_write(uid, 'sale.order', so, cr)
-
         # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
         # for proceeding to other actions (create PO, Done etc)
         for tender in tender_obj.browse(cr, uid, list(tender_to_update), context=context):

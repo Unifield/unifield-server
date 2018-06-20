@@ -1290,7 +1290,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
             po_ids.add(pol.order_id.id)
 
-        return po_ids
+        return list(po_ids)
 
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
         '''
