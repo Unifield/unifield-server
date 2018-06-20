@@ -647,7 +647,8 @@ class tender(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
+            rfq_ids = self.pool.get('purchase.order').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
