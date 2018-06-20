@@ -986,8 +986,8 @@ class tender_line(osv.osv):
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
 
         if sol_ids:
-            for sol in sol_ids:
-                sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids.keys(), context=context):
+                sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, sol_ids[sol.id], context=context)
 
         # Update sale order lines
         so_to_cancel_ids = []
