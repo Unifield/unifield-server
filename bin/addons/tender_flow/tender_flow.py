@@ -957,7 +957,7 @@ class tender_line(osv.osv):
         # Variables
         to_remove = []
         to_cancel = []
-        sol_ids = {}
+        sol_to_resource = []
         sol_to_update = {}
         sol_not_to_delete = []
         so_to_update = set()
@@ -974,7 +974,7 @@ class tender_line(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.qty, line.sale_order_line_id.product_uom.id)
 
                 if line.has_to_be_resourced:
-                    sol_ids.update({line.sale_order_line_id.id: diff_qty})
+                    sol_to_resource.append(line.sale_order_line_id.id)
 
                 sol_to_update.setdefault(line.sale_order_line_id.id, 0.00)
                 sol_to_update[line.sale_order_line_id.id] += diff_qty
@@ -986,15 +986,11 @@ class tender_line(osv.osv):
         if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
 
-        if sol_ids:
-            for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids.keys(), context=context):
-                sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, sol_ids[sol.id], context=context)
-
         # Update sale order lines
         so_to_cancel_ids = []
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete
-            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], sol in sol_to_resource, context=context)
             if so_to_cancel_id:
                 so_to_cancel_ids.append(so_to_cancel_id)
 
