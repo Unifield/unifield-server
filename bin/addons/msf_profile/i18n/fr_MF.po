@@ -101265,3 +101265,8 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:357
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with a Partner or an Employee Third Party."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenaire ou Employé."

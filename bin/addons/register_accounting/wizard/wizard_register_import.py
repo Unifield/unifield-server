@@ -484,10 +484,18 @@ class wizard_register_import(osv.osv_memory):
                                         if tp_journal.currency.id != register_currency:
                                             errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                                             continue
-                            # Type DP or payroll ==> PARTNER required
-                            elif type_for_register in ['down_payment', 'payroll']:
+                            # Type DP ==> PARTNER required
+                            elif type_for_register == 'down_payment':
                                 tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                                 partner_type = 'partner'
+                            # Type payroll ==> PARTNER or EMPLOYEE required
+                            elif type_for_register == 'payroll':
+                                tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                if tp_ids:
+                                    partner_type = 'partner'
+                                else:
+                                    tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                    partner_type = 'employee'
                         # Any type for Spec. Treatment listed above ==> EMPTY partner NOT allowed
                         if not tp_ids:
                             errors.append(

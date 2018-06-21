@@ -643,8 +643,9 @@ class account_account(osv.osv):
             acc_type = acc_id.type_for_register
             transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
-            dp_payroll_not_ok = acc_type in ['down_payment', 'payroll'] and (not partner_id or journal_id or employee_id)
-            if transfer_not_ok or advance_not_ok or dp_payroll_not_ok:
+            dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
+            payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
+            if transfer_not_ok or advance_not_ok or dp_not_ok or payroll_not_ok:
                 not_compatible_ids.append(acc_id.id)
         if not_compatible_ids:
             self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
