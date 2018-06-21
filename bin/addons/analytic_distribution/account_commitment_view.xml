@@ -124,6 +124,29 @@
                         <button special="cancel" string="Cancel" icon="gtk-cancel"/>
                         <button name="import_csv_commitment_lines" string="Import" type="object" icon="gtk-ok"/>
                     </group>
+
+                    <separator colspan="4" string="Previous import summary" />
+                    <field name="last_stop" />
+                    <field name="last_error" colspan="4" widget="full_text"/>
+                    <button name="open_ana_lines" type="object" string="Open Last imported Commitments" attrs="{'invisible': [('last_stop', '=', False)]}" colspan="2" icon="gtk-justify-left" />
+                </form>
+            </field>
+        </record>
+        
+        <!-- Commitment Import view -->
+        <record id="import_commitment_wizard_progress_view" model="ir.ui.view">
+            <field name="name">Import Intl Commitments</field>
+            <field name="model">import.commitment.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+                <form string="Import Intl Commitments is running in background ...">
+                    <field name="start_date" />
+                    <field name="progress"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button name="refresh" type="object" string="Refresh" icon="gtk-refresh"/>
+                    </group>
                 </form>
             </field>
         </record>

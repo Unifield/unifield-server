@@ -396,6 +396,8 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context.get('from_je_import', False):
+            return True
         for l in self.browse(cr, uid, ids):
             # Next line if this one comes from a non-manual move (journal entry)
             if l.move_id.status != 'manu':

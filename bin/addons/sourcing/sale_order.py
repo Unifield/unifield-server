@@ -55,7 +55,7 @@ class sale_order(osv.osv):
 
         for so in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
             to_source = []
-            for sol in so.order_line: 
+            for sol in so.order_line:
                 if sol.state.startswith('validated'):
                     if sol.type == 'make_to_order' and sol.po_cft in ('po','rfq') and not sol.supplier:
                         raise osv.except_osv(_('Error'), _('Supplier is not defined for all Field Order lines. Please check the line %s') % sol.line_number)

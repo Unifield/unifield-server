@@ -106,7 +106,7 @@
                     <para style="HeaderRight">Actual Shipped Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.date, date_time=True) ]]</para>
+                    <para style="Header">[[ picking.move_lines and formatLang(picking.move_lines[0].date, date_time=True) or '' ]]</para>
                 </td>
             </tr>
             <tr>
@@ -177,7 +177,7 @@
 
 
         <section>
-        <blockTable colWidths="20.0,70.0,120.0,50.0,60.0,45.0,40.0,70.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,100.0,120.0,50.0,50.0,45.0,40.0,60.0,70.0,70.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -186,10 +186,10 @@
                     <para style="LHeader">Product Code</para>
                 </td>
                 <td>
-                    <para style="LHeader">Product Name</para>
+                    <para style="LHeader">Product Description</para>
                 </td>
                 <td>
-                    <para style="LHeader">CommentS</para>
+                    <para style="LHeader">Comments</para>
                 </td>
                 <td>
                     <para style="LHeader">Kit</para>
@@ -214,9 +214,6 @@
                 </td>
                 <td>
                     <para style="LHeader">Destination Location</para>
-                </td>
-                <td>
-                    <para style="LHeader">Actual Shipped Date</para>
                 </td>
             </tr>
             <tr>
@@ -257,9 +254,6 @@
                 </td>
                 <td>
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
-                </td>
-                <td>
-                    <para style="Line">[[ formatLang(line.date[:10], date=True) ]]</para>
                 </td>
             </tr>
         </blockTable>

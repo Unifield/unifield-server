@@ -178,9 +178,10 @@
                             <field name="journal_type"/>
                         </group>
                         <newline/>
-                        <group col="2" colspan="4">
+                        <group col="6" colspan="4">
                             <field name="balance" string="Debit/Credit Fonctional" select='1'/>
                             <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                            <field name="currency_id" help="" domain="[('active', '=', True)]"/>
                         </group>
                         <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">

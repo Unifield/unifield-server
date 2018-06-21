@@ -26,11 +26,11 @@ class ir_sequence_fiscalyear(osv.osv):
     _rec_name = "sequence_main_id"
     _columns = {
         "sequence_id": fields.many2one("ir.sequence", 'Sequence', required=True,
-            ondelete='cascade'),
+                                       ondelete='cascade'),
         "sequence_main_id": fields.many2one("ir.sequence", 'Main Sequence',
-            required=True, ondelete='cascade'),
+                                            required=True, ondelete='cascade'),
         "fiscalyear_id": fields.many2one('account.fiscalyear', 'Fiscal Year',
-            required=True, ondelete='cascade')
+                                         required=True, ondelete='cascade')
     }
 
     _sql_constraints = [
@@ -44,22 +44,25 @@ class ir_sequence(osv.osv):
     _inherit = 'ir.sequence'
     _columns = {
         'fiscal_ids': fields.one2many('account.sequence.fiscalyear',
-            'sequence_main_id', 'Sequences')
+                                      'sequence_main_id', 'Sequences')
     }
     def get_id(self, cr, uid, sequence_id, code_or_id='id', context=None):
         if context is None:
             context = {}
-        cr.execute('select id from ir_sequence where '
-                   + code_or_id + '=%s and active=%s', (sequence_id, True,))
-        res = cr.dictfetchone()
-        if res:
-            for line in self.browse(cr, uid, res['id'],
-                                    context=context).fiscal_ids:
-                if line.fiscalyear_id.id == context.get('fiscalyear_id', False):
-                    return super(ir_sequence, self).get_id(cr, uid,
-                                                           line.sequence_id.id,
-                                                           code_or_id="id",
-                                                           context=context)
+
+        assert code_or_id in ('id', 'code'), 'bad param code_or_id'
+        if context.get('fiscalyear_id'):
+            cr.execute('select id from ir_sequence where '
+                       + code_or_id + '=%s and active=%s', (sequence_id, True,)) # ignore_sql_check
+            res = cr.dictfetchone()
+            if res:
+                for line in self.browse(cr, uid, res['id'], fields_to_fetch=['fiscal_ids'],
+                                        context=context).fiscal_ids:
+                    if line.fiscalyear_id.id == context.get('fiscalyear_id', False):
+                        return super(ir_sequence, self).get_id(cr, uid,
+                                                               line.sequence_id.id,
+                                                               code_or_id="id",
+                                                               context=context)
         return super(ir_sequence, self).get_id(cr, uid, sequence_id, code_or_id,
                                                context=context)
 
