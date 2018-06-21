@@ -713,20 +713,20 @@ You cannot choose this supplier because some destination locations are not avail
 
                 if key in product_data:
                     product_data[key] += uom_obj._compute_qty(cr, uid, move.product_uom.id,
-                                                                       move.product_qty, move.product_id.uom_id.id)
+                                                              move.product_qty, move.product_id.uom_id.id)
                 else:
                     product_data[key] = uom_obj._compute_qty(cr, uid, move.product_uom.id,
-                                                                      move.product_qty, move.product_id.uom_id.id)
+                                                             move.product_qty, move.product_id.uom_id.id)
 
                 if key not in qties:
                     if prodlot_id:
                         qties[key] = prodlot_obj.read(cr, uid, prodlot_id, ['stock_available'],
-                                                         context={'location_id': move.location_id.id})['stock_available']
+                                                      context={'location_id': move.location_id.id})['stock_available']
                     else:
                         qties[key] = prod_obj.read(cr, uid, move.product_id.id, ['qty_available'],
-                                                      context={'location_id': move.location_id.id})['qty_available']
+                                                   context={'location_id': move.location_id.id})['qty_available']
 
-                if product_data[key] > qties[key]:
+                if product_data[key] > qties[key] or (move.product_id.batch_management and not key[2] and qties[key]):
                     moves_ids_to_reassign.append(move.id)
 
         if moves_ids_to_reassign:
