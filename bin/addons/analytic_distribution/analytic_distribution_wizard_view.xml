@@ -195,6 +195,9 @@
                     <newline/>
                     <label string="- Unposted items" align="0.0"/>
                     <newline/>
+                    <label string='- Items booked on accounts set as "Prevent correction on analytic accounts"' align="0.0" colspan="4"/>
+                    <newline/>
+                    <label string="- Items booked on a Currency Adjustment Analytic Journal" align="0.0" colspan="4"/>
                     <html>
                         <br />
                     </html>

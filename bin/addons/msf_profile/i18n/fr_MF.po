@@ -101265,3 +101265,12 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: analytic_distribution
+#: view:mass.reallocation.wizard:0
+msgid "- Items booked on accounts set as \"Prevent correction on analytic accounts\""
+msgstr "- Ecritures enregistrées sur des comptes définis comme \"Empêcher la correction sur les comptes analytiques\""
+
+#. module: analytic_distribution
+#: view:mass.reallocation.wizard:0
+msgid "- Items booked on a Currency Adjustment Analytic Journal"
+msgstr "- Ecritures enregistrées sur un Journal Analytique de type Ajustement de Devise"
