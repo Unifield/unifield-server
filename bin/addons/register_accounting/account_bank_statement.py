@@ -1227,6 +1227,9 @@ class account_bank_statement_line(osv.osv):
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
         'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
+        'advance_invoice_move_id': fields.many2one('account.move', 'Account Move of the Invoice used to close the Advance',
+                                                   readonly=True,
+                                                   help="When a SI is used to close an Advance, the related JE is stored in this field"),
     }
 
     _defaults = {
@@ -2224,6 +2227,7 @@ class account_bank_statement_line(osv.osv):
             'down_payment_id': False,
             'cash_return_move_line_id': False,  # BKLG-60
             'partner_move_ids': [],
+            'advance_invoice_move_id': False,
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
