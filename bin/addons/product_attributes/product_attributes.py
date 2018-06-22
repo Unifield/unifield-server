@@ -299,6 +299,18 @@ class product_template(osv.osv):
 product_template()
 
 
+class product_sde_proof_of_concept(osv.osv):
+    _name = 'product.sde.proof.of.concept'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', 'Product'),
+        'gtin': fields.char(size=25, string='GTIN'),
+        'packaging': fields.char(size=10, string='Packaging'),
+    }
+
+product_sde_proof_of_concept()
+
+
 class product_attributes(osv.osv):
     _inherit = "product.product"
 
@@ -906,6 +918,7 @@ class product_attributes(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
+        'sde_proof_of_concept': fields.one2many('product.sde.proof.of.concept', 'product_id', 'SDE Proof Of Concept'),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value

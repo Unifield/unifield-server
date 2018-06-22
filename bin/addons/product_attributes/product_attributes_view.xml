@@ -158,6 +158,13 @@
                                 <field name="closed_article" colspan="2"/>
                                 <field name="manufacturer_ref" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                                 <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
+                                <separator string="SDE Proof Of Concept" colspan="2"/>
+                                <field name="sde_proof_of_concept" nolabel="1" mode="tree" colspan="2">
+                                    <tree editable="top">
+                                        <field name="gtin" />
+                                        <field name="packaging" />
+                                    </tree>
+                                </field>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />
