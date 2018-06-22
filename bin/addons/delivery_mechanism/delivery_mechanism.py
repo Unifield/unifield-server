@@ -1086,10 +1086,10 @@ class stock_picking(osv.osv):
                             out_values['price_currency_id'] = out_move.price_currency_id.id
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
-                        if out_move.picking_id.type == 'out' \
-                           and out_move.picking_id.subtype == 'picking' \
-                           and out_move.picking_id.state == 'draft':
-                            out_picks.add(out_move.picking_id.id)
+                        if out_move.picking_id.type == 'out':
+                            out_values['purchase_line_id'] = False
+                            if out_move.picking_id.subtype == 'picking' and out_move.picking_id.state == 'draft':
+                                out_picks.add(out_move.picking_id.id)
 
                         if line.uom_id.id != out_move.product_uom.id:
                             uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
