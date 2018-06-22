@@ -2228,6 +2228,7 @@ class account_bank_statement_line(osv.osv):
             'cash_return_move_line_id': False,  # BKLG-60
             'partner_move_ids': [],
             'advance_invoice_move_id': False,
+            'direct_invoice_move_id': False,
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
