@@ -591,7 +591,7 @@ class wizard_cash_return(osv.osv_memory):
             vals.update({'invoice_id': invoice_id,})
             # also store the invoice JE
             inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=['move_id'], context=context)
-            vals.update({'advance_invoice_move_id': inv.move_id and inv.move_id.id or False})
+            vals.update({'advance_invoice_move_id': inv and inv.move_id and inv.move_id.id or False})
 
         # Create the statement line with vals
         st_line_id = absl_obj.create(cr, uid, vals, context=context)
