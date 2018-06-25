@@ -31,7 +31,14 @@ class order(report_sxw.rml_parse):
             'to_time': self.str_to_time,
             'enumerate': enumerate,
             'getOrigin': self._get_origin,
+            'filter_lines': self.filter_lines,
         })
+
+    def filter_lines(self, o):
+        if not o.order_line:
+            return []
+
+        return [x for x in o.order_line if x.state not in ('cancel', 'cancel_r')]
 
     def _get_origin(self, origin='', number=5):
         res = []
@@ -57,17 +64,17 @@ class order(report_sxw.rml_parse):
             tmp_orig = ''
 
         return res
-        
+
     def str_to_time(self, time):
         if isinstance(time, str):
             if time == 'False':
                 time = False
-                
+
         if time:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
-        
+
         return ''
-            
+
 report_sxw.report_sxw('report.msf.purchase.order','purchase.order','addons/purchase_override/report/purchase_order.rml',parser=order, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

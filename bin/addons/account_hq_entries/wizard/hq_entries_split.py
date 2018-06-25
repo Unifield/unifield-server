@@ -53,6 +53,7 @@ class hq_entries_split_lines(osv.osv_memory):
         'ref': fields.char("Reference", size=255),
         'account_id': fields.many2one("account.account", "Account", domain=[('type', '!=', 'view')], required=True),
         'account_hq_correctible': fields.boolean("Is HQ correctible?"),
+        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts"),
         'amount': fields.float('Amount', required=True),
         'destination_id': fields.many2one('account.analytic.account', "Destination", domain=[('category', '=', 'DEST'), ('type', '!=', 'view')], required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", domain=[('category', '=', 'OC'), ('type', '!=', 'view')], required=True),
@@ -114,6 +115,19 @@ class hq_entries_split_lines(osv.osv_memory):
             res = getattr(account, 'is_not_hq_correctible', False)
         return res
 
+    def _get_is_not_ad_correctable(self, cr, uid, context=None):
+        """
+        Returns True if the account of the original entry to split is set as 'is_not_ad_correctable'
+        """
+        res = False
+        if not context:
+            return res
+        original_line = self._get_original_line(cr, uid, context=context)
+        account = original_line and getattr(original_line, 'account_id', False) or False
+        if account:
+            res = getattr(account, 'is_not_ad_correctable', False)
+        return res
+
     _defaults = {
         'name': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'name', context=c),
         'ref': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'ref', context=c),
@@ -122,8 +136,22 @@ class hq_entries_split_lines(osv.osv_memory):
         'destination_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'destination_id', field_type='m2o', context=c),
         'cost_center_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'cost_center_id', field_type='m2o', context=c),
         'analytic_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'analytic_id', field_type='m2o', context=c),
-        'account_hq_correctible': lambda obj, cr, uid, c: obj._get_hq_correctible(cr, uid, context=c)
+        'account_hq_correctible': lambda obj, cr, uid, c: obj._get_hq_correctible(cr, uid, context=c),
+        'is_not_ad_correctable': lambda obj, cr, uid, c: obj._get_is_not_ad_correctable(cr, uid, context=c)
     }
+
+    def _update_account_and_ad(self, wizard, vals):
+        """
+        Updates vals dictionary with the account and AD to use IF they are not retrieved from the wizard because they are readonly.
+        If so the values are taken from the original entry (use case: account set as is_not_hq_correctible / is_not_ad_correctable).
+        """
+        if wizard:
+            for field in ['account_id', 'destination_id', 'cost_center_id', 'analytic_id']:  # analytic_id = FP
+                if not vals.get(field):
+                    value = getattr(wizard.original_id, field) and getattr(wizard.original_id, field).id or False
+                    if not value:
+                        raise osv.except_osv(_('Error'), _('The account or AD of the original entry is missing or incomplete.'))
+                    vals[field] = value
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -149,10 +177,7 @@ class hq_entries_split_lines(osv.osv_memory):
             if not vals.get('wizard_id'):
                 raise osv.except_osv(_('Error'), _('No link from this line to a specific wizard. Do you come from web client?'))
             wiz = self.pool.get('hq.entries.split').browse(cr, uid, vals.get('wizard_id', False))
-            account = wiz and wiz.original_id and wiz.original_id.account_id or False
-            if not account:
-                raise osv.except_osv(_('Error'), _('Account is required!'))
-            vals['account_id'] = account.id
+        self._update_account_and_ad(wiz, vals)
         # US-672/2
         hq_entry = self._get_original_line(cr, uid, context=context,
                                            wizard_id=vals.get('wizard_id', False))
@@ -199,7 +224,9 @@ class hq_entries_split_lines(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
             elif original_amount < 0 and vals.get('amount') > 0.0:
                 raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
-        # Prepare some values
+
+        wizard = self.browse(cr, uid, ids[0], context=context).wizard_id
+        self._update_account_and_ad(wizard, vals)
 
         # US-672/2
         for line in self.browse(cr, uid, ids, context=context):

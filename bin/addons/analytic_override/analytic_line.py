@@ -153,6 +153,8 @@ class account_analytic_line(osv.osv):
             context = {}
         if not 'account_id' in vals:
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
+        if context.get('skip_ad_date_check', False):
+            return True
 
         account_obj = self.pool.get('account.analytic.account')
 
@@ -245,6 +247,10 @@ class account_analytic_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        aml_obj = self.pool.get('account.move.line')
+        invoice_line_obj = self.pool.get('account.invoice.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        aal_account_obj = self.pool.get('account.analytic.account')
         # SP-50: If data is synchronized from another instance, just create it with the given document_date
         if context.get('update_mode') in ['init', 'update']:
             if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
@@ -254,6 +260,24 @@ class account_analytic_line(osv.osv):
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                vals.get('document_date'), vals.get('date'), show_date=True,
                                                                context=context)
+        # in case of a refund cancel/modify: update the reversal origin
+        if vals.get('move_id'):
+            related_ji = aml_obj.browse(cr, uid, vals['move_id'], fields_to_fetch=['invoice_line_id'], context=context)
+            if related_ji.invoice_line_id and related_ji.invoice_line_id.reversed_invoice_line_id:
+                vals['is_reversal'] = True
+                reversed_inv_line = invoice_line_obj.browse(cr, uid, related_ji.invoice_line_id.reversed_invoice_line_id.id,
+                                                            fields_to_fetch=['move_lines'], context=context)
+                reversed_aml_id = reversed_inv_line.move_lines and reversed_inv_line.move_lines[0].id or False
+                # use a Funding Pool as Free1/2 are not synched to HQ
+                fp_account_ids = aal_account_obj.search(cr, uid, [('category', '=', 'FUNDING'), ('type', '=', 'normal')],
+                                                        order='NO_ORDER', context=context)
+                reversed_aal_dom = [('move_id', '=', reversed_aml_id), ('account_id', 'in', fp_account_ids)]
+                # the reversal_origin is used to keep the chain with previous AJIs so if several AJIs are linked to a JI
+                # the reversed AJI used is the same for all AJIs = the first one found by id
+                reversed_aal_ids = reversed_aml_id and aal_obj.search(cr, uid, reversed_aal_dom, order='id', limit=1,
+                                                                      context=context)
+                if reversed_aal_ids:
+                    vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
@@ -261,7 +285,7 @@ class account_analytic_line(osv.osv):
         br = self.browse(cr, uid, res,context)
         if entry_sequence_sync is not None:
             if entry_sequence_sync != br.entry_sequence:
-                cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (entry_sequence_sync,res))
+                cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (entry_sequence_sync, res))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):

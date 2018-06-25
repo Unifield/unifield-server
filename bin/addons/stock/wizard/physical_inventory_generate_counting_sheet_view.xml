@@ -9,6 +9,7 @@
                 <form string="Generate Counting Sheet">
                     <field name="prefill_bn" colspan="4"/>
                     <field name="prefill_ed" colspan="4"/>
+                    <field name="only_with_stock_level" colspan="4"/>
                     <button name="generate_counting_sheet" string="Generate counting sheet" icon="gtk-go-forward" colspan="4" type="object" />
                 </form>
             </field>

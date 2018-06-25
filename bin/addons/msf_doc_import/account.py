@@ -32,6 +32,7 @@ import threading
 import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
+from spreadsheet_xml import UNIT_SEPARATOR
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -152,6 +153,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                 return True
         return False
 
+    def _format_unit_separator(self, line):
+        """
+        Replaces back the arbitrary string used for the unit separator with the corresponding hexadecimal code
+        """
+        for i in range(len(line)):
+            if line[i] and isinstance(line[i], basestring) and UNIT_SEPARATOR in line[i]:
+                line[i] = line[i].replace(UNIT_SEPARATOR, '\x1F')
+        return line
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Do treatment before validation:
@@ -204,7 +214,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                 fileobj = NamedTemporaryFile('w+b', delete=False)
                 fileobj.write(decodestring(wiz.file))
                 fileobj.close()
-                content = SpreadsheetXML(xmlfile=fileobj.name)
+                context.update({'from_je_import': True})
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content'))
                 # Update wizard
@@ -261,6 +272,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # ignore empty lines
                     if not self._check_has_data(line):
                         continue
+
+                    self._format_unit_separator(line)
 
                     # Check document date
                     if not line[cols['Document Date']]:
@@ -393,10 +406,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
                         continue
 
-                    # US-3461 Accounts that can't be corrected on HQ entries are not allowed here
+                    # US-3461 Accounts that can't be corrected on Account Codes are not allowed here
                     if account.is_not_hq_correctible:
                         errors.append(_("Line %s. The account \"%s - %s\" cannot be used because it is set as "
-                                        "\"Can not be corrected on HQ entries\".") % (current_line_num, account.code, account.name,))
+                                        "\"Prevent correction on account codes\".") % (current_line_num, account.code, account.name,))
                         continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic
@@ -428,13 +441,37 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. %s is a VIEW type Cost Center!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         # Check Funding Pool (added since UTP-1082)
-                        r_fp = msf_fp_id
-                        if line[cols['Funding Pool']]:
+                        if not line[cols['Funding Pool']]:
+                            errors.append(_('Line %s. No Funding Pool specified!') % (current_line_num,))
+                            continue
+                        else:
                             fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['Funding Pool']]), ('code', '=', line[cols['Funding Pool']])])
                             if not fp_ids:
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
                                 continue
                             r_fp = fp_ids[0]
+                        if r_destination not in [d.id for d in account.destination_ids]:
+                            errors.append(_('Line %s. The destination %s is not compatible with the account %s.') %
+                                          (current_line_num, line[cols['Destination']], line[cols['G/L Account']]))
+                            continue
+                        # if the Fund. Pool used is NOT "PF" check the compatibility with the (account, dest) and the CC
+                        if r_fp != msf_fp_id:
+                            fp_fields = ['tuple_destination_account_ids', 'cost_center_ids']
+                            fp = self.pool.get('account.analytic.account').browse(cr, uid, r_fp,
+                                                                                  fields_to_fetch=fp_fields, context=context)
+                            if (account.id, r_destination) not in \
+                                [t.account_id and t.destination_id and (t.account_id.id, t.destination_id.id)
+                                 for t in fp.tuple_destination_account_ids if not t.disabled]:
+                                errors.append(_('Line %s. The combination "account %s and destination %s" is not '
+                                                'compatible with the Funding Pool %s.') %
+                                              (current_line_num, line[cols['G/L Account']], line[cols['Destination']],
+                                               line[cols['Funding Pool']]))
+                                continue
+                            if cc.id not in [c.id for c in fp.cost_center_ids]:
+                                errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
+                                              (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
+                                continue
+
                     # US-937: use period of import file
                     if line[cols['Period']].startswith('Period 16'):
                         raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
