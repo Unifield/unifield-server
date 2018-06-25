@@ -1130,6 +1130,9 @@ class account_bank_statement_line(osv.osv):
                 # hard posted direct invoice regline case (and sync P1->C1)
                 if absl.direct_invoice_move_id:
                     res.add(absl.direct_invoice_move_id.id)
+            # advance closed by a SI in project => in upper inst. invoice_id is empty: use advance_invoice_move_id
+            elif not absl.invoice_id and absl.advance_invoice_move_id:
+                res.add(absl.advance_invoice_move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1272,7 +1275,7 @@ class account_bank_statement_line(osv.osv):
         cash_adv_return_move_line_ids = [
             absl.cash_return_move_line_id.id \
             for absl in absl_brs \
-            if not absl.invoice_id and absl.from_cash_return and \
+            if not absl.invoice_id and not absl.advance_invoice_move_id and absl.from_cash_return and \
             absl.cash_return_move_line_id
             # NOTE: for imported invoices we let the default behaviour
             # (display of invoice AJIs)
