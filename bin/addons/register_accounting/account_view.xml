@@ -175,7 +175,8 @@
                             </page>
                         </notebook>
                         <separator string="Comments"/>
-                        <field name="notes" nolabel="1"/>
+                        <field name="notes" nolabel="1" colspan="4"/>
+                        <field name="register_closed_by"/>
                         <separator string="Dates"/>
                         <group col="6" colspan="4">
                            <field name="date" string="Opening Date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
@@ -396,7 +397,8 @@
                             </group>
                         </group>
                         <separator string="Comments"/>
-                        <field name="notes" nolabel="1"/>
+                        <field name="notes" nolabel="1" colspan="4"/>
+                        <field name="register_closed_by"/>
                         <separator string="State" />
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>

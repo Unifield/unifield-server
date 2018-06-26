@@ -359,7 +359,7 @@ class sync_version_instance_monitor(osv.osv):
         return self.get_path_disk_usage(cr, uid, unifield_path)
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Instance', select=1, m2o_order='code'),
         'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),
         'version': fields.char(size=128, string='Version', readonly=True),
         'backup_path': fields.char('Backup Location', size=128),
@@ -383,6 +383,8 @@ class sync_version_instance_monitor(osv.osv):
     _defaults = {
         'backup_date' : fields.datetime.now,
         'instance_id': _get_default_instance_id,
+        'cloud_size': 0,
+        'backup_size': 0,
     }
 
     _sql_constraints = [

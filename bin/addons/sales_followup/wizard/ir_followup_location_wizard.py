@@ -81,14 +81,11 @@ class ir_followup_location_wizard(osv.osv_memory):
         'confirmed_ok': fields.boolean(
             string='Confirmed',
         ),
-        'exception_ok': fields.boolean(
-            string='Exception',
-        ),
         'closed_ok': fields.boolean(
             string='Closed',
         ),
         'cancel_ok': fields.boolean(
-            string='Cancel',
+            string='Cancelled',
         ),
         'only_bo': fields.boolean(
             string='Pending order lines only (PDF)',
@@ -115,19 +112,16 @@ class ir_followup_location_wizard(osv.osv_memory):
         state_domain = []
 
         if wizard.draft_ok:
-            state_domain.append('draft')
+            state_domain.extend(['draft', 'draft_p'])
 
         if wizard.validated_ok:
-            state_domain.extend(['validated', 'waiting_date'])
+            state_domain.extend(['validated', 'validated_p'])
 
         if wizard.sourced_ok:
-            state_domain.append('sourced')
+            state_domain.extend(['sourced', 'sourced_p'])
 
         if wizard.confirmed_ok:
-            state_domain.extend(['manual', 'progress'])
-
-        if wizard.exception_ok:
-            state_domain.extend(['shipping_except', 'invoice_except'])
+            state_domain.extend(['confirmed', 'confirmed_p'])
 
         if wizard.closed_ok:
             state_domain.append('done')
@@ -136,7 +130,6 @@ class ir_followup_location_wizard(osv.osv_memory):
             state_domain.append('cancel')
 
         return state_domain
-
 
     def get_values(self, cr, uid, ids, context=None):
         '''

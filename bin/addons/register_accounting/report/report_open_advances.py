@@ -61,10 +61,10 @@ class report_open_advances(report_sxw.report_sxw):
                 account.type_for_register = 'advance' AND
                 line.state = 'valid' AND
                 line.reconcile_id IS NULL AND
-                line.date <= '%s'
+                line.date <= %s
             ORDER BY account_name, booking_currency.name, line.partner_txt, line.date
-        """ % (time.strftime('%Y-%m-%d'))
-        cr.execute(sql_open_advances)
+        """
+        cr.execute(sql_open_advances, (time.strftime('%Y-%m-%d'),))
         res = header + cr.fetchall()
 
         b = StringIO.StringIO()
@@ -91,7 +91,7 @@ class report_open_advances2(report_sxw.rml_parse):
         domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
         if obj.journal_id and obj.journal_id.currency:
             domain.append(('statement_id.journal_id.currency', '=', obj.journal_id.currency.id))
-        ids = obj_line.search(self.cr, self.uid, domain)
+        ids = obj_line.search(self.cr, self.uid, domain, context={'check_advance_reconciled': True})
         for line in obj_line.browse(self.cr, self.uid, ids, context={'lang': self.localcontext.get('lang')}):
             ret.append(line)
         return ret

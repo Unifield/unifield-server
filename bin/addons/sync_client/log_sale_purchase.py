@@ -37,7 +37,7 @@ def check(fn):
                 "log_sale_purchase is not set in the context!"
                 % (fn.func_name, self._name) )
             return True
-        
+
     return wrapper
 
 
@@ -53,13 +53,12 @@ class log_sale_purchase(osv.osv):
 
     def _get_model_id_from_document(self, cr, uid, ids, field, args, context=None):
         self.read(cr, uid, ids, ['model'], context=context)
-        cr.execute("""\
+        cr.execute("""
             SELECT log.id, m.id
             FROM %s log
             LEFT JOIN ir_model m
             ON log.model = m.model
-            WHERE log.id IN %%s;""" \
-            % (self._table,), [tuple(ids)])
+            WHERE log.id IN %%s;""" % (self._table,), [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     @check
@@ -80,10 +79,10 @@ class log_sale_purchase(osv.osv):
         # Synchronization
         'synchro_id' :
             fields.many2one('sync.monitor', "Synchronization",
-                ondelete='cascade', readonly=True),
+                            ondelete='cascade', readonly=True),
         'synchro_datetime' :
             fields.related('synchro_id', 'start', type='datetime', store=True,
-                string="Synchronization Date/Time", readonly=True),
+                           string="Synchronization Date/Time", readonly=True),
 
         # Document
         'document' :
@@ -95,12 +94,12 @@ class log_sale_purchase(osv.osv):
             ], size=128, required=True, readonly=True),
         'model' :
             fields.function(_get_model_from_document, method=True,
-                string="Model", type='char', size=64,
-                store=True, readonly=True),
+                            string="Model", type='char', size=64,
+                            store=True, readonly=True),
         'model_id' :
             fields.function(_get_model_id_from_document, method=True,
-                string="Model", type='many2one', relation='ir.model',
-                store=True, readonly=True),
+                            string="Model", type='many2one', relation='ir.model',
+                            store=True, readonly=True),
 
         # Log information
         'action_type' :
@@ -125,7 +124,7 @@ class log_sale_purchase(osv.osv):
         'is_date_modified' :
             fields.boolean("Date changed", readonly=True),
     }
-    
+
     _defaults = {
         'action_datetime' : fields.datetime.now,
     }
@@ -151,16 +150,16 @@ class SalePurchaseLogger(object):
         if not symbol.startswith('_') \
            and symbol in self._model._all_columns.keys():
             return self._values.get(symbol,
-                (False if symbol.startswith('is_') else None))
+                                    (False if symbol.startswith('is_') else None))
         return self.__dict__[symbol]
 
     def write(self):
         if self._id is not None:
             self._model.write(self._cr, self._uid, [self._id],
-                self._values, context=self._context)
+                              self._values, context=self._context)
         else:
             self._id = self._model.create(self._cr, self._uid,
-                self._values, context=self._context)
+                                          self._values, context=self._context)
             if 'logger' in self._context:
                 self._context['logger'].link(
                     self._model._name, 'synchro_id', self._id)
@@ -173,7 +172,7 @@ class SalePurchaseLogger(object):
                 self.write()
         else:
             self.__dict__[symbol] = value
-    
+
     def delete(self):
         if self._id is not None:
             if 'logger' in self._context:
@@ -191,4 +190,4 @@ def get_sale_purchase_logger(cr, uid, model, res_id, context=None):
     return context['sale_purchase_logger']\
         .setdefault(model._name, {})\
         .setdefault(res_id,
-            SalePurchaseLogger(cr, uid, model, res_id, context=context))
+                    SalePurchaseLogger(cr, uid, model, res_id, context=context))

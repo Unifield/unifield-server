@@ -36,7 +36,7 @@ UPDATE %(table)s
     WHERE %(table)s.%(column)s = %(rel_table)s.id;
 ALTER TABLE %(table)s DROP COLUMN %(column)s;
 ALTER TABLE %(table)s RENAME COLUMN new_%(column)s TO %(column)s;
-COMMIT;""" % format_keys)
+COMMIT;""" % format_keys)  # not_a_user_entry
             return fn(self, cr, context=context)
         return wrapper
     return decorator
@@ -53,7 +53,7 @@ SELECT column_name
         column_sdref_exists = bool( cr.fetchone() )
         result = fn(self, cr, context=context)
         if not column_sdref_exists:
-            cr.execute("SELECT COUNT(*) FROM %s" % self._table)
+            cr.execute("SELECT COUNT(*) FROM %s" % self._table)  # not_a_user_entry
             count = cr.fetchone()[0]
             if count > 0:
                 cr.commit()
@@ -67,8 +67,9 @@ SELECT column_name
                     try:
                         data = dict(zip(eval(fields), eval(values)))
                         assert 'id' in data, "Cannot find column 'id' on model=%s id=%d" % (self._name, id)
-                        sdref = xmlid_to_sdref(data['id'])
-                        cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])
+                        raise Exception('Wrong Way')
+                        #sdref = xmlid_to_sdref(data['id'])
+                        #cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])  # not_a_user_entry
                     except AssertionError, e:
                         _logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
                         cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
@@ -96,14 +97,14 @@ SELECT 1
 FROM information_schema.columns c1
     LEFT JOIN information_schema.columns c2
     ON c2.table_name = c1.table_name AND c2.column_name = 'sequence_number'
-WHERE c1.table_name = '%s' AND c1.column_name = 'sequence' AND c2.column_name IS NULL;""" % self._table)
+WHERE c1.table_name = %s AND c1.column_name = 'sequence' AND c2.column_name IS NULL;""", (self._table,))  # not_a_user_entry
         if cr.fetchone():
             _logger.info("Replacing column sequence by sequence_number for table %s..." % self._table)
             cr.execute("""\
 ALTER TABLE %(table)s ADD COLUMN "sequence_number" INTEGER;
 UPDATE %(table)s SET sequence_number = sequence;
 ALTER TABLE %(table)s DROP COLUMN "sequence";
-""" % {'table':self._table})
+""" % {'table':self._table})  # not_a_user_entry
         return fn(self, cr, context=context)
     return wrapper
 

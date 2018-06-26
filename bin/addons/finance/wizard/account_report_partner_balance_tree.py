@@ -79,7 +79,7 @@ class account_partner_balance_tree(osv.osv):
             " " + self.IB_DATE_TO + " "
             "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
             "ORDER BY ac.type, p.name ",
-            (tuple(self.ib_move_state_list),))
+            (tuple(self.ib_move_state_list),)) # not_a_user_entry
         return cr.dictfetchall()
 
     def _cmp_account_type_partner(self, a, b):
@@ -216,25 +216,23 @@ class account_partner_balance_tree(osv.osv):
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         where = where and 'AND %s' % where or ''
-        query = "SELECT ac.type as account_type," \
-            " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
-            " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
-            " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
-            " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
-            " FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id)" \
-            " JOIN account_account ac ON (l.account_id = ac.id)" \
-            " JOIN account_move am ON (am.id = l.move_id)" \
-            " JOIN account_account_type at ON (ac.user_type = at.id)" \
-            " WHERE ac.type IN " + self.account_type + "" \
-            " AND am.state IN " + move_state + "" \
-            " " + where + "" \
-            " " + self.INSTANCE_REQUEST + " " \
-            " " + self.TAX_REQUEST + " " \
-            " " + self.PARTNER_REQUEST + " " \
-            " " + self.ACCOUNT_REQUEST + " " \
-            " " + self.RECONCILE_REQUEST + " " \
-            " GROUP BY ac.type,p.id,p.ref,p.name" \
-            " ORDER BY ac.type,p.name"
+        query = """SELECT ac.type as account_type,
+            p.id as partner_id, p.ref as partner_ref, p.name as partner_name,
+            COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit,
+            CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit,
+            CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit
+            FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id)
+            JOIN account_account ac ON (l.account_id = ac.id)
+            JOIN account_move am ON (am.id = l.move_id)
+            JOIN account_account_type at ON (ac.user_type = at.id)
+            WHERE ac.type IN %s
+            AND am.state IN %s
+            %s %s %s %s %s %s
+            GROUP BY ac.type,p.id,p.ref,p.name
+            ORDER BY ac.type,p.name""" % (self.account_type, move_state,  # not_a_user_entry
+                                          where, self.INSTANCE_REQUEST, self.TAX_REQUEST,
+                                          self.PARTNER_REQUEST, self.ACCOUNT_REQUEST,
+                                          self.RECONCILE_REQUEST)
         cr.execute(query)
         res = cr.dictfetchall()
 
@@ -460,13 +458,14 @@ class account_partner_balance_tree(osv.osv):
         # recalculate the result only if the criteria have changed
         if not self.total_debit_credit_balance or account_type != self.total_debit_credit_balance['account_type'] \
                 or data != self.total_debit_credit_balance['data']:
-            query = "SELECT" \
-                " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
-                " FROM account_partner_balance_tree" \
-                " WHERE account_type IN ('" + account_type + "')" \
-                " AND uid = " + str(uid) + "" \
-                " AND build_ts='" + data['build_ts'] + "'"
-            cr.execute(query)
+            query = """SELECT
+                sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance
+                FROM account_partner_balance_tree
+                WHERE account_type IN ('%s')
+                AND uid = %%s
+                AND build_ts=%%s
+                """ % account_type  # not_a_user_entry
+            cr.execute(query, (uid, data['build_ts']))
             res = cr.dictfetchall()
             self.total_debit_credit_balance['account_type'] = account_type
             self.total_debit_credit_balance['data'] = data

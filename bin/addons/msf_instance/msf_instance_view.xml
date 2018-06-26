@@ -72,9 +72,14 @@
                     <field name="state" readonly="1"/>
                     <button
                         attrs="{'invisible': ['|', ('state', '!=', 'active'), ('current_instance_level', '!=', 'section')]}"
-                        confirm="You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?"
+                        confirm="You are about to deactivate this proprietary instance. Do you want to proceed?"
                         icon="gtk-cancel" name="button_deactivate"
                         string="Deactivate" type="object"/>
+                    <button
+                        attrs="{'invisible': ['|', ('state', '!=', 'inactive'), ('current_instance_level', '!=', 'section')]}"
+                        confirm="You are about to reactivate this proprietary instance. Do you want to proceed?"
+                        icon="terp-check" name="button_activate"
+                        string="Reactivate" type="object"/>
                 </form>
             </field>
         </record>
@@ -366,7 +371,8 @@
                 <data>
                     <field name="parent_id" position="before">
                         <field name="current_instance_type" invisible="1"/>
-                        <field name="instance_id" domain="[('level', '=', 'coordo')]" attrs="{'required': [('category', '=', 'FUNDING')], 'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
+                        <field name="instance_id" domain="[('level', '=', 'coordo')]"
+                               attrs="{'required': [('category', '=', 'FUNDING'), ('current_instance_type', '=', 'section')], 'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
                     </field>
                 </data>
             </field>
@@ -386,6 +392,8 @@
                     <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_retry_from" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_retry_to" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <newline />
                     <button name="test_connection" icon="monitor.png" string="Test Connection" type="object" colspan="2"/>
                     <group colspan="4" attrs="{'invisible': ['|', ('is_editable', '=', False), ('has_config', '=', False)]}">
@@ -412,6 +420,8 @@
                     <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_retry_from" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_retry_to" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <button name="test_connection" icon="monitor.png" string="Test Connection" type="object" />
                 </tree>
             </field>

@@ -51,6 +51,52 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF9.0
+    def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
+        data = self.pool.get('ir.model.data')
+        seq_id = False
+        try:
+            seq_id = data.get_object_reference(cr, uid, 'sale', 'seq_sale_order')[1]
+        except:
+            return True
+
+        if seq_id:
+            seq_obj = self.pool.get('ir.sequence')
+            seq_id = seq_obj.search(cr, uid, [('id', '=', seq_id), ('implementation', '=', 'psql')])
+            if seq_id:
+                seq_obj.write(cr, uid, seq_id[0], {'implementation': 'no_gap'})
+                self._logger.warn('Change FO seq to no_gap')
+        return True
+
+    def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
+        if self.pool.get('sync.version.instance.monitor'):
+            cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
+            cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        return True
+
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+        return True
+
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
     # UF8.2
     def ud_trans(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
@@ -95,6 +141,7 @@ class patch_scripts(osv.osv):
             """)
             self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
 
+        return True
 
     # UF8.1
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
@@ -345,6 +392,39 @@ class patch_scripts(osv.osv):
                         """
         cr.execute(update_free_1)
         cr.execute(update_free_2)
+
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        company_curr = self.pool.get('res.company').browse(cr, uid, 1, fields_to_fetch=['currency_id']).currency_id.id
+
+        move_ids_currencies = {}
+        cr.execute('''
+            select m.id, m.price_currency_id, s.procurement_request, pl.currency_id
+            from stock_move m
+                left join stock_picking p on (m.picking_id = p.id)
+                left join sale_order_line sl on (m.sale_line_id = sl.id)
+                left join sale_order s on (sl.order_id = s.id)
+                left join product_pricelist pl on (s.pricelist_id = pl.id)
+            where m.sale_line_id is not null and m.type = 'out' and p.type = 'out' and p.subtype in ('standard', 'picking')
+        ''')
+        for x in cr.fetchall():
+            if x[2]:
+                currency_id_key = company_curr
+            else:
+                currency_id_key = x[3]
+            if x[1] != currency_id_key:
+                if currency_id_key in move_ids_currencies:
+                    move_ids_currencies[currency_id_key].append(x[0])
+                else:
+                    move_ids_currencies.update({currency_id_key: [x[0]]})
+
+        for currency_id in move_ids_currencies:
+            cr.execute('''update stock_move set price_currency_id = %s where id in %s'''
+                       , (currency_id, tuple(move_ids_currencies[currency_id])))
+
+        return True
 
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
@@ -764,7 +844,7 @@ class patch_scripts(osv.osv):
                     cr.execute("""
                         ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
                         """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
-                               'unique(name, currency_id)'))
+                               'unique(name, currency_id)'))  # not_a_user_entry
                 except:
                     self._logger.warn('Unable to set unique constraint on currency rate')
                     cr.rollback()
@@ -833,7 +913,7 @@ class patch_scripts(osv.osv):
                         select id from stock_mission_report_line where 
                         """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
                     )
-            """)
+            """) # not_a_user_entry
 
         cr.execute("""
             update stock_mission_report_line set
@@ -842,7 +922,7 @@ class patch_scripts(osv.osv):
             (
                 select id from stock_mission_report where full_view='f' and export_ok='t'
             )
-        """)
+        """) # not_a_user_entry
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
@@ -1098,7 +1178,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
 
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
+                    cr.execute("DELETE FROM ir_model_data WHERE model=%s AND module='sd'", (model,))
                     current_count = cr.rowcount
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
@@ -1177,7 +1257,7 @@ class patch_scripts(osv.osv):
                         and d.model='res.partner'
                         and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
                         and name not like '%s%%'
-                    ) """ % (identifier, ))
+                    ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))
         return True
 
@@ -2088,22 +2168,22 @@ class patch_scripts(osv.osv):
                 cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                     (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
-                    and name like '"""+instance_id+"""%'
-                )""")
+                    and name like '%s%%'
+                )""" % instance_id)  # not_a_user_entry
                 cr.execute("""delete from ir_translation t
                     where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and id in
-                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""%')
-                """)
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                """ % instance_id)  # not_a_user_entry
                 if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
                     # also remove old UniData trans sent by coordo
                     cr.execute("""delete from ir_translation t
                         where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                             (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                         and id in
-                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+coordo_id+"""%')
-                    """)
+                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                    """ % coordo_id)  # not_a_user_entry
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
 
@@ -2234,7 +2314,7 @@ class patch_scripts(osv.osv):
         SET touched = '[''state_ud'', ''product_active'', ''international_status_code'']', last_modification = now()
         WHERE model = 'stock.mission.report.line' AND res_id IN (
           SELECT id FROM stock_mission_report_line WHERE mission_report_id IN %s)
-        ''' % (tuple(smr_ids),))
+        ''', (tuple(smr_ids),))
 
         return True
 
@@ -2522,10 +2602,8 @@ class email_configuration(osv.osv):
 
     def set_config(self, cr):
         data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
-        cr.execute("""select """+','.join(data)+"""
-            from email_configuration
-            limit 1
-        """)
+        cr.execute("""select %s from email_configuration
+            limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
         if res:
             for i, key in enumerate(data):
@@ -2686,12 +2764,12 @@ class sync_tigger_something(osv.osv):
 
             trans_to_delete = """from ir_translation where name='product.template,name'
                 and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
-            """ % (unidata_id,)
+            """ % (unidata_id,)  # not_a_user_entry
             cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
                 select id  """ + trans_to_delete + """
-            )""")
+            )""")  # not_a_user_entry
             _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
-            cr.execute("delete "+ trans_to_delete)
+            cr.execute("delete "+ trans_to_delete) # not_a_user_entry
             _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)

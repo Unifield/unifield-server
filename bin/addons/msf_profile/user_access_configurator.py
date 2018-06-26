@@ -315,7 +315,7 @@ class user_access_configurator(osv.osv_memory):
                     file_level_dict[group] = level
                 elif len(group_name.split('$')) > 2:
                     raise osv.except_osv(_('Error'),
-                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum" % group_name))
+                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum") % group_name)
                 else:
                     file_level_dict[group_name] = False
 
@@ -689,10 +689,10 @@ class user_access_configurator(osv.osv_memory):
             models_to_clean = ['ir.model.access', 'ir.rule']
             for model in models_to_clean:
                 m_obj = self.pool.get(model)
-                cr.execute('''select m.id from '''+ m_obj._table+''' m
-                    left join ir_model_data d on d.res_id = m.id and d.model = %s
+                cr.execute('''select m.id from %s m
+                    left join ir_model_data d on d.res_id = m.id and d.model = %%s
                     where module not in ('sd', 'sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server', '')
-                ''', (model,))
+                ''' % m_obj._table, (model,))  # not_a_user_entry
                 ids_to_del = [x[0] for x in cr.fetchall()]
                 if ids_to_del:
                     m_obj.unlink(cr, 1, ids_to_del)

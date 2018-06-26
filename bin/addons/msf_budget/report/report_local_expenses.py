@@ -113,7 +113,11 @@ class report_local_expenses(WebKitParser):
             total_amount = 0
             # Search the chart of account account (those that have no parent_id
             parent_view_id = pool.get('account.account').search(cr, uid, [('parent_id', '=', False)])
-            for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
+
+            account_list = pool.get('account.account').browse(cr, uid, expenses.keys(), context=context)
+
+            # sorting by account code in ALPHABETICAL order, i.e. 60, 600, 60000, 60010, (...) 601, 60100, 60110, etc.
+            for expense_account in sorted(account_list, key=lambda x: x.code):
                 expense_values = expenses[expense_account.id][month_start - 1:month_stop]
                 if expense_account.type != 'view':
                     total_amount += sum(expense_values)
