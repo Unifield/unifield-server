@@ -1240,7 +1240,7 @@
                                 <field name="selection" attrs="{'required': [('ttype','in',['selection','reference'])], 'readonly': [('ttype','not in',['selection','reference'])]}"/>
                                 <field name="size" attrs="{'required': [('ttype','in',['char','reference'])], 'readonly': [('ttype','not in',['char','reference'])]}"/>
                                 <field name="domain" attrs="{'readonly': [('relation','=','')]}"/>
-                                <field name="uom_id"/>
+                                <field name="uom_id" readonly="1" />
                             </group>
 
                             <group colspan="2" col="2">
