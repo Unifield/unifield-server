@@ -63,21 +63,17 @@ class account_account(osv.osv):
     _defaults = {'currency_revaluation': False}
 
     _sql_mapping = {
-        'balance': "COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance",
-            'debit': "COALESCE(SUM(l.debit), 0) as debit",
-            'credit': "COALESCE(SUM(l.credit), 0) as credit",
-            # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepedencies
-            'foreign_balance': "COALESCE(SUM(l.debit_currency),0) - COALESCE(SUM(l.credit_currency), 0) as foreign_balance"
-            #'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"
+        'balance': "COALESCE(l.debit, 0) - COALESCE(l.credit, 0) as balance",
+        'debit': "COALESCE(l.debit, 0) as debit",
+        'credit': "COALESCE(l.credit, 0) as credit",
+        # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepancies
+        'foreign_balance': "COALESCE(l.debit_currency, 0) - COALESCE(l.credit_currency, 0) as foreign_balance"
     }
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         query = ("SELECT l.account_id as id, l.currency_id, l.reconcile_id, "
-                 " l.id AS aml_id, "
-                 " COALESCE(l.credit, 0) as credit, "
-                 " COALESCE(l.debit, 0) - COALESCE(l.credit, 0) as balance, "
-                 " COALESCE(l.debit_currency, 0) - COALESCE(l.credit_currency, 0) as foreign_balance, "
-                 " COALESCE(l.debit, 0) as debit "
+                 " l.id AS aml_id, " +
+                 ', '.join(self._sql_mapping.values()) +
                  " FROM account_move_line l"
                  " inner join account_period p on p.id = l.period_id"
                  " WHERE l.account_id IN %(account_ids)s AND"
