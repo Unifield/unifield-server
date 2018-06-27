@@ -120,13 +120,14 @@ class product_uom(osv.osv):
         'uom_type': fields.selection([('bigger','Bigger than the reference UoM'),
                                       ('reference','Reference UoM for this category'),
                                       ('smaller','Smaller than the reference UoM')],'UoM Type', required=1),
-        'display_qty_as': fields.selection([('float', 'Float'), ('integer', 'Integer')], 'Display quantity as'),
+        'display_decimals': fields.selection([('yes', 'Yes'), ('no', 'No')], 'Display decimals', required=1, help="If 'No' is selected, then all quantities with this UoM will not display decimals"),
     }
 
     _defaults = {
         'active': 1,
         'rounding': 0.01,
         'uom_type': 'reference',
+        'display_decimals': lambda *a :'yes',
     }
 
     _constraints = [

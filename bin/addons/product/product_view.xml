@@ -314,7 +314,7 @@
                             <field name="name" select="1"/>
                             <field name="category_id" select="1" widget="selection"/>
                             <field name="active"/>
-                            <field name="display_qty_as" />
+                            <field name="display_decimals" />
                         </group>
                         <group col="4"  colspan="4">
                             <separator string="Ratio &amp; Precision" colspan="4"/>

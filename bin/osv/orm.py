@@ -1317,7 +1317,7 @@ class orm_template(object):
             FROM ir_model_fields f, product_uom uom
             WHERE f.uom_id = uom.id 
             AND f.model = %s
-            AND uom.display_qty_as = 'integer';
+            AND uom.display_decimals = 'no';
         ''', (self._name,))
         fields_to_truncate = [x[0] for x in cr.fetchall()]
 
