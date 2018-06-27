@@ -101265,3 +101265,17 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: account_override
+#: field:account.move.line,revaluation_date:0
+msgid "Revaluation date"
+msgstr "Date de la révaluation"
+
+#. module: account_override
+#: field:account.move.line,revaluation_reference:0
+msgid "Revaluation reference"
+msgstr "Référence de la révaluation"
+
+#. module: account_override
+#: help:account.move.line,revaluation_reference:0
+msgid "Entry sequence of the related Revaluation Entry"
+msgstr "Séquence de l'Entrée de Révaluation associée"

@@ -340,6 +340,9 @@ class account_move_line(osv.osv):
         'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
         'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
                                                                    "to the original SI and to the SR created are marked as 'is_si_refund'"),
+        'revaluation_date': fields.datetime(string='Revaluation date'),
+        'revaluation_reference': fields.char(string='Revaluation reference', size=64,
+                                             help="Entry sequence of the related Revaluation Entry"),
     }
 
     _defaults = {
@@ -634,6 +637,7 @@ class account_move_line(osv.osv):
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
         - the tag 'is_si_refund'
+        - the fields related to revaluation
         """
         if context is None:
             context = {}
@@ -645,6 +649,8 @@ class account_move_line(osv.osv):
             'unreconcile_date': None,
             'unreconcile_txt': '',
             'is_si_refund': False,
+            'revaluation_date': None,
+            'revaluation_reference': '',
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

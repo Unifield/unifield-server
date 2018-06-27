@@ -629,6 +629,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         period_state_obj =  self.pool.get('account.period.state')
         account_obj = self.pool.get('account.account')
         currency_obj = self.pool.get('res.currency')
+        move_obj = self.pool.get('account.move')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
@@ -820,8 +821,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     msg = _(u"End year revaluation already performed")
                 raise osv.except_osv(_(u"Error"), msg)
 
-        # Get balance sums
-        account_sums = account_obj.compute_revaluations(
+        # Get balance sums and entries included in the reval
+        account_sums, entries_included = account_obj.compute_revaluations(
             cr, uid, account_ids, period_ids, form.fiscalyear_id.id,
             revaluation_date, form.revaluation_method, context=context)
         for account_id, account_tree in account_sums.iteritems():
@@ -845,6 +846,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     context=context)
                 account_sums[account_id][currency_id].update(diff_balances)
         # Create entries only after all computation have been done
+        current_dt = datetime.datetime.now()
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
                 # (US-1682) The adj_balance is rounded, otherwise the booking amount of the first reval entry would be
@@ -862,13 +864,23 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     account_id, currency_id, False, adj_balance,
                     label, rate, form, sums, context=context)
                 if move_id:
+                    move_name = move_obj.read(cr, uid, move_id, ['name'], context=context)['name']
+                    to_tag_ids = account_id in entries_included and currency_id in entries_included[account_id] and \
+                        entries_included[account_id][currency_id] or []
+                    to_tag_ids.extend(new_ids)
                     created_ids.extend(new_ids)
                     # Create a second journal entry that will offset the first one
                     # if the revaluation method is 'Other B/S'
                     if form.revaluation_method in ['liquidity_year', 'other_bs']:
                         move_id, rev_line_ids = self._reverse_other_bs_move_lines(
                             cr, uid, form, move_id, new_ids, context=context)
+                        to_tag_ids.extend(rev_line_ids)
                         created_ids.extend(rev_line_ids)
+                # tag the entries revaluated, and the reval entry and reversal reval entry (only the leg on the revaluated account)
+                cr.execute('UPDATE account_move_line '
+                           'SET revaluation_date = %s, revaluation_reference = %s '
+                           'WHERE id IN %s '
+                           'AND account_id = %s;', (current_dt, move_name, tuple(to_tag_ids), account_id,))
 
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
