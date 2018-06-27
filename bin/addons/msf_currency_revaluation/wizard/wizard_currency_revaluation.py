@@ -55,8 +55,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
         'result_period_internal_id': fields.many2one(
             'account.period', string=_(u"Entry period"), invisible=True),
-        'result_period_yearly_editable': fields.boolean(
-            'Yearly revaluation applied ?', invisible=True),
         'posting_date': fields.date(
             _('Entry date'), readonly=True,
             help=_("Revaluation entry date (document and posting date)")),
@@ -91,7 +89,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         'label': "%(currency)s %(account)s %(rate)s",
         'revaluation_method': lambda *args: 'liquidity_month',
         'fiscalyear_id': _get_default_fiscalyear_id,
-        'result_period_yearly_editable': True,
     }
 
     def _get_last_yearly_reval_period_id(self, cr, uid, fy_id, context=None):
@@ -279,10 +276,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             return res
 
         value = {
-            'result_period_yearly_editable': True,
             'msg': False,
         }
-        warning = {}
         domain = {
             'result_period_id': [
                 ('fiscalyear_id', '=', fiscalyear_id),
@@ -331,35 +326,20 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 last_reval_period = self._get_last_yearly_reval_period_id(
                     cr, uid, fiscalyear_id)
                 if last_reval_period:
-                    # US-816: liquidity or BS can be processed in any order
-                    # but the 2nd should always use the same period
                     period_number = last_reval_period.number
-                    value['result_period_id'] = last_reval_period.id
-                    value['result_period_yearly_editable'] = False
-                    value['msg'] = _('One of the year-end revaluations has' \
-                                     ' already been processed. The next one will be' \
-                                     ' processed on the same period: %s.') % (
-                        last_reval_period.name, )
+                    value['msg'] = _('One of the year-end revaluations has already been processed in the period "%s". '
+                                     'The next one will be processed in the selected period.') % (last_reval_period.name,)
 
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
                                                              fiscalyear.id, period_number)
-                if check_period_res[1]:
-                    value['result_period_id'] = check_period_res[1]
-                else:
-                    value['result_period_id'] = False
-                if not check_period_res[0] and check_period_res[2]:
-                    warning = {
-                        'title': _('Warning!'),
-                        'message': check_period_res[2]
-                    }
                 # US-816: end year reval restrict to periods 13, 14, 15
                 domain['result_period_id'] += [
                     ('number', '>', 12),
                     ('number', '<', 16),
                 ]
-                value['result_period_id'] = check_period_res[0] and \
-                    check_period_res[1] or False
+                # pre-select the period if it is opened
+                value['result_period_id'] = check_period_res[0] and check_period_res[1] or False
         else:
             if period_id:
                 period = period_obj.browse(cr, uid, period_id)
@@ -369,7 +349,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # result_period_internal_id: real target period wrapper
         value['result_period_internal_id'] = value['result_period_id']
-        res = {'value': value, 'warning': warning, 'domain': domain, }
+        res = {'value': value, 'domain': domain, }
         return res
 
     def on_change_result_period_id(self, cr, uid, ids, result_period_id,
