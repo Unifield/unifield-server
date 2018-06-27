@@ -25,6 +25,7 @@ import netsvc
 import logging
 import time
 from tools.translate import _
+import uuid
 
 from sync_client import get_sale_purchase_logger
 
@@ -57,7 +58,7 @@ class purchase_order_line_sync(osv.osv):
                 res[pol.id] = False
             elif pol.state.startswith('validated'):
                 pol_identifier = self.get_sd_ref(cr, uid, pol.id, context=context)
-                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, 1, [
                     ('sent', '=', True),
                     ('remote_call', '=', 'sale.order.line.create_so_line'),
                     ('identifier', 'like', pol_identifier),
@@ -134,6 +135,15 @@ class purchase_order_line_sync(osv.osv):
                         if resourced_sol_id:
                             pol_values['linked_sol_id'] = resourced_sol_id[0]
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
+            elif sol_dict.get('original_line_id') and not sol_dict.get('is_line_split'):
+                orig_line_ids = self.search(cr, uid, [
+                    ('order_id', '=', pol_values['order_id']),
+                    ('sync_linked_sol', 'ilike', '%%%s' % sol_dict['original_line_id']['id'].split('/')[-1])
+                ], context=context)
+                if orig_line_ids:
+                    orig_line = self.browse(cr, uid, orig_line_ids[0], context=context)
+                    pol_values['link_so_id'] = orig_line.link_so_id.id
+                    self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
 
         # search the PO line to update:
         pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
@@ -155,9 +165,11 @@ class purchase_order_line_sync(osv.osv):
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
                     raise Exception, "Original PO line not found when trying to split the PO line"
-                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state'], context=context)
+                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state', 'analytic_distribution_id'], context=context)
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
+                if orig_pol_info.analytic_distribution_id:
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_pol_info.analytic_distribution_id.id, {}, context=context)
                 if orig_pol_info.linked_sol_id:
                     pol_values['origin'] = orig_pol_info.origin
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
@@ -365,7 +377,7 @@ class purchase_order_sync(osv.osv):
             if po.state == 'validated' and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
-                    cr, uid,
+                    cr, 1,
                     [('sent', '=', True),
                      ('remote_call', '=', 'sale.order.create_so'),
                      ('identifier', 'like', po_identifier),
@@ -503,7 +515,7 @@ class purchase_order_sync(osv.osv):
         header_result['push_fo'] = True
         header_result['origin'] = so_dict.get('name', False)
 
-        partner_type = so_po_common.get_partner_type(cr, uid, source, context)  
+        partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type == 'section':
             #US-620: If the FO type is donation or loan, then remove the analytic distribution
             if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):
@@ -523,7 +535,21 @@ class purchase_order_sync(osv.osv):
             self.write(cr, uid, po_id, default, context=context)
         else:
             # create a new PO, then send it to Validated state
+
+            # do not eat a seq
+            tmp_name = '%s' % uuid.uuid4()
+            default['name'] = tmp_name
             po_id = self.create(cr, uid, default , context=context)
+
+            # no constraint raised, we can create the default name and save gap in ref
+            new_name = self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')
+            self.write(cr, uid, po_id, {'name': new_name}, context=context)
+            audit_log_line = self.pool.get('audittrail.log.line')
+            audit_ids = audit_log_line.search(cr, uid,
+                                              [('method', '=', 'create'), ('res_id', '=', po_id), ('new_value', '=', tmp_name), ('object_id.model', '=', 'purchase.order')],
+                                              context=context)
+            if audit_ids:
+                audit_log_line.write(cr, uid, audit_ids, {'new_value': new_name, 'new_value_text': new_name}, context=context)
 
         # update the next line number for the PO if needed
         so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)

@@ -615,9 +615,9 @@ class instance_auto_creation(osv.osv):
             if len(company_id) != 1:
                 raise osv.except_osv(_("Error!"), 'There should be one and only one company with proprietary instance \'%s\', found %d.' % (config_dict['instance']['prop_instance_code'], len(instance_partner_id)))
 
-            vals = {
-                'schedule_range': float(config_dict['company']['scheduler_range_days']),
-            }
+            vals = {}
+            if config_dict['company']['scheduler_range_days']:
+                vals['schedule_range'] = float(config_dict['company']['scheduler_range_days'])
 
             account_property_dict = {  # config_file_property_name : unifield property name
                 'salaries_default_account': 'salaries_default_account',
@@ -644,13 +644,8 @@ class instance_auto_creation(osv.osv):
             company_obj.write(cr, uid, company_id, vals)
 
             # configure cost center for FX gain loss
-            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss'):
-                cc_code = config_dict['accounting'].get('cost_center_code_for_fx_gain_loss')
-                if cc_code:
-                    cc_code = cc_code.upper()
-                    analytic_account_module = self.pool.get('account.analytic.account')
-                    cc_id = analytic_account_module.search(cr, uid, [('code', '=', cc_code)])
-                    analytic_account_module.write(cr, uid, cc_id, {'for_fx_gain_loss': True})
+            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss') and  config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'):
+                self.pool.get('ir.config_parameter').set_param(cr, 1, 'INIT_CC_FX_GAIN', config_dict['accounting'].get('cost_center_code_for_fx_gain_loss'))
 
             # send imported data and configuration
             self.pool.get('sync.client.entity').sync(cr, uid)

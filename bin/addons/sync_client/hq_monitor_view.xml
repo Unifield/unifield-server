@@ -41,7 +41,7 @@
             <field name="name">Synchronisation Instances Monitor</field>
             <field name="res_model">sync.monitor</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">tree,form</field>
             <field name="domain">[('my_instance', '=', False)]</field>
             <field name="search_view_id" ref="sync_hq_monitor_search" />
             <field name="view_id" ref="sync_hq_monitor_tree" />
@@ -57,11 +57,15 @@
             <field name="type">tree</field>
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
-                <tree hide_edit_button="1" hide_delete_button="1">
+                <tree hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="instance_id" />
                     <field name="version" />
                     <field name="backup_date" />
                     <field name="backup_path" />
+                    <field name="backup_size" widget="human_size" />
+                    <field name="cloud_date" />
+                    <field name="cloud_backup" />
+                    <field name="cloud_size" widget="human_size" />
                     <field name="postgresql_disk_space" />
                     <field name="unifield_disk_space" />
                     <field name="instance_state" />
@@ -69,12 +73,34 @@
             </field>
         </record>
 
+        <!-- READ-ONLY FORM FOR VERSION INSTANCES MONITOR -->
+        <record id="sync_version_instance_monitor_form" model="ir.ui.view">
+            <field name="name">sync.version.instance.monitor.form</field>
+            <field name="model">sync.version.instance.monitor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <field name="instance_id"/>
+                    <field name="version"/>
+                    <field name="backup_date"/>
+                    <field name="backup_path"/>
+                    <field name="backup_size"/>
+                    <field name="cloud_date"/>
+                    <field name="cloud_backup"/>
+                    <field name="cloud_size"/>
+                    <field name="postgresql_disk_space"/>
+                    <field name="unifield_disk_space"/>
+                    <field name="instance_state"/>
+                </form>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="sync_hq_instance_version_action">
             <field name="name">Version Instances Monitor</field>
             <field name="res_model">sync.version.instance.monitor</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
-            <field name="domain">[('my_instance', '=', False)]</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('instance_id', '!=', False)]</field>
             <field name="view_id" ref="sync_hq_instance_version_tree" />
         </record>
 

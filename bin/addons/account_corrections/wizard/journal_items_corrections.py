@@ -59,7 +59,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for line_br in self.browse(cr, uid, ids, context=context):
-            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted or False
+            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted and not line_br.account_id.is_not_ad_correctable or False
         return res
 
     def _get_is_account_correctible(self, cr, uid, ids, name, args,  context=None):

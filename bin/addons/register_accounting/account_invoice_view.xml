@@ -104,9 +104,9 @@
                 <separator string="Refund Invoice Options" colspan="4"/>
                 <group colspan="4" >
                     <field name="description"/>
-                    <field name="journal_id" widget='selection'/>
+                    <field name="journal_id" widget='selection' required="1"/>
                     <field name="document_date"/>
-                    <field name="date" on_change="onchange_date(date)"/>
+                    <field name="date" required="1"/>
                     <field name="filter_refund" readonly="1" />
                 </group>
                 <separator colspan="4"/>

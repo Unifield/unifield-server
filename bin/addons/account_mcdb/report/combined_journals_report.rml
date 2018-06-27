@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<document filename="combined_journals_report.pdf">
+
+  <template pageSize="(842.0,595.0)" title="Combined Journals Report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="28.0" y1="57.0" width="772" height="481"/>
+      <pageGraphics>
+        <fill color="blue"/>
+        <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+        <image x="50" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+        <setFont name="Helvetica" size="8"/>
+        <fill color="black"/>
+        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+    <initialize>
+      <paraStyle name="all" fontName="Helvetica" fontSize="9.0"/>
+    </initialize>
+    <paraStyle name="right" alignment="RIGHT"/>
+    <paraStyle name="center" alignment="CENTER"/>
+    <paraStyle name="text" leftIndent="3mm"/>
+    <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+    <paraStyle name="terp_default_8" fontName="Helvetica" fontSize="7.0" leading="9" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_header_Centre" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="14.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <blockTableStyle id="Table1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="0,0" stop="0,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table2">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="-1,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
+      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+    </blockTableStyle>
+  </stylesheet>
+
+  <story>
+
+    <blockTable colWidths="823.0" style="Table1">
+      <tr>
+        <td>
+          <para style="P1">Combined Journals Report</para>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="P2">
+      <font color="white"> </font>
+    </para>
+
+    <blockTable colWidths="823.0" style="Table2">
+      <tr>
+        <td>
+          <para style="P3">Selection</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3Left">[[ criteria() ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
+    <blockTable style="Table2" colWidths="43.0,36.0,48.0,55.0,41.0,51.0,51.0,34.0,43.0,48.0,38.0,43.0,36.0,45.0,45.0,37.0,45.0,45.0,39.0">
+      [[ analytic_axis() == 'fp' or setTag('blockTable', 'blockTable', {'colWidths': "48.0,42.0,53.0,57.0,46.0,56.0,56.0,38.0,49.0,42.0,41.0,53.0,50.0,50.0,50.0,42.0,50.0"}) ]]
+      <tr>
+        <td>
+          <parawrap style="P3">Proprietary Instance</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Journal Code</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Entry Sequence</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Description</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Reference</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Document Date</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Posting Date</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Period</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">G/L Account</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Third Parties</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Cost Centre") or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Destination") or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and translate("Funding Pool") or translate("Analytic Account") ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Booking Debit</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Booking Credit</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Book. Currency</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Func. Debit</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Func. Credit</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">Func. Currency</parawrap>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3">[[ repeatIn(lines(), 'line') ]]</para>
+          <!-- updates the percentage of the report generation -->
+          <parawrap style="P3">[[ update_percent_display() and line['prop_instance'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['journal_code'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['entry_sequence'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['description'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['reference'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['document_date'], date=True) or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['posting_date'], date=True) or '' ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['period'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ line['gl_account'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['third_party'] ]]</parawrap>
+        </td>
+        <!-- Analytic Distrib.: add a space after each Analytic Axis to avoid a shift for the B/S lines without AD -->
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['cost_center']) or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['destination']) or removeParentNode('td') ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ analytic_axis() == 'fp' and ('%s ' % line['funding_pool']) or ('%s ' % line['analytic_account']) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ formatLang(line['booking_debit'] or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ formatLang(line['booking_credit'] or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['booking_currency'] ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['func_debit'] or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P3">[[ formatLang(line['func_credit'] or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="P4">[[ line['func_currency'] ]]</parawrap>
+        </td>
+      </tr>
+      <!-- TOTAL -->
+      <tr>
+        <td>
+          <parawrap style="Total">TOTAL</parawrap>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3">[[ analytic_axis() == 'fp' and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ analytic_axis() == 'fp' and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Booking</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_booking_debit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_booking_credit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">Total Func.</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_func_debit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <parawrap style="Total">[[ formatLang(total_func_credit() or 0.0) ]]</parawrap>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+      </tr>
+    </blockTable>
+
+  </story>
+</document>

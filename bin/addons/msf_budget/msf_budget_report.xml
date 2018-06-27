@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+
         <!-- see msf_budget/wizard/wizard_budget_criteria_export.py for real filename -->
         <report id="budget_criteria_2"
         string="Budget vs. Actuals"
@@ -54,6 +55,7 @@
         auto="False"
         menu="False"/>
 
+        <!-- Order Impact vs. Budget report PDF declaration -->
         <report id="pdf_engagement"
         string="Order impact vs. Budget"
         model="purchase.order"
@@ -61,7 +63,18 @@
         target_filename="Order Impact vs. Budget_${name}_%(year)s%(month)s%(day)s"
         rml="msf_budget/report/engagement.rml"
         auto="False"
-        menu="True"/>
+        menu="False"/>
+
+        <!-- Order Impact vs. Budget report XLS declaration -->
+        <report id="order_impact_vs_budget_xls"
+                string="Order Impact vs. Budget"
+                model="purchase.order"
+                name="order.impact.vs.budget.xls"
+                file="msf_budget/report/order_impact_vs_budget.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="False"/>
 
         <report id="budget_actual"
         string="Actuals by CC"
@@ -71,6 +84,40 @@
         report_type="txt"
         auto="False"
         menu="False"/>
+
+        <!-- Order Impact vs. Budget report menu -->
+        <record id="action_order_impact_vs_budget_menu" model="ir.actions.act_window">
+            <field name="name">Order Impact vs. Budget</field>
+            <field name="res_model">wizard.order.impact.vs.budget</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <record model="ir.values" id="action_order_impact_vs_budget_values">
+            <field name="object" eval="1" />
+            <field name="name">order.impact.vs.budget</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_order_impact_vs_budget_menu'))" />
+            <field name="key">action</field>
+            <field name="model">purchase.order</field>
+            <field name="sequence" eval="105"/>
+        </record>
+
+        <!-- Order Impact vs. Budget report Wizard -->
+        <record id="wizard_order_impact_vs_budget_view" model="ir.ui.view">
+            <field name="name">Order Impact vs. Budget</field>
+            <field name="model">wizard.order.impact.vs.budget</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group colspan="4">
+                        <field colspan="4" name="export_type"/>
+                        <button colspan="2" string="Cancel" icon='gtk-cancel' special="cancel"/>
+                        <button colspan="2" name="button_order_impact_vs_budget_report" string="Print" type="object" icon="gtk-print"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>

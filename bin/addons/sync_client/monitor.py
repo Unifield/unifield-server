@@ -359,12 +359,13 @@ class sync_version_instance_monitor(osv.osv):
         return self.get_path_disk_usage(cr, uid, unifield_path)
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'instance_id': fields.many2one('msf.instance', 'Instance', select=1, m2o_order='code'),
         'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),
         'version': fields.char(size=128, string='Version', readonly=True),
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
                                        required=True),
+        'backup_size': fields.integer('Backup Size', readonly=True),
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
@@ -373,11 +374,17 @@ class sync_version_instance_monitor(osv.osv):
                                          readonly=True, store=True),
         'postgresql_disk_space': fields.char('PostgreSQL hd', size=128),
         'unifield_disk_space': fields.char('UniField hd', size=128),
+        'cloud_date': fields.datetime('Cloud Date', readonly=True),
+        'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
+        'cloud_error': fields.text('Cloud last error', readonly=True),
+        'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
     }
 
     _defaults = {
         'backup_date' : fields.datetime.now,
         'instance_id': _get_default_instance_id,
+        'cloud_size': 0,
+        'backup_size': 0,
     }
 
     _sql_constraints = [
@@ -393,9 +400,6 @@ class sync_version_instance_monitor(osv.osv):
         # look for existing entrie for this instance
         ids = self.search(cr, uid, [('instance_id', '=', instance_id)], limit=1)
         if ids:
-            # update existing
-            if 'backup_date' not in vals:
-                vals.update({'backup_date': fields.datetime.now()})
             super(osv.osv, self).write(cr, uid, ids[0], vals)
             return ids[0]
         else:

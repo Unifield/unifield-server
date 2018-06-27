@@ -702,6 +702,20 @@ class product_product(osv.osv):
         else:
             return super(product_product, self).copy(cr, uid, id, default=default,
                                                      context=context)
+
+    def is_field_translatable(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+
+        lang_obj = self.pool.get('res.lang')
+
+        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True)], context=context)
+        if len(active_lang_ids) > 1:
+            return False
+
+        return True
+
+
 product_product()
 
 class product_packaging(osv.osv):

@@ -415,8 +415,8 @@ class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'
     _columns = {
-        'model': fields.char(size=64, string='Model'),
-        'res_id': fields.integer(string='Res Id'),
+        'model': fields.char(size=64, string='Model', select=1),
+        'res_id': fields.integer(string='Res Id', select=1),
         'sequence': fields.many2one('ir.sequence', 'Logs Sequence', required=True, ondelete='cascade'),
     }
 
@@ -789,7 +789,7 @@ class audittrail_rule(osv.osv):
         log_seq_obj = self.pool.get('audittrail.log.sequence')
         log_sequence = log_seq_obj.search(cr, uid, [('model', '=', obj_name), ('res_id', '=', res_id)])
         if log_sequence:
-            log_seq = log_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log_seq = log_seq_obj.browse(cr, uid, log_sequence[0], fields_to_fetch=['sequence']).sequence
             log = log_seq.get_id(code_or_id='id')
         else:
             # Create a new sequence
@@ -809,7 +809,7 @@ class audittrail_rule(osv.osv):
             }
             seq_id = seq_pool.create(cr, uid, seq)
             log_seq_obj.create(cr, uid, {'model': obj_name, 'res_id': res_id, 'sequence': seq_id})
-            log = seq_pool.browse(cr, uid, seq_id).get_id(code_or_id='id')
+            log = seq_pool.get_id(cr, uid, seq_id, code_or_id='id')
         return log
 
 audittrail_rule()
@@ -865,10 +865,13 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
-            if not line.old_value_text:
+            if line.method == 'create':
+                res[line.id]['old_value_fct'] = False
+            elif not line.old_value_text:
                 res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.fct_object_id or line.object_id, context=context)
             else:
                 res[line.id]['old_value_fct'] = line.old_value_text
+
             if not line.new_value_text:
                 res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
             else:
@@ -892,7 +895,7 @@ class audittrail_log_line(osv.osv):
         res = {}
         lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
 
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['field_id', 'object_id', 'fct_object_id', 'res_id', 'name', 'field_description'], context=context):
             res[line.id] = False
 
             # Translation of field name
@@ -903,7 +906,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # Translation of one2many object if any
             if not res[line.id] and line.fct_object_id:
@@ -913,7 +916,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # Translation of main object
             if not res[line.id] and (line.object_id or line.fct_object_id):
@@ -922,7 +925,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'model'),
                                                  ('src', '=', line.name)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # No translation
             if not res[line.id]:
@@ -1077,7 +1080,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         field_id = field_ids and field_ids[0] or False
 
     if field_id:
-        field = field_pool.read(cr, uid, field_id)
+        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name'])
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
@@ -1095,7 +1098,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
                     res = relation_model_pool.name_get(cr, uid,
-                                                       [long(values[0])])[0][1]
+                                                       [long(values[0])], context={'from_track_changes': True})[0][1]
             return res
 
         elif field['ttype'] in ('many2many', 'one2many'):
@@ -1128,7 +1131,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 translation_obj = self.pool.get('ir.translation')
-                fct_object = model_pool.browse(cr, uid, model.id, context=context).model
+                fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)

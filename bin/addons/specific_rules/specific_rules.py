@@ -508,7 +508,6 @@ class product_uom(osv.osv):
 
     def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
         dom = []
-
         for arg in args:
             if arg[0] == 'uom_by_parent' and arg[1] != '=':
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
@@ -522,11 +521,28 @@ class product_uom(osv.osv):
 
         return dom
 
+    def _search_uom_by_stock_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+
+        for arg in args:
+            if arg[0] == 'uom_by_stock_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_stock_product':
+                product_id = arg[2]
+                if product_id and isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                    if product_id:
+                        product = self.pool.get('product.product').read(cr, uid, product_id[0], ['uom_id'], context=context)
+                        if product['uom_id']:
+                            dom = [('id', '=', product['uom_id'][0])]
+        return dom
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product',
                                           method=True, help='Field used to filter the UoM for a specific product'),
         'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent',
                                          method=True, help='Field used to filter the UoM for a specific product'),
+        'uom_by_stock_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_stock_product, string='Stock UoM by Product',
+                                                method=True, help='Field used to filter the UoM for a specific product'),
     }
 
 product_uom()
@@ -1107,7 +1123,7 @@ class stock_production_lot(osv.osv):
                     stock_report_prodlots_virtual
                 where
                     location_id IN %s group by prodlot_id
-                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
@@ -1614,7 +1630,7 @@ class stock_inventory(osv.osv):
                 l.inventory_id in %%s
             GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % (
+            ORDER BY count(l.id) DESC""" % (  # not_a_user_entry
             self._name.replace('.', '_'),
             self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
         )
