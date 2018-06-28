@@ -46524,7 +46524,7 @@ msgstr "La Séquence Principale doit être différente de la séquence en cours 
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:330
 #, python-format
 msgid "One of the year-end revaluations has already been processed in the period \"%s\". The next one will be processed in the selected period."
-msgstr "L'une des révaluations annuelles a déjà été effectuée dans la période \"%s\". La prochaine sera effectuée dans la période sélectionnée."
+msgstr "L'une des réévaluations annuelles a déjà été effectuée dans la période \"%s\". La prochaine sera effectuée dans la période sélectionnée."
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:260

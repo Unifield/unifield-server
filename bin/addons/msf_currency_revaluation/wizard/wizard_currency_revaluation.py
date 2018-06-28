@@ -278,6 +278,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         value = {
             'msg': False,
         }
+        warning = {}
         domain = {
             'result_period_id': [
                 ('fiscalyear_id', '=', fiscalyear_id),
@@ -333,6 +334,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
                                                              fiscalyear.id, period_number)
+                if not check_period_res[0] and check_period_res[2]:
+                    # non-blocking warning
+                    warning = {
+                        'title': _('Warning!'),
+                        'message': check_period_res[2]
+                    }
                 # US-816: end year reval restrict to periods 13, 14, 15
                 domain['result_period_id'] += [
                     ('number', '>', 12),
@@ -349,7 +356,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # result_period_internal_id: real target period wrapper
         value['result_period_internal_id'] = value['result_period_id']
-        res = {'value': value, 'domain': domain, }
+        res = {'value': value, 'warning': warning, 'domain': domain, }
         return res
 
     def on_change_result_period_id(self, cr, uid, ids, result_period_id,
