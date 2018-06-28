@@ -2466,6 +2466,7 @@ class stock_picking(osv.osv):
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
                 'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 'in_ref': fields.char(string='IN Reference', size=1024),
+                'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
                 }
 
     _defaults = {'flow_type': 'full',

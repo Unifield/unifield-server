@@ -101265,3 +101265,32 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:85
+#, python-format
+msgid "Warning !"
+msgstr "Attention !"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_manage_expired_stock
+#: model:ir.ui.menu,name:stock.menu_action_manage_expired_stock
+#: view:manage.expired.stock:0
+msgid "Manage Expired Stock"
+msgstr "Gestion du Stock Expiré"
+
+#. module: msf_outgoing
+#: field:stock.picking,from_manage_expired:0
+msgid "The Picking was created with Manage Expired Stock"
+msgstr "Le Picking a été créé grâce à la Gestion du Stock Expiré"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:85
+#, python-format
+msgid "There is no expired quantity for this location."
+msgstr "Il n'y a pas de quantité expirée sur cette zone."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:679
+#, python-format
+msgid "All lines of Internal Moves created with Manage Expired Stock should have a batch number."
+msgstr "Toutes les lignes des Mouvements Internes créées avec la Gestion du Stock Expiré doivent avoir un numéro de lot."
