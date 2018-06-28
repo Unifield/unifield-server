@@ -46521,10 +46521,10 @@ msgid "Main Sequence must be different from current !"
 msgstr "La Séquence Principale doit être différente de la séquence en cours !"
 
 #. module: msf_currency_revaluation
-#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:339
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:330
 #, python-format
-msgid "One of the year-end revaluations has already been processed. The next one will be processed on the same period: %s."
-msgstr "One of the year-end revaluations has already been processed. The next one will be processed on the same period: %s."
+msgid "One of the year-end revaluations has already been processed in the period \"%s\". The next one will be processed in the selected period."
+msgstr "L'une des réévaluations annuelles a déjà été effectuée dans la période \"%s\". La prochaine sera effectuée dans la période sélectionnée."
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:260
@@ -76216,11 +76216,6 @@ msgstr "DEL. CONF. DATE"
 #: field:account.entries.report,move_line_state:0
 msgid "State of Move Line"
 msgstr "Statut de la Ligne de Transaction"
-
-#. module: msf_currency_revaluation
-#: field:wizard.currency.revaluation,result_period_yearly_editable:0
-msgid "Yearly revaluation applied ?"
-msgstr "Yearly revaluation applied ?"
 
 #. modules: account, msf_instance, account_override, msf_audittrail, sync_so, account_period_closing_level
 #: model:ir.model,name:account.model_account_period
