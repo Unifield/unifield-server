@@ -5251,7 +5251,6 @@ class stock_move(osv.osv):
                         # all in lines processed or will be processed for this po line
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
-
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
@@ -5259,7 +5258,12 @@ class stock_move(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.id not in context.get('not_resource_move', []):
+                        has_linked_pol = self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
+                        if has_linked_pol:
+                            context['sol_done_instead_of_cancel'] = True
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
+                        if has_linked_pol:
+                            context.pop('sol_done_instead_of_cancel')
 
         self.action_done(cr, uid, move_to_done, context=context)
 

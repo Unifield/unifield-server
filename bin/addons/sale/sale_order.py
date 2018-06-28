@@ -2442,7 +2442,12 @@ class sale_order_line(osv.osv):
         # Documents
         so_obj = self.pool.get('sale.order')
         wf_service = netsvc.LocalService("workflow")
-        signal = 'cancel_r' if resource else 'cancel'
+
+        signal = 'cancel'
+        if resource:
+            signal = 'cancel_r'
+        elif context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
 
         if context is None:
             context = {}
