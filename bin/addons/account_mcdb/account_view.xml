@@ -284,6 +284,8 @@
                     <field name="reconcile_date" invisible="1"/>
                     <field name="unreconcile_date" invisible="1"/>
                     <field name="unreconcile_txt" invisible="1"/>
+                    <field name="revaluation_reference" invisible="1"/>
+                    <field name="revaluation_date" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>

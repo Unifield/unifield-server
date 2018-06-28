@@ -876,11 +876,11 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                             cr, uid, form, move_id, new_ids, context=context)
                         to_tag_ids.extend(rev_line_ids)
                         created_ids.extend(rev_line_ids)
-                # tag the entries revaluated, and the reval entry and reversal reval entry (only the leg on the revaluated account)
-                cr.execute('UPDATE account_move_line '
-                           'SET revaluation_date = %s, revaluation_reference = %s '
-                           'WHERE id IN %s '
-                           'AND account_id = %s;', (current_dt, move_name, tuple(to_tag_ids), account_id,))
+                    # tag the entries revaluated, and the reval entry and reversal reval entry (only the leg on the revaluated account)
+                    cr.execute('UPDATE account_move_line '
+                               'SET revaluation_date = %s, revaluation_reference = %s '
+                               'WHERE id IN %s '
+                               'AND account_id = %s;', (current_dt, move_name, tuple(to_tag_ids), account_id,))
 
         if created_ids:
             # Set all booking amount to 0 for revaluation lines
