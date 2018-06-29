@@ -1,4 +1,4 @@
-    <group col="5" colspan="4">
+    <group col="7" colspan="4">
         <group col="2" colspan="2">
             <group col="4" colspan="2">
                 <separator string="G/L journals" colspan="3"/>
@@ -12,6 +12,27 @@
                 <field name="rev_journal_ids" colspan="2"/>
                 <field name="journal_ids" colspan="2" nolabel="1">
                     <tree string="Journals" editable="top" noteditable="1">
+                        <field name="code"/>
+                        <field name="name" string="Name"/>
+                        <field name="type"/>
+                    </tree>
+                </field>
+            </group>
+        </group>
+        <!-- for the Combined Journals Report only: Analytic Journals added next to the G/L ones -->
+        <group col="2" colspan="2" attrs="{'invisible': [('model', '!=', 'combined.line')]}">
+            <group col="4" colspan="2">
+                <separator string="Analytic journals" colspan="3"/>
+                <field name="display_analytic_journal" colspan="1" nolabel="1"/>
+            </group>
+            <group colspan="2" col="2" attrs="{'invisible': [('display_analytic_journal', '=', False)]}">
+                <group col="2" colspan="2">
+                    <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="1"/>
+                    <button name="button_analytic_journal_add" type="object" string="Add all Analytic Journals" icon="gtk-add" colspan="1"/>
+                </group>
+                <field name="rev_analytic_journal_ids" colspan="2"/>
+                <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                    <tree string="Analytic Journals" editable="top" noteditable="1">
                         <field name="code"/>
                         <field name="name" string="Name"/>
                         <field name="type"/>

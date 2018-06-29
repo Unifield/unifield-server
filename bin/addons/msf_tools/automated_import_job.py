@@ -414,8 +414,8 @@ class automated_import_job(osv.osv):
                                 msg += _(' and ')
                         if nb_rejected:
                             msg += _('%s lines have been rejected') % nb_rejected
-
                         self.log(cr, uid, job.id, msg)
+
                 if context.get('job_comment'):
                     error_message += context['job_comment']
                     for mess in error_message:
@@ -451,6 +451,10 @@ class automated_import_job(osv.osv):
                 }, context=context)
                 move_to_process_path(job.import_id, ftp_connec, sftp, filename, success=False)
                 self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
+
+        if 'row' in context:
+            # causing LmF when running job manually
+            context.pop('row')
 
         return {
             'type': 'ir.actions.act_window',

@@ -185,7 +185,8 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
 
             ftp = FTP()
             try:
-                ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
+                port = int(obj.ftp_port or 0)
+                ftp.connect(host=obj.ftp_url, port=port) # '220 (vsFTPd 3.0.2)'
             except:
                 self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
@@ -209,10 +210,13 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         if isinstance(ids, (int,long)):
             ids = [ids]
 
+
         for obj in self.browse(cr, uid, ids, context=context):
             sftp = None
             try:
-                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password)
+                cnopts = pysftp.CnOpts()
+                cnopts.hostkeys = None
+                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
             except:
                 self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)

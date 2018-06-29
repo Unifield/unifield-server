@@ -119,6 +119,22 @@ class purchase_order_report_xls(WebKitParser):
 
 purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/msf_supply_doc_export/report/report_purchase_order_xls.mako')
 
+
+def getInstanceAddressG(self):
+    part_addr = []
+    deliv_addr = ''
+    company_partner = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.partner_id
+    for addr in company_partner.address:
+        if addr.active:
+            if addr.type == 'default':
+                return addr.office_name or ''
+            elif addr.type == 'delivery':
+                deliv_addr = addr.office_name
+            else:
+                part_addr.append(addr.office_name)
+
+    return deliv_addr or (part_addr and part_addr[0]) or ''
+
 # VALIDATED PURCHASE ORDER (Excel XML)
 class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -154,11 +170,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
 
     def getInstanceAddress(self):
-        part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
-        part_addr = False
-        if part_addr_id:
-            part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
-        return part_addr.office_name if part_addr else ''
+        return getInstanceAddressG(self)
 
     def getCustomerAddress(self, customer_id):
         part_addr_obj = self.pool.get('res.partner.address')
@@ -222,11 +234,7 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
         return res
 
     def getInstanceAddress(self):
-        part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
-        part_addr = False
-        if part_addr_id:
-            part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
-        return part_addr.office_name if part_addr else ''
+        return getInstanceAddressG(self)
 
 
 class validated_purchase_order_report_xml(WebKitParser):
