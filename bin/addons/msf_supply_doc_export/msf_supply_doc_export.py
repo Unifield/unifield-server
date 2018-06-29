@@ -158,7 +158,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
         part_addr = False
         if part_addr_id:
             part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
-        return part_addr.name if part_addr else ''
+        return part_addr.office_name if part_addr else ''
 
     def getCustomerAddress(self, customer_id):
         part_addr_obj = self.pool.get('res.partner.address')
@@ -169,7 +169,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def getContactName(self, addr_id):
         res = ''
         if addr_id:
-            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['office_name']
         return res
 
 
