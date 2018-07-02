@@ -27,6 +27,7 @@
                     <!-- Buttons -->
                     <group name="buttons" colspan="4" col="6">
                         <button name="return_to_po" string="Return to PO" icon="gtk-jump-to" type="object" />
+                        <button name="reset_import" string="Reset the import" icon="gtk-refresh" type="object" states="error,simu_done" />
                         <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
                         <button name="launch_import" string="Import" icon="gtk-execute" type="object" states="simu_done" />
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />

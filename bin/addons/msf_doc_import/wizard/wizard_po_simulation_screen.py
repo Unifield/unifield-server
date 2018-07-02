@@ -320,6 +320,39 @@ class wizard_import_po_simulation_screen(osv.osv):
             'context': context,
         }
 
+    def reset_import(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        export_line_obj = self.pool.get('wizard.import.po.simulation.screen.line')
+
+        for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
+            order_id = wiz['order_id'][0]
+            context.update({'active_id': order_id})
+            export_ids = self.search(cr, uid, [('order_id', '=', order_id)], context=context)
+            self.unlink(cr, uid, export_ids, context=context)
+            export_id = self.create(cr, uid, {'order_id': order_id}, context)
+
+            for l in self.pool.get('purchase.order').browse(cr, uid, order_id, context=context).order_line:
+                export_line_obj.create(cr, uid, {'po_line_id': l.id,
+                                                 'in_line_number': l.line_number,
+                                                 'in_ext_ref': l.external_ref,
+                                                 'simu_id': export_id}, context=context)
+
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.import.po.simulation.screen',
+                    'res_id': export_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'same',
+                    'context': context,
+                    }
+
+        return True
+
     def return_to_po(self, cr, uid, ids, context=None):
         '''
         Go back to PO

@@ -101265,3 +101265,7 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: msf_doc_import
+#: view:wizard.import.po.simulation.screen:0
+msgid "Reset the import"
+msgstr "Réinitialiser l'import"
