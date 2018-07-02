@@ -391,11 +391,18 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         return;
     }
 
+    // to be able to get selected lines ids
+    s_ids = [];
+    if (jQuery('[id="order_line"]').length > 0) {
+        s_ids = ListView('order_line').getSelectedRecords();
+    }
+
     var params = {
         '_terp_button/name': name,
         '_terp_button/btype': btype,
         '_terp_button/model': model,
-        '_terp_button/id': id
+        '_terp_button/id': id,
+        '_terp_button/selected_ids': s_ids
     };
 
     // if works as expected can be extended to other buttons
