@@ -283,11 +283,20 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                    # Bypass this line if NO debit AND NO credit
+                    # Check on booking amounts: ensure that both only one value (debit or credit) exists and that its
+                    # amount isn't negative (lines with 0.00 amount are allowed since US-4688)
                     try:
-                        if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
+                        if line[cols['Booking Debit']] and line[cols['Booking Credit']]:
+                            errors.append(_('Line %s. Only one value (Booking Debit or Booking Credit) should be filled in.') % (current_line_num,))
+                            continue
+                        if not isinstance(line[cols['Booking Debit']], (int, long, float)) or not isinstance(line[cols['Booking Credit']], (int, long, float)):
+                            errors.append(_('Line %s. The Booking Debit or Credit amount is invalid and should be a number.') % (current_line_num,))
+                            continue
+                        if line[cols['Booking Debit']] < 0 or line[cols['Booking Credit']] < 0:
+                            errors.append(_('Line %s. Negative numbers are forbidden for the Booking Debit and Credit amounts.') % (current_line_num,))
                             continue
                     except IndexError:
+                        errors.append(_('Line %s. The Booking Debit and Credit amounts are missing.') % (current_line_num,))
                         continue
                     processed += 1
                     # Check that currency is active
@@ -336,7 +345,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 errors.append(_('Line %s. Import of entries only allowed on the following journal(s): %s') % (current_line_num, journal_list))
                                 continue
                         aj_id = aj_ids[0]
-                        if num == 0:
+                        if file_journal_id == 0:  # take the journal from the first line where there was no "continue"
                             file_journal_id = aj_id
                         else:
                             if file_journal_id != aj_id:

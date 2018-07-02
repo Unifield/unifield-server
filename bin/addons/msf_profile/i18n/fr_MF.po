@@ -101265,3 +101265,26 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:290
+#, python-format
+msgid "Line %s. Only one value (Booking Debit or Booking Credit) should be filled in."
+msgstr "Ligne %s. Seule une valeur (Débit ou Crédit en devise d'enregistrement) doit être renseignée."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:293
+#, python-format
+msgid "Line %s. The Booking Debit or Credit amount is invalid and should be a number."
+msgstr "Ligne %s. Le montant Débit ou Crédit en devise d'enregistrement est invalide et devrait être un nombre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:296
+#, python-format
+msgid "Line %s. Negative numbers are forbidden for the Booking Debit and Credit amounts."
+msgstr "Ligne %s. Les nombres négatifs sont interdits pour les montants Débit et Crédit en devise d'enregistrement."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:299
+#, python-format
+msgid "Line %s. The Booking Debit and Credit amounts are missing."
+msgstr "Ligne %s. Il manque les montants Débit et Crédit en devise d'enregistrement."
