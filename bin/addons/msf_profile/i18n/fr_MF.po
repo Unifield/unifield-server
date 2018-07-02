@@ -41334,10 +41334,10 @@ msgid "Retry from time"
 msgstr "Retry from time"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:578
+#: code:addons/msf_doc_import/account.py:588
 #, python-format
 msgid "Currency %s is not balanced: %s"
-msgstr "Currency %s is not balanced: %s"
+msgstr "La devise %s n'est pas équilibrée : %s"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:754
