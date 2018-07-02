@@ -101265,3 +101265,48 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. modules: msf_order_date, purchase
+#: code:addons/msf_order_date/order_dates.py:701
+#: code:addons/purchase/purchase_order.py:1170
+#, python-format
+msgid "Do you want to update the Confirmed Delivery Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Confirmée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. modules: msf_order_date, purchase
+#: code:addons/msf_order_date/order_dates.py:693
+#: code:addons/purchase/purchase_order.py:1162
+#, python-format
+msgid "Do you want to update the Requested Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. modules: msf_order_date, purchase, procurement_request
+#: code:addons/msf_order_date/order_dates.py:709
+#: code:addons/procurement_request/procurement_request.py:542
+#: code:addons/purchase/purchase_order.py:1178
+#, python-format
+msgid "Do you want to update the Date of Stock Take of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:89
+#, python-format
+msgid "Value to be used"
+msgstr "Valeur à utiliser"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:90
+#, python-format
+msgid "Yes - Selected lines"
+msgstr "Oui - Lignes sélectionnées"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:92
+#, python-format
+msgid "No"
+msgstr "Non"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:91
+#, python-format
+msgid "Yes - All lines"
+msgstr "Oui - Toutes les lignes"

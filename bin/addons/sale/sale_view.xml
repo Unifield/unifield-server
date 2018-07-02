@@ -157,7 +157,7 @@
                             </group>
                             <group colspan="2" col="3">
                                 <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
+                                <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <newline/>
@@ -329,11 +329,11 @@
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
                                     <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ['cancel','done'])]}"/>
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}"/>
                                 </group>
                                 <field name="transport_type" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"/>
                                 <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"/>
