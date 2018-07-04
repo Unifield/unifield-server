@@ -103,7 +103,7 @@ class purchase_order_followup(osv.osv_memory):
         for order in order_obj.browse(cr, uid, ids, context=context):
             if order.state not in ('sourced_p', 'confirmed', 'confirmed_p', 'done'):
                 raise osv.except_osv(_('Error'),
-                       _('You cannot follow a non-confirmed Purchase order !'))
+                       _('You can only follow up confirmed Purchase order (lines)'))
 
             followup_id = self.create(cr, uid,
                                        {'order_id': order.id}, context=context)
