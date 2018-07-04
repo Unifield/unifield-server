@@ -80,7 +80,7 @@ OUT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in OUT_COLUMNS_HEADER_FOR_IMPORT]
 
 IR_COLUMNS_HEADER_FOR_IMPORT=[
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
-    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('state'), 'string')]
+    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Status'), 'string')]
 IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
 TENDER_COLUMNS_HEADER_FOR_IMPORT=[

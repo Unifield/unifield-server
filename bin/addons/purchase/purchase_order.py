@@ -778,15 +778,6 @@ class purchase_order(osv.osv):
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
     ]
 
-    def _check_po_from_fo(self, cr, uid, ids, context=None):
-        if not context:
-            context = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_id.partner_type == 'internal' and po.po_from_fo and po.customer_id.partner_type != 'external'\
-                    and not po.is_a_counterpart:
-                return False
-        return True
-
     def _check_order_type(self, cr, uid, ids, context=None):
         '''
         Check the integrity of the order type and the source order type
@@ -818,7 +809,6 @@ class purchase_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
         (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
     ]
 
