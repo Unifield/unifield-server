@@ -152,7 +152,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
             jtype = 'extra'
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', jtype), ('is_current_instance', '=', True)])
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
+                                                                                  [('type', '=', jtype), ('is_current_instance', '=', True)],
+                                                                                  order='id', limit=1)
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -164,10 +166,18 @@ class analytic_distribution_wizard(osv.osv_memory):
         any_reverse = False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
-        cr.execute("select id, code from account_journal where type = %s and is_current_instance = true", (jtype,))
-        for row in cr.dictfetchall():
-            journal_id = row['id']
-            code = row['code']
+        journal_sql = """
+            SELECT id, code
+            FROM account_journal
+            WHERE type = %s 
+            AND is_current_instance = true
+            ORDER BY id
+            LIMIT 1;
+            """
+        cr.execute(journal_sql, (jtype,))
+        journal_sql_res = cr.fetchone()
+        journal_id = journal_sql_res[0]
+        code = journal_sql_res[1]
         journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
         if not period_ids:

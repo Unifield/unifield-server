@@ -1271,12 +1271,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return order_id
 
-    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
-        """
-        Overrided on sync_module_prod/sync_so/sale.py
-        """
-        return True
-
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of sale order ids

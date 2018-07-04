@@ -1737,12 +1737,13 @@ class product_product(osv.osv):
             if from_date and to_date:
                 rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
                     ('cons_location_id', 'in', location_ids),
+                    ('state', '!=', 'cancel'),
                     # All lines with a report started out the period and finished in the period
                     '|', '&', ('period_to', '>=', from_date), ('period_to', '<=', to_date),
                     #  All lines with a report started in the period and finished out the period
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
-                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date)
+                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
                 ])
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
@@ -1837,7 +1838,7 @@ class product_product(osv.osv):
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
         if from_date and to_date:
-            rcr_domain = ['&', ('product_id', 'in', ids),
+            rcr_domain = ['&', '&', ('rac_id.state', '!=', 'cancel'), ('product_id', 'in', ids),
                           # All lines with a report started out the period and finished in the period
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
                           # All lines with a report started in the period and finished out the period

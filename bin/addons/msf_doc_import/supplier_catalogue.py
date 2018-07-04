@@ -60,7 +60,8 @@ class supplier_catalogue(osv.osv):
 
         displayable = {}
         for field in ['name', 'partner_id', 'currency_id', 'period_from',  'period_to']:
-            displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
+            displayable[field] = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get(field) or \
+                self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
 
         data = {}
         for index, row in enumerate(file_obj.getRows()):
@@ -79,13 +80,17 @@ class supplier_catalogue(osv.osv):
             elif row.cells[0].data == displayable['period_to']:
                 data['period_to'] = get_well_formed_date(row.cells[1].data)
 
+
         catalogue_id = False
-        if data['name'] and data['partner_id']:
+        if data.get('name') and data.get('partner_id'):
             catalogue_id = self.search(cr, uid, [('name', '=', data['name']), ('partner_id', '=', data['partner_id'])], context=context)
+        else:
+            raise osv.except_osv(_('Error'), ('Given partner not found'))
         if not catalogue_id:
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]
             cr.commit()
+            self.button_confirm(cr, uid, catalogue_id, context=context)
 
         res = (False, False, False)
         if catalogue_id:

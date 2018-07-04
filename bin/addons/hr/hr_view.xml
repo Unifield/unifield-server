@@ -58,7 +58,7 @@
                                 <field name="address_id" colspan="2" on_change="onchange_address_id(address_id)" domain="[('partner_id', '=', partner_id)]"/>
                                 <field name="work_phone"/>
                                 <field name="mobile_phone"/>
-                                <field name="work_email" widget="email" />
+                                <field name="work_email"/>
                                 <field name="work_location"/>
                             </group>
                             <group col="2" colspan="2">
