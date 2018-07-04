@@ -788,6 +788,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
+                    line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             # Removed by QT on UFTP-370
@@ -807,11 +808,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             if required_field:
                                 not_ok = True
                                 err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
-                                err = _('Line %s of the file: %s') % (x, err1)
+                                err = _('Line %s of the PO: %s') % (line_number, err1)
                                 values_line_errors.append(err)
                                 file_line_error.append(err1)
 
-                    line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
@@ -824,7 +824,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
                         not_ok = True
                         err1 = _('The line cannot have both Line no. and Ext. Ref')
-                        err = _('Line %s of the file: %s') % (x, err1)
+                        err = _('Line %s of the PO: %s') % (line_number, err1)
                         values_line_errors.append(err)
                         file_line_error.append(err1)
 
@@ -879,19 +879,19 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 file line and the simulation screen line.
                 '''
                 to_del = []
-                for x, fl in file_lines.iteritems():
+                for x, fl in sorted(file_lines.iteritems()):
                     # Search lines with same product, same UoM and same qty
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match')]
+                            file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
                             no_match = False
                             break
                     if tmp_wl_ids and no_match:
-                        file_po_lines[l].append((x, 'split'))
+                        file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
                 for x in to_del:
@@ -906,12 +906,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match')]
+                            file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
                             no_match = False
                             break
                     if tmp_wl_ids and no_match:
-                        file_po_lines[l].append((x, 'split'))
+                        file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
                 for x in to_del:
@@ -925,12 +925,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match')]
+                            file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
                             no_match = False
                             break
                     if tmp_wl_ids and no_match:
-                        file_po_lines[l].append((x, 'split'))
+                        file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
                 for x in to_del:
@@ -944,12 +944,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match')]
+                            file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
                             no_match = False
                             break
                     if tmp_wl_ids and no_match:
-                        file_po_lines[l].append((x, 'split'))
+                        file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
                 for x in to_del:
@@ -991,7 +991,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the file: %s' % (file_line[0], err)
+                            err = 'Line %s of the PO: %s' % (file_line[2], err)
                             values_line_errors.append(err)
 
 
@@ -1013,9 +1013,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if po_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[po_line]}, context=context)
 
+                    line_n = vals[0] or False
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the file: %s' % (po_line, err)
+                            if line_n:
+                                err = 'Line %s of the PO: %s' % (line_n, err)
+                            else:
+                                err = 'Line %s of the file: %s' % (po_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1307,7 +1311,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),
-                                         ('ignore', 'Ignore')],
+                                         ('ignore', 'Ignore'), ('warning', 'Warning')],
                                         string='CHG', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1367,7 +1371,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
                 write_vals['type_change'] = 'error'
-                errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
+                errors.append(_('PO line has been confirmed or cancelled and consequently is not editable'))
 
             # Comment
             write_vals['imp_comment'] = values[15] and values[15].strip()
@@ -1380,11 +1384,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if not pol_ids and not (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
                     errors.append(_('Line no is not consistent with validated PO.'))
                     write_vals['in_line_number'] = False
-                    write_vals['type_change'] = 'error'
+                    write_vals['type_change'] = 'warning'
 
             if (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
                 if not pol_ids:
-                    write_vals['type_change'] = 'error'
+                    write_vals['type_change'] = 'warning'
                     if line.in_line_number:
                         errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
                     else:
@@ -1416,7 +1420,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
                     if not prod_ids:
                         write_vals['type_change'] = 'error'
-                        errors.append(_('Product not found in database'))
+                        errors.append(_('Product %s not found in database') % values[2])
                     else:
                         write_vals['imp_product_id'] = prod_ids[0]
                 else:
@@ -1570,7 +1574,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.error_msg:
                 write_vals['type_change'] = 'error'
 
-            if write_vals.get('type_change') == 'error':
+            if write_vals.get('type_change') in ['error', 'warning']:
                 err_msg = line.error_msg or ''
                 for err in errors:
                     if err_msg:
