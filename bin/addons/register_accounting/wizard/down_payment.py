@@ -86,11 +86,14 @@ class wizard_down_payment(osv.osv_memory):
 
         # Cut away open and paid invoice linked to this PO
         invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
+        included_dp_amls = []
         for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total', 'down_payment_ids']):
             lines_amount -= inv.get('amount_total', 0.0)
-            dp_ids = inv.get('down_payment_ids', None)
+            dp_ids = [dp_aml_id for dp_aml_id in inv.get('down_payment_ids', []) if dp_aml_id not in included_dp_amls]
             for dp in self.pool.get('account.move.line').read(cr, uid, dp_ids, ['down_payment_amount']):
                 lines_amount += dp.get('down_payment_amount', 0.0)
+                # store each DP JI included in the calculation so its amount is counted only once (even if linked to several SIs)
+                included_dp_amls.append(dp.get('id'))
 
         total_amount = lines_amount + absl.amount
         if (total + total_amount) < -0.001:
