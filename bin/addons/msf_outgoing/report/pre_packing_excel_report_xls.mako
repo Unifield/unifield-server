@@ -275,7 +275,7 @@
         % endfor
         </Row>
 
-        % for m in getLines(pt, False):
+        % for m in sorted(getLines(pt, False), key=lambda move: move.line_number):
             <Row ss:Height="14.25">
                 <Cell ss:StyleID="line_center_no_digit"><Data ss:Type="Number">${m.line_number|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or ''|x}</Data></Cell>
