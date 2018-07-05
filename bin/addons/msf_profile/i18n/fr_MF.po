@@ -38096,6 +38096,9 @@ msgstr "Macao"
 #: report:addons/sale/report/fo_allocation_report.mako:219
 #: report:sale.order.allocation.report:0
 #: field:sale.order.line,price_subtotal:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:364
 msgid "Subtotal"
 msgstr "Sous-total"
 
