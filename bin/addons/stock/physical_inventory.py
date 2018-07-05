@@ -1385,6 +1385,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
+        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True, write_relate=False, store=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),
