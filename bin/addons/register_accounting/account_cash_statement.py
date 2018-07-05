@@ -158,6 +158,9 @@ class account_cash_statement(osv.osv):
                                     to_write_id_list.extend(search_ids)
                 self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
+        if not vals:
+            return True
+
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
                                                          context=context)
 

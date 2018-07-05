@@ -211,10 +211,12 @@ class Cursor(object):
         return res
 
 
-    def split_for_in_conditions(self, ids):
+    def split_for_in_conditions(self, ids, max_split=None):
         """Split a list of identifiers into one or more smaller tuples
            safe for IN conditions, after uniquifying them."""
-        return tools.misc.split_every(self.IN_MAX, set(ids))
+        if max_split is None:
+            max_split = self.IN_MAX
+        return tools.misc.split_every(max_split, set(ids))
 
     def print_log(self):
         global sql_counter
@@ -390,6 +392,9 @@ class ConnectionPool(object):
         try:
             result = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
         except psycopg2.Error:
+            log = logging.getLogger()
+            if len(log.handlers) > 1:
+                log.removeHandler(log.handlers[1])
             self.__logger.exception('Connection to the database failed')
             raise
         self._connections.append((result, True, time.time()))

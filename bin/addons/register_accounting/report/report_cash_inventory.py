@@ -28,6 +28,7 @@ class cash_inventory(report_sxw.rml_parse):
         super(cash_inventory, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'getNow': self.get_now,
+            'formatComments': self._format_comments,
         })
 
     def get_now(self, show_datetime=False):
@@ -35,6 +36,31 @@ class cash_inventory(report_sxw.rml_parse):
         res = datetime.datetime.now()
         return date_tools_obj.datetime2orm(res) if show_datetime \
             else date_tools_obj.date2orm(res.date())
+
+    def _format_comments(self, notes):
+        """
+        Formats the comments to print:
+        - 4 lines max
+        - 90 characters per line
+        """
+        res = ''
+        nb_lines = 4
+        strlimit = 90
+        # remove the existing line breaks from the comments
+        notes = notes.replace('\r\n', ' ').replace('\n', ' ')
+        for i in range(nb_lines):
+            begin = i * strlimit
+            end = begin + strlimit
+            is_last_line = i == nb_lines - 1
+            eol = ''
+            if not is_last_line:
+                # add an hyphen if the cut is done in the middle of a word
+                eol = len(notes) > end and notes[end-1].isalpha() and notes[end].isalpha() and '-\n-' or '\n'
+            res = '%s%s%s' % (res, notes[begin:end], eol)
+        # add an ellipsis if the comment is too long to be fully printed
+        if len(notes) > strlimit * nb_lines:
+            res = '%s%s' % (res, '...')
+        return res
 
 report_sxw.report_sxw('report.cash.inventory', 'account.bank.statement', 'addons/register_accounting/report/cash_inventory.rml', parser=cash_inventory)
 

@@ -63,9 +63,9 @@ class account_automatic_reconcile(osv.osv_memory):
     #TODO: cleanup and comment this code... For now, it is awfulllll
     # (way too complex, and really slow)...
     def do_reconcile(self, cr, uid, credits, debits, max_amount, power, writeoff_acc_id, period_id, journal_id, context=None):
-    # for one value of a credit, check all debits, and combination of them
-    # depending on the power. It starts with a power of one and goes up
-    # to the max power allowed
+        # for one value of a credit, check all debits, and combination of them
+        # depending on the power. It starts with a power of one and goes up
+        # to the max power allowed
         move_line_obj = self.pool.get('account.move.line')
         if context is None:
             context = {}
@@ -228,13 +228,13 @@ class account_automatic_reconcile(osv.osv_memory):
             # add the number of transactions for partners who have only one
             # unreconciled transactions to the unreconciled count
             partner_filter = partner_ids and 'AND partner_id not in (%s)' % ','.join(map(str, filter(None, partner_ids))) or ''
-            cr.execute(
-                "SELECT count(*) " \
-                "FROM account_move_line " \
-                "WHERE account_id=%s " \
-                "AND reconcile_id IS NULL " \
-                "AND state <> 'draft' " + partner_filter,
-                (account_id,))
+            cr.execute("""
+                SELECT count(*)
+                FROM account_move_line
+                WHERE account_id=%s
+                AND reconcile_id IS NULL
+                AND state <> 'draft' """ + partner_filter,
+                       (account_id,)) # not_a_user_entry
             additional_unrec = cr.fetchone()[0]
             unreconciled = unreconciled + additional_unrec
         context.update({'reconciled': reconciled, 'unreconciled': unreconciled})
