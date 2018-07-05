@@ -84,6 +84,7 @@
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="3.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationStreet" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
@@ -240,19 +241,19 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_address_id.street ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].partner_address_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].dest_address_id.street ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].dest_address_id.street ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].invoice_address_id.street ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].invoice_address_id.street ]]</para>
                 </td>
             </tr>
             <tr>
@@ -263,25 +264,25 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street2 or '' ]]</para>
+                    <para style="TextInformationStreet">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street2 or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_address_id.street2 ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].partner_address_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].dest_address_id.street2 ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].dest_address_id.street2 ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].invoice_address_id.street2 ]]</para>
+                    <para style="TextInformationStreet">[[ objects[0].invoice_address_id.street2 ]]</para>
                 </td>
             </tr>
             <tr>
@@ -292,7 +293,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].zip or '' ]] [[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].city or '' ]]</para>
+                    <para style="TextInformationStreet">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].zip or '' ]] [[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].city or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
