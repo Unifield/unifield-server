@@ -315,7 +315,7 @@ class user_access_configurator(osv.osv_memory):
                     file_level_dict[group] = level
                 elif len(group_name.split('$')) > 2:
                     raise osv.except_osv(_('Error'),
-                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum" % group_name))
+                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum") % group_name)
                 else:
                     file_level_dict[group_name] = False
 

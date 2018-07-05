@@ -288,7 +288,13 @@ class wizard_import_po_simulation_screen(osv.osv):
         if context.get('button') in ('go_to_simulation', 'print_simulation_report', 'return_to_po'):
             return True
 
-        return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        try:
+            return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
+        except Exception, e:
+            if e[0] == 'ConcurrencyException':
+                return True
+            else:
+                raise e
 
     '''
     Action buttons
@@ -762,8 +768,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 # Nothing to do
 
                 # Line 19: Message ESC Header
-                if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(19, [])[1]
+                if values.get(19, False):
+                    header_values['imp_message_esc'] = values.get(19)[1]
 
                 # Line 20: Sourcing group
                 # Nothing to do
@@ -1073,6 +1079,18 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
+
+        # To prevent adding multiple lines by clicking multiple times on the import button
+        if active_wiz.state != 'simu_done':
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order',
+                    'res_id': active_wiz.order_id.id,
+                    'view_type': 'form',
+                    'view_mode': 'form, tree',
+                    'target': 'crush',
+                    'context': context}
+
         self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
         for wiz in self.browse(cr, uid, ids, context=context):
             filename = wiz.filename.split('\\')[-1]
@@ -1088,7 +1106,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
         else:
             return {'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order',
-                    'res_id': self.browse(cr, uid, ids, context=context)[0].order_id.id,
+                    'res_id': active_wiz.order_id.id,
                     'view_type': 'form',
                     'view_mode': 'form, tree',
                     'target': 'crush',
@@ -1300,8 +1318,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                            type='float', string='Discrepancy',
                                            store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['imp_qty', 'imp_price', 'in_qty', 'in_price', 'type_change', 'po_line_id'], 20),}),
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
+        'imp_stock_take_date': fields.date(string='Stock Take Date', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
+        'esc_conf': fields.boolean(string='ESC Confirmed', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
         'imp_comment': fields.text(string='Comment', readonly=True),
@@ -1484,6 +1504,23 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 
+            # Stock Take Date
+            stock_take_date = values[9]
+            if stock_take_date and type(stock_take_date) == type(DateTime.now()):
+                write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
+            elif stock_take_date and isinstance(stock_take_date, str):
+                try:
+                    time.strptime(stock_take_date, '%Y-%m-%d')
+                    write_vals['imp_stock_take_date'] = stock_take_date
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Stock Take Date\'')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            elif stock_take_date:
+                err_msg = _('Incorrect date value for field \'Stock Take Date\'')
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
+
             # Delivery Requested Date
             drd_value = values[10]
             if drd_value and type(drd_value) == type(DateTime.now()):
@@ -1517,6 +1554,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
+
+            # ESC Confirmed
+            if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
+                write_vals['esc_conf'] = True
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[17]
@@ -1615,6 +1656,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
+                    if line.imp_stock_take_date:
+                        line_vals['stock_take_date'] = line.imp_stock_take_date,
 
                     # UF-2537 after split reinject import qty computed in
                     # simu for import consistency versus simu
@@ -1626,11 +1669,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'order_id': line.simu_id.order_id.id,
                             'line_number': line.in_line_number,
                             'confirmed_delivery_date': line.imp_dcd or False,
+                            'esc_confirmed': True if line.imp_dcd else False,
                         })
+                        if context.get('auto_import_ok') and line.parent_line_id.po_line_id.analytic_distribution_id:
+                            line_vals.update({
+                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                            })
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:
                             line_vals['confirmed_delivery_date'] = line.imp_dcd
+                            line_vals['esc_confirmed'] = line.esc_conf
                         line_obj.write(cr, uid, [new_po_line_id], line_vals,
                                        context=context)
 
@@ -1652,7 +1701,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                              'set_as_validated_n': True,
+                             'display_sync_ref': True,
+                             'created_by_vi_import': True,
                              }
+                if line.imp_stock_take_date:
+                    line_vals['stock_take_date'] = line.imp_stock_take_date,
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
                 if line.imp_project_ref:
@@ -1661,6 +1714,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
                 line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
@@ -1678,6 +1733,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.esc_conf:
+                    line_vals['esc_confirmed'] = line.esc_conf
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)

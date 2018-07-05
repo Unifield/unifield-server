@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="auto_export_fnct_purchase_order" model="automated.export.function">
+            <field name="name">Export validated Purchase Order</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
+            <field name="method_to_call">auto_export_validated_purchase_order</field>
+        </record>
+    </data>
+</openerp>

@@ -48,6 +48,7 @@ class product_list(osv.osv):
 
         displayable = {}
         for field in ['type', 'ref', 'name', 'description', 'standard_list_ok', 'order_list_print_ok',  'warehouse_id', 'location_id']:
+            # TODO search for custom fields
             displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'product.list', field, context=context)
 
         # get header data:
@@ -66,9 +67,9 @@ class product_list(osv.osv):
             elif row.cells[0].data == displayable['description']:
                 data['description'] = row.cells[1].data
             elif row.cells[0].data == displayable['standard_list_ok']:
-                data['standard_list_ok'] = True if row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
+                data['standard_list_ok'] = True if row.cells[1].data and row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
             elif row.cells[0].data == displayable['order_list_print_ok']:
-                data['order_list_print_ok'] = True if row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
+                data['order_list_print_ok'] = True if row.cells[1].data and row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
             elif row.cells[0].data == displayable['warehouse_id']:
                 warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
                 data['warehouse_id'] = warehouse_id[0] if warehouse_id else False

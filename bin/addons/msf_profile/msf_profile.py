@@ -51,6 +51,98 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF9.0
+    def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
+        data = self.pool.get('ir.model.data')
+        seq_id = False
+        try:
+            seq_id = data.get_object_reference(cr, uid, 'sale', 'seq_sale_order')[1]
+        except:
+            return True
+
+        if seq_id:
+            seq_obj = self.pool.get('ir.sequence')
+            seq_id = seq_obj.search(cr, uid, [('id', '=', seq_id), ('implementation', '=', 'psql')])
+            if seq_id:
+                seq_obj.write(cr, uid, seq_id[0], {'implementation': 'no_gap'})
+                self._logger.warn('Change FO seq to no_gap')
+        return True
+
+    def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
+        if self.pool.get('sync.version.instance.monitor'):
+            cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
+            cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        return True
+
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+        return True
+
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
+    # UF8.2
+    def ud_trans(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        if level_current == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
+
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+
+            cr.execute("""
+                update ir_translation r set xml_id =
+                    (select d.name from ir_model_data d where model='product.product' and module='sd' and d.res_id=(select p.id from product_product p where p.product_tmpl_id=r.res_id))
+                    where r.name='product.template,name'
+            """)
+            self._logger.warn('HQ update xml_id no %d product trans' % (cr.rowcount,))
+
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
+                model='ir.translation' and
+                res_id in (
+                   select id from ir_translation where name='product.template,name' and res_id in (
+                        select p.product_tmpl_id from product_product p where p.international_status=%s
+                        )
+                )
+            """, (unidata_id,))
+            self._logger.warn('HQ touching %d UD trans' % (cr.rowcount,))
+
+            # send product on which UD has changed the name without any lang ctx, if there isn't any ir.trans record
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''name'']'
+                where model='product.product' and
+                res_id in (
+                    select id from product_product where product_tmpl_id in
+                        ( select id from product_template where id in
+                            (select res_id from audittrail_log_line where name='name' and object_id=128 and method='write')
+                          and id not in (select res_id from ir_translation where name='product.template,name' and lang='en_MF')
+                        )
+                )
+            """)
+            self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
+        return True
+
     # UF8.1
     def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
         rule_obj = self.pool.get('sync.client.message_rule')
@@ -245,6 +337,7 @@ class patch_scripts(osv.osv):
             cr.execute(update_ji)
             self._logger.warn('%s JI updated.' % (cr.rowcount,))
 
+
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
         nom = ['MED', 'LOG', 'LIB', 'SRV']
@@ -299,6 +392,39 @@ class patch_scripts(osv.osv):
                         """
         cr.execute(update_free_1)
         cr.execute(update_free_2)
+
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        company_curr = self.pool.get('res.company').browse(cr, uid, 1, fields_to_fetch=['currency_id']).currency_id.id
+
+        move_ids_currencies = {}
+        cr.execute('''
+            select m.id, m.price_currency_id, s.procurement_request, pl.currency_id
+            from stock_move m
+                left join stock_picking p on (m.picking_id = p.id)
+                left join sale_order_line sl on (m.sale_line_id = sl.id)
+                left join sale_order s on (sl.order_id = s.id)
+                left join product_pricelist pl on (s.pricelist_id = pl.id)
+            where m.sale_line_id is not null and m.type = 'out' and p.type = 'out' and p.subtype in ('standard', 'picking')
+        ''')
+        for x in cr.fetchall():
+            if x[2]:
+                currency_id_key = company_curr
+            else:
+                currency_id_key = x[3]
+            if x[1] != currency_id_key:
+                if currency_id_key in move_ids_currencies:
+                    move_ids_currencies[currency_id_key].append(x[0])
+                else:
+                    move_ids_currencies.update({currency_id_key: [x[0]]})
+
+        for currency_id in move_ids_currencies:
+            cr.execute('''update stock_move set price_currency_id = %s where id in %s'''
+                       , (currency_id, tuple(move_ids_currencies[currency_id])))
+
+        return True
 
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
@@ -2619,3 +2745,33 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something(osv.osv):
+    _name = 'sync.trigger.something'
+
+    _columns = {
+        'name': fields.char('Name', size=16),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
+            _logger = logging.getLogger('tigger')
+
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_to_delete = """from ir_translation where name='product.template,name'
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
+            """ % (unidata_id,)  # not_a_user_entry
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id  """ + trans_to_delete + """
+            )""")  # not_a_user_entry
+            _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
+            cr.execute("delete "+ trans_to_delete) # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        return super(sync_tigger_something, self).create(cr, uid, vals, context)
+
+sync_tigger_something()
