@@ -266,6 +266,8 @@
         <paraStyle name="P7" fontName="Helvetica" fontSize="7.0" leading="9" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
         <paraStyle name="P8" fontName="Helvetica" fontSize="7.0" leading="9" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
         <paraStyle name="P9" fontName="Helvetica" fontSize="7.0" leading="9" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+        <paraStyle name="PRightBold" fontName="Helvetica-Bold" fontSize="7.0" leading="9" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+        <paraStyle name="PCenteredBold" fontName="Helvetica-Bold" fontSize="7.0" leading="9" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
         <paraStyle name="Standard" fontName="Helvetica"/>
         <paraStyle name="Heading" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="12.0" spaceAfter="6.0"/>
         <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -527,6 +529,40 @@
                     </td>
                 </tr>
             </blockTable>
+
+            <!-- SUBTOTALS -->
+            <section>
+                <para style="terp_default_8">[[ repeatIn(get_subtotals(p), 'curr') ]]</para>
+                <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                    <tr>
+                        <td>
+                            <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                        </td>
+                        <td>
+                            <para style="PRightBold">Subtotal</para>
+                        </td>
+                        <td>
+                            <para style="terp_default_Bold_8">[[ curr or '' ]]</para>
+                        </td>
+                        <td>
+                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['debit'] or 0.0) ]]</para>
+                        </td>
+                        <td>
+                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['credit'] or 0.0) ]]</para>
+                        </td>
+                        <td>
+                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['amount_currency'] or 0.0) ]]</para>
+                        </td>
+                        <td>
+                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['total_functional'] or 0.0) ]]</para>
+                        </td>
+                    </tr>
+                </blockTable>
+                <para style="terp_default_2">
+                    <font color="white"> </font>
+                </para>
+            </section>
+
             <section>
                 <para style="terp_default_8">[[ repeatIn(lines(p), 'line') ]]</para>
                 <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
