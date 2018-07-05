@@ -148,6 +148,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssSubtotalLineLeft">
+<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
+<Font ss:Size="10"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssSubtotalLineRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="10"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -164,6 +184,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssAccountLineNumber">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssSubtotalLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="10"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -319,6 +350,37 @@ else:
     <Data ss:Type="Number">${(sum_debit_partner(p) or 0.) - (sum_credit_partner(p) or 0.)|x}</Data>
 </Cell>
 </Row>
+
+<!-- SUBTOTAL LINES -->
+<%
+subtotals = get_subtotals(p)
+%>
+% for curr in subtotals:
+    <Row>
+      <Cell ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${p.name or ''|x}</Data>
+      </Cell>
+      <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${ _('Subtotal') |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineLeft">
+        <Data ss:Type="String">${ curr or '' |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['debit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['credit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['amount_currency'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+% endfor
+
 <!-- PARTNER LINES -->
 % for line in lines(p):
 <Row>

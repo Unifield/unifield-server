@@ -31,6 +31,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
+        self.subtotals = {}
+        self.report_lines = {}
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
@@ -51,6 +53,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_instances_str': self._get_instances_str,
             'get_accounts_str': self._get_accounts_str,
             'format_entry_label': self._format_entry_label,
+            'get_subtotals': self._get_subtotals,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -196,6 +199,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         return "\n".join(parts)
 
     def lines(self, partner):
+        if partner.id in self.report_lines:
+            return self.report_lines[partner.id]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
@@ -223,7 +228,31 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 " " + self.INSTANCE_REQUEST + " "
                 "ORDER BY l.date",
                 (partner.id, tuple(self.account_ids), tuple(move_state)))
-        return self.cr.dictfetchall()
+        self.report_lines[partner.id] = self.cr.dictfetchall()
+        if partner.id not in self.subtotals:
+            self.subtotals[partner.id] = {}
+        for line in self.report_lines[partner.id]:
+            if line['currency_code'] not in self.subtotals[partner.id]:
+                self.subtotals[partner.id][line['currency_code']] = {
+                    'debit': 0.0,
+                    'credit': 0.0,
+                    'amount_currency': 0.0,
+                    'total_functional': 0.0,
+                }
+            self.subtotals[partner.id][line['currency_code']]['debit'] += line['debit'] or 0.0
+            self.subtotals[partner.id][line['currency_code']]['credit'] += line['credit'] or 0.0
+            self.subtotals[partner.id][line['currency_code']]['amount_currency'] += line['amount_currency'] or 0.0
+            self.subtotals[partner.id][line['currency_code']]['total_functional'] += line['total_functional'] or 0.0
+        return self.report_lines[partner.id]
+
+    def _get_subtotals(self, partner):
+        """
+        Returns a dictionary with key = currency code, and value = dict. of the subtotals values for the partner i.e.
+        {'credit': xxx, 'debit': xxx, 'amount_currency': xxx, 'total_functional': xxx}
+        """
+        if partner.id not in self.subtotals:
+            self.lines(partner)  # fills in the self.subtotals dictionary
+        return self.subtotals[partner.id]
 
     def _sum_debit_partner(self, partner):
         move_state = ['draft','posted']
