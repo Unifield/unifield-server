@@ -352,6 +352,7 @@ class res_partner(osv.osv):
         Check if the deleted partner is not a system one
         """
         data_obj = self.pool.get('ir.model.data')
+        property_obj = self.pool.get('ir.property')
 
         partner_data_id = [
             'supplier_tbd',
@@ -379,6 +380,16 @@ class res_partner(osv.osv):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         address_obj.unlink(cr, uid, address_ids, context)
+
+        # delete the related fields.property
+        property_fields = ['property_account_receivable', 'property_account_payable', 'property_product_pricelist',
+                           'property_product_pricelist_purchase', 'property_stock_supplier',
+                           'property_stock_customer', 'property_account_position', 'property_payment_term']
+        for partner_id in ids:
+            res_id = 'res.partner,%s' % partner_id
+            property_domain = [('name', 'in', property_fields), ('res_id', '=', res_id)]
+            property_ids = property_obj.search(cr, uid, property_domain, context=context)
+            property_obj.unlink(cr, uid, property_ids, context=context)
 
         mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
         ir_model_data_obj.unlink(cr, uid, mdids, context)
