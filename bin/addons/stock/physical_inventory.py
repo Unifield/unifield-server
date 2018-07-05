@@ -928,7 +928,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 add_error(_('Unknown line no %s') % line_no, row_index, 0)
                 line_no = False
 
-            discrepancy_report_lines.append((1, line_no, {'reason_type_id': adjustment_type, 'comment': comment}))
+            if inventory_rec.state == 'confirmed':
+                disc_line = (1, line_no, {'comment': comment})
+            else:
+                disc_line = (1, line_no, {'reason_type_id': adjustment_type, 'comment': comment})
+            discrepancy_report_lines.append(disc_line)
         # endfor
 
         context['import_in_progress'] = True
