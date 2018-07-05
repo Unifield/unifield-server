@@ -406,7 +406,7 @@
     </record>
 
     <record id="stock.stock_location_internal_customers" model="stock.location">
-        <field name="name">MSF Customer</field>
+        <field name="name">MSF Customer</field>
         <field name="location_category">other</field>
         <field name="usage">customer</field>
         <field name="location_id" ref="stock_location_internal_customers_view" />

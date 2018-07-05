@@ -46,7 +46,10 @@ class import_data(osv.osv_memory):
 
         if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
-            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
+            if isinstance(data['parent_id'], (int, long)):
+                parent_ids = [data['parent_id']]
+            else:
+                parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
             if parent_ids:
                 parent_id = parent_ids[0]
 
@@ -65,21 +68,27 @@ class import_data(osv.osv_memory):
         aa_obj = self.pool.get('account.account')
         context = {}
 
-        family_msfid = data.get('family_id', False)
-        if family_msfid:
-            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', family_msfid)], limit=1, context=context)
+        msfid = data.get('msfid', False)
+        if msfid and not data.get('family_id'):
+            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', msfid)], limit=1, context=context)
             if nomen_ids:
                 data['family_id'] = nomen_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
-                                     % (family_msfid))
+                                     % (msfid))
+        elif data.get('family_id'):
+            data['msfid'] = n_obj.read(cr, uid, data['family_id'], ['msfid'])['msfid']
         else:
             raise osv.except_osv(_('Warning !'),
                                  _('Product category MSFID required'))
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:
+            if isinstance(paec_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paec_code)
+                if re_res:
+                    paec_code = re_res[0]
             paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
             if paec_ids:
                 data['property_account_expense_categ'] = paec_ids[0]
@@ -92,6 +101,10 @@ class import_data(osv.osv_memory):
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
+            if isinstance(paic_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paic_code)
+                if re_res:
+                    paic_code = re_res[0]
             paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
             if paic_ids:
                 data['property_account_income_categ'] = paic_ids[0]
@@ -104,6 +117,10 @@ class import_data(osv.osv_memory):
 
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
+            if isinstance(dea_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', dea_code)
+                if re_res:
+                    dea_code = re_res[0]
             dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
             if dea_ids:
                 data['donation_expense_account'] = dea_ids[0]
@@ -299,7 +316,7 @@ class import_data(osv.osv_memory):
             newids = new_obj.search(cr, uid, [(list_obj[1], '=ilike', value)], limit=1)
             if not newids:
                 # no obj
-                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(tools.ustr(value),))
 
             if impobj._name == 'product.product':
                 self._cache[dbname].setdefault(relation, {})
@@ -319,7 +336,7 @@ class import_data(osv.osv_memory):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
                     else:
                         for key, val in fields_def[field]['selection']:
-                            if value.lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
+                            if tools.ustr(value).lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
                                 value = key
                                 if impobj == 'product.product':
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
@@ -343,6 +360,9 @@ class import_data(osv.osv_memory):
         def write_error_row(row, index, error=""):
             if not auto_import and writer:
                 row.append(error)
+                # change data into right format
+                for row_i, row_data in enumerate(row):
+                    row[row_i] = tools.ustr(row_data).encode('utf-8')
                 writer.writerow(row)
             else:
                 rejected.append((index, row, error))

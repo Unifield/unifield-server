@@ -161,7 +161,9 @@ class hr_employee(osv.osv):
         'coach_id': fields.many2one('hr.employee', 'Coach'),
         'job_id': fields.many2one('hr.job', 'Job', select=True),
         'photo': fields.binary('Photo'),
-        'passport_id':fields.char('Passport No', size=64)
+        'passport_id': fields.char('Passport No', size=64),
+        'contract_start_date': fields.date('Contract Start Date'),
+        'contract_end_date': fields.date('Contract End Date'),
     }
 
     def onchange_address_id(self, cr, uid, ids, address, context=None):

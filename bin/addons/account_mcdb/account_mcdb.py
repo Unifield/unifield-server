@@ -28,6 +28,7 @@ from tools import flatten
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
+    _rec_name = 'description'
 
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
@@ -67,7 +68,9 @@ class account_mcdb(osv.osv):
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
-        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
+        'model': fields.selection([('account.move.line', 'Journal Items'),
+                                   ('account.analytic.line', 'Analytic Journal Items'),
+                                   ('combined.line', 'Both Journal Items and Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -111,6 +114,11 @@ class account_mcdb(osv.osv):
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
+        'template': fields.many2one('account.mcdb', 'Template',
+                                    domain=[('description', '!=', False), ('description', '!=', '')]),  # filter on model done in the view
+        'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
+        'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
+        'display_mcdb_load_button': fields.boolean('Display the Load button'),
     }
 
     _defaults = {
@@ -131,7 +139,10 @@ class account_mcdb(osv.osv):
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
+        'display_mcdb_load_button': lambda *a: True,
     }
+
+    _order = 'user, description, id'
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -250,6 +261,15 @@ class account_mcdb(osv.osv):
             }
         return {}
 
+    def onchange_template(self, cr, uid, ids, context=None):
+        """
+        Whenever a new template is selected, display the "load" button
+        (and don't display the other options for the template, such as "delete"...)
+        """
+        res = {}
+        res['value'] = {'display_mcdb_load_button': True}
+        return res
+
     def _get_domain(self, cr, uid, ids, context=None):
         """
         Returns the domain to use to get the selector results
@@ -260,14 +280,12 @@ class account_mcdb(osv.osv):
             ids = [ids]
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
-        res_model = wiz and wiz.model or False
+        res_model = context.get('selector_model', False) or (wiz and wiz.model) or False
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
             m2m_fields = [
                 ('period_ids', 'period_id'),
-                ('journal_ids', 'journal_id'),
-                ('analytic_journal_ids', 'journal_id'),
                 ('analytic_account_fp_ids', 'account_id'),
                 ('analytic_account_cc_ids', 'cost_center_id'),
                 ('analytic_account_f1_ids', 'account_id'),
@@ -276,6 +294,18 @@ class account_mcdb(osv.osv):
                 ('instance_ids', 'instance_id'),
                 ('top_prop_instance_ids', 'instance_id'),
             ]
+            # Journals
+            if res_model == 'account.analytic.line':
+                if context.get('from', '') == 'combined.line':
+                    # for the AJIs in the Combined Journals Report: distinguish between G/L and Analytic Journals
+                    m2m_fields.append(('journal_ids', 'gl_journal_id'))
+                    m2m_fields.append(('analytic_journal_ids', 'analytic_journal_id'))
+                else:
+                    # for the other AJIs: only handle analytic journals
+                    m2m_fields.append(('analytic_journal_ids', 'journal_id'))
+            else:
+                # for the JIs: only handle G/L journals
+                m2m_fields.append(('journal_ids', 'journal_id'))
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
                 m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
@@ -585,6 +615,9 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             name = _('Selector - Analytic')
             view_name = 'account_mcdb_analytic_form'
+        elif res_model == 'combined.line':
+            name = _('Selector - Combined Journals Report')
+            view_name = 'account_mcdb_combined_form'
         if not view_name or not name:
             raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
         # Search view_id
@@ -596,7 +629,7 @@ class account_mcdb(osv.osv):
             'res_model': 'account.mcdb',
             'res_id': res_id,
             'view_type': 'form',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',  # to display the menu on the right
             'view_id': [view_id],
             'context': context,
             'target': 'crush',
@@ -638,6 +671,9 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             name = _('Selector - Analytic')
             view_name = 'account_mcdb_analytic_form'
+        elif res_model == 'combined.line':
+            name = _('Selector - Combined Journals Report')
+            view_name = 'account_mcdb_combined_form'
         if not view_name or not name:
             raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
         # Search view_id
@@ -649,7 +685,7 @@ class account_mcdb(osv.osv):
             'res_model': 'account.mcdb',
             'res_id': res_id,
             'view_type': 'form',
-            'view_mode': 'form',
+            'view_mode': 'form,tree',  # to display the menu on the right
             'view_id': [view_id],
             'context': context,
             'target': 'crush',
@@ -1147,6 +1183,193 @@ class account_mcdb(osv.osv):
         data['target_filename'] = target_filename
         data['header'] = header
         return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+
+    def load_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
+        the user clicks on the Search button)
+        """
+        if context is None:
+            context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
+        template_id = mcdb and mcdb['template'] and mcdb['template'][0]
+        if not template_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
+        default_dict = {'description': '',
+                        'copied_id': template_id,
+                        'template': template_id,
+                        'display_mcdb_load_button': False}
+        copied_template_id = self.copy(cr, uid, template_id, default=default_dict, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': copied_template_id,
+            'view_mode': 'form,tree',  # to display the menu on the right
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
+    def _format_data(self, data):
+        """
+        Formats the dictionary in parameter containing the data to use to create/write a selector:
+        - removes the id, the values related to the template itself, and the user that shouldn't be modified
+        - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
+        - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
+        """
+        if 'id' in data:
+            del data['id']
+        if 'copied_id' in data:
+            del data['copied_id']
+        if 'template' in data:
+            del data['template']
+        if 'description' in data:  # Query name
+            del data['description']
+        if 'template_name' in data:
+            del data['template_name']
+        if 'user' in data:
+            del data['user']
+        if 'display_mcdb_load_button' in data:
+            del data['display_mcdb_load_button']
+        for i in data:
+            if type(data[i]) == list:
+                data[i] = [(6, 0, data[i])]
+            elif type(data[i]) == tuple:
+                data[i] = data[i][0]
+
+    def edit_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Edits the values of the selector of which the loaded template is a copy (see load_mcdb_template method)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get a dictionary containing ALL fields values of the selector
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to load the template first.'))
+        self._format_data(data)
+        return self.write(cr, uid, copied_id, data, context=context)
+
+    def save_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Stores all the fields values under the template name chosen
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get a dictionary containing ALL fields values of the selector
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        if data:
+            template_name = data['template_name']
+            if not template_name:
+                raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
+            if self.search_exist(cr, uid, [('description', '=', template_name),
+                                           ('user', '=', uid),
+                                           ('model', '=', data.get('model', ''))], context=context):
+                raise osv.except_osv(_('Error'), _('This template name already exists for the current user. Please choose another name.'))
+            self._format_data(data)
+            data.update({'description': template_name})  # store the name chosen as the "Query name"
+            self.create(cr, uid, data, context=context)
+        return True
+
+    def delete_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Deletes the selector of which the loaded template is a copy (see load_mcdb_template method),
+        and loads a new empty selector
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get the id of the template to delete
+        data = ids and self.read(cr, uid, ids[0], ['copied_id'], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to delete.'))
+        self.unlink(cr, uid, copied_id, context=context)
+        # create a new "empty" selector
+        new_id = self.create(cr, uid, {'display_mcdb_load_button': True}, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': new_id,
+            'view_mode': 'form,tree',  # to display the menu on the right
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
+    def combined_export(self, cr, uid, ids, format='pdf', context=None):
+        """
+        Generates the Combined Journals Report in 'pdf' or 'xls' format
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        bg_obj = self.pool.get('memory.background.report')
+        if format == 'xls':
+            report_name = 'combined.journals.report.xls'
+        else:
+            report_name = 'combined.journals.report.pdf'
+        selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
+        data = {
+            'selector_id': ids[0],
+            'analytic_axis': selector.get('analytic_axis', 'fp')
+        }
+        # make the report run in background
+        background_id = bg_obj.create(cr, uid, {'file_name': 'Combined Journals Report',
+                                                'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': data,
+            'context': context,
+        }
+
+    def combined_export_xls(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in Excel format
+        """
+        return self.combined_export(cr, uid, ids, format='xls', context=context)
+
+    def combined_export_pdf(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in PDF format
+        """
+        return self.combined_export(cr, uid, ids, format='pdf', context=context)
+
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

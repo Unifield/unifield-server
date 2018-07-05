@@ -189,6 +189,7 @@ class BackupConfig(osv.osv):
     def exp_dump(self, cr, uid, ids, suffix='', context=None):
         if context is None:
             context = {}
+        version_instance_module = self.pool.get('sync.version.instance.monitor')
         bkp = self.browse(cr, uid, ids, context)
         if bkp and bkp[0] and bkp[0].name: #US-786 If no path define -> return
             bck = bkp[0]
@@ -198,17 +199,6 @@ class BackupConfig(osv.osv):
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
                                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
                                         suffix, version))
-                version_instance_module = self.pool.get('sync.version.instance.monitor')
-                postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
-                unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
-                vals = {
-                    'version': version,
-                    'postgresql_disk_space': postgres_disk_space,
-                    'unifield_disk_space': unifield_disk_space,
-                }
-
-                version_instance_module.create(cr, uid, vals, context=context)
-
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
             except Exception, e:

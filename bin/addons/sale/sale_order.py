@@ -204,7 +204,7 @@ class sale_order(osv.osv):
 
         cursor.execute('SELECT rel.order_id ' \
                        'FROM sale_order_invoice_rel AS rel, account_invoice AS inv, sale_order AS sale, res_partner AS part ' + sale_clause + \
-                       'WHERE rel.invoice_id = inv.id AND rel.order_id = sale.id AND sale.partner_id = part.id ' + clause)
+                       'WHERE rel.invoice_id = inv.id AND rel.order_id = sale.id AND sale.partner_id = part.id ' + clause) # not_a_user_entry
         res = cursor.fetchall()
         if no_invoiced:
             cursor.execute('SELECT sale.id ' \
@@ -582,7 +582,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
                                        string='Order Type', required=True, readonly=True),
@@ -1172,7 +1172,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN sale_order fo ON l.order_id = fo.id
                           WHERE (t.type != 'service_recep' %s) AND fo.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                       (tuple(ids),)) # not_a_user_entry
             res = cr.fetchall()
 
         if res:
@@ -1270,12 +1270,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ), context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
-
-    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
-        """
-        Overrided on sync_module_prod/sync_so/sale.py
-        """
-        return True
 
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
         '''
@@ -2446,10 +2440,9 @@ class sale_order_line(osv.osv):
         @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
         # Documents
-        move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
         so_obj = self.pool.get('sale.order')
-
+        wf_service = netsvc.LocalService("workflow")
+        signal = 'cancel_r' if resource else 'cancel'
 
         if context is None:
             context = {}
@@ -2460,29 +2453,7 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         if qty_diff >= line.product_uom_qty:
-            # Delete the line and the procurement
-            if not (context.get('picking_type', '') == 'incoming_shipment' and context.get('split_line')):
-                self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
-
-            # Cancel OUT line when IR line has been canceled:
-            picking_ids = set()
-            out_moves = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
-            for move in move_obj.read(cr, uid, out_moves, ['picking_id'], context=context):
-                if move['picking_id']:
-                    picking_ids.add(move['picking_id'][0])
-            if not context.get('no_cancel_out'):
-                move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
-                move_obj.action_cancel(cr, uid, out_moves, context=context)
-
-            for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
-                if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
-                    pick_obj.action_cancel(cr, uid, [pick.id])
-                elif pick.subtype == 'picking' and pick.state == 'draft':
-                    pick_obj.validate(cr, uid, [pick.id])
-
-            if line.original_line_id:
-                cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
-                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+            wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
             self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
@@ -3116,7 +3087,7 @@ class sale_order_sourcing_progress(osv.osv):
                     slsdr.document_id IN %%s
                     %s
                 GROUP BY sol.type
-            ''' % where_sql
+            ''' % where_sql # not_a_user_entry
             cr.execute(sql, where_params)
             res = cr.dictfetchall()
 

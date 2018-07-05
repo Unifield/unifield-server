@@ -22,20 +22,10 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from urllib import quote_plus
+from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 import time
 from datetime import datetime
-
-PURCHASE_ORDER_STATE_SELECTION = [
-    ('draft', 'Draft'),
-    ('sourced', 'Sourced'),
-    ('confirmed', 'Validated'),
-    ('confirmed_wait', 'Confirmed (waiting)'),
-    ('approved', 'Confirmed'),
-    ('done', 'Closed'),
-    ('cancel', 'Cancelled'),
-]
 
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
@@ -96,7 +86,7 @@ class po_follow_up(osv.osv_memory):
         # Supplier
         if wiz.partner_id:
             domain.append(('partner_id', '=', wiz.partner_id.id))
-            report_parms['supplier'] = quote_plus(wiz.partner_id.name)
+            report_parms['supplier'] = wiz.partner_id.name
 
         # Supplier Reference
         if wiz.project_ref:
@@ -124,7 +114,7 @@ class po_follow_up(osv.osv_memory):
             if wiz.po_date_from:
                 report_header_line2 += ' - '
             report_header_line2 += wiz.po_date_thru
-        report_header.append(quote_plus(report_header_line2))
+        report_header.append(report_header_line2)
 
         datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}
         if wiz.export_format == 'xls':

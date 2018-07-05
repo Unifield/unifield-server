@@ -40,10 +40,11 @@ def check_cycle(self, cr, uid, ids, context=None):
     """
     level = 100
     while len(ids):
-        cr.execute('SELECT DISTINCT parent_id '\
-                   'FROM '+self._table+' '\
-                   'WHERE id IN %s '\
-                   'AND parent_id IS NOT NULL',(tuple(ids),))
+        cr.execute('''
+            SELECT DISTINCT parent_id
+            FROM %s
+            WHERE id IN %%s
+            AND parent_id IS NOT NULL''' % self._table, (tuple(ids),))  # not_a_user_entry
         ids = map(itemgetter(0), cr.fetchall())
         if not level:
             return False
@@ -243,101 +244,6 @@ class account_account(osv.osv):
             ids3 = self._get_children_and_consol(cr, uid, ids3, context=context)
         return ids2 + ids3
 
-
-    def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
-                  query='', query_params=()):
-        """ compute the balance, debit and/or credit for the provided
-        account ids
-        Arguments:
-        `ids`: account ids
-        `field_names`: the fields to compute (a list of any of
-                       'balance', 'debit' and 'credit')
-        `arg`: unused fields.function stuff
-        `query`: additional query filter (as a string)
-        `query_params`: parameters for the provided query string
-                        (__compute will handle their escaping) as a
-                        tuple
-        """
-        if context is None:
-            context = {}
-        mapping = {
-            'balance': "COALESCE(SUM(l.debit),0) " \
-                       "- COALESCE(SUM(l.credit), 0) as balance",
-            'debit': "COALESCE(SUM(l.debit), 0) as debit",
-            'credit': "COALESCE(SUM(l.credit), 0) as credit"
-        }
-        #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
-                                                                  context=context)
-        #compute for each account the balance/debit/credit from the move lines
-        accounts = {}
-        sums = {}
-        if children_and_consolidated:
-            aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-
-            wheres = [""]
-            if query.strip():
-                wheres.append(query.strip())
-            if aml_query.strip():
-                wheres.append(aml_query.strip())
-            filters = " AND ".join(wheres)
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
-                                      'Filters: %s'%filters)
-            # IN might not work ideally in case there are too many
-            # children_and_consolidated, in that case join on a
-            # values() e.g.:
-            # SELECT l.account_id as id FROM account_move_line l
-            # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
-            # ON l.account_id = tmp.id
-            # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l" \
-                       " WHERE l.account_id IN %s " \
-                       + filters +
-                       " GROUP BY l.account_id")
-            params = (tuple(children_and_consolidated),) + query_params
-            cr.execute(request, params)
-            self.logger.notifyChannel('addons.'+self._name, netsvc.LOG_DEBUG,
-                                      'Status: %s'%cr.statusmessage)
-
-            for res in cr.dictfetchall():
-                accounts[res['id']] = res
-
-            # consolidate accounts with direct children
-            children_and_consolidated.reverse()
-            brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
-            currency_obj = self.pool.get('res.currency')
-            display_only_checked_account = context.get('display_only_checked_account', False)
-            while brs:
-                current = brs[0]
-#                can_compute = True
-#                for child in current.child_id:
-#                    if child.id not in sums:
-#                        can_compute = False
-#                        try:
-#                            brs.insert(0, brs.pop(brs.index(child)))
-#                        except ValueError:
-#                            brs.insert(0, child)
-#                if can_compute:
-                brs.pop(0)
-                for fn in field_names:
-                    sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
-                    for child in current.child_id:
-                        # in context of report, if the current account is not
-                        # displayed, it should no impact the total amount
-                        if display_only_checked_account and not child.display_in_reports:
-                            continue
-                        if child.company_id.currency_id.id == current.company_id.currency_id.id:
-                            sums[current.id][fn] += sums[child.id][fn]
-                        else:
-                            sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
-        res = {}
-        null_result = dict((fn, 0.0) for fn in field_names)
-        for id in ids:
-            res[id] = sums.get(id, null_result)
-        return res
-
     def _get_company_currency(self, cr, uid, ids, field_name, arg, context=None):
         result = {}
         for rec in self.browse(cr, uid, ids, context=context):
@@ -410,9 +316,6 @@ class account_account(osv.osv):
         'child_parent_ids': fields.one2many('account.account','parent_id','Children'),
         'child_consol_ids': fields.many2many('account.account', 'account_account_consol_rel', 'child_id', 'parent_id', 'Consolidated Children'),
         'child_id': fields.function(_get_child_ids, method=True, type='many2many', relation="account.account", string="Child Accounts"),
-        'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
-        'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
-        'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),
         'reconcile': fields.boolean('Reconcile', help="Check this if the user is allowed to reconcile entries in this account."),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
@@ -510,18 +413,6 @@ class account_account(osv.osv):
         else:
             ids = self.search(cr, user, args, context=context, limit=limit)
         return self.name_get(cr, user, ids, context=context)
-
-    def name_get(self, cr, uid, ids, context=None):
-        if not ids:
-            return []
-        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
-        res = []
-        for record in reads:
-            name = record['name']
-            if record['code']:
-                name = record['code'] + ' '+name
-            res.append((record['id'], name))
-        return res
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, id, context=context)
@@ -703,7 +594,7 @@ class account_journal(osv.osv):
         res_obj = self.pool.get('res.users')
         if not context.get('sync_update_execution'):
             fields_list = ['type', 'analytic_journal_id', 'default_debit_account_id', 'default_credit_account_id',
-                           'bank_journal_id', 'code', 'currency']
+                           'bank_journal_id', 'code', 'currency', 'instance_id']
             for journal in self.browse(cr, uid, journal_ids, fields_to_fetch=fields_list, context=context):
                 journal_type = journal.type or ''
                 journal_code = journal.code or ''
@@ -1282,7 +1173,7 @@ class account_move(osv.osv):
                 if cond[1] in ['=like', 'like', 'not like', 'ilike', 'not ilike', 'in', 'not in', 'child_of']:
                     continue
 
-            cr.execute("select move_id from account_move_line group by move_id having sum(debit) %s %%s" % (cond[1]),(amount,))
+            cr.execute("select move_id from account_move_line group by move_id having sum(debit) %s %%s" % (cond[1]),(amount,))  # ignore_sql_check
             res_ids = set(id[0] for id in cr.fetchall())
             ids = ids and (ids & res_ids) or res_ids
         if ids:
@@ -1569,9 +1460,9 @@ class account_move(osv.osv):
         else:
             line_id2 = 0
 
-        cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))
+        cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))  # not_a_user_entry
         result = cr.fetchone()[0] or 0.0
-        cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))
+        cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))  # not_a_user_entry
 
         #adjust also the amount in currency if needed
         cr.execute("select currency_id, sum(amount_currency) as amount_currency from account_move_line where move_id = %s and currency_id is not null group by currency_id", (move.id,))
@@ -1821,25 +1712,27 @@ class account_tax_code(osv.osv):
     def _sum(self, cr, uid, ids, name, args, context, where ='', where_params=()):
         parent_ids = tuple(self.search(cr, uid, [('parent_id', 'child_of', ids)]))
         if context.get('based_on', 'invoices') == 'payments':
-            cr.execute('SELECT line.tax_code_id, sum(line.tax_amount) \
-                    FROM account_move_line AS line, \
-                        account_move AS move \
-                        LEFT JOIN account_invoice invoice ON \
-                            (invoice.move_id = move.id) \
-                    WHERE line.tax_code_id IN %s '+where+' \
-                        AND move.id = line.move_id \
-                        AND ((invoice.state = \'paid\') \
-                            OR (invoice.id IS NULL)) \
-                            GROUP BY line.tax_code_id',
-                       (parent_ids,) + where_params)
+            cr.execute('''
+                SELECT line.tax_code_id, sum(line.tax_amount)
+                FROM account_move_line AS line,
+                     account_move AS move
+                     LEFT JOIN account_invoice invoice ON
+                        (invoice.move_id = move.id)
+                WHERE line.tax_code_id IN %%s %s
+                    AND move.id = line.move_id
+                    AND ((invoice.state = 'paid')
+                        OR (invoice.id IS NULL))
+                GROUP BY line.tax_code_id''' % where,
+                       (parent_ids,) + where_params) # not_a_user_entry
         else:
-            cr.execute('SELECT line.tax_code_id, sum(line.tax_amount) \
-                    FROM account_move_line AS line, \
-                    account_move AS move \
-                    WHERE line.tax_code_id IN %s '+where+' \
-                    AND move.id = line.move_id \
-                    GROUP BY line.tax_code_id',
-                       (parent_ids,) + where_params)
+            cr.execute('''
+                SELECT line.tax_code_id, sum(line.tax_amount)
+                FROM account_move_line AS line,
+                account_move AS move
+                WHERE line.tax_code_id IN %%s %s
+                AND move.id = line.move_id
+                GROUP BY line.tax_code_id''' % where,
+                       (parent_ids,) + where_params) # not_a_user_entry
         res = dict(cr.fetchall())
         res2 = {}
         obj_precision = self.pool.get('decimal.precision')

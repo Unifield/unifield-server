@@ -66,7 +66,7 @@ class supplier_catalogue(osv.osv):
         if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context):
             user = self.pool.get('res.users').browse(cr, uid, uid,context=context)
             level = user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level or False
-            if level != 'section':
+            if level == 'coordo':
                 raise osv.except_osv(
                     _('Error'),
                     'For an ESC Supplier you must create the catalogue on a HQ instance.'
@@ -303,7 +303,7 @@ class supplier_catalogue(osv.osv):
                     # should be updated accordingly (that could be long operation)
                     cr.execute('''SELECT partner_info_id
                     FROM supplier_catalogue_line
-                    WHERE catalogue_id = %s ''' % (ids[0]))
+                    WHERE catalogue_id = %s ''', (ids[0],))
                     pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
                     price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
@@ -384,13 +384,13 @@ class supplier_catalogue(osv.osv):
         cr.execute('''delete from pricelist_partnerinfo
                       where id in (select partner_info_id
                                     from supplier_catalogue_line
-                                    where catalogue_id = %s)''' % (ids[0]))
+                                    where catalogue_id = %s)''', (ids[0],))
         cr.execute('''delete from product_supplierinfo
                         where id in (select supplier_info_id
                                     from supplier_catalogue_line
                                      where catalogue_id = %s)
                         and id not in (select suppinfo_id from
-                                    pricelist_partnerinfo ) ''' % (ids[0]))
+                                    pricelist_partnerinfo ) ''', (ids[0],))
 
 
         return True
@@ -866,7 +866,7 @@ class supplier_catalogue(osv.osv):
                             user = users[0]
                             if user.company_id and user.company_id.instance_id:
                                 if user.company_id.instance_id.level and \
-                                        user.company_id.instance_id.level !=  'section':
+                                        user.company_id.instance_id.level ==  'coordo':
                                     raise osv.except_osv(
                                         _('Error'),
                                         'For an ESC Supplier you must create the catalogue on a HQ instance.'
@@ -1037,13 +1037,14 @@ class supplier_catalogue_line(osv.osv):
                 cr.execute('''delete from pricelist_partnerinfo
                               where id in (select partner_info_id
                                           from supplier_catalogue_line
-                                          where catalogue_id = %s)''' % (ids[0]))
+                                          where catalogue_id = %s)''', (ids[0],))
                 cr.execute('''delete from product_supplierinfo
                               where id in (select supplier_info_id
                                           from supplier_catalogue_line
                                           where catalogue_id = %s)
                               and id not in (select suppinfo_id from
-                                            pricelist_partnerinfo ) ''' % (ids[0]))
+                                            pricelist_partnerinfo ) ''',
+                           (ids[0],))
 
             res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 

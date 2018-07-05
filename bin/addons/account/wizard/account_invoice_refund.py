@@ -139,7 +139,9 @@ class account_invoice_refund(osv.osv_memory):
             description = False
             company = res_users_obj.browse(cr, uid, uid, context=context).company_id
             journal_id = form.get('journal_id', False)
-            for inv in inv_obj.browse(cr, uid, context.get('active_ids'), context=context):
+            # in case of a DI refund from a register line use the dir_invoice_id in context
+            invoice_ids = context.get('dir_invoice_id') and [context['dir_invoice_id']] or context.get('active_ids')
+            for inv in inv_obj.browse(cr, uid, invoice_ids, context=context):
                 if inv.state in ['draft', 'proforma2', 'cancel']:
                     raise osv.except_osv(_('Error !'), _('Can not %s draft/proforma/cancel invoice.') % (mode))
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):

@@ -4,6 +4,7 @@ import base64
 import time
 from dateutil.parser import parse
 import math
+import tools
 
 import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -1016,6 +1017,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                                  _("Please remove non-stockable from the discrepancy report to validate:\n%s") % ("\n".join(error),)
                                  )
 
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            message = _('Physical Inventory') + " '" + inv.name + "' " + _("is validated.")
+            self.log(cr, uid, inv.id, message)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
@@ -1149,11 +1153,12 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
                 location_id = product_dict[line['product_id'][0]]['stock_inventory']
                 value = {
-                    'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                    'name': 'INV:' + tools.ustr(inv['id']) + ':' + inv['name'],
                     'product_id': line['product_id'][0],
                     'product_uom': line['product_uom_id'][0],
                     'prodlot_id': lot_id,
                     'date': inv['date'],
+                    'not_chained': True,
                 }
                 if change > 0:
                     value.update({
@@ -1175,7 +1180,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 move_ids.append(move_id)
                 discrepancy_to_move[line_id] = move_id
 
-            message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
+            message = _('Physical Inventory') + " '" + inv['name'] + "' " + _("is confirmed.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {
                 'state': 'confirmed',
@@ -1243,8 +1248,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Batch / Expiry date
         'batch_number': fields.char(_('Batch number'), size=64),
-        'expiry_date': fields.date(string=_('Expiry date')),
-
+        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
         'quantity': fields.char(_('Quantity'), size=15),
