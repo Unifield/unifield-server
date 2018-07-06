@@ -23962,10 +23962,11 @@ msgstr "Nombre de modules mis à jour"
 msgid "Line %s. Only a single Journal Code can be specified per file"
 msgstr "Line %s. Only a single Journal Code can be specified per file"
 
-#. modules: account, account_mcdb, register_accounting
+#. modules: account, account_mcdb, register_accounting, msf_doc_import
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:247
 #: report:addons/register_accounting/report/open_advances_xls.mako:154
+#: code:addons/msf_doc_import/account.py:308
 msgid "Booking Credit"
 msgstr "Crédit Devise d'enreg."
 
@@ -26375,10 +26376,11 @@ msgstr "brouillon"
 msgid "Number to Ship"
 msgstr "Nombre à Expédier"
 
-#. modules: account, account_mcdb, register_accounting
+#. modules: account, account_mcdb, register_accounting, msf_doc_import
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:244
 #: report:addons/register_accounting/report/open_advances_xls.mako:153
+#: code:addons/msf_doc_import/account.py:307
 msgid "Booking Debit"
 msgstr "Débit Devise d'enreg."
 
@@ -101288,3 +101290,21 @@ msgstr "Ligne %s. Les nombres négatifs sont interdits pour les montants Débit 
 #, python-format
 msgid "Line %s. The Booking Debit and Credit amounts are missing."
 msgstr "Ligne %s. Il manque les montants Débit et Crédit en devise d'enregistrement."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:309
+#, python-format
+msgid "Line %s. %s at 0, %s empty, please change."
+msgstr "Ligne %s. %s à 0, %s vide, veuillez modifier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:300
+#, python-format
+msgid "Line %s. Booking Debit and Booking Credit at 0, please change."
+msgstr "Ligne %s. Les montants Débit et Crédit en devise d'enregistrement sont à zéro, veuillez modifier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:304
+#, python-format
+msgid "Line %s. Please fill in either a Booking Debit or a Booking Credit value."
+msgstr "Ligne %s. Veuillez renseigner une valeur en devise d'enregistrement, soit en débit soit en crédit."

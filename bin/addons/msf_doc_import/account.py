@@ -267,7 +267,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_document_date = False
                     current_line_num = num + base_num
                     # Fetch all XML row values
-                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r, context=context)
 
                     # ignore empty lines
                     if not self._check_has_data(line):
@@ -283,16 +283,37 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                    # Check on booking amounts: ensure that both only one value (debit or credit) exists and that its
-                    # amount isn't negative (lines with 0.00 amount are allowed since US-4688)
+                    # Check on booking amounts: ensure that one (and only one) value exists and that its amount isn't negative
+                    book_debit = 0
+                    book_credit = 0
                     try:
-                        if line[cols['Booking Debit']] and line[cols['Booking Credit']]:
+                        book_debit = line[cols['Booking Debit']]
+                        book_credit = line[cols['Booking Credit']]
+                        if book_debit and book_credit:
                             errors.append(_('Line %s. Only one value (Booking Debit or Booking Credit) should be filled in.') % (current_line_num,))
                             continue
-                        if not isinstance(line[cols['Booking Debit']], (int, long, float)) or not isinstance(line[cols['Booking Credit']], (int, long, float)):
+                        if not book_debit and not book_credit:
+                            # /!\ display different messages depending if values are zero or empty
+                            debit_is_zero = book_debit is 0 or book_debit is 0.0
+                            credit_is_zero = book_credit is 0 or book_credit is 0.0
+                            if debit_is_zero and credit_is_zero:
+                                errors.append(_('Line %s. Booking Debit and Booking Credit at 0, please change.') % (current_line_num,))
+                                continue
+                            elif not debit_is_zero and not credit_is_zero:
+                                # empty cells
+                                errors.append(_('Line %s. Please fill in either a Booking Debit or a Booking Credit value.') % (current_line_num,))
+                                continue
+                            else:
+                                amount_zero_str = debit_is_zero and _('Booking Debit') or _('Booking Credit')
+                                amount_empty_str = debit_is_zero and _('Booking Credit') or _('Booking Debit')
+                                errors.append(_('Line %s. %s at 0, %s empty, please change.') % (current_line_num,
+                                                                                                 amount_zero_str, amount_empty_str))
+                                continue
+                        if (book_debit and not isinstance(book_debit, (int, long, float))) or \
+                                (book_credit and not isinstance(book_credit, (int, long, float))):
                             errors.append(_('Line %s. The Booking Debit or Credit amount is invalid and should be a number.') % (current_line_num,))
                             continue
-                        if line[cols['Booking Debit']] < 0 or line[cols['Booking Credit']] < 0:
+                        if (book_debit and book_debit < 0) or (book_credit and book_credit < 0):
                             errors.append(_('Line %s. Negative numbers are forbidden for the Booking Debit and Credit amounts.') % (current_line_num,))
                             continue
                     except IndexError:
@@ -321,12 +342,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not 'name' in money[line[cols['Booking Currency']]]:
                         money[line[cols['Booking Currency']]]['name'] = line[cols['Booking Currency']]
                     # Increment global debit/credit
-                    if line[cols['Booking Debit']]:
-                        money[line[cols['Booking Currency']]]['debit'] += line[cols['Booking Debit']]
-                        r_debit = line[cols['Booking Debit']]
-                    if line[cols['Booking Credit']]:
-                        money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
-                        r_credit = line[cols['Booking Credit']]
+                    if book_debit:
+                        money[line[cols['Booking Currency']]]['debit'] += book_debit
+                        r_debit = book_debit
+                    if book_credit:
+                        money[line[cols['Booking Currency']]]['credit'] += book_credit
+                        r_credit = book_credit
 
                     # Check which journal it is to be posted to: should be of type OD, MIG or INT
                     if not line[cols['Journal Code']]:
