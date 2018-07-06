@@ -92,7 +92,8 @@
                                     <field name="in_line_number" invisible="1" />
                                     <field name="str_in_line_number" />
                                     <field name="in_ext_ref" />
-                                    <field name="type_change" />
+                                    <field name="type_change" invisible="1"/>
+                                    <field name="chg_text" />
                                     <field name="error_msg" invisible="1" />
                                     <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
                                     <field name="imp_product_id" />

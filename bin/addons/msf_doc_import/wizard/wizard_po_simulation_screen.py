@@ -980,6 +980,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                         elif file_line[1] == 'split':
                             new_wl_id = wl_obj.copy(cr, uid, po_line,
                                                     {'type_change': 'split',
+                                                     'chg_text': _('Split\nQTY'),
                                                      'parent_line_id': po_line,
                                                      'imp_dcd': False,
                                                      'po_line_id': False}, context=context)
@@ -1203,7 +1204,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'in_currency': False,
                             'in_ext_ref': False,
                             'imp_discrepancy': 0.00,
-                            'change_ok': False}
+                            'change_ok': False,
+                            'chg_text': line.chg_text
+                                or line.type_change and dict(self._columns['type_change'].selection).get(line.type_change) or '',
+                            }
 
             if line.po_line_id:
                 l = line.po_line_id
@@ -1224,11 +1228,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                     prod_change = False
                     if res[line.id]['in_product_id'] and not line.imp_product_id or \
-                       not res[line.id]['in_product_id'] and line.imp_product_id or \
-                       res[line.id]['in_product_id'] != line.imp_product_id.id:
+                            not res[line.id]['in_product_id'] and line.imp_product_id or \
+                            res[line.id]['in_product_id'] != line.imp_product_id.id:
                         prod_change = True
+                        if not line.chg_text and line.imp_product_id or (not line.imp_product_id and line.in_comment):
+                            res[line.id]['chg_text'] += _('\nPROD')
                     qty_change = not(res[line.id]['in_qty'] == line.imp_qty)
+                    if not line.chg_text and (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
+                            and qty_change:
+                        res[line.id]['chg_text'] += _('\nQTY')
                     price_change = not(res[line.id]['in_price'] == line.imp_price)
+                    if not line.chg_text and (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
+                            and price_change:
+                        res[line.id]['chg_text'] += _('\nPRICE')
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
                     to_delete = line.imp_comment == '[DELETE]'
@@ -1308,7 +1320,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),
                                          ('ignore', 'Ignore')],
-                                        string='CHG', readonly=True),
+                                        string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
         'imp_qty': fields.float(digits=(16,2), string='Qty', readonly=True),
@@ -1335,6 +1347,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                           string='Parent line id',
                                           help='Use to split the good PO line',
                                           readonly=True),
+        'chg_text': fields.function(_get_line_info, method=True, multi='line', type='char', size=216, string='CHG',
+                                    readonly=True, store=True),
     }
 
     def get_error_msg(self, cr, uid, ids, context=None):
