@@ -444,11 +444,11 @@ class msf_import_export(osv.osv_memory):
         if not all([id_check[wiz.model_list_selection][x] for x in id_check[wiz.model_list_selection]]):
             raise osv.except_osv(
                 _('Error'),
-                _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s." % (
+                _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s.") % (
                     _('Product list') if wiz.model_list_selection == 'product_list_update' else _('Supplier catalogue'),
                     wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name,
                     ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in id_check[wiz.model_list_selection].keys()]).strip(' ,')
-                ))
+                )
             )
 
         if len(fields_gotten) != len(fields_needed_name):

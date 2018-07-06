@@ -2,6 +2,10 @@
 <openerp>
     <data>
         <!-- UF9.0 -->
+        <record id="change_fo_seq_to_nogap" model="patch.scripts">
+            <field name="method">change_fo_seq_to_nogap</field>
+        </record>
+
         <record id="us_4481_monitor_set_null_size" model="patch.scripts">
             <field name="method">us_4481_monitor_set_null_size</field>
         </record>
