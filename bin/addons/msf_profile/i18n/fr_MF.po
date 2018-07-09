@@ -101274,3 +101274,10 @@ msgstr "- Ecritures enregistrées sur des comptes définis comme \"Empêcher la 
 #: view:mass.reallocation.wizard:0
 msgid "- Items booked on a Currency Adjustment Analytic Journal"
 msgstr "- Ecritures enregistrées sur un Journal Analytique de type Ajustement de Devise"
+
+#. module: sourcing
+#: code:addons/sourcing/wizard/multiple_sourcing.py:286
+#, python-format
+msgid "Line #%s of %s You cannot cannot source a loan on order"
+msgstr "Ligne %s de %s: vous ne pouvez pas sourcer un prêt sur commande"
+
