@@ -101281,6 +101281,13 @@ msgstr "- Ecritures enregistrées sur un Journal Analytique de type Ajustement d
 msgid "Line #%s of %s You cannot cannot source a loan on order"
 msgstr "Ligne %s de %s: vous ne pouvez pas sourcer un prêt sur commande"
 
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1745
+#, python-format
+msgid "Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool"
+msgstr "Ligne %s de la commande %s, veuillez sélectionner une valeur pour le champ BC/AdO dans le Sourcing"
+
+
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:357
 #, python-format
