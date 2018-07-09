@@ -101281,3 +101281,8 @@ msgstr "- Ecritures enregistrées sur un Journal Analytique de type Ajustement d
 msgid "Line #%s of %s You cannot cannot source a loan on order"
 msgstr "Ligne %s de %s: vous ne pouvez pas sourcer un prêt sur commande"
 
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:357
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with a Partner or an Employee Third Party."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenaire ou Employé."

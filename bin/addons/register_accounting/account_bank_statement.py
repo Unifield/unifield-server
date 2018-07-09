@@ -2983,8 +2983,12 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] in ['down_payment', 'payroll']:
+            elif a['type_for_register'] == 'down_payment':
                 third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
