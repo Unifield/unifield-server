@@ -51,6 +51,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def product_uom_init_field_display_decimals(self, cr, uid, *a, **b):
+        uom_ids = self.pool.get('product.uom').search(cr, uid, [])
+        for uom in self.pool.get('product.uom').browse(cr, uid, uom_ids):
+            self.pool.get('product.uom').write(cr, uid, [uom.id], {'rounding': uom.rounding})
+        return True
+
     # UF9.0
     def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
         data = self.pool.get('ir.model.data')

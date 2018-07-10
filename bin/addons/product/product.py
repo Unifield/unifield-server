@@ -101,6 +101,19 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error !'), _('UoM Categ %s, must have one and only one UoM reference, found: %s') % (categ['name'], x[0]))
         return True
 
+    def _get_display_decimals(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for uom in self.browse(cr, uid, ids, fields_to_fetch=['rounding'], context=context):
+            res[uom.id] = not (uom.rounding == 1.0)
+
+        return res
+
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, translate=True),
         'category_id': fields.many2one('product.uom.categ', 'UoM Category', required=True, ondelete='cascade',
@@ -120,14 +133,17 @@ class product_uom(osv.osv):
         'uom_type': fields.selection([('bigger','Bigger than the reference UoM'),
                                       ('reference','Reference UoM for this category'),
                                       ('smaller','Smaller than the reference UoM')],'UoM Type', required=1),
-        'display_decimals': fields.selection([('yes', 'Yes'), ('no', 'No')], 'Display decimals', required=1, help="If 'No' is selected, then all quantities with this UoM will not display decimals"),
+        'display_decimals': fields.function(_get_display_decimals, method=True, type='boolean', string='Display decimals',
+            help="Display decimals on quantities linked with this UoM according to the rounding precision", readonly=True,
+            store={'product.uom': (lambda obj, cr, uid, ids, c={}: ids, ['rounding'], 10)},
+        ),
+
     }
 
     _defaults = {
         'active': 1,
         'rounding': 0.01,
         'uom_type': 'reference',
-        'display_decimals': lambda *a :'yes',
     }
 
     _constraints = [

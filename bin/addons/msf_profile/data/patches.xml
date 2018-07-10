@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="product_uom_init_field_display_decimals" model="patch.scripts">
+            <field name="method">product_uom_init_field_display_decimals</field>
+        </record>
+        
         <!-- UF9.0 -->
         <record id="change_fo_seq_to_nogap" model="patch.scripts">
             <field name="method">change_fo_seq_to_nogap</field>
