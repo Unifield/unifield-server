@@ -23,6 +23,7 @@ import time
 import calendar
 import tools
 
+from datetime import datetime
 from report import report_sxw
 from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
@@ -53,7 +54,6 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
-            'getExpiredQty': self._get_expired_qty,
             'isExpiredDate': self.is_expired_date,
             'toDate': self.str_to_time,
         })
@@ -237,12 +237,6 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
 
     def _get_currency(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.name
-
-    def _get_expired_qty(self, in_stock_qty, total_expired_qty):
-        if in_stock_qty and total_expired_qty and in_stock_qty == total_expired_qty:
-            return tools.ustr(in_stock_qty) + ' (' + tools.ustr(total_expired_qty) + ')'
-        else:
-            return '0.00'
 
     def is_expired_date(self, expiry_date):
         res = False

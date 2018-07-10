@@ -190,7 +190,7 @@
                     <para style="TextInfoRight">[[ formatLang(line.consumption or 0.00) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ getExpiredQty(line.in_stock, line.total_expired) ]]</para>
+                    <para style="TextInfoRight">[[ line.expired_qty ]]</para>
                 </td>
                 <td>
                     <para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
