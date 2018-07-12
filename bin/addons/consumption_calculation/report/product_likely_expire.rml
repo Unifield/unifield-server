@@ -141,7 +141,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="80.0,120.0,60.0,60.0,60.0,60.0,60.0,80.0,60.0,60.0,60.0" style="LinesTable" repeatRows="1">
+        <blockTable colWidths="80.0,120.0,60.0,60.0,60.0,60.0,60.0,60.0,70.0,65.0,65.0" style="LinesTable" repeatRows="1">
             [[ repeatIn(getRmlTables(objects[0], 5), 't') ]]
             <tr>
                 <td>
@@ -190,7 +190,7 @@
                     <para style="TextInfoRight">[[ formatLang(line.consumption or 0.00) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ line.expired_qty ]]</para>
+                    <para style="TextInfoRight">[[ getExpiredQtyColData(line.id) ]]</para>
                 </td>
                 <td>
                     <para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>

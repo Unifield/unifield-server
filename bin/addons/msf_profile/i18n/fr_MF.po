@@ -108379,3 +108379,10 @@ msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engage
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
 msgid "Budget missing"
 msgstr "Budget manquant"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/expiry_calculation.py:740
+#: report:product.likely.expire.report_pdf:0
+#, python-format
+msgid "Expired Qty"
+msgstr "Qté Expirée"

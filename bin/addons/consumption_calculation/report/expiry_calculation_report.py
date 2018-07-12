@@ -51,6 +51,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getRmlTables': self._get_rml_tables,
             'getRmlNextMonth': self._get_rml_next_month,
             'getRmlLineItemNextMonth': self._get_rml_line_item_next_month,
+            'getExpiredQtyColData': self._get_expired_qty_col_data,
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
@@ -118,8 +119,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         """
         item_obj = self.pool.get('product.likely.expire.report.item')
         domain = [('line_id', '=', line.id)]
-        items_ids = item_obj.search(self.cr, self.uid, domain,
-                                    order='period_start')  # items ordered by date
+        items_ids = item_obj.search(self.cr, self.uid, domain)
         if not items_ids:
             return False
         return item_obj.browse(self.cr, self.uid, items_ids)
@@ -231,6 +231,16 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             res = '0.00'
         return res
 
+    def _get_expired_qty_col_data(self, line_id):
+        item_obj = self.pool.get('product.likely.expire.report.item')
+
+        expired_qty = '0.00'
+        item_ids = item_obj.search(self.cr, self.uid, [('line_id', '=', line_id), ('name', '=', 'expired_qty_col')])
+        if item_ids:
+            expired_qty = item_obj.browse(self.cr, self.uid, item_ids[0]).expired_qty or '0.00'
+
+        return expired_qty
+
     def _get_instance_addr(self):
         instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id
         return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
@@ -240,7 +250,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
 
     def is_expired_date(self, expiry_date):
         res = False
-        if time.strftime("%Y-%m-%d") > self.str_to_time(expiry_date):
+        if time.strftime("%Y-%m-%d") > expiry_date:
             res = True
         return res
 

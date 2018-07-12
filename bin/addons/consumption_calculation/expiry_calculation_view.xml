@@ -189,7 +189,6 @@
                         <tree string="Expired products">
                             <field name="product_id" />
                             <field name="consumption" />
-                            <field name="expired_qty" />
                             <field name="in_stock" />
                             <field name="total_expired" />
                             <field name="total_value" sum="Total Expired Value" />

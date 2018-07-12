@@ -126,14 +126,16 @@ if cols < 0:
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.consumption or 0.}</Data></Cell>
-<Cell ss:StyleID="line"><Data ss:Type="String">${line.expired_qty}</Data></Cell>
 % for i in getLineItems(line):
     ## line items
-    % if i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
-    % endif
-    % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
+    %if i.name == 'expired_qty_col':
+        <Cell ss:StyleID="line"><Data ss:Type="String">${i.expired_qty and formatLang(i.expired_qty) or 0.00}</Data></Cell>
+    %else:
+        % if i.expired_qty:
+        <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
+        % endif
     % endif
 % endfor
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>
