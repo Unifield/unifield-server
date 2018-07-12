@@ -156,7 +156,6 @@ class wizard_import_cheque(osv.osv_memory):
         # US-212: If multi-click on import button, we import only the first
         if wizard.is_imported:
             return {}
-        self.write(cr, uid, ids, {'is_imported': True}, context=context)
 
         # Process lines
         absl_lines = []
@@ -189,6 +188,9 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
+        # set the wizard to "is_imported" at the end of the process only
+        # (the user must be able to re-click on OK after having fixed the potential errors displayed)
+        self.write(cr, uid, ids, {'is_imported': True}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
