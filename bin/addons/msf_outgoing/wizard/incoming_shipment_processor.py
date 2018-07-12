@@ -131,8 +131,7 @@ class stock_incoming_processor(osv.osv):
         res = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
-            attach_ok = self.check_if_has_import_file_in_attachment(cr, uid, [wiz.id], context=context)
-            if attach_ok and wiz.picking_id and wiz.picking_id.origin and wiz.picking_id.origin.find('/FO') != -1:
+            if wiz.picking_id and wiz.picking_id.state == 'updated' and wiz.linked_to_out:
                 res[wiz.id] = True
 
         return res
@@ -739,21 +738,14 @@ class stock_incoming_processor(osv.osv):
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
 
-                total_weight = 0.0
-                total_height = 0.0
-                total_length = 0.0
-                total_width = 0.0
                 for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
-                    total_weight += move.weight
-                    total_height += move.height
-                    total_length += move.length
-                    total_width += move.width
-                family_data.update({
-                    'weight': total_weight,
-                    'height': total_height,
-                    'length': total_length,
-                    'width': total_width,
-                })
+                    family_data.update({
+                        'weight': move.weight,
+                        'height': move.height,
+                        'length': move.length,
+                        'width': move.width,
+                    })
+                    break
 
                 fam_id = self.pool.get('in.family.processor').create(cr, uid, family_data, context=context)
                 if move_ids:
@@ -1198,8 +1190,14 @@ class stock_move_in_processor(osv.osv):
         'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
-        'linked_to_out': fields.related('wizard_id', 'linked_to_out', string='Linked to OUT', readonly=True),
+        'split_move_ok': fields.boolean(string='Is split move ?'),
     }
+
+
+    _defaults = {
+        'split_move_ok': lambda *a: False,
+    }
+
 
     """
     Model methods

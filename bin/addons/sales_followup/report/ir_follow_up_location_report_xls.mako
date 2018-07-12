@@ -319,7 +319,7 @@
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_comment', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('line_comment', '-')|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
@@ -349,7 +349,7 @@
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_comment', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('line_comment', '-')|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:

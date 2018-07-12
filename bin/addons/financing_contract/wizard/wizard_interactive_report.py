@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import fields, osv
+from osv import osv
 import locale
 
 class wizard_interactive_report(osv.osv_memory):
@@ -68,12 +68,12 @@ class wizard_interactive_report(osv.osv_memory):
         data.append([parent_hierarchy,
                      line.code,
                      line.name,
-                     locale.format(format_str, line_allocated_budget, grouping=True),
-                     locale.format(format_str, line_allocated_real, grouping=True),
-                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format(format_str, self._round(line_allocated_real/line_allocated_budget * 100, context=context), grouping=True)) + "%",
-                     locale.format(format_str, line_project_budget, grouping=True),
-                     locale.format(format_str, line_project_real, grouping=True),
-                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format(format_str, self._round(line_project_real/line_project_budget * 100, context=context), grouping=True)) + "%"])
+                     locale.format(format_str, line_allocated_budget, grouping=False),
+                     locale.format(format_str, line_allocated_real, grouping=False),
+                     '0%' if line_allocated_real == 0 or line_allocated_budget == 0 else str(locale.format(format_str, self._round(line_allocated_real/line_allocated_budget * 100, context=context), grouping=False)) + "%",
+                     locale.format(format_str, line_project_budget, grouping=False),
+                     locale.format(format_str, line_project_real, grouping=False),
+                     '0%' if line_project_real == 0 or line_project_budget == 0 else str(locale.format(format_str, self._round(line_project_real/line_project_budget * 100, context=context), grouping=False)) + "%"])
 
         for child_line in line.child_ids:
             new_max_parent_hierarchy = self._create_reporting_line(cr, uid, reporting_currency_id, child_line, parent_hierarchy + 1, data, line_amount_list, out_currency_id, context=context)
@@ -82,9 +82,13 @@ class wizard_interactive_report(osv.osv_memory):
         return max_parent_hierarchy
 
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
+        if context is None:
+            context = {}
         has_round, format_str = self._get_amount_format(context)
-        res = {}
         contract_obj = self.pool.get('financing.contract.contract')
+        bg_obj = self.pool.get('memory.background.report')
+        bg_id = context.get('background_id', False)
+
         # Context updated with wizard's value
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
 
@@ -103,25 +107,27 @@ class wizard_interactive_report(osv.osv_memory):
         total_project_real = 0.
 
         # check the output currency if it has been selected
-        for header in header_data:
-            if "Grant amount:" in header:
-                out_currency_amount = header[1]
         out_currency_id = None
         if 'out_currency' in context:
             out_currency_id = context['out_currency']
 
         max_parent_hierarchy = 0 # 0 for contract line
         temp_analytic_data = []
-        currency_obj = self.pool.get('res.currency')
 
         # create "real" lines
         line_obj = self.pool.get('financing.contract.format.line')
         actual_line_ids = [x.id for x in contract.actual_line_ids]
 
         allocated_budget_list = line_obj._get_budget_amount(cr, uid, actual_line_ids, 'allocated_budget', context=context)
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.10)  # 10% of the total process
         project_budget_list = line_obj._get_budget_amount(cr, uid, actual_line_ids, 'project_budget', context=context)
-        allocated_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'allocated_real', context=context)
-        project_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'project_real', context=context)
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.20)  # 20% of the total process
+        allocated_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'allocated_real',
+                                                          context=context)  # 50% of the total process (see _get_actual_amount method)
+        project_real_list = line_obj._get_actual_amount(cr, uid, actual_line_ids, 'project_real',
+                                                        context=context)  # 80% of the total process
         line_amount_list = {}
         for id in actual_line_ids:
             line_amount_list[id] = {'allocated_budget': allocated_budget_list[id],
@@ -155,15 +161,15 @@ class wizard_interactive_report(osv.osv_memory):
                                'Total Project - Budget',
                                'Total Project - Actuals',
                                'Total Project - %used']] + temp_analytic_data + [
-                               [0,
-                               '',
-                               'TOTAL',
-                               locale.format(format_str, total_allocated_budget, grouping=True),
-                               locale.format(format_str, total_allocated_real, grouping=True),
-                               '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format(format_str, self._round(total_allocated_real/total_allocated_budget * 100, context=context), grouping=True)) + "%",
-                               locale.format(format_str, total_project_budget, grouping=True),
-                               locale.format(format_str, total_project_real, grouping=True),
-                               '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=True)) + "%"]]
+            [0,
+             '',
+             'TOTAL',
+             locale.format(format_str, total_allocated_budget, grouping=False),
+             locale.format(format_str, total_allocated_real, grouping=False),
+             '0%' if total_allocated_real == 0  or total_allocated_budget == 0 else str(locale.format(format_str, self._round(total_allocated_real/total_allocated_budget * 100, context=context), grouping=False)) + "%",
+             locale.format(format_str, total_project_budget, grouping=False),
+             locale.format(format_str, total_project_real, grouping=False),
+             '0%' if total_project_real == 0  or total_project_budget == 0 else str(locale.format(format_str, self._round(total_project_real/total_project_budget * 100, context=context), grouping=False)) + "%"]]
 
         # Now, do the hierarchy
         analytic_data = []
@@ -184,6 +190,8 @@ class wizard_interactive_report(osv.osv_memory):
                 final_line += temp_line[6:9]
             analytic_data.append(final_line)
 
+        if bg_id:
+            bg_obj.update_percent(cr, uid, [bg_id], 0.90)  # 90% of the total process
         if context.get('mako',False):
             return analytic_data
         data = header_data + [[]] + analytic_data + [[]] + footer_data
