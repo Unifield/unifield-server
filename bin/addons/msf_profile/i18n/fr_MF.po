@@ -101265,3 +101265,8 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_cheque_on_bank_registers.py:166
+#, python-format
+msgid "The Cheque %s has already been imported."
+msgstr "Le Chèque %s a déjà été importé."

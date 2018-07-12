@@ -156,11 +156,14 @@ class wizard_import_cheque(osv.osv_memory):
         # US-212: If multi-click on import button, we import only the first
         if wizard.is_imported:
             return {}
+        self.write(cr, uid, ids, {'is_imported': True}, context=context)
 
         # Process lines
         absl_lines = []
         for imported_line in wizard.imported_lines_ids:
             line = imported_line.line_id
+            if absl_obj.search_exist(cr, uid, [('from_import_cheque_id', '=', line.id)], context=context):
+                raise osv.except_osv(_('Warning'), _('The Cheque %s has already been imported.') % line.cheque_number or line.name or line.ref or '')
             total = line.amount_currency
             if not imported_line.document_date:
                 raise osv.except_osv(_('Warning'), _('Please add a Document Date on imported lines.'))
@@ -186,7 +189,6 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
-        self.write(cr, uid, ids, {'is_imported': True}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 
 wizard_import_cheque()
