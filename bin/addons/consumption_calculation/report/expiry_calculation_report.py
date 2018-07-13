@@ -247,10 +247,11 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_expired_qty_col_data(self, line_id):
         item_obj = self.pool.get('product.likely.expire.report.item')
 
-        expired_qty = '0.00'
         item_ids = item_obj.search(self.cr, self.uid, [('line_id', '=', line_id), ('name', '=', 'expired_qty_col')])
         if item_ids:
-            expired_qty = item_obj.browse(self.cr, self.uid, item_ids[0]).expired_qty or '0.00'
+            expired_qty = item_obj.browse(self.cr, self.uid, item_ids[0]).expired_qty or '0'
+        else:
+            expired_qty = ''
 
         return expired_qty
 

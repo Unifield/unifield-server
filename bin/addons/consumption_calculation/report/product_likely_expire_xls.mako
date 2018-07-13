@@ -137,7 +137,7 @@ if cols < 0:
             <Cell ss:StyleID="line"><Data ss:Type="Number">${0.00}</Data></Cell>
             % endif
         %else:
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${0.00}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${''}</Data></Cell>
             % if i.expired_qty:
             <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
             % else:
