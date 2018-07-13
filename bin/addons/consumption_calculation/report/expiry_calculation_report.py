@@ -47,6 +47,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getLines': self._get_lines,
             'getExpiryValueTotal': self._get_expiry_value_total,
             'getLineItems': self._get_line_items,
+            'getNthLineItem': self._get_nth_line_item,
             'getMonthItemLines': self._get_month_item_lines,
             'getRmlTables': self._get_rml_tables,
             'getRmlNextMonth': self._get_rml_next_month,
@@ -115,7 +116,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_line_items(self, line):
         """get line items 'product.likely.expire.report.item'
         for each line 'product.likely.expire.report.line'
-        ordered by date
+        ordered by id
         """
         item_obj = self.pool.get('product.likely.expire.report.item')
         domain = [('line_id', '=', line.id)]
@@ -123,6 +124,18 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if not items_ids:
             return False
         return item_obj.browse(self.cr, self.uid, items_ids)
+
+    def _get_nth_line_item(self, line, number):
+        """get the Nth line item 'product.likely.expire.report.item'
+        for each line 'product.likely.expire.report.line'
+        ordered by id
+        """
+        item_obj = self.pool.get('product.likely.expire.report.item')
+        domain = [('line_id', '=', line.id)]
+        items_ids = item_obj.search(self.cr, self.uid, domain)
+        if not items_ids:
+            return False
+        return item_obj.browse(self.cr, self.uid, items_ids[number])
 
     def _get_month_item_lines_ids(self, report, month_date):
         """get month items('product.likely.expire.report.item')
