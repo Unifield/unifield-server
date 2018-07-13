@@ -214,15 +214,20 @@
                                 filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
                                 o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
-                                    <field name="comment" readonly="1" displayon="noteditable"/>
-                                    <field name="nomenclature_description" readonly="1" displayon="noteditable"/>
-                                    <field name="supplier_code" displayon="noteditable"/>
 
-                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" displayon="editable" required="1"/>
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
+                                    <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
+                                    <field name="nomenclature_description" readonly="1" displayon="noteditable"/>
+                                    <field name="supplier_code" displayon="noteditable" />
+                                    <button name="openform"
+                                        special="openform"
+                                        string="Configurator"
+                                        attrs="{'invisible': ['|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'draft_p', 'validated_n', 'validated'])]}"
+                                        icon="terp-go-week" />
                                     <field name="inactive_error" invisible="1"/>
                                     <field name="internal_code" invisible="True"/>
                                     <field name="internal_name" invisible="True"/>
