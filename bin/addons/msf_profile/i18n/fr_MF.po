@@ -101293,3 +101293,9 @@ msgstr "Ligne %s de la commande %s, veuillez sélectionner une valeur pour le ch
 #, python-format
 msgid "The account \"%s - %s\" is only compatible with a Partner or an Employee Third Party."
 msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenaire ou Employé."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_cheque_on_bank_registers.py:166
+#, python-format
+msgid "The Cheque %s has already been imported."
+msgstr "Le Chèque %s a déjà été importé."
