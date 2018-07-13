@@ -192,7 +192,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                 return self.sftp_test_connection(cr, uid, ids, context=context)
             ftp = FTP()
             try:
-                ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
+                port = int(obj.ftp_port or 0)
+                ftp.connect(host=obj.ftp_url, port=port) # '220 (vsFTPd 3.0.2)'
             except:
                 self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
                 raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)

@@ -1132,7 +1132,7 @@ class stock_picking(osv.osv):
             }
             sol_obj.create(cr, uid, fo_line_data, context=context)
 
-        message = _('IN %s processed to FO %s by Push Flow at %s.' % (stock_picking.name, fo_name, source))
+        message = _('IN %s processed to FO %s by Push Flow at %s.') % (stock_picking.name, fo_name, source)
         self._logger.info(message)
 
         return message

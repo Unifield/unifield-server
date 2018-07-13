@@ -771,9 +771,7 @@ The starting balance will be proposed automatically and the closing balance is t
             else:
                 computed_balance = 0.0
                 if reg.journal_id.type == 'cash':
-                    context['from_open'] = True
                     computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
-                    del context['from_open']
                 return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
         return res
 
@@ -2276,8 +2274,12 @@ class account_bank_statement_line(osv.osv):
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
+
+        # low level lock to prevent double posting
+        cr.execute('select id from account_bank_statement_line where id in %s for update', (tuple(ids),))
+
         # browse all statement lines for creating move lines
-        for absl in self.browse(cr, 1, ids, context=context):
+        for absl in self.browse(cr, 1, list(set(ids)), context=context):
             if not context.get('from_wizard_di'):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
@@ -2979,8 +2981,12 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] in ['down_payment', 'payroll']:
+            elif a['type_for_register'] == 'down_payment':
                 third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}

@@ -625,7 +625,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin != wiz.origin:
+                if wiz.purchase_id.name not in origin:
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -633,7 +633,7 @@ Nothing has been imported because of %s. See below:
                     cr.commit()
                     cr.close(True)
                     return res
-                header_values['imp_origin'] = origin
+                header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]
@@ -1715,6 +1715,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,
