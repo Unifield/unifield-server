@@ -144,10 +144,10 @@ function gogo(rid) {
                         edit_image = '/openerp/static/images/iconset-b-edit.gif'
                 %>
                 % if bothedit:
-                    <img alt="edit record" src="/openerp/static/images/partners-a-dots.gif"
-                        class="listImage" border="0" title="${_('Edit')}"
-                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
                     <img alt="edit record" src="${edit_image}"
+                        class="listImage" border="0" title="${_('Inline Edit')}"
+                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
+                    <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
                         class="listImage" border="0" title="${_('Edit')}"
                         onclick="new One2Many('${source}', false).edit(${data['id']});" />
 
