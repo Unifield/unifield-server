@@ -47,9 +47,22 @@ class hr_payment_method(osv.osv):
                 root = etree.fromstring(result['arch'])
                 root.set('editable', 'top')
                 root.set('hide_new_button', '0')
+                root.set('hide_edit_button', '0')
                 result['arch'] = etree.tostring(root)
         return result
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'name' in vals and not context.get('sync_update_execution'):
+            existing_ids = self.search(cr, uid, [('id', 'in', ids), ('name', '!=', vals['name'])])
+            if existing_ids and self.pool.get('hr.employee').search(cr, uid, [('active', 'in', ['t', 'f']), ('payment_method_id', 'in', existing_ids)]):
+                raise osv.except_osv(_('Error'), _("You can't change a payment method used at least in one employee"))
+
+        return super(hr_payment_method, self).write(cr, uid, ids, vals, context=context)
 hr_payment_method()
 
 
