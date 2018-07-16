@@ -48,6 +48,7 @@ class hr_payment_method(osv.osv):
                 root.set('editable', 'top')
                 root.set('hide_new_button', '0')
                 root.set('hide_edit_button', '0')
+                root.set('hide_delete_button', '0')
                 result['arch'] = etree.tostring(root)
         return result
 
@@ -145,7 +146,7 @@ class hr_employee(osv.osv):
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
         'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
-        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False),
+        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False, ondelete='restrict'),
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
     }
