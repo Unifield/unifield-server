@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
-
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class hr_payment_method(osv.osv):
     _name = 'hr.payment.method'
@@ -39,6 +39,16 @@ class hr_payment_method(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'The payment method name must be unique.')
     ]
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        result = super(hr_payment_method, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree':
+            if _get_instance_level(self, cr, uid) == 'hq':
+                root = etree.fromstring(result['arch'])
+                root.set('editable', 'top')
+                root.set('hide_new_button', '0')
+                result['arch'] = etree.tostring(root)
+        return result
 
 hr_payment_method()
 

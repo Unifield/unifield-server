@@ -817,3 +817,12 @@ class hr_employee(osv.osv):
         return True
 
 hr_employee()
+
+class hr_payment_method(osv.osv):
+    _inherit = 'hr.payment.method'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        r = self.read(cr, uid, [res_id], ['name'])[0]
+        return get_valid_xml_name('hr_payment_method', r['name'])
+
+hr_payment_method()
