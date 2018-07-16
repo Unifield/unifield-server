@@ -1574,7 +1574,7 @@ class stock_mission_report_line(osv.osv):
                        ON p.product_tmpl_id = t.id
                        LEFT JOIN
                           msf_instance i
-                       ON l.instance_id = i.id
+                       ON m.instance_id = i.id
                      WHERE m.full_view = False
                        AND (l.internal_qty != 0.00
                        OR l.stock_qty != 0.00
