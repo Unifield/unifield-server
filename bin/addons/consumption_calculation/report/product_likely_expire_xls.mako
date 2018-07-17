@@ -234,16 +234,8 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Qty</Data></Cell>
 </Row>
 % for il in getMonthItemLines(o, d):
+% if not isExpiredDate(il.expired_date) or il.available_qty != il.expired_qty:
 <Row>
-% if isExpiredDate(il.expired_date) and il.available_qty == il.expired_qty:
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">ALREADY EXPIRED PRODUCT REMOVED</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-% else:
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
@@ -251,8 +243,8 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
-% endif
 </Row>
+% endif
 % endfor
 </Table>
 <x:WorksheetOptions/>
