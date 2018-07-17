@@ -928,7 +928,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 add_error(_('Unknown line no %s') % line_no, row_index, 0)
                 line_no = False
 
-            discrepancy_report_lines.append((1, line_no, {'reason_type_id': adjustment_type, 'comment': comment}))
+            if inventory_rec.state == 'confirmed':
+                disc_line = (1, line_no, {'comment': comment})
+            else:
+                disc_line = (1, line_no, {'reason_type_id': adjustment_type, 'comment': comment})
+            discrepancy_report_lines.append(disc_line)
         # endfor
 
         context['import_in_progress'] = True
@@ -1385,6 +1389,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
+        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True, write_relate=False, store=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),
