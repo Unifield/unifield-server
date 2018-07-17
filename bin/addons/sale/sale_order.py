@@ -2778,6 +2778,12 @@ class sale_order_line(osv.osv):
         if vals.get('set_as_sourced_n', False):
             vals['state'] = 'sourced_n'
 
+        # US-4620 : Set price_unit to the product's standard price in case of synchro
+        if vals.get('sync_linked_pol') and product_id:
+            vals.update({
+                'price_unit': product_obj.read(cr, uid, product_id, ['standard_price'], context=context)['standard_price']
+            })
+
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
