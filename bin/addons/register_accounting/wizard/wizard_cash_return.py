@@ -773,6 +773,7 @@ class wizard_cash_return(osv.osv_memory):
         """
         if context is None:
             context = {}
+        account_obj = self.pool.get('account.account')
         wizard = self.browse(cr, uid, ids[0], context=context)
 
         # US-672/2
@@ -904,6 +905,11 @@ class wizard_cash_return(osv.osv_memory):
             debit = abs(advance.amount)
             credit = 0.0
             account_id = advance.account_id.id
+
+            # check the compatibility between Third Party and Account "Type for specific treatment"
+            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id,
+                                                          employee_id=line_employee_id, context=context)
+
             # Analytic distribution for this line
             distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
