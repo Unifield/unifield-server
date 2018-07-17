@@ -4621,8 +4621,8 @@ msgstr "Commencer la Production"
 #. module: purchase_followup
 #: code:addons/purchase_followup/purchase_followup.py:107
 #, python-format
-msgid "You cannot follow a non-confirmed Purchase order !"
-msgstr "Vous ne pouvez pas faire le suivi d'un Bon de Commande non confirmé !"
+msgid "You can only follow up confirmed Purchase order (lines)"
+msgstr "Vous pouvez seulement faire le suivi des Bons de commande confirmés"
 
 #. module: base
 #: selection:res.config.users,context_tz:0

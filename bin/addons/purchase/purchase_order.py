@@ -593,6 +593,25 @@ class purchase_order(osv.osv):
             po_ids.add(pol.order_id.id)
         return [('id', operator, list(po_ids))]
 
+
+    def _search_has_confirmed_or_further_line(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain corresponding to POs having at least one line being in Confirmed state or more
+        """
+        if context is None:
+            context = {}
+        pol_obj = self.pool.get('purchase.order.line')
+        if not args:
+            return []
+        if args[0][1] != '=' or len(args[0]) < 3:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+        operator = args[0][2] is True and 'in' or 'not in'
+        po_ids = set()
+        pol_ids = pol_obj.search(cr, uid, [('state', 'in', ['confirmed', 'done'])], context=context)
+        for pol in pol_obj.browse(cr, uid, pol_ids, fields_to_fetch=['order_id'], context=context):
+            po_ids.add(pol.order_id.id)
+        return [('id', operator, list(po_ids))]
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -741,6 +760,10 @@ class purchase_order(osv.osv):
                                               fnct_search=_search_has_confirmed_line,
                                               string='Has a confirmed line',
                                               help='Only used to SEARCH for POs with at least one line in Confirmed state'),
+        'has_confirmed_or_further_line': fields.function(_get_fake, type='boolean', method=True, store=False,
+                                                         fnct_search=_search_has_confirmed_or_further_line,
+                                                         string='Has a confirmed (or further) line',
+                                                         help='Only used to SEARCH for POs with at least one line in Confirmed or Closed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
     }
