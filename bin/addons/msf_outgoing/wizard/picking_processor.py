@@ -224,7 +224,7 @@ class stock_picking_processor(osv.osv):
                             for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
                                 # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
                                 sm_in_proc = line_obj.search(cr, uid, [
-                                    ('wizard_id', '=', in_proc_id), 
+                                    ('wizard_id', '=', in_proc_id),
                                     ('line_number', '=', move.line_number),
                                     ('split_move_ok', '=', False),
                                     ('pack_info_id', '!=', False),
@@ -240,7 +240,7 @@ class stock_picking_processor(osv.osv):
                             for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
                                 # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
                                 sm_in_proc = line_obj.search(cr, uid, [
-                                    ('wizard_id', '=', in_proc_id), 
+                                    ('wizard_id', '=', in_proc_id),
                                     ('line_number', '=', move.line_number),
                                     ('split_move_ok', '=', False),
                                     ('pack_info_id', '!=', False),

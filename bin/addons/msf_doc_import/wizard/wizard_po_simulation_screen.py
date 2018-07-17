@@ -1326,6 +1326,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                            type='float', string='Discrepancy',
                                            store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['imp_qty', 'imp_price', 'in_qty', 'in_price', 'type_change', 'po_line_id'], 20),}),
         'imp_currency': fields.many2one('res.currency', string='Currency', readonly=True),
+        'imp_stock_take_date': fields.date(string='Stock Take Date', readonly=True),
         'imp_drd': fields.date(string='Delivery Requested Date', readonly=True),
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
         'esc_conf': fields.boolean(string='ESC Confirmed', readonly=True),
@@ -1397,13 +1398,16 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     else:
                         errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
                 else:
-                    write_vals['type_change'] = 'del'
-                    if line.in_line_number:
-                        to_delete = self.search(cr, uid, [
-                            ('simu_id', '=', line.simu_id.id),
-                            ('in_line_number', '=', line.in_line_number),
-                        ], context=context)
-                        self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
+                    if line.po_line_id.state in ('validated', 'validated_n'):
+                        write_vals['type_change'] = 'del'
+                        if line.in_line_number:
+                            to_delete = self.search(cr, uid, [
+                                ('simu_id', '=', line.simu_id.id),
+                                ('in_line_number', '=', line.in_line_number),
+                            ], context=context)
+                            self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
+                    else:
+                        write_vals['type_change'] = 'ignore'
 
             if not line.in_line_number and not write_vals.get('imp_external_ref'):
                 errors.append(_('The line should have a Line no. or an Ext Ref.'))
@@ -1510,6 +1514,23 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
+
+            # Stock Take Date
+            stock_take_date = values[9]
+            if stock_take_date and type(stock_take_date) == type(DateTime.now()):
+                write_vals['imp_stock_take_date'] = stock_take_date.strftime('%Y-%m-%d')
+            elif stock_take_date and isinstance(stock_take_date, str):
+                try:
+                    time.strptime(stock_take_date, '%Y-%m-%d')
+                    write_vals['imp_stock_take_date'] = stock_take_date
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Stock Take Date\'')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            elif stock_take_date:
+                err_msg = _('Incorrect date value for field \'Stock Take Date\'')
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
             drd_value = values[10]
@@ -1646,6 +1667,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
+                    if line.imp_stock_take_date:
+                        line_vals['stock_take_date'] = line.imp_stock_take_date,
 
                     # UF-2537 after split reinject import qty computed in
                     # simu for import consistency versus simu
@@ -1703,6 +1726,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'display_sync_ref': True,
                              'created_by_vi_import': True,
                              }
+                if line.imp_stock_take_date:
+                    line_vals['stock_take_date'] = line.imp_stock_take_date,
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
                 if line.imp_project_ref:

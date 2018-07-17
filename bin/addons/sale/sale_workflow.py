@@ -555,12 +555,16 @@ class sale_order_line(osv.osv):
                 )
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
+            if sol.order_id.order_type == 'loan':
+                to_write['supplier'] = False
+                to_write['type'] = 'make_to_stock'
+                to_write['po_cft'] = False
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
                     raise osv.except_osv(
                         _('Error'),
-                        _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
+                        _('Line #%s: You cannot validate a line with unit price as zero.') % sol.line_number
                     )
                 # check analytic distribution before validating the line:
                 self.analytic_distribution_checks(cr, uid, [sol.id], context=context)
