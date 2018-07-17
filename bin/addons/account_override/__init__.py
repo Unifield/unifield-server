@@ -48,8 +48,10 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier refund
     'in_invoice': [
         ('type', '!=', 'view'),
-        # Either Payable/Payables accounts or Regular / Debt accounts
-        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
+        # Either Payable/Payables or Payable/Tax or Regular/Debt or Regular/Cash or Regular/Income accounts
+        '|',
+        '&', ('type', '=', 'payable'), ('user_type_code', 'in', ['payables', 'tax']),
+        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt', 'cash', 'income']),
         ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF:
