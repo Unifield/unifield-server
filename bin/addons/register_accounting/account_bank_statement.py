@@ -771,9 +771,7 @@ The starting balance will be proposed automatically and the closing balance is t
             else:
                 computed_balance = 0.0
                 if reg.journal_id.type == 'cash':
-                    context['from_open'] = True
                     computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
-                    del context['from_open']
                 return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
         return res
 
@@ -2983,8 +2981,12 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] in ['down_payment', 'payroll']:
+            elif a['type_for_register'] == 'down_payment':
                 third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}

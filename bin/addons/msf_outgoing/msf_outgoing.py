@@ -3801,7 +3801,7 @@ class stock_picking(osv.osv):
                 if move_vals['processed_qty'] > move_vals['initial_qty']:
                     raise osv.except_osv(
                         _('Error'),
-                        _('Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed' % move_vals['line_number'])
+                        _('Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed') % move_vals['line_number']
                     )
                 initial_qty = max(move_vals['initial_qty'] - move_vals['processed_qty'], 0.00)
                 wr_vals = {

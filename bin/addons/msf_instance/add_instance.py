@@ -440,7 +440,7 @@ class account_bank_statement(osv.osv):
                 # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change
                 if 'balance_end_real' in newvals and not context.get('from_cash_statement_equal_balance', False):
                     del newvals['balance_end_real']
-                if 'balance_start' in newvals:
+                if 'balance_start' in newvals and not context.get('update_next_reg_balance_start', False):
                     del newvals['balance_start']
                 if 'ending_details_ids' in newvals:
                     del newvals['ending_details_ids']
