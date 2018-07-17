@@ -812,8 +812,9 @@
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% move_lines = [] %>
-% if line.invoice_id:
-<% move_lines = getMoveLines([line.invoice_id.move_id], line) %>
+<% invoice_move = line.invoice_id and line.invoice_id.move_id or line.advance_invoice_move_id %>
+% if invoice_move:
+<% move_lines = getMoveLines([invoice_move], line) %>
 % elif line.imported_invoice_line_ids:
 <% move_lines = getImportedMoveLines([ml for ml in line.imported_invoice_line_ids], line) %>
 % elif line.direct_invoice_move_id:

@@ -101279,3 +101279,12 @@ msgstr "RAPPORT DE REGISTRE"
 msgid "Post Date"
 msgstr "Date comptab."
 
+#. module: register_accounting
+#: field:account.bank.statement.line,advance_invoice_move_id:0
+msgid "Account Move of the Invoice used to close the Advance"
+msgstr "Ecriture Comptable de la Facture utilisée pour clôturer l'Avance"
+
+#. module: register_accounting
+#: help:account.bank.statement.line,advance_invoice_move_id:0
+msgid "When a SI is used to close an Advance, the related JE is stored in this field"
+msgstr "Lorsqu'une facture est utilisée pour clôturer une avance, l'écriture comptable associée est stockée dans ce champ"
