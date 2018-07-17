@@ -1123,7 +1123,7 @@ class purchase_order_line(osv.osv):
 
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
-        if pol.state in ['cancel', 'cancel_r']:
+        if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
             return False
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
