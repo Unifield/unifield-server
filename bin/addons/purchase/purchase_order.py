@@ -743,6 +743,8 @@ class purchase_order(osv.osv):
                                               help='Only used to SEARCH for POs with at least one line in Confirmed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
+        'from_address': fields.many2one('res.partner.address', string='From Address'),
+        'partner_company_id': fields.many2one('res.partner', string='Instance partner'),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -751,9 +753,11 @@ class purchase_order(osv.osv):
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'other',
         'loan_duration': 2,
-        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
+        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['default'])['default'],
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
+        'from_address': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
+        'partner_company_id': lambda self, cr, uid, ctx: self.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id,
         'no_line': lambda *a: True,
         'active': True,
         'name': lambda *a: False,
