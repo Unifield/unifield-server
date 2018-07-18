@@ -414,12 +414,13 @@ class automated_import_job(osv.osv):
                                 msg += _(' and ')
                         if nb_rejected:
                             msg += _('%s lines have been rejected') % nb_rejected
-                        self.log(cr, uid, job.id, msg)
+                        if nb_processed or nb_rejected:
+                            self.pool.get('purchase.order').log(cr, uid, po_id, msg)
 
                 if context.get('job_comment'):
-                    error_message += context['job_comment']
-                    for mess in error_message:
-                        self.log(cr, uid, job.id, mess)
+                    for msg_dict in context['job_comment']:
+                        self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
+                        error_message.append(msg_dict['msg'])
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,

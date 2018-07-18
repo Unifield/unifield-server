@@ -225,7 +225,7 @@ class purchase_order(osv.osv):
             file_content = self.get_file_content(cr, uid, file_path, context=context)
 
             # get po_id from file
-            po_id = self.get_po_id_from_file(cr, uid, file_path, context=None)
+            po_id = self.get_po_id_from_file(cr, uid, file_path, context=context)
             context['po_id'] = po_id
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
@@ -258,26 +258,31 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
+        context.update({'auto_import_confirm_pol': True})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         if context.get('po_id'):
             po = self.browse(cr, uid, context['po_id'], context=context)
             nb_pol_confirmed = 0
             for pol in po.order_line:
-                try:
-                    self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                    cr.commit()
-                    nb_pol_confirmed += 1
-                except:
-                    cr.rollback()
-                    self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
+                if pol.line_number in context.get('line_number_to_confirm', []) or \
+                    (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
+                    try:
+                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                        cr.commit()
+                        nb_pol_confirmed += 1
+                    except:
+                        cr.rollback()
+                        self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
+                        job_comment = context.get('job_comment', [])
+                        job_comment.append({
+                            'res_model': 'purchase.order',
+                            'res_id': po.id,
+                            'msg': _('%s line #%s cannot be confirmed') % (po.name, pol.line_number),
+                        })
+                        context['job_comment'] = job_comment
 
             if nb_pol_confirmed:
                 self.log(cr, uid, po.id, _('%s: %s lines have been confirmed') % (po.name, nb_pol_confirmed))
-
-            for line_number_not_confirmed in [pol.line_number for pol in po.order_line if pol.state != 'confirmed']:
-                job_comment = context.get('job_comment', [])
-                job_comment.append(_('PO line #%s cannot be confirmed') % line_number_not_confirmed)
-                context['job_comment'] = job_comment
 
         return res
 

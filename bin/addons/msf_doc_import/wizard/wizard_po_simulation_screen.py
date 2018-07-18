@@ -814,6 +814,14 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
+                    if context.get('auto_import_confirm_pol'):
+                        delivery_confirmed_date = values.get(x, [None]*12)[11]
+                        if delivery_confirmed_date:
+                            if line_number:
+                                context['line_number_to_confirm'] = context.get('line_number_to_confirm', []) + [line_number]
+                            elif ext_ref:
+                                context['ext_ref_to_confirm'] = context.get('ext_ref_to_confirm', []) + [ext_ref]
+
                     if not line_number and not ext_ref:
                         not_ok = True
                         err1 = _('The line must have either the line number or the external ref. set')
@@ -1674,10 +1682,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'confirmed_delivery_date': line.imp_dcd or False,
                             'esc_confirmed': True if line.imp_dcd else False,
                         })
-                        if context.get('auto_import_ok') and line.parent_line_id.po_line_id.analytic_distribution_id:
+                        if context.get('auto_import_ok'):
+                          if line.parent_line_id.po_line_id.analytic_distribution_id:
                             line_vals.update({
-                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                              'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
                             })
+                          if line.parent_line_id.po_line_id.stock_take_date:
+                            line_vals['stock_take_date'] = line.parent_line_id.po_line_id.stock_take_date
                         line_obj.create(cr, uid, line_vals, context=context)
                     else:
                         if line.imp_dcd:
@@ -1696,6 +1707,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     }
                     line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
                                    line_vals, context=context)
+
+                    job_comment = context.get('job_comment', [])
+                    job_comment.append({
+                        'res_model': 'purchase.order',
+                        'res_id': line.simu_id.order_id.id,
+                        'msg': _('Line #%s has been split.') % line.parent_line_id.po_line_id.line_number,
+                    })
+                    context['job_comment'] = job_comment
             elif line.type_change == 'new':
                 line_vals = {'order_id': line.simu_id.order_id.id,
                              'product_id': line.imp_product_id.id,
@@ -1719,7 +1738,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['external_ref'] = line.imp_external_ref
                 if line.esc_conf:
                     line_vals['esc_confirmed'] = line.esc_conf
-                line_obj.create(cr, uid, line_vals, context=context)
+                new_line_id = line_obj.create(cr, uid, line_vals, context=context)
+                new_line_numb = line_obj.read(cr, uid, new_line_id, ['line_number'], context=context)['line_number']
+                job_comment = context.get('job_comment', [])
+                job_comment.append({
+                    'res_model': 'purchase.order',
+                    'res_id': line.simu_id.order_id.id,
+                    'msg': _('New line #%s created.') % new_line_numb,
+                })
+                context['job_comment'] = job_comment
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
                              'product_uom': line.imp_uom.id,
@@ -1738,6 +1765,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['external_ref'] = line.imp_external_ref
                 if line.esc_conf:
                     line_vals['esc_confirmed'] = line.esc_conf
+                if context.get('auto_import_ok') and line.simu_id.order_id.stock_take_date:
+                    line_vals['stock_take_date'] = line.simu_id.order_id.stock_take_date
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
