@@ -407,13 +407,14 @@ class automated_import_job(osv.osv):
                     po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
                     if po_id and (nb_processed or nb_rejected):
                         po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
+                        nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
                         msg = _('%s: ') % po_name
                         if nb_processed:
-                            msg += _('%s lines have been updated') % nb_processed
+                            msg += _('%s out of %s lines have been updated') % (nb_processed, nb_total_pol)
                             if nb_rejected:
                                 msg += _(' and ')
                         if nb_rejected:
-                            msg += _('%s lines have been rejected') % nb_rejected
+                            msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
                         if nb_processed or nb_rejected:
                             self.pool.get('purchase.order').log(cr, uid, po_id, msg)
 

@@ -263,7 +263,9 @@ class purchase_order(osv.osv):
         if context.get('po_id'):
             po = self.browse(cr, uid, context['po_id'], context=context)
             nb_pol_confirmed = 0
+            nb_pol_total = 0
             for pol in po.order_line:
+                nb_pol_total += 1
                 if pol.line_number in context.get('line_number_to_confirm', []) or \
                     (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
                     try:
@@ -282,7 +284,7 @@ class purchase_order(osv.osv):
                         context['job_comment'] = job_comment
 
             if nb_pol_confirmed:
-                self.log(cr, uid, po.id, _('%s: %s lines have been confirmed') % (po.name, nb_pol_confirmed))
+                self.log(cr, uid, po.id, _('%s: %s out of %s lines have been confirmed') % (po.name, nb_pol_confirmed, nb_pol_total))
 
         return res
 
