@@ -435,7 +435,7 @@ class account_bank_statement(osv.osv):
             # if the End-of-the-Month Balance has already been confirmed for a register, ignore changes on fields that
             # should be read-only in that case (cover the use case of concurrent changes by 2 users)
             newvals = vals.copy()
-            if reg.closing_balance_frozen:
+            if reg.closing_balance_frozen and not context.get('sync_update_execution', False):
                 # remove the values for each register with a confirmed balance
                 # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change
                 if 'balance_end_real' in newvals and not context.get('from_cash_statement_equal_balance', False):
@@ -527,8 +527,9 @@ class account_cashbox_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = True
+        from_synchro = context.get('sync_update_execution', False)
         for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id'], context=context):
-            if not line.ending_id or not line.ending_id.closing_balance_frozen:
+            if from_synchro or (not line.ending_id or not line.ending_id.closing_balance_frozen):
                 res = res and super(account_cashbox_line, self).unlink(cr, uid, [line.id], context=context)
         return res
 
