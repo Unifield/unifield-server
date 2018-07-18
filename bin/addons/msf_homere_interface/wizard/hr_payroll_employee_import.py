@@ -374,7 +374,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if payment_method_ids:
                     payment_method_id = payment_method_ids[0]
                 else:
-                    raise osv.except_osv(_('Error'), _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (bqmodereglement, line_number))
+                    raise osv.except_osv(_('Error'), _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (ustr(bqmodereglement), line_number))
 
             vals.update({'payment_method_id': payment_method_id})
 
