@@ -202,6 +202,7 @@ def compute_location_value(cr, uid, **kwargs):
     product_id = kwargs.get('product_id')
     pick_type = kwargs.get('pick_type')
     pick_subtype = kwargs.get('pick_subtype')
+    pick_ext_cu = kwargs.get('pick_ext_cu')
     context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
@@ -232,18 +233,30 @@ def compute_location_value(cr, uid, **kwargs):
 
                 loc_ids = loc_obj.search(cr, uid, domain, context=context)
                 loc_by_name_ids = loc_obj.search(cr, uid, [('name', '=ilike', loc_name)], context=context)
-                if loc_ids:
-                    loc_id = loc_ids[0]
-                elif loc_by_name_ids:
-                    loc_by_name = loc_obj.browse(cr, uid, loc_by_name_ids[0], context=context)
-                    if pick_type == 'in' and loc_by_name.location_category == 'consumption_unit' \
-                            and loc_by_name.usage == 'customer':
-                        loc_id = loc_by_name.id
-                        ext_cu = True
+                if pick_ext_cu:
+                    if loc_ids and loc_ids[0] != pick_ext_cu.id:
+                        error_list.append(
+                            _('The Location "%s" on line level is not the same as the Location "%s" on header level.')
+                            % (loc_name, pick_ext_cu.name))
+                    elif loc_by_name_ids and loc_by_name_ids[0] != pick_ext_cu.id:
+                        error_list.append(
+                            _('The Location "%s" on line level is not the same as the Location "%s" on header level.')
+                            % (loc_name, pick_ext_cu.name))
                     else:
-                        error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                        loc_id = pick_ext_cu.id
+                        ext_cu = True
                 else:
-                    error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
+                    if loc_ids:
+                        loc_id = loc_ids[0]
+                    elif loc_by_name_ids:
+                        loc_by_name = loc_obj.browse(cr, uid, loc_by_name_ids[0], context=context)
+                        if pick_type == 'in' and loc_by_name.location_category == 'consumption_unit' \
+                                and loc_by_name.usage == 'customer':
+                            loc_id = loc_by_name.id
+                        else:
+                            error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                    else:
+                        error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
 
         else:
             msg = _('The Location Name has to be string.')

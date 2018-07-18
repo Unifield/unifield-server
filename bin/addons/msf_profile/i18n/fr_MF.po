@@ -108380,3 +108380,10 @@ msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engage
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
 msgid "Budget missing"
 msgstr "Budget manquant"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:238
+#: code:addons/msf_doc_import/check_line.py:242
+#, python-format
+msgid "The Location \"%s\" on line level is not the same as the Location \"%s\" on header level."
+msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s\" au niveau de l'entête."
