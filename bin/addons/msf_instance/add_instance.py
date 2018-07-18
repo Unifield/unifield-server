@@ -529,7 +529,7 @@ class account_cashbox_line(osv.osv):
         res = True
         from_synchro = context.get('sync_update_execution', False)
         for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id'], context=context):
-            if from_synchro or (not line.ending_id or not line.ending_id.closing_balance_frozen):
+            if from_synchro or not line.ending_id or not line.ending_id.closing_balance_frozen:
                 res = res and super(account_cashbox_line, self).unlink(cr, uid, [line.id], context=context)
         return res
 
