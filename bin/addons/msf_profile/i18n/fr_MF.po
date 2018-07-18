@@ -101360,3 +101360,10 @@ msgstr "Ligne %s. Veuillez renseigner une valeur en devise d'enregistrement, soi
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:173
 msgid "Expired"
 msgstr "Expiré"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:321
+#: code:addons/msf_config_locations/stock_configuration.py:346
+#, python-format
+msgid "A location with a similar name already exists."
+msgstr "Une zone avec un nom similaire existe déjà."
