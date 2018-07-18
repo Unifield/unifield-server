@@ -369,14 +369,12 @@ class hr_payroll_employee_import(osv.osv_memory):
 
             # Update the payment method
             payment_method_id = False
-            if bqmodereglement:
-                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
+            if bqmodereglement and bqmodereglement.strip():
+                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement.strip())], limit=1, context=context)
                 if payment_method_ids:
                     payment_method_id = payment_method_ids[0]
                 else:
-                    message = _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (bqmodereglement, line_number)
-                    self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
-                    return False, created, updated
+                    raise osv.except_osv(_('Error'), _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (bqmodereglement, line_number))
 
             vals.update({'payment_method_id': payment_method_id})
 
