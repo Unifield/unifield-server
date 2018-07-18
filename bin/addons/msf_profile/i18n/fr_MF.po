@@ -12291,7 +12291,7 @@ msgstr "Relevé sous statut brouillon"
 #. module: product_attributes
 #: model:ir.actions.act_window,name:product_attributes.action_order_line_product_tree
 msgid "Field orders"
-msgstr "Field orders"
+msgstr "Commandes de terrain"
 
 #. module: tender_flow
 #: selection:tender,internal_state:0
@@ -88892,7 +88892,7 @@ msgstr "Compte- Journal"
 #: view:account.analytic.line:0
 #: field:analytic.distribution,purchase_ids:0
 #: model:ir.ui.menu,name:base.menu_purchase_root
-#: model:ir.actions.act_window,name:purchase.action_purchase_line_product_tree
+#: model:ir.actions.act_window,name:purchase.action_purchase_line_product_tree2
 msgid "Purchases"
 msgstr "Achats"
 
