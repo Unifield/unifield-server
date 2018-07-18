@@ -1572,7 +1572,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 job_comment.append({
                     'res_model': 'stock.picking',
                     'res_id': line.simu_id.picking_id.id,
-                    'msg': _('Line %s: %s') % (line.line_number, msg)
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
                 })
             context['job_comment'] = job_comment
 
