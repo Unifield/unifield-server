@@ -51,6 +51,39 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF9.1
+    def change_xml_payment_method(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if not level_current:
+            return True
+
+
+        identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
+        cr.execute("update sync_client_update_received set run='t', log='Set as run by US-4762' where run='f' and model='hr.payment.method'")
+        cr.execute("delete from ir_model_data where model='hr.payment.method' and res_id not in (select id from hr_payment_method)")
+        cr.execute("update ir_model_data set name=(select 'hr_payment_method_'||name from hr_payment_method where id=res_id) where model='hr.payment.method'")
+
+        # on HQ sync down payment method
+        if level_current == 'section':
+            cr.execute("update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='hr.payment.method'")
+            pay_obj = self.pool.get('hr.payment.method')
+            for pm in ['ESP', 'CHQ', 'VIR']:
+                if not pay_obj.search(cr, uid, [('name', '=', pm)]):
+                    pay_obj.create(cr, uid, {'name': pm})
+
+
+        # touch employee created on this instance
+        cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''payment_method_id'']' where model='hr.employee' and module='sd' and name like %s||'/%%'
+            and res_id in (select id from hr_employee where payment_method_id is not null)""" , (identifier,))
+
+        return True
+
     # UF9.0
     def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
         data = self.pool.get('ir.model.data')
