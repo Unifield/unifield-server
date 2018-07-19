@@ -3810,17 +3810,6 @@ msgstr "Date de Mouvement Réel"
 msgid "The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue"
 msgstr "Le catalogue que vous essayez de confirmer est déjà confirmé. Merci de rafraîchir la page pour mettre à jour le statut de ce catalogue"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:192
-#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:181
-#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:275
-#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:237
-#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:382
-#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:200
-#, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes en erreur, elle a des éléments en dehors des colonnes définies %s. Détails: %s"
-
 #. module: purchase
 #: report:purchase.order:0
 msgid "Purchase Order Confirmation N°"
@@ -4053,7 +4042,8 @@ msgstr "Activer"
 msgid "You cannot perform this action now."
 msgstr "Vous ne pouvez pas faire cette action maintenant."
 
-#. module: specific_rules
+#. module: specific_rules, stock
+#: code:addons/stock/stock.py:1729
 #: code:addons/specific_rules/stock.py:173
 #, python-format
 msgid "is done."
@@ -8908,6 +8898,10 @@ msgstr "My Departments Jobs"
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:236
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:407
 #: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:270
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:216
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:247
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:226
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:215
 #, python-format
 msgid " \n"
 "Importation completed in %s!\n"
@@ -12240,12 +12234,6 @@ msgstr "Valider Lignes de Régularisation "
 msgid "# data not run"
 msgstr "# data not run"
 
-#. module: stock
-#: code:addons/stock/stock.py:1729
-#, python-format
-msgid "is done."
-msgstr "est effectué."
-
 #. module: tender_flow
 #: code:addons/tender_flow/tender_flow.py:322
 #, python-format
@@ -15207,7 +15195,7 @@ msgstr "Enregistrer nouveau modèle"
 #: code:addons/consumption_calculation/consumption_calculation.py:493
 #, python-format
 msgid "The RAC lines has been exported. Please click on Save As button to download the file"
-msgstr "The RAC lines has been exported. Please click on Save As button to download the file"
+msgstr "Les lignes de CMR ont été exportées. Cliquez sur le bouton 'Enregistrer sous' pour télécharger le fichier"
 
 #. modules: account, account_voucher
 #: view:account.invoice.report:0
@@ -20393,12 +20381,6 @@ msgstr "Erreurs d'Import"
 #: report:addons/financing_contract/report/project_expenses_xls.mako:396
 msgid "Grant amount:"
 msgstr "Montant des Subventions:"
-
-#. module: stock_override
-#: report:delivery.order:0
-#: report:internal.move:0
-msgid "Asset"
-msgstr "Bien"
 
 #. module: stock
 #: code:addons/stock/wizard/stock_change_product_qty.py:107
@@ -31027,22 +31009,6 @@ msgstr "Articles de Substitution"
 #: help:procurement.batch.cron,interval_number:0
 msgid "Repeat every x."
 msgstr "Répéter tous les x."
-
-#. modules: account, supplier_catalogue, product, product_asset, mission_stock, msf_doc_import, return_claim
-#: selection:report.account.receivable,type:0
-#: view:stock.mission.report.line:0
-#: selection:stock.mission.report.line,subtype:0
-#: code:addons/msf_doc_import/wizard/__init__.py:68
-#: code:addons/msf_doc_import/wizard/__init__.py:73
-#: code:addons/msf_doc_import/wizard/__init__.py:78
-#: view:product.product:0
-#: view:product.asset:0
-#: selection:product.template,subtype:0
-#: view:return.claim:0
-#: view:supplier.catalogue.line:0
-#, python-format
-msgid "Asset"
-msgstr "Actifs"
 
 #. module: specific_rules
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:41
@@ -45116,12 +45082,6 @@ msgstr "Nouvelle langue %s installée"
 msgid "Date Req."
 msgstr "Date Souhaitée"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:4722
-#, python-format
-msgid "The shipment process is completed and cannot be canceled!"
-msgstr "La procédure d'expédition est complete et ne peut être annulée!"
-
 #. modules: purchase, sale
 #: model:ir.actions.act_window,name:purchase.action_view_purchase_line_invoice
 #: view:sale.make.invoice:0
@@ -46069,12 +46029,6 @@ msgstr "Is account correctible"
 #: view:substitute:0
 msgid "Process Substitute"
 msgstr "Traiter les substitutions"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/shipment.py:226
-#, python-format
-msgid "Create Shipment"
-msgstr "Créer une Expédition"
 
 #. module: account_payment
 #: report:payment.order:0
@@ -48748,23 +48702,6 @@ msgstr "Sourced-v"
 #: field:base.setup.installer,point_of_sale:0
 msgid "Point of Sales"
 msgstr "Point de Ventes"
-
-#. modules: return_claim, msf_outgoing, product_asset, kit
-#: field:composition.item,hidden_asset_mandatory:0
-#: field:composition.item,item_asset_id:0
-#: field:substitute.item,asset_id_substitute_item:0
-#: field:substitute.item,hidden_asset_mandatory:0
-#: field:substitute.item.mirror,asset_id_substitute_item:0
-#: field:substitute.item.mirror,hidden_asset_mandatory:0
-#: field:stock.move.memory.picking,asset_id:0
-#: field:stock.move.memory.ppl,asset_id:0
-#: field:stock.move.memory.returnproducts,asset_id:0
-#: field:stock.move,asset_id:0
-#: field:stock.move.memory.in,asset_id:0
-#: field:stock.move.memory.out,asset_id:0
-#: field:claim.product.line,asset_id_claim_product_line:0
-msgid "Asset"
-msgstr "Biens"
 
 #. module: analytic_distribution
 #: model:ir.model,name:analytic_distribution.model_mass_reallocation_verification_wizard
@@ -61990,13 +61927,6 @@ msgstr "MONGOLIAN TUGRIK"
 msgid "You should select at least one day of the month !"
 msgstr "Vous devriez sélectionner au minimum un jour du mois! "
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/purchase_order.py:395
-#: code:addons/msf_doc_import/sale_order.py:81
-#, python-format
-msgid "%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
-msgstr "%s a été désactivé. Si vous valider le document vous devez supprimer/corriger la ligne contenant les produits inactifs (ligne en rouge %s)"
-
 #. module: stock
 #: view:stock.picking:0
 msgid "Open processing wizard"
@@ -63643,6 +63573,7 @@ msgstr "Priorité Appel d'Offres"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/shipment_processor.py:151
 #: code:addons/msf_outgoing/wizard/shipment_processor.py:182
+#: code:addons/msf_outgoing/wizard/shipment.py:226
 #, python-format
 msgid "Create Shipment"
 msgstr "Créer Expédition"
@@ -66913,12 +66844,15 @@ msgstr "lignes"
 msgid "Budget Lines"
 msgstr "Budget - Lignes"
 
-#. modules: msf_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit, analytic_distribution
 #: code:addons/consumption_calculation/consumption_calculation.py:69
 #: code:addons/kit/kit.py:860
 #: code:addons/msf_doc_import/initial_stock_inventory.py:70
 #: code:addons/msf_doc_import/initial_stock_inventory.py:611
 #: code:addons/stock_override/stock.py:436
+#: code:addons/msf_doc_import/purchase_order.py:395
+#: code:addons/msf_doc_import/sale_order.py:81
+#: code:addons/analytic_distribution/invoice.py:48
 #, python-format
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
@@ -77595,9 +77529,10 @@ msgstr "Zone de Transit pour les transferts inter-sociétés"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/expiry_calculation.py:368
 #: code:addons/consumption_calculation/expiry_calculation.py:371
+#: code:addons/consumption_calculation/weekly_forecast_report.py:311
 #, python-format
 msgid "You cannot have 'To date' older than 'From date'"
-msgstr "Vous ne pouvez pas avoir de 'date -de fin' antérieure à la 'date-de début'"
+msgstr "Vous ne pouvez pas avoir de 'date-de fin' antérieure à la 'date-de début'"
 
 #. module: product_attributes
 #: model:ir.model,name:product_attributes.model_product_supply_source
@@ -78202,11 +78137,11 @@ msgid "\n"
 "           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
 "        "
 msgstr "\n"
-"        IMPORTANT : The first line will be ignored by the system.\n"
+"        IMPORTANT : La première ligne sera ignorée par la système.\n"
 "        \n"
-"        The file should be in XML 2003 format.\n"
-"        The columns should be in this order :\n"
-"           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
+"        Les fichier doit être au format XML 2003.\n"
+"        Les colonnes doivent être dans cet ordre :\n"
+"           Code Produit ;  Description Produit ; UdM du Produit ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
 "        "
 
 #. module: msf_outgoing
@@ -79309,30 +79244,6 @@ msgstr "La date Prêt pour expédition devrait être postérieure à la date de 
 #: model:res.currency,currency_name:base.SOS
 msgid "SOMALI SHILLING"
 msgstr "SOMALI SHILLING"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:216
-#, python-format
-msgid "\n"
-"%s\n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-msgstr "\n"
-"%s\n"
-"Importation terminée en %s!\n"
-"# de lignes importées : %s sur %s lignes\n"
-"# de lignes ignorées : %s\n"
-"# de lignes à corriger : %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
 
 #. module: sale
 #: field:sale.order.sourcing.progress,check_data:0
@@ -80640,8 +80551,9 @@ msgstr "Installation of module 'update_client' in progress..."
 msgid "Define your company's financial year according to your needs. A financial year is a period at the end of which a company's accounts are made up (usually 12 months). The financial year is usually referred to by the date in which it ends. For example, if a company's financial year ends November 30, 2011, then everything between December 1, 2010 and November 30, 2011  would be referred to as FY 2011. You are not obliged to follow the actual calendar year."
 msgstr "Définir l'exercice comptable de votre société selon vos besoins. Un exercice comptable est une période à la fin de laquelle tous les comptes de la société sont clôturés (habituellement 12 mois). Le nom donné à un exercice comptable est généralement celui de la  date à laquelle l'exercice prend  fin. Par exemple, si l'exercice financier d'une société se termine le 30 novembre 2011, tout ce qui se passe entre le 1er décembre 2010 et le 30 novembre 2011 sera référencé comme FY2011. Vous n'êtes pas obligé de suivre l'année calendaire."
 
-#. module: stock_override
+#. modules: stock_override, msf_outgoing
 #: code:addons/stock_override/stock.py:708
+#: code:addons/msf_outgoing/msf_outgoing.py:4722
 #, python-format
 msgid "The shipment process is completed and cannot be canceled!"
 msgstr "Le processus d'expédition est terminé et ne peut plus être annulé!"
@@ -90452,12 +90364,6 @@ msgstr "Please remove non-stockable from the discrepancy report to validate:\n"
 msgid "Indicative stock"
 msgstr "Qté indicative en stock"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/weekly_forecast_report.py:311
-#, python-format
-msgid "You cannot have 'To date' older than 'From date'"
-msgstr "Vous ne pouvez pas avoir 'Date jusqu'à' plus ancienne que 'Date à partir de'"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: model:ir.actions.act_window,name:register_accounting.act_wizard_closing_cashbox
@@ -93646,12 +93552,6 @@ msgstr "SIERRA LEONEAN LEONE"
 msgid "wiz.common.import"
 msgstr "wiz.common.import"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/invoice.py:48
-#, python-format
-msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
-msgstr "%s inactivés. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s rouge du document)"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -93856,28 +93756,6 @@ msgstr "Produit - Modèles"
 #: selection:sale.order,order_policy:0
 msgid "Invoice From The Picking"
 msgstr "Facture A partir du Picking"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:247
-#, python-format
-msgid "\n"
-"Importation completed in %s!\n"
-"# of imported linse: %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-msgstr "\n"
-"Importation completed in %s!\n"
-"# of imported linse: %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
 
 #. modules: msf_doc_import, purchase, msf_supply_doc_export, purchase_override
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:75
@@ -94841,6 +94719,12 @@ msgstr "PME"
 #: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:245
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:352
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:186
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:192
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:181
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:275
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:237
+#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:382
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:200
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 msgstr "La ligne %s du fichier a été ajoutée au fichier des erreurs, il y a des données en dehors des %s colonnes définies. Détails: %s"
@@ -99909,29 +99793,6 @@ msgstr "Importer Paie"
 msgid "Canada/Central"
 msgstr "Canada/Central"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:226
-#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:215
-#, python-format
-msgid " \n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-msgstr " \n"
-"Importation completed in %s!\n"
-"# of imported lines : %s on %s lines\n"
-"# of ignored lines: %s\n"
-"# of lines to correct: %s\n"
-"%s\n"
-"\n"
-"%s\n"
-""
-
 #. module: base
 #: model:res.currency,currency_name:base.MMF
 msgid "MYANMA KYAT2"
@@ -100449,7 +100310,7 @@ msgstr "Display account types?"
 msgid "Languages"
 msgstr "Langues"
 
-#. modules: msf_doc_import, msf_outgoing, consumption_calculation, msf_supply_doc_export, kit
+#. modules: account, msf_outgoing, stock_override, supplier_catalogue, consumption_calculation, product_asset, kit, product, msf_supply_doc_export, mission_stock, msf_doc_import, return_claim
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:74
 #: view:real.average.consumption:0
@@ -100474,6 +100335,32 @@ msgstr "Langues"
 #: field:validate.move.processor,asset_id:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:69
+#: field:composition.item,hidden_asset_mandatory:0
+#: field:composition.item,item_asset_id:0
+#: field:substitute.item,asset_id_substitute_item:0
+#: field:substitute.item,hidden_asset_mandatory:0
+#: field:substitute.item.mirror,asset_id_substitute_item:0
+#: field:substitute.item.mirror,hidden_asset_mandatory:0
+#: field:stock.move.memory.picking,asset_id:0
+#: field:stock.move.memory.ppl,asset_id:0
+#: field:stock.move.memory.returnproducts,asset_id:0
+#: field:stock.move,asset_id:0
+#: field:stock.move.memory.in,asset_id:0
+#: field:stock.move.memory.out,asset_id:0
+#: field:claim.product.line,asset_id_claim_product_line:0
+#: report:delivery.order:0
+#: report:internal.move:0
+#: selection:report.account.receivable,type:0
+#: view:stock.mission.report.line:0
+#: selection:stock.mission.report.line,subtype:0
+#: code:addons/msf_doc_import/wizard/__init__.py:68
+#: code:addons/msf_doc_import/wizard/__init__.py:73
+#: code:addons/msf_doc_import/wizard/__init__.py:78
+#: view:product.product:0
+#: view:product.asset:0
+#: selection:product.template,subtype:0
+#: view:return.claim:0
+#: view:supplier.catalogue.line:0
 #, python-format
 msgid "Asset"
 msgstr "Actif"
