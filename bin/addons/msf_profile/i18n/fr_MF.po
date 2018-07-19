@@ -101332,3 +101332,9 @@ msgstr "Ligne %s. Les montants Débit et Crédit en devise d'enregistrement sont
 #, python-format
 msgid "Line %s. Please fill in either a Booking Debit or a Booking Credit value."
 msgstr "Ligne %s. Veuillez renseigner une valeur en devise d'enregistrement, soit en débit soit en crédit."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1138
+#, python-format
+msgid "The account %s - %s is not compatible with the journal %s."
+msgstr "Le compte %s - %s n'est pas compatible avec le journal %s."

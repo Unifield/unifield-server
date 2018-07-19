@@ -1133,6 +1133,10 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    # Only Donation accounts are allowed with an ODX journal
+                    if m.journal_id.type == 'extra' and ml.account_id.type_for_register != 'donation':
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
+                                                             'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue
