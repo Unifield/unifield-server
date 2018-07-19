@@ -996,6 +996,9 @@ class purchase_order_line(osv.osv):
         else:
             if order.po_from_fo or order.po_from_ir or vals.get('link_so_id', False):
                 vals['from_fo'] = True
+            else:
+                # duplication of PO from fo must not set this value
+                vals['from_fo'] = False
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(
                     _('Error'),

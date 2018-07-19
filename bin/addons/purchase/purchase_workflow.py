@@ -475,6 +475,7 @@ class purchase_order_line(osv.osv):
                 open_wizard = True
             if pol.state == 'validated_n':
                 # if line is 'validated_n', pass through 'validated' state to ensure no checks has been missed
+                #self.check_origin_is_set(self, cr, uid, pol, context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'validated', cr)
 
         if open_wizard:
@@ -548,6 +549,19 @@ class purchase_order_line(osv.osv):
             if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
                 raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
+    def check_origin_for_validation(self, cr, uid, ids, context=None):
+        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False)])
+        if to_complete_ids:
+            error = []
+            for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
+                error.append(_('#%d  %s') % (line['line_number'], line['default_code']))
+            if len(error) == 1:
+                raise osv.except_osv(_('Error'), _("This cannot be validated as line source document information is missing: %s") % error[0])
+            else:
+                raise osv.except_osv(_('Error'), _("These lines cannot be validated as line source document information is missing: \n - %s") % "\n -".join(error))
+
+        return True
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -558,7 +572,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
+
         # checks before validating the line:
+        self.check_origin_for_validation(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)
