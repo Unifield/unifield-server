@@ -77,6 +77,106 @@ class journal_items_corrections_lines(osv.osv_memory):
                 res[line_br.id] = False
         return res
 
+    def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Gets the right Third Parties based on:
+        - the partner / employee of the line if any (Journal 3d Party is excluded)
+        - or on the line account type
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.employee_id:
+                res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
+                res[line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')],
+                                                'selection': 'hr.employee,%s' % line.employee_id.id}
+            elif line.partner_id:
+                res[line.id] = {'third_parties': 'res.partner,%s' % line.partner_id.id}
+                res[line.id]['partner_type'] = {'options': [('res.partner', 'Partner')],
+                                                'selection': 'res.partner,%s' % line.partner_id.id}
+            else:
+                res[line.id] = {'third_parties': False}
+                if line.account_id:
+                    acc_type = line.account_id.type_for_register
+                    if acc_type == 'advance':
+                        third_type = [('hr.employee', 'Employee')]
+                        third_selection = 'hr.employee,'
+                    elif acc_type == 'down_payment':
+                        third_type = [('res.partner', 'Partner')]
+                        third_selection = 'res.partner,'
+                    else:
+                        # by default when no restriction and for the "payroll" type
+                        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                        third_selection = 'res.partner,'
+                    res[line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
+        return res
+
+    def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_arg=None, context=None):
+        """
+        Sets the chosen 3d Party to the wizard line (can be: a partner, an employee, or empty)
+        """
+        if context is None:
+            context = {}
+        if name == 'partner_type':
+            employee_id = False
+            partner_id = False
+            element = False
+            if value:
+                fields = value.split(",")
+                element = fields[0]
+            if element == 'hr.employee':
+                employee_id = fields[1] and int(fields[1]) or False
+            elif element == 'res.partner':
+                partner_id = fields[1] and int(fields[1]) or False
+            vals = {
+                'employee_id': employee_id,
+                'partner_id': partner_id,
+            }
+            self.write(cr, uid, obj_id, vals, context=context)
+        return True
+
+    def onchange_correction_line_account_id(self, cr, uid, ids, account_id=False):
+        """
+        Adapts the "Third Parties" selectable on the wizard line according to the account selected
+        """
+        vals = {}
+        warning = {}
+        if isinstance(account_id, (list, tuple)):
+            account_id = account_id[0]
+        acc_obj = self.pool.get('account.account')
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+        third_required = False
+        third_selection = 'res.partner,0'
+        if account_id:
+            account = acc_obj.browse(cr, uid, [account_id], fields_to_fetch=['code', 'name', 'type_for_register'])[0]
+            acc_type = account.type_for_register
+            if acc_type in ['transfer', 'transfer_same']:  # requires a journal 3d party on which corr. are forbidden
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _('The account %s - %s requires a Journal Third Party.') % (account.code, account.name)
+                }
+                vals.update({'account_id': False})  # empty the account
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                third_required = False
+                third_selection = 'res.partner,0'
+            elif acc_type == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'hr.employee,0'
+            elif acc_type == 'down_payment':
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif acc_type == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'res.partner,0'
+        vals.update({'partner_type_mandatory': third_required,
+                     'partner_type': {'options': third_type,
+                                      'selection': third_selection}})
+        return {'value': vals, 'warning': warning}
+
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
         'wizard_id': fields.many2one('wizard.journal.items.corrections', string="wizard"),
@@ -100,12 +200,22 @@ class journal_items_corrections_lines(osv.osv_memory):
         'is_account_correctible': fields.function(_get_is_account_correctible,
                                                   type='boolean', string='Is account correctible',
                                                   method=True, invisible=True),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
+                                        string="Third Parties", readonly=False,
+                                        selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')],
+                                        multi="third_parties_key"),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
+        'third_parties': fields.function(_get_third_parties, type='reference', method=True,
+                                         string="Third Parties",
+                                         selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')],
+                                         help="To use for python code when registering", multi="third_parties_key"),
     }
 
     _defaults = {
         'from_donation': lambda *a: False,
         'is_analytic_target': lambda *a: False,
         'is_account_correctible': lambda *a: True,
+        'partner_type_mandatory': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

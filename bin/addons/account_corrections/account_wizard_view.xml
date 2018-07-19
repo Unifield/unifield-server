@@ -15,7 +15,11 @@
                     <field name="account_id"
                         domain="[('restricted_area', '=', 'correction_wizard')]"
                         attrs="{'readonly': [('is_account_correctible', '=', False)]}"
+                        on_change="onchange_correction_line_account_id(account_id)"
                     />
+                    <field name="partner_type_mandatory" invisible="1"/>
+                    <field name="partner_type" readonly="0"
+                           attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <button name="button_analytic_distribution" type="object"
                             icon="terp-stock_symbol-selection" string="Ana. Distri."
                             attrs="{'invisible': [('is_analytic_target', '=', False)]}" />
