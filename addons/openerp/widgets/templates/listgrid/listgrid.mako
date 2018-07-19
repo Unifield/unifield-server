@@ -21,29 +21,10 @@ if (auto_field && auto_field.val()){
     }, 1000*auto_field.val(), model);
 }
 
-function gogo(rid) {
-    var key = evt.key();
-    var src = evt.src();
-
-    if (!(key.string == "KEY_PAGE_DOWN" || key.string == "KEY_PAGE_UP") ) {
-        return;
-    }
-    if (key.string == "KEY_PAGE_DOWN"){
-        evt.stop();
-        ${object}.save(rid);
-        return;
-        }
-    if (key.string == "KEY_PAGE_UP"){
-        evt.stop();
-        ${object}.save(rid);
-        return;
-        }
-    // TODO OR IN ./addons/openerp/static/javascript/listgrid.js events handler ?
-}
 </script>
 <%def name="make_editors(data=None)">
     % if editable and editors:
-        <tr class="grid-row editors" record="${(data and data['id']) or -1}" onkeydown="gogo(${(data and data['id']) or 'null'});">
+        <tr class="grid-row editors" record="${(data and data['id']) or -1}">
             % if selector:
                 <td class="grid-cell selector">&nbsp;</td>
             % endif

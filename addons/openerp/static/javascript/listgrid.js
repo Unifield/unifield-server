@@ -1193,13 +1193,13 @@ function validateList(_list) {
     });
 }
 
-function listgridValidation(_list, o2m, record_id) {
+function listgridValidation(_list, o2m, record_id, inline) {
     o2m = parseInt(o2m, 10);
     var current_id = jQuery(idSelector(_list)).attr('current_id');
     // not(null | undefined)
     var o2m_obj;
     // Hooks O2M and ListView in case of save
-    if(o2m) { o2m_obj = new One2Many(_list); }
+    if(o2m) { o2m_obj = new One2Many(_list, inline); }
     if(current_id != null) {
         if(o2m || confirm('The record has been modified \n Do you want to save it ?')) {
             new ListView(_list).save(current_id, record_id);
