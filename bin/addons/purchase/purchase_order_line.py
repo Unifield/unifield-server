@@ -996,6 +996,9 @@ class purchase_order_line(osv.osv):
         else:
             if order.po_from_fo or order.po_from_ir or vals.get('link_so_id', False):
                 vals['from_fo'] = True
+            else:
+                # duplication of PO from fo must not set this value
+                vals['from_fo'] = False
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(
                     _('Error'),
@@ -1100,7 +1103,8 @@ class purchase_order_line(osv.osv):
                 data.update({'partner_id': context.get('partner_id')})
             if context.get('categ'):
                 data.update({'categ': context.get('categ')})
-            self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
+            # FIXME
+            #self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
 
         return super(purchase_order_line, self).default_get(cr, uid, fields, context=context)
 
