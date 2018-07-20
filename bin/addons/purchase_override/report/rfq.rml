@@ -6,9 +6,7 @@
             <frame id="first" x1="30.0" y1="0.0" width="772" height="500" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">REQUEST FOR QUOTATION ([[ getSel(objects[0], 'order_type') ]])</drawString>
-            <fill color="blue"/>
-            <drawString x="35" y="540.0">[[ '%s %s %s' % (getSel(objects[0], 'order_type'), objects[0].name, getSel(objects[0], 'state')) ]]</drawString>
+            <drawString x="35" y="560.0">[[ 'REQUEST FOR QUOTATION %s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
