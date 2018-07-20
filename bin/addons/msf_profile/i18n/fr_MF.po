@@ -101379,3 +101379,23 @@ msgstr "Méthode de paiement %s non trouvée pour la ligne %s. Veuillez modifier
 #, python-format
 msgid "You can't change a payment method used at least in one employee"
 msgstr "Vous ne pouvez pas modifier une méthode de paiement utilisée sur au moins un employé"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1865
+#, python-format
+msgid "Another Draft Shipment exists with this Consignee."
+msgstr "Une autre Expédition en Brouillon existe avec ce Destinataire"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1843
+#: code:addons/msf_outgoing/msf_outgoing.py:1853
+#: code:addons/msf_outgoing/msf_outgoing.py:1861
+#, python-format
+msgid "The field you are modifying may impact the shipment mechanism, please check the correct process."
+msgstr "Le champ que vous modifiez pourrait avoir un impact sur le mécanisme d'expédition, veuillez vérifier le bon processus."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1896
+#, python-format
+msgid "You can only have one draft shipment for a given address, please check %s"
+msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "
