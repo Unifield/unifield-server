@@ -101367,3 +101367,15 @@ msgstr "Expiré"
 #, python-format
 msgid "A location with a similar name already exists."
 msgstr "Une zone avec un nom similaire existe déjà."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:377
+#, python-format
+msgid "Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ."
+msgstr "Méthode de paiement %s non trouvée pour la ligne %s. Veuillez modifier la configuration d'Homere ou demander une nouvelles méthode de paiement au HQ"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr.py:63
+#, python-format
+msgid "You can't change a payment method used at least in one employee"
+msgstr "Vous ne pouvez pas modifier une méthode de paiement utilisée sur au moins un employé"

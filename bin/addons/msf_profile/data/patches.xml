@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF 9.1 -->
+        <record id="change_xml_payment_method" model="patch.scripts">
+            <field name="method">change_xml_payment_method</field>
+        </record>
+
         <!-- UF9.0 -->
         <record id="change_fo_seq_to_nogap" model="patch.scripts">
             <field name="method">change_fo_seq_to_nogap</field>
