@@ -629,7 +629,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Number of line')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Value (CHF)')|x}</Data><NamedCell
+    <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Value')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Total Absolute value')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
