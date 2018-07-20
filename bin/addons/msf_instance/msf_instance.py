@@ -596,12 +596,6 @@ class msf_instance_cloud(osv.osv):
                 init_time = init_time % 24
                 data['cloud_schedule_time'] = init_time
 
-                retry_from = (retry_from + (sc_info['delay_minute'] / 60.)) % 24
-                data['cloud_retry_from'] = retry_from
-
-                retry_to = (retry_to + (sc_info['delay_minute'] / 60. )) % 24
-                data['cloud_retry_to'] = retry_to
-
             self.write(cr, uid, x, data, context=context)
 
         return True
