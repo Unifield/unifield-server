@@ -167,13 +167,8 @@ class purchase_order(osv.osv):
                 for move in line.move_ids:
                     if move.state == 'done':
                         move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        if move.type == 'out':
-                            amount_received -= move_qty
-                        elif move.type == 'in':
+                        if move.type == 'in':
                             amount_received += move_qty
-                        elif move.type == 'internal':
-                            # not taken into account
-                            pass
 
             if amount_total:
                 res[order.id] = (amount_received/amount_total)*100
