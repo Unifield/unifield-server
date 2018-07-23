@@ -452,7 +452,7 @@
             </tr>
         </blockTable>
         <section>
-            <para style="terp_default_8">[[ repeatIn(objects, 'p') ]]</para>
+            <para style="terp_default_8">[[ repeatIn(partners_to_display(objects), 'p') ]]</para>
             <blockTable colWidths="59.0,44.0,89.0,89.0,89.0,40.0,80.0,80.0,90.0,102.0" style="Table8">
                 <tr>
                     <td>

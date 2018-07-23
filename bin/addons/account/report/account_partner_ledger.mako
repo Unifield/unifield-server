@@ -325,7 +325,7 @@ else:
 </Cell>
 </Row>
 
-% for p in objects:
+% for p in partners_to_display(objects):
 <!-- PARTNER HEADER -->
 <Row>
 <Cell ss:StyleID="ssPartner">

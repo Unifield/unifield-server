@@ -44,6 +44,8 @@ class account_partner_ledger(osv.osv_memory):
         'account_ids': fields.many2many('account.account', 'account_partner_ledger_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'display_partner': fields.selection([('non-zero_balance', 'With balance is not equal to 0'),
+                                             ('all', 'All Partners')], string='Display Partners'),
     }
 
     _defaults = {
@@ -54,6 +56,7 @@ class account_partner_ledger(osv.osv_memory):
        'only_active_partners': False,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
        'fiscalyear_id': False,
+       'display_partner': 'non-zero_balance',
     }
 
     def _print_report(self, cr, uid, ids, data, context=None):
@@ -61,7 +64,8 @@ class account_partner_ledger(osv.osv_memory):
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
-                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+                                                     'only_active_partners', 'instance_ids', 'account_ids',
+                                                     'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         if data['form']['page_split']:
             return {
@@ -89,7 +93,8 @@ class account_partner_ledger(osv.osv_memory):
 
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
-                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+                                                     'only_active_partners', 'instance_ids', 'account_ids',
+                                                     'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.report.xml',

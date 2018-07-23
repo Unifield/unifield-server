@@ -33,7 +33,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
         self.subtotals = {}
         self.report_lines = {}
+        self.debit_balances = {}
+        self.credit_balances = {}
         self.localcontext.update({
+            'partners_to_display': self._partners_to_display,
             'time': time,
             'lines': self.lines,
             'sum_debit_partner': self._sum_debit_partner,
@@ -69,6 +72,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.exclude_tax = data['form'].get('tax', False)
         self.instance_ids = data['form'].get('instance_ids', False)
         self.account_ids = data['form'].get('account_ids', False)
+        self.display_partner = data['form'].get('display_partner', '')
         PARTNER_REQUEST = ''
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -257,6 +261,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         return self.subtotals[partner.id]
 
     def _sum_debit_partner(self, partner):
+        if partner.id in self.debit_balances:
+            # compute the result only once per partner
+            return self.debit_balances[partner.id]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
@@ -290,9 +297,13 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
+        self.debit_balances[partner.id] = result_tmp
         return result_tmp
 
     def _sum_credit_partner(self, partner):
+        if partner.id in self.credit_balances:
+            # compute the result only once per partner
+            return self.credit_balances[partner.id]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
@@ -326,7 +337,21 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
+        self.credit_balances[partner.id] = result_tmp
         return result_tmp
+
+    def _partners_to_display(self, partners):
+        """
+        Returns the partners to be displayed in the report as a list of res.partner browse records
+        """
+        to_display = partners
+        if self.display_partner == 'non-zero_balance':
+            for p in partners:
+                # fill in the dictionaries self.debit_balances and self.credit_balances
+                self._sum_debit_partner(p)
+                self._sum_credit_partner(p)
+            to_display = [p for p in partners if self.debit_balances[p.id] > 0 or self.credit_balances[p.id] > 0]
+        return to_display
 
     def _get_partners(self):
         if self.result_selection == 'customer':
