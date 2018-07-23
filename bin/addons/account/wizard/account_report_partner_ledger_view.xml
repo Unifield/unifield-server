@@ -15,7 +15,7 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
-                <field name="reconcil"/>
+                <field name="reconciled"/>
                 <field name="page_split"/>
                 <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="only_active_partners"/>

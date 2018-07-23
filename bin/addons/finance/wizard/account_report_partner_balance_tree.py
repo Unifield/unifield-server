@@ -185,9 +185,14 @@ class account_partner_balance_tree(osv.osv):
         # state filter
         self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
         # reconciliation filter
-        self.RECONCILE_REQUEST = ''
-        if not data['form'].get('include_reconciled_entries', False):
-            self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+        reconcile_filter = data['form'].get('reconciled', '')
+        if reconcile_filter == 'yes':
+            self.RECONCILE_REQUEST = "AND l.reconcile_id IS NOT NULL"
+        elif reconcile_filter == 'no':
+            self.RECONCILE_REQUEST = "AND l.reconcile_id IS NULL AND ac.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
+            self.RECONCILE_REQUEST = ""
+
         # proprietary instances filter
         self.INSTANCE_REQUEST = ''
         instance_ids = data['form'].get('instance_ids', False)
@@ -269,8 +274,13 @@ class account_partner_balance_tree(osv.osv):
             # UFTP-312: Filtering regarding tax account (if user asked it)
             if data['form'].get('tax', False):
                 query += " AND at.code != 'tax' "
-            if not data['form'].get('include_reconciled_entries', False):
-                query += ' AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+
+            reconcile_filter = data['form'].get('reconciled', '')
+            if reconcile_filter == 'yes':
+                query += " AND l.reconcile_id IS NOT NULL"
+            elif reconcile_filter == 'no':
+                query += " AND l.reconcile_id IS NULL AND ac.reconcile='t'"  # reconcilable entries not reconciled
+
             if data['form'].get('instance_ids', False):
                 query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
             if data['form'].get('account_ids', False):  # some accounts are specifically selected
@@ -494,7 +504,11 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
         'account_ids': fields.many2many('account.account', 'account_partner_balance_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
-        'include_reconciled_entries': fields.boolean('Include Reconciled Entries', help='Take reconciled entries into account'),
+        'reconciled': fields.selection([
+                        ('empty', ''),
+                        ('yes', 'Yes'),
+                        ('no', 'No'),
+                    ], string='Reconciled'),
         'initial_balance': fields.boolean('Include initial balances'),
     }
 
@@ -510,7 +524,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'journal_ids': _get_journals,
         'tax': False,
         'only_active_partners': False,
-        'include_reconciled_entries': False,
+        'reconciled': 'empty',
         'fiscalyear_id': False,
     }
 
@@ -527,7 +541,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
                                                 'instance_ids', 'tax', 'partner_ids', 'initial_balance',
-                                                'only_active_partners', 'account_ids', 'include_reconciled_entries'])[0]
+                                                'only_active_partners', 'account_ids', 'reconciled'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:

@@ -16841,7 +16841,7 @@ msgstr "Réf Packing:"
 msgid "%s update%s"
 msgstr "%s update%s"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing,, tender_flow, msf_doc_import
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
@@ -16870,6 +16870,8 @@ msgstr "%s update%s"
 #: selection:account.balance.report,reconciled:0
 #: selection:account.report.general.ledger,reconciled:0
 #: code:addons/account/report/account_general_ledger.py:516
+#: selection:account.partner.ledger,reconciled:0
+#: selection:wizard.account.partner.balance.tree,reconciled:0
 #: selection:mission.stock.wizard,display_only_in_stock:0
 #: view:monthly.budget.wizard:0
 #: selection:wizard.export.po.validated,need_ad:0
@@ -17862,11 +17864,6 @@ msgstr "La facture '%s' est en attente de validation."
 #: field:ir.module.module,contributors:0
 msgid "Contributors"
 msgstr "Contributeurs"
-
-#. module: account
-#: help:account.partner.ledger,reconcil:0
-msgid "Consider reconciled entries"
-msgstr "Tenir compte des écritures lettrées"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -21787,11 +21784,6 @@ msgstr "Vous ne pouvez pas importer de lignes dans une Commande Client"
 msgid "There is no lines to create! Please choose another period."
 msgstr "Il n'y pas de ligne à créer! Veuillez choisir une autre période."
 
-#. module: finance
-#: help:wizard.account.partner.balance.tree,include_reconciled_entries:0
-msgid "Take reconciled entries into account"
-msgstr "Prendre en compte les écritures lettrées"
-
 #. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:542
 #, python-format
@@ -25212,7 +25204,7 @@ msgstr "# push data"
 msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
-#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import
+#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -25236,6 +25228,8 @@ msgstr "Europe/Bucharest"
 #: selection:account.balance.report,reconciled:0
 #: selection:account.report.general.ledger,reconciled:0
 #: code:addons/account/report/account_general_ledger.py:515
+#: selection:account.partner.ledger,reconciled:0
+#: selection:wizard.account.partner.balance.tree,reconciled:0
 #: selection:mission.stock.wizard,display_only_in_stock:0
 #: code:addons/msf_budget/report/report_budget_criteria.py:63
 #: selection:wizard.export.po.validated,need_ad:0
@@ -64145,12 +64139,14 @@ msgstr "Flux de Départ"
 msgid "Cheque Number"
 msgstr "Chèque - Numéro"
 
-#. modules: account, register_accounting, account_mcdb
+#. modules: account, register_accounting, account_mcdb, finance
 #: view:account.entries.report:0
 #: selection:account.mcdb,reconciled:0
 #: field:wizard.account.invoice,reconciled:0
 #: field:account.balance.report,reconciled:0
 #: field:account.report.general.ledger,reconciled:0
+#: field:account.partner.ledger,reconciled:0
+#: field:wizard.account.partner.balance.tree,reconciled:0
 msgid "Reconciled"
 msgstr "Lettrée"
 
@@ -88416,12 +88412,6 @@ msgstr "Journal items that are on reconciliable accounts but that are not reconc
 #: field:multiple.sourcing.wizard,company_id:0
 msgid "Current company"
 msgstr "Société actuelle"
-
-#. modules: account, finance
-#: field:account.partner.ledger,reconcil:0
-#: field:wizard.account.partner.balance.tree,include_reconciled_entries:0
-msgid "Include Reconciled Entries"
-msgstr "Inclure les Ecritures Lettrées"
 
 #. modules: base, base_setup, unifield_setup
 #: field:res.partner.address,state_id:0

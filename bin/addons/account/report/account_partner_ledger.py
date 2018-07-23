@@ -61,7 +61,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         obj_partner = self.pool.get('res.partner')
         obj_fy = self.pool.get('account.fiscalyear')
         used_context = data['form'].get('used_context', {})
-        self.reconcil = data['form'].get('reconcil', False)
+        self.reconciled = data['form'].get('reconciled', False)
         self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.target_move = data['form'].get('target_move', 'all')
         self.period_id = data['form'].get('period_from', False)
@@ -205,10 +205,12 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.target_move == 'posted':
             move_state = ['posted']
 
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL"
         self.cr.execute(
             "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, "
             "COALESCE(l.debit_currency, 0) as debit, COALESCE(l.credit_currency, 0) as credit, "
@@ -260,17 +262,21 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND reconcile_id IS NULL"
 
         self.cr.execute(
             "SELECT sum(debit) " \
                 "FROM account_move_line AS l, " \
-                "account_move AS m "
+                "account_move AS m, "
+                "account_account AS acc "
                 "WHERE l.partner_id = %s " \
                     "AND m.id = l.move_id " \
+                    "AND l.account_id = acc.id "
                     "AND m.state IN %s "
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
@@ -292,17 +298,21 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND reconcile_id IS NULL"
 
         self.cr.execute(
             "SELECT sum(credit) " \
                 "FROM account_move_line AS l, " \
-                "account_move AS m "
+                "account_move AS m, "
+                "account_account AS acc "
                 "WHERE l.partner_id=%s " \
                     "AND m.id = l.move_id " \
+                    "AND l.account_id = acc.id "
                     "AND m.state IN %s "
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
