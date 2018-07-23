@@ -664,15 +664,18 @@ class po_follow_up_mixin(object):
 
     def getAnalyticLines(self,po_line):
         ccdl_obj = self.pool.get('cost.center.distribution.line')
+        blank_dist = [{'cost_center': '','destination': ''}]
         if po_line.analytic_distribution_id.id:
             dist_id = po_line.analytic_distribution_id.id
-        else:
+        elif po_line.order_id.analytic_distribution_id:
             dist_id = po_line.order_id.analytic_distribution_id.id  # get it from the header
+        else:
+            return blank_dist
         ccdl_ids = ccdl_obj.search(self.cr, self.uid, [('distribution_id','=',dist_id)])
         ccdl_rows = ccdl_obj.browse(self.cr, self.uid, ccdl_ids)
         dist_lines = [{'cost_center': ccdl.analytic_id.code,'destination': ccdl.destination_id.code, 'raw_state': po_line.state} for ccdl in ccdl_rows]
         if not dist_lines:
-            dist_lines = [{'cost_center': '','destination': ''}]
+            return blank_dist
         return dist_lines
 
     def getAllLineIN(self, po_line_id):

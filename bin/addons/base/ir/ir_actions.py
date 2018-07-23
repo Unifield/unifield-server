@@ -132,6 +132,7 @@ class report_xml(osv.osv):
         'report_rml_content_data': fields.binary('RML content'),
         'report_sxw_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='SXW content',),
         'report_rml_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='RML content'),
+        'run_in_background': fields.boolean('Run report in bg'),
 
     }
     _defaults = {
@@ -142,6 +143,7 @@ class report_xml(osv.osv):
         'report_sxw_content': lambda *a: False,
         'report_type': lambda *a: 'pdf',
         'attachment': lambda *a: False,
+        'run_in_background': False,
     }
 
 report_xml()

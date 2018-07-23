@@ -1290,7 +1290,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
             po_ids.add(pol.order_id.id)
 
-        return po_ids
+        return list(po_ids)
 
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
         '''
@@ -2777,6 +2777,12 @@ class sale_order_line(osv.osv):
         # go back to draft (US-3671):
         if vals.get('set_as_sourced_n', False):
             vals['state'] = 'sourced_n'
+
+        # US-4620 : Set price_unit to the product's standard price in case of synchro
+        if vals.get('sync_linked_pol') and product_id:
+            vals.update({
+                'price_unit': product_obj.read(cr, uid, product_id, ['standard_price'], context=context)['standard_price']
+            })
 
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id

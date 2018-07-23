@@ -541,6 +541,7 @@ class wizard_cash_return(osv.osv_memory):
         # Fetch objects
         move_line_obj = self.pool.get('account.move.line')
         absl_obj = self.pool.get('account.bank.statement.line')
+        inv_obj = self.pool.get('account.invoice')
         move_line = move_line_obj.browse(cr, uid, move_line_id, context=context)
 
         # Prepare some values
@@ -588,6 +589,9 @@ class wizard_cash_return(osv.osv_memory):
         # Add invoice link if exists
         if invoice_id:
             vals.update({'invoice_id': invoice_id,})
+            # also store the invoice JE
+            inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=['move_id'], context=context)
+            vals.update({'advance_invoice_move_id': inv and inv.move_id and inv.move_id.id or False})
 
         # Create the statement line with vals
         st_line_id = absl_obj.create(cr, uid, vals, context=context)
@@ -769,6 +773,7 @@ class wizard_cash_return(osv.osv_memory):
         """
         if context is None:
             context = {}
+        account_obj = self.pool.get('account.account')
         wizard = self.browse(cr, uid, ids[0], context=context)
 
         # US-672/2
@@ -900,6 +905,11 @@ class wizard_cash_return(osv.osv_memory):
             debit = abs(advance.amount)
             credit = 0.0
             account_id = advance.account_id.id
+
+            # check the compatibility between Third Party and Account "Type for specific treatment"
+            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id,
+                                                          employee_id=line_employee_id, context=context)
+
             # Analytic distribution for this line
             distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
