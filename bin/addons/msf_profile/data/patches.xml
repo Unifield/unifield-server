@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF10.0 -->
+        <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
+            <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
+        </record>
+
         <!-- UF9.0 -->
         <record id="change_fo_seq_to_nogap" model="patch.scripts">
             <field name="method">change_fo_seq_to_nogap</field>

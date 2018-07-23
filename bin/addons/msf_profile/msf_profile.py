@@ -51,6 +51,32 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF10.0
+    def us_3873_update_reconcile_filter_in_partner_report_templates(self, cr, uid, *a, **b):
+        """
+        Updates the Wizard Templates for the "Partner Ledger" and "Partner Balance" following the change on reconcile filter:
+        - "Include Reconciled Entries" ticked ==> becomes "Reconciled: Empty"
+        - "Include Reconciled Entries" unticked ==> becomes "Reconciled: No"
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', 'in',
+                                                      ['account.partner.ledger', 'wizard.account.partner.balance.tree'])])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['wizard_name', 'values']):
+            old_field = template.wizard_name == 'account.partner.ledger' and 'reconcil' or 'include_reconciled_entries'
+            new_field = 'reconciled'
+            try:
+                values_dict = eval(template.values)
+                if old_field in values_dict:
+                    if not values_dict[old_field]:
+                        reconciled = 'no'
+                    else:
+                        reconciled = 'empty'
+                    values_dict[new_field] = reconciled
+                    del values_dict[old_field]
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
     # UF9.0
     def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
         data = self.pool.get('ir.model.data')
