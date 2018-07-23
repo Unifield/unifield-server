@@ -50,6 +50,7 @@ OBJ_TO_RECREATE = [
     'msf_button_access_rights.button_access_rule',
     'ir.rule',
     'account.analytic.journal',
+    'account.journal',
 ]
 
 
