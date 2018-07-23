@@ -151,6 +151,12 @@ class internal_picking_processor(osv.osv):
 
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
 
+        if wizard_brw_list[0].picking_id.type != 'internal':
+            raise osv.except_osv(
+                _('Error'),
+                _('This object: %s is not an Internal Move') % (wizard_brw_list[0].picking_id.name)
+            )
+
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
         # call stock_picking method which returns action call

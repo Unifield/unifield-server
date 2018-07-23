@@ -349,6 +349,22 @@ class act_window(osv.osv):
         res_id = dataobj.browse(cr, uid, data_id, context).res_id
         return self.read(cr, uid, res_id, [], context)
 
+    def open_view_from_xmlid(self, cr, uid, xmlid, views_order,  new_tab=False, context=None):
+        keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
+        module, xmlid = xmlid.split('.', 1)
+        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+        res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], keys, context=context)
+        views_dict = {}
+        for view_id, view_type in res['views']:
+            views_dict[view_type] = view_id
+
+        views = []
+        for v in views_order:
+            views.append((views_dict.get(v), v))
+        res['views'] = views
+        if not new_tab:
+            res['target'] = 'crush'
+        return res
 act_window()
 
 class act_window_view(osv.osv):
