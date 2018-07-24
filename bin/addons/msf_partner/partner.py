@@ -401,17 +401,17 @@ class res_partner(osv.osv):
         if res in ids:
             for obj in self.browse(cr, uid, [res], context=context):
 
-                if context.get('from_setup') and bro.second_time and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner anymore'))
+                #if context.get('from_setup') and bro.second_time and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
+                #    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner anymore'))
 
-                if not context.get('from_setup') and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
+                #if not context.get('from_setup') and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
+                #    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
 
-                if context.get('from_setup') and bro.second_time and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner anymore'))
+                #if context.get('from_setup') and bro.second_time and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
+                #    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner anymore'))
 
-                if not context.get('from_setup') and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
+                #if not context.get('from_setup') and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
+                #    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
 
                 if obj.customer:
                     raise osv.except_osv(_('Warning !'), _('This partner can not be checked as customer'))
