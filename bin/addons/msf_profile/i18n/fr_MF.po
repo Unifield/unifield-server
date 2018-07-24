@@ -1339,6 +1339,7 @@ msgstr "Liste d'erreurs"
 #. modules: account, finance
 #: selection:account.partner.balance,display_partner:0
 #: selection:wizard.account.partner.balance.tree,display_partner:0
+#: selection:account.partner.ledger,display_partner:0
 msgid "All Partners"
 msgstr "Tous les Partenaires"
 
@@ -7627,9 +7628,10 @@ msgstr "Rapport de Stock par numéro de suivi"
 msgid "Monthly review consumption line to delete"
 msgstr "Monthly review consumption line to delete"
 
-#. module: finance
+#. modules: finance, account
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:315
 #: field:wizard.account.partner.balance.tree,display_partner:0
+#: field:account.partner.ledger,display_partner:0
 msgid "Display Partners"
 msgstr "Afficher les Partenaires"
 
@@ -13833,6 +13835,7 @@ msgstr "The Internal request '%s' has been closed."
 #: code:addons/account/report/account_profit_loss.py:205
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:294
 #: selection:wizard.account.partner.balance.tree,display_partner:0
+#: selection:account.partner.ledger,display_partner:0
 #, python-format
 msgid "With balance is not equal to 0"
 msgstr "Avec un solde qui n'est pas égal à 0"

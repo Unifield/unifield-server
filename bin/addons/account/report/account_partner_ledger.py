@@ -350,7 +350,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 # fill in the dictionaries self.debit_balances and self.credit_balances
                 self._sum_debit_partner(p)
                 self._sum_credit_partner(p)
-            to_display = [p for p in partners if self.debit_balances[p.id] > 0 or self.credit_balances[p.id] > 0]
+            to_display = [p for p in partners if abs(self.debit_balances[p.id] - self.credit_balances[p.id]) > 10**-3]
         return to_display
 
     def _get_partners(self):
