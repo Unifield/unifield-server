@@ -550,7 +550,10 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def check_origin_for_validation(self, cr, uid, ids, context=None):
-        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False)])
+        if not context:
+            context = {}
+
+        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
         if to_complete_ids:
             error = []
             for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
