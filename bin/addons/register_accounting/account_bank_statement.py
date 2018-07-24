@@ -771,9 +771,7 @@ The starting balance will be proposed automatically and the closing balance is t
             else:
                 computed_balance = 0.0
                 if reg.journal_id.type == 'cash':
-                    context['from_open'] = True
                     computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
-                    del context['from_open']
                 return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
         return res
 
@@ -1130,6 +1128,9 @@ class account_bank_statement_line(osv.osv):
                 # hard posted direct invoice regline case (and sync P1->C1)
                 if absl.direct_invoice_move_id:
                     res.add(absl.direct_invoice_move_id.id)
+            # advance closed by a SI in project => in upper inst. invoice_id is empty: use advance_invoice_move_id
+            elif not absl.invoice_id and absl.advance_invoice_move_id:
+                res.add(absl.advance_invoice_move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1227,6 +1228,9 @@ class account_bank_statement_line(osv.osv):
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
         'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
+        'advance_invoice_move_id': fields.many2one('account.move', 'Account Move of the Invoice used to close the Advance',
+                                                   readonly=True,
+                                                   help="When a SI is used to close an Advance, the related JE is stored in this field"),
     }
 
     _defaults = {
@@ -1269,7 +1273,7 @@ class account_bank_statement_line(osv.osv):
         cash_adv_return_move_line_ids = [
             absl.cash_return_move_line_id.id \
             for absl in absl_brs \
-            if not absl.invoice_id and absl.from_cash_return and \
+            if not absl.invoice_id and not absl.advance_invoice_move_id and absl.from_cash_return and \
             absl.cash_return_move_line_id
             # NOTE: for imported invoices we let the default behaviour
             # (display of invoice AJIs)
@@ -2224,6 +2228,8 @@ class account_bank_statement_line(osv.osv):
             'down_payment_id': False,
             'cash_return_move_line_id': False,  # BKLG-60
             'partner_move_ids': [],
+            'advance_invoice_move_id': False,
+            'direct_invoice_move_id': False,
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
@@ -2983,8 +2989,12 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] in ['down_payment', 'payroll']:
+            elif a['type_for_register'] == 'down_payment':
                 third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}

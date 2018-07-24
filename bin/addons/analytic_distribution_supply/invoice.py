@@ -302,7 +302,12 @@ class account_invoice(osv.osv):
                 if po.commitment_ids:
                     to_process.append(inv.id)
                     # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
-                    if po.state == 'done' and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
+                    po_states = ['done']
+                    if po.order_type == 'direct':
+                        # DPO specific use case: CV and SI are both created at DPO confirmation
+                        # ==> close the CVs if the DPO is at least "Confirmed" and no SI is in Draft anymore
+                        po_states = ['confirmed', 'confirmed_p', 'done']
+                    if po.state in po_states and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
                         self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
 
         # Process invoices
