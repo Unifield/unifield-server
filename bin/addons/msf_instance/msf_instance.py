@@ -821,7 +821,7 @@ class msf_instance_cloud(osv.osv):
 
                         self._get_backoff(dav, 'OneDrive: retry %s' % error)
                         if 'timed out' in error or '2130575252' in error:
-                            self._logger('OneDrive: session time out')
+                            self._logger.info('OneDrive: session time out')
                             dav.login()
 
                 except requests.exceptions.RequestException, e:
