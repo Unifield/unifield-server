@@ -493,10 +493,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     _description = 'Print Account Partner Balance View'
 
     _columns = {
-        'display_partner': fields.selection([('non-zero_balance',
-                                              'With balance is not equal to 0'),
-                                             ('all', 'All Partners')]
-                                            ,'Display Partners'),
+        'display_partner': fields.selection([('non-zero_balance', 'With balance is not equal to 0'),
+                                             ('all', 'All Partners')],
+                                            string='Display Partners', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
         'partner_ids': fields.many2many('res.partner', 'account_partner_balance_partner_rel', 'wizard_id', 'partner_id',

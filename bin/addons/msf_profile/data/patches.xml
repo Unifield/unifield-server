@@ -6,6 +6,10 @@
             <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
         </record>
 
+        <record id="us_3873_update_display_partner_filter_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_update_display_partner_filter_in_partner_balance_templates</field>
+        </record>
+
         <!-- UF9.0 -->
         <record id="change_fo_seq_to_nogap" model="patch.scripts">
             <field name="method">change_fo_seq_to_nogap</field>
