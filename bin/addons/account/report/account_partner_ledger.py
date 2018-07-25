@@ -351,6 +351,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self._sum_debit_partner(p)
                 self._sum_credit_partner(p)
             to_display = [p for p in partners if abs(self.debit_balances[p.id] - self.credit_balances[p.id]) > 10**-3]
+        elif self.display_partner == 'with_movements':
+            for p in partners:
+                # fill in the dictionary self.report_lines
+                self.lines(p)
+            to_display = [p for p in partners if self.report_lines[p.id]]
         return to_display
 
     def _get_partners(self):
