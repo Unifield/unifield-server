@@ -33910,7 +33910,7 @@ msgstr "1er"
 msgid "Shipment Lead Time"
 msgstr "Délai d'Expédition"
 
-#. module: account
+#. modules: account, finance
 #: selection:account.balance.report,display_account:0
 #: selection:account.bs.report,display_account:0
 #: selection:account.common.account.report,display_account:0
@@ -33919,6 +33919,8 @@ msgstr "Délai d'Expédition"
 #: code:addons/account/report/account_profit_loss.py:203
 #: code:addons/account/report/account_balance_sheet.py:296
 #: code:addons/account/report/account_general_ledger.py:537
+#: selection:account.partner.ledger,display_partner:0
+#: selection:wizard.account.partner.balance.tree,display_partner:0
 #, python-format
 msgid "With movements"
 msgstr "Avec écritures"

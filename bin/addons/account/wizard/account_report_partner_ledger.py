@@ -44,8 +44,10 @@ class account_partner_ledger(osv.osv_memory):
         'account_ids': fields.many2many('account.account', 'account_partner_ledger_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
-        'display_partner': fields.selection([('non-zero_balance', 'With balance is not equal to 0'),
-                                             ('all', 'All Partners')], string='Display Partners'),
+        'display_partner': fields.selection([('all', 'All Partners'),
+                                             ('with_movements', 'With movements'),
+                                             ('non-zero_balance', 'With balance is not equal to 0')],
+                                            string='Display Partners', required=True),
     }
 
     _defaults = {
@@ -56,7 +58,7 @@ class account_partner_ledger(osv.osv_memory):
        'only_active_partners': False,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
        'fiscalyear_id': False,
-       'display_partner': 'non-zero_balance',
+       'display_partner': 'with_movements',
     }
 
     def _print_report(self, cr, uid, ids, data, context=None):

@@ -493,8 +493,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     _description = 'Print Account Partner Balance View'
 
     _columns = {
-        'display_partner': fields.selection([('non-zero_balance', 'With balance is not equal to 0'),
-                                             ('all', 'All Partners')],
+        'display_partner': fields.selection([('all', 'All Partners'),
+                                             ('with_movements', 'With movements'),
+                                             ('non-zero_balance', 'With balance is not equal to 0')],
                                             string='Display Partners', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
@@ -517,7 +518,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         return self.pool.get('account.journal').search(cr, uid, domain, context=context)
 
     _defaults = {
-        'display_partner': 'non-zero_balance',
+        'display_partner': 'with_movements',
         'result_selection': 'customer_supplier',
         'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
         'journal_ids': _get_journals,
