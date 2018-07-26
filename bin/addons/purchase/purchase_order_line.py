@@ -1081,37 +1081,14 @@ class purchase_order_line(osv.osv):
 
         return po_line_id
 
-    def default_get(self, cr, uid, fields, context=None):
-        if not context:
-            context = {}
-
-        if context.get('purchase_id'):
-            # Check validity of the purchase order. We write the order to avoid
-            # the creation of a new line if one line of the order is not valid
-            # according to the order category
-            # Example :
-            #    1/ Create a new PO with 'Other' as Order Category
-            #    2/ Add a new line with a Stockable product
-            #    3/ Change the Order Category of the PO to 'Service' -> A warning message is displayed
-            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
-            #       while the not valid line is not modified/deleted
-            #
-            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
-            #   of the new line that is not very understandable for the user
-            data = {}
-            if context.get('partner_id'):
-                data.update({'partner_id': context.get('partner_id')})
-            if context.get('categ'):
-                data.update({'categ': context.get('categ')})
-            # FIXME
-            #self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
-
-        return super(purchase_order_line, self).default_get(cr, uid, fields, context=context)
-
-    def copy(self, cr, uid, line_id, defaults={}, context=None):
+    def copy(self, cr, uid, line_id, defaults=None, context=None):
         '''
         Remove link to merged line
         '''
+
+        if defaults is None:
+            defaults = {}
+
         defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1415,11 +1392,10 @@ class purchase_order_line(osv.osv):
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
                              name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
-                             nomen_manda_0=False, comment=False, context=None):
+                             nomen_manda_0=False, comment=False, context=None, categ=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
-
         if not context:
             context = {}
 
@@ -1513,12 +1489,14 @@ class purchase_order_line(osv.osv):
             res['value'].update({'old_price_unit': old_price})
 
         # Set the unit price with cost price if the product has no staged pricelist
+        if product:
+            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price', 'is_ssl'])
+
         if product and qty != 0.00:
             res['value'].update({'comment': False, 'nomen_manda_0': False, 'nomen_manda_1': False,
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False,
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
-            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price'])
             st_uom = product_result['uom_id'][0]
             st_price = product_result['standard_price']
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
@@ -1538,9 +1516,9 @@ class purchase_order_line(osv.osv):
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
 
-        if context and context.get('categ') and product:
+        if (categ or context.get('categ')) and product:
             # Check consistency of product
-            consistency_message = product_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = product_obj.check_consistency(cr, uid, product, categ or context.get('categ'), context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')
@@ -1548,6 +1526,13 @@ class purchase_order_line(osv.osv):
 
                 res['warning']['message'] = '%s \n %s' % (
                     res.get('warning', {}).get('message', ''), consistency_message)
+
+        if product and product_result['is_ssl']:
+            warning = {
+                'title': 'Short Shelf Life product',
+                'message': _('Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.')
+            }
+            res.update(warning=warning)
 
         return res
 
