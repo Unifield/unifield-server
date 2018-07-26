@@ -130,7 +130,7 @@ if (auto_field && auto_field.val()){
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
                     <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
                         class="listImage" border="0" title="${_('Edit')}"
-                        onclick="new One2Many('${source}', false).edit(${data['id']});" />
+                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']}, false)" />
 
                 % else:
                     <img alt="edit record" src="${edit_image}"
