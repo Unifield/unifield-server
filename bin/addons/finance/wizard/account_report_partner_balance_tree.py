@@ -47,7 +47,7 @@ class account_partner_balance_tree(osv.osv):
         'ib_balance': fields.float('IB Balance', digits_compute=dp.get_precision('Account')),
     }
 
-    _order = "account_type, partner_id"
+    _order = "account_type, name, partner_id"
 
     def __init__(self, pool, cr):
         super(account_partner_balance_tree, self).__init__(pool, cr)
@@ -243,7 +243,7 @@ class account_partner_balance_tree(osv.osv):
 
         if data['form'].get('display_partner', '') == 'non-zero_balance':
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
-        else:
+        else:  # with_movements or all
             res2 = [r for r in res]
         # add the initial balances if requested
         self._add_initial_balances(cr, res2)
@@ -341,9 +341,15 @@ class account_partner_balance_tree(osv.osv):
 
         res = self._execute_query_partners(cr, uid, data)
 
+        p_seen = {}  # store every partner handled
         for r in res[0]:
             debit = r['debit'] + (self.initial_balance and r['ib_debit'] or 0.0)
             credit = r['credit'] + (self.initial_balance and r['ib_credit'] or 0.0)
+            if r['partner_id'] not in p_seen:
+                p_seen[r['partner_id']] = {}
+                p_seen[r['partner_id']]['name'] = r['partner_name']
+                p_seen[r['partner_id']]['partner_ref'] = r['partner_ref']
+            p_seen[r['partner_id']][r['account_type']] = 1
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -359,6 +365,69 @@ class account_partner_balance_tree(osv.osv):
                 'ib_balance': r['ib_balance'] or 0.0,
             }
             self.create(cr, uid, vals, context=context)
+
+        if data['form'].get('display_partner', '') == 'all':  # Display all partners ==> add those without lines
+            # if only 'payable' or only 'receivable' exits for a partner, create an entry at zero
+            # for the other account type ONLY IF they both needs to be displayed
+            result_selection = data['form'].get('result_selection', '')
+            if result_selection == 'customer_supplier':
+                for p_id in p_seen:
+                    acc_type_missing = ''
+                    if 'payable' not in p_seen[p_id]:
+                        acc_type_missing = 'payable'
+                    elif 'receivable' not in p_seen[p_id]:
+                        acc_type_missing = 'receivable'
+                    if acc_type_missing:
+                        vals = {
+                            'uid': uid,
+                            'build_ts': data['build_ts'],
+                            'account_type': acc_type_missing,
+                            'partner_id': p_id,
+                            'name': p_seen[p_id]['name'],
+                            'partner_ref': p_seen[p_id]['partner_ref'] or '',
+                            'debit': 0.0,
+                            'credit': 0.0,
+                            'balance': 0.0,
+                            'ib_debit': 0.0,
+                            'ib_credit': 0.0,
+                            'ib_balance': 0.0,
+                        }
+                        self.create(cr, uid, vals, context=context)
+
+            # create entries at zero for partners where no result was found
+            active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
+            if result_selection == 'customer':
+                account_types = ['receivable']
+            elif result_selection == 'supplier':
+                account_types = ['payable']
+            else:
+                account_types = ['payable', 'receivable']
+            all_partners_sql = """
+                        SELECT id, ref, name 
+                        FROM res_partner
+                        WHERE active IN %s 
+                        AND name != 'To be defined';
+                        """
+            cr.execute(all_partners_sql, (active_selection,))
+            all_partners = cr.dictfetchall()
+            for partner in all_partners:
+                if partner['id'] not in p_seen:
+                    for acc_type in account_types:  # payable / receivable
+                        vals = {
+                            'uid': uid,
+                            'build_ts': data['build_ts'],
+                            'account_type': acc_type,
+                            'partner_id': partner['id'],
+                            'name': partner['name'],
+                            'partner_ref': partner['ref'] or '',
+                            'debit': 0.0,
+                            'credit': 0.0,
+                            'balance': 0.0,
+                            'ib_debit': 0.0,
+                            'ib_credit': 0.0,
+                            'ib_balance': 0.0,
+                        }
+                        self.create(cr, uid, vals, context=context)
 
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
@@ -409,8 +478,7 @@ class account_partner_balance_tree(osv.osv):
         ]
         if account_types:
             domain += [('account_type', 'in', account_types)]
-        # get the ids in the order in which the entries have been created (to keep the sorting criteria used)
-        ids = self.search(cr, uid, domain, context=context, order='id')
+        ids = self.search(cr, uid, domain, context=context, order='name, id')
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
