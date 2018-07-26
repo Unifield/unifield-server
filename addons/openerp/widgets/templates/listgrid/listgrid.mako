@@ -128,7 +128,7 @@ if (auto_field && auto_field.val()){
                     <img alt="edit record" src="${edit_image}"
                         class="listImage" border="0" title="${_('Inline Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
-                    % if not edit_inline:
+                    % if not edit_inline or edit_inline == 'null':
                     <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
                         class="listImage" border="0" title="${_('Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']}, false)" />
