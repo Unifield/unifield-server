@@ -73,10 +73,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.instance_ids = data['form'].get('instance_ids', False)
         self.account_ids = data['form'].get('account_ids', False)
         self.display_partner = data['form'].get('display_partner', '')
-        PARTNER_REQUEST = ''
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted']
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if self.fiscalyear_id:
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
@@ -116,10 +112,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(self.instance_ids),)
 
-        if (data['model'] == 'res.partner'):
-            ## Si on imprime depuis les partenaires
-            if ids:
-                PARTNER_REQUEST =  "AND line.partner_id IN %s",(tuple(ids),)
         if self.result_selection == 'supplier':
             self.ACCOUNT_TYPE = ['payable']
         elif self.result_selection == 'customer':
@@ -141,26 +133,16 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if data['form'].get('partner_ids', False):
             new_ids = data['form']['partner_ids']  # some partners are specifically selected
         else:
-            # by default display the report only for the partners linked to entries having the requested state
             partner_to_use = []
             # check if we should display all partners or only active ones
             active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
             self.cr.execute(
-                "SELECT DISTINCT l.partner_id, rp.name "
-                    "FROM account_move_line AS l, account_account AS account, "
-                    "account_move AS am, res_partner AS rp "
-                    "WHERE l.partner_id IS NOT NULL "
-                    "AND l.account_id = account.id "
-                    "AND am.id = l.move_id "
-                    "AND am.state IN %s"
-                    "AND l.partner_id = rp.id "
-                    "AND l.account_id IN %s "
-                    " " + self.INSTANCE_REQUEST + " "
-                    " " + PARTNER_REQUEST + " "
-                    "AND rp.active IN %s "
-                    "AND account.active "
-                    "ORDER BY rp.name",
-                    (tuple(move_state), tuple(self.account_ids), active_selection,))
+                "SELECT id as partner_id, name "
+                "FROM res_partner "
+                "WHERE active IN %s "
+                "AND name != 'To be defined'"
+                "ORDER BY name;",
+                (active_selection,))
             res = self.cr.dictfetchall()
             for res_line in res:
                 partner_to_use.append(res_line['partner_id'])
