@@ -402,32 +402,32 @@ class account_partner_balance_tree(osv.osv):
                 account_types = ['payable']
             else:
                 account_types = ['payable', 'receivable']
-            all_partners_sql = """
+            other_partners_sql = """
                         SELECT id, ref, name 
                         FROM res_partner
                         WHERE active IN %s 
-                        AND name != 'To be defined';
+                        AND name != 'To be defined'
+                        AND id NOT in %s;
                         """
-            cr.execute(all_partners_sql, (active_selection,))
-            all_partners = cr.dictfetchall()
-            for partner in all_partners:
-                if partner['id'] not in p_seen:
-                    for acc_type in account_types:  # payable / receivable
-                        vals = {
-                            'uid': uid,
-                            'build_ts': data['build_ts'],
-                            'account_type': acc_type,
-                            'partner_id': partner['id'],
-                            'name': partner['name'],
-                            'partner_ref': partner['ref'] or '',
-                            'debit': 0.0,
-                            'credit': 0.0,
-                            'balance': 0.0,
-                            'ib_debit': 0.0,
-                            'ib_credit': 0.0,
-                            'ib_balance': 0.0,
-                        }
-                        self.create(cr, uid, vals, context=context)
+            cr.execute(other_partners_sql, (active_selection, tuple(p_seen.keys()),))
+            other_partners = cr.dictfetchall()
+            for partner in other_partners:
+                for acc_type in account_types:  # payable / receivable
+                    vals = {
+                        'uid': uid,
+                        'build_ts': data['build_ts'],
+                        'account_type': acc_type,
+                        'partner_id': partner['id'],
+                        'name': partner['name'],
+                        'partner_ref': partner['ref'] or '',
+                        'debit': 0.0,
+                        'credit': 0.0,
+                        'balance': 0.0,
+                        'ib_debit': 0.0,
+                        'ib_credit': 0.0,
+                        'ib_balance': 0.0,
+                    }
+                    self.create(cr, uid, vals, context=context)
 
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
