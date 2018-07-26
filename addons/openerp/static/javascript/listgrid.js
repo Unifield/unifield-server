@@ -709,7 +709,7 @@ MochiKit.Base.update(ListView.prototype, {
     save: function(id, prev_id) {
 
         if (openobject.http.AJAX_COUNT > 0) {
-            return callLater(1, bind(this.save, this), id);
+            return callLater(1, bind(this.save, this), id, prev_id);
         }
 
         var parent_field = this.name.split('/');
@@ -1190,6 +1190,14 @@ function validateList(_list) {
         $list.attr(
             'current_id',
             parseInt(jQuery(this).closest('tr.grid-row').attr('record'), 10) || -1);
+    });
+
+    // inline edition, change datetime widget, click on another pencil icon => save current record
+    jQuery('table.grid[id="'+_list+'_grid'+'"] tr.grid-row[record] td.grid-cell:not(.selector)').find('img.datetime').click(function() {
+        $list.attr(
+            'current_id',
+            parseInt(jQuery(this).closest('tr.grid-row').attr('record'), 10) || -1);
+
     });
 }
 
