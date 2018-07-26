@@ -72,6 +72,7 @@
         'wizard/sale_loan_stock_moves_view.xml',
         'report/sale_loan_stock_moves_report.xml',
         'wizard/delete_sale_order_line.xml',
+        'wizard/internal_request_import.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [
