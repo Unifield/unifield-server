@@ -59,11 +59,10 @@ function displayErrorOverlay(xhr) {
     var options = {
         showCloseButton: true,
         overlayOpacity: 0.7,
-        scrolling: 'no'
+        scrolling: 'auto'
     };
     if(xhr.getResponseHeader('X-Maintenance-Error')) {
         options['autoDimensions'] = false;
-        options['scrolling'] = 'auto';
     }
     jQuery.fancybox(xhr.responseText, options);
 }
