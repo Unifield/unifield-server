@@ -369,7 +369,7 @@ class account_partner_balance_tree(osv.osv):
         # if "Display Partners: All partners" has been selected, add the partners without movements
         # ONLY IF NO specific partner has been selected
         if data['form'].get('display_partner', '') == 'all' and not data['form'].get('partner_ids', False):
-            # if only 'payable' or only 'receivable' exits for a partner, create an entry at zero
+            # if only 'payable' or only 'receivable' exists for a partner, create an entry at zero
             # for the other account type ONLY IF they both needs to be displayed
             result_selection = data['form'].get('result_selection', '')
             if result_selection == 'customer_supplier':
