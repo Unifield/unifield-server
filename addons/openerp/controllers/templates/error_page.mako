@@ -33,6 +33,7 @@
         };
 
         jQuery(document).ready(function () {
+            setTimeout("jQuery('#error').scrollTop(1000)", 5);
             new openerp.ui.TextArea('error');
             jQuery('.error-section h5[id!="non-fold-error-link"]').click(function () {
                 jQuery(this).parent().toggleClass('expanded-error collapsed-error');
@@ -98,7 +99,7 @@
                 <form id="view_form" action="/openerp/errorpage/submit" method="POST">
                     <div>
                         <h4 style="padding-top:10px;">${_("An %(error_type)s has been reported.", error_type=title)}</h4>
-                        <div class="error-section collapsed-error">
+                        <div class="error-section">
                             <h5><label for="error">${_('Let me fix it')}</label></h5>
                             <div class="details">
                                 <textarea id="error" name="error" class="text" readonly="readonly" rows="15" >${error}</textarea>
@@ -106,7 +107,7 @@
                         </div>
                         <div class="error-section ${maintenance_default}">
                             % if maintenance['status'] != 'full':
-                            <h5 id="non-fold-error-link"><a href="${MAINTENANCE_CONTRACTS_URL}" target="_blank">${_('Fix it for me')}</a></h5>
+                            <!-- <h5 id="non-fold-error-link"><a href="${MAINTENANCE_CONTRACTS_URL}" target="_blank">${_('Fix it for me')}</a></h5> -->
                             % else:
                             <h5>${_('Fix it for me')}</h5>
                             <div class="details">
