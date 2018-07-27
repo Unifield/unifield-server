@@ -31,6 +31,7 @@ import logging
 
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from sale import SALE_ORDER_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -38,6 +39,8 @@ from tools.translate import _
 
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
+ORDER_PRIORITY_BY_VALUE = dict((_(y), x) for x, y in ORDER_PRIORITY)
+ORDER_CATEGORY_BY_VALUE = dict((_(y), x) for x, y in ORDER_CATEGORY)
 LINES_COLUMNS = [
     (0, _('Line number'), 'mandatory', ('order_id', '!=', False)),
     (1, _('Product Code'), 'optionnal'),
@@ -54,21 +57,7 @@ LINES_COLUMNS = [
 class internal_request_import(osv.osv):
     _name = 'internal.request.import'
 
-    def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for ir_import in self.read(cr, uid, ids, ['state', 'in_state', 'imp_state']):
-            res[ir_import['id']] = {
-                'wiz_fake_state': ir_import['state'],
-                'in_fake_state': ir_import['in_state'],
-                'imp_fake_state': ir_import['imp_state'],
-            }
-        return res
-
     _columns = {
-        'wiz_fake_state': fields.function(_get_fake_state, type='char', method=True, multi='line', string='State',
-                                          help='for internal use only'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('simu_progress', 'Simulation in progress'),
                                    ('simu_done', 'Simulation done'),
@@ -90,43 +79,29 @@ class internal_request_import(osv.osv):
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
         'in_order_name': fields.related('order_id', 'name', type='char', string='Order Reference', readonly=True),
-        'in_state': fields.related('order_id', 'state', type='selection', selection=SALE_ORDER_STATE_SELECTION,
-                                   string='State', readonly=True),
-        'in_fake_state': fields.function(_get_fake_state, type='char', method=True, multi='line', string='State',
-                                         help='for internal use only'),
         'in_categ': fields.related('order_id', 'categ', type='selection', selection=ORDER_CATEGORY,
                                    string='Order Category', readonly=True),
         'in_priority': fields.related('order_id', 'priority', type='selection', selection=ORDER_PRIORITY,
-                                   string='Priority', readonly=True),
-        'in_creation_date': fields.related('order_id', 'date_order', type='date', string='Creation date', readonly=True),
+                                      string='Priority', readonly=True),
         'in_requested_date': fields.related('order_id', 'delivery_requested_date', type='date', string='Requested date', readonly=True),
         'in_requestor': fields.related('order_id', 'requestor', type='char', string='Requestor', readonly=True),
         'location_requestor_id': fields.many2one('stock.location', string='Stock Location'),
         'in_loc_requestor': fields.related('location_requestor_id', 'name', type='char', size=64,
                                            string='Location Requestor', store=False, readonly=True),
         'in_origin': fields.related('order_id', 'origin', type='char', string='Origin', readonly=True),
-        'functional_currency_id': fields.many2one('stock.location', string='Stock Location'),
-        'in_functional_currency': fields.related('functional_currency_id', 'name', type='char', size=64,
-                                                 string='Functional Currency', store=False, readonly=True),
         # # Imported IR info
         'imp_order_name': fields.char(size=64, string='Order Refererence', readonly=True),
-        'imp_state': fields.selection(selection=SALE_ORDER_STATE_SELECTION, string='State', readonly=True),
-        'imp_fake_state': fields.function(_get_fake_state, type='char', method=True, multi='line',
-                                          string='State', help='for internal use only'),
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
-        'imp_creation_date': fields.datetime(string='Creation Date', readonly=True),
-        'imp_requested_date': fields.datetime(string='Requested Date', readonly=True),
+        'imp_requested_date': fields.date(string='Requested Date', readonly=True),
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
         'imp_loc_requestor': fields.char(size=64, string='Location Requestor', readonly=True),
         'imp_origin': fields.char(size=64, string='Origin', readonly=True),
-        'imp_functional_currency': fields.char(size=64, string='Functional Currency', readonly=True),
         'imp_line_ids': fields.one2many('internal.request.line.import', 'ir_import_id', string='Lines', readonly=True),
     }
 
     _defaults = {
         'state': lambda *args: 'draft',
-        # 'wiz_fake_state': 'draft',
     }
 
     def reset_import(self, cr, uid, ids, context=None):
@@ -218,12 +193,6 @@ class internal_request_import(osv.osv):
             uom_obj = self.pool.get('product.uom')
             loc_obj = self.pool.get('stock.location')
 
-            # Declare global variables (need this explicit declaration to clear them at the end of the treatment)
-            global PRODUCT_CODE_ID
-            global UOM_NAME_ID
-            global CURRENCY_NAME_ID
-            global SIMU_LINES
-
             if context is None:
                 context = {}
 
@@ -242,41 +211,6 @@ class internal_request_import(osv.osv):
                 nb_file_lines_columns = NB_LINES_COLUMNS
                 first_line_index = nb_file_header_lines + 1
 
-                for line in ir_imp.imp_line_ids:
-                    # Put data in cache
-                    if line.in_product_id:
-                        PRODUCT_CODE_ID.setdefault(line.in_product_id.default_code, line.in_product_id.id)
-                    if line.in_uom:
-                        UOM_NAME_ID.setdefault(line.in_uom.name, line.in_uom.id)
-                    if line.in_currency:
-                        CURRENCY_NAME_ID.setdefault(line.in_currency.name, line.in_currency.id)
-
-                    '''
-                    First of all, we build a cache for simulation screen lines
-                    '''
-                    l_num = line.in_line_number
-                    l_prod = line.in_product_id and line.in_product_id.id or False
-                    l_uom = line.in_uom and line.in_uom.id or False
-                    # By simulation screen
-                    SIMU_LINES.setdefault(ir_imp.id, {})
-                    SIMU_LINES[ir_imp.id].setdefault('line_ids', [])
-                    SIMU_LINES[ir_imp.id]['line_ids'].append(line.id)
-                    # By line number
-                    SIMU_LINES[ir_imp.id].setdefault(l_num, {})
-                    SIMU_LINES[ir_imp.id][l_num].setdefault('line_ids', [])
-                    SIMU_LINES[ir_imp.id][l_num]['line_ids'].append(line.id)
-                    # By product
-                    SIMU_LINES[ir_imp.id][l_num].setdefault(l_prod, {})
-                    SIMU_LINES[ir_imp.id][l_num][l_prod].setdefault('line_ids', [])
-                    SIMU_LINES[ir_imp.id][l_num][l_prod]['line_ids'].append(line.id)
-                    # By UoM
-                    SIMU_LINES[ir_imp.id][l_num][l_prod].setdefault(l_uom, {})
-                    SIMU_LINES[ir_imp.id][l_num][l_prod][l_uom].setdefault('line_ids', [])
-                    SIMU_LINES[ir_imp.id][l_num][l_prod][l_uom]['line_ids'].append(line.id)
-                    # By Qty
-                    SIMU_LINES[ir_imp.id][l_num][l_prod][l_uom].setdefault(line.in_qty, [])
-                    SIMU_LINES[ir_imp.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
-
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
                 file_format_errors = []
@@ -292,7 +226,7 @@ class internal_request_import(osv.osv):
                 '''
                 We check for each line if the number of columns is consistent
                 with the expected number of columns :
-                  * For PO header information : 1 columns
+                  * For IR header information : 1 columns
                   * For the line information : 9 columns
                 '''
                 # Check number of columns on lines
@@ -303,21 +237,18 @@ class internal_request_import(osv.osv):
                         continue
                     if len(values.get(x, [])) != nb_to_check:
                         lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The header information must be on two columns : \
-                        Column A for name of the field and column B for value.') % x
+                        error_msg = _('Line %s of the imported file: The header information must be on two columns : Column A for name of the field and column B for value.') % x
                         file_format_errors.append(error_msg)
 
                 if len(values.get(first_line_index, [])) < nb_file_lines_columns:
-                    error_msg = _('Line %s of the Excel file: This line is mandatory and must have at least %s columns. \
-                    The values on this line must be the name of the field for IR lines.') \
+                    error_msg = _('Line %s of the Excel file: This line is mandatory and must have at least %s columns. The values on this line must be the name of the field for IR lines.') \
                                 % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
                 for x in xrange(first_line_index, len(values)+1):
                     if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The line information must be on at least %s columns. \
-                        The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
+                        error_msg = _('Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
                         file_format_errors.append(error_msg)
 
                 nb_file_lines = len(values) - first_line_index
@@ -339,61 +270,39 @@ class internal_request_import(osv.osv):
                     return res
 
                 '''
-                Now, we know that the file has the good format, you can import
-                data for header.
+                Now, we know that the file has the good format, you can import data for header.
                 '''
-                # Line 1: Order reference
-                order_ref = values.get(1, [])[1]
-                if order_ref != ir_imp.order_id.name:
-                    message = '''## IMPORT STOPPED ##
-
-    LINE 1 OF THE IMPORTED FILE: THE ORDER REFERENCE \
-    IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
-
-    YOU SHOULD IMPORT A FILE THAT HAS THE SAME ORDER REFERENCE THAN THE SIMULATION\
-    SCREEN !'''
-                    self.write(cr, uid, [ir_imp.id], {'message': message, 'state': 'error'}, context)
-                    res = self.go_to_simulation(cr, uid, [ir_imp.id], context=context)
-                    cr.commit()
-                    cr.close(True)
-                    return res
-
                 # Line 2: Order Reference
                 # TODO: update
                 if values.get(2, [])[1]:
-                    values_header_errors.append(_('Line 2 of the file: You can not import this file with an IR Order Reference.\
-                    The Order Reference is system-generated at creation of object.'))
-
-                # Line 3: State
-                # Nothing to do
+                    values_header_errors.append(_('Line 2 of the file: You can not import this file with an IR Order Reference. The Order Reference is system-generated at creation of object.'))
 
                 # Line 4: Order Category
                 # TODO: update
-                if values.get(4, [])[1] in ORDER_CATEGORY:
-                    header_values['imp_categ'] = values.get(4, [])[1]
+                categ = values.get(4, [])[1]
+                if categ in ORDER_CATEGORY_BY_VALUE:
+                    header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
                 else:
                     values_header_errors.append(
                         _('Line 4 of the file: Order Category \'%s\' not defined, default value will be Other')
-                        % (values.get(4, [])[1],))
+                        % (categ,))
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
                 # TODO: update
-                if values.get(5, [])[1] in ORDER_PRIORITY:
-                    header_values['imp_categ'] = values.get(5, [])[1]
+                priority = values.get(5, [])[1]
+                if priority in ORDER_PRIORITY_BY_VALUE:
+                    header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
                 else:
                     values_header_errors.append(
                         _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be Normal')
-                        % (values.get(5, [])[1],))
-                    header_values['imp_categ'] = 'normal'
-
-                # Line 6: Creation Date
-                # Nothing to do
+                        % (priority,))
+                    header_values['imp_priority'] = 'normal'
 
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]
                 if req_date:
-                    if isinstance(req_date, datetime.datetime):
+                    if type(req_date) == type(DateTime.now()):
                         req_date = req_date.strftime('%d-%m-%Y')
                         header_values['imp_requested_date'] = req_date
                     else:
@@ -401,8 +310,8 @@ class internal_request_import(osv.osv):
                             time.strptime(req_date, '%d-%m-%Y')
                             header_values['imp_requested_date'] = req_date
                         except:
-                            values_header_errors.append(_('Line 7 of the file: The Requested Date \'%s\' must be \
-                                                          formatted like \'DD-MM-YYYY\'') % req_date)
+                            values_header_errors.append(_('Line 7 of the file: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')
+                                                        % req_date)
                 else:
                     values_header_errors.append(_('Line 7 of the file: The Requested Date is mandatory.'))
 
@@ -410,6 +319,8 @@ class internal_request_import(osv.osv):
                 # TODO: update
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
+                elif not ir_imp.order_id:
+                    values_header_errors.append(_('Line 8 of the file: The Requestor is mandatory in the first import.'))
 
                 # Line 9: Location Requestor
                 # TODO: update
@@ -420,9 +331,9 @@ class internal_request_import(osv.osv):
                         ('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&',
                         ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')
                     ]
-                    loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, context=context)
+                    loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, limit=1, context=context)
                     if loc_ids:
-                        header_values['imp_loc_requestor'] = loc_req
+                        header_values['imp_loc_requestor'] = loc_ids[0]
                     else:
                         values_header_errors.append(_('Line 9 of the file: The Location Requestor \'%s\' does not match possible options.')
                                                     % (loc_req,))
@@ -433,9 +344,8 @@ class internal_request_import(osv.osv):
                 # TODO: update
                 if values.get(10, [])[1]:
                     header_values['imp_origin'] = values.get(10, [])[1]
-
-                # Line 11: Location Requestor
-                # Nothing to do
+                elif not ir_imp.order_id:
+                    values_header_errors.append(_('Line 10 of the file: The Origin is mandatory in the first import.'))
 
                 '''
                 The header values have been imported, start the importation of
@@ -481,11 +391,10 @@ class internal_request_import(osv.osv):
                         prod_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
-                            prod_cols = ['name', 'standard_price', 'uom_id', 'uom_po_id']
+                            prod_cols = ['standard_price', 'uom_id', 'uom_po_id']
                             product = prod_obj.read(cr, uid, product_id, prod_cols, context=context)
                             line_data.update({
                                 'imp_product_id': product_id,
-                                'imp_product_desc': product['name'],
                                 'imp_comment': comment or '',
                             })
                         else:
@@ -493,7 +402,8 @@ class internal_request_import(osv.osv):
                                 line_data.update({'imp_comment': product_code + '\n' + comment})
                             else:
                                 line_data.update({'imp_comment': comment or ''})
-                                line_errors += _('Product \'%s\' does not exist in this database. It has not been imported.\n') % vals[1]
+                                line_errors += _('Product \'%s\' does not exist in this database. It has not been imported.\n') \
+                                               % vals[1]
                     else:
                         line_data.update({'imp_comment': comment or ''})
                         if not comment:
@@ -513,14 +423,9 @@ class internal_request_import(osv.osv):
                             line_errors += _('Product \'%s\' has not been imported as UoM \'%s\' is not consistent.') \
                                            % (vals[1], vals[5])
 
-                    # Currency
-                    # Nothing to do
-
-                    # Date of Stock Take
-                    # Nothing to do
-
                     line_data.update({'error_msg': line_errors})
                     lines_values.append(line_data)
+                    nb_treated_lines += 1
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -548,7 +453,6 @@ class internal_request_import(osv.osv):
                     'imp_line_ids': [(0, 0, {
                         'imp_line_number': i + 1,
                         'imp_product_id': line['imp_product_id'] or False,
-                        'imp_product_desc': line['imp_product_desc'] or False,
                         'imp_qty': line['imp_qty'] or 0.00,
                         'imp_cost_price': line['imp_cost_price'] or 0.00,
                         'imp_uom_id': line['imp_uom_id'] or False,
@@ -561,11 +465,6 @@ class internal_request_import(osv.osv):
             cr.commit()
             cr.close(True)
 
-            # Clear the cache
-            PRODUCT_CODE_ID = {}
-            UOM_NAME_ID = {}
-            CURRENCY_NAME_ID = {}
-            SIMU_LINES = {}
         except Exception, e:
             logging.getLogger('internal.request.import').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
@@ -573,6 +472,117 @@ class internal_request_import(osv.osv):
             cr.close(True)
 
         return True
+
+    def launch_import(self, cr, uid, ids, context=None):
+        '''
+        Launch the simulation routine in background
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        active_wiz = self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_id'], context=context)[0]
+
+        # To prevent adding multiple lines by clicking multiple times on the import button
+        if active_wiz.state != 'simu_done':
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': active_wiz.id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+            }
+
+        # TODO: Store timestamp ?
+        self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
+
+        cr.commit()
+        new_thread = threading.Thread(target=self.run_import, args=(cr.dbname, uid, ids, context))
+        new_thread.start()
+        new_thread.join(10.0)
+
+        if new_thread.isAlive():
+            return self.go_to_simulation(cr, uid, ids, context=context)
+        else:
+            if active_wiz.order_id:
+                # TODO: update
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'internal.request.import',
+                    'res_id': active_wiz.id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'crush',
+                    'context': context,
+                }
+            else:
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'internal.request.import',
+                    'res_id': active_wiz.id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'crush',
+                    'context': context,
+                }
+
+    def run_import(self, dbname, uid, ids, context=None):
+        '''
+        Launch the real import
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        cr = pooler.get_db(dbname).cursor()
+
+        try:
+            for wiz in self.browse(cr, uid, ids, context=context):
+                self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
+
+                if wiz.order_id:
+                    # TODO: update
+                    continue
+                else:
+                    ir_vals = {
+                        'procurement_request': True,
+                        'categ': wiz.imp_categ,
+                        'priority': wiz.imp_priority,
+                        'delivery_requested_date': wiz.imp_requested_date,
+                        'requestor': wiz.imp_requestor,
+                        'location_requestor_id': wiz.imp_loc_requestor,
+                        'origin': wiz.imp_origin,
+                        'order_line': [(0, 0, {
+                            'product_id': x.imp_product_id and x.imp_product_id.id or False,
+                            'product_uom_qty': x.imp_qty or 0.00,
+                            'cost_price': x.imp_cost_price or 0.00,
+                            'price_unit': x.imp_cost_price or 0.00,
+                            'product_uom': x.imp_uom_id and x.imp_uom_id.id or False,
+                            'comment': x.imp_comment or '',
+                        }) for x in (y for y in wiz.imp_line_ids if not y.error_msg)],
+                    }
+
+                    self.pool.get('sale.order').create(cr, uid, ir_vals, context=context)
+
+            if ids:
+                self.write(cr, uid, ids, {'state': 'done', 'percent_completed': 100.00}, context=context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+            else:
+                res = True
+
+            cr.commit()
+            cr.close(True)
+        except Exception, e:
+            logging.getLogger('ir.simulation.run').warn('Exception', exc_info=True)
+            self.write(cr, uid, ids, {'message': e}, context=context)
+            res = True
+            cr.commit()
+            cr.close(True)
+
+        return res
 
 
 internal_request_import()
@@ -590,26 +600,20 @@ class internal_request_line_import(osv.osv):
             res[line.id] = {
                 'in_line_number': False,
                 'in_product_id': False,
-                'in_product_desc': False,
                 'in_qty': 0.00,
                 'in_cost_price': 0.00,
                 'in_uom': False,
-                'in_currency': False,
                 'in_comment': False,
-                'in_dost': False,
             }
             if line.ir_line_id:
                 l = line.ir_line_id
                 res[line.id].update({
                     'in_line_number': l.line_number or False,
                     'in_product_id': l.product_id and l.product_id.id or False,
-                    'in_product_desc': l.product_id and l.product_id.name or False,
                     'in_qty': l.product_uom_qty,
                     'in_cost_price': l.price_unit,
                     'in_uom': l.product_uom and l.product_uom.id,
-                    'in_currency': l.order_id.functional_currency and l.order_id.functional_currency.id,
                     'in_comment': l.comment,
-                    'in_dost': l.date_of_stock_take,
                 })
 
         return res
@@ -622,30 +626,21 @@ class internal_request_line_import(osv.osv):
                                           string='Line Number', readonly=True, store=True),
         'in_product_id': fields.function(_get_line_info, method=True, multi='line', type='many2one',
                                          relation='product.product', string='Product', readonly=True, store=True),
-        'in_product_desc': fields.function(_get_line_info, method=True, multi='line', type='char',
-                                           size=256, string='Description', readonly=True, store=True),
         'in_qty': fields.function(_get_line_info, method=True, multi='line', type='float',
                                   string='Quantity', readonly=True, store=True),
         'in_cost_price': fields.function(_get_line_info, method=True, multi='line', type='float',
                                          string='Cost Price', readonly=True, store=True),
         'in_uom': fields.function(_get_line_info, method=True, multi='line', type='many2one',
                                   relation='product.uom', string='UoM', readonly=True, store=True),
-        'in_currency': fields.function(_get_line_info, method=True, multi='line', type='many2one',
-                                       relation='res.currency', string='Currency', readonly=True, store=True),
         'in_comment': fields.function(_get_line_info, method=True, multi='line', type='char',
                                       size=256, string='Comment', readonly=True, store=True),
-        'in_dost': fields.function(_get_line_info, method=True, multi='line', type='date',
-                                   string='Date of Stock Take', readonly=True, store=True),
         # # Imported IR line info
         'imp_line_number': fields.integer(string='Line Number'),
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
-        'imp_product_desc': fields.char(size=256, string='Description', readonly=True),
         'imp_qty': fields.float(digits=(16, 2), string='Quantity', readonly=True),
         'imp_cost_price': fields.float(digits=(16, 2), string='Cost Price', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
-        'imp_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'imp_comment': fields.char(size=256, string='Comment', readonly=True),
-        'imp_dost': fields.date(string='Date of Stock Take', readonly=True),
         'error_msg': fields.text(string='Error message', readonly=True),
     }
 
