@@ -97,7 +97,7 @@ class internal_request_import(osv.osv):
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
         'imp_loc_requestor': fields.char(size=64, string='Location Requestor', readonly=True),
         'imp_origin': fields.char(size=64, string='Origin', readonly=True),
-        'imp_line_ids': fields.one2many('internal.request.line.import', 'ir_import_id', string='Lines', readonly=True),
+        'imp_line_ids': fields.one2many('internal.request.import.line', 'ir_import_id', string='Lines', readonly=True),
     }
 
     _defaults = {
@@ -188,7 +188,7 @@ class internal_request_import(osv.osv):
         '''
         cr = pooler.get_db(dbname).cursor()
         try:
-            ir_imp_l_obj = self.pool.get('internal.request.line.import')
+            ir_imp_l_obj = self.pool.get('internal.request.import.line')
             prod_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
             loc_obj = self.pool.get('stock.location')
@@ -569,7 +569,7 @@ class internal_request_import(osv.osv):
 
             if ids:
                 self.write(cr, uid, ids, {'state': 'done', 'percent_completed': 100.00}, context=context)
-                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                res = self.reset_import(cr, uid, ids, context=context)
             else:
                 res = True
 
@@ -588,8 +588,8 @@ class internal_request_import(osv.osv):
 internal_request_import()
 
 
-class internal_request_line_import(osv.osv):
-    _name = 'internal.request.line.import'
+class internal_request_import_line(osv.osv):
+    _name = 'internal.request.import.line'
 
     def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
         if context is None:
@@ -598,6 +598,7 @@ class internal_request_line_import(osv.osv):
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {
+                'ir_line_id': False,
                 'in_line_number': False,
                 'in_product_id': False,
                 'in_qty': 0.00,
@@ -608,6 +609,7 @@ class internal_request_line_import(osv.osv):
             if line.ir_line_id:
                 l = line.ir_line_id
                 res[line.id].update({
+                    'ir_line_id': l.id,
                     'in_line_number': l.line_number or False,
                     'in_product_id': l.product_id and l.product_id.id or False,
                     'in_qty': l.product_uom_qty,
@@ -662,4 +664,4 @@ class internal_request_line_import(osv.osv):
         return True
 
 
-internal_request_line_import()
+internal_request_import_line()

@@ -799,7 +799,6 @@ class ir_values(osv.osv):
             for v in values:
                 if context.get('procurement_request', False):
                     if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
-                            or v[2].get('report_name', False) in ('internal_request_export', 'procurement.request.report') \
                             or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 else:

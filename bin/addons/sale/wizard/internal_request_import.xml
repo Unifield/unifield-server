@@ -60,7 +60,7 @@
                         <page string="Details">
                             <field name="imp_line_ids" nolabel="1" colspan="4">
                                 <tree string="Lines" colors="red: error_msg != False" >
-                                    <group attrs="['invisible': {'order_id', '=', False}]">
+                                    <group attrs="['invisible': {'ir_line_id', '=', False}]">
                                         <field name="in_line_number" />
                                         <field name="in_product_id" />
                                         <field name="in_qty" />

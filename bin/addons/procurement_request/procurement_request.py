@@ -23,6 +23,7 @@ import time
 
 from osv import osv, fields
 from tools.translate import _
+import datetime
 import decimal_precision as dp
 import netsvc
 
@@ -273,7 +274,6 @@ class procurement_request(osv.osv):
             view_id = obj_data.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-
 
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
@@ -559,7 +559,79 @@ class procurement_request(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
+    def ir_import_by_order(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        context.update({'active_id': ids[0]})
+        ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line'], context=context)
+        import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
+        import_obj.unlink(cr, uid, import_ids, context=context)
+        new_import_vals = {
+            'order_id': ids[0],
+            'imp_line_ids': [(0, 0, {
+                'ir_line_id': l.id,
+                'in_line_number': l.line_number,
+            }) for l in ir.order_line],
+        }
+        import_id = import_obj.create(cr, uid, new_import_vals, context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_export_get_file_name(self, cr, uid, ids, prefix='IR', context=None):
+        """
+        get export file name
+        :return IR_14_OC_MW101_IR00060_YYYY_MM_DD.xls
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        ir_r = self.read(cr, uid, ids[0], ['name'], context=context)
+        if not ir_r or not ir_r['name']:
+            return False
+        dt_now = datetime.datetime.now()
+        ir_name = "%s_%s_%d_%02d_%02d" % (prefix, ir_r['name'].replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
+        return ir_name
+
+    def export_excel_ir(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of IR
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data = {'ids': ids}
+        file_name = self.ir_export_get_file_name(cr, uid, ids, prefix='IR', context=context)
+        if file_name:
+            data['target_filename'] = file_name
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'internal_request_export',
+            'data': data,
+            'context': context,
+        }
+
+
 procurement_request()
+
 
 class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
