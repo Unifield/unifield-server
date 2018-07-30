@@ -1917,6 +1917,13 @@ class orm_template(object):
         result['arch'] = xarch
         result['fields'] = xfields
 
+        result['uom_rounding'] = {}
+        # TODO:  check if rouding is needed
+        uom_obj = self.pool.get('product.uom')
+        uom_ids = uom_obj.search(cr, 1, [])
+        for uom_data in uom_obj.read(cr, 1, uom_ids, ['rounding']):
+            result['uom_rounding'][uom_data['id']] = uom_data['rounding']
+
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
