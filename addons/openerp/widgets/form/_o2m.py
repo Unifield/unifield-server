@@ -123,7 +123,7 @@ class O2M(TinyInputWidget):
 
         view = attrs.get('views', {})
         mode = str(attrs.get('mode', 'tree,form')).split(',')
-
+        view['uom_rounding'] = attrs.get('uom_rounding', {})
         self.view = view
 
         view_mode = mode

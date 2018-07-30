@@ -107,6 +107,8 @@ class List(TinyWidget):
         self.force_readonly = kw.get('force_readonly', False)
         self.filter_selector = kw.get('filter_selector', None)
 
+        self.rounding_values = view.get('uom_rounding', {})
+
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
             if terp_params.get('_terp_model'):
@@ -486,7 +488,14 @@ class List(TinyWidget):
                             cell = Hidden(**fields[name])
                             cell.set_value(row_value.get(name, False))
                         else:
-                            cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
+                            if kind == 'float' and fields[name].get('related_uom') and self.rounding_values and row_value.get(fields[name]['related_uom']):
+                                if isinstance(row_value.get(fields[name]['related_uom']), (list, tuple)):
+                                    rounding = row_value.get(fields[name]['related_uom'])[0]
+                                else:
+                                    rounding = row_value.get(fields[name]['related_uom'])
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), rounding=self.rounding_values.get(rounding), **fields[name])
+                            else:
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
 
                         for color, expr in self.colors.items():
                             try:
@@ -617,6 +626,9 @@ class Float(Char):
         computation = self.attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
+
+        if self.attrs.get('rounding'):
+            return format.format_decimal(self.value or 0.0, int(abs(math.log(self.attrs['rounding']))))
 
         integer, digit = digits
         return format.format_decimal(self.value or 0.0, digit, computation=computation)
