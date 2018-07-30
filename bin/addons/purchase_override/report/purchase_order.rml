@@ -205,7 +205,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.office_name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address.office_name or objects[0].from_address.partner_id.name or objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
