@@ -436,7 +436,7 @@ class purchase_order_line(osv.osv):
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
                                         string="Customer ref."),
         'name': fields.char('Description', size=256, required=True),
-        'product_qty': fields.float('Quantity', required=True, digits=(16, 2)),
+        'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='purchase.order.line,product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True, select=True),
         'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok', '=', True)],

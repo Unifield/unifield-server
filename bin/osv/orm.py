@@ -1343,7 +1343,7 @@ class orm_template(object):
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
                     res[f]['no_write_access'] = True
-                for arg in ('digits', 'invisible', 'filters', 'computation'):
+                for arg in ('digits', 'invisible', 'filters', 'computation', 'related_uom'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
