@@ -1527,7 +1527,7 @@ class account_move(osv.osv):
                 # US-822: consider system journal JE always valid (bypass)
                 valid_moves.append(move)
                 continue
-            if not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution'):
+            if not context.get('ignore_analytic_line') and (not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution')):
                 for obj_line in move.line_id:
                     for obj in obj_line.analytic_lines:
                         obj_analytic_line.unlink(cr,uid,obj.id)
@@ -1641,7 +1641,7 @@ class account_move(osv.osv):
                     'state': 'draft'
                 }, context, check=False)
         # Create analytic lines for the valid moves
-        if not context.get('do_not_create_analytic_line'):
+        if not context.get('ignore_analytic_line'):
             for record in valid_moves:
                 obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
 

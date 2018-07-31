@@ -2335,6 +2335,12 @@ class account_bank_statement_line(osv.osv):
             #+  As temp state is not effective on direct invoice and that previously we just create move when we are in draft and do not want to hard post a direct invoice
             #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
             #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
+            ignore_analytique = False
+            if not context.get('ignore_analytic_line') and postype == 'hard' and absl.account_id.is_analytic_addicted:
+                # AJIs will be updated with update_analytic_lines
+                ignore_analytique = True
+                context['ignore_analytic_line'] = True
+
             if absl.state == 'draft' and not absl.direct_invoice:
                 self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
@@ -2343,6 +2349,9 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, 1, absl.id, context=context)
+
+            if ignore_analytique:
+                context['ignore_analytic_line'] = False
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 # Optimization on write() for this field
@@ -2437,7 +2446,16 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
+                    # /!\ we create AJIS only here check the orhter if elif for AJIs upate
+                    ignore_analytic_line = False
+                    if not context.get('ignore_analytic_line'):
+                        context['ignore_analytic_line'] = True
+                        ignore_analytic_line = True
+
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                    if ignore_analytic_line:
+                        context['ignore_analytic_line'] = False
+
                     # WARNING: if we don't do a browse before the "do_direct_expense", the system doesn't know that the absl state is hard post. And so the direct expense functionnality doesn't work!
                     absl = self.browse(cr, uid, absl.id, context=context)
                     # do a move that enable a complete supplier follow-up
