@@ -277,7 +277,16 @@ class account_move_line_compute_currency(osv.osv):
                          'credit': addendum_cr or 0.0,
                          'ref': fxa_ref,
                          'reference': fxa_ref})
+
+            set_no_an_ctx = False
+            if not context.get('do_not_create_analytic_line'):
+                context['do_not_create_analytic_line'] = True
+                set_no_an_ctx = True
+
             addendum_line_id = self.create(cr, uid, vals, context=context)
+
+            if set_no_an_ctx:
+                context['do_not_create_analytic_line'] = False
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
 
