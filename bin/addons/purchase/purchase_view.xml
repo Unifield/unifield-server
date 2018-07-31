@@ -772,7 +772,10 @@
 
         <act_window context="{'search_default_partner_id': [active_id]}" id="act_res_partner_2_purchase_order" name="Purchase Orders" groups="purchase.group_purchase_user" res_model="purchase.order" src_model="res.partner"/>
 
-        <act_window context="{'search_default_product_id': [active_id]}" id="action_purchase_line_product_tree" name="Purchases" res_model="purchase.order.line" src_model="product.product" groups="purchase.group_purchase_user"/>
+        <act_window context="{}"
+                    domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+                    id="purchase.action_purchase_line_product_tree2" name="Purchases"
+                    res_model="purchase.order" src_model="product.product" groups=""/>
 
         <record id="purchase_line_form_action2" model="ir.actions.act_window">
             <field name="name">Purchase Lines Not Invoiced</field>

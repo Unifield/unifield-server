@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+
         <!-- UF10.0 -->
         <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
             <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
@@ -8,6 +9,11 @@
 
         <record id="us_3873_update_display_partner_in_partner_balance_templates" model="patch.scripts">
             <field name="method">us_3873_update_display_partner_in_partner_balance_templates</field>
+        </record>
+
+        <!-- UF 9.1 -->
+        <record id="change_xml_payment_method" model="patch.scripts">
+            <field name="method">change_xml_payment_method</field>
         </record>
 
         <!-- UF9.0 -->
