@@ -77,7 +77,7 @@ class patch_scripts(osv.osv):
             except:
                 pass
 
-    def us_3873_update_display_partner_filter_in_partner_balance_templates(self, cr, uid, *a, **b):
+    def us_3873_update_display_partner_in_partner_balance_templates(self, cr, uid, *a, **b):
         """
         Updates the Wizard Templates for the "Partner Balance" report following the fact that the display_partner field
         is now required: an empty display_partner becomes "With movements" (= will give the same results as before US-3873 dev)
