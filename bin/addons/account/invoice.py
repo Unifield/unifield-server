@@ -1053,7 +1053,8 @@ class account_invoice(osv.osv):
                 'journal_id': journal_id,
                 'date': date,
                 'type': entry_type,
-                'narration':inv.comment
+                'narration':inv.comment,
+                'document_date': inv.document_date,
             }
             period_id = inv.period_id and inv.period_id.id or False
             if not period_id:
@@ -1070,10 +1071,18 @@ class account_invoice(osv.osv):
                 if 'seqnums' in argdict:
                     context['seqnums'] = argdict['seqnums']
 
+            set_no_an_ctx = False
+            if not context.get('do_not_create_analytic_line'):
+                context['do_not_create_analytic_line'] = True
+                set_no_an_ctx = True
+
             move_id = self.pool.get('account.move').create(cr, uid, move, context=context)
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move
-            self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name})
+            self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name}, context={'do_not_create_analytic_line': True})
+            if set_no_an_ctx:
+                context['do_not_create_analytic_line'] = False
+
             # Pass invoice in context in method post: used if you want to get the same
             # account move reference when creating the same invoice after a cancelled one:
             self.pool.get('account.move').post(cr, uid, [move_id], context={'invoice':inv})

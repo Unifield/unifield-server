@@ -1641,8 +1641,9 @@ class account_move(osv.osv):
                     'state': 'draft'
                 }, context, check=False)
         # Create analytic lines for the valid moves
-        for record in valid_moves:
-            obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
+        if not context.get('do_not_create_analytic_line'):
+            for record in valid_moves:
+                obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
 
         valid_moves = [move.id for move in valid_moves]
         return len(valid_moves) > 0 and valid_moves or False

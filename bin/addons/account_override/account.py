@@ -1077,21 +1077,6 @@ class account_move(osv.osv):
         self._check_date_in_period(cr, uid, ids, context)
         return res
 
-    def post(self, cr, uid, ids, context=None):
-        """
-        Add document date
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # If invoice in context, we come from self.action_move_create from invoice.py. So at invoice validation step.
-        if context.get('invoice', False):
-            inv_info = self.pool.get('account.invoice').read(cr, uid, context.get('invoice') and context.get('invoice').id, ['document_date'])
-            if inv_info.get('document_date', False):
-                self.write(cr, uid, ids, {'document_date': inv_info.get('document_date')})
-        res = super(account_move, self).post(cr, uid, ids, context)
-        return res
 
     def button_validate(self, cr, button_uid, ids, context=None):
         """
