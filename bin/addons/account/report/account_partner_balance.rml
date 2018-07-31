@@ -186,25 +186,26 @@
     </para>
     <section>
         [[ repeatIn(get_partners(data), 'p_entries') ]]
-      <blockTable colWidths="50.0,40.0,85.0,50.0,124.0,50.0,91.0,50.0" style="Table2_header">
+      <blockTable colWidths="50.0,37.0,81.0,50.0,91.0,112.0,90.0,43.0" style="Table2_header">
         <tr>
           <td><para style="terp_tblheader_General_Centre">Chart of Account</para></td>
           <td><para style="terp_tblheader_General_Centre">Fiscal Year</para></td>
           <td><para style="terp_tblheader_General_Centre">Journals</para></td>
-          <td><para style="terp_tblheader_General_Centre">Partner's</para></td>
-          <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para></td>
-          <td><para style="terp_tblheader_General_Centre">Target Moves</para></td>
-          <td><para style="terp_tblheader_General_Centre">Proprietary Instances</para></td>
           <td><para style="terp_tblheader_General_Centre">Accounts</para></td>
+          <td><para style="terp_tblheader_General_Centre">Proprietary Instances</para></td>
+          <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para></td>
+          <td><para style="terp_tblheader_General_Centre">Display</para></td>
+          <td><para style="terp_tblheader_General_Centre">Func. Currency</para></td>
         </tr>
         <tr>
           <td><para style="terp_default_Centre_8">[[ get_account(data) or removeParentNode('para') ]]</para></td>
           <td><para style="terp_default_Centre_8">[[ get_fiscalyear(data)  or '' ]]</para></td>
           <td> <para style="terp_default_Centre_8">[[ get_journals_str(data) ]] </para></td>
-          <td> <para style="terp_default_Centre_8">[[ get_type_of_accounts() ]]</para></td>
+          <td><para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para></td>
+          <td><para style="terp_default_Centre_8">[[ get_prop_instances_str(data, pdf=True) ]]</para></td>
 
           <td><para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]] </para>
-            <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)==translate('Date') or removeParentNode('blockTable') ]]
+            <blockTable colWidths="51.0,51.0" style="Table3">[[ get_filter(data)==translate('Date') or removeParentNode('blockTable') ]]
               <tr>
                 <td><para style="terp_tblheader_General_Centre">Start Date</para></td>
                 <td><para style="terp_tblheader_General_Centre">End Date</para></td>
@@ -214,7 +215,7 @@
                 <td><para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para></td>
               </tr>
             </blockTable>
-            <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)==translate('Periods') or removeParentNode('blockTable') ]]
+            <blockTable colWidths="51.0,51.0" style="Table3">[[ get_filter(data)==translate('Periods') or removeParentNode('blockTable') ]]
               <tr>
                 <td><para style="terp_tblheader_General_Centre">Start Period</para></td>
                 <td><para style="terp_tblheader_General_Centre">End Period</para></td>
@@ -225,9 +226,17 @@
               </tr>
             </blockTable>
           </td>
-          <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
-          <td><para style="terp_default_Centre_8">[[ get_prop_instances_str(data, pdf=True) ]]</para></td>
-          <td><para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para></td>
+          <td>
+              <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                  translate("Partner's"), get_type_of_accounts(),
+                  translate('Target Moves'), get_target_move(data),
+                  translate('Reconciled'), get_reconcile_selection(data),
+                  translate('Display Partners'), get_display_partners_selection(data),
+                  ) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
+          </td>
         </tr>
       </blockTable>
 

@@ -53,6 +53,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_journals_str': self._get_journals_str,
             'get_partners':self._get_partners,
             'get_target_move': self._get_target_move,
+            'get_reconcile_selection': self._get_reconcile_selection,
+            'get_display_partners_selection': self._get_display_partners_selection,
             'get_instances_str': self._get_instances_str,
             'get_accounts_str': self._get_accounts_str,
             'format_entry_label': self._format_entry_label,
@@ -348,6 +350,30 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         elif self.result_selection == 'customer_supplier':
             return _('Receivable and Payable Accounts')
         return ''
+
+    def _get_reconcile_selection(self):
+        """
+        Returns "Yes" if "Reconciled: Yes" is selected in the wizard
+        """
+        selection = _('All')
+        if self.reconciled == 'yes':
+            selection = _('Yes')
+        elif self.reconciled == 'no':
+            selection = _('No')
+        return selection
+
+    def _get_display_partners_selection(self):
+        """
+        Returns the String to display in the "Display Partners" section of the report header
+        """
+        selection = '-'
+        if self.display_partner == 'all':
+            selection = _('All Partners')
+        elif self.display_partner == 'with_movements':
+            selection = _('With movements')
+        elif self.display_partner == 'non-zero_balance':
+            selection = _('With balance is not equal to 0')
+        return selection
 
     def _sum_currency_amount_account(self, account, form):
         self._set_get_account_currency_code(account.id)

@@ -1340,6 +1340,8 @@ msgstr "Liste d'erreurs"
 #: selection:account.partner.balance,display_partner:0
 #: selection:wizard.account.partner.balance.tree,display_partner:0
 #: selection:account.partner.ledger,display_partner:0
+#: code:addons/account/report/account_partner_ledger.py:371
+#: code:addons/finance/report/account_partner_balance_tree.py:135
 msgid "All Partners"
 msgstr "Tous les Partenaires"
 
@@ -7632,6 +7634,11 @@ msgstr "Monthly review consumption line to delete"
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:315
 #: field:wizard.account.partner.balance.tree,display_partner:0
 #: field:account.partner.ledger,display_partner:0
+#: field:account.partner.balance,display_partner:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:280
 msgid "Display Partners"
 msgstr "Afficher les Partenaires"
 
@@ -8210,7 +8217,7 @@ msgstr "Valider Inventaire"
 msgid "Open Logs"
 msgstr "Ouvrir les Journaux de bord"
 
-#. modules: account, res_currency_functional, analytic_override, account_mcdb, transport_mgmt
+#. modules: account, res_currency_functional, analytic_override, account_mcdb, transport_mgmt, finance
 #: selection:account.journal.column,field:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:combined.journals.report.pdf:0
@@ -8220,6 +8227,11 @@ msgstr "Ouvrir les Journaux de bord"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:184
 #: report:addons/account_mcdb/report/combined_journals_report.mako:259
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:246
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:316
 #: field:account.analytic.line,functional_currency_id:0
 #: field:account.bank.statement.line,functional_currency_id:0
 #: field:account.move.line,functional_currency_id:0
@@ -13833,6 +13845,8 @@ msgstr "The Internal request '%s' has been closed."
 #: code:addons/account/report/account_balance_sheet.py:298
 #: code:addons/account/report/account_general_ledger.py:539
 #: code:addons/account/report/account_profit_loss.py:205
+#: code:addons/account/report/account_partner_ledger.py:372
+#: code:addons/finance/report/account_partner_balance_tree.py:136
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:294
 #: selection:wizard.account.partner.balance.tree,display_partner:0
 #: selection:account.partner.ledger,display_partner:0
@@ -16877,6 +16891,8 @@ msgstr "%s update%s"
 #: code:addons/account/report/account_general_ledger.py:516
 #: selection:account.partner.ledger,reconciled:0
 #: selection:wizard.account.partner.balance.tree,reconciled:0
+#: code:addons/account/report/account_partner_ledger.py:360
+#: code:addons/finance/report/account_partner_balance_tree.py:123
 #: selection:mission.stock.wizard,display_only_in_stock:0
 #: view:monthly.budget.wizard:0
 #: selection:wizard.export.po.validated,need_ad:0
@@ -18256,11 +18272,6 @@ msgstr "Column 8 :: 'Product Qty' must be positive"
 #, python-format
 msgid "line"
 msgstr "ligne"
-
-#. module: account
-#: field:account.partner.balance,display_partner:0
-msgid "Display Partners"
-msgstr "Afficher Partenaires"
 
 #. modules: product_nomenclature, product_asset, stock_schedule, product_attributes, product_expiry, return_claim, msf_doc_import, supplier_catalogue, unifield_setup, product_list, stock, product, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sync_so, product_manufacturer, account_override, msf_outgoing, transport_mgmt, msf_audittrail, purchase_msf
 #: constraint:product.product:0
@@ -25236,6 +25247,8 @@ msgstr "Europe/Bucharest"
 #: code:addons/account/report/account_general_ledger.py:515
 #: selection:account.partner.ledger,reconciled:0
 #: selection:wizard.account.partner.balance.tree,reconciled:0
+#: code:addons/account/report/account_partner_ledger.py:359
+#: code:addons/finance/report/account_partner_balance_tree.py:122
 #: selection:mission.stock.wizard,display_only_in_stock:0
 #: code:addons/msf_budget/report/report_budget_criteria.py:63
 #: selection:wizard.export.po.validated,need_ad:0
@@ -27800,6 +27813,9 @@ msgstr "Vous devez définir une zone de stock"
 #: report:account.partner.balance:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:316
 #: report:account.general.ledger_landscape_tb:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:244
 msgid "Filter By"
 msgstr "Filtrer par"
 
@@ -33919,6 +33935,8 @@ msgstr "Délai d'Expédition"
 #: code:addons/account/report/account_profit_loss.py:203
 #: code:addons/account/report/account_balance_sheet.py:296
 #: code:addons/account/report/account_general_ledger.py:537
+#: code:addons/account/report/account_partner_ledger.py:370
+#: code:addons/finance/report/account_partner_balance_tree.py:134
 #: selection:account.partner.ledger,display_partner:0
 #: selection:wizard.account.partner.balance.tree,display_partner:0
 #, python-format
@@ -45175,7 +45193,7 @@ msgstr "Total Fonc. Crédit"
 msgid "Create Invoices"
 msgstr "Créer Factures"
 
-#. module: account
+#. modules: account, finance
 #: field:account.aged.trial.balance,result_selection:0
 #: field:account.common.partner.report,result_selection:0
 #: report:account.partner.balance:0
@@ -45184,6 +45202,7 @@ msgstr "Créer Factures"
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:211
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:339
 msgid "Partner's"
 msgstr "Du Partenaire"
 
@@ -58223,10 +58242,7 @@ msgstr "Dépenses budgétisées pour la période M+3"
 #: field:account.move,journal_id:0
 #: field:account.move.bank.reconcile,journal_id:0
 #: view:account.move.line:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
 #: code:addons/account/account_move_line.py:870
-#: report:addons/account/report/account_partner_ledger.mako:210
 #: view:analytic.entries.report:0
 #: field:analytic.entries.report,journal_id:0
 #: model:ir.actions.report.xml,name:account.account_journal
@@ -64161,6 +64177,11 @@ msgstr "Chèque - Numéro"
 #: field:account.report.general.ledger,reconciled:0
 #: field:account.partner.ledger,reconciled:0
 #: field:wizard.account.partner.balance.tree,reconciled:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:279
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:341
 msgid "Reconciled"
 msgstr "Lettrée"
 
@@ -69473,7 +69494,6 @@ msgid "Attach a certificate of donation"
 msgstr "Joindre un certificat de donation"
 
 #. modules: res_currency_functional, msf_accrual, finance, register_accounting
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:318
 #: field:cash.request.liquidity,functional_currency_id:0
 #: field:cash.request.liquidity.bank,functional_currency_id:0
 #: field:cash.request.liquidity.cash,functional_currency_id:0
@@ -69832,6 +69852,9 @@ msgstr "Manage the VAT locally"
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:314
 #: report:account.general.ledger_landscape_tb:0
 #: field:wizard.account.partner.balance.tree,journal_ids:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:241
 msgid "Journals"
 msgstr "Journaux"
 
@@ -77321,9 +77344,6 @@ msgstr "Final destination of goods:"
 #. module: account
 #: report:account.general.ledger:0
 #: report:account.journal.period.print:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
-#: report:addons/account/report/account_partner_ledger.mako:213
 msgid "Filters By"
 msgstr "Filtrés par"
 
@@ -85320,6 +85340,8 @@ msgstr "Nelle Qtté"
 #: code:addons/account_override/wizard/account_chart.py:305
 #: code:addons/account_period_closing_level/account_year_end_closing.py:214
 #: code:addons/analytic_distribution/wizard/account_analytic_chart.py:215
+#: code:addons/account/report/account_partner_ledger.py:358
+#: code:addons/finance/report/account_partner_balance_tree.py:121
 #, python-format
 msgid "All"
 msgstr "Tous(tes)"
@@ -92115,12 +92137,17 @@ msgstr "Sélecteur non trouvé."
 msgid "Base price for computing the customer price. Sometimes called the catalog price."
 msgstr "Prix de base pour le calcul du prix client. Parfois appelé prix catalogue."
 
-#. modules: account, account_mcdb
+#. modules: account, account_mcdb, finance
 #: field:account.mcdb,analytic_axis:0
 #: code:addons/account_mcdb/account_mcdb.py:1109
 #: report:account.general.ledger:0
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:245
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:315
 #, python-format
 msgid "Display"
 msgstr "Afficher"

@@ -48,6 +48,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_type_of_accounts': self._get_type_of_accounts,
             'get_accounts_str': self._get_accounts_str,
             'get_display_ib': self._get_display_ib,
+            'get_reconcile_selection': self._get_reconcile_selection,
+            'get_display_partners_selection': self._get_display_partners_selection,
 
             # data
             'get_partners': self._get_partners,
@@ -111,6 +113,31 @@ class account_partner_balance_tree(report_sxw.rml_parse):
                 res.append(objects)
         self.has_data = len(res)
         return res
+
+    def _get_reconcile_selection(self, data):
+        """
+        Returns "Yes" if "Reconciled: Yes" is selected in the wizard
+        """
+        selection = _('All')
+        if data['form'].get('reconciled', '') == 'yes':
+            selection = _('Yes')
+        elif data['form'].get('reconciled', '') == 'no':
+            selection = _('No')
+        return selection
+
+    def _get_display_partners_selection(self, data):
+        """
+        Returns the String to display in the "Display Partners" section of the report header
+        """
+        selection = ''
+        display_partner = data['form'].get('display_partner', '')
+        if display_partner == 'all':
+            selection = _('All Partners')
+        elif display_partner == 'with_movements':
+            selection = _('With movements')
+        elif display_partner == 'non-zero_balance':
+            selection = _('With balance is not equal to 0')
+        return selection
 
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
         return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)

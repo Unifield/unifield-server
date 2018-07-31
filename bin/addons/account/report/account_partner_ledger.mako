@@ -222,8 +222,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="85" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -238,13 +238,12 @@ selected_filter = get_filter(data) or ''
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Chart of Account')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journal')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_("Partner's")}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filters By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Display')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Func. Currency')}</Data></Cell>
 </Row>
 <%
 if selected_filter == _('Date'):
@@ -264,20 +263,22 @@ else:
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
     <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${ get_partners()|x}</Data>
- </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
     <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
+    <Data ss:Type="String">${ get_instances_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ filter|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${ get_target_move(data)|x}</Data>
- </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ get_instances_str(data)|x}</Data>
+    <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                            _("Partner's"), get_partners(),
+                            _('Target Moves'), get_target_move(data),
+                            _('Reconciled'), get_reconcile_selection(),
+                            _('Display Partners'), get_display_partners_selection(),
+                            )|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ company.currency_id.name |x}</Data>
