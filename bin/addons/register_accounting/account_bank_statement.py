@@ -2335,11 +2335,6 @@ class account_bank_statement_line(osv.osv):
             #+  As temp state is not effective on direct invoice and that previously we just create move when we are in draft and do not want to hard post a direct invoice
             #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
             #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
-            ignore_analytique = False
-            if not context.get('ignore_analytic_line') and postype == 'hard' and absl.account_id.is_analytic_addicted:
-                # AJIs will be updated with update_analytic_lines
-                ignore_analytique = True
-                context['ignore_analytic_line'] = True
 
             if absl.state == 'draft' and not absl.direct_invoice:
                 self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
@@ -2350,8 +2345,6 @@ class account_bank_statement_line(osv.osv):
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, 1, absl.id, context=context)
 
-            if ignore_analytique:
-                context['ignore_analytic_line'] = False
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 # Optimization on write() for this field
@@ -2401,10 +2394,6 @@ class account_bank_statement_line(osv.osv):
                                              _('You can not hard post with an amount greater'
                                                ' than total of imported invoices: Entry %s') % absl.sequence_for_reference or '')
 
-                # Update analytic lines
-                if absl.account_id.is_analytic_addicted:
-                    self.update_analytic_lines(cr, uid, absl)
-                # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
                     vals = self.update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
                     if 'analytic_distribution_id' in vals:
