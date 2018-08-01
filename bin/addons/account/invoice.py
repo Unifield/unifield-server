@@ -29,6 +29,10 @@ from tools.translate import _
 
 
 class account_invoice(osv.osv):
+    _name = "account.invoice"
+    _description = 'Invoice'
+    _order = "id desc"
+
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice in self.browse(cr, uid, ids, context=context):
@@ -251,10 +255,6 @@ class account_invoice(osv.osv):
         if move:
             invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
         return invoice_ids
-
-    _name = "account.invoice"
-    _description = 'Invoice'
-    _order = "id desc"
 
     _columns = {
         'name': fields.char('Description', size=64, select=True, readonly=True, states={'draft':[('readonly',False)]}),

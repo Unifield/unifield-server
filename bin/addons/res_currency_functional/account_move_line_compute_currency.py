@@ -278,16 +278,8 @@ class account_move_line_compute_currency(osv.osv):
                          'ref': fxa_ref,
                          'reference': fxa_ref})
 
-            ignore_analytic_line = False
-            if not context.get('ignore_analytic_line'):
-                # post() will create AJIs
-                context['ignore_analytic_line'] = True
-                ignore_analytic_line = True
 
-            addendum_line_id = self.create(cr, uid, vals, context=context)
-
-            if ignore_analytic_line:
-                context['ignore_analytic_line'] = False
+            addendum_line_id = self.create(cr, uid, vals, context=context, check=False)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
 
