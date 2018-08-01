@@ -48,15 +48,15 @@ class account_mcdb(osv.osv):
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),  # not used since US-3427
         'partner_ids': fields.many2many(obj='res.partner', rel='partner_mcdb', id1='mcdb_id', id2='partner_id',
-                                        string='Partners', order_by='name'),
+                                        string='Partners', order_by='name, id'),
         'employee_id': fields.many2one('hr.employee', string="Employee"),  # not used since US-3427
         'employee_ids': fields.many2many(obj='hr.employee', rel='employee_mcdb', id1='mcdb_id', id2='employee_id',
-                                         string='Employee', order_by='employee_type, identification_id, id'),
+                                         string='Employees', order_by='employee_type, identification_id, id'),
         'transfer_journal_id': fields.many2one('account.journal', string="Journal",
                                                domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal / not used since US-3427
         'transfer_journal_ids': fields.many2many(obj='account.journal', rel='transfer_journal_mcdb', id1='mcdb_id', id2='journal_id',
                                                  string='Journals', domain="[('type', 'in', ['cash', 'bank', 'cheque'])]",
-                                                 order_by='instance_id, code'),
+                                                 order_by='instance_id, code, id'),
         'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
         'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
         'amount_func_from': fields.float('Begin amount in functional currency'),
