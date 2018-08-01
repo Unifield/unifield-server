@@ -645,6 +645,7 @@ class account_move_line(osv.osv):
             'unreconcile_date': None,
             'unreconcile_txt': '',
             'is_si_refund': False,
+            'analytic_lines': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
