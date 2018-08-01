@@ -288,7 +288,7 @@ class hq_entries_validation(osv.osv_memory):
             # PROCESS SPLIT LINES
             #if any([x.account_changed for x in line.split_ids]):
             # utp101 mark the original line as reversed
-            aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
+            aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context, check=False)
             original_account_id = original_move.account_id.id
 
             new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id,
