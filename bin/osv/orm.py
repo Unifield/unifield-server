@@ -185,7 +185,7 @@ class browse_record(object):
             else:
                 self.logger.notifyChannel("browse_record", netsvc.LOG_WARNING,
                                           "Field '%s' does not exist in object '%s': \n%s" % (
-                                              name, self, ''.join(traceback.format_exc())))
+                                              name, self, ''.join(traceback.format_stack())))
                 raise KeyError("Field '%s' does not exist in object '%s'" % (
                     name, self))
 
@@ -206,7 +206,7 @@ class browse_record(object):
                 if name not in self._fields_to_fetch:
                     self.__logger.warn("fields_to_fetch has been defined in "
                                        "browse() for object %s, but field %s is not member "
-                                       "of it" % (self, name))
+                                       "of it %s" % (self, name, ''.join(traceback.format_stack())))
                     self._fields_to_fetch.append(name)
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                                    self._fields_to_fetch]
