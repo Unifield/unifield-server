@@ -37,6 +37,8 @@ from lxml import etree
 import subprocess
 import os
 import shutil
+import ConfigParser
+
 
 def get_7z():
     if os.name == 'nt':
@@ -534,23 +536,31 @@ class hr_payroll_employee_import(osv.osv_memory):
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
         job_file = 'fonction.csv'
+        ini_file = 'envoi.ini'
         job_reader =False
         contract_reader = False
         staff_reader = False
+        config_parser = False
         desc_to_close = []
         tmpdir = False
         if is_zipfile(filename):
             zipobj = zf(filename)
+            if zipobj:
+                desc_to_close.append(zipobj)
             if zipobj.namelist() and job_file in zipobj.namelist():
                 job_reader = csv.DictReader(zipobj.open(job_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
                 # Do not raise error for job file because it's just a useful piece of data, but not more.
-        # read the contract file
+            # read the contract file
             if zipobj.namelist() and contract_file in zipobj.namelist():
                 contract_reader = csv.DictReader(zipobj.open(contract_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-        # read the staff file
+            # read the staff file
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 staff_reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            # read the ini file
+            if zipobj.namelist() and ini_file in zipobj.namelist():
+                config_parser = ConfigParser.SafeConfigParser()
+                config_parser.readfp(zipobj.open(ini_file))
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
@@ -571,11 +581,20 @@ class hr_payroll_employee_import(osv.osv_memory):
                 desc_to_close.append(staff_file_desc)
                 staff_reader = csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
+            ini_file_name = os.path.join(tmpdir, ini_file)
+            if os.path.isfile(ini_file_name):
+                ini_file_desc = open(ini_file_name, 'rb')
+                desc_to_close.append(ini_file_desc)
+                config_parser = ConfigParser.SafeConfigParser()
+                config_parser.readfp(ini_file_desc)
+
         if not contract_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
         if not staff_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-        return (job_reader, contract_reader, staff_reader, desc_to_close, tmpdir)
+        if not config_parser:
+            raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (ini_file,))
+        return job_reader, contract_reader, staff_reader, config_parser, desc_to_close, tmpdir
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -603,9 +622,18 @@ class hr_payroll_employee_import(osv.osv_memory):
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()
-            job_reader, contract_reader, staff_reader, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
+            job_reader, contract_reader, staff_reader, config_parser, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
             filename = wiz.filename or ""
-
+            # Check data from the ini file
+            mois_ko = not config_parser.has_option('DEFAUT', 'MOIS')
+            type_envoi_ko = not config_parser.has_option('DEFAUT', 'TYPE_ENVOI') or \
+                config_parser.get('DEFAUT', 'TYPE_ENVOI') != 'A field'
+            liste_terr_ko = not config_parser.has_option('DEFAUT', 'LISTETERRAIN') or \
+                config_parser.get('DEFAUT', 'LISTETERRAIN').count(';') > 1  # it should contain only 1 project code
+            if mois_ko or type_envoi_ko or liste_terr_ko:
+                # block all the import if the file imported is not a valid PER_MOIS file
+                raise osv.except_osv(_('Error'), _("You can't import this file. Please check that it contains data "
+                                                   "for only one month and one field."))
             if job_reader:
                 self.update_job(cr, uid, ids, job_reader, context=context)
             # Do not raise error for job file because it's just a useful piece of data, but not more.

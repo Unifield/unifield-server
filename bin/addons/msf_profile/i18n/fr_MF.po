@@ -101386,3 +101386,9 @@ msgstr "Vous ne pouvez pas modifier une méthode de paiement utilisée sur au mo
 #, python-format
 msgid "The Location \"%s\" on line level is not the same as the Location \"%s\" on header level."
 msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s\" au niveau de l'entête."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:635
+#, python-format
+msgid "You can't import this file. Please check that it contains data for only one month and one field."
+msgstr "Vous ne pouvez pas importer ce fichier. Veuillez vérifier qu'il contient des données pour seulement un mois et un terrain."
