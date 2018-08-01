@@ -206,30 +206,6 @@ class account_move_line(osv.osv):
                 del data[f]
         return data
 
-    def create_analytic_lines(self, cr, uid, ids, context=None):
-        acc_ana_line_obj = self.pool.get('account.analytic.line')
-        for obj_line in self.browse(cr, uid, ids, context=context):
-            if obj_line.analytic_account_id:
-                if not obj_line.journal_id.analytic_journal_id:
-                    raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
-                amt = (obj_line.credit or  0.0) - (obj_line.debit or 0.0)
-                vals_lines = {
-                    'name': obj_line.name,
-                    'date': obj_line.date,
-                    'account_id': obj_line.analytic_account_id.id,
-                    'unit_amount': obj_line.quantity,
-                    'product_id': obj_line.product_id and obj_line.product_id.id or False,
-                    'product_uom_id': obj_line.product_uom_id and obj_line.product_uom_id.id or False,
-                    'amount': amt,
-                    'general_account_id': obj_line.account_id.id,
-                    'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                    'ref': obj_line.ref or False,
-                    'move_id': obj_line.id,
-                    'user_id': uid
-                }
-                acc_ana_line_obj.create(cr, uid, vals_lines)
-        return True
-
     def _default_get_move_form_hook(self, cursor, user, data):
         '''Called in the end of default_get method for manual entry in account_move form'''
         if data.has_key('analytic_account_id'):
