@@ -1518,6 +1518,7 @@ class account_move(osv.osv):
             context = {}
 
         valid_moves = [] #Maintains a list of moves which can be responsible to create analytic entries
+        invalid_moves = []
         obj_analytic_line = self.pool.get('account.analytic.line')
         obj_move_line = self.pool.get('account.move.line')
         for move in self.browse(cr, uid, ids, context):
@@ -1531,10 +1532,6 @@ class account_move(osv.osv):
                 # US-822: consider system journal JE always valid (bypass)
                 valid_moves.append(move)
                 continue
-            if not context.get('ignore_analytic_line') and (not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution')):
-                for obj_line in move.line_id:
-                    for obj in obj_line.analytic_lines:
-                        obj_analytic_line.unlink(cr,uid,obj.id)
 
             journal = move.journal_id
             amount = 0
@@ -1644,10 +1641,60 @@ class account_move(osv.osv):
                     'period_id': move.period_id.id,
                     'state': 'draft'
                 }, context, check=False)
-        # Create analytic lines for the valid moves
-        if not context.get('ignore_analytic_line'):
-            for record in valid_moves:
-                obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
+                invalid_moves.append(move)
+
+        if not context.get('ignore_analytic_line') and (not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution')):
+            for move in valid_moves:
+                for obj_line in move.line_id:
+                    recreate = False
+                    if not obj_line.analytic_lines:
+                        recreate = True
+                    else:
+                        amount = (obj_line.debit_currency or 0.0) - (obj_line.credit_currency or 0.0)
+                        amount_ji_fctal = (obj_line.debit or  0.0) - (obj_line.credit or 0.0)
+
+                        ana = obj_line.analytic_lines[0]
+                        source_date = obj_line.source_date or obj_line.date
+                        if obj_line.name != ana.name or \
+                                obj_line.date != ana.date or \
+                                obj_line.ref != ana.ref or \
+                                obj_line.journal_id.analytic_journal_id.id != ana.journal_id.id or \
+                                obj_line.account_id.id != ana.general_account_id.id or \
+                                obj_line.currency_id.id != ana.currency_id.id or \
+                                obj_line.document_date != ana.document_date or \
+                                source_date != ana.source_date or \
+                                obj_line.period_id.id != ana.real_period_id.id or \
+                                abs(amount_ji_fctal + ana.distribution_id.total_fp_fct_amount) > 10**-4 or \
+                                abs(amount + ana.distribution_id.total_fp_book_amount) > 10**-4:
+                            recreate = True
+                            print 1, obj_line.name, '!=', ana.name
+                            print 2, obj_line.date, ana.date
+                            print 3, obj_line.ref, ana.ref
+                            print 4, obj_line.journal_id.analytic_journal_id.id, ana.journal_id.id
+                            print 5, obj_line.account_id.id, ana.general_account_id.id
+                            print 6, obj_line.currency_id.id, ana.currency_id.id
+                            print 7, obj_line.document_date, ana.document_date
+                            print 8, source_date , ana.source_date
+                            print 9, obj_line.period_id.id, ana.real_period_id.id
+                            print 10, amount_ji_fctal,ana.distribution_id.total_fp_fct_amount
+                            print 11, amount, ana.distribution_id.total_fp_book_amount
+
+                    if recreate:
+                        print 'RECREATE', obj_line.id
+                        for obj in obj_line.analytic_lines:
+                            obj_analytic_line.unlink(cr,uid,obj.id)
+
+                        obj_move_line.create_analytic_lines(cr, uid, [obj_line.id], context)
+                    else:
+                        print 'NO CHANGE', obj_line.id
+        if not context.get('ignore_analytic_line') and (not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution')):
+            ajis_to_del = []
+            for record in invalid_moves:
+                for obj_line in move.line_id:
+                    for obj in obj_line.analytic_lines:
+                        ajis_to_del.append(obj.id)
+            if ajis_to_del:
+                obj_analytic_line.unlink(cr, uid, ajis_to_del)
 
         valid_moves = [move.id for move in valid_moves]
         return len(valid_moves) > 0 and valid_moves or False

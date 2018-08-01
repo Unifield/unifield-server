@@ -27,6 +27,22 @@ import decimal_precision as dp
 class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
 
+    def _get_total(self, cr, uid, ids, *a, **b):
+        res = {}
+        for x in ids:
+            res[x] = {'total_fp_book_amount': 0, 'total_fp_fct_amount': 0}
+
+        cr.execute("""select sum(coalesce(l.amount,0)), sum(coalesce(l.amount_currency,0)), l.distribution_id
+                from account_analytic_line l, account_analytic_account a
+                where a.id = l.account_id and a.category = 'FUNDING' and l.distribution_id in %s
+                group by l.distribution_id
+                """, (tuple(ids),))
+
+        for x in cr.fetchall():
+            res[x[2]] = {'total_fp_book_amount': x[1], 'total_fp_fct_amount': x[0]}
+
+        return res
+
     _columns = {
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
         'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
@@ -35,6 +51,8 @@ class analytic_distribution1(osv.osv):
         'move_line_ids': fields.one2many('account.move.line', 'analytic_distribution_id', string="Move Lines"),
         'commitment_ids': fields.one2many('account.commitment', 'analytic_distribution_id', string="Commitments voucher"),
         'commitment_line_ids': fields.one2many('account.commitment.line', 'analytic_distribution_id', string="Commitment voucher lines"),
+        'total_fp_book_amount': fields.function(_get_total, type='float', multi='get_tot', method=True),
+        'total_fp_fct_amount': fields.function(_get_total, type='float', multi='get_tot', method=True),
     }
 
     def copy(self, cr, uid, distrib_id, default=None, context=None):
