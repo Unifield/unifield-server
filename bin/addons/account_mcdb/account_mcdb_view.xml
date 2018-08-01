@@ -32,9 +32,70 @@
                     &currency;
                     <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>
-                        <field name="partner_id" colspan="2" context="{'show_button_show_inactive':1}" />
-                        <field name="employee_id" colspan="2" context="{'disrupt_inactive': False}"/>
-                        <field name="transfer_journal_id" colspan="2"/>
+                        <!-- PARTNERS -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Partners" colspan="3"/>
+                                <field name="display_partner" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_partner', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_partner_clear" type="object" string="Remove all Partners" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_partner_add" type="object" string="Add all Partners" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_partner_ids" colspan="2"/>
+                                <field name="partner_ids" colspan="2" nolabel="1" context="{'show_button_show_inactive':1}">
+                                    <tree string="Partners" editable="top" noteditable="1">
+                                        <field name="name"/>
+                                        <field name="ref"/>
+                                        <field name="partner_type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <!-- EMPLOYEES -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Employees" colspan="3"/>
+                                <field name="display_employee" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_employee', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_employee_clear" type="object" string="Remove all Employees" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_employee_add" type="object" string="Add all Employees" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_employee_ids" colspan="2"/>
+                                <field name="employee_ids" colspan="2" nolabel="1" context="{'disrupt_inactive': False}">
+                                    <tree string="Employes" editable="top" noteditable="1">
+                                        <field name="name"/>
+                                        <field name="identification_id"/>
+                                        <field name="employee_type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <!-- JOURNAL THIRD PARTIES -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Journals" colspan="3"/>
+                                <field name="display_transfer_journal" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_transfer_journal', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_transfer_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_transfer_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_transfer_journal_ids" colspan="2"/>
+                                <field name="transfer_journal_ids" colspan="2" nolabel="1">
+                                    <tree string="Journals" editable="top" noteditable="1">
+                                        <field name="instance_id"/>
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
                     &end;
                 </form>
