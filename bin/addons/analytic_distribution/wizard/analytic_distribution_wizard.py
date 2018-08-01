@@ -1197,8 +1197,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
                 # account.move validate is called in account.bank.statement.line write
                 #self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
-        elif new_distrib:
-            # Update analytic lines
+        elif new_distrib and not wiz.move_id and not wiz.move_line_id:
+            # Update analytic lines: if we come from JE or JI AJIs has been updated in the previous account.move.validate
             self.update_analytic_lines(cr, uid, ids, context=context)
 
         if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
