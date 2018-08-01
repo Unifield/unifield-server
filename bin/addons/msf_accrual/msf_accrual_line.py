@@ -42,7 +42,7 @@ class msf_accrual_line(osv.osv):
             res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
                                                                           uid,
                                                                           accrual_line.currency_id.id,
-                                                                          accrual_line.functional_currency_id.id, 
+                                                                          accrual_line.functional_currency_id.id,
                                                                           accrual_line.accrual_amount or 0.0,
                                                                           round=True,
                                                                           context=date_context)
@@ -161,7 +161,7 @@ class msf_accrual_line(osv.osv):
 
         if 'document_date' in vals and vals.get('period_id', False):
             # US-192 check doc date regarding post date
-            # => read (as date readonly in form) to get posting date: 
+            # => read (as date readonly in form) to get posting date:
             # is end of period
             posting_date = self.pool.get('account.period').read(cr, uid,
                                                                 vals['period_id'], ['date_stop', ],
@@ -425,7 +425,16 @@ class msf_accrual_line(osv.osv):
                     'date': move_date,
                 }
 
+                ignore_analytique = False
+                if not context.get('ignore_analytic_line'):
+                    # AJIs created with post()
+                    ignore_analytique = True
+                    context['ignore_analytic_line'] = True
+
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
+
+                if ignore_analytique:
+                    context['ignore_analytic_line'] = False
 
                 # Create move lines
                 booking_field = accrual_line.accrual_amount > 0 and 'credit_currency' or 'debit_currency'
@@ -465,8 +474,8 @@ class msf_accrual_line(osv.osv):
                     'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
 
-                accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
-                move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
+                accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context, check=False)
+                move_line_obj.create(cr, uid, expense_move_line_vals, context=context, check=False)
 
                 # Post the moves
                 move_obj.post(cr, uid, move_id, context=context)
@@ -503,7 +512,16 @@ class msf_accrual_line(osv.osv):
                     'document_date': document_date,
                 }
 
+                ignore_analytique = False
+                if not context.get('ignore_analytic_line'):
+                    # AJIs created with post()
+                    ignore_analytique = True
+                    context['ignore_analytic_line'] = True
+
                 reversal_move_id = move_obj.create(cr, uid, reversal_move_vals, context=context)
+
+                if ignore_analytique:
+                    context['ignore_analytic_line'] = False
 
                 reversal_description = "REV - " + accrual_line.description
 
@@ -544,8 +562,8 @@ class msf_accrual_line(osv.osv):
                     'analytic_distribution_id': accrual_line.analytic_distribution_id.id,
                 }
 
-                reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
-                move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
+                reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context, check=False)
+                move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context, check=False)
 
                 # Post the moves
                 move_obj.post(cr, uid, reversal_move_id, context=context)

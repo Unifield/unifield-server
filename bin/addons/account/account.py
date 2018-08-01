@@ -1238,6 +1238,10 @@ class account_move(osv.osv):
     def post(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         invoice = context.get('invoice', False)
         valid_moves = self.validate(cr, uid, ids, context)
 
