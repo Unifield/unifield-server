@@ -56,6 +56,7 @@ class patch_scripts(osv.osv):
         """
         Third Parties in G/L selector (partners / employees / journals) become many2many fields
         Updates the existing selectors accordingly
+        (note: selectors aren't synched for now)
         """
         selector_obj = self.pool.get('account.mcdb')
         selector_ids = selector_obj.search(cr, uid, [('model', '=', 'account.move.line')])
