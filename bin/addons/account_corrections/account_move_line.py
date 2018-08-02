@@ -930,7 +930,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ji_ids, (int, long)):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
-        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
+        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id', 'account_id'], context=context):
             # check that the account can be corrected
             if ji.account_id.is_not_hq_correctible:
                 raise osv.except_osv(_('Error'), _('The account "%s - %s" is set as "Prevent correction on '
