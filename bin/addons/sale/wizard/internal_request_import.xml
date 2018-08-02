@@ -61,7 +61,7 @@
                         </page>
                         <page string="Details">
                             <field name="imp_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="red: error_msg != ''" >
+                                <tree string="Lines" colors="red: error_msg not in ['', False]" >
                                     <field name="in_line_number" />
                                     <field name="in_product_id" />
                                     <field name="in_qty" />

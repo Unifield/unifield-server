@@ -1110,6 +1110,8 @@ class product_attributes(osv.osv):
         res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
         if res:
+            if isinstance(error_msg, unicode):
+                error_msg = error_msg.encode('ascii', 'ignore')
             raise osv.except_osv(_('Error'), error_msg)
             return False
 

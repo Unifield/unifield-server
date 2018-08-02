@@ -232,6 +232,7 @@ class internal_request_import(osv.osv):
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
+                blocked = False
                 message = ''
                 ir_order = ir_imp.order_id
 
@@ -291,6 +292,7 @@ class internal_request_import(osv.osv):
                 # Line 2: Order Reference
                 if ir_order:
                     if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
+                        blocked = True
                         values_header_errors.append(_('Line 2 of the file: IR Order Reference is not correct.'))
                     else:
                         header_values['imp_order_name'] = values.get(2, [])[1]
@@ -308,6 +310,7 @@ class internal_request_import(osv.osv):
                             ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
                         header_values['imp_order_name'] = values.get(2, [])[1]
                     else:
+                        blocked = True
                         values_header_errors.append(_('Line 2 of the file: You can not import this file with a non-existing IR Order Reference.'))
 
                 # Line 4: Order Category
@@ -316,7 +319,7 @@ class internal_request_import(osv.osv):
                     header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
                 elif not ir_order:
                     values_header_errors.append(
-                        _('Line 4 of the file: Order Category \'%s\' not defined, default value will be Other')
+                        _('Line 4 of the file: Order Category \'%s\' not defined, default value will be \'Other\'')
                         % (categ,))
                     header_values['imp_categ'] = 'other'
 
@@ -326,7 +329,7 @@ class internal_request_import(osv.osv):
                     header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
                 elif not ir_order:
                     values_header_errors.append(
-                        _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be Normal')
+                        _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be \'Normal\'')
                         % (priority,))
                     header_values['imp_priority'] = 'normal'
 
@@ -341,9 +344,11 @@ class internal_request_import(osv.osv):
                             time.strptime(req_date, '%d-%m-%Y')
                             header_values['imp_requested_date'] = req_date
                         except:
+                            blocked = True
                             values_header_errors.append(_('Line 7 of the file: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')
                                                         % req_date)
                 elif not ir_order:
+                    blocked = True
                     values_header_errors.append(
                         _('Line 7 of the file: The Requested Date is mandatory in the first import.'))
 
@@ -351,6 +356,7 @@ class internal_request_import(osv.osv):
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
                 elif not ir_order:
+                    blocked = True
                     values_header_errors.append(_('Line 8 of the file: The Requestor is mandatory in the first import.'))
 
                 # Line 9: Location Requestor
@@ -365,9 +371,11 @@ class internal_request_import(osv.osv):
                     if loc_ids:
                         header_values['imp_loc_requestor'] = loc_ids[0]
                     else:
+                        blocked = True
                         values_header_errors.append(_('Line 9 of the file: The Location Requestor \'%s\' does not match possible options.')
                                                     % (loc_req,))
                 elif not ir_order:
+                    blocked = True
                     values_header_errors.append(_('Line 9 of the file: The Location Requestor is mandatory.'))
 
                 # Line 10: Origin
@@ -375,13 +383,13 @@ class internal_request_import(osv.osv):
                     if values.get(10, [])[1]:
                         header_values['imp_origin'] = values.get(10, [])[1]
                     else:
+                        blocked = True
                         values_header_errors.append(_('Line 10 of the file: The Origin is mandatory in the first import.'))
 
                 '''
                 The header values have been imported, start the importation of
                 lines
                 '''
-                not_ok_file_lines = {}
                 in_line_numbers = []  # existing line numbers
                 imp_line_numbers = []  # imported line numbers
                 if ir_order:  # get the lines numbers
@@ -389,9 +397,8 @@ class internal_request_import(osv.osv):
 
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
+                    line_errors = ''
                     # Check mandatory fields
-                    not_ok = False
-                    file_line_error = []
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             required_field = True
@@ -403,18 +410,11 @@ class internal_request_import(osv.osv):
                                 else:
                                     required_field = ir_imp[col] == val
                             if required_field:
-                                not_ok = True
-                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
-                                err = _('Line %s of the file: %s') % (x, err1)
-                                values_line_errors.append(err)
-                                file_line_error.append(err1)
-
-                    if not_ok:
-                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
+                                line_errors += _('The column \'%s\' mustn\'t be empty%s. ') \
+                                               % (manda_field[1], manda_field[0] == 0 or '')
 
                     # Get values
                     line_data = {}
-                    line_errors = ''
                     duplicate_line = False
                     product_id = False
                     product = False
@@ -427,14 +427,14 @@ class internal_request_import(osv.osv):
                                 line_n = int(vals[0])
                                 line_data.update({'imp_line_number': line_n})
                                 if line_n in imp_line_numbers:
-                                    line_errors += _('Line Number \'%s\' has already been treated.\n') % (line_n,)
+                                    line_errors += _('Line Number \'%s\' has already been treated. ') % (line_n,)
                                     duplicate_line = True
                                 else:
                                     imp_line_numbers.append(line_n)
                             except:
-                                line_errors += _('Line Number must be an integer.\n')
+                                line_errors += _('Line Number must be an integer. ')
                         else:
-                            line_errors += _('Line Number is mandatory to update a line.\n')
+                            line_errors += _('Line Number is mandatory to update a line. ')
 
                     # Product and Comment
                     product_code = vals[1]
@@ -454,12 +454,11 @@ class internal_request_import(osv.osv):
                                 line_data.update({'imp_comment': product_code + '\n' + comment})
                             else:
                                 line_data.update({'imp_comment': comment or ''})
-                                line_errors += _('Product \'%s\' does not exist in this database. It has not been imported.\n') \
-                                               % vals[1]
+                                line_errors += _('Product \'%s\' does not exist in this database. ') % vals[1]
                     else:
                         line_data.update({'imp_comment': comment or ''})
                         if not comment:
-                            line_errors += _('Product Code is mandatory.\n')
+                            line_errors += _('Product Code is mandatory. ')
 
                     # Quantity
                     qty = vals[3] or 0.00
@@ -472,13 +471,17 @@ class internal_request_import(osv.osv):
                         if uom_ids and uom_ids[0] in [product['uom_id'][0], product['uom_po_id'][0]]:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
-                            line_errors += _('Product \'%s\' has not been imported as UoM \'%s\' is not consistent.') \
+                            line_errors += _('UoM \'%s\' is not consistent with the Product \'%s\'. ') \
                                            % (vals[1], vals[5])
 
                     line_data.update({
                         'error_msg': line_errors,
                         'ir_import_id': ir_imp.id,
                     })
+
+                    if len(line_errors):
+                        values_line_errors.append(_('Line %s of the file: %sLine not imported.') % (x, line_errors))
+
                     if not duplicate_line and in_line_numbers and line_data.get('imp_line_number') \
                             and line_data['imp_line_number'] in in_line_numbers:
                         l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
@@ -497,20 +500,20 @@ class internal_request_import(osv.osv):
                 import_error_ok = False
                 if len(values_header_errors):
                     import_error_ok = True
-                    message += '\n## Error on header values ##\n\n'
+                    message += _('\n## Errors on header values ##\n\n')
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += _('\n## Errors on line values ##\n\n')
                     for err in values_line_errors:
                         message += '%s\n' % err
 
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
-                    'state': 'simu_done',
+                    'state': blocked and 'error' or 'simu_done',
                     'percent_completed': 100.0,
                     'import_error_ok': import_error_ok,
                     'nb_treated_lines': nb_treated_lines,

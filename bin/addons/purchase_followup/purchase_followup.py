@@ -101,13 +101,12 @@ class purchase_order_followup(osv.osv_memory):
         line_obj = self.pool.get('purchase.order.followup.line')
 
         for order in order_obj.browse(cr, uid, ids, context=context):
-            if order.state not in ('approved', 'done', 'confirmed_wait', 'split',
-                                   'sourced', 'except_picking', 'except_invoice'):
+            if not order_obj.search(cr, uid, [('id', '=', order.id), ('has_confirmed_or_further_line', '=', True)], context=context):
                 raise osv.except_osv(_('Error'),
-                       _('You cannot follow a non-confirmed Purchase order !'))
+                                     _('You can only follow up confirmed Purchase order (lines)'))
 
             followup_id = self.create(cr, uid,
-                                       {'order_id': order.id}, context=context)
+                                      {'order_id': order.id}, context=context)
 
             order_ids = order_obj.search(cr, uid, [('id', '!=', order.id), ('name', 'like', order.name)], context=context)
             if not order_ids:
@@ -120,22 +119,22 @@ class purchase_order_followup(osv.osv_memory):
                     if not line.move_ids:
                         line_data = {'followup_id': followup_id,
                                      'order_id': line.order_id and line.order_id.id or False,
-                                      'move_id': False,
-                                      'line_id': line.id,
-                                      'picking_id': False,
-                                      'move_state': 'No move',
-                                      'line_name': line.line_number,
-                                      'line_product_id': line.product_id.id,
-                                      'line_product_qty': line.product_qty,
-                                      'line_uom_id': line.product_uom.id,
-                                      'line_confirmed_date': line.confirmed_delivery_date,
-                                      'line_shipped_rate': 0.0,
-                                      'move_product_id': False,
-                                      'move_product_qty': '',
-                                      'move_uom_id': False,
-                                      'move_delivery_date': False,
-                                      'return_move': False,
-                                      }
+                                     'move_id': False,
+                                     'line_id': line.id,
+                                     'picking_id': False,
+                                     'move_state': 'No move',
+                                     'line_name': line.line_number,
+                                     'line_product_id': line.product_id.id,
+                                     'line_product_qty': line.product_qty,
+                                     'line_uom_id': line.product_uom.id,
+                                     'line_confirmed_date': line.confirmed_delivery_date,
+                                     'line_shipped_rate': 0.0,
+                                     'move_product_id': False,
+                                     'move_product_qty': '',
+                                     'move_uom_id': False,
+                                     'move_delivery_date': False,
+                                     'return_move': False,
+                                     }
                         line_obj.create(cr, uid, line_data, context=context)
                     first_move = True
                     move_ids1 = []
@@ -217,8 +216,8 @@ class purchase_order_followup(osv.osv_memory):
             return False
         dt_now = datetime.datetime.now()
         po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-            foup.order_id.name.replace('/', '_'),
-            dt_now.year, dt_now.month, dt_now.day)
+                                          foup.order_id.name.replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):

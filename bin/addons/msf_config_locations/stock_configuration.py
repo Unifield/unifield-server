@@ -315,10 +315,19 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
 
+        lang_obj = self.pool.get('res.lang')
+
         if vals and vals.get('name'):
             loc_name = vals.get('name', '').strip()
-            if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
-                raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
+            if lang_ids:
+                langs = lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context)
+                for lang in langs:
+                    if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context={'lang': lang.code}):
+                        raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+            else:
+                if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
+                    raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
             vals['name'] = loc_name
 
         return super(stock_location, self).create(cr, uid, vals, context=context)
@@ -339,11 +348,21 @@ class stock_location(osv.osv):
         if not ids:
             return True
 
+        lang_obj = self.pool.get('res.lang')
+
         if vals and vals.get('name'):
             for loc_id in ids:
                 loc_name = vals.get('name', '').strip()
-                if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)], context=context):
-                    raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+                lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
+                if lang_ids:
+                    langs = lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context)
+                    for lang in langs:
+                        if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)],
+                                             context={'lang': lang.code}):
+                            raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+                else:
+                    if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)], context=context):
+                        raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
                 vals['name'] = loc_name
 
         return super(stock_location, self).write(cr, uid, ids, vals, context=context)
