@@ -534,9 +534,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         line_number_by_order = {}
 
         lines = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
-        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number'], context=context):
+        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number', 'state'], context=context):
             line_number_by_order.setdefault(l['order_id'][0], set())
-            line_number_by_order[l['order_id'][0]].add(l['line_number'])
+            if not l['state'].startswith('cancel'):
+                line_number_by_order[l['order_id'][0]].add(l['line_number'])
 
         for so_id, ln in line_number_by_order.iteritems():
             res[so_id] = len(ln)
