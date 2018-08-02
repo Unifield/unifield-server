@@ -2789,7 +2789,7 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                     <field name="period_id"/>
                     <field name="document_date"/>
                     <field name="posting_date"/>
-                    <field name="instance_id"/>
+                    <field name="instance_id" domain="[('instance_to_display_ids', '=', True)]"/>
                     <newline/>
                     <field name="account_ids"/>
                     <field name="journal_ids"/>
