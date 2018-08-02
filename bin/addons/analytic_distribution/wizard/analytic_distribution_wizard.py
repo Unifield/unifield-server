@@ -1032,6 +1032,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
+            print "GGGGGGGGGGG", distrib_id
             if not distrib_id:
                 # create a new analytic distribution
                 analytic_vals = {}
@@ -1197,7 +1198,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'account_id': wiz.account_id.id, 'analytic_distribution_id': new_register_distribution_id}, context=context)
                 # account.move validate is called in account.bank.statement.line write
                 #self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
-        elif new_distrib and not wiz.move_id and not wiz.move_line_id:
+        elif new_distrib:
+            print 'LLLLLLLLLLLLLLLLLLLLLLLLL'
             # Update analytic lines: if we come from JE or JI AJIs has been updated in the previous account.move.validate
             self.update_analytic_lines(cr, uid, ids, context=context)
 
@@ -1447,8 +1449,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             ml_obj = self.pool.get('account.move.line')
             if not distrib:
                 return False
-            if wizard.move_line_id:
-                move_lines = [x.id for x in distrib.move_line_ids]
+            if wizard.move_line_id or wizard.move_id:
+                if wizard.move_id:
+                    move_lines = [x.id for x in wizard.move_id.line_id]
+                else:
+                    move_lines = [x.id for x in distrib.move_line_ids]
                 # Search account analytic lines attached to this move lines
                 operator = 'in'
                 if len(move_lines) == 1:

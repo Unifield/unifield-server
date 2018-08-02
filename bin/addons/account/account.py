@@ -1655,7 +1655,9 @@ class account_move(osv.osv):
 
                         ana = obj_line.analytic_lines[0]
                         source_date = obj_line.source_date or obj_line.date
-                        if obj_line.name != ana.name or \
+                        distib_id = obj_line.analytic_distribution_id and obj_line.analytic_distribution_id.id or obj_line.move_id.analytic_distribution_id and obj_line.move_id.analytic_distribution_id.id
+                        if distib_id != ana.distribution_id.id or \
+                            obj_line.name != ana.name or \
                                 obj_line.date != ana.date or \
                                 obj_line.ref != ana.ref or \
                                 obj_line.journal_id.analytic_journal_id.id != ana.journal_id.id or \
@@ -1667,6 +1669,7 @@ class account_move(osv.osv):
                                 abs(amount_ji_fctal + ana.distribution_id.total_fp_fct_amount) > 10**-4 or \
                                 abs(amount + ana.distribution_id.total_fp_book_amount) > 10**-4:
                             recreate = True
+                            print 0, distib_id, ana.distribution_id.id
                             print 1, obj_line.name, '!=', ana.name
                             print 2, obj_line.date, ana.date
                             print 3, obj_line.ref, ana.ref
