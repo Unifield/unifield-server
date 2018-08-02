@@ -17,10 +17,13 @@
                         <field name="import_error_ok" invisible="1" />
                         <field name="state" />
                         <field name="no_prod_as_comment" />
+                        <field name="nb_treated_lines" attrs="{'invisible': [('state', '=', 'draft')]}" />
                         <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
                     </group>
                     <group name="buttons" colspan="4" col="6">
                         <button name="reset_import" string="Reset the import" icon="gtk-refresh" type="object" />
+                        <button name="go_to_ir" string="Return to IR" icon="gtk-jump-to" type="object"
+                                attrs="{'invisible': [('order_id', '=', False)]}" />
                         <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
                         <button name="launch_import" string="Import" icon="gtk-execute" type="object" states="simu_done" />
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object"
@@ -50,7 +53,6 @@
                             <field name="in_requestor" />
                             <field name="imp_requestor" nolabel="1" />
                             <label> </label>
-                            <field name="location_requestor_id" invisible="1" />
                             <field name="in_loc_requestor" />
                             <field name="imp_loc_requestor" nolabel="1" />
                             <label> </label>
@@ -59,17 +61,15 @@
                         </page>
                         <page string="Details">
                             <field name="imp_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="red: error_msg != False" >
-                                    <group attrs="['invisible': {'ir_line_id', '=', False}]">
-                                        <field name="in_line_number" />
-                                        <field name="in_product_id" />
-                                        <field name="in_qty" />
-                                        <field name="in_cost_price" />
-                                        <field name="in_uom" />
-                                        <field name="in_comment" />
-                                        <field name="error_msg" invisible="1" />
-                                    </group>
-                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
+                                <tree string="Lines" colors="red: error_msg != ''" >
+                                    <field name="in_line_number" />
+                                    <field name="in_product_id" />
+                                    <field name="in_qty" />
+                                    <field name="in_cost_price" />
+                                    <field name="in_uom" />
+                                    <field name="in_comment" />
+                                    <field name="error_msg" invisible="1" />
+                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', '')]}" />
                                     <field name="imp_line_number" />
                                     <field name="imp_product_id" />
                                     <field name="imp_qty" />

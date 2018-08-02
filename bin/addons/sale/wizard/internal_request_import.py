@@ -29,11 +29,8 @@ import tools
 import datetime
 import logging
 
-from lxml import etree
-from lxml.etree import XMLSyntaxError
 from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from sale import SALE_ORDER_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 
@@ -56,6 +53,7 @@ LINES_COLUMNS = [
 
 class internal_request_import(osv.osv):
     _name = 'internal.request.import'
+    _rec_name = 'order_id'
 
     _columns = {
         'state': fields.selection([('draft', 'Draft'),
@@ -75,6 +73,7 @@ class internal_request_import(osv.osv):
         'percent_completed': fields.float(string='Percent completed', readonly=True),
         'import_error_ok': fields.boolean(string='Error at import'),
         'no_prod_as_comment': fields.boolean(string='Change Product to a Comment if Product is not found'),
+        'date_done': fields.datetime(string='Date of finished import', readonly=True),
         # IR Header Info
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
@@ -85,9 +84,8 @@ class internal_request_import(osv.osv):
                                       string='Priority', readonly=True),
         'in_requested_date': fields.related('order_id', 'delivery_requested_date', type='date', string='Requested date', readonly=True),
         'in_requestor': fields.related('order_id', 'requestor', type='char', string='Requestor', readonly=True),
-        'location_requestor_id': fields.many2one('stock.location', string='Stock Location'),
-        'in_loc_requestor': fields.related('location_requestor_id', 'name', type='char', size=64,
-                                           string='Location Requestor', store=False, readonly=True),
+        'in_loc_requestor': fields.related('order_id', 'location_requestor_id', type='many2one', relation='stock.location',
+                                           string='Location Requestor', readonly=True),
         'in_origin': fields.related('order_id', 'origin', type='char', string='Origin', readonly=True),
         # # Imported IR info
         'imp_order_name': fields.char(size=64, string='Order Refererence', readonly=True),
@@ -95,13 +93,14 @@ class internal_request_import(osv.osv):
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'imp_requested_date': fields.date(string='Requested Date', readonly=True),
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
-        'imp_loc_requestor': fields.char(size=64, string='Location Requestor', readonly=True),
+        'imp_loc_requestor': fields.many2one('stock.location', string='Location Requestor', readonly=True),
         'imp_origin': fields.char(size=64, string='Origin', readonly=True),
         'imp_line_ids': fields.one2many('internal.request.import.line', 'ir_import_id', string='Lines', readonly=True),
     }
 
     _defaults = {
         'state': lambda *args: 'draft',
+        'nb_treated_lines': 0,
     }
 
     def reset_import(self, cr, uid, ids, context=None):
@@ -117,6 +116,22 @@ class internal_request_import(osv.osv):
             'context': context,
         }
 
+    def go_to_ir(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
+            order_id = wiz['order_id'][0]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'sale.order',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'target': 'crush',
+                'res_id': order_id,
+                'context': context,
+            }
+
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
         Display the simulation screen
@@ -124,8 +139,8 @@ class internal_request_import(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # if ids and self.browse(cr, uid, ids, context=context)[0].state == 'done':
-        #     return
+        if ids and self.browse(cr, uid, ids, context=context)[0].state == 'done':
+            return self.go_to_ir(cr, uid, ids, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
@@ -189,6 +204,7 @@ class internal_request_import(osv.osv):
         cr = pooler.get_db(dbname).cursor()
         try:
             ir_imp_l_obj = self.pool.get('internal.request.import.line')
+            so_obj = self.pool.get('sale.order')
             prod_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
             loc_obj = self.pool.get('stock.location')
@@ -217,9 +233,9 @@ class internal_request_import(osv.osv):
                 values_header_errors = []
                 values_line_errors = []
                 message = ''
+                ir_order = ir_imp.order_id
 
                 header_values = {}
-                lines_values = []
 
                 values = self.get_values_from_excel(cr, uid, ir_imp.file_to_import, context=context)
 
@@ -273,27 +289,42 @@ class internal_request_import(osv.osv):
                 Now, we know that the file has the good format, you can import data for header.
                 '''
                 # Line 2: Order Reference
-                # TODO: update
-                if values.get(2, [])[1]:
-                    values_header_errors.append(_('Line 2 of the file: You can not import this file with an IR Order Reference. The Order Reference is system-generated at creation of object.'))
+                if ir_order:
+                    if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
+                        values_header_errors.append(_('Line 2 of the file: IR Order Reference is not correct.'))
+                    else:
+                        header_values['imp_order_name'] = values.get(2, [])[1]
+                elif not ir_order and values.get(2, [])[1]:  # Search for existing IR
+                    ir_ids = so_obj.search(cr, uid, [('procurement_request', '=', True),
+                                                     ('name', '=', values.get(2, [])[1])], limit=1, context=context)
+                    if ir_ids:
+                        ir_order = so_obj.browse(cr, uid, ir_ids[0], context=context)
+                        for ir_line in ir_order.order_line:
+                            imp_line_data = {
+                                'ir_import_id': ir_imp.id,
+                                'ir_line_id': ir_line.id,
+                                'in_line_number': ir_line.line_number
+                            }
+                            ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
+                        header_values['imp_order_name'] = values.get(2, [])[1]
+                    else:
+                        values_header_errors.append(_('Line 2 of the file: You can not import this file with a non-existing IR Order Reference.'))
 
                 # Line 4: Order Category
-                # TODO: update
                 categ = values.get(4, [])[1]
                 if categ in ORDER_CATEGORY_BY_VALUE:
                     header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
-                else:
+                elif not ir_order:
                     values_header_errors.append(
                         _('Line 4 of the file: Order Category \'%s\' not defined, default value will be Other')
                         % (categ,))
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
-                # TODO: update
                 priority = values.get(5, [])[1]
                 if priority in ORDER_PRIORITY_BY_VALUE:
                     header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
-                else:
+                elif not ir_order:
                     values_header_errors.append(
                         _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be Normal')
                         % (priority,))
@@ -312,18 +343,17 @@ class internal_request_import(osv.osv):
                         except:
                             values_header_errors.append(_('Line 7 of the file: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')
                                                         % req_date)
-                else:
-                    values_header_errors.append(_('Line 7 of the file: The Requested Date is mandatory.'))
+                elif not ir_order:
+                    values_header_errors.append(
+                        _('Line 7 of the file: The Requested Date is mandatory in the first import.'))
 
                 # Line 8: Requestor
-                # TODO: update
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
-                elif not ir_imp.order_id:
+                elif not ir_order:
                     values_header_errors.append(_('Line 8 of the file: The Requestor is mandatory in the first import.'))
 
                 # Line 9: Location Requestor
-                # TODO: update
                 loc_req = values.get(9, [])[1]
                 if loc_req:
                     ir_loc_req_domain = [
@@ -337,21 +367,26 @@ class internal_request_import(osv.osv):
                     else:
                         values_header_errors.append(_('Line 9 of the file: The Location Requestor \'%s\' does not match possible options.')
                                                     % (loc_req,))
-                else:
+                elif not ir_order:
                     values_header_errors.append(_('Line 9 of the file: The Location Requestor is mandatory.'))
 
                 # Line 10: Origin
-                # TODO: update
-                if values.get(10, [])[1]:
-                    header_values['imp_origin'] = values.get(10, [])[1]
-                elif not ir_imp.order_id:
-                    values_header_errors.append(_('Line 10 of the file: The Origin is mandatory in the first import.'))
+                if not ir_order:
+                    if values.get(10, [])[1]:
+                        header_values['imp_origin'] = values.get(10, [])[1]
+                    else:
+                        values_header_errors.append(_('Line 10 of the file: The Origin is mandatory in the first import.'))
 
                 '''
                 The header values have been imported, start the importation of
                 lines
                 '''
                 not_ok_file_lines = {}
+                in_line_numbers = []  # existing line numbers
+                imp_line_numbers = []  # imported line numbers
+                if ir_order:  # get the lines numbers
+                    in_line_numbers = [line.line_number for line in ir_order.order_line]
+
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
                     # Check mandatory fields
@@ -380,10 +415,27 @@ class internal_request_import(osv.osv):
                     # Get values
                     line_data = {}
                     line_errors = ''
+                    duplicate_line = False
                     product_id = False
                     product = False
 
                     vals = values.get(x, [])
+                    # Line number
+                    if in_line_numbers:
+                        if vals[0]:
+                            try:
+                                line_n = int(vals[0])
+                                line_data.update({'imp_line_number': line_n})
+                                if line_n in imp_line_numbers:
+                                    line_errors += _('Line Number \'%s\' has already been treated.\n') % (line_n,)
+                                    duplicate_line = True
+                                else:
+                                    imp_line_numbers.append(line_n)
+                            except:
+                                line_errors += _('Line Number must be an integer.\n')
+                        else:
+                            line_errors += _('Line Number is mandatory to update a line.\n')
+
                     # Product and Comment
                     product_code = vals[1]
                     comment = vals[7]
@@ -423,8 +475,18 @@ class internal_request_import(osv.osv):
                             line_errors += _('Product \'%s\' has not been imported as UoM \'%s\' is not consistent.') \
                                            % (vals[1], vals[5])
 
-                    line_data.update({'error_msg': line_errors})
-                    lines_values.append(line_data)
+                    line_data.update({
+                        'error_msg': line_errors,
+                        'ir_import_id': ir_imp.id,
+                    })
+                    if not duplicate_line and in_line_numbers and line_data.get('imp_line_number') \
+                            and line_data['imp_line_number'] in in_line_numbers:
+                        l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
+                                                              ('in_line_number', '=', line_data['imp_line_number'])],
+                                                    context=context)
+                        ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
+                    else:
+                        ir_imp_l_obj.create(cr, uid, line_data, context=context)
                     nb_treated_lines += 1
 
                 '''
@@ -446,19 +508,12 @@ class internal_request_import(osv.osv):
                         message += '%s\n' % err
 
                 header_values.update({
+                    'order_id': ir_order and ir_order.id,
                     'message': message,
                     'state': 'simu_done',
                     'percent_completed': 100.0,
                     'import_error_ok': import_error_ok,
-                    'imp_line_ids': [(0, 0, {
-                        'imp_line_number': i + 1,
-                        'imp_product_id': line['imp_product_id'] or False,
-                        'imp_qty': line['imp_qty'] or 0.00,
-                        'imp_cost_price': line['imp_cost_price'] or 0.00,
-                        'imp_uom_id': line['imp_uom_id'] or False,
-                        'imp_comment': line['imp_comment'] or '',
-                        'error_msg': line['error_msg'] or False,
-                    }) for i, line in enumerate(lines_values)],
+                    'nb_treated_lines': nb_treated_lines,
                 })
                 self.write(cr, uid, [ir_imp.id], header_values, context=context)
 
@@ -494,7 +549,6 @@ class internal_request_import(osv.osv):
                 'context': context,
             }
 
-        # TODO: Store timestamp ?
         self.write(cr, uid, ids, {'state': 'import_progress', 'percent_completed': 0.00}, context=context)
 
         cr.commit()
@@ -505,27 +559,15 @@ class internal_request_import(osv.osv):
         if new_thread.isAlive():
             return self.go_to_simulation(cr, uid, ids, context=context)
         else:
-            if active_wiz.order_id:
-                # TODO: update
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'internal.request.import',
-                    'res_id': active_wiz.id,
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'crush',
-                    'context': context,
-                }
-            else:
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'internal.request.import',
-                    'res_id': active_wiz.id,
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'crush',
-                    'context': context,
-                }
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': active_wiz.id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+            }
 
     def run_import(self, dbname, uid, ids, context=None):
         '''
@@ -538,22 +580,47 @@ class internal_request_import(osv.osv):
             ids = [ids]
 
         cr = pooler.get_db(dbname).cursor()
+        so_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
 
         try:
             for wiz in self.browse(cr, uid, ids, context=context):
                 self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
-
-                if wiz.order_id:
-                    # TODO: update
-                    continue
-                else:
+                if wiz.order_id:  # update IR
+                    ir_vals = {
+                        'categ': wiz.imp_categ,
+                        'priority': wiz.imp_priority,
+                        'delivery_requested_date': wiz.imp_requested_date,
+                        'requestor': wiz.imp_requestor,
+                        'location_requestor_id': wiz.imp_loc_requestor.id,
+                    }
+                    so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
+                    for line in wiz.imp_line_ids:
+                        if not line.error_msg:
+                            line_vals = {
+                                'product_id': line.imp_product_id and line.imp_product_id.id or False,
+                                'product_uom_qty': line.imp_qty or 0.00,
+                                'comment': line.imp_comment or '',
+                            }
+                            if line.imp_uom_id:
+                                line_vals.update({'product_uom': line.imp_uom_id.id})
+                            if line.ir_line_id:  # update IR line
+                                sol_obj.write(cr, uid, line.ir_line_id.id, line_vals, context=context)
+                            else:  # create IR line
+                                line_vals.update({
+                                    'order_id': wiz.order_id.id,
+                                    'cost_price': line.imp_cost_price or 0.00,
+                                    'price_unit': line.imp_cost_price or 0.00,
+                                })
+                                sol_obj.create(cr, uid, line_vals, context=context)
+                else:  # Create IR
                     ir_vals = {
                         'procurement_request': True,
                         'categ': wiz.imp_categ,
                         'priority': wiz.imp_priority,
                         'delivery_requested_date': wiz.imp_requested_date,
                         'requestor': wiz.imp_requestor,
-                        'location_requestor_id': wiz.imp_loc_requestor,
+                        'location_requestor_id': wiz.imp_loc_requestor.id,
                         'origin': wiz.imp_origin,
                         'order_line': [(0, 0, {
                             'product_id': x.imp_product_id and x.imp_product_id.id or False,
@@ -564,12 +631,13 @@ class internal_request_import(osv.osv):
                             'comment': x.imp_comment or '',
                         }) for x in (y for y in wiz.imp_line_ids if not y.error_msg)],
                     }
-
-                    self.pool.get('sale.order').create(cr, uid, ir_vals, context=context)
+                    new_ir_id = so_obj.create(cr, uid, ir_vals, context=context)
+                    self.write(cr, uid, [wiz.id], {'order_id': new_ir_id}, context=context)
 
             if ids:
-                self.write(cr, uid, ids, {'state': 'done', 'percent_completed': 100.00}, context=context)
-                res = self.reset_import(cr, uid, ids, context=context)
+                self.write(cr, uid, ids, {'state': 'done', 'date_done': datetime.datetime.now(), 'percent_completed': 100.00},
+                           context=context)
+                res = self.go_to_simulation(cr, uid, ids, context=context)
             else:
                 res = True
 
@@ -590,6 +658,7 @@ internal_request_import()
 
 class internal_request_import_line(osv.osv):
     _name = 'internal.request.import.line'
+    _rec_name = 'in_line_number'
 
     def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
         if context is None:

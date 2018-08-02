@@ -95,7 +95,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Priority')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.priority or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'priority') or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
@@ -138,7 +138,7 @@
     </Row>
     % for line in o.order_line:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.line_number or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.line_number or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.default_code or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.name or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.product_uom_qty or '' | x}</Data></Cell>
