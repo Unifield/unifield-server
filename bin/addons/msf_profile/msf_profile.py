@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
         Updates the Wizard Templates for the "Partner Ledger" and "Partner Balance" following the change on reconcile filter:
         - "Include Reconciled Entries" ticked ==> becomes "Reconciled: Empty"
         - "Include Reconciled Entries" unticked ==> becomes "Reconciled: No"
+        (Note: templates aren't synched for now)
         """
         template_obj = self.pool.get('wizard.template')
         template_ids = template_obj.search(cr, uid, [('wizard_name', 'in',
@@ -81,6 +82,7 @@ class patch_scripts(osv.osv):
         """
         Updates the Wizard Templates for the "Partner Balance" report following the fact that the display_partner field
         is now required: an empty display_partner becomes "With movements" (= will give the same results as before US-3873 dev)
+        (Note: templates aren't synched for now)
         """
         template_obj = self.pool.get('wizard.template')
         template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
