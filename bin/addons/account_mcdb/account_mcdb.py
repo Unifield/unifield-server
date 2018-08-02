@@ -295,6 +295,7 @@ class account_mcdb(osv.osv):
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
         res_model = context.get('selector_model', False) or (wiz and wiz.model) or False
+        journal_obj = self.pool.get('account.journal')
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
@@ -331,6 +332,7 @@ class account_mcdb(osv.osv):
                 m2m_fields.append(('transfer_journal_ids', 'transfer_journal_id'))
             for m2m in m2m_fields:
                 if getattr(wiz, m2m[0]):
+                    value = False
 
                     # do not add domain if the block have not been selected
                     # (because they are using same field relation m2m)
@@ -385,6 +387,9 @@ class account_mcdb(osv.osv):
                     # transfer_journal_ids with reversal
                     elif m2m[0] == 'transfer_journal_ids' and wiz.rev_transfer_journal_ids:
                         operator = 'not in'
+                        # also exclude all non liquidity journals (so the right journals will be displayed in the PDF report header)
+                        other_journal_ids = journal_obj.search(cr, uid, [('type', 'not in', ['cash', 'bank', 'cheque'])], order='NO_ORDER', context=context)
+                        value = [x.id for x in getattr(wiz, m2m[0])] + other_journal_ids
                     # Search if a view account is given
                     if m2m[0] in ['account_ids', 'analytic_account_fp_ids', 'analytic_account_cc_ids', 'analytic_account_f1_ids', 'analytic_account_f2_ids']:
                         account_ids = []
@@ -409,7 +414,8 @@ class account_mcdb(osv.osv):
                         id_list = child_list + [x.id for x in getattr(wiz, m2m[0])]
                         domain.append((m2m[1], operator, tuple(id_list)))
                     else:
-                        domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
+                        value = value or tuple([x.id for x in getattr(wiz, m2m[0])])
+                        domain.append((m2m[1], operator, value))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('booking_currency_id', 'currency_id'),
                         ('fiscalyear_id', 'fiscalyear_id')]:
