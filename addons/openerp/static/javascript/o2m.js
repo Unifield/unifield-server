@@ -127,7 +127,7 @@ One2Many.prototype = {
         new ListView(this.name).edit(id)
     },
 
-    edit: function(id, readonly) {
+    edit: function(id, readonly, tab) {
         if(this.mode == 'tree' && this.inline) {
             this.edit_inline(id);
             return;
@@ -145,9 +145,12 @@ One2Many.prototype = {
             '_terp_view_params/_terp_view_ids': this.parent_view_ids,
             '_terp_view_params/_terp_view_mode': this.parent_view_mode,
             '_terp_view_params/_terp_context': this.parent_context || {},
-            '_terp_view_params/_terp_view_type': 'form'
+            '_terp_view_params/_terp_view_type': 'form',
         };
 
+        if (tab) {
+            params['_terp_notebook_tab'] = tab;
+        }
         while (names.length) {
             parents.push(names.shift());
             var prefix = parents.join('/');

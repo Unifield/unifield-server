@@ -9,7 +9,7 @@
        attrs_with_context = py.attrs(attrs, context=ctx, confirm=confirm)
   
    if btype == 'openform':
-       onclickAction="new One2Many('%s', false).edit(%s);" % (parent_grid, id)
+       onclickAction="new One2Many('%s', false).edit(%s, 0, 1);" % (parent_grid, id)
    else:
        onclickAction="new ListView('%s').onButtonClick('%s', '%s', %s, getNodeAttribute(this, 'confirm'), getNodeAttribute(this, 'context'));" % (parent_grid, name, btype, ids)
    oncontextmenuAction="showBtnSdref(event, '%s', '%s', '%s', '%s');" % (name, model, ids, parent_grid)
