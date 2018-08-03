@@ -92,4 +92,32 @@ class free_allocation_wizard(osv.osv_memory):
 
 
 free_allocation_wizard()
+
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        """
+        Hides the Report "Analytic Allocation with Free" in AJI view menu
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        model_names = [x[0] for x in models]
+        if key == 'action' and key2 == 'client_print_multi' and 'account.analytic.line' in model_names:
+            new_act = []
+            for v in values:
+                display_fp = context.get('display_fp', False)
+                not_free_axis = context.get('categ', '') not in ['FREE1', 'FREE2']
+                if v[1] == 'action_analytic_allocation_with_free' and (display_fp or not_free_axis):
+                    continue
+                else:
+                    new_act.append(v)
+            values = new_act
+        return values
+
+
+ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
