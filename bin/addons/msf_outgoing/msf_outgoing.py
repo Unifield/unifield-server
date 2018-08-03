@@ -4572,6 +4572,7 @@ class stock_picking(osv.osv):
                     'product_qty': return_qty,
                     'location_dest_id': line.move_id.initial_location.id,
                     'state': 'done',
+                    'ppl_returned_ok': True,
                 }
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
@@ -5108,6 +5109,7 @@ class stock_move(osv.osv):
 
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
+                'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
                 'length': fields.float(digits=(16, 2), string='Length [cm]'),
                 'width': fields.float(digits=(16, 2), string='Width [cm]'),
