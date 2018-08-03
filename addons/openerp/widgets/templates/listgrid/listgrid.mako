@@ -435,6 +435,13 @@ if (auto_field && auto_field.val()){
                                    }
                                });
                                }
+                               % if bothedit:
+                                else {
+                                    jQuery(row).click(function(event) {
+                                        new One2Many('${name}', false).edit(parseInt(jQuery(row).attr('record'), 10),  true);
+                                    });
+                                }
+                               % endif
                            });
                         </script>
                     % else:
