@@ -101205,3 +101205,8 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenai
 #, python-format
 msgid "The Cheque %s has already been imported."
 msgstr "Le Chèque %s a déjà été importé."
+
+#. module: purchase
+#: field:purchase.order,from_address:0
+msgid "From Address"
+msgstr "Adresse expéditeur"
