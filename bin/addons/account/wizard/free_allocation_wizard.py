@@ -82,7 +82,7 @@ class free_allocation_wizard(osv.osv_memory):
             'free1_ids': wiz.free1_ids and [x.id for x in wiz.free1_ids] or [],
             'free2_ids': wiz.free2_ids and [x.id for x in wiz.free2_ids] or [],
         }
-        report_name = 'free.allocation.report'
+        report_name = 'free.allocation.report.xls'
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
