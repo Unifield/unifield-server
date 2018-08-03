@@ -77,7 +77,6 @@ class internal_request_import(osv.osv):
         # IR Header Info
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
-        'in_order_name': fields.related('order_id', 'name', type='char', string='Order Reference', readonly=True),
         'in_categ': fields.related('order_id', 'categ', type='selection', selection=ORDER_CATEGORY,
                                    string='Order Category', readonly=True),
         'in_priority': fields.related('order_id', 'priority', type='selection', selection=ORDER_PRIORITY,
@@ -88,7 +87,6 @@ class internal_request_import(osv.osv):
                                            string='Location Requestor', readonly=True),
         'in_origin': fields.related('order_id', 'origin', type='char', string='Origin', readonly=True),
         # # Imported IR info
-        'imp_order_name': fields.char(size=64, string='Order Refererence', readonly=True),
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'imp_requested_date': fields.date(string='Requested Date', readonly=True),
@@ -120,6 +118,10 @@ class internal_request_import(osv.osv):
         if context is None:
             context = {}
 
+        # view_id = self.pool.get('ir.model.data').\
+        #     get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
+        ctx = context.copy()
+        ctx.update({'procurement_request': True})
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
             order_id = wiz['order_id'][0]
             return {
@@ -127,9 +129,10 @@ class internal_request_import(osv.osv):
                 'res_model': 'sale.order',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
+                # 'view_id': [view_id],
                 'target': 'crush',
                 'res_id': order_id,
-                'context': context,
+                'context': ctx,
             }
 
     def go_to_simulation(self, cr, uid, ids, context=None):
@@ -293,9 +296,8 @@ class internal_request_import(osv.osv):
                 if ir_order:
                     if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
                         blocked = True
-                        values_header_errors.append(_('Line 2 of the file: IR Order Reference is not correct.'))
-                    else:
-                        header_values['imp_order_name'] = values.get(2, [])[1]
+                        values_header_errors.append(_('Line 2 of the file: IR Order Reference \'%s\' is not correct.') %
+                                                    (values.get(2, [])[1],))
                 elif not ir_order and values.get(2, [])[1]:  # Search for existing IR
                     ir_ids = so_obj.search(cr, uid, [('procurement_request', '=', True),
                                                      ('name', '=', values.get(2, [])[1])], limit=1, context=context)
@@ -308,7 +310,6 @@ class internal_request_import(osv.osv):
                                 'in_line_number': ir_line.line_number
                             }
                             ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
-                        header_values['imp_order_name'] = values.get(2, [])[1]
                     else:
                         blocked = True
                         values_header_errors.append(_('Line 2 of the file: You can not import this file with a non-existing IR Order Reference.'))
@@ -320,7 +321,7 @@ class internal_request_import(osv.osv):
                 elif not ir_order:
                     values_header_errors.append(
                         _('Line 4 of the file: Order Category \'%s\' not defined, default value will be \'Other\'')
-                        % (categ,))
+                        % (categ or False,))
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
@@ -330,7 +331,7 @@ class internal_request_import(osv.osv):
                 elif not ir_order:
                     values_header_errors.append(
                         _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be \'Normal\'')
-                        % (priority,))
+                        % (priority or False,))
                     header_values['imp_priority'] = 'normal'
 
                 # Line 7: Requested date
@@ -462,7 +463,11 @@ class internal_request_import(osv.osv):
 
                     # Quantity
                     qty = vals[3] or 0.00
-                    line_data.update({'imp_qty': qty})
+                    try:
+                        qty = float(qty)
+                        line_data.update({'imp_qty': qty})
+                    except:
+                        line_errors += _('Quantity must be a number. ')
 
                     # Cost Price and UoM
                     if product_id and product:
@@ -487,6 +492,13 @@ class internal_request_import(osv.osv):
                         l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
                                                               ('in_line_number', '=', line_data['imp_line_number'])],
                                                     context=context)
+                        if l_ids:
+                            ir_imp_l = ir_imp_l_obj.browse(cr, uid, l_ids[0], context=context)
+                            if (line_data.get('imp_product_id') and ir_imp_l.in_product_id.id != line_data['imp_product_id']) \
+                                    or (line_data.get('imp_qty') and ir_imp_l.in_qty != line_data['imp_qty']) \
+                                    or (line_data.get('imp_uom_id') and ir_imp_l.in_uom.id != line_data['imp_uom_id']) \
+                                    or (line_data.get('imp_comment') and ir_imp_l.in_comment != line_data['imp_comment']):
+                                line_data.update({'line_changed': True})
                         ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
                     else:
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
@@ -591,12 +603,14 @@ class internal_request_import(osv.osv):
                 self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
                 if wiz.order_id:  # update IR
                     ir_vals = {
-                        'categ': wiz.imp_categ,
-                        'priority': wiz.imp_priority,
                         'delivery_requested_date': wiz.imp_requested_date,
                         'requestor': wiz.imp_requestor,
                         'location_requestor_id': wiz.imp_loc_requestor.id,
                     }
+                    if wiz.imp_categ:
+                        ir_vals.update({'categ': wiz.imp_categ})
+                    if wiz.imp_priority:
+                        ir_vals.update({'priority': wiz.imp_priority})
                     so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
                     for line in wiz.imp_line_ids:
                         if not line.error_msg:
@@ -640,7 +654,7 @@ class internal_request_import(osv.osv):
             if ids:
                 self.write(cr, uid, ids, {'state': 'done', 'date_done': datetime.datetime.now(), 'percent_completed': 100.00},
                            context=context)
-                res = self.go_to_simulation(cr, uid, ids, context=context)
+                res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
             else:
                 res = True
 
@@ -695,6 +709,7 @@ class internal_request_import_line(osv.osv):
     _columns = {
         'ir_line_id': fields.many2one('sale.order.line', string='Line', readonly=True),
         'ir_import_id': fields.many2one('internal.request.import', string='Simulation screen', readonly=True, ondelete='cascade'),
+        'line_changed': fields.boolean(string='Line has been changed', readonly=True),
         # # Original IR line info
         'in_line_number': fields.function(_get_line_info, method=True, multi='line', type='integer',
                                           string='Line Number', readonly=True, store=True),
@@ -719,6 +734,7 @@ class internal_request_import_line(osv.osv):
     }
 
     defaults = {
+        'line_changed': False,
         'imp_line_number': 0,
     }
 

@@ -101524,8 +101524,8 @@ msgstr "Quantité"
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:294
 #, python-format
-msgid "Line 2 of the file: IR Order Reference is not correct."
-msgstr "Ligne 2 du fichier: La Référence de la Demande Interne est incorrecte."
+msgid "Line 2 of the file: IR Order Reference '%s' is not correct."
+msgstr "Ligne 2 du fichier: La Référence de la Demande Interne '%s' est incorrecte."
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:344
@@ -101964,3 +101964,9 @@ msgstr "\n"
 #, python-format
 msgid "Line %s of the file: %sLine not imported."
 msgstr "Ligne %s du fichier: %sLigne non importée."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:468
+#, python-format
+msgid "Quantity must be a number. "
+msgstr "La Quantité doit être un nombre. "
