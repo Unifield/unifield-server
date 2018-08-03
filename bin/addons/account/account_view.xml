@@ -2784,17 +2784,21 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <separator colspan="4" string="Options - General"/>
-                    <field name="fiscalyear_id" on_change="onchange_fiscalyear(fiscalyear_id)"/>
-                    <field name="period_id"/>
-                    <field name="document_date"/>
-                    <field name="posting_date"/>
+                    <separator colspan="4" string="General"/>
                     <field name="instance_id" domain="[('instance_to_display_ids', '=', True)]"/>
                     <newline/>
                     <field name="account_ids"/>
                     <field name="journal_ids"/>
                     <newline/>
-                    <separator colspan="4" string="Options - Analytic Accounts"/>
+                    <separator colspan="4" string="Dates"/>
+                    <field name="fiscalyear_id" on_change="onchange_fiscalyear(fiscalyear_id)"/>
+                    <field name="period_id"/>
+                    <field name="document_date_from"/>
+                    <field name="document_date_to"/>
+                    <field name="posting_date_from"/>
+                    <field name="posting_date_to"/>
+                    <newline/>
+                    <separator colspan="4" string="Analytic Accounts"/>
                     <field name="free1_ids" />
                     <field name="free2_ids"/>
                     <field name="cost_center_ids"/>

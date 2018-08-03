@@ -126,7 +126,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Worksheet ss:Name="${_('Analytic Allocation with Free')}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120"/>
-<Column ss:AutoFitWidth="1" ss:Width="90" ss:Span="8"/>
+<Column ss:AutoFitWidth="1" ss:Width="90" ss:Span="10"/>
 
 <!-- TABLE HEADER -->
 <Row>
@@ -155,7 +155,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Book. Amount')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Book. Currency')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Func. Amount')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Func. Currency')}</Data>
     </Cell>
 </Row>
 
@@ -186,8 +192,14 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${line['book_amount']}</Data>
     </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['book_currency']|x}</Data>
+    </Cell>
     <Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${line['func_amount']}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['func_currency']|x}</Data>
     </Cell>
 </Row>
 % endfor

@@ -47,10 +47,14 @@ class free_allocation_report(report_sxw.rml_parse):
             dom.append(('fiscalyear_id', '=', data['fiscalyear_id']))
         if data.get('period_id', False):
             dom.append(('period_id', '=', data['period_id']))
-        if data.get('document_date', False):
-            dom.append(('document_date', '=', data['document_date']))
-        if data.get('posting_date', False):
-            dom.append(('date', '=', data['posting_date']))
+        if data.get('document_date_from', False):
+            dom.append(('document_date', '>=', data['document_date_from']))
+        if data.get('document_date_to', False):
+            dom.append(('document_date', '<=', data['document_date_to']))
+        if data.get('posting_date_from', False):
+            dom.append(('date', '>=', data['posting_date_from']))
+        if data.get('posting_date_to', False):
+            dom.append(('date', '<=', data['posting_date_to']))
         if data.get('instance_id', False):
             dom.append(('instance_id', '=', data['instance_id']))
         if data.get('journal_ids', []):
