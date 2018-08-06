@@ -66,7 +66,7 @@ PACK_INTEGRITY_STATUS_SELECTION = [
     ('overlap', 'The sequence overlaps previous one'),
     ('gap', 'A gap exist in the sequence'),
     ('bad_qty_int', 'The quantity per pack must be an integer for this UoM'),
-    ('bad_qty_rounded', 'The quantity per pack must not have more decimals than the UoM\'s rounding'),
+    ('bad_qty_rounded', 'The quantity per pack must be a multiple of UoM\'s rounding'),
 ]
 import msf_outgoing
 import wizard

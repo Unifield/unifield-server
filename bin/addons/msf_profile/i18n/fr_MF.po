@@ -105048,8 +105048,8 @@ msgstr "La quantité par paquet doit être un entier pour cette UdM"
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
-msgid "The quantity per pack must not have more decimals than the UoM's rounding"
-msgstr "La quantité par paquet ne doit pas avoir plus de décimales que l'arrondi de l'UdM"
+msgid "The quantity per pack must be a multiple of UoM's rounding"
+msgstr "La quantité par paquet doit être un multiple de l'arrondi de l'UdM"
 
 #. modules: msf_supply_doc_export, sales_followup
 #: report:po.follow.up_rml:0
