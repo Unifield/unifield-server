@@ -790,7 +790,6 @@ class shipment(osv.osv):
         proc_obj = self.pool.get('return.shipment.processor')
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -959,13 +958,8 @@ class shipment(osv.osv):
                 ))
                 log_flag = True
 
-            res = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            context.update({
-                'view_id': res,
-                'picking_type': 'picking.ticket'
-            })
             if draft_picking:
-                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), context=context)
+                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), action_xmlid='msf_outgoing.action_picking_ticket')
 
         # Call complete_finished on the shipment object
         # If everything is allright (all draft packing are finished) the shipment is done also
@@ -1952,63 +1946,6 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
 
-    def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
-        pick = kwargs['pick']
-        obj_data = self.pool.get('ir.model.data')
-        view_list = {'standard': ('stock', 'view_picking_out_form'),
-                     'picking': ('msf_outgoing', 'view_picking_ticket_form'),
-                     'ppl': ('msf_outgoing', 'view_ppl_form'),
-                     'packing': ('msf_outgoing', 'view_packing_form'),
-                     }
-        if pick.type == 'out':
-            context.update({'picking_type': pick.subtype == 'standard' and 'delivery_order' or 'picking_ticket'})
-            module, view = view_list.get(pick.subtype, ('msf_outgoing', 'view_picking_ticket_form'))
-            try:
-                return obj_data.get_object_reference(cr, uid, module, view)
-            except ValueError:
-                pass
-        elif pick.type == 'in':
-            context.update({'picking_type': 'incoming_shipment'})
-        else:
-            context.update({'picking_type': 'internal_move'})
-            context.update({'_terp_view_name': 'Internal Moves'})  # REF-92: Update also the Form view name, otherwise Products to Process
-
-        return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
-
-    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>log_picking
-        update the domain and other values if necessary in the log creation
-        '''
-        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
-        pick_obj = self.pool.get('stock.picking')
-        pick = kwargs['pick']
-        message = kwargs['message']
-        if pick.type and pick.subtype:
-            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
-            return self.pool.get('res.log').create(cr, uid,
-                                                   {'name': message,
-                                                    'res_model': pick_obj._name,
-                                                    'secondary': False,
-                                                    'res_id': pick.id,
-                                                    'domain': domain,
-                                                    }, context=context)
-        return result
-
-    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>stock_picking>log_picking
-        specify if we display a log or not
-        '''
-        result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
-        pick = kwargs['pick']
-        if pick.subtype == 'packing':
-            return 'packing'
-        # if false the log will be defined by the method _hook_custom_log (which include a domain)
-        if pick.type and pick.subtype:
-            return False
-
-        return result
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
@@ -3334,7 +3271,7 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', out.id, 'convert_to_picking_ticket', cr)
             # we force availability
 
-            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), action_xmlid='msf_outgoing.action_picking_ticket')
             self.infolog(cr, uid, "The Delivery order id:%s (%s) has been converted to draft Picking Ticket id:%s (%s)." % (
                 out.id, out.name, out.id, new_name,
             ))
@@ -4590,19 +4527,14 @@ class stock_picking(osv.osv):
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             context['view_id'] = ppl_view
             log_message = _('Products from Pre-Packing List (%s) have been returned to stock.') % (picking.name,)
-            self.log(cr, uid, picking.id, log_message, context=context)
+            self.log(cr, uid, picking.id, log_message, action_xmlid='msf_outgoing.action_ppl')
             self.infolog(cr, uid, "Products from Pre-Packing List id:%s (%s) have been returned to stock." % (
                 picking.id, picking.name,
             ))
 
             # Log message for draft picking ticket
-            pick_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            context.update({
-                'view_id': pick_view,
-                'picking_type': 'picking_ticket',
-            })
             log_message = _('The corresponding Draft Picking Ticket (%s) has been updated.') % (picking.previous_step_id.backorder_id.name,)
-            self.log(cr, uid, draft_picking_id, log_message, context=context)
+            self.log(cr, uid, draft_picking_id, log_message, action_xmlid='msf_outgoing.action_picking_ticket')
 
             # If all moves are done or canceled, the PPL is canceled
             cancel_ppl = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('state', '!=', 'assigned')], count=True, context=context)

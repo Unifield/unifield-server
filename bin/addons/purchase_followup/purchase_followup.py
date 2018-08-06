@@ -314,14 +314,10 @@ class purchase_order_followup_line(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             if not line.picking_id:
                 raise osv.except_osv(_('Error'), _('This line has no incoming shipment !'))
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)[1]
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'stock.picking',
-                    'res_id': line.picking_id.id,
-                    'target': 'current',
-                    'view_type': 'form',
-                    'view_mode': 'form,tree',
-                    'view_id': [view_id]}
+            xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+            res['res_id'] = line.picking_id.id
+            return res
 
 purchase_order_followup_line()
 

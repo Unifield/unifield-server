@@ -442,13 +442,14 @@ class orm_template(object):
     _replace_exported_fields = {}
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
-    def log(self, cr, uid, id, message, secondary=False, context=None):
+    def log(self, cr, uid, id, message, secondary=False, action_xmlid=False, context=None):
         return self.pool.get('res.log').create(cr, uid,
                                                {
                                                    'name': message,
                                                    'res_model': self._name,
                                                    'secondary': secondary,
                                                    'res_id': id,
+                                                   'action_xmlid': action_xmlid,
                                                },
                                                context=context
                                                )

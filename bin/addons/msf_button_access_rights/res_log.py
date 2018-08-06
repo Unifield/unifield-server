@@ -1,5 +1,6 @@
-from osv import osv, orm
+from osv import osv
 from osv import fields
+from tools.safe_eval import safe_eval
 
 class res_log(osv.osv):
 
@@ -10,6 +11,7 @@ class res_log(osv.osv):
             string='Read OK',
             help='Indicate if the user is able to open the document in res.log',
         ),
+        'action_xmlid': fields.char('Xmlid of action to open', size=512),
     }
 
     _defaults = {
@@ -139,6 +141,7 @@ class res_log(osv.osv):
             'context',
             'domain',
             'read_ok',
+            'action_xmlid',
         ]
 
         read_rights = {}
@@ -147,13 +150,38 @@ class res_log(osv.osv):
         res.reverse()
 
         res_dict = {}
-
+        action_seen = {}
         for r in res:
-           r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
-           t = (r['name'], r['res_model'], r['res_id'])
-           if t not in res_dict:
-               res_dict[t] = True
-               result.insert(0,r)
+            if r['action_xmlid'] and (not r['domain'] or r['domain'] == '[]' or not r['context']):
+                if r['action_xmlid'] not in action_seen:
+                    module, xmlid = r['action_xmlid'].split('.', 1)
+                    action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+                    action_seen[r['action_xmlid']] = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], ['domain', 'context', 'views', 'view_mode', 'search_view_id'], context=context)
+                action_data = action_seen.get(r['action_xmlid'])
+                if action_data:
+                    r['action_id'] = action_data['id']
+                    action_ctx = {}
+                    if r['context']:
+                        try:
+                            action_ctx = safe_eval(r['context'])
+                            if action_data['search_view_id']:
+                                action_ctx['search_view'] = action_data['search_view_id'][0]
+                            if 'view_id' in action_ctx:
+                                del(action_ctx['view_id'])
+                            r['context'] = action_ctx
+                        except:
+                            pass
+                    r['view_mode'] = '%s' % (action_data['view_mode'].split(','),)
+                    r['view_ids'] = [x[0] for x in action_data['views']]
+                    if action_data['domain'] and (not r['domain'] or r['domain'] == '[]'):
+                        r['domain'] = action_data['domain']
+                    if action_data['context'] and not r['context']:
+                        r['context'] = action_data['context']
+            r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
+            t = (r['name'], r['res_model'], r['res_id'])
+            if t not in res_dict:
+                res_dict[t] = True
+                result.insert(0,r)
 
         self.write(cr, uid, unread_log_ids, {'read': True}, context=context)
         return result
