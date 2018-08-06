@@ -118,8 +118,6 @@ class internal_request_import(osv.osv):
         if context is None:
             context = {}
 
-        # view_id = self.pool.get('ir.model.data').\
-        #     get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
         ctx = context.copy()
         ctx.update({'procurement_request': True})
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
@@ -129,7 +127,6 @@ class internal_request_import(osv.osv):
                 'res_model': 'sale.order',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
-                # 'view_id': [view_id],
                 'target': 'crush',
                 'res_id': order_id,
                 'context': ctx,
