@@ -1666,6 +1666,8 @@ class stock_picking(osv.osv):
             'in': 'stock.action_picking_tree4',
             'internal': 'stock.action_picking_tree6',
         }
+        if pick.type == 'out' and pick.subtype:
+            return action_list.get(pick.subtype, pick.type)
 
         return action_list.get(pick.type, 'stock.action_picking_tree6')
 
@@ -1733,7 +1735,9 @@ class stock_picking(osv.osv):
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
             if infolog_message:
                 infolog_message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=infolog_message, pick=pick)
-            self.log(cr, uid, pick.id, message, action_xmlid=action_xmlid, context=context)
+            if pick.type != 'out' and pick.subtype != 'packing':
+                # we dont info PACK/
+                self.log(cr, uid, pick.id, message, action_xmlid=action_xmlid, context=context)
 
             if infolog_message:
                 self.infolog(cr, uid, message)

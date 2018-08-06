@@ -198,18 +198,9 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
-        context['pick_type'] = 'incoming'
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'res_id': picking_id,
-                'view_type': 'form',
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'context': context}
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree4', ['form', 'tree'], context=context)
+        res['res_id'] = picking_id
+        return res
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
