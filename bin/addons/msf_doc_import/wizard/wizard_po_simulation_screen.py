@@ -1390,13 +1390,16 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     else:
                         errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
                 else:
-                    write_vals['type_change'] = 'del'
-                    if line.in_line_number:
-                        to_delete = self.search(cr, uid, [
-                            ('simu_id', '=', line.simu_id.id),
-                            ('in_line_number', '=', line.in_line_number),
-                        ], context=context)
-                        self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
+                    if line.po_line_id.state in ('validated', 'validated_n'):
+                        write_vals['type_change'] = 'del'
+                        if line.in_line_number:
+                            to_delete = self.search(cr, uid, [
+                                ('simu_id', '=', line.simu_id.id),
+                                ('in_line_number', '=', line.in_line_number),
+                            ], context=context)
+                            self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
+                    else:
+                        write_vals['type_change'] = 'ignore'
 
             if not line.in_line_number and not write_vals.get('imp_external_ref'):
                 errors.append(_('The line should have a Line no. or an Ext Ref.'))

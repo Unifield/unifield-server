@@ -49,6 +49,7 @@ OBJ_TO_RECREATE = [
     'msf_field_access_rights.field_access_rule_line',
     'msf_button_access_rights.button_access_rule',
     'ir.rule',
+    'hr.payment.method',
 ]
 
 

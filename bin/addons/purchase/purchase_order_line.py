@@ -1123,7 +1123,7 @@ class purchase_order_line(osv.osv):
 
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
-        if pol.state in ['cancel', 'cancel_r']:
+        if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
             return False
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
@@ -1644,6 +1644,9 @@ class purchase_order_line(osv.osv):
                 return False
 
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
+                return False
+
+            if pol.order_id.order_type == 'loan':
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)

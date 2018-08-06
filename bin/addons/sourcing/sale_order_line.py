@@ -1688,6 +1688,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         # attach new RfQ line:
                         price_unit = sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price
                         src_currency = sourcing_line.currency_id.id
+
                         if price_unit and src_currency != target_currency_id:
                             price_unit = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price_unit, round=False, context=context)
 
@@ -1740,6 +1741,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                                 'original_uom': sourcing_line.original_uom.id,
                             })
                         self.pool.get('tender.line').create(cr, uid, tender_values, context=context)
+                    else:
+                        raise osv.except_osv(_('Error'), _('Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool') % (sourcing_line.line_number, sourcing_line.order_id.name))
 
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
