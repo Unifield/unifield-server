@@ -171,16 +171,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssIBLine">
-<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -222,17 +212,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Borders>
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat ss:Format="#,##0.00"/>
-</Style>
-<Style ss:ID="ssIBLineNumber">
-<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
@@ -436,33 +415,6 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
 </Cell>
 </Row>
-
-<!-- INITIAL BALANCE Section -->
-% if get_display_ib():
-<Row>
-<Cell ss:StyleID="ssIBLine" ss:MergeAcross="2">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${_('Initial Balance')}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${company.currency_id.name|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_credit or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
-</Cell>
-</Row>
-% endif
 
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):

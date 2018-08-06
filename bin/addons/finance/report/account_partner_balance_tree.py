@@ -30,7 +30,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         super(account_partner_balance_tree, self).__init__(cr, uid, name, context=context)
         self.apbt_obj = self.pool.get('account.partner.balance.tree')
         self.uid = uid
-        self.initial_balance = False
         self.has_data = True
         self.localcontext.update({
             # header
@@ -47,7 +46,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_prop_instances_str': self._get_prop_instances_str,
             'get_type_of_accounts': self._get_type_of_accounts,
             'get_accounts_str': self._get_accounts_str,
-            'get_display_ib': self._get_display_ib,
             'get_reconcile_selection': self._get_reconcile_selection,
             'get_display_partners_selection': self._get_display_partners_selection,
 
@@ -61,7 +59,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         })
 
     def set_context(self, objects, data, ids, report_type=None):
-        self.initial_balance = data['form'].get('initial_balance', False)
         self.display_partner = data['form'].get('display_partner', 'non-zero_balance')
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
@@ -74,12 +71,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.ACCOUNT_TYPE = ('payable', 'receivable')
 
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
-
-    def _get_display_ib(self):
-        """
-        Returns True if the IB data must be displayed
-        """
-        return self.initial_balance
 
     def _get_nb_account_types(self):
         """

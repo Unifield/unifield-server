@@ -54,34 +54,6 @@ class account_partner_balance_tree(osv.osv):
         self.total_debit_credit_balance = {}
         self.move_line_ids = {}
 
-    def _get_initial_balance(self, cr):
-        """
-        Returns the initial balances by partner and account TYPE
-        """
-        ACCOUNT_TYPE_REQUEST = self.account_type and "AND ac.type IN %s" % self.account_type or ""
-        cr.execute(
-            "SELECT p.id as partner_id, ac.type as account_type, p.ref as partner_ref, ac.name AS account_name, "
-            "ac.code AS code, p.name as partner_name, COALESCE(SUM(l.debit), 0.0) as ib_debit, "
-            "COALESCE(SUM(l.credit), 0.0) as ib_credit, "
-            "COALESCE(sum(debit-credit), 0.0) as ib_balance "
-            "FROM account_move_line AS l INNER JOIN account_move am ON am.id = l.move_id "
-            "INNER JOIN res_partner p ON l.partner_id = p.id "
-            "INNER JOIN account_account ac ON l.account_id = ac.id "
-            "INNER JOIN account_account_type at ON ac.user_type = at.id "
-            "WHERE am.state IN %s"
-            " " + ACCOUNT_TYPE_REQUEST + " "
-            " " + self.ACCOUNT_REQUEST + " "
-            " " + self.RECONCILE_REQUEST + " "
-            " " + self.INSTANCE_REQUEST + " "
-            " " + self.PARTNER_REQUEST + " "
-            " " + self.TAX_REQUEST + " "
-            " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " "
-            "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
-            "ORDER BY ac.type, p.name ",
-            (tuple(self.ib_move_state_list),)) # not_a_user_entry
-        return cr.dictfetchall()
-
     def _cmp_account_type_partner(self, a, b):
         """
         Comparison function to sort by account TYPE and then partner name 
@@ -96,47 +68,6 @@ class account_partner_balance_tree(osv.osv):
             elif a['partner_name'] < b['partner_name']:
                 return -1
         return 0
-
-    def _add_initial_balances(self, cr, full_account):
-        """
-        Add the initial balances values to the report lines
-        """
-        if self.initial_balance:
-            initial_balances = self._get_initial_balance(cr)
-            for ib in initial_balances:
-                found = False
-                # update the result lines with the corresponding IB result
-                for fa in full_account:
-                    if ib['partner_id'] == fa['partner_id'] and ib['account_type'] == fa['account_type']:
-                        # add up the values to the existing ones
-                        fa.update({'ib_debit': fa.get('ib_debit', 0.0) + ib['ib_debit'],
-                                   'ib_credit': fa.get('ib_credit', 0.0) + ib['ib_credit'],
-                                   'ib_balance': fa.get('ib_balance', 0.0) + ib['ib_balance'],
-                                   })
-                        found = True
-                        break
-                # use case: IB lines existing for an "account-partner" association where no "standard value" found:
-                # put the standard values to zero
-                if not found:
-                    ib.update({
-                        'debit': 0,
-                        'credit': 0,
-                        'sdebit': 0,
-                        'scredit': 0,
-                    })
-                    full_account.append(ib)
-            # sort the elements of the list per account and partner
-            full_account.sort(self._cmp_account_type_partner)
-        # use case: "standard values" existing for an "account-partner" association where no IB value found
-        # OR "IB" tickbox not ticked:
-        # put the IB values to zero
-        for fa in full_account:
-            if 'ib_balance' not in fa.keys():
-                fa.update({
-                    'ib_debit': 0,
-                    'ib_credit': 0,
-                    'ib_balance': 0,
-                })
 
     def _execute_query_partners(self, cr, uid, data):
         """
@@ -159,7 +90,6 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
 
-        self.initial_balance = data['form'].get('initial_balance', False)
         fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if fiscalyear_id:
             fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'], context=used_context)
@@ -169,21 +99,6 @@ class account_partner_balance_tree(osv.osv):
 
         where = obj_move._query_get(cr, uid, obj='l', context=used_context) or ''
 
-        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
-        self.IB_DATE_TO = ''
-        self.IB_JOURNAL_REQUEST = ''
-        if self.initial_balance and fiscalyear_id:
-            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
-            # all journals by default
-            journal_ids = data['form'].get('journal_ids',
-                                           obj_journal.search(cr, uid, [], order='NO_ORDER',
-                                                              context=data.get('context', {})))
-            if len(journal_ids) == 1:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
-            else:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
-        # state filter
-        self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
         # reconciliation filter
         reconcile_filter = data['form'].get('reconciled', '')
         if reconcile_filter == 'yes':
@@ -245,8 +160,6 @@ class account_partner_balance_tree(osv.osv):
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:  # with_movements or all
             res2 = [r for r in res]
-        # add the initial balances if requested
-        self._add_initial_balances(cr, res2)
         return res2, self.account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
@@ -343,8 +256,8 @@ class account_partner_balance_tree(osv.osv):
 
         p_seen = {}  # store every partner handled
         for r in res[0]:
-            debit = r['debit'] + (self.initial_balance and r['ib_debit'] or 0.0)
-            credit = r['credit'] + (self.initial_balance and r['ib_credit'] or 0.0)
+            debit = r['debit']
+            credit = r['credit']
             if r['partner_id'] not in p_seen:
                 p_seen[r['partner_id']] = {}
                 p_seen[r['partner_id']]['name'] = r['partner_name']
@@ -360,9 +273,6 @@ class account_partner_balance_tree(osv.osv):
                 'debit': debit,
                 'credit': credit,
                 'balance': debit - credit,
-                'ib_debit': r['ib_debit'] or 0.0,
-                'ib_credit': r['ib_credit'] or 0.0,
-                'ib_balance': r['ib_balance'] or 0.0,
             }
             self.create(cr, uid, vals, context=context)
 
@@ -390,9 +300,6 @@ class account_partner_balance_tree(osv.osv):
                             'debit': 0.0,
                             'credit': 0.0,
                             'balance': 0.0,
-                            'ib_debit': 0.0,
-                            'ib_credit': 0.0,
-                            'ib_balance': 0.0,
                         }
                         self.create(cr, uid, vals, context=context)
 
@@ -425,9 +332,6 @@ class account_partner_balance_tree(osv.osv):
                         'debit': 0.0,
                         'credit': 0.0,
                         'balance': 0.0,
-                        'ib_debit': 0.0,
-                        'ib_credit': 0.0,
-                        'ib_balance': 0.0,
                     }
                     self.create(cr, uid, vals, context=context)
 
@@ -579,7 +483,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                         ('yes', 'Yes'),
                         ('no', 'No'),
                     ], string='Reconciled'),
-        'initial_balance': fields.boolean('Include initial balances'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -610,7 +513,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
-                                                'instance_ids', 'tax', 'partner_ids', 'initial_balance',
+                                                'instance_ids', 'tax', 'partner_ids',
                                                 'only_active_partners', 'account_ids', 'reconciled'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)

@@ -96,6 +96,21 @@ class patch_scripts(osv.osv):
             except:
                 pass
 
+    def us_3873_remove_initial_balance_in_partner_balance_templates(self, cr, uid, *a, **b):
+        """
+        Removes the initial_balance from the Wizard Templates for the "Partner Balance" report
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['values']):
+            try:
+                values_dict = eval(template.values)
+                if 'initial_balance' in values_dict:
+                    del values_dict['initial_balance']
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
     # UF9.1
     def change_xml_payment_method(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')

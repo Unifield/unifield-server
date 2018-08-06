@@ -72532,9 +72532,8 @@ msgstr "Type de Registre"
 msgid "Send Last Backup to remote"
 msgstr "Envoyer la dernière sauvegarde à distance"
 
-#. modules: account, finance, account_override
+#. modules: account, account_override
 #: field:account.report.general.ledger,initial_balance:0
-#: field:wizard.account.partner.balance.tree,initial_balance:0
 #: field:account.balance.report,initial_balance:0
 #: field:account.chart,initial_balance:0
 msgid "Include initial balances"

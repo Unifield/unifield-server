@@ -97,10 +97,8 @@
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="display_partner"/>
                 <field name="reconciled"/>
-                <field name="initial_balance" attrs="{'readonly': [('fiscalyear_id', '=', False)]}"/>
-                <field name="only_active_partners"/>
                 <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
-                <newline />
+                <field name="only_active_partners"/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
