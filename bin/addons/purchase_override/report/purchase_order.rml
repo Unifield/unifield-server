@@ -209,7 +209,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ (objects[0].partner_address_id.office_name or objects[0].partner_address_id.partner_id.name or objects[0].partner_id.name or '')[0:100] ]]</para>
+                    <parawrap style="TextInformation">[[ (objects[0].partner_address_id.office_name or objects[0].partner_address_id.partner_id.name or objects[0].partner_id.name or '')[0:100] ]]</parawrap>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
