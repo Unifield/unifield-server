@@ -296,6 +296,13 @@ class stock_incoming_processor(osv.osv):
         picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
             picking_id = proc.picking_id.id
+
+            if proc.picking_id.type != 'in':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('This object: %s is not an Incoming Shipment') % (proc.picking_id.name)
+                )
+
             total_qty = 0.00
 
             if proc.already_processed:
