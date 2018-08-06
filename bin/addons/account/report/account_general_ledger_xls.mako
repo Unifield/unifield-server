@@ -294,6 +294,35 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endif
 
+% if o.displayed:
+% for ccy in o.get_currencies():
+## subtotals line
+<Row>
+    <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
+        <Data ss:Type="String">${(o.code or '')|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
+        <Data ss:Type="String">Sub Total</Data>
+    </Cell>
+    <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
+        <Data ss:Type="String">${(ccy or '')|x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+        <Data ss:Type="Number">${o.data[ccy]['debit_ccy']}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+        <Data ss:Type="Number">${o.data[ccy]['credit_ccy']}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+        <Data ss:Type="Number">${o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy']}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
+        <Data ss:Type="Number">${o.data[ccy]['debit'] - o.data[ccy]['credit']}</Data>
+    </Cell>
+</Row>
+% endfor
+% endif
+
 % for line in lines(o, initial_balance_mode=True):
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
@@ -351,35 +380,6 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 </Row>
 % endfor
-
-% if o.displayed:
-% for ccy in o.get_currencies():
-## subtotals line
-<Row>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
-    <Data ss:Type="String">${(o.code or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
-    <Data ss:Type="String">Sub Total</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
-    <Data ss:Type="String">${(ccy or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${o.data[ccy]['debit_ccy']}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${o.data[ccy]['credit_ccy']}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy']}</Data>
-</Cell>
-<Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${o.data[ccy]['debit'] - o.data[ccy]['credit']}</Data>
-</Cell>
-</Row>
-% endfor
-% endif
 
 % endfor
 % endfor

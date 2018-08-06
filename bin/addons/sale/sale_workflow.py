@@ -558,6 +558,10 @@ class sale_order_line(osv.osv):
                 )
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
+            if sol.order_id.order_type == 'loan':
+                to_write['supplier'] = False
+                to_write['type'] = 'make_to_stock'
+                to_write['po_cft'] = False
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:

@@ -111,12 +111,12 @@
                     <field name="order_id" 
                            attrs="{'readonly': ['|', ('cust_order_id', '!=', False), ('incoming_id', '!=', False), ('cust_order_id2', '!=', False)], 'required': [('cust_order_id', '=', False), ('incoming_id', '=', False), ('cust_order_id2', '=', False)]}" 
                            context="{'active_test': False}"
-                           domain="[('rfq_ok', '=', False), ('state', 'in', ['sourced', 'confirmed_wait', 'split', 'approved', 'done', 'except_picking', 'except_invoice'])]"
+                           domain="[('rfq_ok', '=', False), ('has_confirmed_or_further_line', '=', True)]"
                            on_change="change_order_id(order_id, cust_order_id, incoming_id, cust_order_id2, 'order_id')"/>
                     <field name="cust_order_id" 
                            context="{'from_followup': True, 'active_test': False}" 
                            attrs="{'readonly': ['|', ('order_id', '!=', False), ('incoming_id', '!=', False), ('cust_order_id2', '!=', False)], 'required': [('order_id', '=', False), ('incoming_id', '=', False), ('cust_order_id2', '=', False)]}" 
-                           domain="[('rfq_ok', '=', False), ('state', 'in', ['sourced', 'confirmed_wait', 'split', 'approved', 'done', 'except_picking', 'except_invoice'])]"
+                           domain="[('rfq_ok', '=', False), ('has_confirmed_or_further_line', '=', True)]"
                            on_change="change_order_id(order_id, cust_order_id, incoming_id, cust_order_id2, 'cust_order_id')" />
                     <field name="incoming_id" 
                            context="{'from_followup': True, 'wh_dashboard': True, 'pick_type': 'incoming'}" 
@@ -126,7 +126,7 @@
                     <field name="cust_order_id2" 
                            context="{'from_followup2': True, 'active_test': False}" 
                            attrs="{'readonly': ['|', ('cust_order_id', '!=', False), ('order_id', '!=', False), ('incoming_id', '!=', False)], 'required': [('cust_order_id', '=', False), ('order_id', '=', False), ('incoming_id', '=', False)]}" 
-                           domain="[('rfq_ok', '=', False), ('state', 'in', ['sourced', 'confirmed_wait', 'split', 'approved', 'done', 'except_picking', 'except_invoice'])]"
+                           domain="[('rfq_ok', '=', False), ('has_confirmed_or_further_line', '=', True)]"
                            on_change="change_order_id(order_id, cust_order_id, incoming_id, cust_order_id2, 'cust_order_id2')" />
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
