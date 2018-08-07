@@ -257,10 +257,7 @@ entries = get_partners(data)
 % else:
 % for p_entries in entries:
 <%
-if p_entries[0].account_type == 'payable':
-    worsheet_name = _('Payable Accounts')
-else:
-    worsheet_name = _('Receivable Accounts')
+worsheet_name = _('Accounts')
 %>
 <Worksheet ss:Name="${worsheet_name}">
 <%
@@ -364,7 +361,7 @@ header_col_merge_count = col_count - 1
 <Row>
 ## total debit / credit / balance row
 <%
-debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)
+debit, credit, balance = get_partners_total_debit_credit_balance(data)
 %>
 <Cell ss:StyleID="ssCellRightBold" ss:MergeAcross="3">
     <Data ss:Type="String">${_('TOTAL PARTNERS')}</Data>
@@ -417,7 +414,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Row>
 
 ## account move line row
-% for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
+% for aml in get_partner_account_move_lines(p_obj.partner_id.id, data):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
@@ -449,7 +446,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Row>
 
 <!-- SUBTOTALS per currency -->
-% for detail_line in get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account', '')):
+% for detail_line in get_lines_per_currency(p_obj.partner_id.id, data, aml.get('account', '')):
 <Row>
 <Cell ss:StyleID="ssSubtotalLine" ss:MergeAcross="2">
     <Data ss:Type="String"></Data>

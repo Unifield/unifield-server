@@ -361,6 +361,7 @@ msgstr "Déboguer dans le journal du serveur"
 #. modules: account, finance
 #: report:account.partner.balance:0
 #: view:account.partner.balance:0
+#: code:addons/finance/wizard/account_report_partner_balance_tree.py:490
 #: model:ir.actions.act_window,name:account.action_account_partner_balance
 #: model:ir.actions.report.xml,name:account.account_3rdparty_account_balance
 #: model:ir.actions.report.xml,name:finance.account_partner_balance_tree_xls
@@ -37202,13 +37203,11 @@ msgstr "L'Identité de l'enregistrement est attachée à ce(t)"
 #: view:account.account:0
 #: selection:account.aged.trial.balance,result_selection:0
 #: selection:account.common.partner.report,result_selection:0
-#: report:account.partner.balance:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
 #: code:addons/account/report/account_partner_ledger.py:294
 #: model:ir.actions.act_window,name:account.action_aged_receivable
 #: view:account.account:0
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:284
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #: code:addons/finance/report/account_partner_balance_tree.py:90
 #, python-format
@@ -60116,11 +60115,6 @@ msgstr "Auteur du site Web"
 #: model:ir.model,name:object_query.model_object_query_selection_data
 msgid "Search Values"
 msgstr "Valeurs Recherche"
-
-#. module: finance
-#: view:account.partner.balance.tree:0
-msgid "Payable/Receivable"
-msgstr "Payable/Receivable"
 
 #. module: account
 #: selection:report.account.receivable,type:0
@@ -85522,13 +85516,11 @@ msgstr "Ajouter un en-tête RML"
 #: view:account.account.template:0
 #: selection:account.aged.trial.balance,result_selection:0
 #: selection:account.common.partner.report,result_selection:0
-#: report:account.partner.balance:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
 #: code:addons/account/report/account_partner_ledger.py:296
 #: view:account.account:0
 #: code:addons/finance/report/account_partner_balance_tree.py:92
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:282
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #, python-format
 msgid "Payable Accounts"

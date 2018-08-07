@@ -8,15 +8,7 @@
         <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="Partner Balance Search">
-                <field name="account_type"/>
                 <field name="partner_id" string="Partner" />
-                <newline />
-                <group expand="0" string="Group By...">
-                    <filter name="groupby_payable_receivable" string="Payable/Receivable"
-                        icon="terp-personal" domain="[]"
-                        context="{'group_by':'account_type'}"
-                    />
-                </group>
             </search>
         </field>
     </record>
@@ -36,7 +28,6 @@
                         type="object"
                         icon="terp-gtk-go-back-rtl"
                     />
-                    <field name="account_type"/>
                     <field name="name"/>
                     <field name="debit" sum="Debit" />
                     <field name="credit" sum="Credit" />
@@ -169,7 +160,7 @@
              <field name="view_type">form</field>
              <field name="view_mode">form</field>
              <field name="view_id" ref="wizard_account_report_partner_balance_tree_view"/>
-             <field name="context">{'record_id':active_id,'search_default_groupby_payable_receivable':'1'}</field>
+             <field name="context">{'record_id': active_id}</field>
              <field name="target">new</field>
        </record>
        

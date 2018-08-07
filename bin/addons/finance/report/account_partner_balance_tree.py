@@ -53,8 +53,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
             'get_lines_per_currency': self._get_lines_per_currency,
-            'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
-            'get_nb_account_types': self._get_nb_account_types,
+            'get_partners_total_debit_credit_balance': self._get_partners_total_debit_credit_balance,
             'get_has_data': self._get_has_data,
         })
 
@@ -62,21 +61,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         self.display_partner = data['form'].get('display_partner', 'non-zero_balance')
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
-
-        if (self.result_selection == 'customer' ):
-            self.ACCOUNT_TYPE = ('receivable',)
-        elif (self.result_selection == 'supplier'):
-            self.ACCOUNT_TYPE = ('payable',)
-        else:
-            self.ACCOUNT_TYPE = ('payable', 'receivable')
-
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
-
-    def _get_nb_account_types(self):
-        """
-        Returns the number of different account types to display
-        """
-        return self.ACCOUNT_TYPE and len(self.ACCOUNT_TYPE) or 0
 
     def _get_type_of_accounts(self):
         if self.result_selection == 'customer':
@@ -96,12 +81,12 @@ class account_partner_balance_tree(report_sxw.rml_parse):
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
         only [payable] or only [receivable] or [payable, receivable]
+        From US-3873: payable and receivable are grouped together
         """
         res = []
-        for at in self.ACCOUNT_TYPE:
-            objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at], data)
-            if objects:
-                res.append(objects)
+        objects = self.apbt_obj.get_partner_data(self.cr, self.uid, data)
+        if objects:
+            res.append(objects)
         self.has_data = len(res)
         return res
 
@@ -130,14 +115,14 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             selection = _('With balance is not equal to 0')
         return selection
 
-    def _get_partner_account_move_lines(self, account_type, partner_id, data):
-        return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
+    def _get_partner_account_move_lines(self, partner_id, data):
+        return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, partner_id, data)
 
-    def _get_lines_per_currency(self, account_type, partner_id, data, account_code):
-        return self.apbt_obj.get_lines_per_currency(self.cr, self.uid, account_type, partner_id, data, account_code)
+    def _get_lines_per_currency(self, partner_id, data, account_code):
+        return self.apbt_obj.get_lines_per_currency(self.cr, self.uid, partner_id, data, account_code)
 
-    def _get_partners_total_debit_credit_balance_by_account_type(self, account_type, data):
-        return self.apbt_obj.get_partners_total_debit_credit_balance_by_account_type(self.cr, self.uid, account_type, data)
+    def _get_partners_total_debit_credit_balance(self, data):
+        return self.apbt_obj.get_partners_total_debit_credit_balance(self.cr, self.uid, data)
 
     def _get_filter_info(self, data):
         """ get filter info
