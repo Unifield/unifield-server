@@ -1735,7 +1735,7 @@ class stock_picking(osv.osv):
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
             if infolog_message:
                 infolog_message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=infolog_message, pick=pick)
-            if pick.type != 'out' and pick.subtype != 'packing':
+            if pick.type != 'out' or pick.subtype != 'packing':
                 # we dont log info on PACK/
                 self.log(cr, uid, pick.id, message, action_xmlid=action_xmlid, context=context)
 
