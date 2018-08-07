@@ -333,7 +333,7 @@ class stock_picking(osv.osv):
                     proc_id = wiz_ids[0]
                 else:
                     proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
-                    wizard_obj.create_lines(cr, uid, proc_id, context=context)
+                wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {
                     'type': 'ir.actions.act_window',
