@@ -634,7 +634,7 @@
                                         <field name="original_currency_id" colspan="1" readonly="1"/>
                                 </group>
                                 <group colspan="6" col="2">
-                                    <field name="modification_comment" rowspan="2" />
+                                    <field name="modification_comment" rowspan="2" widget="text"/>
                                 </group>
                             </group>
 
