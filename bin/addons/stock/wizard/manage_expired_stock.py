@@ -68,7 +68,7 @@ class manage_expired_stock(osv.osv):
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             qty_available = lot_obj.read(cr, uid, lot.id, ['stock_available'],
                                          context={'location_id': wizard.location_id.id})['stock_available']
-            if qty_available:
+            if qty_available and (lot.product_id.perishable or lot.product_id.batch_management):
                 moves_lines.append((0, 0, {
                     'name': lot.product_id.name,
                     'product_id': lot.product_id.id,
