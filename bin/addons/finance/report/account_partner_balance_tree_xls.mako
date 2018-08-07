@@ -257,9 +257,9 @@ entries = get_partners(data)
 % else:
 % for p_entries in entries:
 <%
-worsheet_name = get_type_of_accounts()
+worksheet_name = get_type_of_accounts()
 %>
-<Worksheet ss:Name="${worsheet_name}">
+<Worksheet ss:Name="${worksheet_name}">
 <%
     col_count = 9
     if data['model'] == 'account.account':
