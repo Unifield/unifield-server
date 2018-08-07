@@ -1,124 +1,123 @@
 # Translation of OpenERP Server.
 # This file contains the translation of the following modules:
-#	* report_webkit_override
-#	* analytic_distribution_supply
-#	* account_voucher
-#	* purchase_allocation_report
-#	* account_journal
-#	* procurement_cycle
-#	* res_currency_tables
-#	* analytic
-#	* order_line_number
-#	* board
-#	* vat_management
-#	* finance
-#	* msf_homere_interface
-#	* product_asset
-#	* msf_currency_revaluation
-#	* res_currency_functional
-#	* threshold_value
-#	* register_accounting
-#	* resource
-#	* stock_move_tracking
-#	* msf_config_locations
-#	* purchase_msf
-#	* delivery_mechanism
-#	* tender_flow
-#	* sync_common
-#	* product_nomenclature
-#	* account_hq_entries
-#	* export_import_lang
-#	* stock_schedule
-#	* product_attributes
-#	* base_report_designer
-#	* account_chart
-#	* mission_stock
-#	* account_accountant
-#	* analytic_override
-#	* supplier_catalogue
-#	* stock_forecast
-#	* order_types
-#	* msf_processes
-#	* msf_order_date
-#	* account_payment
-#	* procurement_request
-#	* account_reconciliation
-#	* consumption_calculation
-#	* out_step
-#	* base
-#	* decimal_precision
-#	* msf_budget
-#	* vertical_integration
-#	* msf_audittrail
-#	* procurement_auto
-#	* msf_field_access_rights
-#	* transport_mgmt
-#	* web_livechat
-#	* msf_custom_settings
-#	* msf_button_access_rights
-#	* specific_locations
-#	* sync_so
-#	* account_subscription
-#	* product_expiry
-#	* return_claim
-#	* import_data
-#	* purchase_compare_rfq
-#	* purchase_followup
-#	* msf_doc_import
-#	* useability_dashboard_and_menu
-#	* analytic_distribution
-#	* reason_types_moves
-#	* hr
-#	* purchase_double_validation
-#	* service_purchasing
-#	* msf_instance
-#	* purchase_override
-#	* product_manufacturer
-#	* procurement_report
-#	* account_corrections
-#	* account
-#	* sync_client_web
-#	* sourcing
-#	* msf_supply_doc_export
-#	* msf_profile
-#	* process
-#	* financing_contract
-#	* update_client
-#	* account_override
-#	* msf_printed_documents
-#	* msf_accrual
-#	* partner_modification
-#	* sync_client
-#	* base_setup
-#	* account_mcdb
-#	* unifield_setup
-#	* stock_batch_recall
-#	* report_webkit
-#	* product_list
-#	* stock
-#	* product
-#	* stock_override
-#	* specific_rules
-#	* kit
-#	* spreadsheet_xml
-#	* account_period_closing_level
-#	* delete_button
-#	* msf_tools
-#	* msf_cross_docking
-#	* purchase
-#	* msf_outgoing
-#	* mission_stock_cron
-#	* msf_partner
-#	* order_nomenclature
-#	* documents_done
-#	* sale
-#	* sales_followup
-#	* procurement
-#	* object_query
+# * report_webkit_override
+# * analytic_distribution_supply
+# * account_voucher
+# * purchase_allocation_report
+# * account_journal
+# * procurement_cycle
+# * res_currency_tables
+# * analytic
+# * order_line_number
+# * board
+# * vat_management
+# * finance
+# * msf_homere_interface
+# * product_asset
+# * msf_currency_revaluation
+# * res_currency_functional
+# * threshold_value
+# * register_accounting
+# * resource
+# * stock_move_tracking
+# * msf_config_locations
+# * purchase_msf
+# * delivery_mechanism
+# * tender_flow
+# * sync_common
+# * product_nomenclature
+# * account_hq_entries
+# * export_import_lang
+# * stock_schedule
+# * product_attributes
+# * base_report_designer
+# * account_chart
+# * mission_stock
+# * account_accountant
+# * analytic_override
+# * supplier_catalogue
+# * stock_forecast
+# * order_types
+# * msf_processes
+# * msf_order_date
+# * account_payment
+# * procurement_request
+# * account_reconciliation
+# * consumption_calculation
+# * out_step
+# * base
+# * decimal_precision
+# * msf_budget
+# * vertical_integration
+# * msf_audittrail
+# * procurement_auto
+# * msf_field_access_rights
+# * transport_mgmt
+# * web_livechat
+# * msf_custom_settings
+# * msf_button_access_rights
+# * specific_locations
+# * sync_so
+# * account_subscription
+# * product_expiry
+# * return_claim
+# * import_data
+# * purchase_compare_rfq
+# * purchase_followup
+# * msf_doc_import
+# * useability_dashboard_and_menu
+# * analytic_distribution
+# * reason_types_moves
+# * hr
+# * purchase_double_validation
+# * service_purchasing
+# * msf_instance
+# * purchase_override
+# * product_manufacturer
+# * procurement_report
+# * account_corrections
+# * account
+# * sync_client_web
+# * sourcing
+# * msf_supply_doc_export
+# * msf_profile
+# * process
+# * financing_contract
+# * update_client
+# * account_override
+# * msf_printed_documents
+# * msf_accrual
+# * partner_modification
+# * sync_client
+# * base_setup
+# * account_mcdb
+# * unifield_setup
+# * stock_batch_recall
+# * report_webkit
+# * product_list
+# * stock
+# * product
+# * stock_override
+# * specific_rules
+# * kit
+# * spreadsheet_xml
+# * account_period_closing_level
+# * delete_button
+# * msf_tools
+# * msf_cross_docking
+# * purchase
+# * msf_outgoing
+# * mission_stock_cron
+# * msf_partner
+# * order_nomenclature
+# * documents_done
+# * sale
+# * sales_followup
+# * procurement
+# * object_query
 #
 msgid ""
-msgstr ""
-"Project-Id-Version: OpenERP Server UF9.0rc3\n"
+msgstr "Project-Id-Version: OpenERP Server UF9.0rc3\n"
 "Report-Msgid-Bugs-To: support@openerp.com\n"
 "POT-Creation-Date: 2018-06-08 13:53+0000\n"
 "PO-Revision-Date: 2018-06-08 13:53+0000\n"
@@ -128,6 +127,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
+""
 
 #. modules: supplier_catalogue, msf_doc_import
 #: field:wizard.import.in.simulation.screen,error_file:0
@@ -22857,7 +22857,6 @@ msgstr "Importer le fichier"
 msgid "Google Maps"
 msgstr "Google Maps (Cartes Google)"
 
-
 #. module: account
 #: view:account.analytic.line:0
 msgid "Analytic Journal Items related to a sale journal."
@@ -23905,7 +23904,6 @@ msgstr "Stock Disponible"
 #: field:automated.import,dest_path:0
 msgid "Destination Path (success)"
 msgstr "Chemin de destination (succès)"
-
 
 #. module: account_period_closing_level
 #: view:account.period:0
@@ -27499,6 +27497,7 @@ msgstr "Volume Total [dm³]"
 #: field:wizard.simu.import.po.line,initial_qty:0
 #: field:wizard.compare.rfq.line,quantity:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
+#: view:purchase.order:0
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -27539,13 +27538,14 @@ msgstr "Importation automatique du relev"
 msgid "To be reviewed by the accountant."
 msgstr "À vérifier par le comptable."
 
-#. module: msf_doc_import
+#. module: msf_doc_import, purchase
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:156
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:240
 #: report:po.simulation.screen:0
 #: field:wizard.import.in.line.simulation.screen,type_change:0
 #: field:wizard.import.po.simulation.screen.line,type_change:0
 #: field:wizard.simu.import.po.line,change_type:0
+#: view:purchase.order:0
 msgid "CHG"
 msgstr "CHG"
 
@@ -28260,10 +28260,11 @@ msgstr "Message système"
 msgid "Africa/Ouagadougou"
 msgstr "Africa/Ouagadougou"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: field:procurement.request.line.wizard,product_uom_qty:0
+#: view:purchase.order.line:0
 msgid "Current Qty"
-msgstr "Current Qty"
+msgstr "Qté Actuelle"
 
 #. module: procurement_request
 #: field:sale.order,proc_amount:0
@@ -31634,10 +31635,11 @@ msgstr "Company currency is not defined"
 msgid "Journal code:"
 msgstr "Code du Journal:"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: field:procurement.request.line.wizard,price_unit:0
+#: view:purchase.order.line:0
 msgid "Current Price"
-msgstr "Current Price"
+msgstr "Prix Actuel"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_line.py:296
@@ -40708,10 +40710,11 @@ msgstr "Total Crédit"
 msgid "Threshold Value Line"
 msgstr "Ligne de Valeur Seuil"
 
-#. modules: msf_doc_import, msf_supply_doc_export
+#. modules: msf_doc_import, msf_supply_doc_export, purchase
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:79
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:78
+#: field:purchase.order.line,justification_code_id:0
 #, python-format
 msgid "Justification Code"
 msgstr "Justification Code"
@@ -43898,7 +43901,7 @@ msgstr "Invoice to:"
 #: field:purchase.order.line,display_resourced_orig_line:0
 #: field:purchase.order.merged.line,display_resourced_orig_line:0
 msgid "Original PO line"
-msgstr "Original PO line"
+msgstr "Ligne d'Origine du BdC"
 
 #. module: consumption_calculation
 #: model:ir.model,name:consumption_calculation.model_expiry_quantity_report
@@ -50460,8 +50463,9 @@ msgstr "Evénement (%s) non autorisé pour ce Type de Réclamation"
 msgid "Period '%s' is not open!'                      ' No Journal Entry is updated"
 msgstr "Period '%s' is not open!'                      ' No Journal Entry is updated"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: view:sale.order:0
+#: view:purchase.order:0
 msgid "Configurator"
 msgstr "Configurateur"
 
@@ -58332,7 +58336,6 @@ msgstr "Nouvelle Valeur"
 #: view:stock.production.lot.revision:0
 msgid "Batch Number Revisions"
 msgstr "Révisions du Numéro de Lot"
-
 
 #. module: documents_done
 #: model:ir.model,name:documents_done.model_documents_done_problem
@@ -70842,7 +70845,6 @@ msgstr "Compte Propriétaire"
 msgid "No months found !"
 msgstr "Pas de mois trouvé !"
 
-
 #. module: purchase
 #: model:process.transition,note:purchase.process_transition_purchasecommitment0
 msgid "A purchase order generates a commitment voucher, as soon as it is confirmed by the buyer."
@@ -72294,8 +72296,9 @@ msgstr "ED management"
 msgid "Work Days"
 msgstr "Jours Ouvrés"
 
-#. module: product_attributes
+#. module: product_attributes, purchase
 #: field:product.product,cold_chain:0
+#: field:purchase.order.line,cold_chain:0
 msgid "Cold Chain"
 msgstr "Chaîne du Froid"
 
@@ -82511,7 +82514,6 @@ msgstr "Le Rapport des Pertes&Profits vous donne un aperçu des bénéfices et d
 msgid "Product Qty cannot be < 0. It has been reset to 0."
 msgstr "La Qté Produit ne peux pas être < 0. Elle a été réinitialisée à 0."
 
-
 #. module: stock
 #: code:addons/stock/physical_inventory.py:769
 #, python-format
@@ -84410,7 +84412,6 @@ msgstr "This cost centre is already defined as target in another proprietary ins
 #: field:wizard.local.expenses,booking_currency_id:0
 msgid "Booking currency"
 msgstr "Devise d'enregistrement"
-
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -92895,7 +92896,6 @@ msgstr "Africa/Tunis"
 msgid "JAPANESE YEN"
 msgstr "JAPANESE YEN"
 
-
 #. module: account
 #: help:account.move,to_check:0
 msgid "Check this box if you are unsure of that journal entry and if you want to note it as 'to be reviewed' by an accounting expert."
@@ -95775,8 +95775,9 @@ msgstr "Ligne %s du fichier Excel : Cette ligne est obligatoire et doit comporte
 msgid "This ISO code is the name of po files to use for translations"
 msgstr "Ce code ISO est le nom des fichiers po utilisés pour les traductions"
 
-#. module: product_attributes
+#. module: product_attributes, purchase
 #: field:product.product,heat_sensitive_item:0
+#: field:purchase.order.line,heat_sensitive_item:0
 msgid "Temperature sensitive item"
 msgstr "Article sensible à la température"
 
@@ -101287,9 +101288,28 @@ msgstr "Ligne %s de %s: vous ne pouvez pas sourcer un prêt sur commande"
 msgid "Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool"
 msgstr "Ligne %s de la commande %s, veuillez sélectionner une valeur pour le champ BC/AdO dans le Sourcing"
 
-
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:357
 #, python-format
 msgid "The account \"%s - %s\" is only compatible with a Partner or an Employee Third Party."
 msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenaire ou Employé."
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "A.D"
+msgstr "D.A"
+
+#. module: purchase
+#: view:purchase.order.line:0
+msgid "Changes"
+msgstr "Modifications"
+
+#. module: purchase
+#: field:purchase.order.line,controlled_substance:0
+msgid "Controlled Substance"
+msgstr "Substance contrôlée"
+
+#. module: purchase
+#: view:purchase.order.line:0
+msgid "Linked Information"
+msgstr "Information liée"
