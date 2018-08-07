@@ -257,7 +257,7 @@ entries = get_partners(data)
 % else:
 % for p_entries in entries:
 <%
-worsheet_name = _('Accounts')
+worsheet_name = get_type_of_accounts()
 %>
 <Worksheet ss:Name="${worsheet_name}">
 <%
