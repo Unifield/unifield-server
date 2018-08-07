@@ -303,7 +303,7 @@ class shipment(osv.osv):
                 'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
                 'transport_type': fields.selection(TRANSPORT_TYPE,
                                                    string="Transport Type", readonly=False),
-                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
+                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 # cargo manifest things
                 'cargo_manifest_reference': fields.char(string='Cargo Manifest Reference', size=1024,),
