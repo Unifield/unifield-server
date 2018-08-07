@@ -1,6 +1,7 @@
 from osv import osv
 from osv import fields
 from tools.safe_eval import safe_eval
+import logging
 
 class res_log(osv.osv):
 
@@ -154,9 +155,14 @@ class res_log(osv.osv):
         for r in res:
             if r['action_xmlid'] and (not r['domain'] or r['domain'] == '[]' or not r['context']):
                 if r['action_xmlid'] not in action_seen:
-                    module, xmlid = r['action_xmlid'].split('.', 1)
-                    action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
-                    action_seen[r['action_xmlid']] = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], ['domain', 'context', 'views', 'view_mode', 'search_view_id'], context=context)
+                    try:
+                        module, xmlid = r['action_xmlid'].split('.', 1)
+                        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+                        action_seen[r['action_xmlid']] = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], ['domain', 'context', 'views', 'view_mode', 'search_view_id'], context=context)
+                    except ValueError:
+                        action_seen[r['action_xmlid']] = False
+                        logging.getLogger('res.log').warning('Action %s not found' % (r['action_xmlid']))
+
                 action_data = action_seen.get(r['action_xmlid'])
                 if action_data:
                     r['action_id'] = action_data['id']
