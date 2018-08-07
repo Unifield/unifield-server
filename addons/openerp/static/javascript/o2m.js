@@ -150,6 +150,7 @@ One2Many.prototype = {
 
         if (tab) {
             params['_terp_notebook_tab'] = tab;
+            this.default_get_ctx = this.default_get_ctx.replace(/}\s*/, ", 'from_tab': 1}");
         }
         while (names.length) {
             parents.push(names.shift());
@@ -183,7 +184,7 @@ One2Many.prototype = {
 
         eval_domain_context_request({
             source: this.name,
-            context : this.default_get_ctx
+            context : this.default_get_ctx,
         }).addCallback(function(res) {
             jQuery.o2m(jQuery.extend(params, {
                 _terp_o2m_context: res.context,
