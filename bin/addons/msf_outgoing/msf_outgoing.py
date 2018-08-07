@@ -556,6 +556,12 @@ class shipment(osv.osv):
             )
 
         for shipment in self.browse(cr, uid, ids, context=context):
+            if not shipment.address_id.id:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('Please fill the Address field on %s') % (shipment.name),
+                )
+
             # search for an existing shipment saved as draft ... :
             wiz_ids = self.pool.get('shipment.processor').search(cr, uid, [('shipment_id', '=', shipment.id), ('draft', '=', True)], context=context)
             if wiz_ids:

@@ -82659,6 +82659,12 @@ msgid "Processing Error"
 msgstr "Erreur de traitement"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:562
+#, python-format
+msgid "Please fill the Address field on %s"
+msgstr "Veuillez remplir le champ Adresse sur %s"
+
+#. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_draft_done
 #: model:process.transition,name:msf_outgoing.process_transition_draft_ship_draft_done
 #: model:process.transition,note:msf_outgoing.process_transition_draft_pick_draft_done
