@@ -49628,7 +49628,7 @@ msgstr "Product is not perishable but line is."
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #, python-format
 msgid "Receivable and Payable Accounts"
-msgstr "Comptes Clients & Fournisseurs"
+msgstr "Comptes Clients et Fournisseurs"
 
 #. module: base
 #: code:addons/base/res/res_currency.py:106
