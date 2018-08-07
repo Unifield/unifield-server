@@ -414,10 +414,10 @@ class purchase_order_line(osv.osv):
         ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context=context).get('controlled_substance', {}).get('selection', []))
         for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
             ret[x.id] = {
-                'heat_sensitive_item': x.product_id.heat_sensitive_item and x.product_id.heat_sensitive_item.code == 'yes',
+                'heat_sensitive_item': x.product_id.heat_sensitive_item and x.product_id.heat_sensitive_item.code == 'yes' or False,
                 'cold_chain': x.product_id.cold_chain and x.product_id.cold_chain.name or False,
                 'controlled_substance': ctrl_sub.get(x.product_id.controlled_substance, False),
-                'justification_code_id': x.product_id.justification_code_id and x.product_id.justification_code_id.code,
+                'justification_code_id': x.product_id.justification_code_id and x.product_id.justification_code_id.code or False,
             }
 
         return ret
@@ -719,10 +719,10 @@ class purchase_order_line(osv.osv):
         prod = self.pool.get('product.product').browse(cr, uid, product, context={'lang': lang})
         ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context={'lang': lang}).get('controlled_substance', {}).get('selection', []))
         value = {
-            'heat_sensitive_item': prod.heat_sensitive_item and prod.heat_sensitive_item.code == 'yes',
+            'heat_sensitive_item': prod.heat_sensitive_item and prod.heat_sensitive_item.code == 'yes' or False,
             'cold_chain': prod.cold_chain and prod.cold_chain.name or False,
             'controlled_substance': ctrl_sub.get(prod.controlled_substance, False),
-            'justification_code_id': prod.justification_code_id and prod.justification_code_id.code,
+            'justification_code_id': prod.justification_code_id and prod.justification_code_id.code or False,
         }
 
         lang = False
