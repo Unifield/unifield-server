@@ -4044,7 +4044,7 @@ class stock_picking(osv.osv):
         if data['type'] != 'out' or data['subtype'] != 'ppl':
             raise osv.except_osv(
                 _('Error'),
-                _('%s id not pre-packing list. Please check this and re-try') % (data['name'])
+                _('The object %s is not a pre-packing list. Please check this and re-try.') % (data['name'])
             )
 
         if data['state'] != 'assigned':
@@ -4367,7 +4367,7 @@ class stock_picking(osv.osv):
         if data['type'] != 'out' or data['subtype'] != 'ppl':
             raise osv.except_osv(
                 _('Error'),
-                _('%s id not pre-packing list. Please check this and re-try') % (data['name'])
+                _('The object %s is not a pre-packing list. Please check this and re-try.') % (data['name'])
             )
 
         processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
