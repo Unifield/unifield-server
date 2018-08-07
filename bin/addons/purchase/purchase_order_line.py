@@ -10,6 +10,7 @@ import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
 from msf_partner import PARTNER_TYPE
+from lxml import etree
 
 
 class purchase_order_line(osv.osv):
@@ -27,6 +28,20 @@ class purchase_order_line(osv.osv):
             res[id] = vat_ok
 
         return res
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form' and context.get('from_tab') != 1:
+            form = etree.fromstring(view['arch'])
+            for tag in form.xpath('//page[@name="nomenselection"]'):
+                tag.getparent().remove(tag)
+            nb = form.xpath('//notebook')
+            nb[0].tag = 'empty'
+            view['arch'] = etree.tostring(form)
+        return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
         res = {}
@@ -390,6 +405,23 @@ class purchase_order_line(osv.osv):
             res[line.id] = a
         return res
 
+    def _get_product_info(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = {'heat_sensitive_item': False, 'cold_chain': False, 'controlled_substance': False, 'justification_code_id': False}
+
+
+        ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context=context).get('controlled_substance', {}).get('selection', []))
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
+            ret[x.id] = {
+                'heat_sensitive_item': x.product_id.heat_sensitive_item and x.product_id.heat_sensitive_item.code == 'yes',
+                'cold_chain': x.product_id.cold_chain and x.product_id.cold_chain.name or False,
+                'controlled_substance': ctrl_sub.get(x.product_id.controlled_substance, False),
+                'justification_code_id': x.product_id.justification_code_id and x.product_id.justification_code_id.code,
+            }
+
+        return ret
+
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -503,7 +535,13 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
         'created_by_vi_import': fields.boolean('Line created by VI PO import'),
+
+        'heat_sensitive_item': fields.function(_get_product_info, type='boolean', string='Temperature sensitive item', multi='product_info', method=True),
+        'cold_chain': fields.function(_get_product_info, type='char', string='Cold Chain', multi='product_info', method=True),
+        'controlled_substance': fields.function(_get_product_info, type='char', string='Controlled Substance', multi='product_info', method=True),
+        'justification_code_id': fields.function(_get_product_info, type='char', string='Justification Code', multi='product_info', method=True),
     }
+
 
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -664,10 +702,28 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('No Partner!'), _(
                 'You have to select a partner in the purchase form !\nPlease set one partner before choosing a product.'))
         if not product:
-            return {'value': {'price_unit': price_unit or 0.0, 'name': name or '',
-                              'notes': notes or '', 'product_uom': uom or False}, 'domain': {'product_uom': []}}
+            return {'value': {
+                'price_unit': price_unit or 0.0,
+                'name': name or '',
+                'notes': notes or '',
+                'product_uom': uom or False,
+                'heat_sensitive_item': False,
+                'cold_chain': False,
+                'controlled_substance': False,
+                'justification_code_id': False
+            },
+                'domain': {'product_uom': []}
+            }
         res = {}
-        prod = self.pool.get('product.product').browse(cr, uid, product)
+        lang = self.pool.get('res.users').browse(cr, uid, uid).context_lang
+        prod = self.pool.get('product.product').browse(cr, uid, product, context={'lang': lang})
+        ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context={'lang': lang}).get('controlled_substance', {}).get('selection', []))
+        value = {
+            'heat_sensitive_item': prod.heat_sensitive_item and prod.heat_sensitive_item.code == 'yes',
+            'cold_chain': prod.cold_chain and prod.cold_chain.name or False,
+            'controlled_substance': ctrl_sub.get(prod.controlled_substance, False),
+            'justification_code_id': prod.justification_code_id and prod.justification_code_id.code,
+        }
 
         lang = False
         if partner_id:
@@ -708,11 +764,15 @@ class purchase_order_line(osv.osv):
             res.update({'warning': warning})
         dt = (datetime.now() + relativedelta(days=int(seller_delay) or 0.0)).strftime('%Y-%m-%d %H:%M:%S')
 
-        res.update({'value': {'price_unit': price, 'name': prod_name,
-                              'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
-                              'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
-                              'product_qty': qty,
-                              'product_uom': uom}})
+
+        value.update({
+            'price_unit': price, 'name': prod_name,
+            'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
+            'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
+            'product_qty': qty,
+            'product_uom': uom,
+        })
+        res.update({'value': value})
         domain = {}
 
         taxes = self.pool.get('account.tax').browse(cr, uid, map(lambda x: x.id, prod.supplier_taxes_id))
@@ -1437,6 +1497,8 @@ class purchase_order_line(osv.osv):
 
         # Update the old price value
         res['value'].update({'product_qty': qty})
+
+
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
