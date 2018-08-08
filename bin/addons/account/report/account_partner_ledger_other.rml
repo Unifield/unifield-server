@@ -535,78 +535,112 @@
                 </tr>
             </blockTable>
 
-            <!-- SUBTOTALS -->
             <section>
-                <para style="terp_default_8">[[ repeatIn(get_subtotals(p), 'curr') ]]</para>
-                <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
-                    <tr>
-                        <td>
-                            <para style="PCenteredBold">[[ p.name or '' ]]</para>
-                        </td>
-                        <td>
-                            <para style="PRightBold">Subtotal</para>
-                        </td>
-                        <td>
-                            <para style="terp_default_Bold_8">[[ curr or '' ]]</para>
-                        </td>
-                        <td>
-                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['debit'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['credit'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['amount_currency'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="PRightBold">[[ formatLang(get_subtotals(p)[curr]['total_functional'] or 0.0) ]]</para>
-                        </td>
-                    </tr>
-                </blockTable>
-                <para style="terp_default_2">
-                    <font color="white"> </font>
-                </para>
-            </section>
-
-            <section>
-                <para style="terp_default_8">[[ repeatIn(lines(p), 'line') ]]</para>
-                <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
-                    <tr>
-                        <td>
-                            <para style="P3">[[ formatLang(line['date'],date=True) ]]</para>
-                        </td>
-                        <td>
-                            <para style="P4">[[ line['code'] ]]</para>
-                        </td>
-                        <td>
-                            <para style="P8">[[ line['move_name'] ]]</para>
-                        </td>
-                        <td>
-                            <para style="P7">[[ line['a_code'] ]]</para>
-                        </td>
-                        <td>
-                            <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
-                        </td>
-                        <td>
-                            <para style="P3">[[ line['currency_code'] or '' ]]</para>
-                        </td>
-                        <td>
-                            <para style="P9">[[ formatLang(line['debit'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="P9">[[ formatLang(line['credit'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
-                        </td>
-                        <td>
-                            <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
-                        </td>
-                    </tr>
-                </blockTable>
-                <para style="terp_default_2">
-                    <font color="white"> </font>
-                </para>
+                <para style="terp_default_8">[[ repeatIn(get_accounts_to_display(p), 'account_code') ]]</para>
+                <!-- LINES -->
+                <section>
+                    <para style="terp_default_8">[[ repeatIn(lines(p, account_code), 'line') ]]</para>
+                    <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                        <tr>
+                            <td>
+                                <para style="P3">[[ formatLang(line['date'], date=True) ]]</para>
+                            </td>
+                            <td>
+                                <para style="P4">[[ line['code'] ]]</para>
+                            </td>
+                            <td>
+                                <para style="P8">[[ line['move_name'] ]]</para>
+                            </td>
+                            <td>
+                                <para style="P7">[[ line['a_code'] ]]</para>
+                            </td>
+                            <td>
+                                <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
+                            </td>
+                            <td>
+                                <para style="P3">[[ line['currency_code'] or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="P9">[[ formatLang(line['debit'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="P9">[[ formatLang(line['credit'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
+                            </td>
+                        </tr>
+                    </blockTable>
+                    <para style="terp_default_2">
+                        <font color="white"> </font>
+                    </para>
+                </section>
+                <!-- TOTALS IN FUNCTIONAL -->
+                <section>
+                    <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                        <tr>
+                            <td>
+                                <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ line['a_code'] ]]</para>
+                            </td>
+                            <td>
+                                <para style="terp_default_Bold_8">[[ company.currency_id.name ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['debit_functional'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['credit_functional'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
+                            </td>
+                        </tr>
+                    </blockTable>
+                    <para style="terp_default_2">
+                        <font color="white"> </font>
+                    </para>
+                </section>
+                <!-- SUBTOTALS -->
+                <section>
+                    <para style="terp_default_8">[[ repeatIn(get_subtotals(p, account_code), 'curr') ]]</para>
+                    <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                        <tr>
+                            <td>
+                                <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">Subtotal</para>
+                            </td>
+                            <td>
+                                <para style="terp_default_Bold_8">[[ curr or '' ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['debit'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['credit'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['amount_currency'] or 0.0) ]]</para>
+                            </td>
+                            <td>
+                                <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['total_functional'] or 0.0) ]]</para>
+                            </td>
+                        </tr>
+                    </blockTable>
+                    <para style="terp_default_2">
+                        <font color="white"> </font>
+                    </para>
+                </section>
             </section>
             <para style="terp_default_2">
                 <font color="white"> </font>

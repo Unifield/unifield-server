@@ -352,11 +352,83 @@ else:
 </Cell>
 </Row>
 
-<!-- SUBTOTAL LINES -->
-<%
-subtotals = get_subtotals(p)
-%>
-% for curr in subtotals:
+% for account_code in get_accounts_to_display(p):
+    <!-- PARTNER LINES -->
+    % for line in lines(p, account_code):
+    <Row>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String"></Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String"></Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['code']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['move_name']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['a_code']|x}</Data>
+      </Cell>
+      <%
+      entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
+      %>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${ entry_label |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['credit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+    % endfor
+    <!-- TOTALS IN FUNCTIONAL -->
+    <%
+    fctal_totals = get_fctal_totals(p, account_code)
+    %>
+    <Row>
+      <Cell ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${p.name or ''|x}</Data>
+      </Cell>
+      <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${ line['a_code'] |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineLeft">
+        <Data ss:Type="String">${ company.currency_id.name |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['debit_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['credit_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['total_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+    <!-- SUBTOTAL LINES IN BOOKING -->
+    <%
+    subtotals = get_subtotals(p, account_code)
+    %>
+    % for curr in subtotals:
     <Row>
       <Cell ss:StyleID="ssSubtotalLineRight">
         <Data ss:Type="String">${p.name or ''|x}</Data>
@@ -380,51 +452,7 @@ subtotals = get_subtotals(p)
         <Data ss:Type="Number">${ subtotals[curr]['total_functional'] or 0.0|x}</Data>
       </Cell>
     </Row>
-% endfor
-
-<!-- PARTNER LINES -->
-% for line in lines(p):
-<Row>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['code']|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['move_name']|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['a_code']|x}</Data>
-  </Cell>
-  <%
-  entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
-  %>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${ entry_label |x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['credit'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['total_functional'] or 0.0|x}</Data>
-  </Cell>
-</Row>
+    % endfor
 % endfor
 % endfor
 
