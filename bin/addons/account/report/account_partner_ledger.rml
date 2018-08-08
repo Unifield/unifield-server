@@ -585,7 +585,6 @@
         [[ nb_partners(objects) > 0 and removeParentNode('section') ]]
         <font color="white"> </font>
       </para>
-      <!-- update the number of the current partner displayed -->
       <para style="terp_header_Centre">Partner Ledger</para>
       <para style="terp_default_8">
         <font color="white"> </font>
