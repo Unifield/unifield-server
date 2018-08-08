@@ -43890,8 +43890,8 @@ msgstr "Est une fonction ?"
 #. module: purchase_override
 #: report:msf.purchase.order:0
 #: report:purchase.order.merged:0
-msgid "PURCHASE ORDER ("
-msgstr "BON DE COMMANDE("
+msgid "PURCHASE ORDER"
+msgstr "BON DE COMMANDE"
 
 #. module: product
 #: help:res.partner,property_product_pricelist:0
@@ -51605,8 +51605,8 @@ msgstr "Balance by account"
 
 #. module: purchase_override
 #: report:msf.purchase.quotation:0
-msgid "REQUEST FOR QUOTATION ("
-msgstr "DEMANDE DE DEVIS("
+msgid "REQUEST FOR QUOTATION"
+msgstr "DEMANDE DE DEVIS"
 
 #. module: vertical_integration
 #: field:account.export.mapping,account_id:0
@@ -85454,8 +85454,8 @@ msgstr "16e"
 
 #. module: sale
 #: report:msf.sale.order:0
-msgid "FIELD ORDER ("
-msgstr "COMMANDE DE TERRAIN ("
+msgid "FIELD ORDER"
+msgstr "COMMANDE DE TERRAIN"
 
 #. module: financing_contract
 #: view:financing.contract.contract:0
