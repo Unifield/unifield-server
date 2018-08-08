@@ -203,8 +203,13 @@ class stock_picking_processor(osv.osv):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
+            wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
             for move in wizard.picking_id.move_lines:
-                if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
+                        or move.id in wiz_lines_moves_ids:
+                    if move.id in wiz_lines_moves_ids and move.state == 'cancel':
+                        line_ids = line_obj.search(cr, uid, [('move_id', '=', move.id)], context=context)
+                        line_obj.unlink(cr, uid, line_ids, context=context)
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)

@@ -324,21 +324,16 @@ class stock_picking(osv.osv):
                         _('You cannot do this action on a Picking Ticket. Please check you are in the right view.')
                     )
 
-                # US-148
                 if pick.type == 'in':
                     domain = [('picking_id', '=', pick.id), ('draft', '=', True), ('already_processed', '=', False)]
-                    wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
-                    if wiz_ids:
-                        proc_id = wiz_ids[0]
-                    else:
-                        proc_id = wizard_obj.create(cr, uid,
-                                                    {'picking_id': pick.id})
-                        wizard_obj.create_lines(cr, uid, proc_id,
-                                                context=context)
                 else:
-                    proc_id = wizard_obj.create(cr, uid,
-                                                {'picking_id': pick.id})
-                    wizard_obj.create_lines(cr, uid, proc_id, context=context)
+                    domain = [('picking_id', '=', pick.id), ('draft', '=', True)]
+                wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
+                if wiz_ids:
+                    proc_id = wiz_ids[0]
+                else:
+                    proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
+                wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {
                     'type': 'ir.actions.act_window',
