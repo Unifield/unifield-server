@@ -101393,3 +101393,8 @@ msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s
 #, python-format
 msgid "The account %s - %s is not compatible with the journal %s."
 msgstr "Le compte %s - %s n'est pas compatible avec le journal %s."
+
+#. module: purchase
+#: field:purchase.order,from_address:0
+msgid "From Address"
+msgstr "Adresse expéditeur"
