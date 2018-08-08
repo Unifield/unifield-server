@@ -346,7 +346,7 @@ class shipment_family_processor(osv.osv):
         ),
         'sale_order_id': fields.many2one(
             'sale.order',
-            string='Sale Order Ref.',
+            string='Field Order Ref.',
             readonly=True,
         ),
         'ppl_id': fields.many2one(

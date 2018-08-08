@@ -46990,8 +46990,8 @@ msgstr "max"
 #: field:return.shipment.family.processor,sale_order_id:0
 #: field:shipment.additional.line.processor,sale_order_id:0
 #: field:shipment.family.processor,sale_order_id:0
-msgid "Sale Order Ref."
-msgstr "Sale Order Ref."
+msgid "Field Order Ref."
+msgstr "Réf Commande de Terrain"
 
 #. modules: base, finance
 #: view:res.request:0
