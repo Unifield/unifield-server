@@ -523,6 +523,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         return res
 
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the number of line(s) for the SO
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}.fromkeys(ids, 0)
+        line_number_by_order = {}
+
+        lines = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number'], context=context):
+            line_number_by_order.setdefault(l['order_id'][0], set())
+            line_number_by_order[l['order_id'][0]].add(l['line_number'])
+
+        for so_id, ln in line_number_by_order.iteritems():
+            res[so_id] = len(ln)
+
+        return res
+
+
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
@@ -634,7 +656,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
-        'draft_cancelled': fields.boolean(string='State', readonly=True)
+        'draft_cancelled': fields.boolean(string='State', readonly=True),
+        'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
     }
 
     _defaults = {

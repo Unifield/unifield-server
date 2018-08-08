@@ -62689,8 +62689,9 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. module: purchase
+#. modules: purchase, sale
 #: field:purchase.order,line_count:0
+#: field:sale.order,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
