@@ -244,7 +244,7 @@
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
-    <paraStyle name="P1" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P1" fontName="Helvetica" fontSize="7.0" leading="9" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="9" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="9" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -409,6 +409,9 @@
       <para style="terp_default_8">
         <font color="white"> </font>
       </para>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
       <section>
         <blockTable colWidths="72.0,25.0,101.0,46.0,114.0,61.0,77.0,77.0,87.0,99.0" style="Table2">
           <tr>
@@ -441,6 +444,40 @@
             </td>
             <td>
               <para style="terp_tblheader_Details_Right">Balance [[ company.currency_id.name ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+        <blockTable colWidths="370.0,40.0,80.0,80.0,90.0,102.0" style="Table8">
+          <tr>
+            <td>
+              <para style="terp_tblheader_Details">
+                <font color="white"> </font>
+              </para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details">
+                <font color="white"> </font>
+              </para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Centre">
+                <font color="white"> </font>
+              </para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Centre">
+                <font color="white"> </font>
+              </para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details">
+                <font color="white"> </font>
+              </para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Right">
+                <font color="white"> </font>
+              </para>
             </td>
           </tr>
         </blockTable>
@@ -690,6 +727,46 @@
           </td>
           <td>
             <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
+      <blockTable colWidths="72.0,25.0,101.0,46.0,114.0,61.0,77.0,77.0,87.0,99.0" style="Table2">
+        <tr>
+          <td>
+            <para style="terp_tblheader_Details">Date</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">JRNL</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Centre">Entry Sequence</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Centre">Account</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Entry Label</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details">Currency</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Right">Debit</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Right">Credit</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Right">Booking Balance</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_Details_Right">Balance [[ company.currency_id.name ]]</para>
           </td>
         </tr>
       </blockTable>
