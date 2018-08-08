@@ -309,6 +309,7 @@
         </tr>
       </blockTable>
     </section>
+      <!-- if there is NO DATA to be displayed: display the header only -->
       <blockTable colWidths="50.0,37.0,81.0,50.0,91.0,118.0,90.0,43.0" style="Table2_header">
         [[ get_has_data() and removeParentNode('blockTable') ]]
         <tr>
