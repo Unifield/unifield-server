@@ -220,7 +220,7 @@ class shipment_processor(osv.osv):
                     'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
                     'from_pack': family.from_pack,
                     'to_pack': family.to_pack,
-                    'selected_number': family.num_of_packs,
+                    'selected_number': 0 if self._name == 'return.shipment.processor' else family.num_of_packs,
                     'pack_type': family.pack_type and family.pack_type.id or False,
                     'length': family.length,
                     'width': family.width,
