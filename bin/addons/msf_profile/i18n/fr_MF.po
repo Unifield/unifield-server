@@ -82660,6 +82660,12 @@ msgid "Processing Error"
 msgstr "Erreur de traitement"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:562
+#, python-format
+msgid "Please fill the Address field on %s"
+msgstr "Veuillez remplir le champ Adresse sur %s"
+
+#. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_draft_done
 #: model:process.transition,name:msf_outgoing.process_transition_draft_ship_draft_done
 #: model:process.transition,note:msf_outgoing.process_transition_draft_pick_draft_done
@@ -101398,3 +101404,23 @@ msgstr "Le compte %s - %s n'est pas compatible avec le journal %s."
 #: field:purchase.order,from_address:0
 msgid "From Address"
 msgstr "Adresse expéditeur"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1865
+#, python-format
+msgid "Another Draft Shipment exists with this Consignee."
+msgstr "Une autre Expédition en Brouillon existe avec ce Destinataire"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1843
+#: code:addons/msf_outgoing/msf_outgoing.py:1853
+#: code:addons/msf_outgoing/msf_outgoing.py:1861
+#, python-format
+msgid "The field you are modifying may impact the shipment mechanism, please check the correct process."
+msgstr "Le champ que vous modifiez pourrait avoir un impact sur le mécanisme d'expédition, veuillez vérifier le bon processus."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1896
+#, python-format
+msgid "You can only have one draft shipment for a given address, please check %s"
+msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "

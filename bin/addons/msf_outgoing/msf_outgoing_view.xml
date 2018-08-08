@@ -1247,7 +1247,9 @@
 								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
-								   attrs="{'readonly': ['|', ('partner_id2', '=', False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+								   attrs="{'readonly': ['|', ('partner_id2', '=', False), ('state', 'in', ('done', 'cancel', 'delivered'))]}"
+                                   on_change="on_change_address_id(address_id)"
+                                   />
                             <field name="in_ref" readonly="True" />
                             <field name="partner_type" invisible="True" readonly="True" />
 						</group>
@@ -1344,7 +1346,7 @@
 						<page string="Transport Information">
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Shipper" colspan="2" />
-                                <field name="shipper_name" />
+                                <field name="shipper_name" on_change="on_change_shipper_name(shipper_name)" />
                                 <field name="shipper_contact" />
 								<field name="shipper_address" />
 								<field name="shipper_phone" />
@@ -1364,7 +1366,7 @@
 							</group>
                             <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
 								<separator string="Consignee" colspan="2" />
-                                <field name="consignee_name" />
+                                <field name="consignee_name" on_change="on_change_consignee_name(consignee_name)" />
                                 <field name="consignee_contact" />
 								<field name="consignee_address" />
 								<field name="consignee_phone" />

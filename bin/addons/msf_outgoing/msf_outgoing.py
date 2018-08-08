@@ -303,7 +303,7 @@ class shipment(osv.osv):
                 'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
                 'transport_type': fields.selection(TRANSPORT_TYPE,
                                                    string="Transport Type", readonly=False),
-                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
+                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 # cargo manifest things
                 'cargo_manifest_reference': fields.char(string='Cargo Manifest Reference', size=1024,),
@@ -556,6 +556,12 @@ class shipment(osv.osv):
             )
 
         for shipment in self.browse(cr, uid, ids, context=context):
+            if not shipment.address_id.id:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('Please fill the Address field on %s') % (shipment.name),
+                )
+
             # search for an existing shipment saved as draft ... :
             wiz_ids = self.pool.get('shipment.processor').search(cr, uid, [('shipment_id', '=', shipment.id), ('draft', '=', True)], context=context)
             if wiz_ids:
@@ -1823,25 +1829,80 @@ class shipment2(osv.osv):
 
         if not partner_id:
             v.update({'address_id': False})
-        else:
+            address_id = False
+        elif address_id:
             d.update({'address_id': [('partner_id', '=', partner_id)]})
 
-
+        addr = False
         if address_id:
             addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
 
-        if not address_id or addr.partner_id.id != partner_id:
+        if partner_id and (not address_id or (addr and addr.partner_id.id != partner_id)):
             addr = self.pool.get('res.partner').address_get(cr, uid, partner_id, ['delivery', 'default'])
             if not addr.get('delivery'):
                 addr = addr.get('default')
             else:
                 addr = addr.get('delivery')
 
+            address_id = addr
+
             v.update({'address_id': addr})
 
+        if address_id:
+            error = self.on_change_address_id(cr, uid, ids, address_id, context=context)
+            if error:
+                error['value'] = {'address_id': False}
+                error['domain'] = d
+                return error
 
-        return {'value': v,
-                'domain': d}
+        warning = {
+            'title': _('Warning'),
+            'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
+        }
+
+        return {'value': v, 'domain': d, 'warning': warning}
+
+    def on_change_shipper_name(self, cr, uid, ids, shipper_name):
+        return {
+            'value': {'shipper_name': shipper_name},
+            'warning': {
+                'title': _('Warning'),
+                'message': _('The field you are modifying may impact the shipment mechanism, please check the correct process.'),
+            }
+        }
+
+    def on_change_consignee_name(self, cr, uid, ids, consignee_name, context=None):
+        if context is None:
+            context = {}
+
+        message = _('The field you are modifying may impact the shipment mechanism, please check the correct process.')
+        if ids and self.search_exist(cr, uid, [('id', '!=', ids[0]), ('consignee_name', '=', consignee_name),
+                                               ('state', '=', 'draft')], context=context):
+            consignee_name = self.read(cr, uid, ids[0], ['consignee_name'], context=context)['consignee_name']
+            message = _('Another Draft Shipment exists with this Consignee.')
+
+        return {
+            'value': {'consignee_name': consignee_name},
+            'warning': {
+                'title': _('Warning'),
+                'message': message,
+            }
+        }
+
+    def on_change_address_id(self, cr, uid, ids, address_id, context=None):
+        other_ids = self.search(cr, uid, [('id', 'not in', ids), ('state', '=', 'draft'), ('address_id', '=', address_id)], context=context)
+        if other_ids:
+            other = []
+            for ship in self.read(cr, uid, other_ids, ['name']):
+                other.append(ship['name'])
+            return {
+                'value': {'address_id': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('You can only have one draft shipment for a given address, please check %s') % (', '.join(other))
+                }
+            }
+        return {}
 
     _columns = {
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'shipment_id', string='Memory Families'),
@@ -2978,8 +3039,12 @@ class stock_picking(osv.osv):
                             shipment_ids = []
 
                 # only one 'draft' shipment should be available
-                assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time - %s' % len(shipment_ids)
-
+                if len(shipment_ids) > 1:
+                    other = shipment_obj.read(cr, uid, shipment_ids, ['name'], context=context)
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You can only have one draft shipment for a given address, please check %s') % ', '.join(x['name'] for x in other),
+                    )
                 # get rts of corresponding sale order
                 sale_id = self.read(cr, uid, [new_packing_id], ['sale_id'], context=context)
                 sale_id = sale_id[0]['sale_id']
