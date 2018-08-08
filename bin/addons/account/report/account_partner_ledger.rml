@@ -292,289 +292,408 @@
   </stylesheet>
   <story>
     <para style="terp_default_8">[[ setLang(data['lang']) ]]</para>
-    <para style="terp_default_8">[[ repeatIn(partners_to_display(objects), 'p') ]]</para>
-    <para style="terp_default_8">
-      <font color="white"> </font>
-    </para>
-    <para style="terp_header_Centre">Partner Ledger</para>
-    <para style="terp_default_8">
-      <font color="white"> </font>
-    </para>
-    <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table1">
-      <tr>
-        <td>
-          <para style="terp_tblheader_General_Centre">Chart of Account</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Fiscal Year</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Journals</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Accounts</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Proprietary Instances</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Display</para>
-        </td>
-        <td>
-          <para style="terp_tblheader_General_Centre">Func. Currency</para>
-        </td>
-      </tr>
-    </blockTable>
-    <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table4">
-      <tr>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_journals_str(data) ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_instances_str(data) ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]]</para>
-          <blockTable colWidths="79.0,79.0" style="Table7">
-            <tr>
-              <td>
-                <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Date') and translate('Start Date') or removeParentNode('blockTable') ]]</para>
-              </td>
-              <td>
-                <para style="terp_tblheader_General_Centre">End Date</para>
-              </td>
-            </tr>
-          </blockTable>
-          <blockTable colWidths="79.0,79.0" style="Table9">
-            <tr>
-              <td>
-                <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Date') and ' ' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
-              </td>
-              <td>
-                <para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para>
-              </td>
-            </tr>
-          </blockTable>
-          <blockTable colWidths="79.0,79.0" style="Table10">
-            <tr>
-              <td>
-                <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Periods') and translate('Start Period') or removeParentNode('blockTable') ]]</para>
-              </td>
-              <td>
-                <para style="terp_tblheader_General_Centre">End Period</para>
-              </td>
-            </tr>
-          </blockTable>
-          <blockTable colWidths="79.0,79.0" style="Table11">
-            <tr>
-              <td>
-                <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Periods') and ' ' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
-              </td>
-              <td>
-                <para style="terp_default_Centre_8">[[ get_end_period(data) or removeParentNode('para') ]]</para>
-              </td>
-            </tr>
-          </blockTable>
-          <para style="terp_default_8">
-            <font color="white"> </font>
-          </para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (
-                translate("Partner's"), get_partners(),
-                translate('Target Moves'), get_target_move(data),
-                translate('Reconciled'), get_reconcile_selection(),
-                translate('Display Partners'), get_display_partners_selection(),
-                ) ]]</para>
-        </td>
-        <td>
-          <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
-        </td>
-      </tr>
-    </blockTable>
-    <para style="terp_default_8">
-      <font color="white"> </font>
-    </para>
     <section>
-      <blockTable colWidths="72.0,25.0,101.0,46.0,114.0,61.0,77.0,77.0,87.0,99.0" style="Table2">
-        <tr>
-          <td>
-            <para style="terp_tblheader_Details">Date</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details">JRNL</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Centre">Entry Sequence</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Centre">Account</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details">Entry Label</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details">Currency</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Right">Debit</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Right">Credit</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Right">Booking Balance</para>
-          </td>
-          <td>
-            <para style="terp_tblheader_Details_Right">Balance [[ company.currency_id.name ]]</para>
-          </td>
-        </tr>
-      </blockTable>
-      <blockTable colWidths="370.0,40.0,80.0,80.0,90.0,102.0" style="Table12">
-        <tr>
-          <td>
-            <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Bold_9">[[ company.currency_id.name ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_partner(p) or 0.0) ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_partner(p) or 0.0) ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p) or 0.0) - (sum_credit_partner(p) or 0.0)) ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p) or 0.0) - (sum_credit_partner(p) or 0.0)) ]]</para>
-          </td>
-        </tr>
-      </blockTable>
-
-      <section>
-        <para style="terp_default_8">[[ repeatIn(get_accounts_to_display(p), 'account_code') ]]</para>
-        <!-- TOTALS IN FUNCTIONAL -->
-        <section>
-          <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
-            <tr>
-              <td>
-                <para style="PCenteredBold">[[ p.name or '' ]]</para>
-              </td>
-              <td>
-                <para style="PRightBold">[[ account_code ]]</para>
-              </td>
-              <td>
-                <para style="terp_default_Bold_8">[[ company.currency_id.name ]]</para>
-              </td>
-              <td>
-                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['debit_functional'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['credit_functional'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
-              </td>
-            </tr>
-            </blockTable>
-            <para style="terp_default_2">
-              <font color="white"> </font>
-            </para>
-        </section>
-        <!-- SUBTOTAL LINES IN BOOKING -->
-        <section>
-          <para style="terp_default_8">[[ repeatIn(get_subtotals(p, account_code), 'curr') ]]</para>
-          <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
-            <tr>
-              <td>
-                <para style="PCenteredBold">[[ p.name or '' ]]</para>
-                  </td>
-                  <td>
-                    <para style="PRightBold">Subtotal</para>
-                  </td>
-                  <td>
-                    <para style="terp_default_Bold_8">[[ curr or '' ]]</para>
-                  </td>
-                  <td>
-                    <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['debit'] or 0.0) ]]</para>
-                  </td>
-                  <td>
-                    <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['credit'] or 0.0) ]]</para>
-                  </td>
-                  <td>
-                    <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['amount_currency'] or 0.0) ]]</para>
-                  </td>
-                  <td>
-                    <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['total_functional'] or 0.0) ]]</para>
-                  </td>
-                </tr>
-            </blockTable>
-            <para style="terp_default_2">
-              <font color="white"> </font>
-            </para>
-        </section>
-        <!-- LINES -->
-        <section>
-          <para style="terp_default_8">[[ repeatIn(lines(p, account_code), 'line') ]]</para>
-          <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
-            <tr>
-              <td>
-                <para style="P3">[[ formatLang(line['date'], date=True) ]]</para>
-              </td>
-              <td>
-                  <para style="P4">[[ line['code'] ]]</para>
-              </td>
-              <td>
-                <para style="P8">[[ line['move_name'] ]]</para>
-              </td>
-              <td>
-                <para style="P7">[[ line['a_code'] ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['currency_code'] or '' ]]</para>
-              </td>
-              <td>
-                <para style="P9">[[ formatLang(line['debit'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="P9">[[ formatLang(line['credit'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
-              </td>
-              <td>
-                <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
-              </td>
-            </tr>
-          </blockTable>
-          <para style="terp_default_2">
-            <font color="white"> </font>
-          </para>
-        </section>
-      </section>
-      <para style="terp_default_2">
+      <para style="terp_default_8">[[ repeatIn(partners_to_display(objects), 'p') ]]</para>
+      <para style="terp_default_8">
         <font color="white"> </font>
       </para>
+      <!-- update the number of the current partner displayed -->
+      <para style="terp_header_Centre">[[ update_current_partner_number() and translate('Partner Ledger') ]]</para>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
+      <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table1">
+        <tr>
+          <td>
+            <para style="terp_tblheader_General_Centre">Chart of Account</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Fiscal Year</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Journals</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Accounts</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Proprietary Instances</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Display</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Func. Currency</para>
+          </td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table4">
+        <tr>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_journals_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_instances_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]]</para>
+            <blockTable colWidths="79.0,79.0" style="Table7">
+              <tr>
+                <td>
+                  <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Date') and translate('Start Date') or removeParentNode('blockTable') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_tblheader_General_Centre">End Date</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table9">
+              <tr>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Date') and ' ' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table10">
+              <tr>
+                <td>
+                  <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Periods') and translate('Start Period') or removeParentNode('blockTable') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_tblheader_General_Centre">End Period</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table11">
+              <tr>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Periods') and ' ' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_end_period(data) or removeParentNode('para') ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="terp_default_8">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                  translate("Partner's"), get_partners(),
+                  translate('Target Moves'), get_target_move(data),
+                  translate('Reconciled'), get_reconcile_selection(),
+                  translate('Display Partners'), get_display_partners_selection(),
+                  ) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
+      <section>
+        <blockTable colWidths="72.0,25.0,101.0,46.0,114.0,61.0,77.0,77.0,87.0,99.0" style="Table2">
+          <tr>
+            <td>
+              <para style="terp_tblheader_Details">Date</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details">JRNL</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Centre">Entry Sequence</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Centre">Account</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details">Entry Label</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details">Currency</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Right">Debit</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Right">Credit</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Right">Booking Balance</para>
+            </td>
+            <td>
+              <para style="terp_tblheader_Details_Right">Balance [[ company.currency_id.name ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+        <blockTable colWidths="370.0,40.0,80.0,80.0,90.0,102.0" style="Table12">
+          <tr>
+            <td>
+              <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Bold_9">[[ company.currency_id.name ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Bold_9_Right">[[ formatLang(sum_debit_partner(p) or 0.0) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Bold_9_Right">[[ formatLang(sum_credit_partner(p) or 0.0) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p) or 0.0) - (sum_credit_partner(p) or 0.0)) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p) or 0.0) - (sum_credit_partner(p) or 0.0)) ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+
+        <section>
+          <para style="terp_default_8">[[ repeatIn(get_accounts_to_display(p), 'account_code') ]]</para>
+          <!-- TOTALS IN FUNCTIONAL -->
+          <section>
+            <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+              <tr>
+                <td>
+                  <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                </td>
+                <td>
+                  <para style="PRightBold">[[ account_code ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Bold_8">[[ company.currency_id.name ]]</para>
+                </td>
+                <td>
+                  <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['debit_functional'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['credit_functional'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="PRightBold">[[ formatLang(get_fctal_totals(p, account_code)['total_functional'] or 0.0) ]]</para>
+                </td>
+              </tr>
+              </blockTable>
+              <para style="terp_default_2">
+                <font color="white"> </font>
+              </para>
+          </section>
+          <!-- SUBTOTAL LINES IN BOOKING -->
+          <section>
+            <para style="terp_default_8">[[ repeatIn(get_subtotals(p, account_code), 'curr') ]]</para>
+            <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+              <tr>
+                <td>
+                  <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                    </td>
+                    <td>
+                      <para style="PRightBold">Subtotal</para>
+                    </td>
+                    <td>
+                      <para style="terp_default_Bold_8">[[ curr or '' ]]</para>
+                    </td>
+                    <td>
+                      <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['debit'] or 0.0) ]]</para>
+                    </td>
+                    <td>
+                      <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['credit'] or 0.0) ]]</para>
+                    </td>
+                    <td>
+                      <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['amount_currency'] or 0.0) ]]</para>
+                    </td>
+                    <td>
+                      <para style="PRightBold">[[ formatLang(get_subtotals(p, account_code)[curr]['total_functional'] or 0.0) ]]</para>
+                    </td>
+                  </tr>
+              </blockTable>
+              <para style="terp_default_2">
+                <font color="white"> </font>
+              </para>
+          </section>
+          <!-- LINES -->
+          <section>
+            <para style="terp_default_8">[[ repeatIn(lines(p, account_code), 'line') ]]</para>
+            <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+              <tr>
+                <td>
+                  <para style="P3">[[ formatLang(line['date'], date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="P4">[[ line['code'] ]]</para>
+                </td>
+                <td>
+                  <para style="P8">[[ line['move_name'] ]]</para>
+                </td>
+                <td>
+                  <para style="P7">[[ line['a_code'] ]]</para>
+                </td>
+                <td>
+                  <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
+                </td>
+                <td>
+                  <para style="P3">[[ line['currency_code'] or '' ]]</para>
+                </td>
+                <td>
+                  <para style="P9">[[ formatLang(line['debit'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="P9">[[ formatLang(line['credit'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
+                </td>
+                <td>
+                  <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="terp_default_2">
+              <font color="white"> </font>
+            </para>
+          </section>
+        </section>
+        <para style="terp_default_2">
+          <font color="white"> </font>
+        </para>
+      </section>
+      <pageBreak>[[ (nb_partners(objects) == 0 or get_current_partner_number() == nb_partners(objects)) and removeParentNode('pageBreak')]]</pageBreak>
+    </section>
+    <section> <!-- if there is NO DATA to be displayed: display the header only -->
+      <para style="terp_default_8">
+        [[ nb_partners(objects) > 0 and removeParentNode('section') ]]
+        <font color="white"> </font>
+      </para>
+      <!-- update the number of the current partner displayed -->
+      <para style="terp_header_Centre">Partner Ledger</para>
+      <para style="terp_default_8">
+        <font color="white"> </font>
+      </para>
+      <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table1">
+        <tr>
+          <td>
+            <para style="terp_tblheader_General_Centre">Chart of Account</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Fiscal Year</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Journals</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Accounts</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Proprietary Instances</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Display</para>
+          </td>
+          <td>
+            <para style="terp_tblheader_General_Centre">Func. Currency</para>
+          </td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table4">
+        <tr>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_journals_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_instances_str(data) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]]</para>
+            <blockTable colWidths="79.0,79.0" style="Table7">
+              <tr>
+                <td>
+                  <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Date') and translate('Start Date') or removeParentNode('blockTable') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_tblheader_General_Centre">End Date</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table9">
+              <tr>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Date') and ' ' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table10">
+              <tr>
+                <td>
+                  <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Periods') and translate('Start Period') or removeParentNode('blockTable') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_tblheader_General_Centre">End Period</para>
+                </td>
+              </tr>
+            </blockTable>
+            <blockTable colWidths="79.0,79.0" style="Table11">
+              <tr>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Periods') and ' ' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Centre_8">[[ get_end_period(data) or removeParentNode('para') ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="terp_default_8">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                  translate("Partner's"), get_partners(),
+                  translate('Target Moves'), get_target_move(data),
+                  translate('Reconciled'), get_reconcile_selection(),
+                  translate('Display Partners'), get_display_partners_selection(),
+                  ) ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>
+          </td>
+        </tr>
+      </blockTable>
     </section>
   </story>
 </document>

@@ -37,6 +37,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.report_lines = {}
         self.debit_balances = {}
         self.credit_balances = {}
+        self.current_partner_number = 0
         self.localcontext.update({
             'partners_to_display': self._partners_to_display,
             'time': time,
@@ -63,6 +64,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_accounts_to_display': self._get_accounts_to_display,
             'get_fctal_totals': self._get_fctal_totals,
             'get_subtotals': self._get_subtotals,
+            'nb_partners': lambda partners: len(self._partners_to_display(partners)),
+            'update_current_partner_number': self._update_current_partner_number,
+            'get_current_partner_number': lambda: self.current_partner_number,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -309,6 +313,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if partner.id not in self.fctal_totals or account_code not in self.fctal_totals[partner.id]:
             self.lines(partner, account_code)  # fills in the self.fctal_totals dictionary
         return self.fctal_totals[partner.id][account_code]
+
+    def _update_current_partner_number(self):
+        self.current_partner_number += 1
+        return True
 
     def _sum_debit_partner(self, partner):
         if partner.id in self.debit_balances:
