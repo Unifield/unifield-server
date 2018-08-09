@@ -65777,8 +65777,9 @@ msgstr "workflow.workitem"
 msgid "Search Widget"
 msgstr "Rechercher Widget (window gadget)"
 
-#. module: tender_flow
+#. modules: tender_flow, purchase
 #: code:addons/tender_flow/tender_flow.py:1877
+#: view:purchase.order.line:0
 #, python-format
 msgid "Request for Quotation Line"
 msgstr "Ligne de Demande de Devis"
@@ -101313,3 +101314,5 @@ msgstr "Substance contrôlée"
 #: view:purchase.order.line:0
 msgid "Linked Information"
 msgstr "Information liée"
+
+
