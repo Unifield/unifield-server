@@ -1669,27 +1669,13 @@ class account_move(osv.osv):
                                 abs(amount_ji_fctal + ana.distribution_id.total_fp_fct_amount) > 10**-4 or \
                                 abs(amount + ana.distribution_id.total_fp_book_amount) > 10**-4:
                             recreate = True
-                            print 0, distib_id, ana.distribution_id.id
-                            print 1, obj_line.name, '!=', ana.name
-                            print 2, obj_line.date, ana.date
-                            print 3, obj_line.ref, ana.ref
-                            print 4, obj_line.journal_id.analytic_journal_id.id, ana.journal_id.id
-                            print 5, obj_line.account_id.id, ana.general_account_id.id
-                            print 6, obj_line.currency_id.id, ana.currency_id.id
-                            print 7, obj_line.document_date, ana.document_date
-                            print 8, source_date , ana.source_date
-                            print 9, obj_line.period_id.id, ana.real_period_id.id
-                            print 10, amount_ji_fctal,ana.distribution_id.total_fp_fct_amount
-                            print 11, amount, ana.distribution_id.total_fp_book_amount
 
                     if recreate:
-                        print 'RECREATE', obj_line.id
                         for obj in obj_line.analytic_lines:
                             obj_analytic_line.unlink(cr,uid,obj.id)
 
                         obj_move_line.create_analytic_lines(cr, uid, [obj_line.id], context)
-                    else:
-                        print 'NO CHANGE', obj_line.id
+
         if not context.get('ignore_analytic_line') and (not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution')):
             ajis_to_del = []
             for record in invalid_moves:

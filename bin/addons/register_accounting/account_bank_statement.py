@@ -2435,7 +2435,6 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
-                    # /!\ we create AJIS only here check the orhter if elif for AJIs upate
                     ignore_analytic_line = False
                     if not context.get('ignore_analytic_line'):
                         context['ignore_analytic_line'] = True

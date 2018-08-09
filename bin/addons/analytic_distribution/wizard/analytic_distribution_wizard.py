@@ -1032,7 +1032,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             distrib_id = wiz.distribution_id and wiz.distribution_id.id or False
-            print "GGGGGGGGGGG", distrib_id
             if not distrib_id:
                 # create a new analytic distribution
                 analytic_vals = {}
@@ -1199,7 +1198,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # account.move validate is called in account.bank.statement.line write
                 #self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         elif new_distrib:
-            print 'LLLLLLLLLLLLLLLLLLLLLLLLL'
             # Update analytic lines: if we come from JE or JI AJIs has been updated in the previous account.move.validate
             self.update_analytic_lines(cr, uid, ids, context=context)
 
