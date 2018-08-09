@@ -206,7 +206,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.reconciled == 'yes':
             reconcile_tag = "AND l.reconcile_id IS NOT NULL"
         elif self.reconciled == 'no':
-            reconcile_tag = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"
+            reconcile_tag = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
         else:  # 'empty'
             reconcile_tag = " "
         self.cr.execute(
@@ -237,7 +237,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.reconciled == 'yes':
             RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
         elif self.reconciled == 'no':
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
         else:  # 'empty'
             RECONCILE_TAG = " "
         self.cr.execute(
@@ -315,6 +315,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         return self.fctal_totals[partner.id][account_code]
 
     def _update_current_partner_number(self):
+        """
+        Increments the current partner number and always returns True (used for the display in rml template)
+        """
         self.current_partner_number += 1
         return True
 
@@ -330,7 +333,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.reconciled == 'yes':
             RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
         elif self.reconciled == 'no':
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
         else:  # 'empty'
             RECONCILE_TAG = " "
 

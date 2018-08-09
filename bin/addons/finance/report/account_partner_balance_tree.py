@@ -81,7 +81,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
         only [payable] or only [receivable] or [payable, receivable]
-        From US-3873: payable and receivable are grouped together
+        From US-3873: payable and receivable accounts are grouped together
         """
         res = []
         objects = self.apbt_obj.get_partner_data(self.cr, self.uid, data)

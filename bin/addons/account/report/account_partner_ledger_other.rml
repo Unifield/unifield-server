@@ -312,6 +312,7 @@
         <para style="terp_default_8">
             <font color="white"> </font>
         </para>
+        <!-- NOTE: if this HEADER has to be modified: modify also the "One partner per page" version -->
         <blockTable colWidths="65.0,40.0,125.0,85.0,85.0,167.0,165.0,45.0" style="Table1">
             <tr>
                 <td>

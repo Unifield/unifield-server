@@ -186,6 +186,7 @@
     </para>
     <section>
         [[ repeatIn(get_partners(data), 'p_entries') ]]
+      <!-- NOTE: if this HEADER has to be modified: modify also the "no data" version (below) -->
       <blockTable colWidths="50.0,37.0,81.0,50.0,91.0,118.0,90.0,43.0" style="Table2_header">
         <tr>
           <td><para style="terp_tblheader_General_Centre">Chart of Account</para></td>

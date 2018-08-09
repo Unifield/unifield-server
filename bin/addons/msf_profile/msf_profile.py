@@ -99,6 +99,7 @@ class patch_scripts(osv.osv):
     def us_3873_remove_initial_balance_in_partner_balance_templates(self, cr, uid, *a, **b):
         """
         Removes the initial_balance from the Wizard Templates for the "Partner Balance" report
+        (Note: templates aren't synched for now)
         """
         template_obj = self.pool.get('wizard.template')
         template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
