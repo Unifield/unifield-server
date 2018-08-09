@@ -194,7 +194,7 @@
           <td><para style="terp_tblheader_General_Centre">Journals</para></td>
           <td><para style="terp_tblheader_General_Centre">Accounts</para></td>
           <td><para style="terp_tblheader_General_Centre">Proprietary Instances</para></td>
-          <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para></td>
+          <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para></td>
           <td><para style="terp_tblheader_General_Centre">Display</para></td>
           <td><para style="terp_tblheader_General_Centre">Func. Currency</para></td>
         </tr>

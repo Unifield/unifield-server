@@ -280,6 +280,7 @@ worksheet_name = get_type_of_accounts()
 ## header
 <%
 header_col_merge_count = col_count - 1
+selected_filter = get_filter(data) or ''
 %>
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
@@ -287,7 +288,7 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Display')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Func. Currency')}</Data></Cell>
 </Row>
