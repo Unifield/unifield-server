@@ -78105,6 +78105,7 @@ msgstr "Product Inconsistencies Report generation"
 #: code:addons/account/report/account_balance_sheet.py:325
 #: code:addons/account/report/account_general_ledger.py:458
 #: report:addons/account/report/account_partner_ledger.mako:213
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:291
 #: code:addons/account/report/account_profit_loss.py:232
 #: code:addons/account/report/common_report_header.py:169
 #: code:addons/finance/report/account_partner_balance_tree.py:135
