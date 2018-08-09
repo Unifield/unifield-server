@@ -495,9 +495,10 @@ class internal_request_import(osv.osv):
                                     or (line_data.get('imp_qty') and ir_imp_l.in_qty != line_data['imp_qty']) \
                                     or (line_data.get('imp_uom_id') and ir_imp_l.in_uom.id != line_data['imp_uom_id']) \
                                     or (line_data.get('imp_comment') and ir_imp_l.in_comment != line_data['imp_comment']):
-                                line_data.update({'line_changed': True})
+                                line_data.update({'line_type': 'changed'})
                         ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
                     else:
+                        line_data.update({'line_type': 'new'})
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
                     nb_treated_lines += 1
 
@@ -570,16 +571,7 @@ class internal_request_import(osv.osv):
 
         if new_thread.isAlive():
             return self.go_to_simulation(cr, uid, ids, context=context)
-        else:
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'internal.request.import',
-                'res_id': active_wiz.id,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'crush',
-                'context': context,
-            }
+        return self.go_to_ir(cr, uid, ids, context=context)
 
     def run_import(self, dbname, uid, ids, context=None):
         '''
@@ -706,7 +698,7 @@ class internal_request_import_line(osv.osv):
     _columns = {
         'ir_line_id': fields.many2one('sale.order.line', string='Line', readonly=True),
         'ir_import_id': fields.many2one('internal.request.import', string='Simulation screen', readonly=True, ondelete='cascade'),
-        'line_changed': fields.boolean(string='Line has been changed', readonly=True),
+        'line_type': fields.char(size=64, string='Type of Line', readonly=True),
         # # Original IR line info
         'in_line_number': fields.function(_get_line_info, method=True, multi='line', type='integer',
                                           string='Line Number', readonly=True, store=True),
@@ -731,7 +723,7 @@ class internal_request_import_line(osv.osv):
     }
 
     defaults = {
-        'line_changed': False,
+        'line_type': False,
         'imp_line_number': 0,
     }
 

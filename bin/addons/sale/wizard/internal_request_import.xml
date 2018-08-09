@@ -59,8 +59,8 @@
                         </page>
                         <page string="Details">
                             <field name="imp_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="orange: line_changed == True ;red: error_msg not in ['', False]" >
-                                    <field name="line_changed" invisible="1" />
+                                <tree string="Lines" colors="blue: line_type == 'new' ;orange: line_type == 'changed' ;red: error_msg not in ['', False]" >
+                                    <field name="line_type" invisible="1" />
                                     <field name="in_line_number" />
                                     <field name="in_product_id" />
                                     <field name="in_qty" />

@@ -625,7 +625,7 @@ class procurement_request(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'internal_request_export',
-            'data': data,
+            'datas': data,
             'context': context,
         }
 
