@@ -796,7 +796,6 @@ class shipment(osv.osv):
         proc_obj = self.pool.get('return.shipment.processor')
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -965,13 +964,8 @@ class shipment(osv.osv):
                 ))
                 log_flag = True
 
-            res = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            context.update({
-                'view_id': res,
-                'picking_type': 'picking.ticket'
-            })
             if draft_picking:
-                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), context=context)
+                picking_obj.log(cr, uid, draft_picking.id, _("The corresponding Draft Picking Ticket (%s) has been updated.") % (draft_picking.name,), action_xmlid='msf_outgoing.action_picking_ticket')
 
         # Call complete_finished on the shipment object
         # If everything is allright (all draft packing are finished) the shipment is done also
@@ -981,18 +975,9 @@ class shipment(osv.osv):
         if shipment and shipment.id:
             self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs_shipment_draft', context=context)
 
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-        return {
-            'name': _("Picking Ticket"),
-            'view_mode': 'form,tree',
-            'view_id': [view_id and view_id[1] or False],
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': draft_picking.id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-            'context': context
-        }
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
+        res['res_id'] = draft_picking.id
+        return res
 
     @check_cp_rw
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -2022,63 +2007,6 @@ class stock_picking(osv.osv):
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
 
-    def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
-        pick = kwargs['pick']
-        obj_data = self.pool.get('ir.model.data')
-        view_list = {'standard': ('stock', 'view_picking_out_form'),
-                     'picking': ('msf_outgoing', 'view_picking_ticket_form'),
-                     'ppl': ('msf_outgoing', 'view_ppl_form'),
-                     'packing': ('msf_outgoing', 'view_packing_form'),
-                     }
-        if pick.type == 'out':
-            context.update({'picking_type': pick.subtype == 'standard' and 'delivery_order' or 'picking_ticket'})
-            module, view = view_list.get(pick.subtype, ('msf_outgoing', 'view_picking_ticket_form'))
-            try:
-                return obj_data.get_object_reference(cr, uid, module, view)
-            except ValueError:
-                pass
-        elif pick.type == 'in':
-            context.update({'picking_type': 'incoming_shipment'})
-        else:
-            context.update({'picking_type': 'internal_move'})
-            context.update({'_terp_view_name': 'Internal Moves'})  # REF-92: Update also the Form view name, otherwise Products to Process
-
-        return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
-
-    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>log_picking
-        update the domain and other values if necessary in the log creation
-        '''
-        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
-        pick_obj = self.pool.get('stock.picking')
-        pick = kwargs['pick']
-        message = kwargs['message']
-        if pick.type and pick.subtype:
-            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
-            return self.pool.get('res.log').create(cr, uid,
-                                                   {'name': message,
-                                                    'res_model': pick_obj._name,
-                                                    'secondary': False,
-                                                    'res_id': pick.id,
-                                                    'domain': domain,
-                                                    }, context=context)
-        return result
-
-    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>stock_picking>log_picking
-        specify if we display a log or not
-        '''
-        result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
-        pick = kwargs['pick']
-        if pick.subtype == 'packing':
-            return 'packing'
-        # if false the log will be defined by the method _hook_custom_log (which include a domain)
-        if pick.type and pick.subtype:
-            return False
-
-        return result
 
     def copy(self, cr, uid, copy_id, default=None, context=None):
         '''
@@ -3197,7 +3125,7 @@ class stock_picking(osv.osv):
                 new_name = context.get('rw_backorder_name')
                 del context['rw_backorder_name']
 
-            self.log(cr, uid, obj.id, _('The Picking Ticket (%s) has been converted to simple Out (%s).') % (obj.name, new_name))
+            self.log(cr, uid, obj.id, _('The Picking Ticket (%s) has been converted to simple Out (%s).') % (obj.name, new_name), action_xmlid='stock.action_picking_tree')
 
             keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, None)
 
@@ -3345,28 +3273,9 @@ class stock_picking(osv.osv):
                 new_pick_id or obj.id, new_name,
             ))
 
-            # TODO which behavior
-            data_obj = self.pool.get('ir.model.data')
-            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
-            tree_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')
-            view_id = view_id and view_id[1] or False
-            tree_view_id = tree_view_id and tree_view_id[1] or False
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')
-            search_view_id = search_view_id and search_view_id[1] or False
-            context.update({'picking_type': 'delivery_order', 'view_id': view_id, 'search_view_id': search_view_id})
-            return {'name': _("Delivery Orders"),
-                    'view_mode': 'form,tree',
-                    'view_id': [view_id, tree_view_id],
-                    'search_view_id': search_view_id,
-                    'view_type': 'form',
-                    'res_model': 'stock.picking',
-                    'res_id': new_pick_id or obj.id,
-                    'type': 'ir.actions.act_window',
-                    'target': 'crush',
-                    'context': context,
-                    'domain': [('type', '=', 'out'), ('subtype', '=', 'standard')],
-                    }
-
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree', ['form', 'tree'], context=context)
+            res['res_id'] = new_pick_id or obj.id
+            return res
 
     def _hook_create_rw_out_sync_messages(self, cr, uid, ids, context=None, out=True):
         return True
@@ -3427,7 +3336,7 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', out.id, 'convert_to_picking_ticket', cr)
             # we force availability
 
-            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), action_xmlid='msf_outgoing.action_picking_ticket')
             self.infolog(cr, uid, "The Delivery order id:%s (%s) has been converted to draft Picking Ticket id:%s (%s)." % (
                 out.id, out.name, out.id, new_name,
             ))
@@ -3732,6 +3641,18 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
+        data = self.read(cr, uid, ids[0], ['state', 'type', 'subtype', 'name'], context=context)
+        if data['type'] != 'out' or data['subtype'] != 'picking':
+            raise osv.except_osv(
+                _('Error'),
+                _('%s is not a main-pick !') % (data['name'])
+            )
+        if data['state'] != 'draft':
+            raise osv.except_osv(
+                _('Error'),
+                _('The picking ticket is not in \'Draft\' state. Please check this and re-try')
+            )
+
         # if wizard already exists, then open it (able save as draft/reset functionnality):
         wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
         if wiz_ids:
@@ -3889,31 +3810,15 @@ class stock_picking(osv.osv):
                 picking.id, picking.name,
             ))
 
-        # Just to avoid an error on kit test because view_picking_ticket_form is not still loaded when test is ran
-        msf_outgoing = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
-        if not msf_outgoing:
-            view_id = False
-        else:
-            data_obj = self.pool.get('ir.model.data')
-            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-            view_id = view_id and view_id[1] or False
-
-        context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
 
         # UF-2531: Run the creation of message at RW at some important points
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
 
-        return {'name': _("Picking Ticket"),
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'view_type': 'form',
-                'res_model': 'stock.picking',
-                'res_id': new_picking_id,
-                'type': 'ir.actions.act_window',
-                'target': 'crush',
-                'context': context,
-                }
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
+        res['res_id'] = new_picking_id
+        return res
 
     @check_cp_rw
     def validate_picking(self, cr, uid, ids, context=None):
@@ -3926,7 +3831,14 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if self.read(cr, uid, ids[0], ['state'], context=context)['state'] != 'assigned':
+        data = self.read(cr, uid, ids[0], ['state', 'type', 'subtype', 'name'], context=context)
+
+        if data['type'] != 'out' or data['subtype'] != 'picking':
+            raise osv.except_osv(
+                _('Error'),
+                _('%s is not a sub-pick !') % (data['name'])
+            )
+        if data['state'] != 'assigned':
             raise osv.except_osv(
                 _('Error'),
                 _('The picking ticket is not in \'Available\' state. Please check this and re-try')
@@ -4148,25 +4060,13 @@ class stock_picking(osv.osv):
                 picking.id, picking.name,
             ))
 
-        data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
-        view_id = view_id and view_id[1] or False
-        context.update({'picking_type': 'picking_ticket', 'ppl_screen': True})
-
         # UF-2531: Run the creation of message at RW at some important points
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
 
-        return {'name': _("Pre-Packing List"),
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'view_type': 'form',
-                'res_model': 'stock.picking',
-                'res_id': new_ppl and new_ppl.id or False,
-                'type': 'ir.actions.act_window',
-                'target': 'crush',
-                'context': context,
-                }
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_ppl', ['form', 'tree'], context=context)
+        res['res_id'] = new_ppl and new_ppl.id or False
+        return res
 
     def quick_mode(self, cr, uid, ids, context=None):
         """
@@ -4204,7 +4104,15 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if self.read(cr, uid, ids[0], ['state'], context=context)['state'] != 'assigned':
+        data = self.read(cr, uid, ids[0], ['state', 'name', 'type', 'subtype'], context=context)
+
+        if data['type'] != 'out' or data['subtype'] != 'ppl':
+            raise osv.except_osv(
+                _('Error'),
+                _('The object %s is not a pre-packing list. Please check this and re-try.') % (data['name'])
+            )
+
+        if data['state'] != 'assigned':
             raise osv.except_osv(
                 _('Error'),
                 _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
@@ -4326,7 +4234,6 @@ class stock_picking(osv.osv):
         proc_obj = self.pool.get('ppl.processor')
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
-        data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
         usb_entity = self._get_usb_entity_type(cr, uid)
@@ -4502,18 +4409,10 @@ class stock_picking(osv.osv):
                 pid, pname, shipment_id, shipment_name,
             ))
 
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
-        view_id = view_id and view_id[1] or False
-        return {'name': _("Shipment"),
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'view_type': 'form',
-                'res_model': 'shipment',
-                'res_id': shipment_id,
-                'type': 'ir.actions.act_window',
-                'target': 'crush',
-                'context': context,
-                }
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_shipment', ['form', 'tree'], context=context)
+        res['res_id'] = shipment_id
+        return res
+
 
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
@@ -4528,6 +4427,13 @@ class stock_picking(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        data = self.read(cr, uid, ids[0], ['state', 'name', 'type', 'subtype'], context=context)
+        if data['type'] != 'out' or data['subtype'] != 'ppl':
+            raise osv.except_osv(
+                _('Error'),
+                _('The object %s is not a pre-packing list. Please check this and re-try.') % (data['name'])
+            )
 
         processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
         proc_obj.create_lines(cr, uid, processor_id, context=context)
@@ -4699,19 +4605,14 @@ class stock_picking(osv.osv):
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
             context['view_id'] = ppl_view
             log_message = _('Products from Pre-Packing List (%s) have been returned to stock.') % (picking.name,)
-            self.log(cr, uid, picking.id, log_message, context=context)
+            self.log(cr, uid, picking.id, log_message, action_xmlid='msf_outgoing.action_ppl')
             self.infolog(cr, uid, "Products from Pre-Packing List id:%s (%s) have been returned to stock." % (
                 picking.id, picking.name,
             ))
 
             # Log message for draft picking ticket
-            pick_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
-            context.update({
-                'view_id': pick_view,
-                'picking_type': 'picking_ticket',
-            })
             log_message = _('The corresponding Draft Picking Ticket (%s) has been updated.') % (picking.previous_step_id.backorder_id.name,)
-            self.log(cr, uid, draft_picking_id, log_message, context=context)
+            self.log(cr, uid, draft_picking_id, log_message, action_xmlid='msf_outgoing.action_picking_ticket')
 
             # If all moves are done or canceled, the PPL is canceled
             cancel_ppl = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('state', '!=', 'assigned')], count=True, context=context)
@@ -4733,18 +4634,9 @@ class stock_picking(osv.osv):
         # UF-2531: Create manually the message for the return pack of the ship
         self._manual_create_rw_picking_message(cr, uid, picking.id, return_info, 'usb_picking_return_products', context=context)
 
-        context.update({'picking_type': 'picking_ticket'})
-        return {
-            'name': _("Picking Ticket"),
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': draft_picking_id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-            'context': context,
-        }
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
+        res['res_id'] = draft_picking_id
+        return res
 
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return

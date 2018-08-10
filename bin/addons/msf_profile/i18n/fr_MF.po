@@ -74598,6 +74598,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:45
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:64
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:74
+#: code:addons/msf_outgoing/report/packing_list.py:90
+#: code:addons/msf_outgoing/wizard/internal_move_processor.py:156
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -101442,3 +101444,40 @@ msgstr "Attention"
 #, python-format
 msgid "PO line has been confirmed or cancelled and consequently is not editable"
 msgstr "La ligne du BC a été confirmée ou annulée et n'est donc plus éditable"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3588
+#, python-format
+msgid "The picking ticket is not in 'Draft' state. Please check this and re-try"
+msgstr "Ce Picking n'est pas dans l'état Brouillon. Veuillez vérifier et ré-essayer."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3774
+#, python-format
+msgid "%s is not a sub-pick !"
+msgstr "%s n'est pas sous-Picking"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
+#, python-format
+msgid "This object: %s is not an Incoming Shipment"
+msgstr "Cet objet: %s n'est pas un une Livraison Entrante."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:4047
+#: code:addons/msf_outgoing/msf_outgoing.py:4370
+#, python-format
+msgid "The object %s is not a pre-packing list. Please check this and re-try."
+msgstr "Cet objet %s n'est pas une Liste de Pré-Colisage. Veuillez vérifier et ré-essayer."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3583
+#, python-format
+msgid "%s is not a main-pick !"
+msgstr "%s n'est pas un Picking Brouillon"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/internal_move_processor.py:157
+#, python-format
+msgid "This object: %s is not an Internal Move"
+msgstr "Cet objet: %s n'est pas un Mouvement Interne"

@@ -1655,19 +1655,22 @@ class stock_picking(osv.osv):
         return res
 
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
-        pick = kwargs['pick']
-        view_list = {
-            'out': 'view_picking_out_form',
-            'in': 'view_picking_in_form',
-            'internal': 'view_picking_form',
-        }
-        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form'))
 
-    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        specify if we display a log or not
-        '''
-        return True
+        pick = kwargs['pick']
+        action_list = {
+            'standard': 'stock.action_picking_tree',
+            'picking': 'msf_outgoing.action_picking_ticket',
+            'ppl': 'msf_outgoing.action_ppl',
+            'packing': 'msf_outgoing.action_packing_form',
+            'out': 'stock.action_picking_tree',
+            'in': 'stock.action_picking_tree4',
+            'internal': 'stock.action_picking_tree6',
+        }
+        if pick.type == 'out' and pick.subtype:
+            return action_list.get(pick.subtype, pick.type)
+
+        return action_list.get(pick.type, 'stock.action_picking_tree6')
+
 
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1683,12 +1686,6 @@ class stock_picking(osv.osv):
         '''
         return kwargs['state_list']
 
-    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>log_picking
-        update the domain and other values if necessary in the log creation
-        '''
-        return True
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1730,8 +1727,7 @@ class stock_picking(osv.osv):
                 'draft':_('is in draft state.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
-            res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
-            context.update({'view_id': res and res[1] or False})
+            action_xmlid = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             message += state_list[pick.state]
             if infolog_message:
                 infolog_message += state_list[pick.state]
@@ -1739,12 +1735,9 @@ class stock_picking(osv.osv):
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
             if infolog_message:
                 infolog_message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=infolog_message, pick=pick)
-            # conditional test for message log
-            log_cond = self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick)
-            if log_cond and log_cond != 'packing':
-                self.log(cr, uid, pick.id, message, context=context)
-            elif not log_cond:
-                self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick)
+            if pick.type != 'out' or pick.subtype != 'packing':
+                # we dont log info on PACK/
+                self.log(cr, uid, pick.id, message, action_xmlid=action_xmlid, context=context)
 
             if infolog_message:
                 self.infolog(cr, uid, message)
