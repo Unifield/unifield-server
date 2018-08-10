@@ -562,11 +562,41 @@
             <field name="type">tree</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
                     <field name="complete_name"/>
                     <field name="usage"/>
-                    <field name="stock_real" invisible="'product_id' not in context"/>
-                    <field name="stock_virtual" invisible="'product_id' not in context"/>
+                    <field name="location_category" />
+                    <field name="stock_real" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+                    <field name="stock_virtual" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_location_tree_specific_rule" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="location_category" />
+                    <field name="stock_real_specific" invisible="'specific_rules_tree_view' not in context" />
+                    <field name="stock_virtual_specific" invisible="'specific_rules_tree_view' not in context" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_location_tree_simple" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="location_category" />
                 </tree>
             </field>
         </record>

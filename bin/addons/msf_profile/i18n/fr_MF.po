@@ -60968,6 +60968,7 @@ msgstr "Avancement"
 #: code:addons/sale/sale_order.py:2612
 #: code:addons/stock_override/stock.py:705
 #: code:addons/stock_override/stock.py:708
+#: code:addons/stock/wizard/manage_expired_stock.py:85
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -101424,3 +101425,37 @@ msgstr "Le champ que vous modifiez pourrait avoir un impact sur le mécanisme d'
 #, python-format
 msgid "You can only have one draft shipment for a given address, please check %s"
 msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_manage_expired_stock
+#: model:ir.ui.menu,name:stock.menu_action_manage_expired_stock
+#: view:manage.expired.stock:0
+msgid "Manage Expired Stock"
+msgstr "Gestion du Stock Expiré"
+
+#. module: msf_outgoing
+#: field:stock.picking,from_manage_expired:0
+msgid "The Picking was created with Manage Expired Stock"
+msgstr "Le Picking a été créé grâce à la Gestion du Stock Expiré"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:85
+#, python-format
+msgid "There is no expired quantity for this location."
+msgstr "Il n'y a pas de quantité expirée sur cette zone."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:679
+#, python-format
+msgid "All lines of Internal Moves created with Manage Expired Stock should have a batch number."
+msgstr "Toutes les lignes des Mouvements Internes créées avec la Gestion du Stock Expiré doivent avoir un numéro de lot."
+
+#. module: stock
+#: view:manage.expired.stock:0
+msgid "Create Internal Move with expired stock"
+msgstr "Créer le Mouvement Interne avec le stock expiré"
+
+#. module: stock
+#: view:stock.picking:0
+msgid "Check Expired Products' Availability"
+msgstr "Vérifier Disponibilité des produits expirés"

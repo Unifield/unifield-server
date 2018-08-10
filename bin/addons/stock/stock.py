@@ -720,6 +720,7 @@ class stock_picking(osv.osv):
         default.update({
             'claim': False,
             'claim_name': '',
+            'from_manage_expired': False,
         })
         picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
         move_obj = self.pool.get('stock.move')
