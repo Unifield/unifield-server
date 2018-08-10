@@ -1568,7 +1568,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             write_vals['error_msg'] = error_msg
             job_comment = context.get('job_comment', [])
-            job_comment += ['Line %s: %s' % (line.line_number, s) for s in warnings]
+            for msg in warnings:
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': line.simu_id.picking_id.id,
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                })
             context['job_comment'] = job_comment
 
             if values.get('pack_info_id'):

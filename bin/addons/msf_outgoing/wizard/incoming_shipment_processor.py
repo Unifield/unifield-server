@@ -57,6 +57,7 @@ class in_family_processor(osv.osv):
         'width': fields.float(digits=(16, 2), string='Width [cm]'),
         'height': fields.float(digits=(16, 2), string='Height [cm]'),
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        'volume': fields.float('Volume', digits=(16,2)),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -738,12 +739,17 @@ class stock_incoming_processor(osv.osv):
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
 
+                pack_count = 0
+                if family_data.get('from_pack') and family_data.get('to_pack'):
+                    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
+
                 for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
                     family_data.update({
-                        'weight': move.weight,
+                        'weight': move.weight / pack_count,
                         'height': move.height,
                         'length': move.length,
                         'width': move.width,
+                        'volume': move.volume,
                     })
                     break
 
@@ -825,6 +831,7 @@ class stock_incoming_processor(osv.osv):
                     'total_height': fam.height,
                     'total_length': fam.length,
                     'total_width': fam.width,
+                    'total_volume': fam.volume,
                     'integrity_status': fam.integrity_status,
                 }
                 for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
