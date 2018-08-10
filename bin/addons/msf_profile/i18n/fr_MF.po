@@ -101424,3 +101424,21 @@ msgstr "Le champ que vous modifiez pourrait avoir un impact sur le mécanisme d'
 #, python-format
 msgid "You can only have one draft shipment for a given address, please check %s"
 msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:811
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:827
+#, python-format
+msgid "Line %s of the PO: %s"
+msgstr "Ligne %s du BC: %s"
+
+#. module: msf_doc_import
+#: selection:wizard.import.po.simulation.screen.line,type_change:0
+msgid "Warning"
+msgstr "Attention"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1374
+#, python-format
+msgid "PO line has been confirmed or cancelled and consequently is not editable"
+msgstr "La ligne du BC a été confirmée ou annulée et n'est donc plus éditable"
