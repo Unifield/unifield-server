@@ -340,7 +340,7 @@
                                 default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
-                                attrs="{'readonly': ['from_manage_expired', '=', True]}"
+                                attrs="{'readonly': [('from_manage_expired', '=', True)]}"
                                 >
                                 <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="fake_state=='assigned' or linked_incoming_move != False" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
