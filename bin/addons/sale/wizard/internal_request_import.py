@@ -449,7 +449,10 @@ class internal_request_import(osv.osv):
                             })
                         else:
                             if ir_imp.no_prod_as_comment:
-                                line_data.update({'imp_comment': product_code + '\n' + comment})
+                                if comment:
+                                    line_data.update({'imp_comment': product_code + '\n' + comment})
+                                else:
+                                    line_data.update({'imp_comment': product_code})
                             else:
                                 line_data.update({'imp_comment': comment or ''})
                                 line_errors += _('Product \'%s\' does not exist in this database. ') % vals[1]
