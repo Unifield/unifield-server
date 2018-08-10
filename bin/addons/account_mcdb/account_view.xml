@@ -281,11 +281,6 @@
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
                     <field name="reconcile_total_partial_id"/>
-                    <field name="reconcile_date" invisible="1"/>
-                    <field name="unreconcile_date" invisible="1"/>
-                    <field name="unreconcile_txt" invisible="1"/>
-                    <field name="invoice" invisible="1"/>
-                    <field name="cheque_number" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>
