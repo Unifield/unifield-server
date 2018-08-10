@@ -221,18 +221,19 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        print_id = self.pool.get('stock.print.certificate').create(cr, uid, {'type': 'donation',
-                                                                             'picking_id': ids[0]})
+        newuid = hasattr(uid, 'realUid') and uid.realUid or uid
+        print_id = self.pool.get('stock.print.certificate').create(cr, newuid, {'type': 'donation', 'picking_id': ids[0]})
 
         for picking in self.browse(cr, uid, ids):
             for move in picking.move_lines:
-                self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
-                                                                              'product_id': move.product_id.id,
-                                                                              'qty': move.product_qty,
-                                                                              'print_id': print_id,
-                                                                              'move_id': move.id,
-                                                                              'prodlot_id': move.prodlot_id.id,
-                                                                              'unit_price': move.product_id.list_price})
+                self.pool.get('stock.certificate.valuation').create(cr, newuid,
+                                                                    {'picking_id': picking.id,
+                                                                     'product_id': move.product_id.id,
+                                                                     'qty': move.product_qty,
+                                                                     'print_id': print_id,
+                                                                     'move_id': move.id,
+                                                                     'prodlot_id': move.prodlot_id.id,
+                                                                     'unit_price': move.product_id.list_price})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.print.certificate',
