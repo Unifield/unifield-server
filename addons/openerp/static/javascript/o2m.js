@@ -198,10 +198,18 @@ One2Many.prototype = {
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
-            
+
             MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
 
+            if (!grid) {
+                var grid=MochiKit.DOM.getElement('_o2m_'+this.name);
+                if (grid) {
+                    MochiKit.Base.map(function (el) {form_setReadonly('', el, readonly)}, MochiKit.Selector.findChildElements(grid,['input[kind]']));
+                    MochiKit.Base.map(function (el) {form_setReadonly('', el, readonly)}, MochiKit.Selector.findChildElements(grid,['select[kind]']));
+                    MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['a.button-a']));
+                }
+            }
             // Not disabling clicks on line dynamically (in browser) to be
             // consistent with previous behaviors. In many cases (e.g. FO, SI,
             // ...) we want o2m to be readonly (no New button) but the lines

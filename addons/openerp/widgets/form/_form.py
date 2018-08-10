@@ -196,6 +196,8 @@ class Frame(TinyWidget):
             attrs['attrs'] = str(widget.attributes)
             attrs['widget'] = widget.name
 
+        if widget.__class__.__name__ == 'O2M' and widget.view_type == 'form':
+            attrs['id'] = widget.name
         if not isinstance(widget, (Char, Frame, Float, DateTime, Integer, Selection, Notebook, Separator, NewLine, Label)):
             from openerp.widgets.search import Filter
             if self.is_search \
