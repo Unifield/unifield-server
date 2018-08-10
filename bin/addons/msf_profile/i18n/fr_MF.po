@@ -101970,3 +101970,15 @@ msgstr "Ligne %s du fichier: %sLigne non importée."
 #, python-format
 msgid "Quantity must be a number. "
 msgstr "La Quantité doit être un nombre. "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:487
+#, python-format
+msgid "Cost Price must be a number. "
+msgstr "Le Prix Coûtant doit être un nombre. "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:491
+#, python-format
+msgid "UoM '%s' does not exist in this database. "
+msgstr "L'UdM '%s' n'existe pas dans la base de données. "

@@ -470,14 +470,26 @@ class internal_request_import(osv.osv):
                         line_errors += _('Quantity must be a number. ')
 
                     # Cost Price and UoM
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], limit=1, context=context)
                     if product_id and product:
                         line_data.update({'imp_cost_price': product['standard_price']})
-                        uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], limit=1, context=context)
                         if uom_ids and uom_ids[0] in [product['uom_id'][0], product['uom_po_id'][0]]:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
                             line_errors += _('UoM \'%s\' is not consistent with the Product \'%s\'. ') \
                                            % (vals[1], vals[5])
+                    else:
+                        cost_price = vals[4] or 0.00
+                        try:
+                            cost_price = float(cost_price)
+                            line_data.update({'imp_cost_price': cost_price})
+                        except:
+                            line_errors += _('Cost Price must be a number. ')
+                        if uom_ids:
+                            line_data.update({'imp_uom_id': uom_ids[0]})
+                        else:
+                            line_errors += _('UoM \'%s\' does not exist in this database. ') \
+                                           % (vals[1],)
 
                     line_data.update({
                         'error_msg': line_errors,
