@@ -479,7 +479,7 @@
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}"/>
                                 <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
-                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+                                <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" context="{'from_button': True}" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
@@ -1044,7 +1044,7 @@
                                 <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}" />
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
+                                <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
                                 <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you 'force availability' if you are sure goods are available)" context="{'from_button': True}"/>
