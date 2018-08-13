@@ -322,9 +322,10 @@ class wizard_import_in_simulation_screen(osv.osv):
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
+            self.pool.get('wizard.import.in.line.simulation.screen').unlink(cr, uid, [line.id for line in wiz.line_ids],
+                                                                            context=context)
             self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
-                                      'line_ids': [(6, 0, [])], 'percent_completed': 0, 'import_error_ok': False},
-                       context=context)
+                                      'percent_completed': 0, 'import_error_ok': False}, context=context)
             if wiz.id in SIMU_LINES:
                 del SIMU_LINES[wiz.id]
             if wiz.id in LN_BY_EXT_REF:
