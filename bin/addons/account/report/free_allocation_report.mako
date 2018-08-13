@@ -31,6 +31,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssBorderBold">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Font ss:Bold="1" />
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssBorderTopLeftRight">
 <Font ss:Bold="1" />
 <Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
@@ -48,6 +58,14 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssBorderLeftRight">
+<Font ss:Bold="1" />
+<Alignment ss:Vertical="Center" ss:Horizontal="Center" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
 <Borders>
@@ -59,6 +77,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="Short Date" />
 </Style>
 <Style ss:ID="ssNumber">
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssNumberBold">
+<Font ss:Bold="1" />
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -126,7 +155,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Worksheet ss:Name="${_('Analytic Allocation with Free')}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120"/>
-<Column ss:AutoFitWidth="1" ss:Width="90" ss:Span="10"/>
+<Column ss:AutoFitWidth="1" ss:Width="85" ss:Span="9"/>
 
 <!-- TABLE HEADER -->
 <Row>
@@ -165,43 +194,80 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Cell>
 </Row>
 
-<!-- LINES -->
-% for line in lines(data):
-<Row>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['entry_sequence']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['account']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['destination']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['cost_center']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['funding_pool']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['free1']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['free2']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${line['book_amount']}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['book_currency']|x}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssNumber">
-        <Data ss:Type="Number">${line['func_amount']}</Data>
-    </Cell>
-    <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${line['func_currency']|x}</Data>
-    </Cell>
-</Row>
+% for entry_seq in lines(data):
+    <!-- LINES -->
+    <% line_number = 0 %>
+    % for line in lines(data)[entry_seq]:
+        <% line_number += 1 %>
+        <Row>
+            % if line_number == 1:
+                <!-- entry seq. in bold -->
+                <Cell ss:StyleID="ssBorderBold">
+                    <Data ss:Type="String">${entry_seq|x}</Data>
+                </Cell>
+            % else:
+                <!-- empty cell with only left and right borders -->
+                <Cell ss:StyleID="ssBorderLeftRight">
+                    <Data ss:Type="String"></Data>
+                </Cell>
+            % endif
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['account']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['destination']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['cost_center']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['funding_pool']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['free1']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['free2']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssNumber">
+                <Data ss:Type="Number">${line['book_amount']}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['book_currency']|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssNumber">
+                <Data ss:Type="Number">${line['func_amount']}</Data>
+            </Cell>
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${line['func_currency']|x}</Data>
+            </Cell>
+        </Row>
+    % endfor
+    <!-- TOTAL -->
+    <% total_l = total_line(entry_seq) %>
+    <Row>
+        <% total_str = "%s %s" % (_("Total"), entry_seq) %>
+        <Cell ss:StyleID="ssBorderBold">
+            <Data ss:Type="String">${total_str|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ssBorderBold" ss:MergeAcross="5"></Cell>
+        <Cell ss:StyleID="ssNumberBold">
+            <Data ss:Type="Number">${total_l['book_amount']}</Data>
+        </Cell>
+        <Cell ss:StyleID="ssBorderBold">
+            <Data ss:Type="String">${line['book_currency']|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ssNumberBold">
+            <Data ss:Type="Number">${total_l['func_amount']}</Data>
+        </Cell>
+        <Cell ss:StyleID="ssBorderBold">
+            <Data ss:Type="String">${company.currency_id.name|x}</Data>
+        </Cell>
+    </Row>
+    <!-- EMPTY LINE BETWEEN EACH ENTRY SEQ. -->
+    <Row>
+        <Cell ss:MergeAcross="10"><Data ss:Type="String"></Data></Cell>
+    </Row>
 % endfor
 
 </Table>
