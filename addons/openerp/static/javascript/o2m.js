@@ -127,7 +127,7 @@ One2Many.prototype = {
         new ListView(this.name).edit(id)
     },
 
-    edit: function(id, readonly) {
+    edit: function(id, readonly, tab) {
         if(this.mode == 'tree' && this.inline) {
             this.edit_inline(id);
             return;
@@ -145,9 +145,13 @@ One2Many.prototype = {
             '_terp_view_params/_terp_view_ids': this.parent_view_ids,
             '_terp_view_params/_terp_view_mode': this.parent_view_mode,
             '_terp_view_params/_terp_context': this.parent_context || {},
-            '_terp_view_params/_terp_view_type': 'form'
+            '_terp_view_params/_terp_view_type': 'form',
         };
 
+        if (tab) {
+            params['_terp_notebook_tab'] = tab;
+            this.default_get_ctx = this.default_get_ctx.replace(/}\s*/, ", 'from_tab': 1}");
+        }
         while (names.length) {
             parents.push(names.shift());
             var prefix = parents.join('/');
@@ -180,7 +184,7 @@ One2Many.prototype = {
 
         eval_domain_context_request({
             source: this.name,
-            context : this.default_get_ctx
+            context : this.default_get_ctx,
         }).addCallback(function(res) {
             jQuery.o2m(jQuery.extend(params, {
                 _terp_o2m_context: res.context,

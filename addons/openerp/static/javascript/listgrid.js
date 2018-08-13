@@ -709,7 +709,7 @@ MochiKit.Base.update(ListView.prototype, {
     save: function(id, prev_id) {
 
         if (openobject.http.AJAX_COUNT > 0) {
-            return callLater(1, bind(this.save, this), id);
+            return callLater(1, bind(this.save, this), id, prev_id);
         }
 
         var parent_field = this.name.split('/');
@@ -1191,15 +1191,23 @@ function validateList(_list) {
             'current_id',
             parseInt(jQuery(this).closest('tr.grid-row').attr('record'), 10) || -1);
     });
+
+    // inline edition, change datetime widget, click on another pencil icon => save current record
+    jQuery('table.grid[id="'+_list+'_grid'+'"] tr.grid-row[record] td.grid-cell:not(.selector)').find('img.datetime').click(function() {
+        $list.attr(
+            'current_id',
+            parseInt(jQuery(this).closest('tr.grid-row').attr('record'), 10) || -1);
+
+    });
 }
 
-function listgridValidation(_list, o2m, record_id) {
+function listgridValidation(_list, o2m, record_id, inline) {
     o2m = parseInt(o2m, 10);
     var current_id = jQuery(idSelector(_list)).attr('current_id');
     // not(null | undefined)
     var o2m_obj;
     // Hooks O2M and ListView in case of save
-    if(o2m) { o2m_obj = new One2Many(_list); }
+    if(o2m) { o2m_obj = new One2Many(_list, inline); }
     if(current_id != null) {
         if(o2m || confirm('The record has been modified \n Do you want to save it ?')) {
             new ListView(_list).save(current_id, record_id);
