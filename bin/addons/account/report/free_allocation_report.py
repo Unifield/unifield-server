@@ -68,7 +68,7 @@ class free_allocation_report(report_sxw.rml_parse):
                 aml_dom.append(('account_id', 'in', account_ids))
             aml_ids = aml_obj.search(self.cr, self.uid, aml_dom, order='account_id', context=context)
             for aml in aml_obj.browse(self.cr, self.uid, aml_ids, context=context):
-                aml_booking = aml.amount_currency or 0.0
+                aml_booking = aml.amount_currency or (aml.debit_currency - aml.credit_currency) or 0.0
                 if not aml_booking:
                     continue
                 ad_data = {}
@@ -153,23 +153,29 @@ class free_allocation_report(report_sxw.rml_parse):
                             # (avoids multiplying by zero if an AD axis doesn't exist)
                             # no free axis
                             if abs(free1_booking) <= 10**-3 and abs(free2_booking) <= 10**-3:
-                                book_amount = aml_booking * ad_part_booking
-                                func_amount = aml_fctal * ad_part_fctal
+                                book_amount = abs(aml_booking * ad_part_booking)
+                                func_amount = abs(aml_fctal * ad_part_fctal)
                             # free1 only
                             elif abs(free2_booking) <= 10**-3:
-                                book_amount = aml_booking * free1_part_booking * ad_part_booking
-                                func_amount = aml_fctal * free1_part_fctal * ad_part_fctal
+                                book_amount = abs(aml_booking * free1_part_booking * ad_part_booking)
+                                func_amount = abs(aml_fctal * free1_part_fctal * ad_part_fctal)
                             # free2 only
                             elif abs(free1_booking) <= 10**-3:
-                                book_amount = aml_booking * free2_part_booking * ad_part_booking
-                                func_amount = aml_fctal * free2_part_fctal * ad_part_fctal
+                                book_amount = abs(aml_booking * free2_part_booking * ad_part_booking)
+                                func_amount = abs(aml_fctal * free2_part_fctal * ad_part_fctal)
                             # all axis
                             else:
-                                book_amount = aml_booking * free1_part_booking * free2_part_booking * ad_part_booking
-                                func_amount = aml_fctal * free1_part_fctal * free2_part_fctal * ad_part_fctal
+                                book_amount = abs(aml_booking * free1_part_booking * free2_part_booking * ad_part_booking)
+                                func_amount = abs(aml_fctal * free1_part_fctal * free2_part_fctal * ad_part_fctal)
                             # don't display lines with zero amount
                             if abs(book_amount) <= 10**-3:
                                 continue
+                            # determine if the amounts are positive or negative
+                            sign = 1
+                            if aml_booking > 0:  # positive JI amount = JI amount in debit
+                                sign = -1  # negative AJI
+                            book_amount = sign * book_amount
+                            func_amount = sign * func_amount
                             line = {
                                 'entry_sequence': aml.move_id.name,
                                 'account': aml.account_id.code,
