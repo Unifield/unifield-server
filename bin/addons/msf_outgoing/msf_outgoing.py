@@ -2455,18 +2455,21 @@ class stock_picking(osv.osv):
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
                 'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 'in_ref': fields.char(string='IN Reference', size=1024),
+                'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
                 }
 
-    _defaults = {'flow_type': 'full',
-                 'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)[0] or False,
-                 'subtype': 'standard',
-                 'first_shipment_packing_id': False,
-                 'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
-                 'converted_to_standard': False,
-                 'already_shipped': False,
-                 'line_state': 'empty',
-                 'in_ref': False
-                 }
+    _defaults = {
+        'flow_type': 'full',
+        'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)[0] or False,
+        'subtype': 'standard',
+        'first_shipment_packing_id': False,
+        'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
+        'converted_to_standard': False,
+        'already_shipped': False,
+        'line_state': 'empty',
+        'in_ref': False,
+        'from_manage_expired': False,
+    }
 
     _order = 'name desc'
 

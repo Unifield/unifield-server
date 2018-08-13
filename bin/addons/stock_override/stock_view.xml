@@ -340,6 +340,7 @@
                                 default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
+                                attrs="{'readonly': [('from_manage_expired', '=', True)]}"
                                 >
                                 <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="fake_state=='assigned' or linked_incoming_move != False" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
@@ -476,10 +477,12 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="has_draft_moves" invisible="1" />
+                                <field name="from_manage_expired" invisible="1" />
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}"/>
                                 <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
-                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+                                <button name="expired_assign" states="confirmed,assigned" string="Check Expired Products' Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'assigned']), ('from_manage_expired', '=', False)]}" />
+                                <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': [('from_manage_expired', '=', True)]}" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" context="{'from_button': True}" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
