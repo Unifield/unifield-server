@@ -323,7 +323,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
             self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
-                                      'simu_line_ids': [(6, 0, [])], 'percent_completed': 0, 'import_error_ok': False},
+                                      'line_ids': [(6, 0, [])], 'percent_completed': 0, 'import_error_ok': False},
                        context=context)
             if wiz.id in SIMU_LINES:
                 del SIMU_LINES[wiz.id]
