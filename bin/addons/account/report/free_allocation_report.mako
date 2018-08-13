@@ -157,7 +157,35 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="120"/>
 <Column ss:AutoFitWidth="1" ss:Width="85" ss:Span="9"/>
 
+<!-- LIST OF SELECTED FILTERS -->
+<Row>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instance')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Period')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Document date')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Posting date')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Free 1')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Free 2')}</Data></Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Cost Centers')}</Data></Cell>
+</Row>
+
+<Row>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_proprietary_instance(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1"><Data ss:Type="String">${ get_accounts(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_journals(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_fiscal_year(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_period(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_document_date(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_posting_date(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_free1(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_free2(data) or ''|x}</Data></Cell>
+    <Cell ss:StyleID="ssHeaderCell"><Data ss:Type="String">${ get_cost_centers(data) or ''|x}</Data></Cell>
+</Row>
+
 <!-- TABLE HEADER -->
+<Row></Row>
 <Row>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Entry Sequence')}</Data>
@@ -255,7 +283,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
             <Data ss:Type="Number">${total_l['book_amount']}</Data>
         </Cell>
         <Cell ss:StyleID="ssBorderBold">
-            <Data ss:Type="String">${line['book_currency']|x}</Data>
+            <Data ss:Type="String">${total_l['book_currency']|x}</Data>
         </Cell>
         <Cell ss:StyleID="ssNumberBold">
             <Data ss:Type="Number">${total_l['func_amount']}</Data>

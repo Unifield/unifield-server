@@ -33,6 +33,16 @@ class free_allocation_report(report_sxw.rml_parse):
         self.localcontext.update({
             'lines': self._get_lines,
             'total_line': self._get_total_line,
+            'get_proprietary_instance': self._get_proprietary_instance,
+            'get_accounts': self._get_accounts,
+            'get_journals': self._get_journals,
+            'get_fiscal_year': self._get_fiscal_year,
+            'get_period': self._get_period,
+            'get_document_date': self._get_document_date,
+            'get_posting_date': self._get_posting_date,
+            'get_free1': self._get_free1,
+            'get_free2': self._get_free2,
+            'get_cost_centers': self._get_cost_centers,
         })
 
     def _get_lines(self, data):
@@ -232,6 +242,121 @@ class free_allocation_report(report_sxw.rml_parse):
                 'book_currency': '',
                 'func_amount': 0.0,
             }
+
+    def _get_proprietary_instance(self, data):
+        """
+        Returns the code of the Prop. Instance selected in the wizard if any
+        """
+        instance_code = ''
+        inst_obj = self.pool.get('msf.instance')
+        if data.get('instance_id', False):
+            instance_code = inst_obj.read(self.cr, self.uid, data['instance_id'], ['code'], context=data.get('context', {}))['code']
+        return instance_code
+
+    def _get_fiscal_year(self, data):
+        """
+        Returns the name of the Fiscal Year selected in the wizard if any
+        """
+        fy_name = ''
+        fy_obj = self.pool.get('account.fiscalyear')
+        if data.get('fiscalyear_id', False):
+            fy_name = fy_obj.read(self.cr, self.uid, data['fiscalyear_id'], ['name'], context=data.get('context', {}))['name']
+        return fy_name
+
+    def _get_period(self, data):
+        """
+        Returns the name of the Period selected in the wizard if any
+        """
+        period_name = ''
+        period_obj = self.pool.get('account.period')
+        if data.get('period_id', False):
+            period_name = period_obj.read(self.cr, self.uid, data['period_id'], ['name'], context=data.get('context', {}))['name']
+        return period_name
+
+    def _get_document_date(self, data):
+        """
+        Returns the document date range selected in the wizard if any
+        """
+        doc_date = ''
+        doc_from = data.get('document_date_from', False)
+        doc_to = data.get('document_date_to', False)
+        if doc_from and doc_to:
+            doc_date = "%s - %s" % (doc_from, doc_to)
+        elif doc_from:
+            doc_date = '%s: %s ' % (_('From'), doc_from)
+        elif doc_to:
+            doc_date = '%s: %s ' % (_('To'), doc_to)
+        return doc_date
+
+    def _get_posting_date(self, data):
+        """
+        Returns the posting date range selected in the wizard if any
+        """
+        posting_date = ''
+        post_from = data.get('posting_date_from', False)
+        post_to = data.get('posting_date_to', False)
+        if post_from and post_to:
+            posting_date = "%s - %s" % (post_from, post_to)
+        elif post_from:
+            posting_date = '%s: %s ' % (_('From'), post_from)
+        elif post_to:
+            posting_date = '%s: %s ' % (_('To'), post_to)
+        return posting_date
+
+    def _get_accounts(self, data):
+        """
+        Returns the code and name of the accounts selected in the wizard if any
+        """
+        account_codes_names = ''
+        acc_obj = self.pool.get('account.account')
+        if data.get('account_ids', []):
+            accounts = acc_obj.read(self.cr, self.uid, data['account_ids'], ['code', 'name'], context=data.get('context', {}))
+            account_codes_names = ', '.join(["%s - %s" % (a['code'], a['name']) for a in accounts])
+        return account_codes_names
+
+    def _get_journals(self, data):
+        """
+        Returns the code of the journals selected in the wizard if any
+        """
+        journal_codes = ''
+        journal_obj = self.pool.get('account.journal')
+        if data.get('journal_ids', []):
+            journals = journal_obj.read(self.cr, self.uid, data['journal_ids'], ['code'], context=data.get('context', {}))
+            journal_codes = ', '.join([j['code'] for j in journals])
+        return journal_codes
+
+    def _get_free1(self, data):
+        """
+        Returns the code of the free1 accounts selected in the wizard if any
+        """
+        free1_codes = ''
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if data.get('free1_ids', []):
+            free1_accounts = analytic_acc_obj.read(self.cr, self.uid, data['free1_ids'], ['code'], context=data.get('context', {}))
+            free1_codes = ', '.join([f['code'] or '' for f in free1_accounts])
+        return free1_codes
+
+    def _get_free2(self, data):
+        """
+        Returns the code of the free2 accounts selected in the wizard if any
+        """
+        free2_codes = ''
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if data.get('free2_ids', []):
+            free2_accounts = analytic_acc_obj.read(self.cr, self.uid, data['free2_ids'], ['code'], context=data.get('context', {}))
+            free2_codes = ', '.join([f['code'] or '' for f in free2_accounts])
+        return free2_codes
+
+    def _get_cost_centers(self, data):
+        """
+        Returns the code of the Cost Centers selected in the wizard if any
+        """
+        cc_codes = ''
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if data.get('cost_center_ids', []):
+            cc_accounts = analytic_acc_obj.read(self.cr, self.uid, data['cost_center_ids'], ['code'], context=data.get('context', {}))
+            cc_codes = ', '.join([c['code'] or '' for c in cc_accounts])
+        return cc_codes
 
 
 SpreadsheetReport('report.free.allocation.report.xls', 'account.analytic.line',
