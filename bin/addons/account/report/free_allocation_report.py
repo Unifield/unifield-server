@@ -38,6 +38,7 @@ class free_allocation_report(report_sxw.rml_parse):
         res = []
         move_obj = self.pool.get('account.move')
         aml_obj = self.pool.get('account.move.line')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         context = data.get('context', {})
         account_ids = data.get('account_ids', [])
         cost_center_ids = data.get('cost_center_ids', [])
@@ -60,6 +61,17 @@ class free_allocation_report(report_sxw.rml_parse):
             dom.append(('instance_id', '=', data['instance_id']))
         if data.get('journal_ids', []):
             dom.append(('journal_id', 'in', data['journal_ids']))
+        sql_part = ""
+        sql_part_param = []
+        if cost_center_ids:
+            sql_part += " AND (aac.category != 'FUNDING' OR cc.id IN %s ) "
+            sql_part_param.append(tuple(cost_center_ids))
+        if free1_ids:
+            sql_part += " AND (aac.category != 'FREE1' OR fp.id IN %s ) "
+            sql_part_param.append(tuple(free1_ids))
+        if free2_ids:
+            sql_part += " AND (aac.category != 'FREE2' OR fp.id IN %s ) "
+            sql_part_param.append(tuple(free2_ids))
         # get the JE matching the criteria sorted by Entry Sequence
         move_ids = move_obj.search(self.cr, self.uid, dom, order='name', context=context)
         for move in move_obj.browse(self.cr, self.uid, move_ids, fields_to_fetch=['line_id'], context=context):
@@ -86,10 +98,10 @@ class free_allocation_report(report_sxw.rml_parse):
                     LEFT JOIN account_analytic_account cc on aal.cost_center_id = cc.id
                     LEFT JOIN account_analytic_account dest on aal.destination_id = dest.id
                     LEFT JOIN account_analytic_account fp on aal.account_id = fp.id
-                    WHERE move_id = %s
-                    ORDER BY free1 DESC, free2 DESC;
-                """
-                self.cr.execute(aal_sql, (aml.id,))
+                    WHERE move_id = %s """ + sql_part + """ ORDER BY free1, free2;
+                    """
+                params = (aml.id,) + tuple(sql_part_param)
+                self.cr.execute(aal_sql, params)
                 aals = self.cr.dictfetchall()
                 for aal in aals:
                     # fill in ad_data values for FREE1 axis
@@ -117,11 +129,12 @@ class free_allocation_report(report_sxw.rml_parse):
                         ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] += aal['amount_currency'] or 0.0
                         ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] += aal['amount'] or 0.0
                 # after all lines have been handled, if there is no free1 or free2 create empty free axis entries
-                if not ad_data['free1']:
+                # (unless specific free1/2 accounts have been selected)
+                if not ad_data['free1'] and not free1_ids:
                     ad_data['free1'][''] = {}
                     ad_data['free1']['']['amount_currency'] = 0.0
                     ad_data['free1']['']['amount'] = 0.0
-                if not ad_data['free2']:
+                if not ad_data['free2'] and not free2_ids:
                     ad_data['free2'][''] = {}
                     ad_data['free2']['']['amount_currency'] = 0.0
                     ad_data['free2']['']['amount'] = 0.0
