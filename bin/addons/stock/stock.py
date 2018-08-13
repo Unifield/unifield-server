@@ -905,20 +905,16 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ok = True
-        print 'test_assigned', ids
         for pick in self.browse(cr, uid, ids):
             mt = pick.move_type
             for move in pick.move_lines:
                 if (move.state in ('confirmed', 'draft')) and (mt == 'one'):
-                    print 'FALSE one'
                     return False
                 if (mt == 'direct') and (move.state == 'assigned') and (move.product_qty):
                     import traceback
                     traceback.print_stack()
-                    print 'direct TRUE'
                     return True
                 ok = ok and (move.state in ('cancel', 'done', 'assigned'))
-        print 'END', ok
         return ok
 
     def action_cancel(self, cr, uid, ids, context=None):
