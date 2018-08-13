@@ -268,10 +268,34 @@ class wizard_import_in_simulation_screen(osv.osv):
     def launch_import_pack(self, cr, uid, ids, context=None):
         return self.launch_import(cr, uid, ids, context)
 
+    def populate(self, cr, uid, import_id, picking_id, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {
+                    'move_id': move.id,
+                    'simu_id': import_id,
+                    'move_product_id': move.product_id and move.product_id.id or False,
+                    'move_product_qty': move.product_qty or 0.00,
+                    'move_uom_id': move.product_uom and move.product_uom.id or False,
+                    'move_price_unit': move.price_unit or move.product_id.standard_price,
+                    'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                    'line_number': move.line_number,
+                    'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                                          }, context=context)
+
+        return True
+
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
         Launch the simulation routine in background
         '''
+        global SIMU_LINES, LN_BY_EXT_REF
         if context is None:
             context = {}
 
@@ -298,7 +322,15 @@ class wizard_import_in_simulation_screen(osv.osv):
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
-            self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+            self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
+                                      'simu_line_ids': [(6, 0, [])], 'percent_completed': 0, 'import_error_ok': False},
+                       context=context)
+            if wiz.id in SIMU_LINES:
+                del SIMU_LINES[wiz.id]
+            if wiz.id in LN_BY_EXT_REF:
+                del LN_BY_EXT_REF[wiz.id]
+
+            self.populate(cr, uid, wiz.id, wiz.picking_id.id, context=context)
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 self.simulate(cr.dbname, uid, ids, context=context)
@@ -1730,5 +1762,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 move_ids.append(move.id)
 
         return mem_move_ids, move_ids
+
 
 wizard_import_in_line_simulation_screen()
