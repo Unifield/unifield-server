@@ -1667,7 +1667,8 @@ class account_move(osv.osv):
                                 source_date != ana.source_date or \
                                 obj_line.period_id.id != ana.real_period_id.id or \
                                 abs(amount_ji_fctal + ana.distribution_id.total_fp_fct_amount) > 10**-4 or \
-                                abs(amount + ana.distribution_id.total_fp_book_amount) > 10**-4:
+                                abs(amount + ana.distribution_id.total_fp_book_amount) > 10**-4 or \
+                                obj_line.partner_txt != ana.partner_txt:
                             recreate = True
 
                     if recreate:
