@@ -116,15 +116,15 @@ class free_allocation_report(report_sxw.rml_parse):
                             ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] = 0.0
                         ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] += aal['amount_currency'] or 0.0
                         ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] += aal['amount'] or 0.0
-                    # create an empty free axis entry if there is no ad_data for free1 and/or free2
-                    if not ad_data['free1']:
-                        ad_data['free1'][''] = {}
-                        ad_data['free1']['']['amount_currency'] = 0.0
-                        ad_data['free1']['']['amount'] = 0.0
-                    if not ad_data['free2']:
-                        ad_data['free2'][''] = {}
-                        ad_data['free2']['']['amount_currency'] = 0.0
-                        ad_data['free2']['']['amount'] = 0.0
+                # after all lines have been handled, if there is no free1 or free2 create empty free axis entries
+                if not ad_data['free1']:
+                    ad_data['free1'][''] = {}
+                    ad_data['free1']['']['amount_currency'] = 0.0
+                    ad_data['free1']['']['amount'] = 0.0
+                if not ad_data['free2']:
+                    ad_data['free2'][''] = {}
+                    ad_data['free2']['']['amount_currency'] = 0.0
+                    ad_data['free2']['']['amount'] = 0.0
                 # create lines to be displayed for the JI
                 for free1 in ad_data['free1']:
                     for free2 in ad_data['free2']:
