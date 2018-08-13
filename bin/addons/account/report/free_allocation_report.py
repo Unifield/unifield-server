@@ -63,14 +63,18 @@ class free_allocation_report(report_sxw.rml_parse):
         # get the JE matching the criteria sorted by Entry Sequence
         move_ids = move_obj.search(self.cr, self.uid, dom, order='name', context=context)
         for move in move_obj.browse(self.cr, self.uid, move_ids, fields_to_fetch=['line_id'], context=context):
-            for aml in move.line_id:
+            aml_dom = [('move_id', '=', move.id)]
+            if account_ids:
+                aml_dom.append(('account_id', 'in', account_ids))
+            aml_ids = aml_obj.search(self.cr, self.uid, aml_dom, order='account_id', context=context)
+            for aml in aml_obj.browse(self.cr, self.uid, aml_ids, context=context):
                 aml_booking = aml.amount_currency or 0.0
                 if not aml_booking:
                     continue
-                data = {}
-                data['free1'] = {}
-                data['free2'] = {}
-                data['ad'] = {}
+                ad_data = {}
+                ad_data['free1'] = {}
+                ad_data['free2'] = {}
+                ad_data['ad'] = {}
                 aal_sql = """
                     SELECT dest.code AS dest, cc.code AS cc,
                     CASE WHEN aac.category = 'FUNDING' THEN fp.code ELSE '' END AS fp,
@@ -88,47 +92,47 @@ class free_allocation_report(report_sxw.rml_parse):
                 self.cr.execute(aal_sql, (aml.id,))
                 aals = self.cr.dictfetchall()
                 for aal in aals:
-                    # fill in data values for FREE1 axis
+                    # fill in ad_data values for FREE1 axis
                     if aal['free1']:
-                        if aal['free1'] not in data['free1']:
-                            data['free1'][aal['free1']] = {}
-                            data['free1'][aal['free1']]['amount_currency'] = 0.0
-                            data['free1'][aal['free1']]['amount'] = 0.0
-                        data['free1'][aal['free1']]['amount_currency'] += aal['amount_currency'] or 0.0
-                        data['free1'][aal['free1']]['amount'] += aal['amount'] or 0.0
-                    # fill in data values for FREE2 axis
+                        if aal['free1'] not in ad_data['free1']:
+                            ad_data['free1'][aal['free1']] = {}
+                            ad_data['free1'][aal['free1']]['amount_currency'] = 0.0
+                            ad_data['free1'][aal['free1']]['amount'] = 0.0
+                        ad_data['free1'][aal['free1']]['amount_currency'] += aal['amount_currency'] or 0.0
+                        ad_data['free1'][aal['free1']]['amount'] += aal['amount'] or 0.0
+                    # fill in ad_data values for FREE2 axis
                     if aal['free2']:
-                        if aal['free2'] not in data['free2']:
-                            data['free2'][aal['free2']] = {}
-                            data['free2'][aal['free2']]['amount_currency'] = 0.0
-                            data['free2'][aal['free2']]['amount'] = 0.0
-                        data['free2'][aal['free2']]['amount_currency'] += aal['amount_currency'] or 0.0
-                        data['free2'][aal['free2']]['amount'] += aal['amount'] or 0.0
-                    # fill in data values for AD axis. Key = tuple (DEST, CC, FP)
+                        if aal['free2'] not in ad_data['free2']:
+                            ad_data['free2'][aal['free2']] = {}
+                            ad_data['free2'][aal['free2']]['amount_currency'] = 0.0
+                            ad_data['free2'][aal['free2']]['amount'] = 0.0
+                        ad_data['free2'][aal['free2']]['amount_currency'] += aal['amount_currency'] or 0.0
+                        ad_data['free2'][aal['free2']]['amount'] += aal['amount'] or 0.0
+                    # fill in ad_data values for AD axis. Key = tuple (DEST, CC, FP)
                     if aal['dest'] and aal['cc'] and aal['fp']:
-                        if (aal['dest'], aal['cc'], aal['fp']) not in data['ad']:
-                            data['ad'][(aal['dest'], aal['cc'], aal['fp'])] = {}
-                            data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] = 0.0
-                            data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] = 0.0
-                        data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] += aal['amount_currency'] or 0.0
-                        data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] += aal['amount'] or 0.0
-                    # create an empty free axis entry if there is no data for free1 and/or free2
-                    if not data['free1']:
-                        data['free1'][''] = {}
-                        data['free1']['']['amount_currency'] = 0.0
-                        data['free1']['']['amount'] = 0.0
-                    if not data['free2']:
-                        data['free2'][''] = {}
-                        data['free2']['']['amount_currency'] = 0.0
-                        data['free2']['']['amount'] = 0.0
+                        if (aal['dest'], aal['cc'], aal['fp']) not in ad_data['ad']:
+                            ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])] = {}
+                            ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] = 0.0
+                            ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] = 0.0
+                        ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount_currency'] += aal['amount_currency'] or 0.0
+                        ad_data['ad'][(aal['dest'], aal['cc'], aal['fp'])]['amount'] += aal['amount'] or 0.0
+                    # create an empty free axis entry if there is no ad_data for free1 and/or free2
+                    if not ad_data['free1']:
+                        ad_data['free1'][''] = {}
+                        ad_data['free1']['']['amount_currency'] = 0.0
+                        ad_data['free1']['']['amount'] = 0.0
+                    if not ad_data['free2']:
+                        ad_data['free2'][''] = {}
+                        ad_data['free2']['']['amount_currency'] = 0.0
+                        ad_data['free2']['']['amount'] = 0.0
                 # create lines to be displayed for the JI
-                for free1 in data['free1']:
-                    for free2 in data['free2']:
-                        for ad in data['ad']:
+                for free1 in ad_data['free1']:
+                    for free2 in ad_data['free2']:
+                        for ad in ad_data['ad']:
                             # booking amounts
-                            free1_booking = data['free1'][free1]['amount_currency']
-                            free2_booking = data['free2'][free2]['amount_currency']
-                            ad_booking = data['ad'][ad]['amount_currency']
+                            free1_booking = ad_data['free1'][free1]['amount_currency']
+                            free2_booking = ad_data['free2'][free2]['amount_currency']
+                            ad_booking = ad_data['ad'][ad]['amount_currency']
                             free1_part_booking = free1_booking / aml_booking
                             free2_part_booking = free2_booking / aml_booking
                             ad_part_booking = ad_booking / aml_booking
@@ -139,9 +143,9 @@ class free_allocation_report(report_sxw.rml_parse):
                                 free2_part_fctal = 0.0
                                 ad_part_fctal = 0.0
                             else:
-                                free1_fctal = data['free1'][free1]['amount']
-                                free2_fctal = data['free2'][free2]['amount']
-                                ad_fctal = data['ad'][ad]['amount']
+                                free1_fctal = ad_data['free1'][free1]['amount']
+                                free2_fctal = ad_data['free2'][free2]['amount']
+                                ad_fctal = ad_data['ad'][ad]['amount']
                                 free1_part_fctal = free1_fctal / aml_fctal
                                 free2_part_fctal = free2_fctal / aml_fctal
                                 ad_part_fctal = ad_fctal / aml_fctal
