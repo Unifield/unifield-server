@@ -154,8 +154,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('Analytic Allocation with Free')}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120"/>
-<Column ss:AutoFitWidth="1" ss:Width="85" ss:Span="9"/>
+<Column ss:AutoFitWidth="1" ss:Width="125"/>
+<Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="2"/>
+<Column ss:AutoFitWidth="1" ss:Width="75"/>
+<Column ss:AutoFitWidth="1" ss:Width="100"/>
+<Column ss:AutoFitWidth="1" ss:Width="120" ss:Span="1"/>
+<Column ss:AutoFitWidth="1" ss:Width="70"/>
+<Column ss:AutoFitWidth="1" ss:Width="85" ss:Span="1"/>
 
 <!-- LIST OF SELECTED FILTERS -->
 <Row>
