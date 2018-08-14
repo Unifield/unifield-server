@@ -192,6 +192,74 @@ class finance_archive(finance_export.finance_archive):
         return new_data
 
 
+# request used for OCP and OCG VI
+# Migration journals ONLY are excluded from the Account Balances
+account_balances_per_currency_sql = """
+    SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
+           c.name AS currency
+    FROM
+    (
+        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
+               SUM(col2) AS calculated, SUM(col3) AS closing
+        FROM (
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                       aml.currency_id AS currency_id,
+                ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
+                FROM account_move_line AS aml 
+                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND aml.date < %s
+                AND j.instance_id IN %s
+                AND j.type != 'migration'
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                       aml.currency_id AS currency_id,
+                0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
+                FROM account_move_line AS aml 
+                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND aml.period_id = %s
+                AND j.instance_id IN %s
+                AND j.type != 'migration'
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                       aml.currency_id AS currency_id,
+                0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
+                FROM account_move_line AS aml 
+                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND aml.date <= %s
+                AND j.instance_id IN %s
+                AND j.type != 'migration'
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        ) AS ssreq
+        GROUP BY instance_id, account_id, currency_id
+        ORDER BY instance_id, account_id, currency_id
+    ) AS req
+    INNER JOIN account_account acc ON req.account_id = acc.id
+    INNER JOIN res_currency c ON req.currency_id = c.id
+    INNER JOIN msf_instance i ON req.instance_id = i.id
+    WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
+    """
+
+
 class hq_report_ocp(report_sxw.report_sxw):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -352,71 +420,8 @@ class hq_report_ocp(report_sxw.report_sxw):
                 ORDER BY aml.id;
                 """,
             'liquidity': hq_report_ocb.liquidity_sql,
-            # Migration journals ONLY are excluded from the Account Balances
-            'account_balances_per_currency': """
-                SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
-                       c.name AS currency
-                FROM
-                (
-                    SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
-                           SUM(col2) AS calculated, SUM(col3) AS closing
-                    FROM (
-                        (
-                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
-                                   aml.currency_id AS currency_id,
-                            ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
-                            FROM account_move_line AS aml 
-                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
-                            LEFT JOIN account_account acc ON aml.account_id = acc.id
-                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
-                            WHERE acc.active = 't'
-                            AND curr.active = 't'
-                            AND aml.date < %s
-                            AND j.instance_id IN %s
-                            AND j.type != 'migration'
-                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
-                        )
-                    UNION
-                        (
-                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
-                                   aml.currency_id AS currency_id,
-                            0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
-                            FROM account_move_line AS aml 
-                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
-                            LEFT JOIN account_account acc ON aml.account_id = acc.id
-                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
-                            WHERE acc.active = 't'
-                            AND curr.active = 't'
-                            AND aml.period_id = %s
-                            AND j.instance_id IN %s
-                            AND j.type != 'migration'
-                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
-                        )
-                    UNION
-                        (
-                            SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
-                                   aml.currency_id AS currency_id,
-                            0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
-                            FROM account_move_line AS aml 
-                            LEFT JOIN account_journal j ON aml.journal_id = j.id 
-                            LEFT JOIN account_account acc ON aml.account_id = acc.id
-                            LEFT JOIN res_currency curr ON aml.currency_id = curr.id
-                            WHERE acc.active = 't'
-                            AND curr.active = 't'
-                            AND aml.date <= %s
-                            AND j.instance_id IN %s
-                            AND j.type != 'migration'
-                            GROUP BY aml.instance_id, aml.account_id, aml.currency_id
-                        )
-                    ) AS ssreq
-                    GROUP BY instance_id, account_id, currency_id
-                    ORDER BY instance_id, account_id, currency_id
-                ) AS req
-                INNER JOIN account_account acc ON req.account_id = acc.id
-                INNER JOIN res_currency c ON req.currency_id = c.id
-                INNER JOIN msf_instance i ON req.instance_id = i.id
-                WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
-                """,
+
+            'account_balances_per_currency': account_balances_per_currency_sql,
         }
         if plresult_ji_in_ids:
             # NOTE: for these entries: booking and functional ccy are the same
