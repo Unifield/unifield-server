@@ -1025,6 +1025,9 @@ class purchase_order_line(osv.osv):
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
+        if vals.get('price_unit') and not vals.get('original_price'):
+            vals.update({'original_price': vals['price_unit'] or 0.00})
+
         # [imported from 'order_nomenclature']
         # Don't save filtering data
         self._relatedFields(cr, uid, vals, context)
