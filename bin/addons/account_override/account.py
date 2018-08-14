@@ -798,7 +798,7 @@ class account_move(osv.osv):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
