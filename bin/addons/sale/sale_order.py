@@ -2418,6 +2418,9 @@ class sale_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         signal = 'cancel_r' if resource else 'cancel'
 
+        if context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
+
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty
             # create split to cancel:
