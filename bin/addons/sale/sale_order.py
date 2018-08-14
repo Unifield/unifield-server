@@ -2004,6 +2004,7 @@ class sale_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
+        'from_cancel_out': fields.boolean('OUT cancel'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2011,6 +2012,7 @@ class sale_order_line(osv.osv):
         'delay': 0.0,
         'product_uom_qty': 1,
         'product_uos_qty': 1,
+        'from_cancel_out': False,
         'sequence': 10,
         'invoiced': 0,
         'state': 'draft',
@@ -2119,6 +2121,7 @@ class sale_order_line(osv.osv):
             'created_by_rfq': False,
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
+            'from_cancel_out': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2418,6 +2421,9 @@ class sale_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         signal = 'cancel_r' if resource else 'cancel'
 
+        if context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
+
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty
             # create split to cancel:
@@ -2429,6 +2435,8 @@ class sale_order_line(osv.osv):
             }, context=context)
             context.update({'return_new_line_id': True})
             new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            if signal == 'done':
+                self.pool.get('sale.order.line').write(cr, uid, [new_line_id], {'from_cancel_out': True}, context=context)
             context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
 
@@ -2462,13 +2470,18 @@ class sale_order_line(osv.osv):
         line and its procurement.
         @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
-        # Documents
-        so_obj = self.pool.get('sale.order')
-        wf_service = netsvc.LocalService("workflow")
-        signal = 'cancel_r' if resource else 'cancel'
 
         if context is None:
             context = {}
+
+        so_obj = self.pool.get('sale.order')
+        wf_service = netsvc.LocalService("workflow")
+
+        signal = 'cancel'
+        if resource:
+            signal = 'cancel_r'
+        elif context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
 
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
@@ -2476,6 +2489,8 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         if qty_diff >= line.product_uom_qty:
+            if signal == 'done':
+                self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement

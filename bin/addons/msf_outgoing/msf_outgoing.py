@@ -4694,9 +4694,6 @@ class stock_picking(osv.osv):
             if picking.subtype == 'picking' and picking.state in ('done',):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
 
-        # first call to super method, so if some checks fail won't perform other actions anyway
-        # call super - picking is canceled
-        super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
 
         for picking in self.browse(cr, uid, ids, context=context):
 
@@ -4776,6 +4773,7 @@ class stock_picking(osv.osv):
                                                                'to_pack': move.to_pack,
                                                                'state': 'assigned'}, context=context)
 
+        super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         return True
 
 stock_picking()
@@ -5226,7 +5224,6 @@ class stock_move(osv.osv):
                         # all in lines processed or will be processed for this po line
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
-
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
@@ -5234,7 +5231,12 @@ class stock_move(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.id not in context.get('not_resource_move', []):
+                        has_linked_pol = self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
+                        if has_linked_pol:
+                            context['sol_done_instead_of_cancel'] = True
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
+                        if has_linked_pol:
+                            context.pop('sol_done_instead_of_cancel')
 
         self.action_done(cr, uid, move_to_done, context=context)
 
