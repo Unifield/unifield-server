@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE WIZARD [
+    <!ENTITY wizard_template SYSTEM "../resource/wizard_template_view.xml">
+]>
+
 <openerp>
     <data>
 
@@ -2783,7 +2788,7 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field name="model">free.allocation.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form>
+                <form string="Analytic Allocation with Free - Report">
                     <separator colspan="4" string="General"/>
                     <field name="instance_id" domain="[('instance_to_display_ids', '=', True)]"/>
                     <newline/>
@@ -2806,6 +2811,8 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                     <button string="Cancel" special="cancel" icon="gtk-cancel" colspan="2"/>
                     <button name="print_free_allocation_report" type="object" string="Print report" icon="gtk-print"
                             colspan="2"/>
+                    <!-- to be able to store the wizard values -->
+                    &wizard_template;
                 </form>
             </field>
         </record>

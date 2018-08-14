@@ -52,6 +52,7 @@ class free_allocation_report(report_sxw.rml_parse):
         if not self.lines:
             move_obj = self.pool.get('account.move')
             aml_obj = self.pool.get('account.move.line')
+            bg_obj = self.pool.get('memory.background.report')
             context = data.get('context', {})
             account_ids = data.get('account_ids', [])
             cost_center_ids = data.get('cost_center_ids', [])
@@ -87,7 +88,9 @@ class free_allocation_report(report_sxw.rml_parse):
                 sql_part_param.append(tuple(free2_ids))
             # get the JE matching the criteria sorted by Entry Sequence
             move_ids = move_obj.search(self.cr, self.uid, dom, order='name', context=context)
+            current_line_position = 0
             for move in move_obj.browse(self.cr, self.uid, move_ids, fields_to_fetch=['name'], context=context):
+                current_line_position += 1
                 self.lines[move.name] = []
                 book_total = 0.0
                 func_total = 0.0
@@ -96,7 +99,9 @@ class free_allocation_report(report_sxw.rml_parse):
                 if account_ids:
                     aml_dom.append(('account_id', 'in', account_ids))
                 aml_ids = aml_obj.search(self.cr, self.uid, aml_dom, order='account_id', context=context)
-                for aml in aml_obj.browse(self.cr, self.uid, aml_ids, context=context):
+                aml_field_list = ['amount_currency', 'debit_currency', 'credit_currency', 'currency_id', 'debit',
+                                  'credit', 'account_id', 'functional_currency_id']
+                for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_field_list, context=context):
                     aml_booking = aml.amount_currency or (aml.debit_currency - aml.credit_currency) or 0.0
                     if not aml_booking:
                         continue
@@ -224,7 +229,7 @@ class free_allocation_report(report_sxw.rml_parse):
                                     'func_amount': func_amount,
                                     'func_currency': aml.functional_currency_id and aml.functional_currency_id.name or '',
                                 }
-                                self.lines[aml.move_id.name].append(line)
+                                self.lines[move.name].append(line)
                                 book_total += book_amount or 0.0
                                 func_total += func_amount or 0.0
                 # create the total line for each Entry Sequence
@@ -237,6 +242,7 @@ class free_allocation_report(report_sxw.rml_parse):
                 else:
                     # empty total line in case there is no analytic line for this move
                     self.total_lines[move.name] = {}
+                bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(move_ids), context=context)
         return self.lines
 
     def _get_total_line(self, entry_sequence):

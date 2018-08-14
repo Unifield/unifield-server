@@ -25,6 +25,7 @@ from osv import fields
 
 
 class free_allocation_wizard(osv.osv_memory):
+    _inherit = 'wizard.template.form'  # to be able to store the wizard values
     _name = 'free.allocation.wizard'
     _description = 'Wizard for the "Analytic Allocation with Free - Report"'
 
@@ -71,6 +72,7 @@ class free_allocation_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        bg_obj = self.pool.get('memory.background.report')
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {
             'fiscalyear_id': wiz.fiscalyear_id and wiz.fiscalyear_id.id or False,
@@ -87,6 +89,13 @@ class free_allocation_wizard(osv.osv_memory):
             'free2_ids': wiz.free2_ids and [x.id for x in wiz.free2_ids] or [],
         }
         report_name = 'free.allocation.report.xls'
+        # make the report run in background
+        background_id = bg_obj.create(cr, uid, {'file_name': 'Analytic Allocation with Free - Report',
+                                                'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+        data['keep_open'] = 1
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
