@@ -356,10 +356,26 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'target': 'same',
                 'context': context}
 
+    def populate(self, cr, uid, imp_id, context=None):
+        if context is None:
+            context = {}
+
+        wiz = self.browse(cr, uid, imp_id, fields_to_fetch=['order_id'], context=context)
+        for line in wiz.order_id.order_line:
+            self.pool.get('wizard.import.po.simulation.screen.line').create(cr, uid, {
+                'po_line_id': line.id,
+                'in_line_number': line.line_number,
+                'in_ext_ref': line.external_ref,
+                'simu_id': imp_id,
+            }, context=context)
+
+        return True
+
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
         Launch the simulation routine in background
         '''
+        global SIMU_LINES, LN_BY_EXT_REF, EXT_REF_BY_LN
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -392,7 +408,17 @@ class wizard_import_po_simulation_screen(osv.osv):
 
                     raise osv.except_osv(_('Error'), _("The given XML file is not structured as expected in the DTD:\n %s") % error_msg)
 
-        self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+        self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
+                                  'simu_line_ids': [(6, 0, [])], 'percent_completed': 0, 'import_error_ok': False},
+                   context=context)
+        if ids[0] in SIMU_LINES:
+            del SIMU_LINES[ids[0]]
+        if ids[0] in LN_BY_EXT_REF:
+            del LN_BY_EXT_REF[ids[0]]
+        if ids[0] in EXT_REF_BY_LN:
+            del EXT_REF_BY_LN[ids[0]]
+
+        self.populate(cr, uid, ids[0], context=context)
         cr.commit()
         new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
         new_thread.start()
@@ -597,7 +623,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                 values_header_errors = []
                 values_line_errors = []
                 message = ''
-
                 header_values = {}
 
                 if wiz.filetype == 'excel':
@@ -1781,5 +1806,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)
 
         return True
+
 
 wizard_import_po_simulation_screen_line()
