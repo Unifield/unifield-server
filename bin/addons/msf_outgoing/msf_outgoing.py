@@ -4691,9 +4691,6 @@ class stock_picking(osv.osv):
             if picking.subtype == 'picking' and picking.state in ('done',):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
 
-        # first call to super method, so if some checks fail won't perform other actions anyway
-        # call super - picking is canceled
-        super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
 
         for picking in self.browse(cr, uid, ids, context=context):
 
@@ -4773,6 +4770,7 @@ class stock_picking(osv.osv):
                                                                'to_pack': move.to_pack,
                                                                'state': 'assigned'}, context=context)
 
+        super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         return True
 
 stock_picking()
