@@ -91,24 +91,14 @@ class account_cheque_register(osv.osv):
 
     _columns = {
         'display_type': fields.selection([('not_reconciled', 'Outstanding cheques only'), ('all', 'All cheques')], \
-            string="Display type", required=True, states={'draft': [('readonly', True)]}),
+                                         string="Display type", required=True, states={'draft': [('readonly', True)]}),
         'line_ids': one2many_register('account.bank.statement.line', 'statement_id', 'Statement lines', \
-                states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft': [('readonly', True)]}),
+                                      states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft': [('readonly', True)]}),
     }
 
     _defaults = {
         'display_type': 'all',
     }
-
-    def button_open_cheque(self, cr, uid, ids, context=None):
-        """
-        When you click on "Open Cheque Register"
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for chq in self.browse(cr, uid, ids, context=context):
-            self.write(cr, uid, [chq.id], {'state' : 'open', 'name': chq.journal_id.name})
-        return True
 
     def button_confirm_cheque(self, cr, uid, ids, context=None):
         """

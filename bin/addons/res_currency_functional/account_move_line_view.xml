@@ -73,6 +73,8 @@
                             context="{'curr': currency_id}"
                             />
                         <field name="partner_type_mandatory" invisible="1" colspan="2"/>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="transfer_journal_id" invisible="1"/>
                         <newline />
                         <field name="credit" readonly="0" colspan="2"/>
                         <field name="debit" readonly="0" colspan="2"/>

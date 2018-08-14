@@ -35,7 +35,6 @@
     ],
     "demo_xml": [],
     'test': [
-        'test/out_step.yml'
     ],
     'installable': True,
 }

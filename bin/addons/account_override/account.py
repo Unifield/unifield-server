@@ -76,7 +76,6 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
-    #@@@override account.account_account.__compute
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
         """ compute the balance, debit and/or credit for the provided
@@ -136,7 +135,8 @@ class account_account(osv.osv):
             # target_move from chart of account wizard
             filters = filters.replace("AND l.state <> 'draft'", '')
             prefilters = " "
-            if context.get('move_state', False):
+            possible_states = [x[0] for x in self.pool.get('account.move')._columns['state'].selection]
+            if context.get('move_state', False) and context['move_state'] in possible_states:
                 prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
             else:
                 prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
@@ -150,12 +150,10 @@ class account_account(osv.osv):
             # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
             # ON l.account_id = tmp.id
             # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l, account_move m" +\
-                       " WHERE l.account_id IN %s " \
-                       + prefilters + filters +
-                       " GROUP BY l.account_id")
+            request = """SELECT l.account_id as id, %s
+                       FROM account_move_line l, account_move m
+                       WHERE l.account_id IN %%s %s
+                       GROUP BY l.account_id""" % (', '.join(map(mapping.__getitem__, field_names)), prefilters + filters)  # not_a_user_entry
             params = [tuple(children_and_consolidated)]
             if query_params:
                 for qp in query_params:
@@ -197,7 +195,6 @@ class account_account(osv.osv):
                     new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[i].get(f_name), context=context)
                     res[i][f_name] = new_amount
         return res
-    #@@@end
 
     def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -243,10 +240,10 @@ class account_account(osv.osv):
         if args == [('restricted_area', '=', 'invoice_lines')]:
             # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_stv:
+            if context_stv or context.get('check_line_stv'):
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
         elif args == [('restricted_area', '=', 'intermission_header')]:
-            if context_ivo:
+            if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 # + prevent from using donation accounts
@@ -254,7 +251,7 @@ class account_account(osv.osv):
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
-            elif context_ivi:
+            elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
                 # + prevent from using donation accounts
@@ -646,8 +643,9 @@ class account_account(osv.osv):
             acc_type = acc_id.type_for_register
             transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
-            dp_payroll_not_ok = acc_type in ['down_payment', 'payroll'] and (not partner_id or journal_id or employee_id)
-            if transfer_not_ok or advance_not_ok or dp_payroll_not_ok:
+            dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
+            payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
+            if transfer_not_ok or advance_not_ok or dp_not_ok or payroll_not_ok:
                 not_compatible_ids.append(acc_id.id)
         if not_compatible_ids:
             self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
@@ -769,7 +767,7 @@ class account_journal(osv.osv):
                         # BKLG-19/7: forbid creation of MANUAL journal entries
                         # from COORDO on a PROJECT journal
                         msf_instance_obj = self.pool.get('msf.instance')
-                        forbid_instance_ids = msf_instance_obj.search(cr, uid, 
+                        forbid_instance_ids = msf_instance_obj.search(cr, uid,
                                                                       [('level', '=', 'project')], context=context)
                         if forbid_instance_ids:
                             return [('instance_id', 'not in', forbid_instance_ids)]
@@ -781,7 +779,7 @@ class account_journal(osv.osv):
         return res
 
     _columns = {
-        # BKLG-19/7: journals instance filter 
+        # BKLG-19/7: journals instance filter
         'instance_filter': fields.function(
             _get_fake, fnct_search=_search_instance_filter,
             method=True, type='boolean', string='Instance filter'
@@ -1062,10 +1060,6 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
-                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
-                if 'manual_name' in vals:
-                    ml_vals.update({'name': vals.get('manual_name', '')})
-
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
@@ -1139,12 +1133,27 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    # Only Donation accounts are allowed with an ODX journal
+                    if m.journal_id.type == 'extra' and ml.account_id.type_for_register != 'donation':
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
+                                                             'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue
                     if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+    def update_line_description(self, cr, uid, ids, context=None):
+        """
+        Updates the description of the JIs with the one of the JE
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
+            if m.manual_name and m.line_id:
+                aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
 
     def copy(self, cr, uid, a_id, default={}, context=None):
         """
@@ -1215,6 +1224,7 @@ class account_move(osv.osv):
         user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
+            context.update({'move_ids_to_delete': to_delete})
             ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):

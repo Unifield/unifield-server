@@ -212,7 +212,7 @@
                             <filter name="engagements" string="Engagements" domain="[('journal_id.type','=','engagement')]" icon="terp-folder-violet"
                                     help="Analytic Journal Items related to an engagement journal."/>
                             <filter name="intl_engagements" string="ENGI"
-                                domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                                domain="[('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
                                 icon="terp-folder-violet"
                                 help="Analytic Journal Items related to an ENGI journal."
                                 />
@@ -221,6 +221,7 @@
                             <field name="document_date" select="1"/>
                             <field name="date"/>
                             <field name="period_id"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>
@@ -248,6 +249,7 @@
                         <group>
                             <field name="amount" select="1"/>
                             <field name="amount_currency"/>
+                            <field name="currency_id" domain="[('active', '=', True)]"/>
                         </group>
                     </group>
                     <newline/>

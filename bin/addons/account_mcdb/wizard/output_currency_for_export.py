@@ -98,51 +98,78 @@ class output_currency_for_export(osv.osv_memory):
             res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, uid, ids, context=None, data_from_selector={}):
         """
         Launch export wizard
         """
         # Some verifications
-        if not context or not context.get('active_ids', False) or not context.get('active_model', False):
+        if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not data_from_selector:
             raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        model = context.get('active_model')
+        mcdb_obj = self.pool.get('account.mcdb')
+        model = data_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
-        wiz = self.browse(cr, uid, ids, context=context)[0]
+        wiz = currency_id = choice = False
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
-        currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
-        choice = wiz and wiz.export_format or False
-        if not choice:
-            raise osv.except_osv(_('Error'), _('Please choose an export format!'))
+        if data_from_selector:
+            currency_id = 'output_currency_id' in data_from_selector and data_from_selector['output_currency_id'] or company_currency
+            choice = data_from_selector.get('export_format')
+        else:
+            wiz = self.browse(cr, uid, ids, context=context)[0]
+            currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
+            choice = wiz and wiz.export_format or False
+            if not choice:
+                raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         datas = {}
         # Check user choice
-        if wiz.export_selected:
+        if data_from_selector and 'ids' in data_from_selector:
+            datas = {'ids': data_from_selector['ids']}
+        elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
+        elif wiz and not wiz.export_selected and choice == 'pdf':
+                # get the ids of the entries and the header to display
+                # (for gl.selector/analytic.selector report if we come from JI/AJI view)
+            dom = context.get('search_domain', [])
+            if context.get('original_domain'):
+                dom.extend(context['original_domain'])
+            if context.get('new_filter_domain'):
+                dom.extend(context['new_filter_domain'])
+            if model == 'account.move.line':
+                dom.append(('period_id.number', '!=', 0))  # exclude IB entries
+            export_obj = self.pool.get(model)
+            if export_obj:
+                limit = 5000  # max for PDF + issue if a large number of entries is exported (cf US-661)
+                datas = {
+                    'ids': export_obj.search(cr, uid, dom, context=context, limit=limit),
+                    'header': mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context),
+                }
         else:
-            #export_obj = self.pool.get(model)
-            #args = context.get('search_domain')
-            #datas = {'ids': export_obj.search(cr, uid, args, context=context)}
             context['from_domain'] = True
         # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
         # Update datas for context
         datas.update({'context': context})
-        if wiz.currency_id:
+        display_output_curr = data_from_selector and data_from_selector.get('output_currency_id') or wiz and wiz.currency_id
+        if display_output_curr:
             # seems that there is a bug on context, so using datas permit to transmit info
             datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
         report_name = 'account.move.line'
-        if model == 'account.analytic.line':
+        if model == 'account.move.line' and choice == 'pdf':
+            report_name = 'gl.selector'
+        elif model == 'account.analytic.line' and choice == 'pdf':
+            report_name = 'analytic.selector'
+        elif model == 'account.analytic.line':
             report_name = 'account.analytic.line'
         elif model == 'account.bank.statement.line':
             report_name = 'account.bank.statement.line'
 
         context.update({'display_fp': display_fp})
 
-        if model == 'account.analytic.line' and wiz.state == 'free':
+        if not data_from_selector and model == 'account.analytic.line' and wiz and wiz.state == 'free':
             report_name = 'account.analytic.line.free'
             context.update({'display_fp': False})
 
@@ -151,13 +178,20 @@ class output_currency_for_export(osv.osv_memory):
         elif choice == 'xls':
             report_name += '_xls'
 
+        filename = data_from_selector.get('target_filename') or '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
+        datas['target_filename'] = filename
 
-        datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
-
-        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls'):
+        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls', 'pdf'):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
-            context['background_time'] = wiz.background_time
+            context['background_time'] = wiz and wiz.background_time or 2
+        if data_from_selector.get('header'):
+            datas['header'] = data_from_selector['header']
+        # truncate the header if it is too long
+        if 'header' in datas and len(datas['header']) > 7500:
+            datas['header'] = "%s..." % datas['header'][:7500]
+        if 'ids' in datas and not datas['ids']:
+            raise osv.except_osv(_('Error'), _('There is no data to export.'))
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
@@ -194,7 +228,30 @@ class background_report(osv.osv_memory):
             percent = 1.00
         self.write(cr, uid, ids, {'percent': percent})
 
-
+    def compute_percent(self, cr, uid, current_line_position, nb_lines, before=0, after=1, refresh_rate=50, context=None):
+        """
+        Computes and updates the percentage of the Report Generation:
+        :param cr: DB cursor
+        :param uid: id of the current user
+        :param current_line_position: position of the current line starting from 1
+        :param nb_lines: total number of lines which will be handled
+        :param before: value of the loading percentage before the first call to this method (0 = the generation hasn't started yet)
+        :param after: value of the loading percentage expected after the last call to this method (1 = 100% of the report will be generated)
+        :param refresh_rate: the loading percentage will be updated every "refresh_rate" lines
+        :param context: dictionary which must contain the background_id
+        :return: the percentage of the report Generation
+        """
+        if context is None:
+            context = {}
+        percent = 0.0
+        if context.get('background_id'):
+            if current_line_position == nb_lines:
+                percent = after
+                self.update_percent(cr, uid, [context['background_id']], percent)
+            elif current_line_position % refresh_rate == 0:
+                percent = before + (current_line_position / float(nb_lines) * (after - before))
+                self.update_percent(cr, uid, [context['background_id']], percent)
+        return percent
 
 
 background_report()

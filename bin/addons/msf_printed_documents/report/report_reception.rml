@@ -407,6 +407,10 @@
             </tr>
         </blockTable>
 
+        <blockTable colWidths="800.0" >
+            <tr><td></td></tr>
+        </blockTable>
+
         <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="7">
 
             <tr><td></td></tr>
@@ -476,14 +480,14 @@
 
             <tr>
                 <td>
-                    <blockTable colWidths="30,325,50,50,50,60,75,60,20,20,20,20,20" style="OrderInformations3">
+                    <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
                         <tr>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">Item</para>
                                 </td>
 
                                 <td>
-                                <blockTable colWidths="90,235" style="OrderInformations4">
+                                <blockTable colWidths="110,260" style="OrderInformations4">
                                     <tr>
                                         <td>
                                             <para style="TextInformation" alignment="LEFT">Code</para>
@@ -520,7 +524,7 @@
                                     <para style="TextInformation5" alignment="CENTER">Batch / Serial number</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">Expiry date</para>
+                                    <para style="TextInformation5" alignment="CENTER">Expiry date</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">ED</para>
@@ -551,20 +555,20 @@
             <tr>
             [[ repeatIn(get_lines(objects[0]), 'line') ]]
                 <td>
-                    <blockTable colWidths="30,325,50,50,50,60,75,60,20,20,20,20,20" style="OrderInformations3">
+                    <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
                         <tr>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ getNbItem() ]]</para>
                                 </td>
 
                                 <td>
-                                <blockTable colWidths="90,235" style="OrderInformations4">
+                                <blockTable colWidths="110,260" style="OrderInformations4">
                                     <tr>
                                         <td>
-                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.default_code or False ]]</para>
+                                            <para style="TextInformationSpe" alignment="LEFT">[[ line.product_id and line.product_id.default_code or False ]]</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.name or False ]]</para>
+                                            <para style="TextInformationSpe" alignment="LEFT">[[ line.product_id and line.product_id.name or False ]]</para>
                                         </td>
                                     </tr>
                                     <tr>

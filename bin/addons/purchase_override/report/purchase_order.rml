@@ -6,9 +6,7 @@
             <frame id="first" x1="30.0" y1="15.0" width="772" height="500" />
 
         <pageGraphics>
-            <drawString x="35" y="560.0">PURCHASE ORDER ([[ getSel(objects[0], 'order_type') ]])</drawString>
-            <fill color="blue"/>
-            <drawString x="35" y="548.0">[[ '%s %s %s' % (getSel(objects[0], 'order_type'), objects[0].name, getSel(objects[0], 'state')) ]]</drawString>
+            <drawString x="35" y="560.0">PURCHASE ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
             <drawString x="700" y="548.0">[[ time.strftime('%Y-%m-%d') ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
@@ -83,7 +81,7 @@
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
-        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="3.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
@@ -205,13 +203,13 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].office_name or objects[0].company_id.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address.office_name or objects[0].from_address.partner_id.name or objects[0].partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].partner_address_id.office_name or objects[0].partner_address_id.partner_id.name or objects[0].partner_id.name ]]</para>                   
+                    <parawrap style="TextInformation">[[ (objects[0].partner_address_id.office_name or objects[0].partner_address_id.partner_id.name or objects[0].partner_id.name or '')[0:100] ]]</parawrap>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -228,13 +226,13 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total Lines : [[ len(objects[0].order_line) ]]</para>
+                    <para style="TextInformation">Total Lines : [[ len([x for x in objects[0].order_line if x.state not in ('cancel', 'cancel_r')]) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.street or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -263,7 +261,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].street2 or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.street2 or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -292,7 +290,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].zip or '' ]] [[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].city or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.zip or '' ]] [[ objects[0].from_address and objects[0].from_address.city or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -321,7 +319,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].country_id and objects[0].company_id.partner_id.address[0].country_id.name or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.country_id and objects[0].from_address.country_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -350,7 +348,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].phone or '' ]]</para>
+                    <para style="TextInformation">[[ objects[0].from_address and objects[0].from_address.phone or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -379,7 +377,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <parawrap style="TextInformationMail">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].email or '' ]]</parawrap>
+                    <parawrap style="TextInformationMail">[[ objects[0].from_address and objects[0].from_address.email or '' ]]</parawrap>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -564,7 +562,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
             <tr >
                 <td>
                     <para style="Lines"><i>Line</i></para>
@@ -597,8 +595,8 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[ repeatIn(objects[0].order_line, 'line') ]]
+            <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
+                [[ repeatIn(filter_lines(objects[0]), 'line') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>

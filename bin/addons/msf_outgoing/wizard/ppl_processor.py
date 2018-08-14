@@ -23,7 +23,7 @@ from osv import fields
 from osv import osv
 
 from tools.translate import _
-
+from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 
 class ppl_processor(osv.osv):
     """
@@ -46,7 +46,69 @@ class ppl_processor(osv.osv):
             string='Families',
             help="Pack of products",
         ),
+        'draft_step1': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
+        'draft_step2': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
     }
+
+    _defaults = {
+        'draft_step1': lambda *a: False,
+        'draft_step2': lambda *a: False,
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'move_ids' in vals:
+            vals['draft_step2'] = False
+        return super(ppl_processor, self).write(cr, uid, ids, vals, context=context)
+
+    def do_reset_step1(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+    def do_save_draft_step1(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'draft_step1': True}, context=context)
+
+        return {}
+
+    def do_reset_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft_step2': False}, context=context) #TODO Do not reset step 1 ?
+
+        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+
+    def do_save_draft_step2(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'draft_step2': True, 'draft_step1': True}, context=context)
+
+        return {}
+
+
 
     def do_check_ppl(self, cr, uid, ids, context=None):
         """
@@ -58,6 +120,60 @@ class ppl_processor(osv.osv):
         res = self.do_ppl_step1(cr, uid, ids, context=context, just_check=True)
 
         return res
+
+    def check_sequences(self, cr, uid, sequences, ppl_move_obj, context=None):
+        """
+        check pack sequences integrity
+        sequences is a list of tuples: [(from, to, internal_id), ...]
+        """
+        missing_ids = []
+        to_smaller_ids = []
+        overlap_ids = []
+        gap_ids = []
+        # Sort the sequence according to from value
+        sequences = sorted(sequences, key=lambda seq: seq[0])
+
+        # Rule #1, the first from value must be equal o 1
+        if sequences[0][0] != 1:
+            missing_ids.append(sequences[0][2])
+
+        # Go through the list of sequences applying the rules
+        for i in range(len(sequences)):
+            seq = sequences[i]
+            # Rules #2-#3 applies from second element
+            if i > 0:
+                # Previous sequence
+                seqb = sequences[i - 1]
+                # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+                if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
+                    overlap_ids.append(seq[2])
+                # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+                if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
+                    if seq[0] < seqb[1] + 1:
+                        overlap_ids.append(seq[2])
+                    if seq[0] > seqb[1] + 1:
+                        gap_ids.append(seq[2])
+            # rule #4: to[i] >= from[i]
+            if not (seq[1] >= seq[0]):
+                to_smaller_ids.append(seq[2])
+        ok = True
+        if missing_ids:
+            ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
+            ok = False
+
+        if to_smaller_ids:
+            ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
+            ok = False
+
+        if overlap_ids:
+            ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
+            ok = False
+
+        if gap_ids:
+            ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
+            ok = False
+
+        return ok
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
         """
@@ -80,12 +196,8 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
-        missing_ids = []
-        to_smaller_ids = []
-        overlap_ids = []
-        gap_ids = []
         ok_ids = []
-
+        ok = True
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
             sequences = []
@@ -98,49 +210,12 @@ class ppl_processor(osv.osv):
             if not sequences:
                 return False
 
-            # Sort the sequence according to from value
-            sequences = sorted(sequences, key=lambda seq: seq[0])
+            ok = ok and self.check_sequences(cr, uid, sequences, ppl_move_obj)
 
-            # Rule #1, the first from value must be equal o 1
-            if sequences[0][0] != 1:
-                missing_ids.append(sequences[0][2])
-
-            # Go through the list of sequences applying the rules
-            for i in range(len(sequences)):
-                seq = sequences[i]
-                # Rules #2-#3 applies from second element
-                if i > 0:
-                    # Previous sequence
-                    seqb = sequences[i - 1]
-                    # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
-                    if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
-                        overlap_ids.append(seq[2])
-                    # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
-                        if seq[0] < seqb[1] + 1:
-                            overlap_ids.append(seq[2])
-                        if seq[0] > seqb[1] + 1:
-                            gap_ids.append(seq[2])
-                # rule #4: to[i] >= from[i]
-                if not (seq[1] >= seq[0]):
-                    to_smaller_ids.append(seq[2])
-
-        if missing_ids:
-            ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
-
-        if to_smaller_ids:
-            ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
-
-        if overlap_ids:
-            ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
-
-        if gap_ids:
-            ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
-
-        if not (missing_ids or to_smaller_ids or overlap_ids or gap_ids) and just_check:
+        if ok and just_check:
             ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
-        if missing_ids or to_smaller_ids or overlap_ids or gap_ids or just_check:
+        if not ok or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
@@ -177,8 +252,10 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
-        family_no_weight = []
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft_step1': False, 'draft_step2': False}, context=context)
 
+        family_no_weight = []
         for wizard in self.browse(cr, uid, ids, context=context):
             treated_moves = []
             for family in wizard.family_ids:
@@ -242,10 +319,6 @@ class ppl_processor(osv.osv):
         """
         # Objects
         data_obj = self.pool.get('ir.model.data')
-        family_obj = self.pool.get('ppl.family.processor')
-
-        family_to_unlink = family_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
-        family_obj.unlink(cr, uid, family_to_unlink, context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
 
@@ -270,6 +343,8 @@ class ppl_family_processor(osv.osv):
     _name = 'ppl.family.processor'
     _description = 'PPL family'
     _rec_name = 'from_pack'
+
+    _order = 'from_pack, id'
 
     _columns = {
         'wizard_id': fields.many2one(
@@ -402,6 +477,7 @@ class ppl_move_processor(osv.osv):
             ondelete='cascade',
             help="PPL processor wizard",
         ),
+        'move_id': fields.many2one('stock.move', string='Stock move', readonly=True),
         'from_pack': fields.integer(string='From p.', required=True),
         'to_pack': fields.integer(string='To p.', required=True),
         'num_of_packs': fields.function(
@@ -426,14 +502,7 @@ class ppl_move_processor(osv.osv):
         ),
         'integrity_status': fields.selection(
             string=' ',
-            selection=[
-                ('empty', ''),
-                ('ok', 'Ok'),
-                ('missing_1', 'The first sequence must start with 1'),
-                ('to_smaller_than_from', 'To value must be greater or equal to From value'),
-                ('overlap', 'The sequence overlaps previous one'),
-                ('gap', 'A gap exist in the sequence'),
-            ],
+            selection=PACK_INTEGRITY_STATUS_SELECTION,
             readonly=True,
         ),
         'pack_id': fields.many2one(
@@ -657,6 +726,10 @@ class ppl_move_processor(osv.osv):
         if not vals.get('to_pack', False):
             vals['to_pack'] = 1
 
+        if vals.get('wizard_id', False):
+            rel_obj = self._columns['wizard_id']._obj
+            self.pool.get(rel_obj).write(cr, uid, [vals['wizard_id']], {'draft_step2': False}, context=context)
+
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -690,6 +763,7 @@ class ppl_move_processor(osv.osv):
             'width': move.width,
             'height': move.height,
             'weight': move.weight,
+            'move_id': move.id,
         })
 
         return res

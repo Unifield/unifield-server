@@ -205,7 +205,7 @@
         <setNextTemplate name="second" />
 
         <!-- Lines -->
-        <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" style="LinesHeader">
+        <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader"></para>
@@ -364,7 +364,7 @@
                 <td></td>
             </tr>
         </blockTable>
-                <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" style="LinesHeader">
+                <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader"></para>
@@ -501,7 +501,7 @@
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" rowHeights="15.0" style="LinesValues">
+            <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" rowHeights="15.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -512,7 +512,7 @@
                         <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name) or '' ]]</para>
+                        <para style="LineValueLeft">[[ (m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name) or '' ]]</para>
                     </td>
                     <td>
 			<para style="LineValue">[[ m.no_product and formatLang(m.product_qty, digits=get_digits(dp='Product UoM')) or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>

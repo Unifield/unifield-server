@@ -101,7 +101,7 @@ class account_move_line(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
             cr.execute(sql, (value, aml_id))
         return True
 
@@ -180,7 +180,7 @@ class account_move_line(osv.osv):
                       AND l1.id <= l2.id
                       AND l2.id IN %s AND """ + \
             self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+            " GROUP BY l2.id" # not_a_user_entry
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
-                     GROUP BY id, debit_currency, credit_currency having '+where)
+                     GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -234,7 +234,7 @@ class account_move_line(osv.osv):
                 ('account_id.reconcile', '!=', False),
                 '|',
                 ('reconcile_id', '=', False),
-                ('reconcile_partial_id', '!=', False),    
+                ('reconcile_partial_id', '!=', False),
             ]
 
         return []
@@ -337,6 +337,9 @@ class account_move_line(osv.osv):
         'sequence_move': fields.related('move_id', 'name', type='char',
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
+        'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
+        'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
+                                                                   "to the original SI and to the SR created are marked as 'is_si_refund'"),
     }
 
     _defaults = {
@@ -347,6 +350,7 @@ class account_move_line(osv.osv):
         'exported': lambda *a: False,
         'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
+        'is_si_refund': lambda *a: False,
     }
 
     _order = 'move_id DESC'
@@ -522,8 +526,8 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-            # UFTP-262: Add description from the move_id
-            if m and m.manual_name:
+            # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
+            if m and m.manual_name and not vals.get('name'):
                 vals.update({'name': m.manual_name})
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
@@ -557,8 +561,15 @@ class account_move_line(osv.osv):
                     reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
                     if reconciliation and reconciliation.type == 'auto':
                         raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
-                elif ml.move_id and ml.move_id.status == 'sys':
+                # prevent from modifying system JIs except for reversing a manual correction
+                elif ml.move_id and ml.move_id.status == 'sys' and not context.get('from_manual_corr_reversal'):
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
+                # By default the name of a manual JI is the JE description
+                if ml.status_move == 'manu':
+                    no_ji_name = not vals.get('name') and not ml.name
+                    new_ji_name_empty = 'name' in vals and not vals['name']
+                    if no_ji_name or new_ji_name_empty:
+                        vals.update({'name': ml.move_id.manual_name})
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:
@@ -622,6 +633,7 @@ class account_move_line(osv.osv):
         - the reconciliation date
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
+        - the tag 'is_si_refund'
         """
         if context is None:
             context = {}
@@ -632,6 +644,7 @@ class account_move_line(osv.osv):
             'reconcile_date': None,
             'unreconcile_date': None,
             'unreconcile_txt': '',
+            'is_si_refund': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

@@ -21,39 +21,24 @@
 
 from osv import osv
 from osv import fields
-import logging
-import tools
 import time
-from os import path
+import datetime
+import tempfile
+import os
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 from msf_doc_import import GENERIC_MESSAGE
-
-import datetime
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import xml.etree.ElementTree as ET
+from service.web_services import report_spool
 
 
 class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
-    def init(self, cr):
-        """
-        Load data (product_data.xml) before self
-        """
-        if hasattr(super(purchase_order, self), 'init'):
-            super(purchase_order, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module product: loading product_data.xml')
-        pathname = path.join('product', 'product_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'product', file, {}, mode='init', noupdate=False)
-
-        logging.getLogger('init').info('HOOK: module product_attributes: loading data/sale_data.yml')
-        pathname = path.join('product_attributes', 'data', 'sale_data.yml')
-        file = tools.file_open(pathname)
-        tools.convert_yaml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
 
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
         '''
@@ -97,11 +82,299 @@ class purchase_order(osv.osv):
             store=False,
         ),
         'import_filenames': fields.one2many('purchase.order.simu.import.file', 'order_id', string='Imported files', readonly=True),
+        'auto_exported_ok': fields.boolean('PO exported to ESC'),
     }
 
     _defaults = {
         'import_in_progress': lambda *a: False,
     }
+
+
+    def get_file_content(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+        res = ''
+        with open(file_path) as fich:
+            res = fich.read()
+        return res
+
+
+    def get_po_id_from_file(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context)
+        xmlstring = self.get_file_content(cr, uid, file_path, context=context)
+
+        po_id = False
+        po_name = False
+        if filetype == 'excel':
+            file_obj = SpreadsheetXML(xmlstring=xmlstring)
+            po_name = False
+            for index, row in enumerate(file_obj.getRows()):
+                if row.cells[0].data == 'Order Reference*':
+                    po_name = row.cells[1].data or ''
+                    if isinstance(po_name, (str,unicode)):
+                        po_name = po_name.strip()
+                    if not po_name:
+                        raise osv.except_osv(_('Error'), _('Field "Order Reference*" shouldn\'t be empty'))
+                    break
+            else:
+                raise osv.except_osv(_('Error'), _('Header field "Order Reference*" not found in the given XLS file'))
+
+        elif filetype == 'xml':
+            root = ET.fromstring(xmlstring)
+            orig = root.findall('.//record[@model="purchase.order"]/field[@name="name"]')
+            if orig:
+                po_name = orig[0].text or ''
+                po_name = po_name.strip()
+                if not po_name:
+                    raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
+            else:
+                raise osv.except_osv(_('Error'), _('No field with name "Origin" was found in the XML file'))
+
+        if not po_name:
+            raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
+
+        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        if not po_id:
+            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+
+        return po_id[0]
+
+
+    def create_simu_screen_wizard(self, cr, uid, ids, file_content, filetype, file_path, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        simu_id = self.pool.get('wizard.import.po.simulation.screen').create(cr, uid, {
+            'order_id': ids[0],
+            'file_to_import': base64.encodestring(file_content),
+            'filetype': filetype,
+            'filename': os.path.basename(file_path),
+        }, context=context)
+        for line in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
+            self.pool.get('wizard.import.po.simulation.screen.line').create(cr, uid, {
+                'po_line_id': line.id,
+                'in_line_number': line.line_number,
+                'in_ext_ref': line.external_ref,
+                'simu_id': simu_id,
+            }, context=context)
+
+        return simu_id
+
+
+    def generate_simulation_screen_report(self, cr, uid, simu_id, context=None):
+        '''
+        generate a IN simulation screen report
+        '''
+        if context is None:
+            context = {}
+
+        # generate report:
+        datas = {'ids': [simu_id]}
+        rp_spool = report_spool()
+        result = rp_spool.exp_report(cr.dbname, uid, 'po.simulation.screen.xls', [simu_id], datas, context=context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            time.sleep(0.5)
+
+        return file_res
+
+
+    def get_processed_rejected_header(self, cr, uid, filetype, file_content, import_success, context=None):
+        if context is None:
+            context = {}
+
+        processed, rejected, header = [], [], []
+
+        if filetype == 'excel':
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_excel(cr, uid, base64.encodestring(file_content), context=context)
+            header = values.get(23)
+            for key in sorted([k for k in values.keys() if k > 23]):
+                if import_success:
+                    processed.append( (key, values[key]) )
+                else:
+                    rejected.append( (key, values[key]) )
+        else:
+            values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
+            header = [x.replace('_', ' ').title() for x in values.get(21)]
+            for key in sorted([k for k in values.keys() if k > 21]):
+                if import_success:
+                    processed.append( (key, values[key]) )
+                else:
+                    rejected.append( (key, values[key]) )
+
+        return processed, rejected, header
+
+
+    def auto_import_purchase_order(self, cr, uid, file_path, context=None):
+        '''
+        method called by obj automated.import
+        '''
+        if context is None:
+            context = {}
+
+        import_success = False
+        try:
+            # get filetype
+            filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
+            file_content = self.get_file_content(cr, uid, file_path, context=context)
+
+            # get po_id from file
+            po_id = self.get_po_id_from_file(cr, uid, file_path, context=context)
+            context['po_id'] = po_id
+            # create wizard.import.po.simulation.screen
+            simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
+            # launch simulate
+            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context)
+            # get simulation report
+            file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            # import lines
+            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context)
+            # attach simulation report
+            self.pool.get('ir.attachment').create(cr, uid, {
+                'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'description': 'PO simulation screen',
+                'res_model': 'purchase.order',
+                'res_id': po_id,
+                'datas': file_res.get('result'),
+            })
+            import_success = True
+        except Exception, e:
+            raise e
+
+        return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
+
+
+    def auto_import_confirmed_purchase_order(self, cr, uid, file_path, context=None):
+        '''
+        Method called by obj automated.export
+        '''
+        if context is None:
+            context = {}
+
+        context.update({'auto_import_confirm_pol': True})
+        res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
+        if context.get('po_id'):
+            po = self.browse(cr, uid, context['po_id'], context=context)
+            nb_pol_confirmed = 0
+            nb_pol_total = 0
+            for pol in po.order_line:
+                nb_pol_total += 1
+                if pol.line_number in context.get('line_number_to_confirm', []) or \
+                        (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
+                    try:
+                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                        cr.commit()
+                        nb_pol_confirmed += 1
+                    except:
+                        cr.rollback()
+                        self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
+                        job_comment = context.get('job_comment', [])
+                        job_comment.append({
+                            'res_model': 'purchase.order',
+                            'res_id': po.id,
+                            'msg': _('%s line #%s cannot be confirmed') % (po.name, pol.line_number),
+                        })
+                        context['job_comment'] = job_comment
+
+            if nb_pol_confirmed:
+                self.log(cr, uid, po.id, _('%s: %s out of %s lines have been confirmed') % (po.name, nb_pol_confirmed, nb_pol_total))
+
+        return res
+
+
+    def auto_export_validated_purchase_order(self, cr, uid, export_wiz, context=None):
+        '''
+        Method called by obj automated.export
+        '''
+        if context is None:
+            context = {}
+
+        po_ids = self.search(cr, uid, [
+            ('partner_type', '=', 'esc'),
+            ('state', 'in', ['validated', 'validated_p']),
+            ('auto_exported_ok', '=', False),
+        ], context= context)
+
+        if not po_ids:
+            msg = _('No PO to export !')
+            self.infolog(cr, uid, msg)
+            context.update({'po_not_found': True})
+
+        processed, rejected = [], []
+        for index, po_id in enumerate(po_ids):
+            # generate report:
+            report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
+            datas = {'ids': [po_id]}
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, report_name, [po_id], datas, context=context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
+
+            po_name = self.read(cr, uid, po_id, ['name'], context=context)['name']
+            filename = 'POV_%s_%s.%s' % (
+                po_name.replace('/', '_'),
+                datetime.datetime.now().strftime('%Y_%m_%d'),
+                'xls' if export_wiz.export_format == 'excel' else 'xml',
+            )
+            path_to_file = os.path.join(export_wiz.dest_path, filename)
+            if export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'ftp':
+                ftp_connec = None
+                context.update({'no_raise_if_ok': True})
+                ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, export_wiz.id, context=context)
+                context.pop('no_raise_if_ok')
+
+                # write export on FTP server
+                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.close()
+                rep = ''
+                with open(tmp_file.name, 'rb') as fich:
+                    rep = ftp_connec.storbinary('STOR %s' % path_to_file, fich)
+                os.remove(tmp_file.name)
+                if not rep.startswith('2'):
+                    raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+            elif export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'sftp':
+                sftp = None
+                context.update({'no_raise_if_ok': True})
+                sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, export_wiz.id, context=context)
+                context.pop('no_raise_if_ok')
+
+                # create tmp file
+                tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                tmp_file.write(base64.decodestring(file_res['result']))
+                tmp_file.close()
+                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
+                os.rename(tmp_file.name, new_tmp_file_name)
+
+                # transfer tmp file on SFTP server
+                try:
+                    with sftp.cd(export_wiz.dest_path):
+                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                except:
+                    raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
+
+                # now we can remove tmp file
+                os.remove(new_tmp_file_name)
+            else:
+                # write export in local file
+                with open(path_to_file, 'w') as fich:
+                    fich.write(base64.decodestring(file_res['result']))
+
+            self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
+            processed.append((index, [po_id, po_name]))
+            self.infolog(cr, uid, _('%s successfully exported') % po_name)
+
+        return processed, rejected, ['PO id', 'PO name']
+
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''

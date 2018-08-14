@@ -22,7 +22,10 @@
 import sale_make_invoice
 import sale_line_invoice
 import sale_make_invoice_advance
+import split_order_line
+import order_change_currency
 import sale_donation_stock_moves
 import sale_loan_stock_moves
-
+import delete_sale_order_line
+import wizard_fo_allocation_report
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

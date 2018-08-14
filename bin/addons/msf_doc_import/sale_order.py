@@ -21,9 +21,6 @@
 
 from osv import osv
 from osv import fields
-import logging
-import tools
-from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
@@ -38,21 +35,6 @@ class sale_order(osv.osv):
     We override the class for import of Field Order and Internal Request
     """
     _inherit = 'sale.order'
-
-    def init(self, cr):
-        """
-        Load data (msf_doc_import_data.xml) before self
-        """
-        if hasattr(super(sale_order, self), 'init'):
-            super(sale_order, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        mode = mod_obj.search(cr, 1, [('name', '=', 'msf_doc_import'), ('state', '=', 'to install')]) and 'init' or 'update'
-        logging.getLogger('init').info('HOOK: module msf_doc_import: loading data/msf_doc_import_data.xml')
-        pathname = path.join('msf_doc_import', 'data/msf_doc_import_data.xml')
-        file = tools.file_open(pathname)
-        # mode to force noupdate=True when reloading this module
-        tools.convert_xml_import(cr, 'msf_doc_import', file, {}, mode=mode, noupdate=True)
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''

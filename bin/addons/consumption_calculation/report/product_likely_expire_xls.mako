@@ -61,7 +61,7 @@
      <NumberFormat ss:Format="Short Date"/>
     </Style>
 </Styles>
-<ss:Worksheet ss:Name="Products likely to expire">
+<ss:Worksheet ss:Name="${_('Products likely to expire')}">
 % for o in objects:
 <Table x:FullColumns="1" x:FullRows="1">
 <%
@@ -82,9 +82,9 @@ if n_header_colspan < 0:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 ## criteria header
 <Row>
-<Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Period</Data></Cell>
-<Cell ss:StyleID="header" ss:MergeAcross="2"><Data ss:Type="String">Consumption</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Period')}</Data></Cell>
+<Cell ss:StyleID="header" ss:MergeAcross="2"><Data ss:Type="String">${_('Consumption')}</Data></Cell>
 <%
 cols = n_header_colspan - 2
 if cols < 0:
@@ -109,15 +109,16 @@ if cols < 0:
 </Row>
 ## products to expire header
 <Row>
-<Cell ss:StyleID="header"><Data ss:Type="String">Product Code</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Product Description</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Monthly Consumption</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Monthly Consumption')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Expired Qty')}</Data></Cell>
 % for d, d_str in dates:
 <Cell ss:StyleID="header"><Data ss:Type="String">${d_str|x}</Data></Cell>
 % endfor
-<Cell ss:StyleID="header"><Data ss:Type="String">In Stock</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Total Expired</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Total Value</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('In Stock')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Expired')}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Total Value')}</Data></Cell>
 </Row>
 ## lines
 % for line in o.line_ids:
@@ -125,14 +126,26 @@ if cols < 0:
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.consumption or 0.}</Data></Cell>
+<% cnt = 0 %>
 % for i in getLineItems(line):
     ## line items
-    % if i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+    % if cnt == 0 and i.name == 'expired_qty_col':
+            % if i.expired_qty:
+            <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.expired_qty) or 0.00}</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${0.00}</Data></Cell>
+            % endif
+    % else:
+       % if cnt == 0:
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+       % endif
+            % if i.expired_qty:
+            <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
+            % endif
     % endif
-    % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
-    % endif
+    <% cnt += 1 %>
 % endfor
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.total_expired or 0.}</Data></Cell>
@@ -156,6 +169,9 @@ if cols < 0:
 % endfor
 <x:WorksheetOptions/>
 </ss:Worksheet>
+<%
+dates.insert(0, ('expired_qty_col', _('Expired')))
+%>
 % for d, d_str in dates:
 <%
 worksheet_name = d_str.replace('/', '-')
@@ -170,13 +186,13 @@ worksheet_name = d_str.replace('/', '-')
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Row>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Location</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Available Qty</Data></Cell>
-<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Qty</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Location')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Available Qty')}</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Qty')}</Data></Cell>
 </Row>
 % for il in getMonthItemLines(o, d):
 <Row>

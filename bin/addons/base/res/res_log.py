@@ -33,6 +33,7 @@ class res_log(osv.osv):
         'secondary': fields.boolean('Secondary Log', help='Do not display this log if it belongs to the same object the user is working on'),
         'create_date': fields.datetime('Creation Date', readonly=True, select=1),
         'read': fields.boolean('Read', help="If this log item has been read, get() should not send it to the client"),
+        'action_xmlid': fields.char('Xmlid of action to open', size=512),
     }
     _defaults = {
         'user_id': lambda self,cr,uid,ctx: uid,
@@ -40,7 +41,7 @@ class res_log(osv.osv):
         'domain': "[]",
         'read': False,
     }
-    _order='create_date desc'
+    _order='create_date desc, id desc'
 
     _index_name = 'res_log_uid_read'
     def _auto_init(self, cr, context={}):
@@ -48,8 +49,7 @@ class res_log(osv.osv):
         cr.execute('SELECT 1 FROM pg_indexes WHERE indexname=%s',
                    (self._index_name,))
         if not cr.fetchone():
-            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' %
-                       self._index_name)
+            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' % self._index_name)  # not_a_user_entry
 
     def create(self, cr, uid, vals, context=None):
         create_context = context and dict(context) or {}
@@ -62,7 +62,7 @@ class res_log(osv.osv):
     # TODO: do not return secondary log if same object than in the model (but unlink it)
     def get(self, cr, uid, context=None):
         unread_log_ids = self.search(cr, uid,
-            [('user_id','=',uid), ('read', '=', False)], context=context)
+                                     [('user_id','=',uid), ('read', '=', False)], context=context)
         list_of_fields = ['name','res_model','res_id','context', 'domain']
         res = self.read(cr, uid, unread_log_ids, list_of_fields, context=context)
         res.reverse()

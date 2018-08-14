@@ -59,7 +59,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for line_br in self.browse(cr, uid, ids, context=context):
-            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted or False
+            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted and not line_br.account_id.is_not_ad_correctable or False
         return res
 
     def _get_is_account_correctible(self, cr, uid, ids, name, args,  context=None):
@@ -172,13 +172,13 @@ class journal_items_corrections_lines(osv.osv_memory):
         # Open it!
         return {
             'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 journal_items_corrections_lines()
@@ -208,6 +208,7 @@ class journal_items_corrections(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
         'from_donation': fields.boolean('From Donation account?'),
         'from_register': fields.function(_get_from_register, type='boolean', string='From register?', method=True, store=False),
+        'from_ji': fields.boolean('Opened from the JI view?'),
     }
 
     _defaults = {
@@ -349,15 +350,31 @@ class journal_items_corrections(osv.osv_memory):
             elif acc_type == 'advance' and not aml.employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with an Employee Third Party.') % (account.code, account.name))
-            elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
+            elif acc_type == 'down_payment' and not aml.partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
+            elif acc_type == 'payroll' and not aml.partner_id and not aml.employee_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with a Partner or an Employee Third Party.') % (account.code, account.name))
         else:
             # Check the compatibility with the Allowed Partner Types
             # (according to US-1307 this check is done only when the account has no "Type For Specific Treatment")
             acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
                                               employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
                                               partner_id=aml.partner_id or False, raise_it=True, context=context)
+
+    def correct_manually(self, cr, uid, ids, context=None):
+        """
+        Gets the JI displayed in the wizard and sets it as Manually Corrected
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        aml_obj.set_as_corrected(cr, uid, [wizard.move_line_id.id], context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
@@ -368,6 +385,7 @@ class journal_items_corrections(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
@@ -379,12 +397,11 @@ class journal_items_corrections(osv.osv_memory):
         # UFTP-388: Check if the given period is valid: period open, or not close, if not just block the correction
         correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
         if not correction_period_ids:
-                raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
+            raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
         for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
             if cp.state != 'draft':
                 raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
 
-        aml_obj = self.pool.get('account.move.line')
         # Fetch old line
         old_line = wizard.move_line_id
         # Verify what have changed between old line and new one

@@ -72,7 +72,7 @@ class internal_picking_processor(osv.osv):
             string='Claim Type',
         ),
         'claim_replacement_picking_expected': fields.boolean(
-            string='Replacement expected for Return Claim?',
+            string='Replacement expected for Claim ?',
             help="An Incoming Shipment will be automatically created corresponding to returned products.",
         ),
         'claim_description': fields.text(
@@ -85,6 +85,7 @@ class internal_picking_processor(osv.osv):
             type='boolean',
             readonly=True,
         ),
+        'draft': fields.boolean('Draft'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None):
@@ -149,7 +150,16 @@ class internal_picking_processor(osv.osv):
                 _('No data to process !'),
             )
 
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
+
+        if wizard_brw_list[0].picking_id.type != 'internal':
+            raise osv.except_osv(
+                _('Error'),
+                _('This object: %s is not an Internal Move') % (wizard_brw_list[0].picking_id.name)
+            )
 
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
@@ -183,6 +193,7 @@ class internal_picking_processor(osv.osv):
             'in': ('view_picking_in_form', _('Incoming Shipments')),
             'internal': ('view_picking_form', _('Internal Moves')),
             'out': ('view_picking_out_form', _('Delivery Orders')),
+            'picking': ('view_picking_ticket_form', _('Picking Tickets')),
         }
 
         # Res
@@ -192,8 +203,14 @@ class internal_picking_processor(osv.osv):
             if wizard.register_a_claim:
                 # id of treated picking (can change according to backorder or not)
                 pick_id = res.values()[0]['delivered_picking']
-                pick_type = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context).type
-                view_id = data_obj.get_object_reference(cr, uid, 'stock', view_by_pick_type.get(pick_type, [False])[0])
+                pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
+                pick_type = pick.type
+                if pick_type == 'out' and pick.subtype == 'picking':
+                    pick_type = pick.subtype
+                    pick_view = view_by_pick_type.get(pick_type, [False])[0]
+                    view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', pick_view)
+                else:
+                    view_id = data_obj.get_object_reference(cr, uid, 'stock', view_by_pick_type.get(pick_type, [False])[0])
                 view_id = view_id and view_id[1] or False
                 return {'name': view_by_pick_type.get(pick_type, [None, _('Delivery Orders')])[1],
                         'view_mode': 'form,tree',
@@ -333,6 +350,40 @@ class internal_picking_processor(osv.osv):
             proc_line_obj.unlink(cr, uid, to_unlink, context=context)
 
         return True
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
 
 internal_picking_processor()
 

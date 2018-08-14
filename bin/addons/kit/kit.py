@@ -21,14 +21,10 @@
 
 from osv import osv, fields
 from tools.translate import _
-import netsvc
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import decimal_precision as dp
 import logging
-import tools
 import time
-from os import path
 
 # xml parser
 from lxml import etree
@@ -49,27 +45,27 @@ class composition_kit(osv.osv):
     kit composition class, representing both theoretical composition and actual ones
     '''
     _name = 'composition.kit'
-    
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         action cancel set the state of the composition kit to 'cancel'
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # all specified kits must be in draft state
         if not context.get('flag_force_cancel_composition_kit', False) and not all([x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)]):
             raise osv.except_osv(_('Warning !'), _('You can only cancel draft theoretical kit composition and kit composition list.'))
         else:
             self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
-    
+
     def get_default_expiry_date(self, cr, uid, ids, context=None):
         '''
         default value for kits
         '''
         return '9999-01-01'
-    
+
     def _compute_expiry_date(self, cr, uid, ids, context=None):
         '''
         compute the expiry date of real composition.kit based on items
@@ -77,8 +73,7 @@ class composition_kit(osv.osv):
         # date tools object
         date_obj = self.pool.get('date.tools')
         db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
-        date_format = date_obj.get_date_format(cr, uid, context=context)
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # if no expiry date from items (no perishable products or no expiry date entered), the default value is '9999-01-01'
             expiry_date = False
@@ -91,9 +86,9 @@ class composition_kit(osv.osv):
                         expiry_date = item.item_exp
             if not expiry_date:
                 expiry_date = self.get_default_expiry_date(cr, uid, ids, context=context)
-        
+
         return expiry_date
-    
+
     def modify_expiry_date(self, cr, uid, ids, context=None):
         '''
         open modify expiry date wizard
@@ -114,7 +109,7 @@ class composition_kit(osv.osv):
                                                                                                 kit_id=ids[0],
                                                                                                 date=date))
         return res
-    
+
     def mark_as_completed(self, cr, uid, ids, context=None):
         '''
         button function
@@ -125,7 +120,7 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.composition_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
@@ -136,7 +131,7 @@ class composition_kit(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('Kit Items must have a quantity greater than 0.0.'))
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
-    
+
     def mark_as_inactive(self, cr, uid, ids, context=None):
         '''
         button function
@@ -147,13 +142,13 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type != 'theoretical':
                 raise osv.except_osv(_('Warning !'), _('Only theoretical kit can manipulate "active" field.'))
         self.write(cr, uid, ids, {'active': False}, context=context)
         return True
-    
+
     def mark_as_active(self, cr, uid, ids, context=None):
         '''
         button function
@@ -164,13 +159,13 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type != 'theoretical':
                 raise osv.except_osv(_('Warning !'), _('Only theoretical kit can manipulate "active" field.'))
         self.write(cr, uid, ids, {'active': True}, context=context)
         return True
-    
+
     def close_kit(self, cr, uid, ids, context=None):
         '''
         button function
@@ -181,10 +176,10 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
-    
+
     def reset_to_version(self, cr, uid, ids, context=None):
         '''
         open confirmation wizard
@@ -206,7 +201,7 @@ class composition_kit(osv.osv):
             # a version must have been selected
             if not obj.composition_version_id:
                 raise osv.except_osv(_('Warning !'), _('The composition list is not linked to any version.'))
-        
+
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
@@ -215,7 +210,7 @@ class composition_kit(osv.osv):
                                                                                                           'args': args,
                                                                                                           'kwargs': kwargs}))
         return res
-    
+
     def do_reset_to_version(self, cr, uid, ids, context=None):
         '''
         remove all items and create one item for each item from the referenced version
@@ -249,7 +244,7 @@ class composition_kit(osv.osv):
                     'domain': [('composition_type', '=', 'real')],
                     'context': {'composition_type':'real'},
                     }
-    
+
     def _generate_item_mirror_objects(self, cr, uid, ids, wizard_data, context=None):
         """
         Generate memory objects as mirror for kit items, which can be modified (batch number policy needs modification,
@@ -278,11 +273,11 @@ class composition_kit(osv.osv):
                 id = mirror_obj.create(cr, uid, values, context=context)
                 result.append(id)
         return result
-    
+
     def _get_new_context(self, cr, uid, ids, context=None):
         '''
         add attributes for wizard window
-        
+
         kit + product + lot
         '''
         # get corresponding data
@@ -297,21 +292,52 @@ class composition_kit(osv.osv):
             prodlot_id = datas[0]['composition_lot_id'][0]
         # update the context with needed data
         context.update(kit_id=kit_id, product_id=product_id, prodlot_id=prodlot_id)
-        
+
         return context
-    
+
+    def assert_available_stock(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        assert isinstance(ids, list)
+
+        for kit in self.browse(cr, uid, ids, context=context):
+
+
+            # For kits with a batch, take the stock of the batch
+            # Otherwise, take the global stock of the product
+            request_context = context.copy()
+            request_context.update({ 'states': ('done',),
+                                     'what': ('in', 'out'),
+                                     'location_usage': ['internal'],
+                                     'location_category': ['stock', 'consumption_unit'] })
+            if not kit.composition_reference and kit.composition_lot_id:
+                request_context['prodlot_id'] = kit.composition_lot_id.id
+
+            stock = self.pool.get("product.product").get_product_available(cr, uid, [kit.composition_product_id.id], context=request_context)[kit.composition_product_id.id]
+
+            if stock <= 0:
+                raise osv.except_osv(_('Error'),
+                                     _('This kit product / batch is not available in stock !'))
+
+
     def substitute_items(self, cr, uid, ids, context=None):
         '''
         substitute lines from the composition kit with created new lines
         '''
+
         # we need the context for the wizard switch
         if context is None:
             context = {}
+
+        self.assert_available_stock(cr, uid, ids, context=context)
+
         # data
         name = _("Substitute Kit Items")
         model = 'substitute'
         step = 'substitute' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
+
         # get a context with needed data
         wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
         # open the selected wizard
@@ -321,14 +347,14 @@ class composition_kit(osv.osv):
         # generate mirrors item objects
         self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=res['context'])
         return res
-    
+
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         call the modify expiry date window for possible modification of expiry date
         '''
         res = self.modify_expiry_date(cr, uid, ids, context=context)
         return res
-        
+
     def de_kitting(self, cr, uid, ids, context=None):
         '''
         explode the kit, preselecting all mirror items
@@ -336,6 +362,9 @@ class composition_kit(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+
+        self.assert_available_stock(cr, uid, ids, context=context)
+
         # data
         name = _("De-Kitting")
         model = 'substitute'
@@ -352,7 +381,7 @@ class composition_kit(osv.osv):
         # fill all elements into the many2many field
         self.pool.get(model).write(cr, uid, [res['res_id']], {'composition_item_ids': [(6,0,data)]}, context=res['context'])
         return res
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -362,13 +391,13 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         # date tools object
         date_obj = self.pool.get('date.tools')
         db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
         date_format = date_obj.get_date_format(cr, uid, context=context)
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             for f in fields:
@@ -400,11 +429,11 @@ class composition_kit(osv.osv):
             result[obj.id].update({'nomen_sub_4': obj.composition_product_id.nomen_sub_4.id})
             result[obj.id].update({'nomen_sub_5': obj.composition_product_id.nomen_sub_5.id})
         return result
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         change version name. add (copy)
-        
+
         - theoretical kit can be copied. version -> version (copy)
         - real kit with batch number cannot be copied.
         - real kit without batch but with reference can be copied. reference -> reference (copy)
@@ -423,9 +452,9 @@ class composition_kit(osv.osv):
             default.update(composition_reference='%s (copy)'%reference, composition_creation_date=time.strftime('%Y-%m-%d'))
         else:
             raise osv.except_osv(_('Warning !'), _('Kit Composition List with Batch Number cannot be copied!'))
-            
+
         return super(composition_kit, self).copy(cr, uid, id, default, context=context)
-    
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         cannot delete composition kit not draft
@@ -435,12 +464,12 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _("Cannot delete Kits not in 'draft' state."))
         return super(composition_kit, self).unlink(cr, uid, ids, context=context)
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         columns for the tree
@@ -475,7 +504,7 @@ class composition_kit(osv.osv):
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type - fields from one2many field
-        
+
         if view_type == 'form':
             if context.get('composition_type', False) == 'theoretical':
                 # load the xml tree
@@ -489,7 +518,7 @@ class composition_kit(osv.osv):
                     for field in fields:
                         field.set('invisible', 'True')
                 result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
-            
+
             # if the view is called from the menu "Kit Composition List" the button duplicate and delete are hidden
             if context.get('composition_type', False) == 'real':
                 # load the xml tree
@@ -501,7 +530,7 @@ class composition_kit(osv.osv):
                 result['arch'] = etree.tostring(root)
 
         return result
-    
+
     def name_get(self, cr, uid, ids, context=None):
         '''
         override displayed name
@@ -511,14 +540,14 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # date tools object
         date_obj = self.pool.get('date.tools')
         db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
         date_format = date_obj.get_date_format(cr, uid, context=context)
         # result
         res = []
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
@@ -526,7 +555,7 @@ class composition_kit(osv.osv):
                 name = version + ' - ' + date.strftime(date_format)
             else:
                 name = obj.composition_combined_ref_lot
-                
+
             res += [(obj.id, name)]
         return res
 
@@ -566,12 +595,12 @@ class composition_kit(osv.osv):
                          'composition_version_txt': False}}
         if not product_id:
             return res
-        
+
         data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
         res['value']['composition_batch_check'] = data['batch_management']
         res['value']['composition_expiry_check'] = data['perishable']
         return res
-    
+
     def on_change_lot_id(self, cr, uid, ids, lot_id, context=None):
         '''
         when the lot is changed, expiry date is updated, so the field is modified before the save happens
@@ -582,17 +611,17 @@ class composition_kit(osv.osv):
                          'composition_ref_exp': False}}
         if not lot_id:
             return res
-            
+
         data = lot_obj.read(cr, uid, [lot_id], ['life_date'], context=context)[0]
         res['value']['composition_exp'] = data['life_date']
         return res
-    
+
     def _get_composition_kit_from_product_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of product.product objects for which values have changed
-        
+
         return the list of ids of composition.kit objects which need to get their fields updated
-        
+
         self is product.product object
         '''
         # Some verifications
@@ -600,17 +629,17 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         kit_obj = self.pool.get('composition.kit')
         result = kit_obj.search(cr, uid, [('composition_product_id', 'in', ids)], context=context)
         return result
-    
+
     def _get_composition_kit_from_lot_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of stock.production.lot objects for which values have changed
-        
+
         return the list of ids of composition.kit objects which need to get their fields updated
-        
+
         self is stock.production.lot object
         '''
         # Some verifications
@@ -618,23 +647,23 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         kit_obj = self.pool.get('composition.kit')
         result = kit_obj.search(cr, uid, [('composition_lot_id', 'in', ids)], context=context)
         return result
-    
+
     def onChangeSearchNomenclature(self, cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         prod_obj = self.pool.get('product.product')
         return prod_obj.onChangeSearchNomenclature(cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
-    
+
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
         prod_obj = self.pool.get('product.template')
         return prod_obj._get_nomen_s(cr, uid, ids, fields, *a, **b)
-    
+
     def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
         prod_obj = self.pool.get('product.template')
         return prod_obj._search_nomen_s(cr, uid, obj, name, args, context=context)
-    
+
     def _set_expiry_date(self, cr, uid, ids, field, value, arg, context=None):
         """
         if the kit is linked to a batch management product, we update the expiry date for the correponding batch number
@@ -652,7 +681,7 @@ class composition_kit(osv.osv):
         date_obj = self.pool.get('date.tools')
         db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
         date_format = date_obj.get_date_format(cr, uid, context=context)
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.composition_expiry_check:
                 # a lot is linked, we update its expiry date
@@ -675,7 +704,7 @@ class composition_kit(osv.osv):
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'composition_ref_exp': fields.date(string='Expiry Date for Kit with reference', readonly=True),
-#                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True),
+                #                'composition_kit_creation_id': fields.many2one('kit.creation', string='Kitting Order', readonly=True),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
@@ -735,7 +764,7 @@ class composition_kit(osv.osv):
                 'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
                 }
-    
+
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'composition_type': lambda s, cr, uid, c: c.get('composition_type', False),
                  'composition_product_id': lambda s, cr, uid, c: c.get('composition_product_id', False),
@@ -746,9 +775,9 @@ class composition_kit(osv.osv):
                  'active': True,
                  'state': 'draft',
                  }
-    
+
     _order = 'composition_creation_date desc'
-    
+
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
         '''
         constraint on kit composition - two kits 
@@ -758,7 +787,7 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             # global
             if obj.composition_product_id.type != 'product' or obj.composition_product_id.subtype != 'kit':
@@ -778,7 +807,7 @@ class composition_kit(osv.osv):
                 # constraint on version_id - forbidden for theoretical
                 if obj.composition_version_id:
                     raise osv.except_osv(_('Warning !'), _('Composition Version Object is not available for Theoretical Kit.'))
-                
+
             # real constraints
             if obj.composition_type == 'real':
                 # constraint on lot_id/reference - mandatory for real kit
@@ -809,7 +838,7 @@ class composition_kit(osv.osv):
                 # check that the selected version corresponds to the selected product
                 if obj.composition_version_id and obj.composition_version_id.composition_product_id.id != obj.composition_product_id.id:
                     raise osv.except_osv(_('Warning !'), _('Selected Version is for a different product.'))
-            
+
         return True
 
     def _check_active_product(self, cr, uid, ids, context=None):
@@ -833,13 +862,13 @@ class composition_kit(osv.osv):
                 return False
 
         return True
-    
+
     _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
                     (_check_active_product, 'You cannot confirm this kit because it contains a line with an inactive product', ['state', 'composition_item_ids']),
                     ]
     _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_product_id,composition_reference)", 'Kit Composition List Reference must be unique for a given product.'),
                         # the composition list with lot A should not be taken into account if state is in ['done', 'cancel']
-#                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
+                        #                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
                         ]
 
 composition_kit()
@@ -851,7 +880,7 @@ class composition_item(osv.osv):
     '''
     _name = 'composition.item'
     _order = 'item_module'
-    
+
     def _common_update(self, cr, uid, vals, context=None):
         '''
         common function for values update during create and write
@@ -891,18 +920,18 @@ class composition_item(osv.osv):
             else:
                 # product is False, exp and lot are set to False - asset is set to False
                 vals.update(item_lot=False, item_exp=False, item_asset_id=False)
-        
+
         return vals
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
-        
+
         force writing asset_id to False.
         '''
         vals = self._common_update(cr, uid, vals, context=context)
         return super(composition_item, self).create(cr, uid, vals, context=context)
-        
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
@@ -911,7 +940,7 @@ class composition_item(osv.osv):
             return True
         vals = self._common_update(cr, uid, vals, context=context)
         return super(composition_item, self).write(cr, uid, ids, vals, context=context)
-    
+
     def on_product_change(self, cr, uid, ids, product_id, context=None):
         '''
         product is changed, we update the UoM
@@ -933,7 +962,7 @@ class composition_item(osv.osv):
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
-            
+
         return result
 
     def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
@@ -946,11 +975,11 @@ class composition_item(osv.osv):
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
 
         return res
-    
+
     def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
         if lot exists in the system the date is filled in
-        
+
         prodlot_id is the NAME of the production lot
         '''
         # objects
@@ -961,7 +990,6 @@ class composition_item(osv.osv):
         if product_id:
             data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
             management = data['batch_management']
-            perishable = data['perishable']
             if management and prodlot_id:
                 prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
                                                         ('type', '=', 'standard'),
@@ -970,9 +998,9 @@ class composition_item(osv.osv):
                 if prod_ids:
                     prodlot_id = prod_ids[0]
                     result['value'].update(item_exp=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
-                    
+
         return result
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         columns for the tree
@@ -988,7 +1016,7 @@ class composition_item(osv.osv):
             if context.get('composition_type', False) == 'theoretical':
                 # load the xml tree
                 root = etree.fromstring(result['arch'])
-                # get the original empty separator ref and hide it 
+                # get the original empty separator ref and hide it
                 # fields to be modified
                 list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
                 fields = []
@@ -1001,7 +1029,7 @@ class composition_item(osv.osv):
 
                 result['arch'] = etree.tostring(root)
         return result
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -1011,7 +1039,7 @@ class composition_item(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -1029,9 +1057,9 @@ class composition_item(osv.osv):
             result[obj.id].update({'hidden_perishable_mandatory': obj.item_product_id.perishable})
             # hidden_asset_mandatory
             result[obj.id].update({'hidden_asset_mandatory': obj.item_product_id.type == 'product' and obj.item_product_id.subtype == 'asset'})
-            
+
         return result
-    
+
     def name_get(self, cr, uid, ids, context=None):
         '''
         override displayed name
@@ -1041,24 +1069,22 @@ class composition_item(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # date tools object
-        date_obj = self.pool.get('date.tools')
-        date_format = date_obj.get_date_format(cr, uid, context=context)
         # result
         res = []
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             name = obj.item_product_id.name
             res += [(obj.id, name)]
         return res
-    
+
     def _get_composition_item_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of composition.kit objects for which values have changed
-        
+
         return the list of ids of composition.item objects which need to get their fields updated
-        
+
         self is an composition.kit object
         '''
         # Some verifications
@@ -1066,7 +1092,7 @@ class composition_item(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         item_obj = self.pool.get('composition.item')
         result = item_obj.search(cr, uid, [('item_kit_id', 'in', ids)], context=context)
         return result
@@ -1084,9 +1110,9 @@ class composition_item(osv.osv):
                     'inactive_product': True,
                     'inactive_error': _('The product in line is inactive !')
                 }
-                
+
         return res
-        
+
     _columns = {'item_module': fields.char(string='Module', size=1024),
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
@@ -1101,28 +1127,28 @@ class composition_item(osv.osv):
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
                 'item_kit_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Version', multi='get_vals',
-                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
-                                                'composition.kit': (_get_composition_item_ids, ['composition_version_txt', 'composition_version_id'], 10)}),
+                                                    store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
+                                                            'composition.kit': (_get_composition_item_ids, ['composition_version_txt', 'composition_version_id'], 10)}),
                 'item_kit_type': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Type', multi='get_vals',
-                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
-                                                'composition.kit': (_get_composition_item_ids, ['composition_type'], 10)}),
+                                                 store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
+                                                         'composition.kit': (_get_composition_item_ids, ['composition_type'], 10)}),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_STATE, string='State', readonly=True, multi='get_vals',
-                                store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
-                                        'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
+                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
+                                                 'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
                 }
-    
+
     _defaults = {'hidden_batch_management_mandatory': False,
                  'hidden_perishable_mandatory': False,
                  'hidden_asset_mandatory': False,
                  'inactive_product': False,
                  'inactive_error': lambda *a: '',
                  }
-    
+
     def _composition_item_constraint(self, cr, uid, ids, context=None):
         '''
         constraint on item composition 
@@ -1132,7 +1158,7 @@ class composition_item(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.hidden_perishable_mandatory:
                 # no lot or date management product
@@ -1142,7 +1168,7 @@ class composition_item(osv.osv):
                 if obj.item_exp:
                     # not perishable nor batch management - no item_lot nor item_exp
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
-                
+
         return True
 
     def _uom_constraint(self, cr, uid, ids, context=None):
@@ -1153,7 +1179,7 @@ class composition_item(osv.osv):
 
     _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),
                     (_uom_constraint, 'Constraint error on Uom', [])]
-    
+
 composition_item()
 
 
@@ -1162,7 +1188,7 @@ class product_product(osv.osv):
     add a constraint - a product of subtype 'kit' cannot be perishable only, should be batch management or nothing
     '''
     _inherit = 'product.product'
-    
+
     def _kit_product_constraints(self, cr, uid, ids, context=None):
         '''
         constraint on product
@@ -1172,15 +1198,15 @@ class product_product(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management'], context=context):
             # kit
             if obj['type'] == 'product' and obj['subtype'] == 'kit':
                 if obj['perishable'] and not obj['batch_management']:
                     raise osv.except_osv(_('Warning !'), _('The Kit product cannot be Expiry Date Mandatory only.'))
-            
+
         return True
-    
+
     def _vals_get_kit(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -1190,14 +1216,14 @@ class product_product(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             for f in fields:
                 result[obj.id].update({f:False})
         return result
-    
+
     def _search_completed_kit(self, cr, uid, obj, name, args, context=None):
         '''
         Filter the search according to the args parameter
@@ -1229,26 +1255,26 @@ class product_product(osv.osv):
                     ids.append(res['id'])
             else:
                 assert False, 'Search Not implemented'
-            
+
         return [('id', 'in', ids)]
-    
+
     _columns = {'has_active_completed_theo_kit_kit': fields.function(_vals_get_kit, fnct_search=_search_completed_kit, method=True, type='boolean', string='Kit and completed theoretical list', multi='get_vals_kit', store=False),
                 }
-    
+
     _constraints = [(_kit_product_constraints, 'Constraint error on Kit Product.', []),
                     ]
-    
+
 product_product()
 
 
 class product_nomenclature(osv.osv):
     '''
     decorator over
-    
+
     def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
     '''
     _inherit = 'product.nomenclature'
-    
+
     def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
         '''
         check if we are concerned with composition kit, if we do, we return the number of concerned kit, not product
@@ -1258,7 +1284,7 @@ class product_nomenclature(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         if context.get('composition_type', False):
             composition_type = context.get('composition_type')
             res = {}
@@ -1276,10 +1302,10 @@ class product_nomenclature(osv.osv):
             return res
         else:
             return super(product_nomenclature, self)._getNumberOfProducts(cr, uid, ids, field_name, arg, context=context)
-        
+
     _columns = {'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
                 }
-        
+
 product_nomenclature()
 
 
@@ -1288,7 +1314,7 @@ class stock_move(osv.osv):
     add the new method self.create_composition_list
     '''
     _inherit= 'stock.move'
-    
+
     def create_composition_list(self, cr, uid, ids, context=None):
         '''
         return the form view of composition_list (real) with corresponding values from the context
@@ -1298,7 +1324,7 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         obj = self.browse(cr, uid, ids[0], context=context)
         composition_type = 'real'
         composition_product_id = obj.product_id.id
@@ -1306,7 +1332,7 @@ class stock_move(osv.osv):
         composition_exp = obj.expired_date
         composition_batch_check = obj.product_id.batch_management
         composition_expiry_check = obj.product_id.perishable
-        
+
         return {'name': 'Kit Composition List',
                 'view_id': False,
                 'view_type': 'form',
@@ -1326,7 +1352,7 @@ class stock_move(osv.osv):
                                 composition_expiry_check=composition_expiry_check,
                                 )
                 }
-        
+
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
         hook to update defaults data
@@ -1336,17 +1362,17 @@ class stock_move(osv.osv):
         assert move, 'missing move'
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'missing partial_datas'
-        
+
         # calling super method
         defaults = super(stock_move, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
         assert defaults is not None
-        
+
         kit_id = partial_datas.get('move%s'%(move.id), False).get('composition_list_id')
         if kit_id:
             defaults.update({'composition_list_id': kit_id})
-        
+
         return defaults
-    
+
     _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit', readonly=True)}
 
 stock_move()
@@ -1357,7 +1383,7 @@ class stock_location(osv.osv):
     add a new reservation method, taking production lot into account
     '''
     _inherit = 'stock.location'
-    
+
     def compute_availability(self, cr, uid, ids, consider_child_locations, product_id, uom_id, context=None):
         '''
         call stock computation function
@@ -1375,14 +1401,13 @@ class stock_location(osv.osv):
         res = loc_obj._product_reserve_lot(cr, uid, ids, product_id, uom_id, context=stock_context, lock=True)
         #print res
         return res
-    
+
     def _product_reserve_lot(self, cr, uid, ids, product_id, uom_id, context=None, lock=False):
         """
         refactoring of original reserver method, taking production lot into account
-        
+
         returning the original list-tuple structure + the total qty in each location
         """
-        result = []
         amount = 0.0
         if context is None:
             context = {}
@@ -1397,7 +1422,7 @@ class stock_location(osv.osv):
         fefo_list = []
         # data structure
         data = {'fefo': fefo_list, 'total': 0.0}
-            
+
         for id in location_ids:
             # set up default value
             data.setdefault(id, {}).setdefault('total', 0.0)
@@ -1496,7 +1521,7 @@ class stock_location(osv.osv):
         # global FEFO sorting
         data['fefo'] = sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')), reverse=False)
         return data
-    
+
 stock_location()
 
 
@@ -1515,13 +1540,13 @@ class stock_picking(osv.osv):
         assert move, 'missing move'
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'missing partial_datas'
-        
+
         # calling super method
         defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
         kit_id = partial_datas.get('move%s'%(move.id), {}).get('composition_list_id')
         if kit_id:
             defaults.update({'composition_list_id': kit_id})
-        
+
         return defaults
 
 stock_picking()
@@ -1532,7 +1557,7 @@ class purchase_order_line(osv.osv):
     add theoretical de-kitting capabilities
     '''
     _inherit = 'purchase.order.line'
-    
+
     def de_kitting(self, cr, uid, ids, context=None):
         '''
         open theoretical kit selection
@@ -1564,8 +1589,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # objects
-        kit_obj = self.pool.get('composition.kit')
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'kit_pol_check': False}
@@ -1575,11 +1598,8 @@ class purchase_order_line(osv.osv):
             product = obj.product_id
             if product and product.type == 'product' and product.subtype == 'kit':
                 result[obj.id].update({'kit_pol_check': True})
-#                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
-#                if kit_ids:
-#                    result[obj.id].update({'kit_pol_check': True})
         return result
-    
+
     _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals_kit'),
                 }
 
@@ -1591,7 +1611,7 @@ class sale_order_line(osv.osv):
     add theoretical de-kitting capabilities
     '''
     _inherit = 'sale.order.line'
-    
+
     def de_kitting(self, cr, uid, ids, context=None):
         '''
         open theoretical kit selection
@@ -1624,7 +1644,6 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        kit_obj = self.pool.get('composition.kit')
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'kit_pol_check_sale_order_line': False}
@@ -1634,11 +1653,8 @@ class sale_order_line(osv.osv):
             product = obj.product_id
             if product and product.type == 'product' and product.subtype == 'kit':
                 result[obj.id].update({'kit_pol_check_sale_order_line': True})
-#                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
-#                if kit_ids:
-#                    result[obj.id].update({'kit_pol_check_sale_order_line': True})
         return result
-    
+
     _columns = {'kit_pol_check_sale_order_line' : fields.function(_vals_get_kit, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals_kit', store=False),
                 }
 

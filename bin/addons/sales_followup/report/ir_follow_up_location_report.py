@@ -177,26 +177,15 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             cdd = False
             from_stock = line.type == 'make_to_stock'
             cancel_in_moves = []
-            if line.procurement_id and line.procurement_id.purchase_id:
-                po_name = line.procurement_id.purchase_id.name
-                cdd = line.procurement_id.purchase_id.delivery_confirmed_date
-                cancel_in_moves = self.cancel_in_line(line.procurement_id.purchase_id.id, line.product_id.id)
+            linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
+            if linked_pol:
+                linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
+                po_name = linked_pol.order_id.name
+                cdd = linked_pol.order_id.delivery_confirmed_date
+                if line.product_id:
+                    cancel_in_moves = self.cancel_in_line(linked_pol.order_id.id, line.product_id.id)
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
-
-
-            # fetch the move in case the line doesn't have move_ids
-            # if no move found for this line, it's set to False
-            # to display a grayed line when it is cancelled
-            current_line_state = line.state
-            if line.order_id.state == 'cancel':
-                current_line_state = 'cancel'
-            elif line.procurement_id.purchase_id and line.procurement_id.purchase_id.state == 'cancel':
-                current_line_state = 'cancel'
-            elif line.procurement_id.move_id and \
-                    (line.procurement_id.move_id.state == 'cancel' or line.procurement_id.move_id.picking_id.state == 'cancel'):
-                current_line_state = 'cancel'
-
 
             # cancel IN at line level: qty on IR line is adjusted
             # cancel all IN: qty on IR is untouched
@@ -213,13 +202,14 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if len(line.move_ids) == 0:
                 line_moves, int_name = self._get_move_from_line(line, line.product_id.id, line.order_id.name)
 
+            data = {
+                'state': line.state,
+                'state_display': line.state_to_display,
+            }
+
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
-                    current_move_line_state = current_line_state
-                    if move.state == 'cancel' or move.picking_id.state == 'cancel':
-                        current_move_line_state = 'cancel'
-
-                    m_type = current_move_line_state == 'cancel' or move.product_qty != 0.00 and move.picking_id.type == 'out'
+                    m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                     ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
                     s_out = move.picking_id.subtype == 'standard' and move.location_dest_id.usage == 'customer'
@@ -227,7 +217,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     if (m_type and (ppl or ppl_not_shipped or s_out)) or move.type == 'internal':
                         # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                         #if move.state == 'done' or move.picking_id.state == 'cancel':
-                        if move.state != 'cancel': 
+                        if move.state != 'cancel':
                             bo_qty -= self.pool.get('product.uom')._compute_qty(
                                 self.cr,
                                 self.uid,
@@ -238,7 +228,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         delivery_order = move.picking_id.name
                         if move.picking_id.state != 'done':
                             delivery_order = '-'
-                        data = {
+                        data.update({
                             'po_name': po_name,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -247,10 +237,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'product_code': line.product_id.code or '-',
                             'is_delivered': False,
                             'delivery_order': delivery_order,
-                            'current_line_state': current_move_line_state,
                             'packing': '-',
                             'shipment': '-',
-                        }
+                        })
                         if first_line:
                             data.update({
                                 'uom_id': line.product_uom.name,
@@ -346,9 +335,6 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             m_index += 1
             elif line_moves and (len(line.move_ids) == 0 and line.procurement_id.move_id):
                 for line_move in line_moves:
-                    if line_move.state == 'cancel' or line_move.picking_id.state == 'cancel':
-                        current_line_state = 'cancel'
-
                     m_type = line_move.product_qty != 0.00
 
                     if m_type:
@@ -363,7 +349,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         delivery_order = int_name.get(line_move.id) or line_move.picking_id.name
                         if 'INT' in line_move.picking_id.name and line_move.picking_id.state != 'done':
                             delivery_order = '-'
-                        data = {
+                        data.update({
                             'po_name': po_name,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -372,8 +358,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'product_code': line.product_id.code or '-',
                             'is_delivered': False,
                             'delivery_order': delivery_order,
-                            'current_line_state': current_line_state,
-                        }
+                        })
                         if first_line:
                             data.update({
                                 'uom_id': line.product_uom.name,
@@ -408,7 +393,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             m_index += 1
             else:  # No move found
                 if first_line:
-                    data = {
+                    data.update({
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
@@ -420,10 +405,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'delivered_qty': 0.00,
                         'delivered_uom': '-',
                         'delivery_order': '-',
-                        'current_line_state': current_line_state,
                         'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
                         'cdd': cdd,
-                    }
+                    })
                     lines.append(data)
 
             # Put the backorderd qty on the first line
@@ -444,7 +428,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00
 
             for ln in lines:
-                if only_bo and (ln.get('backordered_qty', 0.00) <= 0.00 or ln.get('current_line_state') == 'cancel'):
+                if only_bo and (ln.get('backordered_qty', 0.00) <= 0.00 or line.state in ('cancel', 'cancel_r')):
                     continue
                 yield ln
 

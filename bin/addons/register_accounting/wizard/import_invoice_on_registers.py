@@ -244,7 +244,8 @@ class wizard_import_invoice(osv.osv_memory):
 
                 # Create register line
                 partial = False
-                if line.amount and line.amount_to_pay and line.amount < abs(line.amount_to_pay):
+                equal_amounts = abs(abs(line.amount) - abs(line.amount_to_pay)) <= 10**-3
+                if not equal_amounts and line.amount < abs(line.amount_to_pay):
                     partial = ' - ' + _('partial pymt')
                 ref = line.ref
                 if not ref or ref == 'false':

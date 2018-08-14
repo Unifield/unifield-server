@@ -23,7 +23,7 @@ from osv import fields, osv
 
 class account_bank_statement_line_compute_currency(osv.osv):
     _inherit = "account.bank.statement.line"
-    
+
 
     def _compute(self, cr, uid, ids, name, args, context):
         cur_obj = self.pool.get('res.currency')
@@ -35,9 +35,9 @@ class account_bank_statement_line_compute_currency(osv.osv):
             try:
                 res[statement_line.id] = {
                     'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                        statement_line.functional_currency_id.id, statement_line.amount_in, round=True, context=ctx),
+                                                     statement_line.functional_currency_id.id, statement_line.amount_in, round=True, context=ctx),
                     'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                        statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
+                                                      statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
                 }
             except osv.except_osv:
                 res[statement_line.id] = {
@@ -45,12 +45,12 @@ class account_bank_statement_line_compute_currency(osv.osv):
                     'functional_out': 0
                 }
         return res
-    
+
     _columns = {
         'currency_id': fields.related('statement_id', 'currency', type="many2one", relation="res.currency", string="Currency", store=False),
         'functional_in': fields.function(_compute, method=True, store=False, type='float', string='Func. In', multi='amount_in, amount_out'),
         'functional_out': fields.function(_compute, method=True, store=False, type='float', string='Func. Out', multi='amount_in, amount_out'),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
     }
-    
+
 account_bank_statement_line_compute_currency()

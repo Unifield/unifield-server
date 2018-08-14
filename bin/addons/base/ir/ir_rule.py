@@ -103,6 +103,11 @@ class ir_rule(osv.osv):
 
         if uid == 1:
             return None
+
+        # do not merge these 2 conditions to prevent infinite loop
+        if uid == self.pool.get('res.users')._get_sync_user_id(cr):
+            return None
+
         cr.execute("""SELECT r.id
                 FROM ir_rule r
                 JOIN ir_model m ON (r.model_id = m.id)
@@ -110,7 +115,7 @@ class ir_rule(osv.osv):
                 AND r.perm_""" + mode + """
                 AND (r.id IN (SELECT rule_group_id FROM rule_group_rel g_rel
                             JOIN res_groups_users_rel u_rel ON (g_rel.group_id = u_rel.gid)
-                            WHERE u_rel.uid = %s) OR r.global)""", (model_name, uid))
+                            WHERE u_rel.uid = %s) OR r.global)""", (model_name, uid)) # not_a_user_entry
         ids = map(lambda x: x[0], cr.fetchall())
         if ids:
             for rule in self.browse(cr, uid, ids):

@@ -93,6 +93,7 @@ class wizard_import_ir_line(osv.osv_memory):
             error_log = ''
             message = ''
             header_index = context['header_index']
+            mandatory_col_count = 7  # ignore Status column
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
 
@@ -154,7 +155,7 @@ class wizard_import_ir_line(osv.osv_memory):
                     line_num += 1
                     col_count = len(row)
                     template_col_count = len(header_index.items())
-                    if col_count != template_col_count:
+                    if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count, ','.join([_(f) for f in columns_for_ir_line_import]))
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
@@ -178,7 +179,8 @@ class wizard_import_ir_line(osv.osv_memory):
                         # Cell 0: Product Code
                         p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                         to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
-                                         'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+                                         'price_unit': p_value['price_unit'], 'comment': p_value['comment'], 'error_list': p_value['error_list'],
+                                         'type': p_value['proc_type']})
 
                         # Cell 2: Quantity
                         qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
@@ -186,8 +188,8 @@ class wizard_import_ir_line(osv.osv_memory):
 
                         # Cell 3: Cost Price
                         price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
-                        to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
-                                         'warning_list': price_value['warning_list']})
+                        to_write.update({'cost_price': price_value['cost_price'], 'price_unit': price_value['price_unit'],
+                                         'error_list': price_value['error_list'], 'warning_list': price_value['warning_list']})
 
                         # Cell 4: UoM
                         uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)

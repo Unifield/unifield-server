@@ -235,7 +235,7 @@ class return_pack_shipment_family_processor(osv.osv):
         'volume': fields.function(
             _get_pack_info,
             method=True,
-            string='Volume [dm³]',
+            string=u'Volume [dm³]',
             type='float',
             store=False,
             readonly=True,

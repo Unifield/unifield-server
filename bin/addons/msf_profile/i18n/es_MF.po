@@ -7657,12 +7657,6 @@ msgstr "¡Acción no válida!"
 msgid "To Close"
 msgstr "Para cerrar"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line_search
-msgid "Analytic Selector - Saved queries"
-msgstr "Selector analítico- consultas guardadas"
-
 #. module: stock
 #: selection:stock.move.split.lines,action:0
 msgid "Keep in one lot"
@@ -12391,20 +12385,6 @@ msgstr "Semana del año"
 msgid "America/St_Lucia"
 msgstr "America / St_Lucia"
 
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: field:account.invoice,from_yml_test:0
-#: field:account.invoice.line,from_yml_test:0
-#: field:account.commitment,from_yml_test:0
-#: field:account.commitment.line,from_yml_test:0
-#: field:purchase.order,from_yml_test:0
-#: field:wizard.account.invoice,from_yml_test:0
-#: field:wizard.account.invoice.line,from_yml_test:0
-#: field:sale.order,from_yml_test:0
-#: field:procurement.order,from_yml_test:0
-#: field:stock.picking,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr "Utilizado solo para pasar la prueba de unidad de addons "
-
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.kr
 #: selection:base.setup.company,country_id:0
@@ -16891,20 +16871,6 @@ msgstr "Referencia UdM"
 msgid "Selection Options"
 msgstr "Opciones de selección"
 
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: help:account.invoice,from_yml_test:0
-#: help:account.invoice.line,from_yml_test:0
-#: help:account.commitment,from_yml_test:0
-#: help:account.commitment.line,from_yml_test:0
-#: help:purchase.order,from_yml_test:0
-#: help:wizard.account.invoice,from_yml_test:0
-#: help:wizard.account.invoice.line,from_yml_test:0
-#: help:sale.order,from_yml_test:0
-#: help:procurement.order,from_yml_test:0
-#: help:stock.picking,from_yml_test:0
-msgid "Never set this field to true !"
-msgstr "¡Nunca configure este campo en 'verdadero'!"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -20488,11 +20454,6 @@ msgstr "Canada / Eastern"
 #: model:ir.actions.act_window,help:sale.action_shop_form
 msgid "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales."
 msgstr "Si hay más de una tienda que vende los productos de su empresa, puede crearlas y administrarlas desde aquí. Cada vez que registre un nuevo presupuesto o pedido de venta, deberá vincularlo a la tienda correspondiente. La tienda también define el almacén desde el que se enviarán los productos para cada venta concreta."
-
-#. module: register_accounting
-#: field:wizard.cash.return,display_invoice:0
-msgid "Display Invoice"
-msgstr "Mostrar factura"
 
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
@@ -36466,11 +36427,6 @@ msgstr "Recibir un informe"
 #: view:sourcing.line:0
 msgid "Need Sourcing"
 msgstr "Requiere abastecimiento"
-
-#. module: analytic_distribution
-#: view:mass.reallocation.wizard:0
-msgid "- Free 1 / Free 2 items"
-msgstr "- Free 1 / Free 2 items"
 
 #. modules: account, msf_outgoing, analytic_distribution_supply, register_accounting, purchase_allocation_report, analytic_distribution_invoice, account_subscription, analytic_distribution
 #: selection:account.journal.column,field:0
@@ -60514,12 +60470,6 @@ msgstr "¡El nombre del grupo debe ser único!"
 msgid "Tender - draft"
 msgstr "Licitación - borrador"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line_search
-msgid "G/L Selector - Saved queries"
-msgstr "Selector contable- consultas guardadas"
-
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
@@ -63097,7 +63047,6 @@ msgstr "¡Los módulos seleccionados han sido actualizados/ instalados!"
 #: report:account.bank.statement.line_csv:0
 #: field:account.mcdb,currency_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:252
-#: field:account.invoice,fake_currency_id:0
 #: model:ir.model,name:account_override.model_res_currency
 #: report:payment.order:0
 #: field:account.model,currency_id:0

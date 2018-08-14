@@ -44,7 +44,7 @@
                     <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
                         <field name="to_correct_ok" invisible="1" />
                         <field name="inactive_product" invisible="1" />
-                        <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=,' False)]}" />
+                        <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                         <field name="inv_expiry_date" invisible="1" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >

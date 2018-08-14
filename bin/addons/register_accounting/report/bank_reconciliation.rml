@@ -41,6 +41,7 @@
     <paraStyle name="center" alignment="CENTER"/>
     <paraStyle name="text" leftIndent="3mm"/>
     <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+    <paraStyle name="medium_text" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
   </stylesheet>
 
   <story>
@@ -96,7 +97,7 @@
       <para style="text"><b>Bank account number:</b></para>
       <blockTable colWidths="180mm" rowHeights="10mm" style="table_comments">
         <tr>
-          <td></td>
+          <td>[[ o.bank_account_number or '' ]]</td>
         </tr>
       </blockTable>
 
@@ -121,7 +122,7 @@
 
       <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
-          <td></td>
+          <td><para style="medium_text">[[ o.register_closed_by or '' ]]</para></td>
           <td></td>
         </tr>
         <tr>

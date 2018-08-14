@@ -205,6 +205,10 @@ class account_bank_statement(osv.osv):
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
         'closing_date': fields.date("Closed On"),
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
+        'bank_account_number': fields.related('journal_id', 'bank_account_number', type='char',
+                                              string='Bank Account Number', store=False, readonly=True),
+        'register_closed_by': fields.char('Register Closed by', size=128, states={'confirm': [('readonly', True)]},
+                                          help='Name and position of the person who closes the register'),
     }
 
     _order = 'state asc, period_number asc'
@@ -249,23 +253,6 @@ class account_bank_statement(osv.osv):
             return super(account_bank_statement, self).unlink(cr, uid, ids)
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
-
-    def button_open_bank(self, cr, uid, ids, context=None):
-        """
-        when pressing 'Open Bank' button
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        registers = self.browse(cr, uid, ids, context=context)
-        for register in registers:
-            if register['period_id']['state'] in ['field-closed',
-                                                  'mission-closed', 'done']:
-                raise osv.except_osv(_('Error'),
-                                     _('The associated period is closed'))
-            else:
-                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
@@ -357,6 +344,9 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
         if isinstance(currency, tuple):
@@ -395,6 +385,8 @@ class account_bank_statement(osv.osv):
         from_cheque = False
         if st.journal_id.type == 'cheque':
             from_cheque = True
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Invoice",
             'type': 'ir.actions.act_window',
@@ -424,6 +416,8 @@ class account_bank_statement(osv.osv):
         st = self.browse(cr, uid, ids[0], context=context)
         i = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None,
                                                                    'period_id': st.period_id.id}, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -497,11 +491,17 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
+
         date = time.strftime('%Y-%m-%d')
         registers = self.browse(cr, uid, ids, context=context)
         register = registers and registers[0] or False
         if not register:
             raise osv.except_osv(_('Error'), _('Please select a register first.'))
+        context.update({'check_advance_reconciled': True})
         domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
         name = _('Open Advances')
         if register.journal_id and register.journal_id.currency:
@@ -716,13 +716,82 @@ The starting balance will be proposed automatically and the closing balance is t
                 aml_list.append(aml.id)
         return aml_list
 
+    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
+        """
+        Opens the register and updates the related XML_ID
+        """
+        if context is None:
+            context = {}
+        reg = self.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
+        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
+            raise osv.except_osv(_('Error'),
+                                 _('The associated period is closed.'))
+        if reg.journal_id.type == 'cash':
+            self.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
+        else:
+            self.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
+        # The update of xml_id must be done when opening the register
+        # --> set the value of xml_id based on the period as period is no more editable
+        self.update_xml_id_register(cr, uid, reg_id, context)
+        return True
+
+    def button_open_cash_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
+    def button_open_cheque_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
+    def button_open_bank_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
+    def button_open_register(self, cr, uid, ids, context=None):
+        """
+        Opens the "Register Opening Confirmation" wizard if it is the first register of the journal,
+        else opens the register directly.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = False
+        wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
+        if ids:
+            reg = self.browse(cr, uid, ids[0], fields_to_fetch=['prev_reg_id', 'journal_id'], context=context)
+            if not reg.prev_reg_id:
+                wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
+                return {'name': _('Open Register Confirmation'),
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'wizard.register.opening.confirmation',
+                        'target': 'new',
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'res_id': [wiz_id],
+                        'context': context,
+                        }
+            else:
+                computed_balance = 0.0
+                if reg.journal_id.type == 'cash':
+                    computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
+                return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
+        return res
+
 account_bank_statement()
+
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
     _order = 'sequence_for_order desc, sequence_for_reference desc, document_date desc, date desc, id desc'
+
+
+    def check_access_rule(self, cr, uid, ids, operation, context=None):
+        if operation == 'create':
+            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        else:
+            real_uid = uid
+
+        return super(account_bank_statement_line, self).check_access_rule(cr, real_uid, ids, operation, context=context)
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -862,14 +931,25 @@ class account_bank_statement_line(osv.osv):
     def _search_reconciled(self, cr, uid, obj, name, args, context=None):
         """
         Search all lines that are reconciled or not
+        If 'check_advance_reconciled' is in context, restrict the search to the accounts having the type "Advance".
+        Use case:
+        - advance booked on the account 13000 - Operating advances in a CHEQUE register
+        - advance line reconciled
+        - the register line should be seen as reconciled even if the other leg of the JE
+          (on the account 10210 - Outstanding Cheques) is still reconcilable.
         """
         # Test how many arguments we have
         if not len(args):
             return []
+        if context is None:
+            context = {}
         # We just support "=" case
         if args[0][1] not in ['=', 'in']:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Search statement lines that have move lines and which moves are posted
+        check_advance_reconciled = ''
+        if context.get('check_advance_reconciled', False):
+            check_advance_reconciled = " AND ac.type_for_register = 'advance' "
         if args[0][2] == True:
             sql_posted_moves = """
                 SELECT st.id FROM account_bank_statement_line st
@@ -878,7 +958,8 @@ class account_bank_statement_line(osv.osv):
                     LEFT JOIN account_move_line line ON line.move_id = move.id
                     LEFT JOIN account_account ac ON ac.id = line.account_id
                 WHERE rel.move_id is not null AND move.state = 'posted'
-                GROUP BY st.id HAVING COUNT(reconcile_id IS NULL AND ac.reconcile='t' OR NULL)=0
+                      %(check_advance_reconciled)s
+                GROUP BY st.id HAVING COUNT(reconcile_id IS NULL AND ac.reconcile='t' OR NULL)=0;
             """
         else:
             sql_posted_moves = """
@@ -888,9 +969,12 @@ class account_bank_statement_line(osv.osv):
                     LEFT JOIN account_move_line line ON line.move_id = move.id
                     LEFT JOIN account_account ac ON ac.id = line.account_id
                 WHERE
-                    rel.move_id is null OR move.state != 'posted' OR (line.reconcile_id IS NULL AND ac.reconcile='t')
+                    rel.move_id is null OR move.state != 'posted' OR 
+                    (line.reconcile_id IS NULL AND ac.reconcile='t' 
+                     %(check_advance_reconciled)s );
             """
-        cr.execute(sql_posted_moves)
+        sql_posted_moves = sql_posted_moves % {'check_advance_reconciled': check_advance_reconciled}
+        cr.execute(sql_posted_moves) # not_a_user_entry
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     def _search_amount(self, cr, uid, obj, name, args, context=None):
@@ -1039,11 +1123,14 @@ class account_bank_statement_line(osv.osv):
                 # BKLG-60: reg line from advance return: display invoice(s) AJIs too
                 res.add(absl.invoice_id.move_id.id)
             elif not absl.invoice_id and absl.direct_invoice:
-                # US-512: 
+                # US-512:
                 # above case UTP-1039 was ok for temp posted direct invoice
                 # hard posted direct invoice regline case (and sync P1->C1)
                 if absl.direct_invoice_move_id:
                     res.add(absl.direct_invoice_move_id.id)
+            # advance closed by a SI in project => in upper inst. invoice_id is empty: use advance_invoice_move_id
+            elif not absl.invoice_id and absl.advance_invoice_move_id:
+                res.add(absl.advance_invoice_move_id.id)
         return list(res)
 
     def _get_fp_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1141,6 +1228,9 @@ class account_bank_statement_line(osv.osv):
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
         'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
+        'advance_invoice_move_id': fields.many2one('account.move', 'Account Move of the Invoice used to close the Advance',
+                                                   readonly=True,
+                                                   help="When a SI is used to close an Advance, the related JE is stored in this field"),
     }
 
     _defaults = {
@@ -1183,7 +1273,7 @@ class account_bank_statement_line(osv.osv):
         cash_adv_return_move_line_ids = [
             absl.cash_return_move_line_id.id \
             for absl in absl_brs \
-            if not absl.invoice_id and absl.from_cash_return and \
+            if not absl.invoice_id and not absl.advance_invoice_move_id and absl.from_cash_return and \
             absl.cash_return_move_line_id
             # NOTE: for imported invoices we let the default behaviour
             # (display of invoice AJIs)
@@ -2138,6 +2228,8 @@ class account_bank_statement_line(osv.osv):
             'down_payment_id': False,
             'cash_return_move_line_id': False,  # BKLG-60
             'partner_move_ids': [],
+            'advance_invoice_move_id': False,
+            'direct_invoice_move_id': False,
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
@@ -2190,8 +2282,12 @@ class account_bank_statement_line(osv.osv):
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
+
+        # low level lock to prevent double posting
+        cr.execute('select id from account_bank_statement_line where id in %s for update', (tuple(ids),))
+
         # browse all statement lines for creating move lines
-        for absl in self.browse(cr, 1, ids, context=context):
+        for absl in self.browse(cr, 1, list(set(ids)), context=context):
             if not context.get('from_wizard_di'):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
@@ -2294,7 +2390,7 @@ class account_bank_statement_line(osv.osv):
                             absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                                              _('You can not hard post with an amount greater'
-                                               ' than total of imported invoices'))
+                                               ' than total of imported invoices: Entry %s') % absl.sequence_for_reference or '')
 
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
@@ -2513,7 +2609,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
                 else:
                     #US-960: No need to set the check flag to True when unlink a reg line, otherwise it could regenerate wrongly new AJIs!
-                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids], context=context, check=False) 
+                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids], context=context, check=False)
             # Delete direct invoice if exists
             if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
                 # unlink moves and analytic lines before deleting the line
@@ -2893,8 +2989,12 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] in ['down_payment', 'payroll']:
+            elif a['type_for_register'] == 'down_payment':
                 third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif a['type_for_register'] == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}

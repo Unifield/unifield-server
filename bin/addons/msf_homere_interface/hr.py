@@ -25,6 +25,47 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
+from msf_field_access_rights.osv_override import _get_instance_level
+
+class hr_payment_method(osv.osv):
+    _name = 'hr.payment.method'
+    _description = 'Payment Method'
+    _columns = {
+        'name': fields.char(size=128, string='Name', required=True, select=1),
+    }
+
+    _order = 'name'
+
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The payment method name must be unique.')
+    ]
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        result = super(hr_payment_method, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree':
+            if _get_instance_level(self, cr, uid) == 'hq':
+                root = etree.fromstring(result['arch'])
+                root.set('editable', 'top')
+                root.set('hide_new_button', '0')
+                root.set('hide_edit_button', '0')
+                root.set('hide_delete_button', '0')
+                result['arch'] = etree.tostring(root)
+        return result
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'name' in vals and not context.get('sync_update_execution'):
+            existing_ids = self.search(cr, uid, [('id', 'in', ids), ('name', '!=', vals['name'])])
+            if existing_ids and self.pool.get('hr.employee').search(cr, uid, [('active', 'in', ['t', 'f']), ('payment_method_id', 'in', existing_ids)]):
+                raise osv.except_osv(_('Error'), _("You can't change a payment method used at least in one employee"))
+
+        return super(hr_payment_method, self).write(cr, uid, ids, vals, context=context)
+hr_payment_method()
+
 
 class hr_employee(osv.osv):
     _name = 'hr.employee'
@@ -51,7 +92,7 @@ class hr_employee(osv.osv):
         return res
 
     def _get_ex_allow_edition(self, cr, uid, ids, field_name=None, arg=None,
-        context=None):
+                              context=None):
         """
         US-94 do not allow to modify an already set identification id for expat
         """
@@ -105,6 +146,9 @@ class hr_employee(osv.osv):
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
         'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
+        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False, ondelete='restrict'),
+        'bank_name': fields.char('Bank Name', size=256, required=False),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
     }
 
     _defaults = {
@@ -115,6 +159,27 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
     }
+
+    def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
+        if not data.get('identification_id') or not data.get('name'):
+            return False
+
+        employee_name = data['name'].strip()
+        existing_id = self.find_sd_ref(cr, uid, sdref)
+        if not existing_id:
+            # never run, but exists with the same id and name => ignore
+            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)]):
+                return True
+
+        else:
+            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)])
+            if same_ids and existing_id not in same_ids:
+                # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
+                return True
+
+        return False
+
+
 
     def _check_unicity(self, cr, uid, ids, context=None):
         """
@@ -145,10 +210,13 @@ class hr_employee(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Block creation for local staff if no 'from' in context
+        Remove space in the beginning and end of employee name
         """
         # Some verifications
         if not context:
             context = {}
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -176,6 +244,7 @@ class hr_employee(osv.osv):
         """
         Block write for local staff if no 'from' in context.
         Allow only analytic distribution changes (cost center, funding pool, free 1 and free 2)
+        Remove space in the beginning and end of employee name
         """
         if not ids:
             return True
@@ -191,6 +260,8 @@ class hr_employee(osv.osv):
         if setup and not setup.payroll_ok:
             allowed = True
         # Prepare some variable for process
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
@@ -328,7 +399,7 @@ class hr_employee(osv.osv):
 
         return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         import os
         processed = []

@@ -40,7 +40,8 @@ class account_invoice_refund(osv.osv_memory):
         if context is None:
             context = {}
         args = [('type', '=', 'sale_refund')]
-        doc_to_refund_id = context.get('active_ids') and context['active_ids'][0]
+        # in case of a DI refund from a register line use the dir_invoice_id in context
+        doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
         if doc_to_refund_id:
             source_type = obj_inv.read(cr, uid, doc_to_refund_id, ['type'], context=context)['type']
             if source_type in ('in_invoice', 'in_refund'):
@@ -51,18 +52,24 @@ class account_invoice_refund(osv.osv_memory):
         return journal and journal[0] or False
 
     def _get_document_date(self, cr, uid, context=None):
-        active_ids = context.get('active_ids', [])
-        if active_ids:
+        if context is None:
+            context = {}
+        invoice_id = context.get('dir_invoice_id') or (context.get('active_ids') and context['active_ids'][0])
+        if invoice_id:
             invoice_module = self.pool.get('account.invoice')
-            doc_date = invoice_module.read(cr, uid, active_ids[0], ['document_date'],
+            doc_date = invoice_module.read(cr, uid, invoice_id, ['document_date'],
                                            context=context)['document_date']
             return doc_date
         return time.strftime('%Y-%m-%d')
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        jtype = context.get('journal_type', 'sale_refund')
+        jtype = 'sale_refund'
+        if context.get('journal_type'):
+            jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
         if jtype in ('sale', 'sale_refund'):
             jtype = 'sale_refund'
         else:
@@ -70,8 +77,10 @@ class account_invoice_refund(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
-                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', jtype),('is_current_instance','=',True)], context=context, limit=None, name_get_uid=1)
+                journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
+                journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
+                res['fields'][field]['domain'] = journal_domain
         return res
 
     _columns = {
@@ -81,20 +90,10 @@ class account_invoice_refund(osv.osv_memory):
 
     _defaults = {
         'document_date': _get_document_date,
-        'date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available
         'filter_refund': 'refund',
         'journal_id': _get_journal,  # US-193
     }
-
-    def onchange_date(self, cr, uid, ids, date, context=None):
-        res = {}
-        # Some verifications
-        if not context:
-            context = {}
-        if date:
-            res.update({'value': {'document_date' : date}})
-        return res
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """
@@ -112,16 +111,16 @@ class account_invoice_refund(osv.osv_memory):
         res.append('analytic_distribution_id')
         return res
 
-    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form):
+    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form, context=None):
         """
         Permits to adapt refund creation
         """
         if form.get('document_date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                form['document_date'], date)
-            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'])
+            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'], context=context)
         else:
-            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
+            return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
     def _hook_create_invoice(self, cr, uid, data, form, *args):
         """
@@ -147,7 +146,7 @@ class account_invoice_refund(osv.osv_memory):
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         if mode == 'modify' or mode == 'cancel':
             invoice_obj = self.pool.get('account.invoice')
-            inv_ids = context.get('active_ids', [])
+            inv_ids = context.get('dir_invoice_id') and [context['dir_invoice_id']] or context.get('active_ids', [])
             invoices = invoice_obj.browse(cr, uid, inv_ids, context=context)
             for invoice in invoices:
                 if invoice.imported_state == 'partial':

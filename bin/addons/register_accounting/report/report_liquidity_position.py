@@ -33,6 +33,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.registers = {}
         self.func_currency = {}
         self.pending_cheques = {}
+        self.revaluation_lines = {}
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
@@ -48,7 +49,10 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
+            # Cheque Journals to display, in alphabetical order:
+            'getChqJournalCodes': lambda *a: sorted(self.getPendingCheques()['registers']),
             'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
+            'getRevaluationLines': self.getRevaluationLines,
         })
         return
 
@@ -67,15 +71,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
-    def getConvert(self, cur_id, amount):
+    def getConvert(self, cur_id, amount, report_period=None):
         '''
         Returns the amount converted from the currency whose id is in parameter into the functional currency
         '''
         currency = self.pool.get('res.currency').browse(self.cr, self.uid, cur_id)
         rate = 1
         # get the correct exchange rate according to the report period
+        if not report_period:
+            report_period = self.getPeriod()
         self.cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s "
-                        "ORDER BY name DESC LIMIT 1", (cur_id, self.getPeriod().date_stop))
+                        "ORDER BY name DESC LIMIT 1;", (cur_id, report_period.date_stop))
         if self.cr.rowcount != 0:
             rate = self.cr.fetchone()[0]
         converted_amount = amount / rate
@@ -92,7 +98,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
         args = [('period_id', '=', self.period_id)]
-        reg_ids = reg_obj.search(self.cr, self.uid, args)
+        reg_ids = reg_obj.search(self.cr, self.uid, args, order='journal_id')
         regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
 
         self.func_currency = regs[0].journal_id.company_id.currency_id.name
@@ -186,15 +192,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
-    def getRegisterState(self, reg):
+    def getRegisterState(self, reg, report_period_id=None):
         '''
         Returns the register state (String) for the period of the report.
         If the register doesn't exist for this period, returns 'Not Created'.
         '''
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
+        if not report_period_id:
+            report_period_id = self.period_id
         reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
-                                                                        ('period_id', '=', self.period_id)])
+                                                                        ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
             # get the value from the selection field ("Closed" instead of "confirm", etc.)
@@ -203,6 +211,69 @@ class report_liquidity_position3(report_sxw.rml_parse):
         else:
             state = _('Not Created')
         return state
+
+    def getRevaluationLines(self):
+        """
+        Returns a dict with key = currency, and value = dict of the data to display for the revaluation entries in this currency.
+        Entries taken into account are: booked in the Revaluation journal of the current instance, on the accounts used
+        for Cheque Registers, with a Posting date in the selected period or before, and not fully reconciled.
+        """
+        if not self.revaluation_lines:
+            pool = pooler.get_pool(self.cr.dbname)
+            journal_obj = pool.get('account.journal')
+            aml_obj = pool.get('account.move.line')
+            journal_ids = journal_obj.search(self.cr, self.uid, [('type', '=', 'revaluation'),
+                                                                 ('is_current_instance', '=', True)], order='NO_ORDER')
+            aml_domain = [('journal_id', 'in', journal_ids),
+                          ('date', '<=', self.getPeriod().date_stop),
+                          ('reconcile_id', '=', False)]
+            cheque_journal_ids = journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque'),
+                                                                        ('is_current_instance', '=', True)], limit=1)
+            if cheque_journal_ids:
+                cheque_journal = journal_obj.browse(self.cr, self.uid, cheque_journal_ids[0],
+                                                    fields_to_fetch=['default_debit_account_id', 'default_credit_account_id'])
+                account_ids = [cheque_journal.default_debit_account_id.id, cheque_journal.default_credit_account_id.id]
+                aml_domain.append(('account_id', 'in', account_ids))
+            aml_ids = aml_obj.search(self.cr, self.uid, aml_domain, order='NO_ORDER')
+            revaluation_lines = {}
+            fields_list = ['currency_id', 'journal_id', 'debit_currency', 'credit_currency', 'debit', 'credit']
+            for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=fields_list):
+                curr = aml.currency_id and aml.currency_id.name or ''
+                if curr not in revaluation_lines:
+                    revaluation_lines[curr] = {}
+                    # initialize amounts
+                    revaluation_lines[curr]['booking_amount'] = 0.0
+                    revaluation_lines[curr]['functional_amount'] = 0.0
+                    # same Prop. instance and journal for all entries
+                    revaluation_lines[curr]['prop_instance'] = aml.journal_id.instance_id.name
+                    revaluation_lines[curr]['journal_code'] = aml.journal_id.code
+                    revaluation_lines[curr]['journal_name'] = aml.journal_id.name
+                revaluation_lines[curr]['booking_amount'] += (aml.debit_currency or 0.0) - (aml.credit_currency or 0.0)
+                revaluation_lines[curr]['functional_amount'] += (aml.debit or 0.0) - (aml.credit or 0.0)
+            self.revaluation_lines = revaluation_lines
+        return self.revaluation_lines
+
+    def _update_totals_with_revaluation_lines(self, pending_cheques):
+        """
+        Adds the revaluation lines values to:
+        - Pending Cheques subtotals per currency
+        - Total Cheque
+        - Grand Total Register per currency
+        """
+        for rev_cur in self.getRevaluationLines():
+            rev_fctal = self.getRevaluationLines()[rev_cur]['functional_amount'] or 0.0
+            rev_booking = self.getRevaluationLines()[rev_cur]['booking_amount'] or 0.0
+            if rev_cur not in pending_cheques['currency_amounts']:
+                pending_cheques['currency_amounts'][rev_cur] = {
+                    'total_amount_reg_currency': 0.0,
+                    'total_amount_func_currency': 0.0,
+                }
+            pending_cheques['currency_amounts'][rev_cur]['total_amount_reg_currency'] += rev_booking
+            pending_cheques['currency_amounts'][rev_cur]['total_amount_func_currency'] += rev_fctal
+            pending_cheques['total_cheque'] += rev_fctal
+            if rev_cur not in self.grand_total_reg_currency:
+                self.grand_total_reg_currency[rev_cur] = 0.0
+            self.grand_total_reg_currency[rev_cur] += rev_booking
 
     def getPendingCheques(self):
         '''
@@ -281,6 +352,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
             # Add amount to get the "global" Total for all currencies (in functional currency)
             pending_cheques['total_cheque'] += amount_func_currency
+        self._update_totals_with_revaluation_lines(pending_cheques)
         self.pending_cheques = pending_cheques
         return pending_cheques
 

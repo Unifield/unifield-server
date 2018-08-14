@@ -3,47 +3,7 @@
     <data>
     
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
-        <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
-            <field name="name">purchase.cross.docking.form.view2</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">45</field>
-            <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/group/field[@name='categ']" position="replace" >
-                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
 
-        <record id="purchase_cross_docking_form_view" model="ir.ui.view">
-            <field name="name">purchase.cross.docking.form.view</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">25</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
-                        <field name="cross_docking_ok"
-                            attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}"
-                            on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"
-                        />
-                    </xpath>
-                    <field name="location_id" position= "replace">
-                        <!-- attrs="{'readonly':['|', ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice', 'confirmed_wait']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"-->
-                        <!-- [UF-1689] we want the user to select only Cross Docking or Input i.e. to tick or clear the checkbox cross docking
-                        so we set the location_id always readonly-->
-                        <field name="location_id" 
-                        domain="[('usage', '=', 'internal')]"
-                        readonly="1"
-                        on_change="onchange_location_id(location_id,categ)"/>
-                    </field>
-                </data>
-            </field>
-        </record>
         
         <!-- Here we add 'purchase_id' in the context for defining a 'default_get'
          when we want to create a new stock move directly in the delivery form -->

@@ -26,12 +26,5 @@
             </field>
         </record>
 
-       <act_window name="SMS Send"
-            res_model="partner.sms.send"
-            src_model="res.partner"
-            view_mode="form"
-            target="new"
-            key2="client_action_multi"
-            id="action_partner_sms_send"/>
     </data>
 </openerp>

@@ -29,7 +29,6 @@
     "depends": [
         "sale",
         "purchase",
-        "sale_override",
         "order_types",
         "order_line_number",
         "msf_order_date",
@@ -43,11 +42,7 @@
     Add sourcing specification
     """,
     'test': [
-        'test/sourcing.yml',
-        'test/2lines_supplier.yml',
-        'test/grouped_po.yml',
-        'test/error_rfq_sourcing.yml',
-        ],
+    ],
     'update_xml': [
         'sourcing_view.xml',
         'related_sourcing_view.xml',

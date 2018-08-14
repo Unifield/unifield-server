@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+from msf_doc_import import PRODUCT_LIST_TYPE
 
 import time
 
@@ -83,10 +84,7 @@ class product_list(osv.osv):
             string='Ref.',
         ),
         'type': fields.selection(
-            selection=[
-                ('list', 'List'),
-                ('sublist', 'Sublist'),
-            ],
+            selection=PRODUCT_LIST_TYPE,
             string='Type',
             required=True,
         ),
@@ -303,7 +301,8 @@ class product_list_line(osv.osv):
         # check if product already exists in the product list:
         if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and vals.get('name', False):
             for line in self.browse(cr, uid, ids, context=context):
-                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context):
+                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context) and \
+                        line.name.id != vals.get('name'):
                     raise osv.except_osv(
                         _('Warning'),
                         _('This product cannot be added as it already exists in this list.')
@@ -315,7 +314,8 @@ class product_list_line(osv.osv):
         if context is None:
             context = {}
         # check if product already exists in the product list:
-        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
+        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and \
+                self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
             raise osv.except_osv(
                 _('Warning'),
                 _('This product cannot be added as it already exists in this list.')
@@ -335,13 +335,14 @@ class product_list_line(osv.osv):
             ids = [ids]
 
         if not context.get('import_error', False):
-            for line in self.read(cr, uid, ids, context=context):
-                opll.create(cr, uid, {
-                    'removal_date': time.strftime('%Y-%m-%d'),
-                    'comment': 'comment' in line and line['comment'] or '',
-                    'name': line['name'][0],
-                    'list_id': line['list_id'][0],
-                }, context=context)
+            for line in self.read(cr, uid, ids, ['comment', 'name', 'list_id'], context=context):
+                if line['list_id'] and line['name']:
+                    opll.create(cr, uid, {
+                        'removal_date': time.strftime('%Y-%m-%d'),
+                        'comment': 'comment' in line and line['comment'] or '',
+                        'name': line['name'][0],
+                        'list_id': line['list_id'][0],
+                    }, context=context)
 
         return super(product_list_line, self).\
             unlink(cr, uid, ids, context=context)

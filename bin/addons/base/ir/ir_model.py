@@ -392,7 +392,7 @@ class ir_model_fields(osv.osv):
         res = super(ir_model_fields,self).write(cr, user, ids, vals, context=context)
 
         if column_rename:
-            cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % column_rename[1])
+            cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % column_rename[1]) # not_a_user_entry
             # This is VERY risky, but let us have this feature:
             # we want to change the key of column in obj._columns dict
             col = column_rename[0]._columns.pop(column_rename[1][1]) # take object out, w/o copy
@@ -501,14 +501,14 @@ class ir_model_access(osv.osv):
             cr.execute("SELECT perm_" + mode + " "
                        "  FROM ir_model_access a "
                        "  JOIN ir_model m ON (m.id = a.model_id) "
-                       " WHERE m.model = %s AND a.group_id = %s", (model_name, group_id)
+                       " WHERE m.model = %s AND a.group_id = %s", (model_name, group_id) # not_a_user_entry
                        )
             r = cr.fetchone()
             if r is None:
                 cr.execute("SELECT perm_" + mode + " "
                            "  FROM ir_model_access a "
                            "  JOIN ir_model m ON (m.id = a.model_id) "
-                           " WHERE m.model = %s AND a.group_id IS NULL", (model_name, )
+                           " WHERE m.model = %s AND a.group_id IS NULL", (model_name, ) # not_a_user_entry
                            )
                 r = cr.fetchone()
 
@@ -522,6 +522,10 @@ class ir_model_access(osv.osv):
         if uid==1:
             # User root have all accesses
             # TODO: exclude xml-rpc requests
+            return True
+
+        if uid== self.pool.get('res.users')._get_sync_user_id(cr):
+            # User for sync have all accesses
             return True
 
         assert mode in ['read','write','create','unlink'], 'Invalid access mode'
@@ -545,7 +549,7 @@ class ir_model_access(osv.osv):
                    '  JOIN res_groups_users_rel gu ON (gu.gid = a.group_id) '
                    ' WHERE m.model = %s '
                    '   AND gu.uid = %s '
-                   , (model_name, uid,)
+                   , (model_name, uid,) # not_a_user_entry
                    )
         r = cr.fetchone()[0]
 
@@ -556,7 +560,7 @@ class ir_model_access(osv.osv):
                        '  JOIN ir_model m ON (m.id = a.model_id) '
                        ' WHERE a.group_id IS NULL '
                        '   AND m.model = %s '
-                       , (model_name,)
+                       , (model_name,) # not_a_user_entry
                        )
             r = cr.fetchone()[0]
 
@@ -569,7 +573,7 @@ class ir_model_access(osv.osv):
                     left join res_groups g on (a.group_id=g.id)
                 where
                     m.model=%s and
-                    a.group_id is not null and perm_''' + mode, (model_name, ))
+                    a.group_id is not null and perm_''' + mode, (model_name, )) # not_a_user_entry
             groups = ', '.join(map(lambda x: x[0], cr.fetchall())) or '/'
             msgs = {
                 'read':   _("You can not read this document (%s) ! Be sure your user belongs to one of these groups: %s."),
@@ -577,7 +581,6 @@ class ir_model_access(osv.osv):
                 'create': _("You can not create this document (%s) ! Be sure your user belongs to one of these groups: %s."),
                 'unlink': _("You can not delete this document (%s) ! Be sure your user belongs to one of these groups: %s."),
             }
-
             raise except_orm(_('AccessError'), msgs[mode] % (model_name, groups) )
         return r
 
@@ -731,7 +734,7 @@ class ir_model_data(osv.osv):
             cr.execute('''SELECT imd.id, imd.res_id, md.id
                           FROM ir_model_data imd LEFT JOIN %s md ON (imd.res_id = md.id)
                           WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,
-                       (module, xml_id))
+                       (module, xml_id)) # not_a_user_entry
             results = cr.fetchall()
             for imd_id2,res_id2,real_id2 in results:
                 if not real_id2:
@@ -770,6 +773,12 @@ class ir_model_data(osv.osv):
                         },context=context)
         else:
             if mode=='init' or (mode=='update' and xml_id):
+                # Exception for DN: block import of lines
+                if model == 'account.invoice':
+                    is_debit_note = context.get('is_debit_note') and context.get('type') == 'out_invoice' \
+                        and not context.get('is_inkind_donation')
+                    if is_debit_note and values.get('invoice_line'):
+                        raise osv.except_osv(_('Error'), _('Creating Debit Note lines by file import is not allowed.'))
                 res_id = model_obj.create(cr, uid, values, context=context)
                 # US-180: Only create ir model data if res_id is valid
                 if xml_id and res_id:
@@ -831,12 +840,12 @@ class ir_model_data(osv.osv):
         else:
             where += ' and (key2 is null)'
 
-        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name))
+        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
         res = cr.fetchone()
         if not res:
             res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
         elif xml_id:
-            cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name))
+            cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name)) # not_a_user_entry
         return True
 
     def _process_end(self, cr, uid, modules):
@@ -844,7 +853,7 @@ class ir_model_data(osv.osv):
             return True
         modules = list(modules)
         module_in = ",".join(["%s"] * len(modules))
-        cr.execute('select id,name,model,res_id,module from ir_model_data where module IN (' + module_in + ') and noupdate=%s', modules + [False])
+        cr.execute('select id,name,model,res_id,module from ir_model_data where module IN (' + module_in + ') and noupdate=%s', modules + [False]) # not_a_user_entry
         wkf_todo = []
         for (id, name, model, res_id,module) in cr.fetchall():
             if (module,name) not in self.loads:
