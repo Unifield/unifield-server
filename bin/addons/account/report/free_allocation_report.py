@@ -207,6 +207,11 @@ class free_allocation_report(report_sxw.rml_parse):
                                     sign = -1  # negative AJI
                                 book_amount = sign * book_amount
                                 func_amount = sign * func_amount
+                                # round amounts (note that because of the rounding the totals in the report and the
+                                # system may be slightly different)
+                                precision = 2
+                                func_amount = round(func_amount, precision)
+                                book_amount = round(book_amount, precision)
                                 line = {
                                     'account': aml.account_id.code,
                                     'destination': ad[0],
