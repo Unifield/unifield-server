@@ -228,11 +228,15 @@ class free_allocation_report(report_sxw.rml_parse):
                                 book_total += book_amount or 0.0
                                 func_total += func_amount or 0.0
                 # create the total line for each Entry Sequence
-                self.total_lines[move.name] = {
-                        'book_amount': book_total,
-                        'book_currency': book_currency,
-                        'func_amount': func_total,
-                    }
+                if self.lines[move.name]:
+                    self.total_lines[move.name] = {
+                            'book_amount': book_total,
+                            'book_currency': book_currency,
+                            'func_amount': func_total,
+                        }
+                else:
+                    # empty total line in case there is no analytic line for this move
+                    self.total_lines[move.name] = {}
         return self.lines
 
     def _get_total_line(self, entry_sequence):
