@@ -101530,3 +101530,35 @@ msgstr "La quantité par paquet doit être un entier pour cette UdM"
 #: selection:return.ppl.move.processor,integrity_status:0
 msgid "The quantity per pack must be a multiple of UoM's rounding"
 msgstr "La quantité par paquet doit être un multiple de l'arrondi de l'UdM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:983
+#, python-format
+msgid "Split\n"
+"QTY"
+msgstr "Divisé\n"
+"QTÉ"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1239
+#, python-format
+msgid "\n"
+"QTY"
+msgstr "\n"
+"QTÉ"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1243
+#, python-format
+msgid "\n"
+"PRICE"
+msgstr "\n"
+"PRIX"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1235
+#, python-format
+msgid "\n"
+"PROD"
+msgstr "\n"
+"PROD"

@@ -79,7 +79,7 @@
                         <page string="Details">
                             <!-- LINES -->
                             <field name="simu_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'ignore', 'error'); blue: type_change=='split'; green: type_change=='new'">
+                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change in ('warning', 'error'); orange: change_ok==True and type_change not in ('del', 'ignore', 'error', 'warning'); blue: type_change=='split'; green: type_change=='new'">
                                     <field name="in_product_id" />
                                     <field name="in_nomen" />
                                     <field name="in_comment" />
@@ -92,7 +92,8 @@
                                     <field name="in_line_number" invisible="1" />
                                     <field name="str_in_line_number" />
                                     <field name="in_ext_ref" />
-                                    <field name="type_change" />
+                                    <field name="type_change" invisible="1"/>
+                                    <field name="chg_text" />
                                     <field name="error_msg" invisible="1" />
                                     <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
                                     <field name="imp_product_id" />
