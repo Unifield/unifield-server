@@ -626,11 +626,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             filename = wiz.filename or ""
             # Check data from the ini file
             mois_ko = not config_parser.has_option('DEFAUT', 'MOIS')
-            type_envoi_ko = not config_parser.has_option('DEFAUT', 'TYPE_ENVOI') or \
-                config_parser.get('DEFAUT', 'TYPE_ENVOI') != 'A field'
             liste_terr_ko = not config_parser.has_option('DEFAUT', 'LISTETERRAIN') or \
                 config_parser.get('DEFAUT', 'LISTETERRAIN').count(';') > 1  # it should contain only 1 project code
-            if mois_ko or type_envoi_ko or liste_terr_ko:
+            if mois_ko or liste_terr_ko:
                 # block all the import if the file imported is not a valid PER_MOIS file
                 raise osv.except_osv(_('Error'), _("You can't import this file. Please check that it contains data "
                                                    "for only one month and one field."))
