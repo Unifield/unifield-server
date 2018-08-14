@@ -668,18 +668,22 @@ class orm_template(object):
                         else:
                             break
                     else:
+                        if isinstance(r, browse_record):
+                            obj = self.pool.get(r._table_name)
+                        else:
+                            obj = self
                         r = r[f[i]]
                         # To display external name of selection field when its exported
                         cols = False
-                        if f[i] in self._columns.keys():
-                            cols = self._columns[f[i]]
-                        elif f[i] in self._inherit_fields.keys():
-                            cols = selection_field(self._inherits)
+                        if f[i] in obj._columns.keys():
+                            cols = obj._columns[f[i]]
+                        elif f[i] in obj._inherit_fields.keys():
+                            cols = selection_field(obj._inherits)
                         if cols and cols._type == 'selection' and not sync_context:
                             # if requested, translate the fields.selection values
                             translated_selection = False
                             if context.get('translate_selection_field', False) and r and f:
-                                fields_get_res = self.fields_get(cr, uid, f, context=context)
+                                fields_get_res = obj.fields_get(cr, uid, f, context=context)
                                 if f[0] in fields_get_res and 'selection' in fields_get_res[f[0]]:
                                     r = dict(fields_get_res[f[0]]['selection'])[r]
                                     translated_selection = True
