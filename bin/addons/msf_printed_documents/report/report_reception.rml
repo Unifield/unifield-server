@@ -512,10 +512,10 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Comment</para>
+                                            <para style="TextInformation" alignment="LEFT">Changed article</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Changed article</para>
+                                            <para style="TextInformation" alignment="LEFT">Comment</para>
                                         </td>
                                     </tr>
 
@@ -587,10 +587,10 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">[[ line.comment or '-' ]]</para>
+                                            <para style="TextInformationN" alignment="LEFT">-</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformationN" alignment="LEFT">-</para>
+                                            <para style="TextInformation" alignment="LEFT">[[ line.comment or '-' ]]</para>
                                         </td>
                                     </tr>
 
