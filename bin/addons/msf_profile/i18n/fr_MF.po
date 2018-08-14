@@ -101562,3 +101562,8 @@ msgid "\n"
 "PROD"
 msgstr "\n"
 "PROD"
+
+#. module: stock
+#: field:stock.picking,physical_reception_date:0
+msgid "Physical Reception Date"
+msgstr "Date de Réception Physique"

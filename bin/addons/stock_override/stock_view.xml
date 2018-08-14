@@ -589,6 +589,7 @@
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="shipment_ref" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
+                            <field name="physical_reception_date" />
                         </group>
                     </group>
                    <field name="is_esc" invisible="1" />

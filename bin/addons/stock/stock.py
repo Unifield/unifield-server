@@ -656,6 +656,7 @@ class stock_picking(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
+        'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -942,7 +943,17 @@ class stock_picking(osv.osv):
         """ Changes picking state to done.
         @return: True
         """
-        self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')})
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for sp in self.browse(cr, uid, ids, fields_to_fetch=['type', 'physical_reception_date']):
+            if sp.type == 'in' and not sp.physical_reception_date:
+                self.write(cr, uid, [sp.id], {'physical_reception_date': time.strftime('%Y-%m-%d %H:%M:%S')})
+
+        self.write(cr, uid, ids, {
+            'state': 'done',
+            'date_done': time.strftime('%Y-%m-%d %H:%M:%S'),
+        })
         self.log_picking(cr, uid, ids, context=context)
         return True
 
