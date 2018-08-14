@@ -2004,6 +2004,7 @@ class sale_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
+        'from_cancel_out': fields.boolean('OUT cancel'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2011,6 +2012,7 @@ class sale_order_line(osv.osv):
         'delay': 0.0,
         'product_uom_qty': 1,
         'product_uos_qty': 1,
+        'from_cancel_out': False,
         'sequence': 10,
         'invoiced': 0,
         'state': 'draft',
@@ -2119,6 +2121,7 @@ class sale_order_line(osv.osv):
             'created_by_rfq': False,
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
+            'from_cancel_out': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2432,6 +2435,8 @@ class sale_order_line(osv.osv):
             }, context=context)
             context.update({'return_new_line_id': True})
             new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            if signal == 'done':
+                self.pool.get('sale.order.line').write(cr, uid, [new_line_id], {'from_cancel_out': True}, context=context)
             context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
 
