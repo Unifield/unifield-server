@@ -1491,7 +1491,7 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree':
+        if not view_id and view_type == 'tree':
             view = False
             if context.get('specific_rules_tree_view', False) and context.get('product_id'):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_specific_rule')
@@ -1499,8 +1499,8 @@ class stock_location(osv.osv):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_simple')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return result
+
+        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),
