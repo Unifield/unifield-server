@@ -14426,6 +14426,21 @@ msgstr "la monnaie d'import est %s tandis que celle du Registre est %s"
 msgid "Display journals?"
 msgstr "Afficher les journaux ?"
 
+#. module: account_mcdb
+#: field:account.mcdb,display_partner:0
+msgid "Display Partners?"
+msgstr "Afficher les Partenaires ?"
+
+#. module: account_mcdb
+#: field:account.mcdb,display_transfer_journal:0
+msgid "Display Transfer Journals?"
+msgstr "Afficher les Journaux de Transfert ?"
+
+#. module: account_mcdb
+#: field:account.mcdb,display_employee:0
+msgid "Display Employees?"
+msgstr "Afficher les Employés ?"
+
 #. module: consumption_calculation
 #: field:real.average.consumption.line,asset_check:0
 msgid "Asset Check"
@@ -37392,11 +37407,13 @@ msgstr "Reconcilation prefix"
 msgid "Partially available"
 msgstr "Partiellement disponible"
 
-#. modules: product, account, base, finance, useability_dashboard_and_menu
+#. modules: product, account, base, finance, useability_dashboard_and_menu, account_mcdb
 #: field:account.partner.ledger,partner_ids:0
 #: model:ir.ui.menu,name:account.next_id_22
 #: view:res.partner:0
 #: view:res.partner.category:0
+#: view:account.mcdb:0
+#: field:account.mcdb,partner_ids:0
 #: field:res.partner.category,partner_ids:0
 #: field:wizard.account.partner.balance.tree,partner_ids:0
 #: field:product.template,seller_ids:0
@@ -46373,6 +46390,21 @@ msgstr "Ligne %s: vous devriez avoir exactement %s colonnes dans cet ordre: %s \
 msgid "Exclude instances selection"
 msgstr "Exclure la sélection d'instance"
 
+#. module: account_mcdb
+#: field:account.mcdb,rev_partner_ids:0
+msgid "Exclude partner selection"
+msgstr "Exclure la sélection de partenaires"
+
+#. module: account_mcdb
+#: field:account.mcdb,rev_employee_ids:0
+msgid "Exclude employee selection"
+msgstr "Exclure la sélection d'employés"
+
+#. module: account_mcdb
+#: field:account.mcdb,rev_transfer_journal_ids:0
+msgid "Exclude journal selection"
+msgstr "Exclure la sélection de journaux"
+
 #. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, msf_supply_doc_export, msf_doc_import, procurement_report, stock
 #: view:expiry.quantity.report:0
 #: field:expiry.quantity.report.line,batch_number:0
@@ -47145,6 +47177,16 @@ msgstr "ESC"
 #: view:account.mcdb:0
 msgid "Remove all Journals"
 msgstr "Supprimer tous les Journaux"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Remove all Partners"
+msgstr "Supprimer tous les Partenaires"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Remove all Employees"
+msgstr "Supprimer tous les Employés"
 
 #. module: base
 #: code:addons/base/res/res_user.py:293
@@ -56994,6 +57036,16 @@ msgstr "Prévu au Recrutement"
 #: view:account.mcdb:0
 msgid "Add all Journals"
 msgstr "Ajouter tous les Journaux"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Add all Partners"
+msgstr "Ajouter tous les Partenaires"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Add all Employees"
+msgstr "Ajouter tous les Employés"
 
 #. modules: msf_order_date, purchase, purchase_override, sale
 #: field:update.lines,stock_take_date:0
@@ -69840,6 +69892,7 @@ msgstr "Manage the VAT locally"
 #: model:ir.ui.menu,name:account.menu_journals
 #: model:ir.ui.menu,name:account.menu_journals_report
 #: view:account.mcdb:0
+#: field:account.mcdb,transfer_journal_ids:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:314
 #: report:account.general.ledger_landscape_tb:0
 #: field:wizard.account.partner.balance.tree,journal_ids:0
@@ -96007,7 +96060,7 @@ msgstr "Vérifier le type de partenaire"
 msgid "SQL Constraint"
 msgstr "Contrainte SQL"
 
-#. modules: hr, base, msf_homere_interface
+#. modules: hr, base, msf_homere_interface, account_mcdb
 #: model:ir.actions.act_window,name:base.action_partner_employee_form
 #: view:hr.employee:0
 #: field:hr.job,employee_ids:0
@@ -96017,6 +96070,8 @@ msgstr "Contrainte SQL"
 #: model:ir.ui.menu,name:hr.menu_open_view_employee_list_my
 #: model:ir.ui.menu,name:hr.menu_view_employee_category_configuration_form
 #: view:hr.employee:0
+#: view:account.mcdb:0
+#: field:account.mcdb,employee_ids:0
 msgid "Employees"
 msgstr "Employé(e)s"
 

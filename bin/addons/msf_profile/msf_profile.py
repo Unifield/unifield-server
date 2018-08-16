@@ -51,6 +51,44 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF10.0
+    def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
+        """
+        Third Parties in G/L selector (partners / employees / journals) become many2many fields
+        Updates the existing selectors accordingly
+        (note: selectors aren't synched for now)
+        """
+        selector_obj = self.pool.get('account.mcdb')
+        selector_ids = selector_obj.search(cr, uid, [('model', '=', 'account.move.line')])
+        for selector in selector_obj.browse(cr, uid, selector_ids,
+                                            fields_to_fetch=['partner_id', 'employee_id', 'transfer_journal_id']):
+            partner_ids, employee_ids, transfer_journal_ids = [], [], []
+            display_partner = display_employee = display_transfer_journal = False
+            if selector.partner_id:
+                partner_ids = [selector.partner_id.id]
+                display_partner = True
+            if selector.employee_id:
+                employee_ids = [selector.employee_id.id]
+                display_employee = True
+            if selector.transfer_journal_id:
+                transfer_journal_ids = [selector.transfer_journal_id.id]
+                display_transfer_journal = True
+            vals = {
+                # old fields not used anymore: to set to False in any cases
+                'partner_id': False,
+                'employee_id': False,
+                'transfer_journal_id': False,
+                # new fields: to fill in if need be
+                'partner_ids': [(6, 0, partner_ids)],
+                'employee_ids': [(6, 0, employee_ids)],
+                'transfer_journal_ids': [(6, 0, transfer_journal_ids)],
+                # 'display' boolean: to set to True to display the relative section by default in the selector
+                'display_partner': display_partner,
+                'display_employee': display_employee,
+                'display_transfer_journal': display_transfer_journal,
+            }
+            selector_obj.write(cr, uid, selector.id, vals)
+
     # UF9.1
     def change_xml_payment_method(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
