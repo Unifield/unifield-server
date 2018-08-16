@@ -196,7 +196,7 @@ class hq_report_ocg(report_sxw.report_sxw):
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
-                                                                       ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind'])], context=context)
+                                                                       ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind', 'extra'])], context=context)
 
         nb_move_line = len(move_line_ids)
         move_line_count = 0
@@ -268,7 +268,7 @@ class hq_report_ocg(report_sxw.report_sxw):
 
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
+                                                                               ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind', 'extra']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
         nb_analytic_line = len(analytic_line_ids)
         analytic_line_count = 0
