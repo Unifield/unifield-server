@@ -47,7 +47,9 @@ class free_allocation_report(report_sxw.rml_parse):
 
     def _get_lines(self, data):
         """
-        Returns the report lines as a list of dicts
+        Returns the report lines as a dict where key = Entry Sequence,
+        and value = list of dicts, each corresponding to a line to display
+        + fills in the self.total_lines for Each Entry Sequence
         """
         if not self.lines:
             move_obj = self.pool.get('account.move')
@@ -242,6 +244,7 @@ class free_allocation_report(report_sxw.rml_parse):
                 else:
                     # empty total line in case there is no analytic line for this move
                     self.total_lines[move.name] = {}
+                # update percentage of the report loading
                 bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(move_ids), context=context)
         return self.lines
 
@@ -298,9 +301,9 @@ class free_allocation_report(report_sxw.rml_parse):
         if doc_from and doc_to:
             doc_date = "%s - %s" % (doc_from, doc_to)
         elif doc_from:
-            doc_date = '%s: %s ' % (_('From'), doc_from)
+            doc_date = '%s: %s' % (_('From'), doc_from)
         elif doc_to:
-            doc_date = '%s: %s ' % (_('To'), doc_to)
+            doc_date = '%s: %s' % (_('To'), doc_to)
         return doc_date
 
     def _get_posting_date(self, data):
@@ -313,9 +316,9 @@ class free_allocation_report(report_sxw.rml_parse):
         if post_from and post_to:
             posting_date = "%s - %s" % (post_from, post_to)
         elif post_from:
-            posting_date = '%s: %s ' % (_('From'), post_from)
+            posting_date = '%s: %s' % (_('From'), post_from)
         elif post_to:
-            posting_date = '%s: %s ' % (_('To'), post_to)
+            posting_date = '%s: %s' % (_('To'), post_to)
         return posting_date
 
     def _get_accounts(self, data):
