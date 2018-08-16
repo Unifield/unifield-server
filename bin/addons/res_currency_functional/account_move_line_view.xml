@@ -64,10 +64,12 @@
                         <field name="reconcile_date" invisible="1"/>
                         <field name="unreconcile_date" invisible="1"/>
                         <field name="unreconcile_txt" invisible="1"/>
+                        <field name="revaluation_reference" invisible="1"/>
+                        <field name="revaluation_date" invisible="1"/>
                         <field name="invoice" invisible="1"/>
                         <field name="cheque_number" invisible="1"/>
                     </group>
-                    
+
                     <group col="6" colspan="4">
                         <separator colspan="6" string="Amount"/>
                         <newline/>
