@@ -231,7 +231,6 @@
                                     <field name="product_uom"/>
                                     <field name="date_planned"/>
                                     <field name="confirmed_delivery_date"/>
-                                    <field name="kc_dg"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal"/>
                                     <field name="currency_id"/>

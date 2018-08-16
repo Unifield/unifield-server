@@ -7799,7 +7799,7 @@ msgstr "Réapprovisionnement Télécharger - Augmenter les Niveaux de stock"
 #: model:ir.ui.menu,name:product_attributes.menu_cold_chain_product
 #: view:product.cold_chain:0
 msgid "Cold chain"
-msgstr "Chaine du froid"
+msgstr "Chaîne du froid"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:924
@@ -15935,7 +15935,7 @@ msgstr "Code de Compte"
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:81
 #, python-format
 msgid "Justification Y/N"
-msgstr "Justification Y/N"
+msgstr "Justification O/N"
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule:0
@@ -26104,7 +26104,7 @@ msgstr "Date de Livraison Souhaitée"
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:78
 msgid "External Ref"
-msgstr "External Ref"
+msgstr "Réf. Externe"
 
 #. module: sale
 #: code:addons/sale/res_partner.py:54
@@ -40734,14 +40734,6 @@ msgstr "Total Crédit"
 msgid "Threshold Value Line"
 msgstr "Ligne de Valeur Seuil"
 
-#. modules: msf_doc_import, msf_supply_doc_export
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:79
-#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:78
-#, python-format
-msgid "Justification Code"
-msgstr "Justification Code"
-
 #. module: stock
 #: field:stock.move,product_uos_qty:0
 msgid "Quantity (UOS)"
@@ -44563,12 +44555,16 @@ msgstr "Mode de Réapprovisionnement"
 msgid "End date"
 msgstr "Date de fin"
 
-#. modules: stock_forecast, product_attributes
+#. modules: stock_forecast, product_attributes, msf_doc_import, msf_supply_doc_export
 #: view:product.justification.code:0
 #: field:product.justification.code,code:0
 #: field:product.product,justification_code_id:0
 #: field:stock.forecast,justification_code_id:0
 #: report:stock.forecast.report:0
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:79
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:78
+#, python-format
 msgid "Justification Code"
 msgstr "Justification - Code"
 
@@ -101638,3 +101634,18 @@ msgstr "Référence de la réévaluation"
 #: help:account.move.line,revaluation_reference:0
 msgid "Entry sequence of the related Revaluation Entry"
 msgstr "Séquence de l'Entrée de Réévaluation associée"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
+msgid "Cold chain type"
+msgstr "Type de chaîne du froid"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:85
+msgid "Controlled Substance Type"
+msgstr "Type de substance contrôlée"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:84
+msgid "Dangerous Good Type"
+msgstr "Type de marchandise Dangereuse"
