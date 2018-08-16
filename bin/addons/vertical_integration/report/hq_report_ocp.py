@@ -378,7 +378,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ, IN-KIND or ODX journals
+            # Exclude lines that come from HQ, MIGRATION, IN-KIND or ODX journals
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
@@ -393,7 +393,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND aal.id IS NULL
                 AND aml.instance_id IN %s;
                 """,
-            # Do not take lines that come from a HQ, MIGRATION, IN-KIND or ODX journals
+            # Do not take lines that come from HQ, MIGRATION, IN-KIND or ODX journals
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             # For these entries instead of the "Cost centre" we take the same value as in the "Instance" column
             'bs_entries': """
