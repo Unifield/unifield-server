@@ -296,8 +296,8 @@ class free_allocation_report(report_sxw.rml_parse):
         Returns the document date range selected in the wizard if any
         """
         doc_date = ''
-        doc_from = data.get('document_date_from', False)
-        doc_to = data.get('document_date_to', False)
+        doc_from = data.get('document_date_from', False) and self.formatLang(data['document_date_from'], date=True)
+        doc_to = data.get('document_date_to', False) and self.formatLang(data['document_date_to'], date=True)
         if doc_from and doc_to:
             doc_date = "%s - %s" % (doc_from, doc_to)
         elif doc_from:
@@ -311,8 +311,8 @@ class free_allocation_report(report_sxw.rml_parse):
         Returns the posting date range selected in the wizard if any
         """
         posting_date = ''
-        post_from = data.get('posting_date_from', False)
-        post_to = data.get('posting_date_to', False)
+        post_from = data.get('posting_date_from', False) and self.formatLang(data['posting_date_from'], date=True)
+        post_to = data.get('posting_date_to', False) and self.formatLang(data['posting_date_to'], date=True)
         if post_from and post_to:
             posting_date = "%s - %s" % (post_from, post_to)
         elif post_from:
