@@ -2807,9 +2807,14 @@ class sale_order_line(osv.osv):
             vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
 
         # Internal request
+        pricelist = False
         order_id = vals.get('order_id', False)
-        if order_id and self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request'], context)['procurement_request']:
-            vals.update({'cost_price': vals.get('cost_price', False)})
+        if order_id:
+            order_data = self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request', 'pricelist_id'], context)
+            if order_data['procurement_request']:
+                vals.update({'cost_price': vals.get('cost_price', False)})
+            if order_data['pricelist_id']:
+                pricelist = order_data['pricelist_id'][0]
 
         # force the line creation with the good state, otherwise track changes for order state will
         # go back to draft (US-3671):
@@ -2818,9 +2823,13 @@ class sale_order_line(osv.osv):
 
         # US-4620 : Set price_unit to the product's standard price in case of synchro
         if vals.get('sync_linked_pol') and product_id:
+            new_ctx = context.copy()
+            if pricelist:
+                new_ctx['pricelist'] = pricelist
             vals.update({
-                'price_unit': product_obj.read(cr, uid, product_id, ['standard_price'], context=context)['standard_price']
+                'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
+
 
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
