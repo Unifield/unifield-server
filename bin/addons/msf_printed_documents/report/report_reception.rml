@@ -114,16 +114,15 @@
 
         <blockTableStyle id="OrderInformations3">
             <blockAlignment value="CENTER" />
-            <blockVAlign value="CENTER" />
-            <blockTopPadding value="0" />
+            <blockValign value="MIDDLE" />
+            <blockTopPadding value="10" />
             <blockBottomPadding value="0" />
 
             <lineStyle kind="LINEBEFORE" colorName="black"  start="2,0" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="OrderInformations4">
-            <blockAlignment value="CENTER" />
-            <blockVAlign value="CENTER" />
+            <blockValign value="MIDDLE" />
             <lineStyle kind="INNERGRID" colorName="#000000" thickness="0.5" />
             <lineStyle kind="LINEBEFORE" colorName="#000000" thickness="0.5" start="0,0" stop="1,-1" />
         </blockTableStyle>
@@ -512,10 +511,10 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Comment</para>
+                                            <para style="TextInformation" alignment="LEFT">Changed article</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Changed article</para>
+                                            <para style="TextInformation" alignment="LEFT">Comment</para>
                                         </td>
                                     </tr>
 
@@ -587,10 +586,10 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">[[ line.comment or '-' ]]</para>
+                                            <para style="TextInformationN" alignment="LEFT">-</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformationN" alignment="LEFT">-</para>
+                                            <parawrap style="TextInformation">[[ line.comment or '-' ]]</parawrap>
                                         </td>
                                     </tr>
 

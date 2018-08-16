@@ -443,7 +443,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
-        'comment': fields.char(size=128, string='Comment'),
+        'comment': fields.char(size=300, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
                                         store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
