@@ -49,7 +49,7 @@ class free_allocation_report(report_sxw.rml_parse):
         """
         Returns the report lines as a dict where key = Entry Sequence,
         and value = list of dicts, each corresponding to a line to display
-        + fills in the self.total_lines for Each Entry Sequence
+        + fills in the self.total_lines for each Entry Sequence
         """
         if not self.lines:
             move_obj = self.pool.get('account.move')

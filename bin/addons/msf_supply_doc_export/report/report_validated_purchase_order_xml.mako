@@ -28,7 +28,7 @@
             % if o.order_type == 'direct':
             <field name="delivery_name">${getContactName(o.dest_address_id.id) or ''|x}</field>
             % else:
-            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
+            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.office_name or ''|x}</field>
             % endif
             % if o.order_type == 'direct':
             <field name="delivery_address">${o.dest_partner_id and o.dest_partner_id.name or ''|x}</field>

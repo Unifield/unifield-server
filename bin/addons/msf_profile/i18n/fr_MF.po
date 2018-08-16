@@ -43890,8 +43890,8 @@ msgstr "Est une fonction ?"
 #. module: purchase_override
 #: report:msf.purchase.order:0
 #: report:purchase.order.merged:0
-msgid "PURCHASE ORDER ("
-msgstr "BON DE COMMANDE("
+msgid "PURCHASE ORDER"
+msgstr "BON DE COMMANDE"
 
 #. module: product
 #: help:res.partner,property_product_pricelist:0
@@ -46990,8 +46990,8 @@ msgstr "max"
 #: field:return.shipment.family.processor,sale_order_id:0
 #: field:shipment.additional.line.processor,sale_order_id:0
 #: field:shipment.family.processor,sale_order_id:0
-msgid "Sale Order Ref."
-msgstr "Sale Order Ref."
+msgid "Field Order Ref."
+msgstr "Réf Commande de Terrain"
 
 #. modules: base, finance
 #: view:res.request:0
@@ -51605,8 +51605,8 @@ msgstr "Balance by account"
 
 #. module: purchase_override
 #: report:msf.purchase.quotation:0
-msgid "REQUEST FOR QUOTATION ("
-msgstr "DEMANDE DE DEVIS("
+msgid "REQUEST FOR QUOTATION"
+msgstr "DEMANDE DE DEVIS"
 
 #. module: vertical_integration
 #: field:account.export.mapping,account_id:0
@@ -60968,6 +60968,7 @@ msgstr "Avancement"
 #: code:addons/sale/sale_order.py:2612
 #: code:addons/stock_override/stock.py:705
 #: code:addons/stock_override/stock.py:708
+#: code:addons/stock/wizard/manage_expired_stock.py:85
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -62689,8 +62690,9 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. module: purchase
+#. modules: purchase, sale
 #: field:purchase.order,line_count:0
+#: field:sale.order,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
@@ -74597,6 +74599,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:45
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:64
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:74
+#: code:addons/msf_outgoing/report/packing_list.py:90
+#: code:addons/msf_outgoing/wizard/internal_move_processor.py:156
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -82659,6 +82663,12 @@ msgid "Processing Error"
 msgstr "Erreur de traitement"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:562
+#, python-format
+msgid "Please fill the Address field on %s"
+msgstr "Veuillez remplir le champ Adresse sur %s"
+
+#. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_draft_done
 #: model:process.transition,name:msf_outgoing.process_transition_draft_ship_draft_done
 #: model:process.transition,note:msf_outgoing.process_transition_draft_pick_draft_done
@@ -85453,8 +85463,8 @@ msgstr "16e"
 
 #. module: sale
 #: report:msf.sale.order:0
-msgid "FIELD ORDER ("
-msgstr "COMMANDE DE TERRAIN ("
+msgid "FIELD ORDER"
+msgstr "COMMANDE DE TERRAIN"
 
 #. module: financing_contract
 #: view:financing.contract.contract:0
@@ -101386,3 +101396,174 @@ msgstr "Vous ne pouvez pas modifier une méthode de paiement utilisée sur au mo
 #, python-format
 msgid "The Location \"%s\" on line level is not the same as the Location \"%s\" on header level."
 msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s\" au niveau de l'entête."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1138
+#, python-format
+msgid "The account %s - %s is not compatible with the journal %s."
+msgstr "Le compte %s - %s n'est pas compatible avec le journal %s."
+
+#. module: purchase
+#: field:purchase.order,from_address:0
+msgid "From Address"
+msgstr "Adresse expéditeur"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1865
+#, python-format
+msgid "Another Draft Shipment exists with this Consignee."
+msgstr "Une autre Expédition en Brouillon existe avec ce Destinataire"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1843
+#: code:addons/msf_outgoing/msf_outgoing.py:1853
+#: code:addons/msf_outgoing/msf_outgoing.py:1861
+#, python-format
+msgid "The field you are modifying may impact the shipment mechanism, please check the correct process."
+msgstr "Le champ que vous modifiez pourrait avoir un impact sur le mécanisme d'expédition, veuillez vérifier le bon processus."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1896
+#, python-format
+msgid "You can only have one draft shipment for a given address, please check %s"
+msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:811
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:827
+#, python-format
+msgid "Line %s of the PO: %s"
+msgstr "Ligne %s du BC: %s"
+
+#. module: msf_doc_import
+#: selection:wizard.import.po.simulation.screen.line,type_change:0
+msgid "Warning"
+msgstr "Attention"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1374
+#, python-format
+msgid "PO line has been confirmed or cancelled and consequently is not editable"
+msgstr "La ligne du BC a été confirmée ou annulée et n'est donc plus éditable"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3588
+#, python-format
+msgid "The picking ticket is not in 'Draft' state. Please check this and re-try"
+msgstr "Ce Picking n'est pas dans l'état Brouillon. Veuillez vérifier et ré-essayer."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3774
+#, python-format
+msgid "%s is not a sub-pick !"
+msgstr "%s n'est pas sous-Picking"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
+#, python-format
+msgid "This object: %s is not an Incoming Shipment"
+msgstr "Cet objet: %s n'est pas un une Livraison Entrante."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:4047
+#: code:addons/msf_outgoing/msf_outgoing.py:4370
+#, python-format
+msgid "The object %s is not a pre-packing list. Please check this and re-try."
+msgstr "Cet objet %s n'est pas une Liste de Pré-Colisage. Veuillez vérifier et ré-essayer."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3583
+#, python-format
+msgid "%s is not a main-pick !"
+msgstr "%s n'est pas un Picking Brouillon"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/internal_move_processor.py:157
+#, python-format
+msgid "This object: %s is not an Internal Move"
+msgstr "Cet objet: %s n'est pas un Mouvement Interne"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_manage_expired_stock
+#: model:ir.ui.menu,name:stock.menu_action_manage_expired_stock
+#: view:manage.expired.stock:0
+msgid "Manage Expired Stock"
+msgstr "Gestion du Stock Expiré"
+
+#. module: msf_outgoing
+#: field:stock.picking,from_manage_expired:0
+msgid "The Picking was created with Manage Expired Stock"
+msgstr "Le Picking a été créé grâce à la Gestion du Stock Expiré"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:85
+#, python-format
+msgid "There is no expired quantity for this location."
+msgstr "Il n'y a pas de quantité expirée sur cette zone."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:679
+#, python-format
+msgid "All lines of Internal Moves created with Manage Expired Stock should have a batch number."
+msgstr "Toutes les lignes des Mouvements Internes créées avec la Gestion du Stock Expiré doivent avoir un numéro de lot."
+
+#. module: stock
+#: view:manage.expired.stock:0
+msgid "Create Internal Move with expired stock"
+msgstr "Créer le Mouvement Interne avec le stock expiré"
+
+#. module: stock
+#: view:stock.picking:0
+msgid "Check Expired Products' Availability"
+msgstr "Vérifier Disponibilité des produits expirés"
+
+#. modules: msf_doc_import, msf_outgoing
+#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
+#: selection:ppl.move.processor,integrity_status:0
+#: selection:return.ppl.move.processor,integrity_status:0
+msgid "The quantity per pack must be an integer for this UoM"
+msgstr "La quantité par paquet doit être un entier pour cette UdM"
+
+#. modules: msf_doc_import, msf_outgoing
+#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
+#: selection:ppl.move.processor,integrity_status:0
+#: selection:return.ppl.move.processor,integrity_status:0
+msgid "The quantity per pack must be a multiple of UoM's rounding"
+msgstr "La quantité par paquet doit être un multiple de l'arrondi de l'UdM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:983
+#, python-format
+msgid "Split\n"
+"QTY"
+msgstr "Divisé\n"
+"QTÉ"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1239
+#, python-format
+msgid "\n"
+"QTY"
+msgstr "\n"
+"QTÉ"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1243
+#, python-format
+msgid "\n"
+"PRICE"
+msgstr "\n"
+"PRIX"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1235
+#, python-format
+msgid "\n"
+"PROD"
+msgstr "\n"
+"PROD"
+
+#. module: stock
+#: field:stock.picking,physical_reception_date:0
+msgid "Physical Reception Date"
+msgstr "Date de Réception Physique"

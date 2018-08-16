@@ -1474,7 +1474,7 @@ class stock_location(osv.osv):
             for f in field_names:
                 result[id].update({f: False,})
         # if product is set to False, it does not make sense to return a stock value, return False for each location
-        if 'product_id' in context and not context['product_id']:
+        if not context.get('product_id'):
             return result
 
         result = super(stock_location, self)._product_value(cr, uid, ids, ['stock_real', 'stock_virtual'], arg, context=context)
@@ -1491,12 +1491,16 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree' and context.get('specific_rules_tree_view', False):
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_location_tree2')
+        if not view_id and view_type == 'tree':
+            view = False
+            if context.get('specific_rules_tree_view', False) and context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_specific_rule')
+            elif not context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_simple')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return result
+
+        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),

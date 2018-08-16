@@ -24,6 +24,8 @@
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="parent_id"/>
+                    <field name="homere_id_unique" invisible="1"/>
+                    <field name="homere_codeterrain" invisible="1"/>
                 </group>
                 <group colspan="4" col="8">
                   <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>

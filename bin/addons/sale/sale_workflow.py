@@ -193,6 +193,9 @@ class sale_order_line(osv.osv):
         if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
             # case the sol has no OUT moves but its normal, so don't close the sol in this case:
             has_open_moves = True
+        elif sol.state.startswith('cancel'):
+            # if line is already cancelled, then we should not set it to closed
+            has_open_moves = True
         else:
             has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
                 ('sale_line_id', '=', sol.id),
