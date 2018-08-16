@@ -101567,3 +101567,9 @@ msgstr "\n"
 #: field:stock.picking,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:635
+#, python-format
+msgid "You can't import this file. Please check that it contains data for only one month and one field."
+msgstr "Vous ne pouvez pas importer ce fichier. Veuillez vérifier qu'il contient des données pour seulement un mois et un terrain."
