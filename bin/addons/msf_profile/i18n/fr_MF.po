@@ -3414,6 +3414,8 @@ msgstr "Sainte-Lucie"
 #: selection:account.journal.column,field:0
 #: field:account.fiscalyear.state,fy_id:0
 #: field:wizard.account.year.end.closing,fy_id:0
+#: report:addons/account/report/free_allocation_report.mako:170
+#: field:free.allocation.wizard,fiscalyear_id:0
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
 
@@ -8220,6 +8222,7 @@ msgstr "Ouvrir les Journaux de bord"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:184
 #: report:addons/account_mcdb/report/combined_journals_report.mako:259
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/account/report/free_allocation_report.mako:226
 #: field:account.analytic.line,functional_currency_id:0
 #: field:account.bank.statement.line,functional_currency_id:0
 #: field:account.move.line,functional_currency_id:0
@@ -10278,6 +10281,7 @@ msgstr "Back Order of :"
 #: view:sale.order:0
 #: view:stock.move:0
 #: view:stock.picking:0
+#: view:free.allocation.wizard:0
 msgid "Dates"
 msgstr "Dates"
 
@@ -15204,6 +15208,7 @@ msgstr "Remplir la ligne de distribution analytique de l'en-tête*"
 #: view:account.mcdb:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 msgid "Save new template"
 msgstr "Enregistrer nouveau modèle"
 
@@ -25401,6 +25406,8 @@ msgstr "Contrepartie pour les balances de Bilan au crédit "
 #: field:wizard.hq.report.oca,period_id:0
 #: field:wizard.hq.report.ocg,period_id:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:86
+#: report:addons/account/report/free_allocation_report.mako:171
+#: field:free.allocation.wizard,period_id:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -38488,6 +38495,7 @@ msgstr "Assistant Confirmation Bancaire"
 #: field:hr.analytic.reallocation,funding_pool_id:0
 #: field:hr.employee,funding_pool_id:0
 #: field:hr.payroll.msf,funding_pool_id:0
+#: report:addons/account/report/free_allocation_report.mako:208
 #, python-format
 msgid "Funding Pool"
 msgstr "Funding Pool"
@@ -40301,12 +40309,14 @@ msgstr "Semaine(s)"
 msgid "audittrail.log.sequence"
 msgstr "audittrail.log.sequence"
 
-#. modules: msf_doc_import, register_accounting, account_mcdb, analytic_distribution
+#. modules: msf_doc_import, register_accounting, account_mcdb, analytic_distribution, account
 #: view:account.mcdb:0
 #: field:analytic.distribution.wizard,document_date:0
 #: field:msf.doc.import.accounting.lines,document_date:0
 #: field:wizard.register.import.lines,document_date:0
 #: field:account.direct.invoice.wizard,document_date:0
+#: report:addons/account/report/free_allocation_report.mako:172
+#: field:free.allocation.wizard,document_date_from:0
 msgid "Document date"
 msgstr "Date du document"
 
@@ -46219,6 +46229,7 @@ msgstr "Aucun appel d'offre"
 #: code:addons/board/queries_finance.py:74
 #: selection:account.journal.column,field:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
+#: report:addons/account/report/free_allocation_report.mako:196
 #: field:account.analytic.line,entry_sequence:0
 #: report:addons/register_accounting/report/open_advances_xls.mako:144
 #, python-format
@@ -48024,6 +48035,7 @@ msgstr "B. Num"
 #: model:ir.actions.act_window,name:analytic_distribution.action_account_analytic_account_form
 #: model:ir.actions.act_window,name:financing_contract.action_account_analytic_account_form
 #: model:ir.actions.act_window,name:msf_budget.action_account_analytic_account_budget_form
+#: view:free.allocation.wizard:0
 msgid "Analytic Accounts"
 msgstr "Comptes Analytiques"
 
@@ -54553,6 +54565,7 @@ msgstr "Balance Agée Partenaire"
 #: field:wizard.invoice.line,account_id:0
 #: report:addons/sale/report/fo_allocation_report.mako:225
 #: report:sale.order.allocation.report:0
+#: report:addons/account/report/free_allocation_report.mako:199
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -57459,6 +57472,7 @@ msgstr "Logistique"
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
 #: view:hr.payment.order:0
+#: view:free.allocation.wizard:0
 msgid "Print report"
 msgstr "Imprimer Rapport"
 
@@ -67162,6 +67176,7 @@ msgstr "Séquence"
 #: view:ir.rule:0
 #: view:res.partner:0
 #: view:res.partner:0
+#: view:free.allocation.wizard:0
 msgid "General"
 msgstr "Général"
 
@@ -67348,13 +67363,15 @@ msgstr "Boite"
 msgid "Please note that users can be added to the white list only if:"
 msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la liste blanche que si:"
 
-#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution
+#. modules: msf_budget, account_mcdb, financing_contract, msf_instance, analytic_override, analytic_distribution, account
 #: view:account.mcdb:0
 #: view:account.analytic.account:0
 #: field:account.analytic.account,cost_center_ids:0
 #: field:financing.contract.format,cost_center_ids:0
 #: field:wizard.actual.export,cost_center_ids:0
 #: view:msf.instance:0
+#: report:addons/account/report/free_allocation_report.mako:176
+#: field:free.allocation.wizard,cost_center_ids:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -69843,6 +69860,8 @@ msgstr "Manage the VAT locally"
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:314
 #: report:account.general.ledger_landscape_tb:0
 #: field:wizard.account.partner.balance.tree,journal_ids:0
+#: report:addons/account/report/free_allocation_report.mako:169
+#: field:free.allocation.wizard,journal_ids:0
 msgid "Journals"
 msgstr "Journaux"
 
@@ -71924,11 +71943,12 @@ msgstr "Mode de Paiement"
 msgid "The analytic account selected '%s' is not active."
 msgstr "The analytic account selected '%s' is not active."
 
-#. module: account_mcdb
+#. modules: account_mcdb, account
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/account/report/free_allocation_report.mako:223
 msgid "Func. Amount"
 msgstr "Montant Fonc."
 
@@ -73232,10 +73252,12 @@ msgstr "Type d'adresse"
 msgid "Import batch numbers"
 msgstr "Import des numéros de lot"
 
-#. modules: financing_contract, msf_outgoing, account_mcdb
+#. modules: financing_contract, msf_outgoing, account_mcdb, account
 #: view:account.mcdb:0
 #: report:financing.contract:0
 #: report:packing.list:0
+#: field:free.allocation.wizard,document_date_to:0
+#: field:free.allocation.wizard,posting_date_to:0
 msgid "to"
 msgstr "à"
 
@@ -74938,6 +74960,7 @@ msgstr "Constraint error on Uom"
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:addons/account/report/free_allocation_report.mako:220
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:wizard.import.invoice:0
@@ -79473,6 +79496,8 @@ msgstr "Chiffres"
 #: view:msf.instance:0
 #: view:res.company:0
 #: field:res.company,instance_id:0
+#: report:addons/account/report/free_allocation_report.mako:167
+#: field:free.allocation.wizard,instance_id:0
 #, python-format
 msgid "Proprietary Instance"
 msgstr "Instance Propriétaire"
@@ -81309,11 +81334,12 @@ msgstr "stock.move.memory.out"
 msgid "Tools"
 msgstr "Outils"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
+#: report:addons/account/report/free_allocation_report.mako:217
 msgid "Book. Amount"
 msgstr "Montant Enreg."
 
@@ -81535,8 +81561,10 @@ msgstr "Une facture ne peut pas être créée depuis une ligne de Commande Clien
 msgid "Europe/Zagreb"
 msgstr "Europe/Zagreb"
 
-#. module: sale
+#. modules: sale, account
 #: report:msf.consumption_report:0
+#: code:addons/account/report/free_allocation_report.py:304
+#: code:addons/account/report/free_allocation_report.py:319
 msgid "From"
 msgstr "Du"
 
@@ -82086,7 +82114,7 @@ msgstr "stock.move.memory.shipment.create"
 msgid "Payables for Cash Request"
 msgstr "Entrées fournisseurs pour la Cash Request"
 
-#. modules: msf_budget, purchase, register_accounting, account_mcdb, msf_homere_interface, financing_contract, sale, account_hq_entries, account_override, purchase_allocation_report, tender_flow, msf_supply_doc_export, msf_doc_import, analytic_override, analytic_distribution
+#. modules: msf_budget, purchase, register_accounting, account_mcdb, msf_homere_interface, financing_contract, sale, account_hq_entries, account_override, purchase_allocation_report, tender_flow, msf_supply_doc_export, msf_doc_import, analytic_override, analytic_distribution, account
 #: field:hq.analytic.reallocation,cost_center_id:0
 #: field:hq.entries,cost_center_id:0
 #: field:hq.entries.split.lines,cost_center_id:0
@@ -82128,6 +82156,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: report:sale.order.allocation.report:0
 #: field:purchase.report,cost_center_id:0
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
+#: report:addons/account/report/free_allocation_report.mako:205
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -85599,6 +85628,7 @@ msgstr "Suivi d'un mouvement"
 #: view:account.chart:0
 #: view:account.analytic.chart:0
 #: view:base.language.install:0
+#: view:free.allocation.wizard:0
 msgid "Load"
 msgstr "Charger"
 
@@ -85769,6 +85799,8 @@ msgstr "Settings Error!"
 #: field:account.report.general.ledger,account_ids:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: report:addons/account/report/free_allocation_report.mako:168
+#: field:free.allocation.wizard,account_ids:0
 #, python-format
 msgid "Accounts"
 msgstr "Comptes"
@@ -88520,6 +88552,8 @@ msgstr "TbD"
 #: field:supplier.historical.catalogue,to_date:0
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:102
 #: report:stock.card.report:0
+#: code:addons/account/report/free_allocation_report.py:306
+#: code:addons/account/report/free_allocation_report.py:321
 msgid "To"
 msgstr "Au"
 
@@ -88959,6 +88993,7 @@ msgstr "Actif à partir de "
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 #: model:ir.model,name:resource.model_wizard_template
 msgid "Wizard Template"
 msgstr "Modèle d'Assistant"
@@ -91391,6 +91426,7 @@ msgstr "Erreur!"
 #: view:account.mcdb:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 msgid "Select an existing template"
 msgstr "Sélectionnez un modèle existant"
 
@@ -91613,6 +91649,8 @@ msgstr "Ceci est la liste de tous vos types de colis."
 #: field:mass.reallocation.wizard,date:0
 #: field:msf.doc.import.accounting.lines,date:0
 #: field:wizard.register.import.lines,date:0
+#: report:addons/account/report/free_allocation_report.mako:173
+#: field:free.allocation.wizard,posting_date_from:0
 msgid "Posting date"
 msgstr "Date de Comptabilisation"
 
@@ -96311,6 +96349,7 @@ msgstr "Facture venant de"
 #: field:sale.order.line.cancel,partner_id:0
 #: view:stock.move:0
 #: view:sync.client.message_to_send:0
+#: report:addons/account/report/free_allocation_report.mako:202
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -97924,6 +97963,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.hq.report.oca:0
 #: view:wizard.import.mapping:0
 #: view:automated.export.job:0
+#: view:free.allocation.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -98153,6 +98193,7 @@ msgstr "Only draft Consumption reports can be processed. Maybe this one has been
 #: view:account.mcdb:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:free.allocation.wizard:0
 msgid "or Choose a new template name"
 msgstr "ou Choisissez un nouveau nom de modèle"
 
@@ -101567,3 +101608,35 @@ msgstr "\n"
 #: field:stock.picking,physical_reception_date:0
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
+
+#. module: account
+#: report:addons/account/report/free_allocation_report.mako:174
+#: report:addons/account/report/free_allocation_report.mako:211
+#: field:free.allocation.wizard,free1_ids:0
+msgid "Free 1"
+msgstr "Free 1"
+
+#. module: account
+#: report:addons/account/report/free_allocation_report.mako:175
+#: report:addons/account/report/free_allocation_report.mako:214
+#: field:free.allocation.wizard,free2_ids:0
+msgid "Free 2"
+msgstr "Free 2"
+
+#. module: account
+#: report:addons/account/report/free_allocation_report.mako:8
+#: view:free.allocation.wizard:0
+#: model:ir.actions.act_window,name:account.action_analytic_allocation_with_free
+#: model:ir.actions.report.xml,name:account.free_allocation_report_xls
+msgid "Analytic Allocation with Free - Report"
+msgstr "Allocation Analytique avec Free - Rapport"
+
+#. module: account
+#: report:addons/account/report/free_allocation_report.mako:155
+msgid "Analytic Allocation with Free"
+msgstr "Allocation Analytique avec Free"
+
+#. module: account
+#: model:ir.model,name:account.model_free_allocation_wizard
+msgid "Wizard for the \"Analytic Allocation with Free - Report\""
+msgstr "Assistant pour le rapport \"Allocation Analytique avec Free\""
