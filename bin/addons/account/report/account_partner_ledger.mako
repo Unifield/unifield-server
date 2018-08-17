@@ -223,8 +223,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="45" />
+<Column ss:AutoFitWidth="1" ss:Width="125" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
