@@ -608,13 +608,13 @@
                 <!-- LINES -->
                 <section>
                     <para style="terp_default_8">[[ repeatIn(lines(p, account_code), 'line') ]]</para>
-                    <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,50.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
+                    <blockTable colWidths="77.0,25.0,88.0,41.0,139.0,50.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
                                 <para style="P3">[[ formatLang(line['date'], date=True) ]]</para>
                             </td>
                             <td>
-                                <para style="P4">[[ line['code'] ]]</para>
+                                <para style="P7">[[ line['code'] ]]</para>
                             </td>
                             <td>
                                 <para style="P8">[[ line['move_name'] ]]</para>
