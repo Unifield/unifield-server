@@ -223,15 +223,17 @@ class hq_entries(osv.osv):
     }
 
     def _check_active_account(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
         for hq in self.browse(cr, uid, ids, fields_to_fetch=['name', 'account_id', 'date']):
             if hq.date < hq.account_id.activation_date or (hq.account_id.inactivation_date and hq.date >= hq.account_id.inactivation_date):
                 raise osv.except_osv(_('Error !'), _('HQ Entry %s: account %s is inactive') % (hq.name, hq.account_id.code))
         return True
 
-
-    _constraints = [
-        (_check_active_account, 'HQ entry: G/L account is inactive', []),
-    ]
     def split_forbidden(self, cr, uid, ids, context=None):
         """
         Split is forbidden for these lines:
@@ -465,6 +467,11 @@ class hq_entries(osv.osv):
         # If destination given, search if given
         return res
 
+    def create(self, cr, uid, vals, context=None):
+        new_id = super(hq_entries, self).create(cr, uid, vals, context)
+        self._check_active_account(cr, uid, [new_id], context=context)
+        return new_id
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Change Expat salary account is not allowed
@@ -493,7 +500,9 @@ class hq_entries(osv.osv):
                 if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
-        return super(hq_entries, self).write(cr, uid, ids, vals, context)
+        res = super(hq_entries, self).write(cr, uid, ids, vals, context)
+        self._check_active_account(cr, uid, ids, context=context)
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """
