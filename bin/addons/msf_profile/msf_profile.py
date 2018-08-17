@@ -89,6 +89,11 @@ class patch_scripts(osv.osv):
             }
             selector_obj.write(cr, uid, selector.id, vals)
 
+    def us_4879_fo_from_shipping_except_to_close(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set state='done' where state='shipping_except' and procurement_request='f'")
+        self._logger.warn('FO from shipping_except to done: %d' % (cr.rowcount,))
+        return True
+
     # UF9.1
     def change_xml_payment_method(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
