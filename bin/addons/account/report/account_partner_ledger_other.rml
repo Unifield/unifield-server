@@ -626,7 +626,7 @@
                                 <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
                             </td>
                             <td>
-                                <para style="P3">TODO</para>
+                                <para style="P3">[[ line['reconcile_txt'] or '' ]]</para>
                             </td>
                             <td>
                                 <para style="P3">[[ line['currency_code'] or '' ]]</para>

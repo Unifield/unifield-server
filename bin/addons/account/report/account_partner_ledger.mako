@@ -434,7 +434,7 @@ else:
         <Data ss:Type="String">${ entry_label |x}</Data>
       </Cell>
       <Cell ss:StyleID="ssAccountLine">
-        <Data ss:Type="String">TODO</Data>
+        <Data ss:Type="String">${ line['reconcile_txt'] or '' |x}</Data>
       </Cell>
       <Cell ss:StyleID="ssAccountLine">
         <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>

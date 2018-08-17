@@ -244,7 +244,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, "
             "COALESCE(l.debit_currency, 0) as debit, COALESCE(l.credit_currency, 0) as credit, "
             "COALESCE(l.debit, 0) AS debit_functional, COALESCE(l.credit, 0) AS credit_functional, "
-            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code "
+            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code, "
+            "l.reconcile_txt "
             "FROM account_move_line l " \
             "LEFT JOIN account_journal j " \
                 "ON (l.journal_id = j.id) " \
