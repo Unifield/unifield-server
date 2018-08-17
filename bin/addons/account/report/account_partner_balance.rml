@@ -269,7 +269,7 @@
           <td>
             <blockTable colWidths="135.0,69.0,60.0,63.0,71.0,68.0,68.0">
               <tr>
-                <td><para style="P15">[[ p_obj.name or '' ]][[ p_obj.partner_id and p_obj.partner_id.ref and ' - %s' % p_obj.partner_id.ref ]]</para></td>
+                <td><para style="P15">[[ p_obj.name or '' ]]</para></td>
                 <td><para style="P15"></para></td>
                 <td><para style="P4Bold">[[ company.currency_id.name ]]</para></td>
                 <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.debit or 0.0) ]]</para></td>
