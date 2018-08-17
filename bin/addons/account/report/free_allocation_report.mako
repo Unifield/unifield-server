@@ -229,7 +229,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 % for entry_seq in sorted(lines(data)):
     <!-- LINES -->
-    <% line_number = 0 %>
     % for line in lines(data)[entry_seq]:
         <Row>
             <Cell ss:StyleID="ssBorder">
