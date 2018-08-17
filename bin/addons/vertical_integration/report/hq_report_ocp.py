@@ -193,7 +193,7 @@ class finance_archive(finance_export.finance_archive):
 
 
 # request used for OCP and OCG VI
-# Migration journals ONLY are excluded from the Account Balances
+# Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
 account_balances_per_currency_sql = """
     SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
            c.name AS currency
@@ -214,7 +214,7 @@ account_balances_per_currency_sql = """
                 AND curr.active = 't'
                 AND aml.date < %s
                 AND j.instance_id IN %s
-                AND j.type != 'migration'
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         UNION
@@ -230,7 +230,7 @@ account_balances_per_currency_sql = """
                 AND curr.active = 't'
                 AND aml.period_id = %s
                 AND j.instance_id IN %s
-                AND j.type != 'migration'
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         UNION
@@ -246,7 +246,7 @@ account_balances_per_currency_sql = """
                 AND curr.active = 't'
                 AND aml.date <= %s
                 AND j.instance_id IN %s
-                AND j.type != 'migration'
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
         ) AS ssreq
@@ -278,7 +278,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
-        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
         reg_types = ('cash', 'bank', 'cheque')
         # Fetch data from wizard
         if not data.get('form', False):
@@ -332,7 +332,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # - key: name of the SQL request
         # - value: the SQL request to use
         sqlrequests = {
-            # Pay attention to take analytic lines that are not on HQ and MIGRATION journals.
+            # Pay attention to take analytic lines that are not on HQ, MIGRATION, IN-KIND and ODX journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
                        CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
@@ -378,7 +378,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ or MIGRATION journal
+            # Exclude lines that come from HQ, MIGRATION, IN-KIND or ODX journals
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
@@ -393,7 +393,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND aal.id IS NULL
                 AND aml.instance_id IN %s;
                 """,
-            # Do not take lines that come from a HQ or MIGRATION journal
+            # Do not take lines that come from HQ, MIGRATION, IN-KIND or ODX journals
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             # For these entries instead of the "Cost centre" we take the same value as in the "Instance" column
             'bs_entries': """
