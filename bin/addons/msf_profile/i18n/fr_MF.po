@@ -101403,3 +101403,10 @@ msgstr "Vous ne pouvez pas modifier une méthode de paiement utilisée sur au mo
 #, python-format
 msgid "The Location \"%s\" on line level is not the same as the Location \"%s\" on header level."
 msgstr "La Zone \"%s\" au niveau de la ligne n'est pas la même que la Zone \"%s\" au niveau de l'entête."
+
+#. module: account
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:310
+msgid "Reconcile Number"
+msgstr "Numéro de lettrage"
