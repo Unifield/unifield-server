@@ -151,29 +151,6 @@ class purchase_order_line(osv.osv):
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                             name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
-                             comment='', context=None):
-        '''
-        if the product is short shelf life we display a warning
-        '''
-        # call to super
-        result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-                                                                       partner_id, date_order, fiscal_position, date_planned,
-                                                                       name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
-
-        # if the product is short shelf life, display a warning
-        if product:
-            prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).is_ssl:
-                warning = {
-                    'title': 'Short Shelf Life product',
-                    'message': _(SHORT_SHELF_LIFE_MESS)
-                }
-                result.update(warning=warning)
-
-        return result
 
 purchase_order_line()
 

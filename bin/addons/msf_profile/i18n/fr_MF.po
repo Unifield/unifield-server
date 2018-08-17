@@ -27426,6 +27426,7 @@ msgstr "Volume Total [dm³]"
 #: field:wizard.simu.import.po.line,initial_qty:0
 #: field:wizard.compare.rfq.line,quantity:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
+#: view:purchase.order:0
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -27466,13 +27467,14 @@ msgstr "Importation automatique du relev"
 msgid "To be reviewed by the accountant."
 msgstr "À vérifier par le comptable."
 
-#. module: msf_doc_import
+#. module: msf_doc_import, purchase
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:156
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:240
 #: report:po.simulation.screen:0
 #: field:wizard.import.in.line.simulation.screen,type_change:0
 #: field:wizard.import.po.simulation.screen.line,type_change:0
 #: field:wizard.simu.import.po.line,change_type:0
+#: view:purchase.order:0
 msgid "CHG"
 msgstr "CHG"
 
@@ -28187,10 +28189,11 @@ msgstr "Message système"
 msgid "Africa/Ouagadougou"
 msgstr "Africa/Ouagadougou"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: field:procurement.request.line.wizard,product_uom_qty:0
+#: view:purchase.order.line:0
 msgid "Current Qty"
-msgstr "Current Qty"
+msgstr "Qté Actuelle"
 
 #. module: procurement_request
 #: field:sale.order,proc_amount:0
@@ -31556,10 +31559,11 @@ msgstr "Company currency is not defined"
 msgid "Journal code:"
 msgstr "Code du Journal:"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: field:procurement.request.line.wizard,price_unit:0
+#: view:purchase.order.line:0
 msgid "Current Price"
-msgstr "Current Price"
+msgstr "Prix Actuel"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_line.py:296
@@ -43774,7 +43778,7 @@ msgstr "Invoice to:"
 #: field:purchase.order.line,display_resourced_orig_line:0
 #: field:purchase.order.merged.line,display_resourced_orig_line:0
 msgid "Original PO line"
-msgstr "Original PO line"
+msgstr "Ligne d'Origine du BdC"
 
 #. module: consumption_calculation
 #: model:ir.model,name:consumption_calculation.model_expiry_quantity_report
@@ -50348,8 +50352,9 @@ msgstr "Evénement (%s) non autorisé pour ce Type de Réclamation"
 msgid "Period '%s' is not open!'                      ' No Journal Entry is updated"
 msgstr "Period '%s' is not open!'                      ' No Journal Entry is updated"
 
-#. module: procurement_request
+#. module: procurement_request, purchase
 #: view:sale.order:0
+#: view:purchase.order:0
 msgid "Configurator"
 msgstr "Configurateur"
 
@@ -65631,8 +65636,9 @@ msgstr "workflow.workitem"
 msgid "Search Widget"
 msgstr "Rechercher Widget (window gadget)"
 
-#. module: tender_flow
+#. modules: tender_flow, purchase
 #: code:addons/tender_flow/tender_flow.py:1877
+#: view:purchase.order.line:0
 #, python-format
 msgid "Request for Quotation Line"
 msgstr "Ligne de Demande de Devis"
@@ -72091,8 +72097,9 @@ msgstr "ED management"
 msgid "Work Days"
 msgstr "Jours Ouvrés"
 
-#. module: product_attributes
+#. module: product_attributes, purchase
 #: field:product.product,cold_chain:0
+#: field:purchase.order.line,cold_chain:0
 msgid "Cold Chain"
 msgstr "Chaîne du Froid"
 
@@ -95527,8 +95534,9 @@ msgstr "Ligne %s du fichier Excel : Cette ligne est obligatoire et doit comporte
 msgid "This ISO code is the name of po files to use for translations"
 msgstr "Ce code ISO est le nom des fichiers po utilisés pour les traductions"
 
-#. module: product_attributes
+#. module: product_attributes, purchase
 #: field:product.product,heat_sensitive_item:0
+#: field:purchase.order.line,heat_sensitive_item:0
 msgid "Temperature sensitive item"
 msgstr "Article sensible à la température"
 
@@ -101746,3 +101754,24 @@ msgstr "Vous ne pouvez pas supprimer un Écriture HQ d'Origine!"
 #, python-format
 msgid "You cannot split a HQ Entry which analytic distribution state is not valid!"
 msgstr "vous ne pouvez pas scinder une Écriture HQ avec une distribution analytique invalide!"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "A.D"
+msgstr "D.A"
+
+#. module: purchase
+#: view:purchase.order.line:0
+msgid "Changes"
+msgstr "Modifications"
+
+#. module: purchase
+#: field:purchase.order.line,controlled_substance:0
+msgid "Controlled Substance"
+msgstr "Substance contrôlée"
+
+#. module: purchase
+#: view:purchase.order.line:0
+msgid "Linked Information"
+msgstr "Information liée"
+

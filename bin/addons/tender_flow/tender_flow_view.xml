@@ -299,7 +299,7 @@
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}">
+                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}">
                                 <tree string="Lines" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="default_code"/>
