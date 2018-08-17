@@ -1129,12 +1129,6 @@ msgstr "The currency on the file is not the same as the currency of the PO line 
 msgid "Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date."
 msgstr "Seul le Produit avec Numéro de Lot Obligatoire ou la Date d'Expiration Obligatoire peut spécifier une Date d'Expiration."
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:534
-#, python-format
-msgid "No HQ Entry selected for transaction"
-msgstr "No HQ Entry selected for transaction"
-
 #. module: account_reconciliation
 #: selection:account.move.line.reconcile,state:0
 msgid "Full Reconciliation with change"
@@ -2803,12 +2797,6 @@ msgstr "The process to export the translations failed !\n"
 "                %s\n"
 "                "
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:301
-#, python-format
-msgid "No line found!"
-msgstr "No line found!"
-
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Max. Margin"
@@ -3547,12 +3535,6 @@ msgstr "Le(s) groupe(s) ne peut(vent) être supprimé(s)car certains utilisateur
 #: view:sync.client.log_sale_purchase:0
 msgid "Field Changes Information"
 msgstr "Field Changes Information"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:79
-#, python-format
-msgid "%s: inactive CC (%s)"
-msgstr "%s: inactive CC (%s)"
 
 #. modules: return_claim, msf_outgoing
 #: selection:stock.incoming.processor,claim_type:0
@@ -5083,12 +5065,6 @@ msgstr "Exporter de la liste de prévision"
 #, python-format
 msgid "Please choose a Purchase Order."
 msgstr "Veuillez choisir un Bon de Commande"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_import.py:110
-#, python-format
-msgid "Account code %s doesn't exist or is not allowed in HQ Entries!"
-msgstr "Account code %s doesn't exist or is not allowed in HQ Entries!"
 
 #. modules: msf_currency_revaluation, register_accounting, finance
 #: model:ir.actions.act_window,name:msf_currency_revaluation.action_view_account_currency_revaluation_wizard
@@ -10402,12 +10378,6 @@ msgstr "Vous devez définir le compte bancaire\n"
 msgid "Connection Manager"
 msgstr "Gestionnaire de Connexion"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:436
-#, python-format
-msgid "The period used to book the December Entries must be in Fiscal Year %s."
-msgstr "The period used to book the December Entries must be in Fiscal Year %s."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:283
 #: code:addons/msf_doc_import/initial_stock_inventory.py:474
@@ -11637,11 +11607,6 @@ msgstr "Creation Month"
 msgid "Inactive"
 msgstr "Inactif"
 
-#. module: account_hq_entries
-#: view:hq.entries.validation:0
-msgid "Selected Lines"
-msgstr "Selected Lines"
-
 #. module: base_setup
 #: help:base.setup.installer,sale:0
 msgid "Helps you handle your quotations, sale orders and invoicing."
@@ -12630,13 +12595,6 @@ msgstr "Seuls les événements en statut Brouillon peuvent être processés"
 #: help:product.packaging,rows:0
 msgid "The number of layers on a pallet or box"
 msgstr "Le nombre de niveaux sur une palette ou dans une caisse."
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:109
-#: code:addons/account_hq_entries/hq_entries.py:127
-#, python-format
-msgid "%s: CC (%s) not found in FP (%s)"
-msgstr "%s: CC (%s) not found in FP (%s)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:239
@@ -13678,11 +13636,6 @@ msgstr "SHILLING UGANDAIS"
 #: selection:instance.auto.creation,state:0
 msgid "Start intial synchronisation, this may take a lot of time..."
 msgstr "Démarrage de la synchronisation initiale, cela peut prendre beaucoup de temps..."
-
-#. module: account_hq_entries
-#: view:hq.entries:0
-msgid "Analytic Allocation (At import)"
-msgstr "Analytic Allocation (At import)"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/report/picking_ticket.py:257
@@ -15438,12 +15391,6 @@ msgstr "Is Sync Config ?"
 msgid "The code of the country must be unique !"
 msgstr "Le code du pays doit être unique !"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:318
-#, python-format
-msgid "Make 2 lines at least."
-msgstr "Make 2 lines at least."
-
 #. module: stock_schedule
 #: view:stock.frequence:0
 msgid "week(s)"
@@ -15534,11 +15481,6 @@ msgstr "Niveaux obligatoires"
 #: model:process.node,note:hr.process_node_employeecontact0
 msgid "Other information"
 msgstr "Autre information"
-
-#. module: account_hq_entries
-#: help:hq.entries,split_ids:0
-msgid "All lines linked to this original HQ Entry."
-msgstr "All lines linked to this original HQ Entry."
 
 #. modules: msf_outgoing, consumption_calculation, specific_rules, kit, msf_doc_import, return_claim
 #: view:real.average.consumption:0
@@ -16833,11 +16775,6 @@ msgstr "Account Invoice"
 #: field:account.chart,target_move:0
 msgid "Move status"
 msgstr "Statut du mouvement"
-
-#. module: account_hq_entries
-#: help:hq.entries,original_id:0
-msgid "The Original HQ Entry from which this line comes from."
-msgstr "The Original HQ Entry from which this line comes from."
 
 #. modules: account, msf_currency_revaluation
 #: selection:account.journal.column,field:0
@@ -19150,12 +19087,6 @@ msgstr "Reference of the view to open"
 msgid "This menu prints a VAT declaration based on invoices or payments. Select one or several periods of the fiscal year. The information required for a tax declaration is automatically generated by OpenERP from invoices (or payments, in some countries). This data is updated in real time. That’s very useful because it enables you to preview at any time the tax that you owe at the start and end of the month or quarter."
 msgstr "Ce menu permet d'imprimer une déclaration de TVA fondée sur des factures ou des paiements. Vous pouvez sélectionner une ou plusieurs périodes de l'exercice. L'information requise pour une déclaration fiscale  est automatiquement générée par OpenERP à partir des factures (ou des paiements, dans certains pays). Ces données sont actualisées en temps réel. Cela vous permet de voir à tout moment  les taxes dues en début et fin de mois ou de trimestre."
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:152
-#, python-format
-msgid "Default counterpart for HQ Entries is not set. Please configure it to Company Settings."
-msgstr "Default counterpart for HQ Entries is not set. Please configure it to Company Settings."
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -19634,11 +19565,6 @@ msgstr "Terme Source"
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:277
 msgid "Location Requestor"
 msgstr "Zone de Demande"
-
-#. module: account_hq_entries
-#: field:hq.entries.split.lines,account_hq_correctible:0
-msgid "Is HQ correctible?"
-msgstr "Is HQ correctible?"
 
 #. module: account_payment
 #: help:payment.line,partner_id:0
@@ -20446,13 +20372,6 @@ msgstr "Simulation en cours"
 #: view:account.entries.report:0
 msgid "# of Entries "
 msgstr "Nombre d'Ecritures "
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:178
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:318
-#, python-format
-msgid "An account is missing!"
-msgstr "An account is missing!"
 
 #. module: msf_tools
 #: field:automated.export,ftp_url:0
@@ -22479,11 +22398,6 @@ msgstr "History consumptions"
 msgid "Qatar"
 msgstr "Qatar"
 
-#. module: account_hq_entries
-#: field:hq.entries.validation,period_id:0
-msgid "Period to book December HQ entries"
-msgstr "Period to book December HQ entries"
-
 #. module: register_accounting
 #: field:wizard.import.invoice,date:0
 msgid "Payment posting date"
@@ -23655,12 +23569,6 @@ msgstr "Mise à jour silencieuse"
 #: model:res.country,name:base.ci
 msgid "Ivory Coast (Cote D'Ivoire)"
 msgstr "Cote d'Ivoire"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:512
-#, python-format
-msgid "You cannot delete original entries!"
-msgstr "You cannot delete original entries!"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -25779,11 +25687,6 @@ msgstr "You should have exactly 8 columns in this order: Product code*, Product 
 #: selection:instance.auto.creation,state:0
 msgid "Module 'sync_so' installed."
 msgstr "Module 'sync_so' installed."
-
-#. module: account_hq_entries
-#: view:hq.entries:0
-msgid "Analytic Allocation (Current)"
-msgstr "Analytic Allocation (Current)"
 
 #. module: account
 #: view:validate.account.move:0
@@ -28641,12 +28544,6 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: view:stock.move:0
 msgid "Stock to be delivered (available or not)"
 msgstr "Stock to be delivered (available or not)"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:326
-#, python-format
-msgid "HQ Entry Split"
-msgstr "HQ Entry Split"
 
 #. module: kit
 #: code:addons/kit/kit.py:822
@@ -32913,12 +32810,6 @@ msgstr "Synchronization Sales order"
 msgid "No data to process"
 msgstr "No data to process"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_import.py:161
-#, python-format
-msgid "Free 1 \"%s\" doesn't exist!"
-msgstr "Free 1 \"%s\" doesn't exist!"
-
 #. modules: account, account_mcdb, stock
 #: view:account.analytic.line:0
 #: view:account.journal:0
@@ -34338,11 +34229,6 @@ msgstr "\n"
 "    \n"
 "    "
 
-#. module: account_hq_entries
-#: field:hq.entries,cc_changed:0
-msgid "Have Cost Center changed?"
-msgstr "Have Cost Center changed?"
-
 #. modules: account, base, analytic_distribution_supply, board, sale
 #: view:account.analytic.line:0
 #: field:analytic.distribution,sale_order_ids:0
@@ -34365,11 +34251,6 @@ msgstr "Zone spéciale"
 #, python-format
 msgid "Line %s, column %s, float expected, found %s"
 msgstr "Line %s, column %s, float expected, found %s"
-
-#. module: account_hq_entries
-#: help:hq.entries,account_changed:0
-msgid "When your entry have a different account from the initial one or from the original one."
-msgstr "When your entry have a different account from the initial one or from the original one."
 
 #. module: base
 #: help:res.config.users,email:0
@@ -34437,11 +34318,6 @@ msgstr "Activer les fonctionnalités des Commandes de Projet ?"
 #: view:real.average.consumption:0
 msgid "Save & Process"
 msgstr "Sauver & Traiter"
-
-#. module: account_hq_entries
-#: help:hq.entries,is_original:0
-msgid "This line was split into other one."
-msgstr "This line was split into other one."
 
 #. module: sale
 #: view:sale.report:0
@@ -34642,7 +34518,7 @@ msgstr "L'activité de destination."
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:96
 #, python-format
 msgid "Wrong format for date: %s: %s"
-msgstr "Format incorrecte pour la date: %s: %s"
+msgstr "Format incorrect pour la date: %s: %s"
 
 #. module: sync_client
 #: selection:sync.client.entity,oc:0
@@ -35925,12 +35801,6 @@ msgstr "Avancé(e)"
 msgid "Line %s. A Third Party is mandatory for the given account: %s."
 msgstr "Ligne %s. Un Tiers est obligatoire pour le compte donné : %s."
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:144
-#, python-format
-msgid "Currency is missing!"
-msgstr "Currency is missing!"
-
 #. modules: base, stock_override, account_mcdb, stock
 #: field:memory.background.report,finished:0
 #: selection:publisher_warranty.contract.wizard,state:0
@@ -35938,12 +35808,6 @@ msgstr "Currency is missing!"
 #: selection:change.dest.location,state:0
 msgid "Finished"
 msgstr "Terminé"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:178
-#, python-format
-msgid "No link from this line to a specific wizard. Do you come from web client?"
-msgstr "No link from this line to a specific wizard. Do you come from web client?"
 
 #. module: msf_currency_revaluation
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:262
@@ -37730,11 +37594,6 @@ msgstr "Réf. Facture Fournisseur"
 msgid "Difference"
 msgstr "Différence"
 
-#. module: account_hq_entries
-#: field:hq.entries,account_changed:0
-msgid "Have account changed?"
-msgstr "Have account changed?"
-
 #. modules: reason_types_moves, specific_rules, stock_batch_recall, sync_so, msf_doc_import, stock
 #: model:ir.model,name:msf_doc_import.model_stock_inventory
 #: model:ir.model,name:reason_types_moves.model_stock_inventory
@@ -38917,12 +38776,6 @@ msgstr "Ligne de registre corrigée"
 #: field:wizard.account.invoice,reference_type:0
 msgid "Reference Type"
 msgstr "Type de Référence"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:554
-#, python-format
-msgid "You can not validate HQ Entry in a mission-closed period"
-msgstr "You can not validate HQ Entry in a mission-closed period"
 
 #. module: base
 #: view:ir.property:0
@@ -42893,11 +42746,6 @@ msgstr "Livraisons futures"
 msgid "The rule only applies if the partner buys/sells more than this quantity."
 msgstr "La règle s'applique seulement si le partenaire achète/vend plus que cette quantité."
 
-#. module: account_hq_entries
-#: field:hq.entries,is_original:0
-msgid "Is Original HQ Entry?"
-msgstr "Is Original HQ Entry?"
-
 #. module: account
 #: model:process.node,name:account.process_node_electronicfile0
 msgid "Electronic File"
@@ -44144,12 +43992,6 @@ msgstr "Code Produit"
 #: model:ir.model,name:register_accounting.model_wizard_account_invoice_line
 msgid "Invoice Line"
 msgstr "Ligne de Facture"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:103
-#, python-format
-msgid "%s: No CC"
-msgstr "%s: No CC"
 
 #. module: unifield_setup
 #: view:sale.price.setup:0
@@ -46526,12 +46368,6 @@ msgstr "Zone de destination du picking interne."
 msgid "Anguilla"
 msgstr "Anguille"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:388
-#, python-format
-msgid "Are you sure you want to post %d HQ entries ?"
-msgstr "Are you sure you want to post %d HQ entries ?"
-
 #. modules: msf_doc_import, msf_outgoing
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:create.picking.move.processor,integrity_status:0
@@ -47947,11 +47783,6 @@ msgstr "Vous devez mentionner une date d'expiration pour ce produit (mention obl
 msgid "You must assign a positive quantity value or 0."
 msgstr "Vous devez attribuer une valeur positive ou égale à 0."
 
-#. module: account_hq_entries
-#: help:hq.entries,is_split:0
-msgid "This line comes from a split."
-msgstr "This line comes from a split."
-
 #. module: msf_profile
 #: view:res.groups:0
 msgid "All Levels"
@@ -48176,7 +48007,7 @@ msgstr "Pacific/Saipan"
 msgid "Non compatible entries found: %s"
 msgstr "Non compatible entries found: %s"
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, stock, product, reason_types_moves, account_payment, consumption_calculation, register_accounting, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, resource, procurement_auto, msf_config_locations, sale, account_override, sourcing, sync_so, res_currency_functional
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, stock, product, reason_types_moves, account_payment, consumption_calculation, register_accounting, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, resource, procurement_auto, msf_config_locations, sale, account_override, sourcing, sync_so, res_currency_functional, account_hq_entries
 #: code:addons/account/account.py:445
 #: code:addons/account/account.py:447
 #: code:addons/account/account.py:860
@@ -48305,6 +48136,7 @@ msgstr "Non compatible entries found: %s"
 #: code:addons/sync_client/special_handling.py:240
 #: code:addons/sync_client/special_handling.py:246
 #: code:addons/sync_so/purchase.py:584
+#: code:addons/account_hq_entries/hq_entries.py:228
 #, python-format
 msgid "Error !"
 msgstr "Erreur !"
@@ -48787,12 +48619,6 @@ msgstr "Selected 'OPE ADV - LINK TO PO' purchase order is already linked to anot
 #, python-format
 msgid "The column \"%s\" is not taken into account. Please correct it. The list of columns accepted is: %s"
 msgstr "La colone \"%s\" n'est pas prise en compte. Merci de corriger. La liste des colonnes acceptée est : %s"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:92
-#, python-format
-msgid "%s: inactive FP (%s)"
-msgstr "%s: inactive FP (%s)"
 
 #. module: msf_outgoing
 #: report:picking.ticket:0
@@ -52412,13 +52238,6 @@ msgstr "Compte - Impression du Journal"
 msgid "Invoices to be imported"
 msgstr "Factures à importer"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:116
-#: code:addons/account_hq_entries/hq_entries.py:133
-#, python-format
-msgid "%s: DEST (%s) not compatible with account (%s)"
-msgstr "%s: DEST (%s) not compatible with account (%s)"
-
 #. modules: analytic, base, msf_outgoing
 #: field:account.analytic.account,contact_id:0
 #: selection:res.partner.address,type:0
@@ -55227,8 +55046,12 @@ msgstr "Sous-Classe 5"
 msgid "You can not create an Incoming Shipment from scratch with %s reason type"
 msgstr "You can not create an Incoming Shipment from scratch with %s reason type"
 
-#. module: consumption_calculation
+#. module: consumption_calculation, account_hq_entries
 #: view:wizard.valid.line:0
+#: view:hq.entries.unsplit:0
+#: field:hq.entries.unsplit,process_ids:0
+#: view:hq.entries.validation:0
+#: field:hq.entries.validation,process_ids:0
 msgid "Valid lines"
 msgstr "Valider les lignes"
 
@@ -56402,12 +56225,6 @@ msgstr "Date de la Sauvegarde"
 msgid "Process De-Kitting"
 msgstr "Traiter le désassemblage de kits"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:142
-#, python-format
-msgid "Period is missing!"
-msgstr "Period is missing!"
-
 #. module: kit
 #: field:process.to.consume.line,wizard_id_process_to_consume:0
 #: field:substitute.item,wizard_id:0
@@ -57570,12 +57387,6 @@ msgstr "America/Scoresbysund"
 #: selection:ir.header_webkit,format:0
 msgid "Ledger  28  431.8 x 279.4 mm"
 msgstr "Format Grand livre 28 431,8 x 279.4 mm"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:85
-#, python-format
-msgid "%s: inactive DEST (%s)"
-msgstr "%s: inactive DEST (%s)"
 
 #. module: account_hq_entries
 #: field:hq.entries,user_validated:0
@@ -60027,12 +59838,6 @@ msgstr "The amount of lines sourced on order"
 msgid "National Partners"
 msgstr "National Partners"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:543
-#, python-format
-msgid "You can not perform this action on a validated HQ Entry (please use the 'To Validate' filter in the HQ Entries list)"
-msgstr "You can not perform this action on a validated HQ Entry (please use the 'To Validate' filter in the HQ Entries list)"
-
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/direct_invoice.py:372
 #, python-format
@@ -60502,12 +60307,6 @@ msgstr "Stock Take Date"
 #: view:account.use.model:0
 msgid "This wizard will create recurring accounting entries"
 msgstr "Cet assistant va créer des écritures comptables périodiques"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_import.py:264
-#, python-format
-msgid "Entry already imported: %s / %s / %s (doc) / %s (posting) / %s (account) / %s (amount) / %s (3rd party) / %s (%s)"
-msgstr "Entry already imported: %s / %s / %s (doc) / %s (posting) / %s (account) / %s (amount) / %s (3rd party) / %s (%s)"
 
 #. module: resource
 #: help:resource.calendar.attendance,hour_from:0
@@ -63538,11 +63337,6 @@ msgstr "You cannot remove the 'Temporary' international status because it's a sy
 msgid "Y - Kit or module with controlled substance"
 msgstr "Y - Kit ou module avec substance controlée"
 
-#. module: account_hq_entries
-#: field:hq.entries,is_account_partner_compatible:0
-msgid "Account and partner compatible ?"
-msgstr "Account and partner compatible ?"
-
 #. module: base
 #: model:ir.ui.menu,name:base.next_id_10
 msgid "Scheduler"
@@ -66014,6 +65808,7 @@ msgstr "PO line to confirm"
 #: report:addons/register_accounting/report/open_advances_xls.mako:148
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:218
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:291
+#: field:hq.entries.split,date:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -66582,12 +66377,6 @@ msgstr "La date d'expiration sélectionnée n'existe pas dans le système."
 msgid "Grant amount"
 msgstr "Montant des Subventions "
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:122
-#, python-format
-msgid "%s: Tuple Account/DEST (%s/%s) not found in FP (%s)"
-msgstr "%s: Tuple Account/DEST (%s/%s) not found in FP (%s)"
-
 #. module: stock
 #: help:product.template,property_stock_procurement:0
 msgid "For the current product, this stock location will be used, instead of the default one, as the source location for stock moves generated by procurements"
@@ -66600,11 +66389,6 @@ msgstr "Pour le produit actuel, cette localisation sera utilisée (à la place d
 #, python-format
 msgid "Bank Registers"
 msgstr "Registres de Banque"
-
-#. module: account_hq_entries
-#: view:hq.entries:0
-msgid "Original HQ entries"
-msgstr "Original HQ entries"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -66658,12 +66442,6 @@ msgstr "Pas d'informations disponibles pour cette mise à jour!"
 msgid "Start Pulling Data"
 msgstr "Commencer l'Extraction des Données"
 
-#. module: account_hq_entries
-#: help:hq.entries.unsplit,process_ids:0
-#: help:hq.entries.validation,process_ids:0
-msgid "Lines that would be processed"
-msgstr "Lines that would be processed"
-
 #. module: kit
 #: model:ir.model,name:kit.model_process_to_consume
 msgid "process.to.consume"
@@ -66695,12 +66473,6 @@ msgstr "Réinitialiser les Composants à Consommer selon la Version de Référen
 #, python-format
 msgid "No shipment"
 msgstr "Aucune expédition"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:207
-#, python-format
-msgid "Expected max amount: %.2f"
-msgstr "Expected max amount: %.2f"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -68161,22 +67933,6 @@ msgstr "GF"
 msgid "Order ref:"
 msgstr "Réf de Commande:"
 
-#. modules: msf_processes, account, account_hq_entries
-#: model:process.transition,name:account.process_transition_customerinvoice0
-#: model:process.transition,name:account.process_transition_paymentorderreconcilation0
-#: model:process.transition,name:account.process_transition_statemententries0
-#: model:process.transition,name:account.process_transition_suppliercustomerinvoice0
-#: model:process.transition,name:account.process_transition_suppliervalidentries0
-#: model:process.transition,name:account.process_transition_validentries0
-#: model:ir.actions.server,name:account_hq_entries.action_hq_validation
-#: model:process.transition,name:msf_processes.process_transition_suppliercustomerinvoice0
-#: model:process.transition,name:msf_processes.process_transition_supplierdonecommitment0
-#: model:process.transition,name:msf_processes.process_transition_supplierentries0
-#: model:process.transition,name:msf_processes.process_transition_supplierinvoicecommitment0
-#: model:process.transition,name:msf_processes.process_transition_suppliervalidcommitment0
-msgid "Validation"
-msgstr "Validation"
-
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
@@ -69175,12 +68931,6 @@ msgstr "3. Lorsqu'un utilisateur appartient à plusieurs groupes, les résultats
 msgid "Cloud Password"
 msgstr "Mot de passe du Cloud"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:362
-#, python-format
-msgid "Analytic distribution is invalid for the line \"%s\" with %.2f amount."
-msgstr "Analytic distribution is invalid for the line \"%s\" with %.2f amount."
-
 #. module: mission_stock
 #: model:ir.actions.act_window,name:mission_stock.mission_stock_wizard_action
 #: model:ir.model,name:mission_stock.model_stock_mission_report
@@ -69432,13 +69182,6 @@ msgstr "You cannot choose Direct Purchase Order as method to source an Internal 
 msgid "Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)"
 msgstr "La quantité sélectionnée (%0.1f%s) ne peut être égale à la quantité initiale (%0.1f%s) "
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:342
-#: code:addons/account_hq_entries/hq_entries.py:375
-#, python-format
-msgid "No selected line(s)!"
-msgstr "No selected line(s)!"
-
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:352
 #: code:addons/register_accounting/wizard/wizard_register_import.py:436
@@ -69603,14 +69346,6 @@ msgstr "Qté PP"
 #: view:purchase.report:0
 msgid "Order of Month"
 msgstr "Order of Month"
-
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:198
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:243
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:336
-#, python-format
-msgid "Null amount is not allowed!"
-msgstr "Null amount is not allowed!"
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -72972,13 +72707,6 @@ msgstr "German / Deutsch"
 msgid "Fallback values"
 msgstr "Valeurs de repli"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:343
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:506
-#, python-format
-msgid "No analytic correction journal found!"
-msgstr "No analytic correction journal found!"
-
 #. module: base
 #: selection:workflow.activity,kind:0
 msgid "Stop All"
@@ -76037,11 +75765,6 @@ msgstr "Prix - Version  de Liste"
 msgid "Hand carry"
 msgstr "Transport en bagage à main"
 
-#. module: account_hq_entries
-#: model:ir.module.module,description:account_hq_entries.module_meta_information
-msgid "HQ records integration"
-msgstr "HQ records integration"
-
 #. module: account_corrections
 #: view:wizard.journal.items.corrections:0
 msgid "Correct"
@@ -76284,11 +76007,6 @@ msgstr "%j - Jour dans l'année [001,366]."
 #: field:sync.client.rule,domain:0
 msgid "Domain"
 msgstr "Domaine"
-
-#. module: account_hq_entries
-#: view:hq.entries:0
-msgid "Validated entries"
-msgstr "Validated entries"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_returnpacksfromshipment
@@ -101722,3 +101440,309 @@ msgstr "Allocation Analytique avec Free"
 #: model:ir.model,name:account.model_free_allocation_wizard
 msgid "Wizard for the \"Analytic Allocation with Free - Report\""
 msgstr "Assistant pour le rapport \"Allocation Analytique avec Free\""
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:109
+#: code:addons/account_hq_entries/hq_entries.py:127
+#, python-format
+msgid "%s: CC (%s) not found in FP (%s)"
+msgstr "%s: CC (%s) non trouvé pour le FP (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:116
+#: code:addons/account_hq_entries/hq_entries.py:133
+#, python-format
+msgid "%s: DEST (%s) not compatible with account (%s)"
+msgstr "%s: DEST (%s) incompatible avec le compte (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:103
+#, python-format
+msgid "%s: No CC"
+msgstr "%s: pas de CC"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:122
+#, python-format
+msgid "%s: Tuple Account/DEST (%s/%s) not found in FP (%s)"
+msgstr "%s: le couple Compte/DEST (%s/%s) non trouvé pour le FP (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:79
+#, python-format
+msgid "%s: inactive CC (%s)"
+msgstr "%s: CC inactif (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:85
+#, python-format
+msgid "%s: inactive DEST (%s)"
+msgstr "%s: DEST inactif (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:92
+#, python-format
+msgid "%s: inactive FP (%s)"
+msgstr "%s: FP inactif (%s)"
+
+#. module: account_hq_entries
+#: field:hq.entries,is_account_partner_compatible:0
+msgid "Account and partner compatible ?"
+msgstr "Compte et partenaire compatibles ?"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:110
+#, python-format
+msgid "Account code %s doesn't exist or is not allowed in HQ Entries!"
+msgstr "Le compte %s n'existe pas ou n'est pas autorisé sur les Écritures HQ"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:113
+#, python-format
+msgid "Account code %s is inactive for this date %s"
+msgstr "Le compte %s est inactif à la date %s"
+
+#. module: account_hq_entries
+#: help:hq.entries,split_ids:0
+msgid "All lines linked to this original HQ Entry."
+msgstr "Toutes les lignes liées à cette Écriture HQ d'Origine."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:178
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:318
+#, python-format
+msgid "An account is missing!"
+msgstr "Le compte est absent!"
+
+#. module: account_hq_entries
+#: view:hq.entries:0
+msgid "Analytic Allocation (At import)"
+msgstr "Distribution Analytique (lors de l'import)"
+
+#. module: account_hq_entries
+#: view:hq.entries:0
+msgid "Analytic Allocation (Current)"
+msgstr "Distribution Analytique (Actuelle)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:363
+#, python-format
+msgid "Analytic distribution is invalid for the line \"%s\" with %.2f amount."
+msgstr "La Distribution Analytique est invalide pour la ligne \"%s\" d'un montant de %.2f."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:398
+#, python-format
+msgid "Are you sure you want to post %d HQ entries ?"
+msgstr "Êtes-vous sûr de vouloir comptabiliser %d Écritures HQ ?"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:144
+#, python-format
+msgid "Currency is missing!"
+msgstr "Devise absente!"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:238
+#, python-format
+msgid "Entry already imported: %s / %s / %s (doc) / %s (posting) / %s (account) / %s (amount) / %s (3rd party) / %s (%s)"
+msgstr "Entrée déjà importée: %s / %s / %s (doc) / %s (comptabilisation) / %s (compte) / %s (montant) / %s (tiers) / %s (%s)"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:207
+#, python-format
+msgid "Expected max amount: %.2f"
+msgstr "Montant maximum attendu: %.2f"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:165
+#, python-format
+msgid "Free 1 \"%s\" doesn't exist!"
+msgstr "Free 1 \"%s\" n'existe pas!"
+
+#. module: account_hq_entries
+#: model:ir.module.module,shortdesc:account_hq_entries.module_meta_information
+msgid "HQ Entries"
+msgstr "Écritures HQ"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:228
+#, python-format
+msgid "HQ Entry %s: account %s is inactive"
+msgstr "Écriture HQ %S: compte %s inactif"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:336
+#, python-format
+msgid "HQ Entry Split"
+msgstr "Scinder des Écritures HQ"
+
+#. module: account_hq_entries
+#: model:ir.model,name:account_hq_entries.model_hq_entries_split
+msgid "HQ entry split"
+msgstr "Écritures HQ scindée"
+
+#. module: account_hq_entries
+#: constraint:hq.entries:0
+msgid "HQ entry: G/L account is inactive"
+msgstr "Écriture HQ: compte inactif"
+
+#. module: account_hq_entries
+#: model:ir.module.module,description:account_hq_entries.module_meta_information
+msgid "HQ records integration"
+msgstr "Iintégration des Ecritures HQ"
+
+#. module: account_hq_entries
+#: field:hq.entries,cc_changed:0
+msgid "Have Cost Center changed?"
+msgstr "Le centre de coût a été modifié?"
+
+#. module: account_hq_entries
+#: field:hq.entries,account_changed:0
+msgid "Have account changed?"
+msgstr "Le compte a été modifié?"
+
+#. module: account_hq_entries
+#: field:hq.entries.split.lines,account_hq_correctible:0
+msgid "Is HQ correctible?"
+msgstr "Est corrigible au HQ?"
+
+#. module: account_hq_entries
+#: field:hq.entries,is_original:0
+msgid "Is Original HQ Entry?"
+msgstr "Est une Écriture HQ d'origine?"
+
+#. module: account_hq_entries
+#: field:hq.entries.split,running:0
+#: field:hq.entries.validation,running:0
+msgid "Is running"
+msgstr "En cours"
+
+#. module: account_hq_entries
+#: help:hq.entries.unsplit,line_ids:0
+#: help:hq.entries.validation,line_ids:0
+msgid "Lines previously selected by the user"
+msgstr "Lignes sélectionnées par l'utilisateur"
+
+#. module: account_hq_entries
+#: help:hq.entries.unsplit,process_ids:0
+#: help:hq.entries.validation,process_ids:0
+msgid "Lines that would be processed"
+msgstr "Lignes qui seraient traitées"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:319
+#, python-format
+msgid "Make 2 lines at least."
+msgstr "Merci de scinder au moins en 2 lignes."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:544
+#, python-format
+msgid "No HQ Entry selected for transaction"
+msgstr "Aucune Écritures HQ sélectionnées"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:159
+#, python-format
+msgid "No HQ journal found!"
+msgstr "Aucun journal HQ trouvé!"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:343
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:506
+#, python-format
+msgid "No analytic correction journal found!"
+msgstr "Aucun Journal Analytique de correction n'a été trouvé!"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:311
+#, python-format
+msgid "No line found!"
+msgstr "Aucune ligne trouvée!"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:352
+#: code:addons/account_hq_entries/hq_entries.py:385
+#, python-format
+msgid "No selected line(s)!"
+msgstr "Aucune ligne sélectionnée!"
+
+#. module: account_hq_entries
+#: view:hq.entries:0
+msgid "Non validated entries"
+msgstr "Entrées non validées"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:198
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:243
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:337
+#, python-format
+msgid "Null amount is not allowed!"
+msgstr "Un Montant de zéro n'est pas autorisé!"
+
+#. module: account_hq_entries
+#: view:hq.entries:0
+msgid "Original HQ entries"
+msgstr "Écritures HQ originales"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:142
+#, python-format
+msgid "Period is missing!"
+msgstr "Période absente!"
+
+#. module: account_hq_entries
+#: field:hq.entries.validation,period_id:0
+msgid "Period to book December HQ entries"
+msgstr "Période d'enregistrement des Écritures HQ de décembre"
+
+#. module: account_hq_entries
+#: view:hq.entries.validation:0
+msgid "Selected Lines"
+msgstr "Lignes Sélectionnées"
+
+#. module: account_hq_entries
+#: help:hq.entries,original_id:0
+msgid "The Original HQ Entry from which this line comes from."
+msgstr "L'Écriture HQ originale dont provient la ligne"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:436
+#, python-format
+msgid "The period used to book the December Entries must be in Fiscal Year %s."
+msgstr "La période utilisée pour enregsitrer une entrée en Décembre doit être dans l'année fiscale %s."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:323
+#, python-format
+msgid "This line cannot be split."
+msgstr "Cette ligne ne peut pas être scindée."
+
+#. module: account_hq_entries
+#: help:hq.entries,is_split:0
+msgid "This line comes from a split."
+msgstr "Cette ligne provient d'une scission."
+
+#. module: account_hq_entries
+#: view:hq.entries:0
+msgid "Validated entries"
+msgstr "Écritures validées"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:564
+#, python-format
+msgid "You can not validate HQ Entry in a mission-closed period"
+msgstr "Vous ne pouvez pas valider un Écriture HQ dans une période Mission-Closed"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:522
+#, python-format
+msgid "You cannot delete original entries!"
+msgstr "Vous ne pouvez pas supprimer un Écriture HQ d'Origine!"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:326
+#, python-format
+msgid "You cannot split a HQ Entry which analytic distribution state is not valid!"
+msgstr "vous ne pouvez pas scinder une Écriture HQ avec une distribution analytique invalide!"
