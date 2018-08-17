@@ -333,11 +333,8 @@ selected_filter = get_filter(data) or ''
 </Row>
 ## partner header
 <Row>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="2">
     <Data ss:Type="String">${_('Partner')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">${_('Account')}</Data>
@@ -388,14 +385,10 @@ debit, credit, balance = get_partners_total_debit_credit_balance(data)
 % for p_obj in p_entries:
 <%
 partner_name = (p_obj.name or '')
-partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 %>
 <Row>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="3">
     <Data ss:Type="String">${partner_name|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner" ss:MergeAcross="2">
-    <Data ss:Type="String">${partner_ref|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerRight">
     <Data ss:Type="String">${company.currency_id.name|x}</Data>
