@@ -198,8 +198,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         """
         Returns the list of account codes to be displayed for the partner in parameter
         """
-        if partner.id in self.accounts_to_display:
-            return self.accounts_to_display[partner.id]
+        if self.accounts_to_display:
+            return self.accounts_to_display.get(partner.id, [])
         move_state = ['draft', 'posted']
         if self.target_move == 'posted':
             move_state = ['posted']
@@ -210,22 +210,23 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:  # 'empty'
             reconcile_tag = " "
         self.cr.execute(
-            "SELECT DISTINCT acc.code "
+            "SELECT l.partner_id, acc.code "
             "FROM account_move_line l "
             "LEFT JOIN account_journal j ON l.journal_id = j.id "
             "LEFT JOIN account_account acc ON l.account_id = acc.id "
             "LEFT JOIN res_currency c ON l.currency_id = c.id "
             "LEFT JOIN account_move m ON m.id = l.move_id "
-            "WHERE l.partner_id = %s "
-            "AND l.account_id IN %s AND " + self.query + " "
+            "WHERE "
+            " l.account_id IN %s AND " + self.query + " "
             "AND m.state IN %s "
             " " + reconcile_tag + " "
             " " + self.DATE_FROM + " "
             " " + self.INSTANCE_REQUEST + " "
-            "ORDER BY acc.code;",
-            (partner.id, tuple(self.account_ids), tuple(move_state)))
-        self.accounts_to_display[partner.id] = [x for x, in self.cr.fetchall()]
-        return self.accounts_to_display[partner.id]
+            "GROUP BY l.partner_id, acc.code ORDER BY acc.code;",
+            (tuple(self.account_ids), tuple(move_state)))
+        for x in self.cr.fetchall():
+            self.accounts_to_display.setdefault(x[0], []).append(x[1])
+        return self.accounts_to_display.get(partner.id, [])
 
     def lines(self, partner, account_code):
         if partner.id in self.report_lines and account_code in self.report_lines[partner.id]:
