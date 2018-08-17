@@ -490,7 +490,7 @@
         <blockTable colWidths="420.0,30.0,70.0,70.0,80.0,92.0" style="Table12">
           <tr>
             <td>
-              <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
+              <para style="terp_default_Bold_9">[[ p.name ]]</para>
             </td>
             <td>
               <para style="terp_default_Bold_9">[[ company.currency_id.name ]]</para>

@@ -221,11 +221,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -292,9 +292,6 @@ else:
     <Data ss:Type="String">${_('Partner')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Partner Ref.')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Date')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
@@ -308,6 +305,9 @@ else:
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Entry Label')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Reconcile Number')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Currency')}</Data>
@@ -333,7 +333,7 @@ else:
     <Data ss:Type="String">${p.name or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner" ss:MergeAcross="5">
-    <Data ss:Type="String">${p.ref or ''|x}</Data>
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${company.currency_id.name|x}</Data>
@@ -416,9 +416,6 @@ else:
         <Data ss:Type="String"></Data>
       </Cell>
       <Cell ss:StyleID="ssAccountLine">
-        <Data ss:Type="String"></Data>
-      </Cell>
-      <Cell ss:StyleID="ssAccountLine">
         <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
       </Cell>
       <Cell ss:StyleID="ssAccountLine">
@@ -435,6 +432,9 @@ else:
       %>
       <Cell ss:StyleID="ssAccountLine">
         <Data ss:Type="String">${ entry_label |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">TODO</Data>
       </Cell>
       <Cell ss:StyleID="ssAccountLine">
         <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
