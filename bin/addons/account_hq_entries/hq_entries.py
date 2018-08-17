@@ -222,6 +222,16 @@ class hq_entries(osv.osv):
         'is_account_partner_compatible': lambda *a: True,
     }
 
+    def _check_active_account(self, cr, uid, ids, context=None):
+        for hq in self.browse(cr, uid, ids, fields_to_fetch=['name', 'account_id', 'date']):
+            if hq.date < hq.account_id.activation_date or (hq.account_id.inactivation_date and hq.date >= hq.account_id.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('HQ Entry %s: account %s is inactive') % (hq.name, hq.account_id.code))
+        return True
+
+
+    _constraints = [
+        (_check_active_account, 'HQ entry: G/L account is inactive', []),
+    ]
     def split_forbidden(self, cr, uid, ids, context=None):
         """
         Split is forbidden for these lines:
@@ -315,7 +325,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount,})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({

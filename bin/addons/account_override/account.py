@@ -48,7 +48,7 @@ class account_account(osv.osv):
         cmp_date = datetime.date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
-        for a in self.browse(cr, uid, ids):
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['activation_date', 'inactivation_date']):
             res[a.id] = True
             if a.activation_date > cmp_date:
                 res[a.id] = False
