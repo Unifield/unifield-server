@@ -231,19 +231,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <!-- LINES -->
     <% line_number = 0 %>
     % for line in lines(data)[entry_seq]:
-        <% line_number += 1 %>
         <Row>
-            % if line_number == 1:
-                <!-- entry seq. in bold -->
-                <Cell ss:StyleID="ssBorderBold">
-                    <Data ss:Type="String">${entry_seq|x}</Data>
-                </Cell>
-            % else:
-                <!-- empty cell with only left and right borders -->
-                <Cell ss:StyleID="ssBorderLeftRight">
-                    <Data ss:Type="String"></Data>
-                </Cell>
-            % endif
+            <Cell ss:StyleID="ssBorder">
+                <Data ss:Type="String">${entry_seq|x}</Data>
+            </Cell>
             <Cell ss:StyleID="ssBorder">
                 <Data ss:Type="String">${line['account']|x}</Data>
             </Cell>
