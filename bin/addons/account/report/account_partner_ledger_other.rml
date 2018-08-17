@@ -210,6 +210,7 @@
             <lineStyle kind="LINEBELOW" colorName="#000000" start="7,-1" stop="7,-1"/>
             <lineStyle kind="LINEBELOW" colorName="#000000" start="8,-1" stop="8,-1"/>
             <lineStyle kind="LINEBELOW" colorName="#000000" start="9,-1" stop="9,-1"/>
+            <lineStyle kind="LINEBELOW" colorName="#000000" start="10,-1" stop="10,-1"/>
         </blockTableStyle>
         <blockTableStyle id="Table8">
             <blockAlignment value="LEFT"/>
@@ -423,7 +424,7 @@
         <para style="terp_default_8">
             <font color="white"> </font>
         </para>
-        <blockTable colWidths="72.0,25.0,101.0,46.0,114.0,61.0,77.0,77.0,87.0,99.0" style="Table2">
+        <blockTable colWidths="72.0,25.0,101.0,46.0,104.0,60.0,51.0,67.0,67.0,77.0,89.0" style="Table2">
             <tr>
                 <td>
                     <para style="terp_tblheader_Details">Date</para>
@@ -438,16 +439,19 @@
                     <para style="terp_tblheader_Details_Centre">Account</para>
                 </td>
                 <td>
-                    <para style="terp_tblheader_Details">Entry Label</para>
+                    <para style="terp_tblheader_Details_Centre">Entry Label</para>
+                </td>
+                <td>
+                    <para style="terp_tblheader_Details">Reconcile Number</para>
                 </td>
                 <td>
                     <para style="terp_tblheader_Details">Currency</para>
                 </td>
                 <td>
-                    <para style="terp_tblheader_Details_Right">Debit</para>
+                    <para style="terp_tblheader_Details_Centre">Debit</para>
                 </td>
                 <td>
-                    <para style="terp_tblheader_Details_Right">Credit</para>
+                    <para style="terp_tblheader_Details_Centre">Credit</para>
                 </td>
                 <td>
                     <para style="terp_tblheader_Details_Right">Booking Balance</para>
@@ -513,7 +517,7 @@
                     </td>
                 </tr>
             </blockTable>
-            <blockTable colWidths="370.0,40.0,80.0,80.0,90.0,102.0" style="Table12">
+            <blockTable colWidths="420.0,30.0,70.0,70.0,80.0,92.0" style="Table12">
                 <tr>
                     <td>
                         <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
@@ -540,7 +544,7 @@
                 <para style="terp_default_8">[[ repeatIn(get_accounts_to_display(p), 'account_code') ]]</para>
                 <!-- TOTALS IN FUNCTIONAL -->
                 <section>
-                    <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                    <blockTable colWidths="296.0,124.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
                                 <para style="PCenteredBold">[[ p.name or '' ]]</para>
@@ -572,7 +576,7 @@
                 <!-- SUBTOTAL LINES IN BOOKING -->
                 <section>
                     <para style="terp_default_8">[[ repeatIn(get_subtotals(p, account_code), 'curr') ]]</para>
-                    <blockTable colWidths="246.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                    <blockTable colWidths="296.0,124.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
                                 <para style="PCenteredBold">[[ p.name or '' ]]</para>
@@ -604,7 +608,7 @@
                 <!-- LINES -->
                 <section>
                     <para style="terp_default_8">[[ repeatIn(lines(p, account_code), 'line') ]]</para>
-                    <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
+                    <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,50.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
                                 <para style="P3">[[ formatLang(line['date'], date=True) ]]</para>
@@ -622,19 +626,22 @@
                                 <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'] or '', line['name'] or ''), 29) ]]</para>
                             </td>
                             <td>
+                                <para style="P3">TODO</para>
+                            </td>
+                            <td>
                                 <para style="P3">[[ line['currency_code'] or '' ]]</para>
                             </td>
                             <td>
-                                <para style="P9">[[ formatLang(line['debit'] or 0.0) ]]</para>
+                                <para style="P7">[[ formatLang(line['debit'] or 0.0) ]]</para>
                             </td>
                             <td>
-                                <para style="P9">[[ formatLang(line['credit'] or 0.0) ]]</para>
+                                <para style="P7">[[ formatLang(line['credit'] or 0.0) ]]</para>
                             </td>
                             <td>
-                                <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
+                                <para style="P7">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
                             </td>
                             <td>
-                                <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
+                                <para style="P7">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
                             </td>
                         </tr>
                     </blockTable>
