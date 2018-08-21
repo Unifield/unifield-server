@@ -180,7 +180,6 @@
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
-                    <!--<para style="TextInformation">[[ objects[0].partner_address_id.office_name or objects[0].partner_address_id.partner_id.name or objects[0].partner_id.name ]]</para>                   -->
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
