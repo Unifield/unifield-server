@@ -1216,9 +1216,10 @@ msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur 
 msgid "America/Sao_Paulo"
 msgstr "America/Sao_Paulo"
 
-#. modules: account, register_accounting
+#. modules: account, register_accounting, analytic_distribution
 #: report:addons/register_accounting/report/fully_report_xls.mako:575
 #: view:account.analytic.line:0
+#: code:addons/analytic_distribution/analytic_line.py:527
 msgid "CC"
 msgstr "CC"
 
@@ -1490,7 +1491,7 @@ msgstr "Le produit sélectionné est Périssable"
 #: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:318
 #, python-format
 msgid "Dest / Cost Center / Funding Pool are not compatible for entry name:'%s', ref:'%s' reason: '%s'"
-msgstr "Dest / Cost Center / Funding Pool are not compatible for entry name:'%s', ref:'%s' reason: '%s'"
+msgstr "Dest. / Centre de Coût / Funding Pool ne sont pas compatibles pour l'écriture : '%s', réf. : '%s'. Motif : '%s'"
 
 #. module: product
 #: help:product.template,product_manager:0
@@ -101798,3 +101799,33 @@ msgstr "Information liée"
 #: report:addons/account/report/account_partner_ledger.mako:310
 msgid "Reconcile Number"
 msgstr "Numéro de lettrage"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:518
+#, python-format
+msgid "DEST"
+msgstr "DEST"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:536
+#, python-format
+msgid "account/dest"
+msgstr "compte / dest."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:541
+#, python-format
+msgid "DEST date"
+msgstr "Date de la DEST"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:544
+#, python-format
+msgid "CC date"
+msgstr "Date du CC"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:548
+#, python-format
+msgid "FP date"
+msgstr "Date du FP"

@@ -320,7 +320,7 @@ class import_commitment_wizard(osv.osv_memory):
                                 " reason: '%s'")
                         raise osv.except_osv(_('Error'), msg % (
                             tools.ustr(vals.get('name', '')), tools.ustr(vals.get('ref', '')),
-                            no_compat[2] or '', )
+                            _(no_compat[2]) or '', )
                         )
 
                     analytic_obj.create(cr, uid, vals, context=context)
