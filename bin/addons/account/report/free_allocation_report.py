@@ -50,6 +50,9 @@ class free_allocation_report(report_sxw.rml_parse):
         Returns the report lines as a dict where key = Entry Sequence,
         and value = list of dicts, each corresponding to a line to display
         + fills in the self.total_lines for each Entry Sequence
+
+        Formula for one combination with all axis:
+        total_JI x (amount_DEST_CC_FP_A/total_JI) x (amount_free1A/total_JI) x (amount_free2A/total_JI)
         """
         if not self.lines:
             move_obj = self.pool.get('account.move')
