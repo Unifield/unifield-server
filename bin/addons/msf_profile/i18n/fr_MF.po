@@ -3391,8 +3391,6 @@ msgstr "Sainte-Lucie"
 #: field:account.move.line,fiscalyear_id:0
 #: field:account.period,fiscalyear_id:0
 #: field:account.sequence.fiscalyear,fiscalyear_id:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
 #: report:account.vat.declaration:0
 #: report:addons/account/report/account_partner_ledger.mako:209
 #: model:ir.model,name:account.model_account_fiscalyear
@@ -41703,6 +41701,8 @@ msgstr "Marque"
 
 #. module: account
 #: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 msgid "Fiscal Year"
 msgstr "Exercice Compt."
 

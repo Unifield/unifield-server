@@ -263,14 +263,20 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('display_partner', '') == 'all' and not data['form'].get('partner_ids', False):
             # create entries at zero for partners where no result was found
             active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
+            other_partners_sql_end = ""
+            other_partners_sql_end_params = []
+            if p_seen:
+                # exclude partners already found if any
+                other_partners_sql_end = " AND id NOT IN %s "
+                other_partners_sql_end_params.append(tuple(p_seen.keys()))
             other_partners_sql = """
                         SELECT id, ref, name 
                         FROM res_partner
                         WHERE active IN %s 
-                        AND name != 'To be defined'
-                        AND id NOT in %s;
+                        AND name != 'To be defined' """ + other_partners_sql_end + """ ;
                         """
-            cr.execute(other_partners_sql, (active_selection, tuple(p_seen.keys()),))
+            other_partners_params = (active_selection,) + tuple(other_partners_sql_end_params)
+            cr.execute(other_partners_sql, other_partners_params) # not_a_user_entry
             other_partners = cr.dictfetchall()
             for partner in other_partners:
                 vals = {
