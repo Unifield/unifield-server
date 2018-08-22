@@ -1349,7 +1349,7 @@ class purchase_order_line(osv.osv):
             signal = 'cancel_r' if resource else 'cancel'
             wf_service.trg_validate(uid, 'purchase.order.line', new_po_line, signal, cr)
 
-        return True
+        return new_po_line
 
     def _get_stages_price(self, cr, uid, product_id, uom_id, order, context=None):
         '''
