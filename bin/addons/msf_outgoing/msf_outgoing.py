@@ -5174,7 +5174,8 @@ class stock_move(osv.osv):
                 pol_product_qty = self.pool.get('purchase.order.line').read(cr, uid, move.purchase_line_id.id, ['product_qty'])['product_qty'] # because value in move.purchase_line_id.product_qty has changed since
                 partially_cancelled = False
                 if pol_product_qty - move.product_qty != 0:
-                    self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                    new_line = self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                    self.write(cr, uid, [move.id], {'purchase_line_id': new_line}, context=context)
                     partially_cancelled = True
                 else:
                     signal = 'cancel_r' if resource else 'cancel'
@@ -5209,7 +5210,7 @@ class stock_move(osv.osv):
                     ('state', 'not in', ['cancel', 'cancel_r', 'done']),
                     ('picking_id.type', '=', 'in'),
                 ], context=context)
-                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                if not not_done_moves:
                     # all in lines processed or will be processed for this po line
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
 
@@ -5220,7 +5221,7 @@ class stock_move(osv.osv):
                         ('state', 'not in', ['cancel', 'cancel_r', 'done']),
                         ('picking_id.type', '=', 'in'),
                     ], context=context)
-                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    if not not_done_moves:
                         # all in lines processed or will be processed for this po line
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
@@ -5243,7 +5244,6 @@ class stock_move(osv.osv):
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
-
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
                 moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)
