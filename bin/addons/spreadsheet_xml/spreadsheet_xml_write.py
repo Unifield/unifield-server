@@ -128,6 +128,7 @@ class SpreadsheetReport(WebKitParser):
             return (out, 'zip')
 
         if context.get('pathit'):
+            os.close(null)
             return (Path(tmpname, delete=True), 'xls')
 
         out = file(tmpname, 'rb').read()
