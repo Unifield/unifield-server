@@ -28,6 +28,9 @@
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
+             <blockLeading length="0" />
+             <blockBottomPadding length="2" />
+             <blockTopPadding length="2" />
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
