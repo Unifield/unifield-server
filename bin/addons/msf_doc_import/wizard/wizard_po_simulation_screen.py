@@ -1425,12 +1425,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
-            if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
+            # Comment
+            write_vals['imp_comment'] = values[15] and values[15].strip()
+
+            if line.po_line_id.state in ('confirmed', 'done') or ( line.po_line_id.state in  ('cancel', 'cancel_r') and write_vals['imp_comment'] != '[DELETE]'):
                 write_vals['type_change'] = 'error'
                 errors.append(_('PO line has been confirmed or cancelled and consequently is not editable'))
 
-            # Comment
-            write_vals['imp_comment'] = values[15] and values[15].strip()
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
