@@ -60,6 +60,7 @@ class wizard_down_payment(osv.osv_memory):
         # Prepare some values
         po_obj = self.pool.get('purchase.order')
         tax_obj = self.pool.get('account.tax')
+        cur_obj = self.pool.get('res.currency')
         po_fields = ['partner_id', 'order_line', 'partner_address_id']
         po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
@@ -76,7 +77,11 @@ class wizard_down_payment(osv.osv_memory):
                                              po.partner_address_id.id, pol.product_id and pol.product_id.id or False,
                                              po.partner_id)['taxes']:
                     amount_tax += c.get('amount', 0.0)
-        total_po = amount_untaxed + amount_tax
+        # round amounts
+        cur = po.pricelist_id.currency_id
+        rounded_untaxed = cur_obj.round(cr, uid, cur.rounding, amount_untaxed)
+        rounded_tax = cur_obj.round(cr, uid, cur.rounding, amount_tax)
+        total_po = rounded_untaxed + rounded_tax
 
         absl_obj = self.pool.get('account.bank.statement.line')
         args = [('down_payment_id', '=', po_id)]
