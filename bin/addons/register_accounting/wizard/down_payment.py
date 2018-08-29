@@ -61,7 +61,7 @@ class wizard_down_payment(osv.osv_memory):
         po_obj = self.pool.get('purchase.order')
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
-        po_fields = ['partner_id', 'order_line', 'partner_address_id']
+        po_fields = ['partner_id', 'order_line', 'partner_address_id', 'pricelist_id']
         po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
         # Verify that PO partner is the same as down payment partner
