@@ -29,8 +29,8 @@
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
              <blockLeading length="0" />
-             <blockBottomPadding length="2" />
-             <blockTopPadding length="2" />
+             <blockBottomPadding length="1" />
+             <blockTopPadding length="1" />
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
@@ -83,8 +83,9 @@
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
-        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationH" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="3.0" spaceBefore="0" spaceAfter="0" />
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
+        <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
         <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -98,36 +99,36 @@
         <blockTable colWidths="90.0,600.0,100.0" style="Origin">
             <tr>
                 <td>
-                    <para style="TextInformation">Source Document :</para>
+                    <para style="TextInformationH">Source Document :</para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
+                    <para style="TextInformationH">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformationH"> </para>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Customer reference :</para>
+                    <para style="TextInformationH">Customer reference :</para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].customer_ref ]]</para>
+                    <para style="TextInformationH">[[ objects[0].customer_ref ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformationH"> </para>
                 </td>
             </tr>
             <tr>
                 [[ repeatIn(getOrigin(objects[0].origin, 5)[1:], 'orig') ]]
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformationH"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ orig ]]</para>
+                    <para style="TextInformationH">[[ orig ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformationH"> </para>
                 </td>
             </tr>
             <tr>
