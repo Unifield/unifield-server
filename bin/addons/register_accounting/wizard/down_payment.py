@@ -59,17 +59,24 @@ class wizard_down_payment(osv.osv_memory):
             po_id = po_id[0]
         # Prepare some values
         po_obj = self.pool.get('purchase.order')
-        pol_obj = self.pool.get('purchase.order.line')
-        po = po_obj.read(cr, uid, po_id, ['partner_id', 'down_payment_ids', 'order_line'])
+        tax_obj = self.pool.get('account.tax')
+        po_fields = ['partner_id', 'order_line', 'partner_address_id']
+        po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
         # Verify that PO partner is the same as down payment partner
         if not absl.partner_id:
             raise osv.except_osv(_('Warning'), _('Third Party is mandatory for down payments!'))
-        if po.get('partner_id', [False])[0] != absl.partner_id.id:
+        if po.partner_id.id != absl.partner_id.id:
             raise osv.except_osv(_('Error'), _('Third party from Down payment and Purchase Order are different!'))
-        total = 0.0
-        for pol in pol_obj.read(cr, uid, po['order_line'], ['state', 'price_unit', 'product_qty'], context=context):
-            total += pol['state'] in ('confirmed', 'done') and (pol['price_unit'] * pol['product_qty']) or 0.0
+        amount_untaxed = amount_tax = 0.0
+        for pol in po.order_line:
+            if pol.state in ('confirmed', 'done'):
+                amount_untaxed += pol.price_subtotal or 0.0
+                for c in tax_obj.compute_all(cr, uid, pol.taxes_id or [], pol.price_unit, pol.product_qty,
+                                             po.partner_address_id.id, pol.product_id and pol.product_id.id or False,
+                                             po.partner_id)['taxes']:
+                    amount_tax += c.get('amount', 0.0)
+        total_po = amount_untaxed + amount_tax
 
         absl_obj = self.pool.get('account.bank.statement.line')
         args = [('down_payment_id', '=', po_id)]
@@ -96,12 +103,12 @@ class wizard_down_payment(osv.osv_memory):
                 included_dp_amls.append(dp.get('id'))
 
         total_amount = lines_amount + absl.amount
-        if (total + total_amount) < -0.001:
+        if (total_po + total_amount) < -0.001:
             raise osv.except_osv(_('Warning'),
                                  _('Maximum amount should be: %s. Register' +
                                    ' line amount is higher than (PO confirmed amount - ' +
                                    'unexpended DPs - open/paid INV).')
-                                 % (total + lines_amount))
+                                 % (total_po + lines_amount))
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
