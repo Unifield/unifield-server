@@ -110,9 +110,7 @@ class wizard_down_payment(osv.osv_memory):
         total_amount = lines_amount + absl.amount
         if (total_po + total_amount) < -0.001:
             raise osv.except_osv(_('Warning'),
-                                 _('Maximum amount should be: %s. Register' +
-                                   ' line amount is higher than (PO confirmed amount - ' +
-                                   'unexpended DPs - open/paid INV).')
+                                 _('Maximum amount should be: %s. Register line amount is higher than (PO confirmed amount - unexpended DPs - open/paid INV).')
                                  % (total_po + lines_amount))
         return True
 
