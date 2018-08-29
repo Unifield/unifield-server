@@ -401,7 +401,12 @@ class automated_import_job(osv.osv):
                         line_message = _('Line %s: ') % resjected_line[0]
                         line_message += resjected_line[2]
                         error_message.append(line_message)
-                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), len(rejected)))
+
+                if context.get('rejected_confirmation'):
+                    nb_rejected += context.get('rejected_confirmation')
+                    state = 'error'
+
+                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), nb_rejected))
 
                 if job.import_id.function_id.model_id.model == 'purchase.order':
                     po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)

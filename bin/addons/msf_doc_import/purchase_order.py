@@ -260,6 +260,7 @@ class purchase_order(osv.osv):
 
         context.update({'auto_import_confirm_pol': True})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
+        context['rejected_confirmation'] = 0
         if context.get('po_id'):
             po = self.browse(cr, uid, context['po_id'], context=context)
             nb_pol_confirmed = 0
@@ -273,6 +274,7 @@ class purchase_order(osv.osv):
                         cr.commit()
                         nb_pol_confirmed += 1
                     except:
+                        context['rejected_confirmation'] += 1
                         cr.rollback()
                         self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
                         job_comment = context.get('job_comment', [])

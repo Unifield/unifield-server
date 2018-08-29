@@ -1764,7 +1764,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     job_comment.append({
                         'res_model': 'purchase.order',
                         'res_id': line.simu_id.order_id.id,
-                        'msg': _('Line #%s has been split.') % line.parent_line_id.po_line_id.line_number,
+                        'msg': _('%s: Line #%s has been split.') % (line.simu_id.order_id.name, line.parent_line_id.po_line_id.line_number),
                     })
                     context['job_comment'] = job_comment
             elif line.type_change == 'new':
@@ -1796,7 +1796,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 job_comment.append({
                     'res_model': 'purchase.order',
                     'res_id': line.simu_id.order_id.id,
-                    'msg': _('New line #%s created.') % new_line_numb,
+                    'msg': _('%s: New line #%s created.') % (line.simu_id.order_id.name, new_line_numb),
                 })
                 context['job_comment'] = job_comment
             elif line.po_line_id:
