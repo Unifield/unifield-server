@@ -101841,3 +101841,9 @@ msgstr "Numéros de Séquence"
 #, python-format
 msgid "You can set several sequences separated by a comma."
 msgstr "Vous pouvez indiquer plusieurs séquences séparées par une virgule."
+
+#. module: account_mcdb
+#: field:account.mcdb,include_related_entries:0
+#: code:addons/account_mcdb/account_mcdb.py:1276
+msgid "Related entries"
+msgstr "Ecritures associées"

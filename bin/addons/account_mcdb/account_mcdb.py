@@ -42,6 +42,7 @@ class account_mcdb(osv.osv):
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
         'document_code': fields.char(string='Sequence number', size=255),
+        'include_related_entries': fields.boolean('Related entries'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'fiscalyear_id': fields.many2one('account.fiscalyear', string='Fiscal Year'),
@@ -434,24 +435,30 @@ class account_mcdb(osv.osv):
                 document_code_field = 'move_id.name'
                 # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
                 # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
+                document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
                     domain.append('|')
-                    if context.get('from', '') != 'combined.line':
+                    if context.get('from', '') == 'combined.line':
+                        domain.append(('move_id.move_id.name', 'ilike', document_code))
+                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
+                        domain.append(('entry_sequence', 'ilike', '%s' % document_code))
+                    else:
                         document_codes = [i.strip() for i in document_code.split(',')]
                         domain.append(('move_id.move_id.name', 'in', document_codes))
                         domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
                         domain.append(('entry_sequence', 'in', document_codes))
-                    else:
-                        domain.append(('move_id.move_id.name', 'ilike', document_code))
-                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
-                        domain.append(('entry_sequence', 'ilike', '%s' % document_code))
                 else:
-                    if context.get('from', '') != 'combined.line':
+                    if context.get('from', '') == 'combined.line':
+                        domain.append((document_code_field, 'ilike', document_code))
+                    else:
                         document_codes = [i.strip() for i in document_code.split(',')]
                         domain.append((document_code_field, 'in', document_codes))
-                    else:
-                        domain.append((document_code_field, 'ilike', document_code))
+                        # for the G/L Selector: add the related JIs if "Related Entries" is checked
+                if document_codes and wiz.include_related_entries:
+                    # note: the domain has no impact on the related entries to be displayed
+                    context.update({'related_entries': document_codes})
+
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -607,6 +614,11 @@ class account_mcdb(osv.osv):
 
             context['target_filename_prefix'] = name
 
+            # add the related entries at the end if needed
+            if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+                entry_ids = self.pool.get(res_model).search(cr, uid, domain, order='NO_ORDER', context=context) or []
+                related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+                domain = [('id', 'in', list(set(entry_ids + related_entry_ids)))]
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
@@ -1260,6 +1272,9 @@ class account_mcdb(osv.osv):
                         value, operator = self._get_data_from_field(cr, uid, second_obj_field, dom[2], operator, context)
                 if title and operator and value:
                     dom_selections.append("%s%s %s" % (title, operator, value))
+        if context.get('related_entries', []):
+            related_entries_str = "%s: %s" % (_("Related entries"), _("True"))
+            dom_selections.append(related_entries_str)
         return ' ; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):
@@ -1285,6 +1300,10 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             result_ids = aal_obj.search(cr, uid, domain, context=context, limit=limit)
             target_filename = 'Analytic Selector'
+        # add the related entries if needed
+        if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+            related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+            result_ids = list(set(result_ids + related_entry_ids))
         output_currency_id = False
         if selector.display_in_output_currency:
             output_currency_id = selector.display_in_output_currency.id
