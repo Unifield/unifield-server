@@ -430,15 +430,28 @@ class account_mcdb(osv.osv):
                         context['selector_display_cheque_number'] = True
             # DOCUMENT CODE fields
             if wiz.document_code and wiz.document_code != '':
+                document_code = wiz.document_code
                 document_code_field = 'move_id.name'
+                # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
+                # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
                 if res_model == 'account.analytic.line':
                     domain.append('|')
                     domain.append('|')
-                    domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('entry_sequence', 'ilike', '%s' % wiz.document_code))
+                    if context.get('from', '') != 'combined.line':
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append(('move_id.move_id.name', 'in', document_codes))
+                        domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
+                        domain.append(('entry_sequence', 'in', document_codes))
+                    else:
+                        domain.append(('move_id.move_id.name', 'ilike', document_code))
+                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
+                        domain.append(('entry_sequence', 'ilike', '%s' % document_code))
                 else:
-                    domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
+                    if context.get('from', '') != 'combined.line':
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append((document_code_field, 'in', document_codes))
+                    else:
+                        domain.append((document_code_field, 'ilike', document_code))
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -1469,6 +1482,18 @@ class account_mcdb(osv.osv):
         Generates the Combined Journals Report in PDF format
         """
         return self.combined_export(cr, uid, ids, format='pdf', context=context)
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Customizes the document_code field: outside the Combined Journals Report the user can set several Entry Seq.
+        """
+        res = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        for field in res['fields']:
+            if field == 'document_code':
+                if context.get('from', '') != 'combined.line':
+                    res['fields'][field]['string'] = _('Sequence numbers')
+                    res['fields'][field]['help'] = _('You can set several sequences separated by a comma.')
+        return res
 
 
 account_mcdb()

@@ -101829,3 +101829,15 @@ msgstr "Date du CC"
 #, python-format
 msgid "FP date"
 msgstr "Date du FP"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1494
+#, python-format
+msgid "Sequence numbers"
+msgstr "Numéros de Séquence"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1495
+#, python-format
+msgid "You can set several sequences separated by a comma."
+msgstr "Vous pouvez indiquer plusieurs séquences séparées par une virgule."
