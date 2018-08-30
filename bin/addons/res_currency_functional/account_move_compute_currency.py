@@ -170,7 +170,8 @@ class account_move_compute_currency(osv.osv):
 
             if move.period_id and not move.period_id.is_system \
                     and len(sorted_line_ids) > 2:
-                if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
+                # if high FX rate, amount is always 0 even if amount_currency != 0 => do not try to recompute anything
+                if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4 and amount:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = self._sub_sort_by_xmlid(cr, uid, sorted_line_ids)
