@@ -1322,9 +1322,9 @@ class account_move_line(osv.osv):
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
         return result
 
-    def get_related_entry_ids(self, cr, uid, ids=False, entry_seqs=[], context=None):
+    def get_related_entry_ids(self, cr, uid, ids=False, entry_seqs=None, context=None):
         """
-        Returns the ids of all the JIs related to the selected JIs and/or Entry Sequences, i.e.:
+        Returns the ids of all the JIs related to the selected JIs and/or Entry Sequences (list), i.e.:
         1) those having the same Entry Sequence as the selected JIs (including the selected JIs themselves)
         2) those having the same reference as one of the JIs found in 1)
         3) those having an Entry Sequence matching exactly with the reference of one of the JIs found in 1)
@@ -1334,6 +1334,8 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
+        if entry_seqs is None:
+            entry_seqs = []
         am_obj = self.pool.get('account.move')
         related_amls = set()
         account_move_ids = []

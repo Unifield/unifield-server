@@ -454,7 +454,6 @@ class account_mcdb(osv.osv):
                     else:
                         document_codes = [i.strip() for i in document_code.split(',')]
                         domain.append((document_code_field, 'in', document_codes))
-                        # for the G/L Selector: add the related JIs if "Related Entries" is checked
                 if document_codes and wiz.include_related_entries:
                     # note: the domain has no impact on the related entries to be displayed
                     context.update({'related_entries': document_codes})
