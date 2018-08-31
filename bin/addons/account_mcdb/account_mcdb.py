@@ -438,14 +438,11 @@ class account_mcdb(osv.osv):
                 document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
-                    domain.append('|')
                     if context.get('from', '') == 'combined.line':
-                        domain.append(('move_id.move_id.name', 'ilike', document_code))
                         domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
                         domain.append(('entry_sequence', 'ilike', document_code))
                     else:
                         document_codes = [i.strip() for i in document_code.split(',')]
-                        domain.append(('move_id.move_id.name', 'in', document_codes))
                         domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
                         domain.append(('entry_sequence', 'in', document_codes))
                 else:
