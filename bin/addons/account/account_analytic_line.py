@@ -173,7 +173,9 @@ class account_analytic_line(osv.osv):
         if entry_seqs and categories:
             # get the ids of all the related lines
 
-            analytic_account_ids = analytic_acc_obj.search(cr, uid, [('category', 'in', list(set(categories)))],
+            categories = list(set(categories))
+            entry_seqs = list(set(entry_seqs))
+            analytic_account_ids = analytic_acc_obj.search(cr, uid, [('category', 'in', categories)],
                                                            order='NO_ORDER', context=context)
             # lines having the same Entry Sequence
             same_seq_domain = [('entry_sequence', 'in', entry_seqs),

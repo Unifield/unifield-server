@@ -1350,6 +1350,8 @@ class account_move_line(osv.osv):
                 entry_seqs.append(selected_aml.move_id.name)
         if account_move_ids and entry_seqs:
             # get the ids of all the related JIs
+            account_move_ids = list(set(account_move_ids))
+            entry_seqs = list(set(entry_seqs))
             # JIs having the same Entry Seq = JIs of the same JE
             same_seq_ji_ids = self.search(cr, uid, [('move_id', 'in', account_move_ids)], order='NO_ORDER', context=context)
             related_amls.update(same_seq_ji_ids)

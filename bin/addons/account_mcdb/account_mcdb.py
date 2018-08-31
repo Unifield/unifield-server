@@ -42,7 +42,7 @@ class account_mcdb(osv.osv):
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
         'document_code': fields.char(string='Sequence number', size=255),
-        'include_related_entries': fields.boolean('Related entries'),
+        'include_related_entries': fields.boolean('Related entries', help='Entries related to the Sequence numbers set'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'fiscalyear_id': fields.many2one('account.fiscalyear', string='Fiscal Year'),
@@ -442,7 +442,7 @@ class account_mcdb(osv.osv):
                     if context.get('from', '') == 'combined.line':
                         domain.append(('move_id.move_id.name', 'ilike', document_code))
                         domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
-                        domain.append(('entry_sequence', 'ilike', '%s' % document_code))
+                        domain.append(('entry_sequence', 'ilike', document_code))
                     else:
                         document_codes = [i.strip() for i in document_code.split(',')]
                         domain.append(('move_id.move_id.name', 'in', document_codes))
@@ -1217,7 +1217,8 @@ class account_mcdb(osv.osv):
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
         """
         Returns a String corresponding to the domain in parameter:
-        criteria separated with ";" and followed by ":" for the value
+        criteria separated with ";" and followed by ":" for the value.
+        Adds "Related entries: True" if related_entries stored in context.
         """
         if context is None:
             context = {}
