@@ -244,7 +244,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0" style="Table7">
+    <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table7">
       [[ get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
         <td>
@@ -255,6 +255,9 @@
         </td>
         <td>
           <para style="terp_tblheader_Details">Description</para>
+        </td>
+        <td>
+          <para style="terp_tblheader_Details">Third Party</para>
         </td>
         <td>
           <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>
@@ -273,9 +276,12 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0" style="Table7">
+    <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table7">
       [[ not get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
+        <td>
+          <para style="terp_tblheader_Details"></para>
+        </td>
         <td>
           <para style="terp_tblheader_Details"></para>
         </td>
@@ -304,7 +310,7 @@
     </blockTable>
     <section>
       <para style="terp_default_8">[[ repeatIn(get_tree_nodes(a), 'o') ]]</para>
-      <blockTable colWidths="286.0,60.0,110.0,110.0,110.0,110.0" style="Table8_header">
+      <blockTable colWidths="356.0,50.0,95.0,95.0,95.0,95.0" style="Table8_header">
         [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
         <tr>
           <td>
@@ -330,7 +336,7 @@
 
       <section>
         <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
-        <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
+        <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table8_subtotal_ccy">
           [[ o.displayed or removeParentNode('blockTable') ]]
           <tr>
             <td>
@@ -360,7 +366,7 @@
 
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
-        <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
+        <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           [[ o.displayed or removeParentNode('blockTable') ]]
           <tr>
             <td>
@@ -390,7 +396,7 @@
 
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False), 'line') ]]</para>
-        <blockTable colWidths="114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
+        <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           [[ o.displayed or removeParentNode('blockTable') ]]
           <tr>
             <td>
@@ -401,6 +407,9 @@
             </td>
             <td>
               <para style="terp_default_8">[[ line['lname'] or '' ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_Right_8">[[ line['third_party'] or '' ]]</para>
             </td>
             <td>
                 <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
