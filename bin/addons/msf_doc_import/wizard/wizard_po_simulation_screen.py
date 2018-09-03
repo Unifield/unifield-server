@@ -1672,6 +1672,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
             if line.type_change in ('ignore', 'error'):
+                if line.type_change == 'error':
+                    job_comment = context.get('job_comment', [])
+                    job_comment.append({
+                        'res_model': 'purchase.order',
+                        'res_id': line.simu_id.order_id.id,
+                        'msg': _('%s: error on line %s %s') % (line.simu_id.order_id.name, line.in_line_number or line.imp_external_ref, line.error_msg),
+                    })
                 continue
 
             if line.type_change == 'del' and line.po_line_id:
