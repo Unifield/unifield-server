@@ -69,7 +69,10 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         res = ""
         for val, label in CONSUMPTION_TYPE:
             if val == report.consumption_type:
-                return _(label)
+                if val == 'amc':
+                    return _(label) + ' (' + self.str_to_time(report.consumption_from) + ' - ' + self.str_to_time(report.consumption_to) + ')'
+                else:
+                    return _(label)
         return res
 
     def _get_report_dates(self, report):

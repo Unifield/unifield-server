@@ -226,6 +226,26 @@ class product_likely_expire_report(osv.osv):
             res[r['id']] = r['status']
         return res
 
+    def _get_amc_consumption_text(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the complete name for AMC Consumption
+        '''
+        if context is None:
+            context = {}
+
+        date_obj = self.pool.get('date.tools')
+
+        res = {}
+        for r in self.read(cr, uid, ids, ['consumption_type', 'consumption_from', 'consumption_to'], context=context):
+            if r['consumption_from'] and r['consumption_to']:
+                d_from = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_from'])
+                d_to = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_to'])
+                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0]) + ' (' + d_from + ' - ' + d_to + ')'
+            else:
+                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0])
+
+        return res
+
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
@@ -241,6 +261,7 @@ class product_likely_expire_report(osv.osv):
         'requestor_date': fields.datetime(string='Date of the demand'),
         'fake_status': fields.function(_get_status, method=True, type='selection', selection=LIKELY_EXPIRE_STATUS, readonly=True, string='Status'),
         'status': fields.selection(LIKELY_EXPIRE_STATUS, string='Status'),
+        'amc_consumption_text': fields.function(_get_amc_consumption_text, method=True, type="char", string='Consumption'),
     }
 
     _defaults = {

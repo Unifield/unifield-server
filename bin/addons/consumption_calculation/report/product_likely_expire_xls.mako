@@ -84,7 +84,7 @@ if n_header_colspan < 0:
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')}</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Period')}</Data></Cell>
-<Cell ss:StyleID="header" ss:MergeAcross="2"><Data ss:Type="String">${_('Consumption')}</Data></Cell>
+<Cell ss:StyleID="header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consumption')}</Data></Cell>
 <%
 cols = n_header_colspan - 2
 if cols < 0:
@@ -97,7 +97,7 @@ if cols < 0:
 <Row>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.msf_instance or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(getReportPeriod(o) or '')|x}</Data></Cell>
-<Cell ss:StyleID="line" ss:MergeAcross="2"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
+<Cell ss:StyleID="line" ss:MergeAcross="4"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
 % for n in range(cols):
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endfor
