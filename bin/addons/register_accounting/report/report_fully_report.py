@@ -260,6 +260,15 @@ class report_fully_report(report_sxw.rml_parse):
             color = 'red'
         return color
 
+class SpreadsheetReportX(SpreadsheetReport):
+    def create(self, cr, uid, ids, data, context=None):
+        if not context:
+            context = {}
+        context['pathit'] = True
+        return super(SpreadsheetReportX, self).create(cr, uid, ids, data, context=context)
 
-SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
+
+
+
+SpreadsheetReportX('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
