@@ -1679,6 +1679,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         'res_id': line.simu_id.order_id.id,
                         'msg': _('%s: error on line %s %s') % (line.simu_id.order_id.name, line.in_line_number or line.imp_external_ref, line.error_msg),
                     })
+                    context['job_comment'] = job_comment
                 continue
 
             if line.type_change == 'del' and line.po_line_id:
