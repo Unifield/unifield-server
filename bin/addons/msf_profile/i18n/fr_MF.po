@@ -101829,3 +101829,9 @@ msgstr "Date du CC"
 #, python-format
 msgid "FP date"
 msgstr "Date du FP"
+
+#. module: account_override
+#: code:addons/account_override/account.py:517
+#, python-format
+msgid "An account set as \"Included in revaluation\" must be set as \"Reconcile\"."
+msgstr "Un compte marqué comme inclus dans la Réévaluation doit être défini comme Lettrable."
