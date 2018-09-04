@@ -194,7 +194,7 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Available Qty')}</Data></Cell>
 <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Qty')}</Data></Cell>
 </Row>
-% for il in getMonthItemLines(o, d):
+% for il in getMonthItemLines(o, d, 'xls'):
 <Row>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>

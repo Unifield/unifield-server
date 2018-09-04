@@ -119,7 +119,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             return False
         return item_obj.browse(self.cr, self.uid, items_ids)
 
-    def _get_month_item_lines_ids(self, report, month_date):
+    def _get_month_item_lines_ids(self, report, month_date, report_type=''):
         """get month items('product.likely.expire.report.item')
         """
         lines_obj = self.pool.get('product.likely.expire.report.line')
@@ -143,6 +143,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
                 ('period_start', '>=', dt_from),
                 ('period_start', '<=', dt_to)
             ]
+            if report_type == 'xls':
+                domain.append(('name', '!=', 'expired_qty_col'))
 
         items_ids = item_obj.search(self.cr, self.uid, domain)
 
@@ -152,11 +154,11 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
                                               order='expired_date')
         return item_lines_ids
 
-    def _get_month_item_lines(self, report, month_date):
+    def _get_month_item_lines(self, report, month_date, report_type=''):
         """get month items('product.likely.expire.report.item')
         """
         item_line_obj = self.pool.get('product.likely.expire.report.item.line')
-        return item_line_obj.browse(self.cr, self.uid, self._get_month_item_lines_ids(report, month_date))
+        return item_line_obj.browse(self.cr, self.uid, self._get_month_item_lines_ids(report, month_date, report_type=report_type))
 
     def _get_rml_tables(self, report, month_cols_count):
         """
