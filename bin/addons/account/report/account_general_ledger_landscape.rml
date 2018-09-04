@@ -406,10 +406,10 @@
               <para style="terp_default_8">[[ formatLang(line['ldate'],date=True) ]]</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ line['lname'] or '' ]]</para>
+              <parawrap style="terp_default_8">[[ line['lname'] or '' ]]</parawrap>
             </td>
             <td>
-              <para style="terp_default_Right_8">[[ line['third_party'] or '' ]]</para>
+              <parawrap style="terp_default_Right_8">[[ line['third_party'] or '' ]]</parawrap>
             </td>
             <td>
                 <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
