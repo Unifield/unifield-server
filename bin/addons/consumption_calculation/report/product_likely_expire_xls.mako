@@ -95,7 +95,7 @@ if cols < 0:
 % endfor
 </Row>
 <Row>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(o.msf_instance or '')|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(o.location_id and objects[0].location_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(getReportPeriod(o) or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ss:MergeAcross="2"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
 % for n in range(cols):
