@@ -87,7 +87,7 @@ class stock_move(osv.osv):
                 account_amount[account_id] += round(qty * price_unit, 2)
 
         if account_amount and po_ids:
-            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=True, context=context)
+            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=ids, context=context)
 
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
