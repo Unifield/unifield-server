@@ -101860,3 +101860,13 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: account
+#: field:account.account,reconciliation_debit_account_id:0
+msgid "Default Debit Account for Reconciliation"
+msgstr "Compte de Débit par Défaut pour le Lettrage"
+
+#. module: account
+#: field:account.account,reconciliation_credit_account_id:0
+msgid "Default Credit Account for Reconciliation"
+msgstr "Compte de Crédit par Défaut pour le Lettrage"
