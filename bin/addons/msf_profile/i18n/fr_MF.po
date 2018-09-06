@@ -34874,12 +34874,6 @@ msgstr "Required by date"
 msgid "Only draft picking tickets can be deleted."
 msgstr "Seuls les brouillons de bons de picking peuvent être supprimés"
 
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:886
-#, python-format
-msgid "Document date should be in posting date FY"
-msgstr "Document date should be in posting date FY"
-
 #. module: account
 #: field:account.account.type,name:0
 msgid "Acc. Type Name"
@@ -39565,12 +39559,6 @@ msgstr "Vous ne pouvez pas dupliquer un document %s !"
 #: selection:res.users,context_tz:0
 msgid "Africa/Kinshasa"
 msgstr "Africa/Kinshasa"
-
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:883
-#, python-format
-msgid "Document date (%s) should be in posting date FY"
-msgstr "Document date (%s) should be in posting date FY"
 
 #. modules: account_override, order_line_number, register_accounting
 #: field:account.invoice,sequence_id:0
