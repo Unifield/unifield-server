@@ -125,21 +125,29 @@ class account_move_line_compute_currency(osv.osv):
         addendum_line_credit_account_id = journal.default_credit_account_id.id
         addendum_line_debit_account_default_destination_id = journal.default_debit_account_id.default_destination_id.id
         addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
-        acc_to_reconcile = lines and self.browse(cr, uid, lines[0], fields_to_fetch=['account_id'], context=context).account_id
         # Since US-5011 use the Default Accounts for Reconciliation of the account to reconcile if it has any
         # (the checks on the FXA journal are kept)
+        acc_to_reconcile = lines and self.browse(cr, uid, lines[0], fields_to_fetch=['account_id'], context=context).account_id
         # Debit account
         if acc_to_reconcile and acc_to_reconcile.reconciliation_debit_account_id:
             rec_debit_acc = acc_to_reconcile.reconciliation_debit_account_id
             addendum_line_debit_account_id = rec_debit_acc.id
             if rec_debit_acc.default_destination_id:
                 addendum_line_debit_account_default_destination_id = rec_debit_acc.default_destination_id.id
+            else:
+                raise osv.except_osv(_('Error'),
+                                     _("The account %s - %s has no Default Destination. FX adjustment entry "
+                                       "can't be created.") % (rec_debit_acc.code, rec_debit_acc.name,))
         # Credit account
         if acc_to_reconcile and acc_to_reconcile.reconciliation_credit_account_id:
             rec_credit_acc = acc_to_reconcile.reconciliation_credit_account_id
             addendum_line_credit_account_id = rec_credit_acc.id
             if rec_credit_acc.default_destination_id:
                 addendum_line_credit_account_default_destination_id = rec_credit_acc.default_destination_id.id
+            else:
+                raise osv.except_osv(_('Error'),
+                                     _("The account %s - %s has no Default Destination. FX adjustment entry "
+                                       "can't be created.") % (rec_credit_acc.code, rec_credit_acc.name,))
         # Create analytic distribution if this account is an analytic-a-holic account
         distrib_id = False
         different_currency = False
@@ -332,6 +340,30 @@ class account_move_line_compute_currency(osv.osv):
         addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
         # Check line state
         for reconciled in reconciled_obj.browse(cr, uid, ids, context=context):
+            # Since US-5011 use the Default Accounts for Reconciliation of the account to reconcile if it has any
+            # (the checks on the FXA journal are kept)
+            aml_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], limit=1, context=context)
+            reconciled_acc = aml_ids and self.browse(cr, uid, aml_ids[0], fields_to_fetch=['account_id'], context=context).account_id
+            # Debit account
+            if reconciled_acc and reconciled_acc.reconciliation_debit_account_id:
+                rec_debit_acc = reconciled_acc.reconciliation_debit_account_id
+                addendum_line_debit_account_id = rec_debit_acc.id
+                if rec_debit_acc.default_destination_id:
+                    addendum_line_debit_account_default_destination_id = rec_debit_acc.default_destination_id.id
+                else:
+                    raise osv.except_osv(_('Error'),
+                                         _("The account %s - %s used for the FX adjustment entry has no Default "
+                                           "Destination.") % (rec_debit_acc.code, rec_debit_acc.name,))
+            # Credit account
+            if reconciled_acc and reconciled_acc.reconciliation_credit_account_id:
+                rec_credit_acc = reconciled_acc.reconciliation_credit_account_id
+                addendum_line_credit_account_id = rec_credit_acc.id
+                if rec_credit_acc.default_destination_id:
+                    addendum_line_credit_account_default_destination_id = rec_credit_acc.default_destination_id.id
+                else:
+                    raise osv.except_osv(_('Error'),
+                                         _("The account %s - %s used for the FX adjustment entry has no Default "
+                                           "Destination.") % (rec_credit_acc.code, rec_credit_acc.name,))
             # Search addendum line
             addendum_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id), ('is_addendum_line', '=', True)], context=context)
             # If addendum_line_ids, update it (if needed)
