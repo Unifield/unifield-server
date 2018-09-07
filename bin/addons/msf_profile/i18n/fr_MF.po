@@ -101860,3 +101860,61 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: stock_override
+#: help:stock.picking,from_pick_cancel_id:0
+msgid "Picking or Out that created this Internal Move after cancellation"
+msgstr "Picking ou Out qui a créé le Mouvement Interne après annulation"
+
+#. module: stock_override
+#: field:stock.picking,from_pick_cancel_id:0
+msgid "Linked Picking/Out"
+msgstr "Picking/Out lié"
+
+#. module: stock_override
+#: field:stock.move.cancel.wizard,is_move_from_cross_docking:0
+msgid "Is the move from the Cross docking Location ?"
+msgstr "Est-ce que le mouvement vient de la Zone de Transbordement ?"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2748
+#: code:addons/stock_override/stock.py:2942
+#, python-format
+msgid "The Internal Move id:%s (%s) has been updated."
+msgstr "Le Mouvement Interne id:%s (%s) a été mis à jour."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2723
+#: code:addons/stock_override/stock.py:2917
+#, python-format
+msgid "The Internal Move id:%s (%s) has been created."
+msgstr "Le Mouvement Interne id:%s (%s) a été créé."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2751
+#, python-format
+msgid "The stock.move id:%s of the picking id:%s (%s) has been cancelled"
+msgstr "Le stock.move id:%s du picking id:%s (%s) a été annulé."
+
+#. module: stock_override
+#: field:stock.picking.cancel.wizard,has_moves_from_cross_docking:0
+msgid "Is one of the moves from the Cross docking Location ?"
+msgstr "Est-ce qu'un des mouvements vient de la Zone de Transbordement ?"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2751945
+#, python-format
+msgid "The %s id:%s (%s) has been cancelled."
+msgstr "Le %s id:%s (%s) a été annulé."
+
+#. module: stock_override
+#: view:stock.move.cancel.wizard:0
+#: view:stock.picking.cancel.wizard:0
+msgid "Do not cancel"
+msgstr "Ne pas annuler"
+
+#. module: stock_override
+#: view:stock.move.cancel.wizard:0
+#: view:stock.picking.cancel.wizard:0
+msgid "Cancel & create Internal Move"
+msgstr "Annuler & créer un Mouvement Interne"

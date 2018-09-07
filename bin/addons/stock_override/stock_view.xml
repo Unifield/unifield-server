@@ -322,6 +322,7 @@
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="order_category"/>
                             <field name="incoming_id" />
+                            <field name="from_pick_cancel_id" attrs="{'invisible': [('from_pick_cancel_id', '=', False)]}" />
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -1212,8 +1213,10 @@
                     </group>
                     <newline />
                     <separator string="Actions" />
-                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('allow_cr', '=', False)]}" />
+                    <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('allow_cr', '=', False)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -1231,10 +1234,13 @@
                     </group>
                     <newline />
                     <field name="cancel_only" invisible="1" />
+                    <field name="is_move_from_cross_docking" invisible="1" />
                     <separator string="Actions" colspan="4" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="2"
+                    <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
+                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="1"
                     attrs="{'invisible': [('cancel_only', '=', True)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>
