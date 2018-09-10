@@ -118,14 +118,22 @@
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Delivery Confirmed (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Status (line)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Status (order)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    # Status (line)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Destination
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Cost Center
     <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Customer
+    <Columns ss:AutoFitWidth="1" ss:Width="120" />
+    # Customer ref
+    <Columns ss:AutoFitWidth="1" ss:Width="160" />
+    # Source document
+    <Columns ss:AutoFitWidth="1" ss:Width="160" />
+    # Supplier ref
+    <Columns ss:AutoFitWidth="1" ss:Width="160" />
 
 <Row>
     <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
@@ -166,6 +174,10 @@
             <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
             <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
             <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
         % else:
             <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
@@ -184,6 +196,10 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
         %endif
     </Row>
     % endfor
