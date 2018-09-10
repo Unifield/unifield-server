@@ -112,6 +112,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             # copy original line
             new_line_id = self.pool.get('purchase.order.line').copy(cr, uid, split.purchase_line_id.id, po_copy_data, context=context)
 
+            if split.purchase_line_id.state == 'draft' and split.purchase_line_id.linked_sol_id:
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, split.purchase_line_id.id, context=context)
+
             if context.get('from_simu_screen') or context.get('return_new_line_id'):
                 return new_line_id
 
