@@ -456,11 +456,58 @@ class stock_location(osv.osv):
         return False
 
 
+    def check_if_has_product_in_stock(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        cr.execute('select distinct product_id, location_id from stock_move where location_id in %s', (tuple(ids), ))
+        dict1 = cr.dictfetchall()
+        cr.execute('select distinct product_id, location_dest_id as location_id from stock_move where location_dest_id in %s', (tuple(ids), ))
+        dict2 = cr.dictfetchall()
+        res_products_by_location = sorted(dict1+dict2, key=itemgetter('location_id'))
+        products_by_location = dict((k, [v['product_id'] for v in itr]) for k, itr in groupby(res_products_by_location, itemgetter('location_id')))
+
+        for loc_id, product_ids in products_by_location.items():
+            location_name = self.read(cr, uid, loc_id, ['name'])['name']
+            prod_with_stock = []
+
+            c = context.copy()
+            c['location'] = loc_id
+
+            for prod in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                prod_data = self.pool.get('product.product').read(cr, uid, prod.id, ['qty_available', 'virtual_available'], context=c)
+                if prod_data['qty_available']:
+                    prod_with_stock.append(prod.id)
+
+            code_list = sorted([x['default_code'] for x in self.pool.get('product.product').read(cr, uid, prod_with_stock, ['default_code'], context=context)])
+
+            if code_list:
+                remaining = 0
+                if len(code_list) > 10:
+                    remaining = len(code_list) - 10
+                    code_list = code_list[:10]
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('You cannot deactivate location %s because of the following products currently in stock: %s %s') % (
+                        location_name,
+                        ', '.join(code_list).strip(', '),
+                        _('... and %s more') % remaining if remaining else '',
+                    )
+                )
+
+        return True
+
+
     def deactivate_location(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+
+        self.check_if_has_product_in_stock(cr, uid, ids, context=context)
+
         self.write(cr, uid, ids, {'active': False}, context=context)
 
         return True
