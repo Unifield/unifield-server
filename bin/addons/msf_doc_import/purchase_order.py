@@ -230,11 +230,11 @@ class purchase_order(osv.osv):
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate
-            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context)
+            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context, thread=False)
             # get simulation report
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             # import lines
-            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context)
+            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context, thread=False)
             # attach simulation report
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),

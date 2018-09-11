@@ -371,7 +371,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         return True
 
-    def launch_simulate(self, cr, uid, ids, context=None):
+    def launch_simulate(self, cr, uid, ids, context=None, thread=True):
         '''
         Launch the simulation routine in background
         '''
@@ -420,11 +420,15 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         self.populate(cr, uid, ids[0], context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
-        new_thread.start()
-        new_thread.join(10.0)
+        if thread:
+            new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
+            new_thread.start()
+            new_thread.join(10.0)
 
-        return self.go_to_simulation(cr, uid, ids, context=context)
+            return self.go_to_simulation(cr, uid, ids, context=context)
+
+        self.simulate(cr.dbname, uid, ids, context)
+        return True
 
     def get_values_from_xml(self, cr, uid, file_to_import, context=None):
         '''
@@ -1110,7 +1114,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
         return True
 
-    def launch_import(self, cr, uid, ids, context=None):
+    def launch_import(self, cr, uid, ids, context=None, thread=True):
         '''
         Launch the simulation routine in background
         '''
@@ -1135,20 +1139,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             self.pool.get('purchase.order.simu.import.file').create(cr, uid, {'order_id': wiz.order_id.id,
                                                                               'filename': filename,}, context=context)
         cr.commit()
-        new_thread = threading.Thread(target=self.run_import, args=(cr.dbname, uid, ids, context))
-        new_thread.start()
-        new_thread.join(10.0)
+        if thread:
+            new_thread = threading.Thread(target=self.run_import, args=(cr.dbname, uid, ids, context))
+            new_thread.start()
+            new_thread.join(10.0)
 
-        if new_thread.isAlive():
-            return self.go_to_simulation(cr, uid, ids, context=context)
+            if new_thread.isAlive():
+                return self.go_to_simulation(cr, uid, ids, context=context)
+            else:
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'purchase.order',
+                        'res_id': active_wiz.order_id.id,
+                        'view_type': 'form',
+                        'view_mode': 'form, tree',
+                        'target': 'crush',
+                        'context': context}
         else:
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'purchase.order',
-                    'res_id': active_wiz.order_id.id,
-                    'view_type': 'form',
-                    'view_mode': 'form, tree',
-                    'target': 'crush',
-                    'context': context}
+            self.run_import(cr.dbname, uid, ids, context)
+            return True
 
     def run_import(self, dbname, uid, ids, context=None):
         '''
