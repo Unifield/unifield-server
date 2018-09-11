@@ -31,4 +31,4 @@ class integrity_finance(report_sxw.rml_parse):
     def _t(self, source):
         return _(source)
 
-SpreadsheetReport('report.integrity.finance', 'board.board', 'board/report/integrity.mako', parser=integrity_finance)
+SpreadsheetReport('report.integrity.finance', 'board.board', 'stock/report/integrity.mako', parser=integrity_finance)
