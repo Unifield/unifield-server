@@ -509,7 +509,9 @@
                         <field name="company_id" groups="base.group_multi_company" widget="selection" colspan="4"/>
                         <field name="icon" groups="base.group_extended" colspan="4"/>
                         <field name="scrap_location" groups="base.group_extended"/>
-                        <field name="active" groups="base.group_extended"/>
+                        <field name="active" groups="base.group_extended" readonly="1" />
+                        <button name="deactivate_location" icon="gtk-execute" string="De-activate location" type="object" attrs="{'invisible': [('active', '=', False)]}" />
+                        <button name="reactivate_location" icon="gtk-execute" string="Re-activate location" type="object" attrs="{'invisible': [('active', '=', True)]}" />
                     </group>
                     <group col="2" colspan="2" groups="base.group_extended">
                         <separator string="Chained Locations" colspan="2"/>

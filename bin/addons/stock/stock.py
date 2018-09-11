@@ -455,6 +455,26 @@ class stock_location(osv.osv):
 
         return False
 
+
+    def deactivate_location(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        self.write(cr, uid, ids, {'active': False}, context=context)
+
+        return True
+
+    def reactivate_location(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        self.write(cr, uid, ids, {'active': True}, context=context)
+
+        return True
+
+
 stock_location()
 
 
