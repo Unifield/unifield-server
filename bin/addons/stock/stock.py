@@ -477,7 +477,7 @@ class stock_location(osv.osv):
             c['location'] = loc_id
 
             for prod in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
-                prod_data = self.pool.get('product.product').read(cr, uid, prod.id, ['qty_available', 'virtual_available'], context=c)
+                prod_data = self.pool.get('product.product').read(cr, uid, prod.id, ['qty_available'], context=c)
                 if prod_data['qty_available']:
                     prod_with_stock.append(prod.id)
 
@@ -490,14 +490,94 @@ class stock_location(osv.osv):
                     code_list = code_list[:10]
                 raise osv.except_osv(
                     _('Error'), 
-                    _('You cannot deactivate location %s because of the following products currently in stock: %s %s') % (
+                    _('You cannot deactivate location %s because of the following products currently in stock:\n %s %s') % (
                         location_name,
                         ', '.join(code_list).strip(', '),
-                        _('... and %s more') % remaining if remaining else '',
+                        _('\n... and %s more') % remaining if remaining else '',
                     )
                 )
 
         return True
+
+
+    def check_if_has_open_stock_move_out(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for loc_id in ids:
+            open_moves_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('location_id', '=', loc_id),
+                ('product_qty', '!=', 0),
+                ('type', 'in', ['out', 'internal']),
+                ('picking_id', '!=', False),
+                ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+            ], context=context)
+
+            location_name = self.read(cr, uid, loc_id, ['name'])['name']
+            open_moves = []
+            for m in self.pool.get('stock.move').browse(cr, uid, open_moves_ids, context=context):
+                open_moves.append((m.picking_id.name, m.line_number, m.product_id.default_code))
+            open_moves = sorted(open_moves)
+
+            if open_moves:
+                msg = _('The location %s has open OUT stock moves:\n') % location_name
+                count = 0
+                for pick_name, line_number, default_code in open_moves:
+                    msg += _('%s line #%s product %s\n') % (pick_name, line_number, default_code)
+                    if count >= 10:
+                        msg += _('... and %s more') % len(open_moves) - count
+                    count += 1
+                raise osv.except_osv(_('Error'), msg.strip())
+
+        return True
+
+
+    def check_if_has_open_stock_move_in(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for loc_id in ids:
+            open_moves_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('location_dest_id', '=', loc_id),
+                ('product_qty', '!=', 0),
+                ('picking_id', '!=', False),
+                ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+            ], context=context)
+
+            location_name = self.read(cr, uid, loc_id, ['name'])['name']
+            open_moves = []
+            for m in self.pool.get('stock.move').browse(cr, uid, open_moves_ids, context=context):
+                open_moves.append((m.picking_id.name, m.line_number, m.product_id.default_code))
+            open_moves = sorted(open_moves)
+
+            if open_moves:
+                msg = ''
+                count = 0
+                for pick_name, line_number, default_code in open_moves:
+                    msg += _('%s line #%s product %s\n') % (pick_name, line_number, default_code)
+                    if count >= 100:
+                        msg += _('... and %s more') % len(open_moves) - count
+                    count += 1
+
+                # open wizard:
+                wiz_id = self.pool.get('stock.location.confirm.deactivation').create(cr, uid, {'location_id': loc_id, 'message': msg}, context=context)
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_confirm_deactivation_form_view')[1]
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.location.confirm.deactivation',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'view_id': [view_id],
+                    'target': 'new',
+                    'context': context
+                }
+
+        return False
 
 
     def deactivate_location(self, cr, uid, ids, context=None):
@@ -507,6 +587,10 @@ class stock_location(osv.osv):
             ids = [ids]
 
         self.check_if_has_product_in_stock(cr, uid, ids, context=context)
+        self.check_if_has_open_stock_move_out(cr, uid, ids, context=context)
+        res = self.check_if_has_open_stock_move_in(cr, uid, ids, context=context)
+        if res:
+            return res
 
         self.write(cr, uid, ids, {'active': False}, context=context)
 
