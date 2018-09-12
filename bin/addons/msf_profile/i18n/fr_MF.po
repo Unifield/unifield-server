@@ -101918,3 +101918,64 @@ msgstr "Ne pas annuler"
 #: view:stock.picking.cancel.wizard:0
 msgid "Cancel & create Internal Move"
 msgstr "Annuler & créer un Mouvement Interne"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:120
+msgid "Location"
+msgstr "Zone"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:126
+msgid "Unreserved Qty"
+msgstr "Qté Non Allouée"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:123
+msgid "UoM"
+msgstr "UdM"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:113
+msgid "Generated on"
+msgstr "Généré le"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:124
+msgid "Batch Number"
+msgstr "Numéro de Lot"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:125
+msgid "Expiration Date"
+msgstr "Date d'Expiration"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:121
+msgid "Product Code"
+msgstr "Code Produit"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.unreserved_stock_report
+#: model:ir.ui.menu,name:stock.menu_unreserved_stock_report
+msgid "Unreserved Stock Report"
+msgstr "Rapport du Stock Non Alloué"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:122
+msgid "Product Description"
+msgstr "Description du Produit"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:127
+msgid "Total Unreserved"
+msgstr "Total Non Alloué"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:109
+msgid "DB/Instance name"
+msgstr "Nom BDD/Instance"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:104
+msgid "UNRESERVED STOCK REPORT"
+msgstr "RAPPORT DU STOCK NON ALLOUÉ"
