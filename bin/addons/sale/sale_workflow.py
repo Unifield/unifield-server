@@ -623,15 +623,17 @@ class sale_order_line(osv.osv):
 
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
 
+        initial_fo_states = dict((x.id, x.order_id.state) for x in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context))
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         context.pop('no_check_line')
 
         # generate sync message:
         return_info = {}
-        for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
-                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not (initial_fo_states[sol.id] == 'draft' and not sol.order_id.fo_created_by_po_sync): # draft push FO
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
+                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
