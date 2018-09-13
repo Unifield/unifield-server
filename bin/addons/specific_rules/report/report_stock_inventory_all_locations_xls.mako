@@ -99,7 +99,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="PO Follow Up">
+<ss:Worksheet ss:Name="Inventory Level all Locations">
 ## definition of the columns' size
 <% locations = getLocations() %>
 <% nb_of_columns = 5 + len(locations) %>

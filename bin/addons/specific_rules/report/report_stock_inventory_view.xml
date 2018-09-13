@@ -38,19 +38,25 @@
                     <field name="name" />
                     <field name="company_id" />
                     <separator colspan="4" string="Advanced filters" />
-                    <field name="product_id" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" domain="[('type', '=', 'product')]" />
+                    <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" domain="[('type', '=', 'product')]" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
                     <field name="prodlot_id" 
                            on_change="onchange_prodlot(prodlot_id)"
-                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
+                    <field name="product_list_id" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <separator colspan="4" string="Actions" />
-                    <button name="generate_report" type="object"
-                            string="Generate report" icon="gtk-execute" states="draft"
-                            attrs="{'readonly': [('location_id', '=', False)]}" />
-                    <button name="generate_report_all_locations" type="object"
-                            string="Generate report (all locations)" icon="gtk-execute" states="draft"
-                            attrs="{'readonly': [('location_id', '!=', False)]}" />
+                    <group colspan="4" col="2">
+                        <button name="generate_report" type="object"
+                                string="Generate report" icon="gtk-execute" states="draft"
+                                attrs="{'readonly': ['|', ('location_id', '=', False), ('product_list_id', '!=', False)]}" />
+                        <button name="generate_report_all_locations" type="object"
+                                string="Generate report (all locations)" icon="gtk-execute" states="draft"
+                                attrs="{'readonly': ['|', ('location_id', '!=', False), ('product_list_id', '!=', False)]}" />
+                        <button name="generate_report_product_list" type="object"
+                                string="Generate report (product list)" icon="gtk-execute" states="draft"
+                                attrs="{'readonly': [('product_list_id', '=', False)]}" />
+                    </group>
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
                         <html>                                                      

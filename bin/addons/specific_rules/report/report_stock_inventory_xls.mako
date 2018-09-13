@@ -99,7 +99,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="PO Follow Up">
+<ss:Worksheet ss:Name="Inventory Level">
 ## definition of the columns' size
 <% nb_of_columns = 12 %>
 <Table x:FullColumns="1" x:FullRows="1">
