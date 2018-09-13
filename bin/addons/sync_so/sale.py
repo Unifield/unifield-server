@@ -161,6 +161,12 @@ class sale_order_sync(osv.osv):
 
         header_result = {}
         so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+
+        if header_result.get('currency_id') and header_result.get('pricelist_id'):
+            if not self.pool.get('product.pricelist').search_exist(cr, uid, [('id', '=', header_result['pricelist_id']), ('currency_id', '=', header_result['currency_id'])]):
+                po_cur = self.pool.get('res.currency').read(cr, uid, header_result['currency_id'], ['name'], context=context)
+                raise Exception, "Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source)
+
         header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []

@@ -406,25 +406,9 @@ class res_partner(osv.osv):
 
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
-        cur =  bro and bro.currency_id and bro.currency_id.id
-
-        po_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist_purchase'))
-        fo_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist'))
 
         if res in ids:
             for obj in self.browse(cr, uid, [res], context=context):
-
-                if context.get('from_setup') and bro.second_time and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
-
-                if context.get('from_setup') and bro.second_time and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
 
                 if obj.customer:
                     raise osv.except_osv(_('Warning !'), _('This partner can not be checked as customer'))
@@ -649,6 +633,22 @@ class res_partner(osv.osv):
                     payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
                     raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
 
+    def check_same_pricelist(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name'], context=context):
+            if x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
+                raise osv.except_osv(_('Warning'),
+                                     _('Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same') % (x.name, x.property_product_pricelist_purchase.currency_id.name, x.property_product_pricelist.currency_id.name)
+                                     )
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -686,7 +686,9 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        return super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        self.check_same_pricelist(cr, uid, ids, context=context)
+        return ret
 
     def create(self, cr, uid, vals, context=None):
         fields_to_create = vals.keys()
@@ -721,7 +723,7 @@ class res_partner(osv.osv):
 
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
         self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
-
+        self.check_same_pricelist(cr, uid, [new_id], context=context)
         # US-3945: checking user's rights
         if not context.get('sync_update_execution') and uid != 1:
             instance_level = _get_instance_level(self, cr, uid)
