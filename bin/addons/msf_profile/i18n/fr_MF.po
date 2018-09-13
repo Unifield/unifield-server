@@ -4983,6 +4983,9 @@ msgstr "Un écart existe dans la séquence"
 
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel Only"
 msgstr "Annuler Seulement"
 
@@ -9830,6 +9833,7 @@ msgstr "Le système gère-t-il l'importation de la paie à partir d'Homere ?"
 
 #. module: stock_override
 #: view:stock.picking.cancel.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel Picking"
 msgstr "Annuler Picking"
 
@@ -10947,7 +10951,7 @@ msgstr "Date de Réception"
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
 msgid "Cancel and Resource"
-msgstr "Cancel and Resource"
+msgstr "Annuler et Ressourcer"
 
 #. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration
 #: report:account.invoice2:0
@@ -80299,6 +80303,7 @@ msgstr "GEORGIAN LARI"
 
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
 msgid "Cancel move"
 msgstr "Annuler le mouvement"
 
@@ -97754,6 +97759,8 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.import.mapping:0
 #: view:automated.export.job:0
 #: view:free.allocation.wizard:0
+#: view:stock.move.cancel.wizard:0
+#: view:stock.picking.cancel.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -101908,14 +101915,14 @@ msgid "The %s id:%s (%s) has been cancelled."
 msgstr "Le %s id:%s (%s) a été annulé."
 
 #. module: stock_override
-#: view:stock.move.cancel.wizard:0
-#: view:stock.picking.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Do not cancel"
 msgstr "Ne pas annuler"
 
 #. module: stock_override
-#: view:stock.move.cancel.wizard:0
-#: view:stock.picking.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel & create Internal Move"
 msgstr "Annuler & créer un Mouvement Interne"
 
@@ -101979,3 +101986,25 @@ msgstr "Nom BDD/Instance"
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:104
 msgid "UNRESERVED STOCK REPORT"
 msgstr "RAPPORT DU STOCK NON ALLOUÉ"
+
+#. module: stock_override
+#: view:stock.picking.cancel.more.wizard:0
+msgid "\n"
+"                                Cancelling these moves might results in unreserved stock.<br/>\n"
+"                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
+"                            "
+msgstr "\n"
+"                                Annuler ces mouvements peut générer du stock non alloué.<br/>\n"
+"                                Voulez-vous créer un Mouvement Interne ou mettre à jour l'existant pour réattribuer les quantités ?\n"
+"                            "
+
+#. module: stock_override
+#: view:stock.move.cancel.more.wizard:0
+msgid "\n"
+"                                Cancelling this move might results in unreserved stock.<br/>\n"
+"                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
+"                            "
+msgstr "\n"
+"                                Annuler ce mouvement peut générer du stock non alloué.<br/>\n"
+"                                Voulez-vous créer un Mouvement Interne ou mettre à jour l'existant pour réattribuer les quantités ?\n"
+"                            "
