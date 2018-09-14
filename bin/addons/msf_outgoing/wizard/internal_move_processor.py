@@ -143,7 +143,7 @@ class internal_picking_processor(osv.osv):
                 if line.move_id and not line.move_id.location_dest_id.active:
                     raise osv.except_osv(_('Error'), _('Warning, destination location is no longer active, please select an active location'))
 
-        return  True
+        return True
 
 
     def do_partial(self, cr, uid, ids, context=None):
