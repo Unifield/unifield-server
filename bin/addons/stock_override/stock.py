@@ -2770,7 +2770,8 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
             if move.picking_id.backorder_id:
                 pick_ids.append(move.picking_id.backorder_id.id)
             int_ids = pick_obj.search(cr, uid, [('type', '=', 'internal'), ('subtype', '=', 'standard'),
-                                                ('from_pick_cancel_id', 'in', pick_ids)], limit=1, context=context)
+                                                ('from_pick_cancel_id', 'in', pick_ids), ('state', 'not in', ['done', 'cancel'])],
+                                      limit=1, context=context)
             if not int_ids:  # Create the INT
                 int_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
                 int_data = {
@@ -2783,7 +2784,7 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
                     'order_category': move.picking_id.order_category,
                     'origin': move.picking_id.backorder_id and move.picking_id.backorder_id.name or move.picking_id.name,
                     'address_id': move.picking_id.address_id and move.picking_id.address_id.id or False,
-                    'invoice_state': move.picking_id.invoice_state,
+                    'invoice_state': 'none',
                     'reason_type_id': int_reason_type_id,
                     'from_pick_cancel_id': move.picking_id.backorder_id and move.picking_id.backorder_id.id or move.picking_id.id,
                 }
@@ -3018,7 +3019,8 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
             if wiz.picking_id.backorder_id:
                 pick_ids.append(wiz.picking_id.backorder_id.id)
             int_ids = pick_obj.search(cr, uid, [('type', '=', 'internal'), ('subtype', '=', 'standard'),
-                                                ('from_pick_cancel_id', 'in', pick_ids)], limit=1, context=context)
+                                                ('from_pick_cancel_id', 'in', pick_ids), ('state', 'not in', ['done', 'cancel'])],
+                                      limit=1, context=context)
             if not int_ids:  # Create the INT
                 int_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
                 int_data = {
@@ -3031,7 +3033,7 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
                     'order_category': wiz.picking_id.order_category,
                     'origin': wiz.picking_id.backorder_id and wiz.picking_id.backorder_id.name or wiz.picking_id.name,
                     'address_id': wiz.picking_id.address_id and wiz.picking_id.address_id.id or False,
-                    'invoice_state': wiz.picking_id.invoice_state,
+                    'invoice_state': 'none',
                     'reason_type_id': int_reason_type_id,
                     'from_pick_cancel_id': wiz.picking_id.backorder_id and wiz.picking_id.backorder_id.id or wiz.picking_id.id,
                 }
