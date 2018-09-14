@@ -56,12 +56,15 @@ class unreserved_stock_report(report_sxw.rml_parse):
         index = 0
         product = False
         prodlot = False
-        loc_name = loc_obj.browse(self.cr, self.uid, cross_docking_id, fields_to_fetch=['name']).name
+        loc_name = loc_obj.browse(self.cr, self.uid, cross_docking_id, fields_to_fetch=['name'],
+                                  context=self.localcontext).name
         for i, line in enumerate(lines):
             if line[0]:
-                product = prod_obj.browse(self.cr, self.uid, line[0], fields_to_fetch=['default_code', 'name', 'uom_id'])
+                product = prod_obj.browse(self.cr, self.uid, line[0], fields_to_fetch=['default_code', 'name', 'uom_id'],
+                                          context=self.localcontext)
             if line[1]:
-                prodlot = lot_obj.browse(self.cr, self.uid, line[1], fields_to_fetch=['name', 'life_date'])
+                prodlot = lot_obj.browse(self.cr, self.uid, line[1], fields_to_fetch=['name', 'life_date'],
+                                         context=self.localcontext)
             res.append({
                 'sum_line': False,
                 'loc_name': loc_name,

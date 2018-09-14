@@ -102008,3 +102008,8 @@ msgstr "\n"
 "                                Annuler ce mouvement peut générer du stock non alloué.<br/>\n"
 "                                Voulez-vous créer un Mouvement Interne ou mettre à jour l'existant pour réattribuer les quantités ?\n"
 "                            "
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:84
+msgid "Unreserved Stock Excel Export"
+msgstr "Export Excel Stock Non Alloué"

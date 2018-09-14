@@ -81,7 +81,7 @@
     </Style>
  </Styles>
 
-<ss:Worksheet ss:Name="Unreserved Stock Excel Export">
+<ss:Worksheet ss:Name="${_('Unreserved Stock Excel Export')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
