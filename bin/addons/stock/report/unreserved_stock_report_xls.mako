@@ -144,7 +144,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['prod_desc'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['prod_uom']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['batch']|x}</Data></Cell>
-                    % if line['exp_date']:
+                    % if isDate(line['exp_date']):
                 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['exp_date']|x}</Data></Cell>
                     % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
