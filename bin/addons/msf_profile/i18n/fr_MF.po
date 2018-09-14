@@ -101860,3 +101860,48 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually."
+msgstr "Attention la location de stock finale pour ces biens n'est plus active, le IN va être executé normalement mais merci de vérifier et d'executer les mouvements internes résultants manuellement."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/internal_move_processor.py:144
+#, python-format
+msgid "Warning, destination location is no longer active, please select an active location"
+msgstr "Attention, la location de stock finale n'est plus active, merci de selectionner une location active"
+
+#. module: stock
+#: code:addons/stock/stock.py:493
+#, python-format
+msgid "You cannot deactivate location %s because of the following products currently in stock:\n"
+" %s %s"
+msgstr "Vous ne pouvez pas desactiver la location %s car elle contient les produits suivants en stock:\n"
+" %s %s"
+
+#. module: stock
+#: code:addons/stock/stock.py:496
+#, python-format
+msgid "\n"
+"... and %s more"
+msgstr "\n"
+"... et %s en plus"
+
+#. module: stock
+#: code:addons/stock/stock.py:525
+#, python-format
+msgid "The location %s has open OUT stock moves:\n"
+""
+msgstr "La location %s a des mouvements de stock sortant ouverts:\n"
+""
+
+#. module: stock
+#: view:stock.location.confirm.deactivation:0
+msgid "There are open documents relating to this location or stock movements into this location, would you like to deactivation it anyway ?"
+msgstr "Des documents sont ouverts pour cette location ou il y a des mouvements de stock vers cette location, êtes-vous sûr de vouloir la désactiver ?"
+
+#. module: stock
+#: view:stock.location.confirm.deactivation:0
+msgid "Deactivate location"
+msgstr "Désactiver la location"
