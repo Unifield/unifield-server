@@ -131,6 +131,21 @@ class internal_picking_processor(osv.osv):
 
         return super(internal_picking_processor, self).create(cr, uid, vals, context=context)
 
+
+    def check_destination_location(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            for line in wizard.move_ids:
+                if line.move_id and not line.move_id.location_dest_id.active:
+                    raise osv.except_osv(_('Error'), _('Warning, destination location is no longer active, please select an active location'))
+
+        return  True
+
+
     def do_partial(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
@@ -163,6 +178,7 @@ class internal_picking_processor(osv.osv):
 
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
+        self.check_destination_location(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
         res = picking_obj.do_partial(cr, uid, ids, context=context)
         return self.return_hook_do_partial(cr, uid, ids, context=context, res=res)
