@@ -905,12 +905,15 @@ class stock_mission_report(osv.osv):
                                                   ('central_location_ok', '=', False)], context=context)
         cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
         secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+        secondary_location_ids = []
         if secondary_location_id:
             secondary_location_id = secondary_location_id[1]
-        secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
+            secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
-        cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
-        central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
+        if cu_loc:
+            cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
+        if central_loc:
+            central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
 
         # Check if the instance is a coordination or a project
         coordo_id = False
