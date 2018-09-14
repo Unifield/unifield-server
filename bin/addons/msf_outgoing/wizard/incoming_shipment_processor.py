@@ -57,6 +57,7 @@ class in_family_processor(osv.osv):
         'width': fields.float(digits=(16, 2), string='Width [cm]'),
         'height': fields.float(digits=(16, 2), string='Height [cm]'),
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        'volume': fields.float('Volume', digits=(16,2)),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -296,6 +297,13 @@ class stock_incoming_processor(osv.osv):
         picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
             picking_id = proc.picking_id.id
+
+            if proc.picking_id.type != 'in':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('This object: %s is not an Incoming Shipment') % (proc.picking_id.name)
+                )
+
             total_qty = 0.00
 
             if proc.already_processed:
@@ -548,27 +556,13 @@ class stock_incoming_processor(osv.osv):
                 _('No picking defined.')
             )
 
-        pick_obj = self.pool.get('stock.picking')
         simu_obj = self.pool.get('wizard.import.in.simulation.screen')
-        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
 
         for wizard in self.browse(cr, uid, ids, context=context):
             picking_id = wizard.picking_id.id
 
             simu_id = simu_obj.create(cr, uid, {'picking_id': picking_id, }, context=context)
             context.update({'simu_id': simu_id})
-            for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
-                if move.state not in ('draft', 'cancel', 'done'):
-                    line_obj.create(cr, uid, {'move_id': move.id,
-                                              'simu_id': simu_id,
-                                              'move_product_id': move.product_id and move.product_id.id or False,
-                                              'move_product_qty': move.product_qty or 0.00,
-                                              'move_uom_id': move.product_uom and move.product_uom.id or False,
-                                              'move_price_unit': move.price_unit or move.product_id.standard_price,
-                                              'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
-                                              'line_number': move.line_number,
-                                              'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
-                                              }, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.in.simulation.screen',
@@ -738,12 +732,17 @@ class stock_incoming_processor(osv.osv):
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
 
+                pack_count = 0
+                if family_data.get('from_pack') and family_data.get('to_pack'):
+                    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
+
                 for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
                     family_data.update({
-                        'weight': move.weight,
+                        'weight': move.weight / pack_count,
                         'height': move.height,
                         'length': move.length,
                         'width': move.width,
+                        'volume': move.volume,
                     })
                     break
 
@@ -825,6 +824,7 @@ class stock_incoming_processor(osv.osv):
                     'total_height': fam.height,
                     'total_length': fam.length,
                     'total_width': fam.width,
+                    'total_volume': fam.volume,
                     'integrity_status': fam.integrity_status,
                 }
                 for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
