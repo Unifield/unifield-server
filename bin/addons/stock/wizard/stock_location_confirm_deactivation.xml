@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="stock_location_confirm_deactivation_form_view" model="ir.ui.view">
+            <field name="name">Confirm location deactivation</field>
+            <field name="model">stock.location.confirm.deactivation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Confirm location deactivation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>There are open documents relating to this location or stock movements into this location, would you like to deactivation it anyway ?</translate></h3>
+                        </html>
+                        <field name="message" nolabel="1" readonly="1" />
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="confirm_deactivation" string="Deactivate location" type="object" icon="terp-camera_test" colspan="2" />
+                    <button name="close_wizard" string="Close the wizard" type="object" icon="gtk-close" colspan="2" />
+                </form>
+            </field>
+        </record>  
+    </data>
+</openerp>  
+        
