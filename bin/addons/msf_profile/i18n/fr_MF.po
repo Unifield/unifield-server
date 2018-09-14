@@ -101860,3 +101860,13 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,product_list_id:0
+msgid "Product list"
+msgstr "Liste de produits"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "Generate report (product list)"
+msgstr "Générer le rapport (liste de produits)"
