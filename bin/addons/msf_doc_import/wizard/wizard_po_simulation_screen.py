@@ -1425,12 +1425,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
-            if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
+            # Comment
+            write_vals['imp_comment'] = values[15] and values[15].strip()
+
+            if line.po_line_id.state in ('confirmed', 'done') or ( line.po_line_id.state in  ('cancel', 'cancel_r') and write_vals['imp_comment'] != '[DELETE]'):
                 write_vals['type_change'] = 'error'
                 errors.append(_('PO line has been confirmed or cancelled and consequently is not editable'))
 
-            # Comment
-            write_vals['imp_comment'] = values[15] and values[15].strip()
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1671,6 +1672,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
             if line.type_change in ('ignore', 'error'):
+                if line.type_change == 'error':
+                    job_comment = context.get('job_comment', [])
+                    job_comment.append({
+                        'res_model': 'purchase.order',
+                        'res_id': line.simu_id.order_id.id,
+                        'msg': _('%s: error on line %s %s') % (line.simu_id.order_id.name, line.in_line_number or line.imp_external_ref, line.error_msg),
+                    })
+                    context['job_comment'] = job_comment
                 continue
 
             if line.type_change == 'del' and line.po_line_id:
@@ -1764,7 +1773,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     job_comment.append({
                         'res_model': 'purchase.order',
                         'res_id': line.simu_id.order_id.id,
-                        'msg': _('Line #%s has been split.') % line.parent_line_id.po_line_id.line_number,
+                        'msg': _('%s: Line #%s has been split.') % (line.simu_id.order_id.name, line.parent_line_id.po_line_id.line_number),
                     })
                     context['job_comment'] = job_comment
             elif line.type_change == 'new':
@@ -1796,7 +1805,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 job_comment.append({
                     'res_model': 'purchase.order',
                     'res_id': line.simu_id.order_id.id,
-                    'msg': _('New line #%s created.') % new_line_numb,
+                    'msg': _('%s: New line #%s created.') % (line.simu_id.order_id.name, new_line_numb),
                 })
                 context['job_comment'] = job_comment
             elif line.po_line_id:

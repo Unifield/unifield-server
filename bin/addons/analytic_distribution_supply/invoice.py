@@ -274,7 +274,7 @@ class account_invoice(osv.osv):
 
         if auto_cv and from_cancel:
             # we cancel the last IN from PO and no draft invoice exist
-            if not self.pool.get('purchase.order').search_exist(cr, uid, [('id', 'in', po_ids), ('state', 'not in', ['cancel', 'done'])], context=context):
+            if not self.pool.get('stock.move').search_exist(cr, uid, [('type', '=', 'in'), ('id', 'not in', from_cancel), ('state', 'not in', ['cancel', 'done']), ('picking_id.purchase_id', 'in', po_ids)], context=context):
                 if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
                     self.pool.get('purchase.order')._finish_commitment(cr, uid, po_ids, context=context)
                     return True
