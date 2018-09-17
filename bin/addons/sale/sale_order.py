@@ -523,6 +523,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         return res
 
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the number of line(s) for the SO
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}.fromkeys(ids, 0)
+        line_number_by_order = {}
+
+        lines = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number'], context=context):
+            line_number_by_order.setdefault(l['order_id'][0], set())
+            line_number_by_order[l['order_id'][0]].add(l['line_number'])
+
+        for so_id, ln in line_number_by_order.iteritems():
+            res[so_id] = len(ln)
+
+        return res
+
+
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
@@ -634,7 +656,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
-        'draft_cancelled': fields.boolean(string='State', readonly=True)
+        'draft_cancelled': fields.boolean(string='State', readonly=True),
+        'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
     }
 
     _defaults = {
@@ -1981,6 +2004,7 @@ class sale_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
+        'from_cancel_out': fields.boolean('OUT cancel'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -1988,6 +2012,7 @@ class sale_order_line(osv.osv):
         'delay': 0.0,
         'product_uom_qty': 1,
         'product_uos_qty': 1,
+        'from_cancel_out': False,
         'sequence': 10,
         'invoiced': 0,
         'state': 'draft',
@@ -2096,6 +2121,7 @@ class sale_order_line(osv.osv):
             'created_by_rfq': False,
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
+            'from_cancel_out': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2395,6 +2421,9 @@ class sale_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         signal = 'cancel_r' if resource else 'cancel'
 
+        if context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
+
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty
             # create split to cancel:
@@ -2406,6 +2435,8 @@ class sale_order_line(osv.osv):
             }, context=context)
             context.update({'return_new_line_id': True})
             new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            if signal == 'done':
+                self.pool.get('sale.order.line').write(cr, uid, [new_line_id], {'from_cancel_out': True}, context=context)
             context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
 
@@ -2439,13 +2470,18 @@ class sale_order_line(osv.osv):
         line and its procurement.
         @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
-        # Documents
-        so_obj = self.pool.get('sale.order')
-        wf_service = netsvc.LocalService("workflow")
-        signal = 'cancel_r' if resource else 'cancel'
 
         if context is None:
             context = {}
+
+        so_obj = self.pool.get('sale.order')
+        wf_service = netsvc.LocalService("workflow")
+
+        signal = 'cancel'
+        if resource:
+            signal = 'cancel_r'
+        elif context.get('sol_done_instead_of_cancel'):
+            signal = 'done'
 
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
@@ -2453,6 +2489,8 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         if qty_diff >= line.product_uom_qty:
+            if signal == 'done':
+                self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
@@ -2769,9 +2807,14 @@ class sale_order_line(osv.osv):
             vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
 
         # Internal request
+        pricelist = False
         order_id = vals.get('order_id', False)
-        if order_id and self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request'], context)['procurement_request']:
-            vals.update({'cost_price': vals.get('cost_price', False)})
+        if order_id:
+            order_data = self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request', 'pricelist_id'], context)
+            if order_data['procurement_request']:
+                vals.update({'cost_price': vals.get('cost_price', False)})
+            if order_data['pricelist_id']:
+                pricelist = order_data['pricelist_id'][0]
 
         # force the line creation with the good state, otherwise track changes for order state will
         # go back to draft (US-3671):
@@ -2780,9 +2823,13 @@ class sale_order_line(osv.osv):
 
         # US-4620 : Set price_unit to the product's standard price in case of synchro
         if vals.get('sync_linked_pol') and product_id:
+            new_ctx = context.copy()
+            if pricelist:
+                new_ctx['pricelist'] = pricelist
             vals.update({
-                'price_unit': product_obj.read(cr, uid, product_id, ['standard_price'], context=context)['standard_price']
+                'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
+
 
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id

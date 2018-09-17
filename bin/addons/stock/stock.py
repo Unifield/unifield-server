@@ -656,6 +656,7 @@ class stock_picking(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
+        'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -720,6 +721,7 @@ class stock_picking(osv.osv):
         default.update({
             'claim': False,
             'claim_name': '',
+            'from_manage_expired': False,
         })
         picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
         move_obj = self.pool.get('stock.move')
@@ -941,7 +943,17 @@ class stock_picking(osv.osv):
         """ Changes picking state to done.
         @return: True
         """
-        self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')})
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for sp in self.browse(cr, uid, ids, fields_to_fetch=['type', 'physical_reception_date']):
+            if sp.type == 'in' and not sp.physical_reception_date:
+                self.write(cr, uid, [sp.id], {'physical_reception_date': time.strftime('%Y-%m-%d %H:%M:%S')})
+
+        self.write(cr, uid, ids, {
+            'state': 'done',
+            'date_done': time.strftime('%Y-%m-%d %H:%M:%S'),
+        })
         self.log_picking(cr, uid, ids, context=context)
         return True
 
@@ -1655,19 +1667,22 @@ class stock_picking(osv.osv):
         return res
 
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
-        pick = kwargs['pick']
-        view_list = {
-            'out': 'view_picking_out_form',
-            'in': 'view_picking_in_form',
-            'internal': 'view_picking_form',
-        }
-        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form'))
 
-    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        specify if we display a log or not
-        '''
-        return True
+        pick = kwargs['pick']
+        action_list = {
+            'standard': 'stock.action_picking_tree',
+            'picking': 'msf_outgoing.action_picking_ticket',
+            'ppl': 'msf_outgoing.action_ppl',
+            'packing': 'msf_outgoing.action_packing_form',
+            'out': 'stock.action_picking_tree',
+            'in': 'stock.action_picking_tree4',
+            'internal': 'stock.action_picking_tree6',
+        }
+        if pick.type == 'out' and pick.subtype:
+            return action_list.get(pick.subtype, pick.type)
+
+        return action_list.get(pick.type, 'stock.action_picking_tree6')
+
 
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1683,12 +1698,6 @@ class stock_picking(osv.osv):
         '''
         return kwargs['state_list']
 
-    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook from stock>stock.py>log_picking
-        update the domain and other values if necessary in the log creation
-        '''
-        return True
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1730,8 +1739,7 @@ class stock_picking(osv.osv):
                 'draft':_('is in draft state.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
-            res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
-            context.update({'view_id': res and res[1] or False})
+            action_xmlid = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             message += state_list[pick.state]
             if infolog_message:
                 infolog_message += state_list[pick.state]
@@ -1739,12 +1747,9 @@ class stock_picking(osv.osv):
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
             if infolog_message:
                 infolog_message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=infolog_message, pick=pick)
-            # conditional test for message log
-            log_cond = self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick)
-            if log_cond and log_cond != 'packing':
-                self.log(cr, uid, pick.id, message, context=context)
-            elif not log_cond:
-                self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick)
+            if pick.type != 'out' or pick.subtype != 'packing':
+                # we dont log info on PACK/
+                self.log(cr, uid, pick.id, message, action_xmlid=action_xmlid, context=context)
 
             if infolog_message:
                 self.infolog(cr, uid, message)
@@ -2471,10 +2476,10 @@ class stock_move(osv.osv):
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
                 res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
                 if res:
-                    #_product_available_test depends on the next status for correct functioning
-                    #the test does not work correctly if the same product occurs multiple times
-                    #in the same order. This is e.g. the case when using the button 'split in two' of
-                    #the stock outgoing form
+                    # _product_available_test depends on the next status for correct functioning
+                    # the test does not work correctly if the same product occurs multiple times
+                    # in the same order. This is e.g. the case when using the button 'split in two' of
+                    # the stock outgoing form
                     move_to_assign.add(move.id)
                     done.append(move.id)
                     pickings[move.picking_id.id] = 1
@@ -2482,8 +2487,6 @@ class stock_move(osv.osv):
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
                     done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
-        if not move_to_assign:
-            self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
         count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
@@ -3292,7 +3295,7 @@ class stock_inventory(osv.osv):
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             line_ids = [x.id for x in inv.inventory_line_id]
-            if line_ids:
+            if line_ids and self._name != 'initial.stock.inventory':
                 self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':

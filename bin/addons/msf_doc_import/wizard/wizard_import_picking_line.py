@@ -396,16 +396,11 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+            xmild = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmild, ['form', 'tree'], context=context)
+            res['res_id'] = picking_id.id
+            return res
+
 
     def close_import(self, cr, uid, ids, context=None):
         '''
@@ -415,15 +410,9 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+            xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+            res['res_id'] = picking_id.id
+            return res
 
 wizard_import_pick_line()

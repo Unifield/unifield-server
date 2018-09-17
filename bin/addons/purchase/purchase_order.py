@@ -115,6 +115,14 @@ class purchase_order(osv.osv):
                     purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
+                # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
+                # (event if some SI amounts have been lowered)
+                po_states = ['done']
+                if purchase.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                    po_states = ['confirmed', 'confirmed_p', 'done']
+                if purchase.state in po_states and all(x.state != 'draft' for x in purchase.invoice_ids):
+                    res[purchase.id] = 100.0
+                    continue
                 tot = 0.0
                 # UTP-808: Deleted invoices amount should be taken in this process. So what we do:
                 # 1/ Take all closed stock picking linked to the purchase
@@ -761,6 +769,7 @@ class purchase_order(osv.osv):
                                                          help='Only used to SEARCH for POs with at least one line in Confirmed or Closed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
+        'from_address': fields.many2one('res.partner.address', string='From Address'),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -772,6 +781,7 @@ class purchase_order(osv.osv):
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
+        'from_address': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['default'])['default'],
         'no_line': lambda *a: True,
         'active': True,
         'name': lambda *a: False,

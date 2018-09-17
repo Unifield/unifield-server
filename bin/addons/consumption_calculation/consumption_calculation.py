@@ -165,7 +165,7 @@ class real_average_consumption(osv.osv):
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
         },),
-        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer')], required=1, select=1),
+        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], required=1, select=1),
         'activity_name': fields.function(_get_act_name, method=True, type='char', string='Destination Location', readonly=True, size=128, multi='loc_name', store={
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
@@ -187,9 +187,7 @@ class real_average_consumption(osv.osv):
     }
 
     _defaults = {
-        #'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',

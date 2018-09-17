@@ -20,7 +20,7 @@
 						<field name="with_pack" invisible="1" />
                         <field name="filetype" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <newline />
-                        <field name="file_to_import" filename="filename" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="file_to_import" filename="filename" attrs="{'readonly': [('state', 'not in', ['draft', 'error'])]}" />
                         <field name="filename" invisible="1" />
                         <field name="error_file" filename="error_filename" readonly="1"
                                attrs="{'invisible': [('import_error_ok', '!=', False), ('state', '!=', 'done')]}" />
@@ -32,7 +32,7 @@
                     <!-- Buttons -->
                     <group name="buttons" colspan="4" col="6">
                         <button name="return_to_in" string="Return to IN" icon="gtk-jump-to" type="object" />
-                        <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
+                        <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft,error" />
 						<button name="launch_import" string="Import" icon="gtk-execute" type="object" attrs="{'invisible': ['|', ('state', '!=', 'simu_done'), ('with_pack', '=', True)]}"/>
 						<button name="launch_import_pack" string="Import, pick &amp; pack" icon="gtk-execute" type="object" attrs="{'invisible': ['|', ('state', '!=', 'simu_done'), ('with_pack', '!=', True)]}"/>
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />

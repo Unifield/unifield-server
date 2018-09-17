@@ -1459,19 +1459,21 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
         move_obj = self.pool.get("stock.move")
 
-        lines = self.read(cr, uid, ids, ["move_id", "comment"], context=context)
+        lines = self.read(cr, uid, ids, ["move_id"], context=context)
 
         for line in lines:
             if not line["move_id"]:
                 continue
             reason_type_id = vals.get("reason_type_id", False)
-            comment = vals.get("comment", False)
             to_update = {}
             if reason_type_id:
                 to_update["reason_type_id"] = reason_type_id
-            if comment:
-                to_update["comment"] = comment
+            if 'comment' in vals:
+                to_update["comment"] = vals['comment']
+
             if to_update:
+                if '__last_update' in context:
+                    context['__last_update'] = {}
                 move_obj.write(cr, uid, [line["move_id"]], to_update, context=context)
 
         return r

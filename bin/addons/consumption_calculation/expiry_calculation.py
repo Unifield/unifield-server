@@ -158,6 +158,8 @@ class expiry_quantity_report(osv.osv_memory):
                     context.update({'location': location, 'compute_child': False})
                     real_qty = lot_obj.browse(cr, uid, lot_location, context=context).product_id.qty_available
                     self.pool.get('expiry.quantity.report.line').create(cr, uid, {'product_id': lot_brw.product_id.id,
+                                                                                  'product_code': lot_brw.product_id.default_code,
+                                                                                  'product_name': lot_brw.product_id.name,
                                                                                   'real_stock': real_qty,
                                                                                   'expired_qty': lots[lot_location][location],
                                                                                   'batch_number': lot_brw.name,
@@ -181,17 +183,16 @@ expiry_quantity_report()
 class expiry_quantity_report_line(osv.osv_memory):
     _name = 'expiry.quantity.report.line'
     _description = 'Products expired line'
-    _order = 'expiry_date, location_id, product_id asc'
+    _order = 'product_code, batch_number'
 
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'product_code': fields.related('product_id', 'default_code', string='Ref.', type='char'),
-        'product_name': fields.related('product_id', 'name', string='Name', type='char'),
+        'product_code': fields.char(string='Ref.', size=64, required=True),
+        'product_name': fields.char(string='Name', size=128, required=True),
         'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'real_stock': fields.float(digits=(16, 2), string='Real stock', related_uom='uom_id'),
         'expired_qty': fields.float(digits=(16, 2), string='Batch exp.', related_uom='uom_id'),
-        #'batch_number': fields.many2one('production.lot', string='Batch'),
         'batch_number': fields.char(size=64, string='Batch'),
         'expiry_date': fields.date(string='Exp. date'),
         'location_id': fields.many2one('stock.location', string='Loc.'),
@@ -704,7 +705,7 @@ class product_likely_expire_report_line(osv.osv):
         return res
 
     _columns = {
-        'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
+        'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade', select=1),
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'consumption': fields.float(digits=(16, 2), string='Monthly Consumption', required=True),
         'in_stock': fields.float(digits=(16, 2), string='In stock'),
@@ -791,11 +792,11 @@ class product_likely_expire_report_item(osv.osv):
     _rec_name = 'line_id'
 
     _columns = {
-        'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
-        'name': fields.char(size=64, string='Month'),
+        'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade', select=1),
+        'name': fields.char(size=64, string='Month', select=1),
         'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
         'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-        'period_start': fields.date(string='Period start', readonly=True),
+        'period_start': fields.date(string='Period start', readonly=True, select=1),
         'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Batchs'),
     }
 
