@@ -468,7 +468,6 @@ class Float(TinyInputWidget):
 
             if rounding_value in attrs.get('uom_rounding'):
                 rounding = int(abs(math.log(attrs['uom_rounding'][rounding_value])))
-
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
@@ -479,7 +478,6 @@ class Float(TinyInputWidget):
         computation = attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
-
         self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding)
 
 #        if not self.default:
@@ -1089,7 +1087,7 @@ class Form(TinyInputWidget):
         if kind == 'image' or kind == 'picture':
             attrs['id'] = self.id
 
-        if kind in ('one2many', 'many2many') or attrs.get('rounding_value') and self.rounding_values:
+        if (kind in ('one2many', 'many2many') or attrs.get('rounding_value')) and self.rounding_values:
             attrs['uom_rounding'] = self.rounding_values
 
         # suppress by container's readonly property

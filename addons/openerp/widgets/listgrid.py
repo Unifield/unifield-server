@@ -373,6 +373,7 @@ class List(TinyWidget):
         ctx = dict(rpc.session.context,
                    **self.context)
 
+        headers_info = dict(self.headers)
         fields = [name for name, _ in chain(self.headers, self.hiddens)]
 
         proxy = rpc.RPCProxy(self.model)
@@ -393,6 +394,10 @@ class List(TinyWidget):
 
         for f in fields:
             if f in values:
+                if headers_info.get(f, {}).get('related_uom') and self.rounding_values and headers_info[f]['related_uom'] in values:
+                    headers_info[f]['uom_rounding'] = self.rounding_values
+                    headers_info[f]['rounding_value'] = values[headers_info[f]['related_uom']]
+                    self.editors[f] = get_widget('float')(**headers_info[f])
                 self.editors[f].set_value(values[f])
 
         return super(List, self).display(value, **params)

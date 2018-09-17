@@ -42,10 +42,12 @@ def decimal_formatter(value, info):
     if isinstance(digits, basestring):
         digits = eval(digits)
     integer, digit = digits
-    
+
     # custom fields - decimal_precision computation
     computation = info.get('computation', False)
-    
+    if info.get('rounding'):
+        return format.format_decimal(value or 0.0, int(abs(math.log(info['rounding']))))
+
     return format_decimal(value, digit, computation=computation)
 
 FORMATTERS = {
