@@ -125,8 +125,8 @@ def rmtree(files, path=None, verbose=False):
             try:
                 os.unlink(target)
             except:
-                warn('Except on target %s, %s' % (target, target.endswith('OpenERPServerService.exe')))
-                if target.endswith('OpenERPServerService.exe'):
+                warn('Except on target %s' % (target,))
+                if target.endswith('.exe'):
                     if not os.path.isdir(backup_trash):
                         os.makedirs(backup_trash)
                     index = 0
@@ -184,6 +184,20 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
     if upgrade_now:
         logger.info("--------------- STARTING BASE UPGRADE PROCESS -----------------")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
+        script = pool.get('patch.scripts')
+        not_run = False
+        if script:
+            not_run = script.search(cr, 1, [('run', '=', False)])
+            if not_run:
+                logger.warn("%d patch scripts are not run" % len(not_run))
+        bad_modules = modules.search(cr, 1, [('state', 'in', ['to upgrade', 'to install', 'to remove'])])
+        if bad_modules:
+            logger.warn("%d modules not upgraded" % len(bad_modules))
+
+        if not not_run and not bad_modules:
+            logger.info("--------------- PATCH APPLIED ---------------")
+        else:
+            logger.info("--------------- ISSUES WITH PATCH APPLICATION ---------------")
 
 def process_deletes(update_dir, webpath):
     delfile = os.path.join(update_dir, 'delete.txt')
@@ -331,7 +345,11 @@ def do_update():
                         if file.endswith('.pyc'):
                             file = os.path.join(root, file)
                             warn('Purge pyc: %s' % file)
-                            os.unlink(file)
+                            try:
+                                os.unlink(file)
+                            except:
+                                # in some cases pyc is locked by another process (virus scan?)
+                                pass
 
             shutil.copy(server_version_file, 'backup')
             files.append(server_version_file)
@@ -352,12 +370,16 @@ def do_update():
 
         except BaseException, e:
             warn("Update failure!")
-            warn(unicode(e))
+            try:
+                warn(unicode(e))
+            except:
+                warn("Unknown error")
             ## Restore backup and purge .update
             if files or deleted_files:
                 warn("Restoring... ")
                 for f in reversed(files + deleted_files):
-                    if is_webfile(f):
+                    webfile = is_webfile(f)
+                    if webfile:
                         f = os.path.join(webpath, webfile.group(1))
                         target = os.path.join(webbackup, webfile.group(1))
                     else:
@@ -937,7 +959,7 @@ def do_pg_update():
             subprocess.call('net start %s' % svc, stdout=log, stderr=log)
 
         # 9. re-alter tables to put the problematic constraint back on
-        if re_alter:        
+        if re_alter:
             cf = tempfile.NamedTemporaryFile(delete=False)
             for db in dbs:
                 warn("alter tables in %s" % db)

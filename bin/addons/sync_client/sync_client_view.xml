@@ -95,6 +95,21 @@
             </field>
         </record>
 
+<!-- ========================= Links to Updates Sent and Received =============================== -->
+
+        <record id="action_open_updates_sent" model="ir.actions.server">
+            <field name="name">Updates Sent</field>
+            <field name="state">code</field>
+            <field name="model_id" ref="model_update_link"/>
+            <field name="code">action = obj.open_updates_sent(context=context)</field>
+        </record>
+
+        <record id="action_open_updates_received" model="ir.actions.server">
+            <field name="name">Updates Received</field>
+            <field name="state">code</field>
+            <field name="model_id" ref="model_update_link"/>
+            <field name="code">action = obj.open_updates_received(context=context)</field>
+        </record>
 
     </data>
 </openerp>

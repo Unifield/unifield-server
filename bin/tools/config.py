@@ -107,7 +107,7 @@ class configmanager(object):
             'create_db_dir_for_attachment': True,
         }
 
-        self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
+        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface"])
 
         self.misc = {}
         self.config_file = fname

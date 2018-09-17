@@ -222,6 +222,18 @@ class hq_entries(osv.osv):
         'is_account_partner_compatible': lambda *a: True,
     }
 
+    def _check_active_account(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
+        for hq in self.browse(cr, uid, ids, fields_to_fetch=['name', 'account_id', 'date']):
+            if hq.date < hq.account_id.activation_date or (hq.account_id.inactivation_date and hq.date >= hq.account_id.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('HQ Entry %s: account %s is inactive') % (hq.name, hq.account_id.code))
+        return True
+
     def split_forbidden(self, cr, uid, ids, context=None):
         """
         Split is forbidden for these lines:
@@ -260,9 +272,9 @@ class hq_entries(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res.add(line.id)
-            if line.is_original:
+            if line.is_original and line.split_ids:
                 add_split(line)
-            if line.is_split:
+            if line.is_split and line.original_id:
                 # add original one
                 res.add(line.original_id.id)
                 # then other split lines
@@ -282,7 +294,9 @@ class hq_entries(osv.osv):
         # Prepare some values
         res = set()
         for line in self.browse(cr, uid, ids, context=context):
-            if line.user_validated == False and (line.is_original or line.is_split):
+            line_original = line.is_original and line.split_ids
+            line_split = line.is_split and line.original_id
+            if not line.user_validated and (line_original or line_split):
                 # First add original and split linked lines
                 for el in self.get_linked_lines(cr, uid, [line.id]):
                     res.add(el)
@@ -313,7 +327,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount,})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
@@ -453,6 +467,11 @@ class hq_entries(osv.osv):
         # If destination given, search if given
         return res
 
+    def create(self, cr, uid, vals, context=None):
+        new_id = super(hq_entries, self).create(cr, uid, vals, context)
+        self._check_active_account(cr, uid, [new_id], context=context)
+        return new_id
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Change Expat salary account is not allowed
@@ -466,8 +485,13 @@ class hq_entries(osv.osv):
 
         #US-921: Only save the user_validated value if the update comes from sync!
         if context.get('sync_update_execution', False):
-            if 'user_validated' in  vals:
-                return super(hq_entries, self).write(cr, uid, ids, {'user_validated': vals['user_validated']}, context)
+            sync_vals = {}
+            if 'user_validated' in vals:
+                sync_vals.update({'user_validated': vals['user_validated']})
+            if 'is_original' in vals:  # US-4169 also enable to sync the is_original tag
+                sync_vals.update({'is_original': vals['is_original']})
+            if sync_vals:
+                return super(hq_entries, self).write(cr, uid, ids, sync_vals, context)
             return True
 
         if 'account_id' in vals:
@@ -476,10 +500,13 @@ class hq_entries(osv.osv):
                 if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
-        return super(hq_entries, self).write(cr, uid, ids, vals, context)
+        res = super(hq_entries, self).write(cr, uid, ids, vals, context)
+        self._check_active_account(cr, uid, ids, context=context)
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """
+        At synchro. only delete the entries having the tag is_split (= sync of an unsplit done in coordo). Otherwise:
         Do not permit user to delete:
          - validated HQ entries
          - split entries
@@ -487,10 +514,18 @@ class hq_entries(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution', False):
+            new_ids = []
+            for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=['is_split'], context=context):
+                if hq_entry.is_split:
+                    new_ids.append(hq_entry.id)
+            ids = new_ids
         if not context.get('from', False) or context.get('from') != 'code' and ids:
             if self.search(cr, uid, [('id', 'in', ids), ('user_validated', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete validated HQ Entries lines!'))
-            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]):
+            if self.search(cr, uid, [('id', 'in', ids), ('is_split', '=', True)]) and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('You cannot delete split entries!'))
             if self.search(cr, uid, [('id', 'in', ids), ('is_original', '=', True)]):
                 raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
@@ -566,7 +601,7 @@ class hq_entries(osv.osv):
                             raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
                                                                  ' analytic accounts\".') % (hq_account.code, hq_account.name))
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         import os
         processed = []

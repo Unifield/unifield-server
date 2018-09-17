@@ -10,6 +10,7 @@ import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
 from msf_partner import PARTNER_TYPE
+from lxml import etree
 
 
 class purchase_order_line(osv.osv):
@@ -27,6 +28,23 @@ class purchase_order_line(osv.osv):
             res[id] = vat_ok
 
         return res
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        if context.get('rfq_ok') and view_type == 'form':
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_line_form')[1]
+            return super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form' and context.get('from_tab') != 1:
+            form = etree.fromstring(view['arch'])
+            for tag in form.xpath('//page[@name="nomenselection"]'):
+                tag.getparent().remove(tag)
+            nb = form.xpath('//notebook')
+            nb[0].tag = 'empty'
+            view['arch'] = etree.tostring(form)
+        return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
         res = {}
@@ -390,6 +408,22 @@ class purchase_order_line(osv.osv):
             res[line.id] = a
         return res
 
+    def _get_product_info(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = {'heat_sensitive_item': False, 'cold_chain': False, 'controlled_substance': False, 'justification_code_id': False}
+
+
+        ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context=context).get('controlled_substance', {}).get('selection', []))
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
+            ret[x.id] = {
+                'heat_sensitive_item': x.product_id.heat_sensitive_item and x.product_id.heat_sensitive_item.code == 'yes' or False,
+                'cold_chain': x.product_id.cold_chain and x.product_id.cold_chain.name or False,
+                'controlled_substance': ctrl_sub.get(x.product_id.controlled_substance, False),
+                'justification_code_id': x.product_id.justification_code_id and x.product_id.justification_code_id.code or False,
+            }
+
+        return ret
 
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
@@ -491,6 +525,7 @@ class purchase_order_line(osv.osv):
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
+        'esc_confirmed': fields.boolean(string='ESC confirmed'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -502,7 +537,14 @@ class purchase_order_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
+        'created_by_vi_import': fields.boolean('Line created by VI PO import'),
+
+        'heat_sensitive_item': fields.function(_get_product_info, type='boolean', string='Temperature sensitive item', multi='product_info', method=True),
+        'cold_chain': fields.function(_get_product_info, type='char', string='Cold Chain', multi='product_info', method=True),
+        'controlled_substance': fields.function(_get_product_info, type='char', string='Controlled Substance', multi='product_info', method=True),
+        'justification_code_id': fields.function(_get_product_info, type='char', string='Justification Code', multi='product_info', method=True),
     }
+
 
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -524,6 +566,7 @@ class purchase_order_line(osv.osv):
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': False,
         'have_analytic_distribution_from_header': lambda *a: True,
+        'created_by_vi_import': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -662,10 +705,28 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('No Partner!'), _(
                 'You have to select a partner in the purchase form !\nPlease set one partner before choosing a product.'))
         if not product:
-            return {'value': {'price_unit': price_unit or 0.0, 'name': name or '',
-                              'notes': notes or '', 'product_uom': uom or False}, 'domain': {'product_uom': []}}
+            return {'value': {
+                'price_unit': price_unit or 0.0,
+                'name': name or '',
+                'notes': notes or '',
+                'product_uom': uom or False,
+                'heat_sensitive_item': False,
+                'cold_chain': False,
+                'controlled_substance': False,
+                'justification_code_id': False
+            },
+                'domain': {'product_uom': []}
+            }
         res = {}
-        prod = self.pool.get('product.product').browse(cr, uid, product)
+        lang = self.pool.get('res.users').browse(cr, uid, uid).context_lang
+        prod = self.pool.get('product.product').browse(cr, uid, product, context={'lang': lang})
+        ctrl_sub = dict(self.pool.get('product.product').fields_get(cr, uid, ['controlled_substance'], context={'lang': lang}).get('controlled_substance', {}).get('selection', []))
+        value = {
+            'heat_sensitive_item': prod.heat_sensitive_item and prod.heat_sensitive_item.code == 'yes' or False,
+            'cold_chain': prod.cold_chain and prod.cold_chain.name or False,
+            'controlled_substance': ctrl_sub.get(prod.controlled_substance, False),
+            'justification_code_id': prod.justification_code_id and prod.justification_code_id.code or False,
+        }
 
         lang = False
         if partner_id:
@@ -706,11 +767,15 @@ class purchase_order_line(osv.osv):
             res.update({'warning': warning})
         dt = (datetime.now() + relativedelta(days=int(seller_delay) or 0.0)).strftime('%Y-%m-%d %H:%M:%S')
 
-        res.update({'value': {'price_unit': price, 'name': prod_name,
-                              'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
-                              'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
-                              'product_qty': qty,
-                              'product_uom': uom}})
+
+        value.update({
+            'price_unit': price, 'name': prod_name,
+            'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
+            'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
+            'product_qty': qty,
+            'product_uom': uom,
+        })
+        res.update({'value': value})
         domain = {}
 
         taxes = self.pool.get('account.tax').browse(cr, uid, map(lambda x: x.id, prod.supplier_taxes_id))
@@ -994,6 +1059,9 @@ class purchase_order_line(osv.osv):
         else:
             if order.po_from_fo or order.po_from_ir or vals.get('link_so_id', False):
                 vals['from_fo'] = True
+            else:
+                # duplication of PO from fo must not set this value
+                vals['from_fo'] = False
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(
                     _('Error'),
@@ -1022,6 +1090,9 @@ class purchase_order_line(osv.osv):
         #     vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
+
+        if vals.get('price_unit') and not vals.get('original_price'):
+            vals.update({'original_price': vals['price_unit'] or 0.00})
 
         # [imported from 'order_nomenclature']
         # Don't save filtering data
@@ -1069,44 +1140,22 @@ class purchase_order_line(osv.osv):
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
-                self.pool.get('expected.sale.order.line').create(cr, uid, {
+                self.pool.get('expected.sale.order.line').create(cr, 1, {
                     'order_id': so_id,
                     'po_line_id': po_line_id,
                 }, context=context)
 
         return po_line_id
 
-    def default_get(self, cr, uid, fields, context=None):
-        if not context:
-            context = {}
-
-        if context.get('purchase_id'):
-            # Check validity of the purchase order. We write the order to avoid
-            # the creation of a new line if one line of the order is not valid
-            # according to the order category
-            # Example :
-            #    1/ Create a new PO with 'Other' as Order Category
-            #    2/ Add a new line with a Stockable product
-            #    3/ Change the Order Category of the PO to 'Service' -> A warning message is displayed
-            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
-            #       while the not valid line is not modified/deleted
-            #
-            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
-            #   of the new line that is not very understandable for the user
-            data = {}
-            if context.get('partner_id'):
-                data.update({'partner_id': context.get('partner_id')})
-            if context.get('categ'):
-                data.update({'categ': context.get('categ')})
-            self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
-
-        return super(purchase_order_line, self).default_get(cr, uid, fields, context=context)
-
-    def copy(self, cr, uid, line_id, defaults={}, context=None):
+    def copy(self, cr, uid, line_id, defaults=None, context=None):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False})
+
+        if defaults is None:
+            defaults = {}
+
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -1121,16 +1170,16 @@ class purchase_order_line(osv.osv):
 
         # do not copy canceled purchase.order.line:
         pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
-        if pol.state in ['cancel', 'cancel_r']:
+        if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
             return False
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import']:
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1212,6 +1261,9 @@ class purchase_order_line(osv.osv):
 
             # if not context.get('update_merge'):
             #     new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
+
+            if line.state == 'draft' and 'price_unit' in new_vals:
+                new_vals['original_price'] = new_vals.get('price_unit')
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
@@ -1332,13 +1384,16 @@ class purchase_order_line(osv.osv):
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
-            self.update_fo_lines(cr, uid, [pol.id], context=context)
+            pol_to_update = [pol.id]
+            if pol.linked_sol_id and not pol.linked_sol_id.order_id.procurement_request:
+                pol_to_update += [new_po_line]
+            self.update_fo_lines(cr, uid, pol_to_update, context=context)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'
             wf_service.trg_validate(uid, 'purchase.order.line', new_po_line, signal, cr)
 
-        return True
+        return new_po_line
 
     def _get_stages_price(self, cr, uid, product_id, uom_id, order, context=None):
         '''
@@ -1394,6 +1449,7 @@ class purchase_order_line(osv.osv):
                 res['value'] = {
                     'display_sync_ref': False,
                     'instance_sync_order_ref': '',
+                    'origin': '',
                 }
             else:
                 res['value'] = {
@@ -1405,11 +1461,10 @@ class purchase_order_line(osv.osv):
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
                              name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
-                             nomen_manda_0=False, comment=False, context=None):
+                             nomen_manda_0=False, comment=False, context=None, categ=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
-
         if not context:
             context = {}
 
@@ -1451,6 +1506,8 @@ class purchase_order_line(osv.osv):
 
         # Update the old price value
         res['value'].update({'product_qty': qty})
+
+
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
@@ -1479,10 +1536,12 @@ class purchase_order_line(osv.osv):
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
                 info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
                                                                      info_price.price, round=False, context=context)
-                res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
-                res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
-                                                                            'for a minimal quantity of %s (the min quantity of the price list), ' \
-                                                                            'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.min_order_qty and qty < info_price.min_order_qty:
+                    if qty > info_price.min_quantity:
+                        res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
+                                                                                'for a minimal quantity of %s (the min quantity of the price list), ' \
+                                                                                'it might change at the supplier confirmation.') % info_price.min_quantity}})
                 if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
                                 'this product, you should than modify ' \
@@ -1501,12 +1560,14 @@ class purchase_order_line(osv.osv):
             res['value'].update({'old_price_unit': old_price})
 
         # Set the unit price with cost price if the product has no staged pricelist
+        if product:
+            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price', 'is_ssl'])
+
         if product and qty != 0.00:
             res['value'].update({'comment': False, 'nomen_manda_0': False, 'nomen_manda_1': False,
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False,
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
-            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price'])
             st_uom = product_result['uom_id'][0]
             st_price = product_result['standard_price']
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
@@ -1526,9 +1587,15 @@ class purchase_order_line(osv.osv):
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
 
-        if context and context.get('categ') and product:
+        if state == 'draft':
+            if name != res['value'].get('name', False) and res['value'].get('price_unit', False):
+                res['value']['original_price'] = res['value']['price_unit']
+            else:
+                res['value']['original_price'] = 0.00
+
+        if (categ or context.get('categ')) and product:
             # Check consistency of product
-            consistency_message = product_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = product_obj.check_consistency(cr, uid, product, categ or context.get('categ'), context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')
@@ -1536,6 +1603,13 @@ class purchase_order_line(osv.osv):
 
                 res['warning']['message'] = '%s \n %s' % (
                     res.get('warning', {}).get('message', ''), consistency_message)
+
+        if product and product_result['is_ssl']:
+            warning = {
+                'title': 'Short Shelf Life product',
+                'message': _('Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.')
+            }
+            res.update(warning=warning)
 
         return res
 
@@ -1636,6 +1710,9 @@ class purchase_order_line(osv.osv):
                 return False
 
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
+                return False
+
+            if pol.order_id.order_type == 'loan':
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)

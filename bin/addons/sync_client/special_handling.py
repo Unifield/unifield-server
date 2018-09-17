@@ -165,6 +165,7 @@ class account_move_line(osv.osv):
         # US 1214: HQ closed tolerate update under certains conditions only
         # Enable the sync on account.move.line field only if they are not : Dates / Journal / Sequence / Description / Reference / all field amounts / Third party / Currency / State
         # http://jira.unifield.org/browse/US-1214?focusedCommentId=47237&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-47237
+        # US-4963: allow changes on employee_id
 
         # => get field by field diff
         fields_to_check = [
@@ -175,7 +176,6 @@ class account_move_line(osv.osv):
             ('debit', 'float'),
             ('debit_currency', 'float'),
             ('document_date', False),
-            ('employee_id', 'id'),
             ('journal_id', 'id'),
             ('move_id', 'id'),
             ('partner_id', 'id'),

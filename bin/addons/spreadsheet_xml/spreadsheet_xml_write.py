@@ -2,6 +2,7 @@
 
 from tools.translate import _
 from tools.misc import file_open
+from tools.misc import Path
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
 from report import report_sxw
@@ -125,6 +126,10 @@ class SpreadsheetReport(WebKitParser):
             os.unlink(tmpzipname)
             os.unlink(tmpname)
             return (out, 'zip')
+
+        if context.get('pathit'):
+            os.close(null)
+            return (Path(tmpname, delete=True), 'xls')
 
         out = file(tmpname, 'rb').read()
         os.close(null)

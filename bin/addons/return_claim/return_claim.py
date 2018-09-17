@@ -1096,8 +1096,7 @@ class return_claim(osv.osv):
             event_obj.create(cr, uid, event_values, context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.'
-                    % (name, claim_info.name, source))
+        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.') % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message
@@ -1120,8 +1119,7 @@ class return_claim(osv.osv):
         self.write(cr, uid, claim_id, ({'state': 'done'}), context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s."
-                    % (name, claim_info.name, source))
+        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s.") % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message
@@ -1981,6 +1979,12 @@ class claim_event(osv.osv):
                                                               field='type_claim_event',
                                                               key=event.type_claim_event,
                                                               context=context)
+            # Cancel created INT backorder in case of claim from scratch
+            if not event.from_picking_wizard_claim_event and event.event_picking_id_claim_event.type == 'internal' \
+                    and event.type_claim_event in ('return', 'surplus'):
+                # To cancel the created INT
+                netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', event.event_picking_id_claim_event.id,
+                                                             'button_cancel', cr)
             log_msgs.append((event.id, _('%s Event %s has been processed.') % (event_type_name, event.name)))
             claim_ids.add(event.return_claim_id_claim_event.id)
 
