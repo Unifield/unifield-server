@@ -101860,3 +101860,53 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:43
+#, python-format
+msgid "OK, cancel line"
+msgstr "OK, annuler la ligne"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:42
+#, python-format
+msgid "Return to previous screen"
+msgstr "Retourner à l'écran précédent"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid " and %s"
+msgstr " et %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:106
+#, python-format
+msgid "You are about to cancel the product %s, are you sure you wish to proceed ?"
+msgstr "Vous êtes sur le point d'annuler le produit %s, voulez-vous vraiment continuer ?"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:76
+#: code:addons/sale/wizard/delete_sale_order_line.py:101
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:63
+#, python-format
+msgid "You cannot delete product: %s"
+msgstr "Vous ne pouvez pas supprimer les produits: %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:89
+#, python-format
+msgid "You are about to cancel the products %s, are you sure you wish to proceed ?"
+msgstr "Vous êtes sur le point d'annuler les produits %s, voulez-vous vraiment continuer ?"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:44
+#: view:delete.sale.order.line.wizard:0
+#, python-format
+msgid "OK, cancel lines"
+msgstr "OK, annuler les lignes"
