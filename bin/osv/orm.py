@@ -442,13 +442,14 @@ class orm_template(object):
     _replace_exported_fields = {}
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
-    def log(self, cr, uid, id, message, secondary=False, context=None):
+    def log(self, cr, uid, id, message, secondary=False, action_xmlid=False, context=None):
         return self.pool.get('res.log').create(cr, uid,
                                                {
                                                    'name': message,
                                                    'res_model': self._name,
                                                    'secondary': secondary,
                                                    'res_id': id,
+                                                   'action_xmlid': action_xmlid,
                                                },
                                                context=context
                                                )
@@ -667,18 +668,22 @@ class orm_template(object):
                         else:
                             break
                     else:
+                        if isinstance(r, browse_record):
+                            obj = self.pool.get(r._table_name)
+                        else:
+                            obj = self
                         r = r[f[i]]
                         # To display external name of selection field when its exported
                         cols = False
-                        if f[i] in self._columns.keys():
-                            cols = self._columns[f[i]]
-                        elif f[i] in self._inherit_fields.keys():
-                            cols = selection_field(self._inherits)
+                        if f[i] in obj._columns.keys():
+                            cols = obj._columns[f[i]]
+                        elif f[i] in obj._inherit_fields.keys():
+                            cols = selection_field(obj._inherits)
                         if cols and cols._type == 'selection' and not sync_context:
                             # if requested, translate the fields.selection values
                             translated_selection = False
                             if context.get('translate_selection_field', False) and r and f:
-                                fields_get_res = self.fields_get(cr, uid, f, context=context)
+                                fields_get_res = obj.fields_get(cr, uid, f, context=context)
                                 if f[0] in fields_get_res and 'selection' in fields_get_res[f[0]]:
                                     r = dict(fields_get_res[f[0]]['selection'])[r]
                                     translated_selection = True
@@ -786,7 +791,7 @@ class orm_template(object):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
-    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=",", context=None):
         import base64
 
         import_obj = self.pool.get('import_data')
@@ -799,7 +804,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -2517,7 +2522,7 @@ class orm_memory(orm_template):
                 order_field = order_split[0].strip()
                 order_direction = order_split[1].strip().lower() if len(order_split) == 2 else 'asc'
                 if order_field == 'id':
-                    getter = lambda d, i: d[0]
+                    getter = lambda d, i, o_field: d[0]
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     # OEB-79: Patch provided by Xavier
@@ -2527,11 +2532,11 @@ class orm_memory(orm_template):
                         continue
 
                     if order_column._classic_read:
-                        getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
+                        getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
                     elif order_column._type == 'many2one':
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
-                            getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
+                            getter = lambda d, i, o_field: len(d) > 1 and d[1].get(o_field) or False
                         else:
                             # use the fact the read follow object standard _parent_order/_order to get many2one ordered
                             dest_model = self.pool.get(order_column._obj)
@@ -2543,18 +2548,18 @@ class orm_memory(orm_template):
                             if dest_ids_has_false:
                                 ordered_ids.insert(0, False) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i: i.get(order_field) and len(d) > 1 and d[1].get(order_field) and i.get(order_field).index(d[1].get(order_field)) or False
+                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or False
                 else:
                     raise NotImplementedError()
-                order_parts_getters.append((getter, order_direction))
+                order_parts_getters.append((getter, order_direction, order_field))
             # create an inline sort method that fullfill 'cmp' specification
             def in_memory_sort(x, y):
                 i = order_info
-                for (getter, direction) in order_parts_getters:
+                for (getter, direction, o_field) in order_parts_getters:
                     if direction == 'asc': # normal sort order
-                        v = cmp(getter(x, i), getter(y, i))
+                        v = cmp(getter(x, i, o_field), getter(y, i, o_field))
                     elif direction == 'desc':
-                        v = cmp(getter(y, i), getter(x, i))
+                        v = cmp(getter(y, i, o_field), getter(x, i, o_field))
                     if v == 0:
                         # at this level item equals,
                         # continue to next order field
@@ -3282,7 +3287,7 @@ class orm(orm_template):
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
-                                if not self.pool.get(f._obj):
+                                if not self.pool.get(f._obj) or not cr.table_exists(self.pool.get(f._obj)._table):
                                     missing_fk.setdefault(f._obj, [])
                                     missing_fk[f._obj].append((self, k, f, False))
                                 else:

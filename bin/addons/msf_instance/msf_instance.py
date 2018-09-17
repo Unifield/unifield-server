@@ -36,6 +36,8 @@ from tempfile import NamedTemporaryFile
 from urlparse import urlparse
 from mx import DateTime
 import logging
+import requests
+import time
 
 class crypt():
     def __init__(self, password):
@@ -423,6 +425,12 @@ class msf_instance(osv.osv):
         self.write(cr, uid, ids, {'state': 'inactive'}, context=context)
         return True
 
+    def button_activate(self, cr, uid, ids, context=None):
+        """
+        (Re)activate the instances
+        """
+        return self.write(cr, uid, ids, {'state': 'active'}, context=context)
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Override the tree view to display historical prices according to context
@@ -470,6 +478,27 @@ class msf_instance_cloud(osv.osv):
     _empty_pass = 'X' * 10
     _temp_folder = 'Temp'
 
+    _backoff_max = 5
+    _backoff_factor = 0.1
+
+    def _get_backoff(self, dav, error):
+        if not dav:
+            self._logger.info(error)
+            time.sleep(self._backoff_factor)
+
+        nb_errors = dav.session_nb_error
+        dav.session_nb_error += 1
+        if nb_errors <= 1:
+            return 0
+
+        if nb_errors % 5 == 0:
+            self._logger.info(error)
+
+        backoff_value = self._backoff_factor * (2 ** (nb_errors - 1))
+        sleep_time = min(self._backoff_max, backoff_value)
+        time.sleep(sleep_time)
+
+
     def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
         for x in self.read(cr, uid, ids, ['cloud_password'], context=context):
@@ -499,7 +528,6 @@ class msf_instance_cloud(osv.osv):
                 crypt_o = crypt(d['instance_identifier'])
                 ret['password'] = crypt_o.decrypt(d['cloud_password'])
             except:
-                raise
                 raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
 
         return ret
@@ -556,15 +584,18 @@ class msf_instance_cloud(osv.osv):
 
     def copy_to_all(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0], context=context)
-        sc_info = self.read(cr, uid, ids[0], ['delay_minute', 'cloud_schedule_time'])
+        sc_info = self.read(cr, uid, ids[0], ['delay_minute', 'cloud_schedule_time', 'cloud_retry_from', 'cloud_retry_to'])
         to_write = self.search(cr, uid, [('instance_identifier', '!=', False), ('filter_by_level', '=', True), ('id', '!=', ids[0])], context=context)
         init_time = sc_info['cloud_schedule_time'] or 0
+        retry_from = sc_info['cloud_retry_from'] or 0
+        retry_to =  sc_info['cloud_retry_to'] or 0
         for x in to_write:
-            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_set_password':  info['password'], 'delay_minute': -1}
-            if sc_info['delay_minute'] != -1:
+            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_set_password':  info['password'], 'cloud_retry_from': retry_from, 'cloud_retry_to': retry_to, 'delay_minute': -1}
+            if sc_info['delay_minute'] and sc_info['delay_minute'] != -1:
                 init_time += (sc_info['delay_minute'] or 0) / 60.
                 init_time = init_time % 24
                 data['cloud_schedule_time'] = init_time
+
             self.write(cr, uid, x, data, context=context)
 
         return True
@@ -575,6 +606,8 @@ class msf_instance_cloud(osv.osv):
         'cloud_password': fields.char('Cloud Password', size=1024),
         'cloud_schedule_time': fields.float('Schedule task time', help="Remote time"),
         'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
+        'cloud_retry_from': fields.float('Retry from time'),
+        'cloud_retry_to': fields.float('Retry to time'),
         'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
         'has_config': fields.function(_get_has_config, string='Is configured', method=True, type='boolean', fnct_search=_search_has_config),
         'filter_by_level': fields.function(_get_filter_by_level, string='Filter Instance', method=True, type='boolean', internal=True, fnct_search=_search_filter_by_level),
@@ -595,7 +628,7 @@ class msf_instance_cloud(osv.osv):
 
         return super(msf_instance_cloud, self).create(cr, uid, vals, context)
 
-    def get_backup_connection(self, cr, uid, ids, context=None):
+    def get_backup_connection_data(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
             raise osv.except_osv(_('Warning !'), _('URL is not set!'))
@@ -607,9 +640,19 @@ class msf_instance_cloud(osv.osv):
         url = urlparse(info['url'])
         if not url.netloc:
             raise osv.except_osv(_('Warning !'), _('Unable to parse url: %s') % (info['url']))
+        return {
+            'host': url.netloc,
+            'port': url.port,
+            'protocol': url.scheme,
+            'username': info['login'],
+            'password': info['password'],
+            'path': url.path,
+        }
 
+    def get_backup_connection(self, cr, uid, ids, context=None):
+        data = self.get_backup_connection_data(cr, uid, ids, context=context)
         try:
-            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=info['password'], path=url.path)
+            dav = webdav.Client(**data)
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
 
@@ -672,6 +715,18 @@ class msf_instance_cloud(osv.osv):
 
         return True
 
+    def _is_in_time_range(self, starttime, endtime):
+        if starttime == endtime:
+            return False
+        start_dt = (DateTime.now()+DateTime.RelativeDateTime(hour=starttime or 0,minute=0, second=0)).time
+        end_dt = (DateTime.now()+DateTime.RelativeDateTime(hour=endtime or 0,minute=0, second=0)).time
+        now_dt = DateTime.now().time
+
+        if start_dt < end_dt:
+            return now_dt >= start_dt and now_dt <= end_dt
+
+        return now_dt >= start_dt or now_dt <= end_dt
+
     def send_backup(self, cr, uid, progress=False, context=None):
         day_abr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         monitor = self.pool.get('sync.version.instance.monitor')
@@ -686,8 +741,8 @@ class msf_instance_cloud(osv.osv):
             param_obj.set_param(cr, 1, 'CLOUD_BUFFER_SIZE',  buffer_size)
             cr.commit()
         buffer_size = int(buffer_size)
-        self._logger.info('OneDrive: upload backup started, buffer_size: %d bytes' % (buffer_size, ))
         progress_obj = False
+
         try:
             if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
                 raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
@@ -713,7 +768,9 @@ class msf_instance_cloud(osv.osv):
                 if previous_backup == bck['name']:
                     raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
 
-            dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
+            dav_data = self.get_backup_connection_data(cr, uid, [local_instance.id], context=None)
+
+            range_data = self.read(cr, uid, local_instance.id, ['cloud_retry_from', 'cloud_retry_to'], context=context)
             temp_fileobj = NamedTemporaryFile('w+b', delete=True)
             z = zipfile.ZipFile(temp_fileobj, "w", compression=zipfile.ZIP_DEFLATED)
             z.write(bck['path'], arcname=bck['name'])
@@ -723,17 +780,55 @@ class msf_instance_cloud(osv.osv):
             zip_size = os.path.getsize(temp_fileobj.name)
             today = DateTime.now()
 
+            self._logger.info('OneDrive: upload backup started, buffer_size: %s, total size %s' % (misc.human_size(buffer_size), misc.human_size(zip_size)))
             if progress:
                 progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
 
-            dav.create_folder(self._temp_folder)
             final_name = '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week])
             temp_drive_file = '%s/%s.zip' % (self._temp_folder, local_instance.instance)
 
-            dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
-            temp_fileobj.close()
-            dav.move(temp_drive_file, final_name)
+            dav_connected = False
+            temp_create = False
+            error = False
+            upload_ok = False
+            dav = False
+            while True:
+                try:
+                    if not dav_connected:
+                        dav = webdav.Client(**dav_data)
+                        dav_connected = True
 
+                    if not temp_create:
+                        dav.create_folder(self._temp_folder)
+                        temp_create = True
+
+                    if not upload_ok:
+                        upload_ok, error = dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
+
+                    # please don't change the following to else:
+                    if upload_ok:
+                        dav.move(temp_drive_file, final_name)
+                        break
+                    else:
+                        if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
+                            break
+
+                        self._get_backoff(dav, 'OneDrive: retry %s' % error)
+                        if 'timed out' in error or '2130575252' in error:
+                            self._logger.info('OneDrive: session time out')
+                            dav.login()
+
+                except requests.exceptions.RequestException, e:
+                    if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):
+                        raise
+                    self._get_backoff(dav, 'OneDrive: retry except %s' % e)
+
+            if not upload_ok:
+                if error:
+                    raise Exception(error)
+                else:
+                    raise Exception('Unknown error')
+            temp_fileobj.close()
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:
                 progress_obj.write({'state': 'Done', 'name': 100, 'message': _('Backup successfully sent!')})

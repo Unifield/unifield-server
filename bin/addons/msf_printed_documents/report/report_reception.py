@@ -21,6 +21,8 @@
 
 import time
 from report import report_sxw
+from tools.translate import _
+
 
 class report_reception(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -75,59 +77,45 @@ class report_reception(report_sxw.rml_parse):
         warn = ''
         tab = []
         if kc_flag or dg_flag:
-            warn += 'You are about to receive'
+            warn += _('You are about to receive')
         if kc_flag :
-            tab.append('heat sensitive')
+            tab.append(_(' heat sensitive'))
         if dg_flag :
-            tab.append('dangerous')
+            tab.append(_(' dangerous'))
         if len(tab) > 0 :
-            if len(tab) ==1:
-                warn += ' ' + tab[0]
+            if len(tab) == 1:
+                warn += tab[0]
             elif len(tab) == 2:
-                warn += ' ' + tab[0] + ' and ' + tab[1]
+                warn += tab[0] + _(' and') + tab[1]
             elif len(tab) == 3:
-                warn += ' ' + tab[0] + ', ' + tab[1] + ' and ' +  tab[2]
+                warn += tab[0] + ', ' + tab[1] + _(' and') +  tab[2]
         if warn:
-            warn += ' goods products, please refer to the appropriate procedures'
+            warn += _(' goods products, please refer to the appropriate procedures')
         return warn
 
     def getQtyPO(self,line):
         # line amount from the PO, always the same on all INs for a given PO
-        val = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
+        val = 0
+        if line.state in ('assigned', 'confirmed', 'done'):
+            val = line.product_qty
         return "{0:.2f}".format(val)
 
     def getQtyBO(self,line,o):
-        # Back Order amount = PO amount - all receipts
+        bo_qty = 0
+        if line.state in ('assigned', 'shipped', 'confirmed'):
+            bo_qty = line.product_qty
 
-        # get PO qty
-        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
-        # get received qty (current and previous INs)
-        cr, uid = self.cr, self.uid
-        val = 0.00
-        stock_move_obj = self.pool.get('stock.move')
-        closed_move_ids = stock_move_obj.search(cr, uid, [('purchase_line_id','=',line.purchase_line_id.id),('state','=','done'),('type','=','in')])
-        if closed_move_ids:
-            stock_moves = stock_move_obj.browse(cr, uid, closed_move_ids)
-            if stock_moves:
-                for move in stock_moves:
-                    val = val + move.product_qty
-
-        qtyBO = qtyPO - val
-        if qtyBO <= 0:
-            qtyBO = 0
-
-        return "{0:.2f}".format(qtyBO)
+        return "{0:.2f}".format(bo_qty)
 
     def getQtyIS(self, line, o):
         # Amount received in this IN only
         # REF-96: Don't count the shipped available IN
 
-        if line.state in ('cancel') or o.state in ('cancel'):
-            return '0' # US_275 Return 0 for cancel lines
-        elif o.state in ('assigned', 'shipped'):
-            val = 0
-        else:
+        val = 0
+        if line.state == 'done':
             val = line.product_qty
+        elif line.state in ('cancel') or o.state in ('cancel'):
+            return '0' # US_275 Return 0 for cancel lines
 
         if val == 0:
             return ' ' # display blank instead 0

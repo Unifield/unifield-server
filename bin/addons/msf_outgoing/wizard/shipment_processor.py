@@ -83,16 +83,52 @@ class shipment_processor(osv.osv):
             ],
             readonly=True,
         ),
+        'draft': fields.boolean('Draft', help='Usefull for internal management of save as draft order'),
     }
 
     _defaults = {
         'step': 'create',
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'draft': lambda *a: False,
     }
 
-    """
-    Model methods
-    """
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        ship_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            ship_id = proc['shipment_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('shipment').create_shipment(cr, uid, ship_id, context=context)
+
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
+
+
     def select_all(self, cr, uid, ids, context=None):
         """
         Select all button, write max number of packs in each pack family line
@@ -184,7 +220,7 @@ class shipment_processor(osv.osv):
                     'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
                     'from_pack': family.from_pack,
                     'to_pack': family.to_pack,
-                    'selected_number': family.num_of_packs,
+                    'selected_number': 0 if self._name == 'return.shipment.processor' else family.num_of_packs,
                     'pack_type': family.pack_type and family.pack_type.id or False,
                     'length': family.length,
                     'width': family.width,
@@ -222,6 +258,9 @@ class shipment_processor(osv.osv):
 
         negative_family_ids = []
         too_much_family_ids = []
+
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
 
         for wizard in self.browse(cr, uid, ids, context=context):
             total_qty = 0.00
@@ -307,7 +346,7 @@ class shipment_family_processor(osv.osv):
         ),
         'sale_order_id': fields.many2one(
             'sale.order',
-            string='Sale Order Ref.',
+            string='Field Order Ref.',
             readonly=True,
         ),
         'ppl_id': fields.many2one(

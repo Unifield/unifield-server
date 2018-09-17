@@ -350,9 +350,12 @@ class journal_items_corrections(osv.osv_memory):
             elif acc_type == 'advance' and not aml.employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with an Employee Third Party.') % (account.code, account.name))
-            elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
+            elif acc_type == 'down_payment' and not aml.partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
+            elif acc_type == 'payroll' and not aml.partner_id and not aml.employee_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with a Partner or an Employee Third Party.') % (account.code, account.name))
         else:
             # Check the compatibility with the Allowed Partner Types
             # (according to US-1307 this check is done only when the account has no "Type For Specific Treatment")

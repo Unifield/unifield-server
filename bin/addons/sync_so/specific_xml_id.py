@@ -809,6 +809,16 @@ class hr_employee(osv.osv):
             return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
                                                                 table_name, res_id)
 
+    def create(self, cr, uid, vals, context=None):
+        if not context:
+            context = {}
+
+        if context.get('sync_update_execution') and vals.get('employee_type') == 'ex':
+            vals['active'] = False
+
+        return super(hr_employee, self).create(cr, uid, vals, context)
+
+
     def unlink(self, cr, uid, ids, context=None):
         super(hr_employee, self).unlink(cr, uid, ids, context)
         if isinstance(ids, (int, long)):
@@ -817,3 +827,12 @@ class hr_employee(osv.osv):
         return True
 
 hr_employee()
+
+class hr_payment_method(osv.osv):
+    _inherit = 'hr.payment.method'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        r = self.read(cr, uid, [res_id], ['name'])[0]
+        return get_valid_xml_name('hr_payment_method', r['name'])
+
+hr_payment_method()

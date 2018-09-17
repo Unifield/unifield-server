@@ -48,7 +48,7 @@ class account_account(osv.osv):
         cmp_date = datetime.date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
-        for a in self.browse(cr, uid, ids):
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['activation_date', 'inactivation_date']):
             res[a.id] = True
             if a.activation_date > cmp_date:
                 res[a.id] = False
@@ -643,8 +643,9 @@ class account_account(osv.osv):
             acc_type = acc_id.type_for_register
             transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
-            dp_payroll_not_ok = acc_type in ['down_payment', 'payroll'] and (not partner_id or journal_id or employee_id)
-            if transfer_not_ok or advance_not_ok or dp_payroll_not_ok:
+            dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
+            payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
+            if transfer_not_ok or advance_not_ok or dp_not_ok or payroll_not_ok:
                 not_compatible_ids.append(acc_id.id)
         if not_compatible_ids:
             self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
@@ -797,7 +798,7 @@ class account_move(osv.osv):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
@@ -1132,6 +1133,10 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    # Only Donation accounts are allowed with an ODX journal
+                    if m.journal_id.type == 'extra' and ml.account_id.type_for_register != 'donation':
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
+                                                             'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue

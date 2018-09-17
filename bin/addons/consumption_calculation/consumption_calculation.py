@@ -80,11 +80,11 @@ class real_average_consumption(osv.osv):
                 raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
-                    raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+                    raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
                 else:
                     for move in report.picking_id.move_lines:
                         if move.state != 'cancel':
-                            raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+                            raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
 
         return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
 
@@ -165,7 +165,7 @@ class real_average_consumption(osv.osv):
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
         },),
-        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer')], required=1, select=1),
+        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], required=1, select=1),
         'activity_name': fields.function(_get_act_name, method=True, type='char', string='Destination Location', readonly=True, size=128, multi='loc_name', store={
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
@@ -187,9 +187,7 @@ class real_average_consumption(osv.osv):
     }
 
     _defaults = {
-        #'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
@@ -1737,12 +1735,13 @@ class product_product(osv.osv):
             if from_date and to_date:
                 rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
                     ('cons_location_id', 'in', location_ids),
+                    ('state', '!=', 'cancel'),
                     # All lines with a report started out the period and finished in the period
                     '|', '&', ('period_to', '>=', from_date), ('period_to', '<=', to_date),
                     #  All lines with a report started in the period and finished out the period
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
-                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date)
+                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
                 ])
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
@@ -1837,7 +1836,7 @@ class product_product(osv.osv):
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
         if from_date and to_date:
-            rcr_domain = ['&', ('product_id', 'in', ids),
+            rcr_domain = ['&', '&', ('rac_id.state', '!=', 'cancel'), ('product_id', 'in', ids),
                           # All lines with a report started out the period and finished in the period
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
                           # All lines with a report started in the period and finished out the period

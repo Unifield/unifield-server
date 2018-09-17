@@ -51,11 +51,232 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF10.0
+    def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
+        """
+        Third Parties in G/L selector (partners / employees / journals) become many2many fields
+        Updates the existing selectors accordingly
+        (note: selectors aren't synched for now)
+        """
+        selector_obj = self.pool.get('account.mcdb')
+        selector_ids = selector_obj.search(cr, uid, [('model', '=', 'account.move.line')])
+        for selector in selector_obj.browse(cr, uid, selector_ids,
+                                            fields_to_fetch=['partner_id', 'employee_id', 'transfer_journal_id']):
+            partner_ids, employee_ids, transfer_journal_ids = [], [], []
+            display_partner = display_employee = display_transfer_journal = False
+            if selector.partner_id:
+                partner_ids = [selector.partner_id.id]
+                display_partner = True
+            if selector.employee_id:
+                employee_ids = [selector.employee_id.id]
+                display_employee = True
+            if selector.transfer_journal_id:
+                transfer_journal_ids = [selector.transfer_journal_id.id]
+                display_transfer_journal = True
+            vals = {
+                # old fields not used anymore: to set to False in any cases
+                'partner_id': False,
+                'employee_id': False,
+                'transfer_journal_id': False,
+                # new fields: to fill in if need be
+                'partner_ids': [(6, 0, partner_ids)],
+                'employee_ids': [(6, 0, employee_ids)],
+                'transfer_journal_ids': [(6, 0, transfer_journal_ids)],
+                # 'display' boolean: to set to True to display the relative section by default in the selector
+                'display_partner': display_partner,
+                'display_employee': display_employee,
+                'display_transfer_journal': display_transfer_journal,
+            }
+            selector_obj.write(cr, uid, selector.id, vals)
+
+    def us_4879_fo_from_shipping_except_to_close(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set state='done' where state='shipping_except' and procurement_request='f'")
+        self._logger.warn('FO from shipping_except to done: %d' % (cr.rowcount,))
+        return True
+
+    def us_3873_update_reconcile_filter_in_partner_report_templates(self, cr, uid, *a, **b):
+        """
+        Updates the Wizard Templates for the "Partner Ledger" and "Partner Balance" following the change on reconcile filter:
+        - "Include Reconciled Entries" ticked ==> becomes "Reconciled: Empty"
+        - "Include Reconciled Entries" unticked ==> becomes "Reconciled: No"
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', 'in',
+                                                      ['account.partner.ledger', 'wizard.account.partner.balance.tree'])])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['wizard_name', 'values']):
+            old_field = template.wizard_name == 'account.partner.ledger' and 'reconcil' or 'include_reconciled_entries'
+            new_field = 'reconciled'
+            try:
+                values_dict = eval(template.values)
+                if old_field in values_dict:
+                    if not values_dict[old_field]:
+                        reconciled = 'no'
+                    else:
+                        reconciled = 'empty'
+                    values_dict[new_field] = reconciled
+                    del values_dict[old_field]
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    def us_3873_update_display_partner_in_partner_balance_templates(self, cr, uid, *a, **b):
+        """
+        Updates the Wizard Templates for the "Partner Balance" report following the fact that the display_partner field
+        is now required: an empty display_partner becomes "With movements" (= will give the same results as before US-3873 dev)
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['values']):
+            try:
+                values_dict = eval(template.values)
+                if 'display_partner' in values_dict:
+                    if not values_dict['display_partner']:
+                        values_dict['display_partner'] = 'with_movements'
+                        template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    def us_3873_remove_initial_balance_in_partner_balance_templates(self, cr, uid, *a, **b):
+        """
+        Removes the initial_balance from the Wizard Templates for the "Partner Balance" report
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['values']):
+            try:
+                values_dict = eval(template.values)
+                if 'initial_balance' in values_dict:
+                    del values_dict['initial_balance']
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    # UF9.1
+    def change_xml_payment_method(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if not level_current:
+            return True
+
+
+        identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
+        cr.execute("update sync_client_update_received set run='t', log='Set as run by US-4762' where run='f' and model='hr.payment.method'")
+        cr.execute("delete from ir_model_data where model='hr.payment.method' and res_id not in (select id from hr_payment_method)")
+        cr.execute("update ir_model_data set name=(select 'hr_payment_method_'||name from hr_payment_method where id=res_id) where model='hr.payment.method'")
+
+        # on HQ sync down payment method
+        if level_current == 'section':
+            cr.execute("update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='hr.payment.method'")
+            pay_obj = self.pool.get('hr.payment.method')
+            for pm in ['ESP', 'CHQ', 'VIR']:
+                if not pay_obj.search(cr, uid, [('name', '=', pm)]):
+                    pay_obj.create(cr, uid, {'name': pm})
+
+
+        # touch employee created on this instance
+        cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''payment_method_id'']' where model='hr.employee' and module='sd' and name like %s||'/%%'
+            and res_id in (select id from hr_employee where payment_method_id is not null)""" , (identifier,))
+
+        return True
+
     # UF9.0
+    def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
+        data = self.pool.get('ir.model.data')
+        seq_id = False
+        try:
+            seq_id = data.get_object_reference(cr, uid, 'sale', 'seq_sale_order')[1]
+        except:
+            return True
+
+        if seq_id:
+            seq_obj = self.pool.get('ir.sequence')
+            seq_id = seq_obj.search(cr, uid, [('id', '=', seq_id), ('implementation', '=', 'psql')])
+            if seq_id:
+                seq_obj.write(cr, uid, seq_id[0], {'implementation': 'no_gap'})
+                self._logger.warn('Change FO seq to no_gap')
+        return True
+
     def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
         if self.pool.get('sync.version.instance.monitor'):
             cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
             cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        return True
+
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+        return True
+
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
+    # UF8.2
+    def ud_trans(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        if level_current == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
+
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+
+            cr.execute("""
+                update ir_translation r set xml_id =
+                    (select d.name from ir_model_data d where model='product.product' and module='sd' and d.res_id=(select p.id from product_product p where p.product_tmpl_id=r.res_id))
+                    where r.name='product.template,name'
+            """)
+            self._logger.warn('HQ update xml_id no %d product trans' % (cr.rowcount,))
+
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
+                model='ir.translation' and
+                res_id in (
+                   select id from ir_translation where name='product.template,name' and res_id in (
+                        select p.product_tmpl_id from product_product p where p.international_status=%s
+                        )
+                )
+            """, (unidata_id,))
+            self._logger.warn('HQ touching %d UD trans' % (cr.rowcount,))
+
+            # send product on which UD has changed the name without any lang ctx, if there isn't any ir.trans record
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''name'']'
+                where model='product.product' and
+                res_id in (
+                    select id from product_product where product_tmpl_id in
+                        ( select id from product_template where id in
+                            (select res_id from audittrail_log_line where name='name' and object_id=128 and method='write')
+                          and id not in (select res_id from ir_translation where name='product.template,name' and lang='en_MF')
+                        )
+                )
+            """)
+            self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
         return True
 
     # UF8.1
@@ -251,6 +472,7 @@ class patch_scripts(osv.osv):
             self._logger.warn('%s AJI updated.' % (cr.rowcount,))
             cr.execute(update_ji)
             self._logger.warn('%s JI updated.' % (cr.rowcount,))
+
 
     # UF8.0
     def set_sequence_main_nomen(self, cr, uid, *a, **b):
@@ -2659,3 +2881,33 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something(osv.osv):
+    _name = 'sync.trigger.something'
+
+    _columns = {
+        'name': fields.char('Name', size=16),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
+            _logger = logging.getLogger('tigger')
+
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_to_delete = """from ir_translation where name='product.template,name'
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
+            """ % (unidata_id,)  # not_a_user_entry
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id  """ + trans_to_delete + """
+            )""")  # not_a_user_entry
+            _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
+            cr.execute("delete "+ trans_to_delete) # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        return super(sync_tigger_something, self).create(cr, uid, vals, context)
+
+sync_tigger_something()

@@ -126,9 +126,9 @@ class module(osv.osv):
                     aa = v.inherit_id and '* INHERIT ' or ''
                     res_mod_dic['views_by_module'].append(aa + v.name + '('+v.type+')')
                 elif key=='ir.actions.report.xml':
-                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id).name)
+                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['name']).name)
                 elif key=='ir.ui.menu':
-                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id).complete_name)
+                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['complete_name']).complete_name)
             except KeyError:
                 self.__logger.warning(
                     'Data not found for reference %s[%s:%s.%s]', data_id.model,

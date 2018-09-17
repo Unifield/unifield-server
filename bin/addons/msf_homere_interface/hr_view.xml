@@ -23,7 +23,8 @@
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                    <field name="parent_id"/>
+                    <field name="homere_id_unique" invisible="1"/>
+                    <field name="homere_codeterrain" invisible="1"/>
                 </group>
                 <group colspan="4" col="8">
                   <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -63,6 +64,14 @@
                             <separator string="Position" colspan="2"/>
                             <field name="job_id" domain="[('state','!=','old')]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="coach_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_start_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="contract_end_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Payment Information" colspan="2"/>
+                            <field name="payment_method_id" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="bank_name" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
+                            <field name="bank_account_number" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
                         </group>
                     </page>
                     <page string="Categories">
@@ -84,7 +93,6 @@
           * delete work phone column
           * delete work e-mail column
           * delete department column
-          * delete manager column (parent_id)
           * add employee ID (identification_id) after description (name)
           * add analytic distribution elements:
             * cost center
@@ -105,7 +113,6 @@
                 <field name="work_phone" position="replace"/>
                 <field name="work_email" position="replace"/>
                 <field name="department_id" position="replace"/>
-                <field name="parent_id" position="replace"/>
                 <field name="name" position="after">
                   <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
@@ -163,10 +170,6 @@
                     <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
                 </xpath>
                 <xpath expr="/search/field[@name='department_id']" position="replace">
-                </xpath>
-                <xpath expr="/search/field[@name='parent_id']" position="replace">
-                </xpath>
-                <xpath expr="//filter[@string='Manager']" position="replace">
                 </xpath>
                 <xpath expr="//filter[@string='Coach']" position="replace">
                 </xpath>

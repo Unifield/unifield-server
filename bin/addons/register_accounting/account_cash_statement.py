@@ -52,11 +52,7 @@ class account_cash_statement(osv.osv):
                 for line in statement.starting_details_ids:
                     amount_total+= line.pieces * line.number
             else:
-                if context and context.get('from_open'):
-                    # US-948 carry other cashbox balance at open register
-                    amount_total = statement.prev_reg_id.balance_end_cash
-                else:
-                    amount_total = statement.prev_reg_id.msf_calculated_balance
+                amount_total = statement.prev_reg_id.msf_calculated_balance
 
             res[statement.id] = {
                 'balance_start': amount_total
@@ -158,6 +154,9 @@ class account_cash_statement(osv.osv):
                                     to_write_id_list.extend(search_ids)
                 self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
+        if not vals:
+            return True
+
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
                                                          context=context)
 
@@ -257,6 +256,8 @@ class account_cash_statement(osv.osv):
         """
         Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
         """
+        if context is None:
+            context = {}
         # Prepare some values
         res = {}
         for st in self.browse(cr, uid, ids):
@@ -265,9 +266,10 @@ class account_cash_statement(osv.osv):
             # Update next register opening balance
             if st.journal_id and st.journal_id.type == 'cash':
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
+                context.update({'update_next_reg_balance_start': True})
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        self.write(cr, 1, [next_st.id], {'balance_start': amount})
+                        self.write(cr, 1, [next_st.id], {'balance_start': amount}, context=context)
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):

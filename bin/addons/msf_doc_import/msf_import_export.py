@@ -61,6 +61,8 @@ class msf_import_export(osv.osv_memory):
         if 'domain_type' in context:
             domain_type = context['domain_type']
         for key, value in MODEL_DICT.items():
+            if key in ['product_list_update', 'supplier_catalogue_update']:
+                continue
             if value['domain_type'] == domain_type:
                 if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
                     result_list.append((key, _(value['name'])))
@@ -442,15 +444,15 @@ class msf_import_export(osv.osv_memory):
         if not all([id_check[wiz.model_list_selection][x] for x in id_check[wiz.model_list_selection]]):
             raise osv.except_osv(
                 _('Error'),
-                _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s." % (
+                _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s.") % (
                     _('Product list') if wiz.model_list_selection == 'product_list_update' else _('Supplier catalogue'),
                     wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name,
                     ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in id_check[wiz.model_list_selection].keys()]).strip(' ,')
-                ))
+                )
             )
 
         if len(fields_gotten) != len(fields_needed_name):
-            raise osv.except_osv(_('Info'), _('Header info fields must be the following: %s' % ', '.join(fields_needed_name).strip(', ')))
+            raise osv.except_osv(_('Info'), _('Header info fields must be the following: %s') % ', '.join(fields_needed_name).strip(', '))
         for i, fn in enumerate(fields_needed_name):
             if fields_gotten[i] != fn:
                 raise osv.except_osv(_('Info'), _('Line %s: Expected header column %s got %s') % (i+1, fn, fields_gotten[i]))

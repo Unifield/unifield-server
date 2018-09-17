@@ -43,7 +43,7 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="20,-1"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="-1,-1"/>
       <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>

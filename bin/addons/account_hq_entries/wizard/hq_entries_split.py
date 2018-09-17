@@ -254,6 +254,7 @@ class hq_entries_split(osv.osv_memory):
         'original_amount': fields.float('Original Amount', readonly=True, required=True),
         'line_ids': fields.one2many('hq.entries.split.lines', 'wizard_id', "Split lines"),
         'running': fields.boolean('Is running'),
+        'date': fields.date('Posting Date'),
     }
 
     _defaults = {

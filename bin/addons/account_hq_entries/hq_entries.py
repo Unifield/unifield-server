@@ -222,6 +222,18 @@ class hq_entries(osv.osv):
         'is_account_partner_compatible': lambda *a: True,
     }
 
+    def _check_active_account(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
+        for hq in self.browse(cr, uid, ids, fields_to_fetch=['name', 'account_id', 'date']):
+            if hq.date < hq.account_id.activation_date or (hq.account_id.inactivation_date and hq.date >= hq.account_id.inactivation_date):
+                raise osv.except_osv(_('Error !'), _('HQ Entry %s: account %s is inactive') % (hq.name, hq.account_id.code))
+        return True
+
     def split_forbidden(self, cr, uid, ids, context=None):
         """
         Split is forbidden for these lines:
@@ -315,7 +327,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount,})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
@@ -455,6 +467,11 @@ class hq_entries(osv.osv):
         # If destination given, search if given
         return res
 
+    def create(self, cr, uid, vals, context=None):
+        new_id = super(hq_entries, self).create(cr, uid, vals, context)
+        self._check_active_account(cr, uid, [new_id], context=context)
+        return new_id
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Change Expat salary account is not allowed
@@ -483,7 +500,9 @@ class hq_entries(osv.osv):
                 if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
-        return super(hq_entries, self).write(cr, uid, ids, vals, context)
+        res = super(hq_entries, self).write(cr, uid, ids, vals, context)
+        self._check_active_account(cr, uid, ids, context=context)
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -582,7 +601,7 @@ class hq_entries(osv.osv):
                             raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
                                                                  ' analytic accounts\".') % (hq_account.code, hq_account.name))
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         import os
         processed = []

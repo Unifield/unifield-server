@@ -88,19 +88,21 @@ class hq_entries_validation(osv.osv_memory):
         return view
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
-    def create_distribution_id(self, cr, uid, currency_id, line, account):
+    def create_distribution_id(self, cr, uid, currency_id, line, account, split=False):
         current_date = strftime('%Y-%m-%d')
         line_cc_first = line.cost_center_id_first_value and line.cost_center_id_first_value.id or False
         line_cc_id = line.cost_center_id and line.cost_center_id.id  or False
         line_account_first = line.account_id_first_value and line.account_id_first_value.id or False
 
-        cc_id = line_cc_first or line_cc_id or False
+        # if split is True the line is a split line: use the current values instead of the original ones
+        cc_id = (not split and line_cc_first) or line_cc_id or False
         fp_id = line.analytic_id and line.analytic_id.id or False
-        if line_cc_id != line_cc_first or line_account_first != line.account_id.id:
+        if not split and (line_cc_id != line_cc_first or line_account_first != line.account_id.id):
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         f1_id = line.free_1_id and line.free_1_id.id or False
         f2_id = line.free_2_id and line.free_2_id.id or False
-        destination_id = line.destination_id_first_value and line.destination_id_first_value.id or account.default_destination_id and account.default_destination_id.id or False
+        destination_id = (split and line.destination_id.id) or line.destination_id_first_value.id or \
+                         (account.default_destination_id and account.default_destination_id.id) or False
         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
         if distrib_id:
             common_vals = {'distribution_id':distrib_id,
@@ -124,10 +126,12 @@ class hq_entries_validation(osv.osv_memory):
         return distrib_id
 
     def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
-                    date=None, journal=None, orig_acct=None, doc_date=None, context=None):
+                    date=None, journal=None, orig_acct=None, doc_date=None, split=False, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
+        Note: if split is True, the lines handled are split lines => the account used is the last given by the user and
+        not the account_id_first_value
         """
         # Some verifications
         if context is None:
@@ -173,9 +177,10 @@ class hq_entries_validation(osv.osv_memory):
                 if not line.account_id_first_value:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
                 # create new distribution (only for expense accounts)
-                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line.account_id_first_value)
+                line_account = split and line.account_id or line.account_id_first_value
+                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
                 vals = {
-                    'account_id': line.account_id_first_value.id,
+                    'account_id': line_account.id,
                     'period_id': period_id,
                     'journal_id': journal_id,
                     'date': line.date,
@@ -249,7 +254,9 @@ class hq_entries_validation(osv.osv_memory):
         original_lines = set()
         original_move_ids = []
         ana_line_obj = self.pool.get('account.analytic.line')
-        od_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+        od_journal_ids = self.pool.get('account.journal').search(cr, uid,
+                                                                 [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                 order='id', limit=1)
         if not od_journal_ids:
             raise osv.except_osv(_('Error'), _('No correction journal found!'))
         od_journal_id = od_journal_ids[0]
@@ -284,7 +291,9 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
-            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, journal=od_journal_id, orig_acct=original_account_id)
+            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id,
+                                            line.currency_id.id, date=line.date, doc_date=line.document_date,
+                                            journal=od_journal_id, orig_acct=original_account_id, split=True, context=context)
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
@@ -324,7 +333,9 @@ class hq_entries_validation(osv.osv_memory):
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
             original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date, context=context)
-            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+            acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
+                                                                                [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                                order='id', limit=1)
             if not acor_journal_ids:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             acor_journal_id = acor_journal_ids[0]
@@ -390,7 +401,8 @@ class hq_entries_validation(osv.osv_memory):
             # Search an analytic correction journal
             acor_journal_id = False
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                          ('is_current_instance', '=', True)])
+                                                                                          ('is_current_instance', '=', True)],
+                                                                                order='id', limit=1)
             if acor_journal_ids:
                 acor_journal_id = acor_journal_ids[0]
             # Tag active_ids as user validated
@@ -522,7 +534,9 @@ class hq_entries_validation(osv.osv_memory):
                     cor_ids = [cor_ids]
                 cor_ids += res_reverse
 
-                gl_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+                gl_journal_ids = self.pool.get('account.journal').search(cr, uid,
+                                                                         [('type', '=', 'correction'), ('is_current_instance', '=', True)],
+                                                                         order='id', limit=1)
                 if not gl_journal_ids:
                     self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Error'), _('No correction journal found!'))
