@@ -20,7 +20,7 @@
 ##############################################################################
 
 from osv import osv
-from xml.sax.saxutils import escape
+from tools.misc import escape_html
 import netsvc
 from tools.translate import _
 
@@ -59,7 +59,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
         if not line_ids:
             if not prev_lines_ids:
                 return result
-            info_string = _('You cannot delete product: %s') % ", ".join([sol.product_id.default_code for sol in so_line.browse(cr, uid, prev_lines_ids)]).strip(', ')
+            info_string = _('You cannot delete product: %s') % ", ".join([escape_html(sol.product_id.default_code) for sol in so_line.browse(cr, uid, prev_lines_ids)]).strip(', ')
             result['arch'] = """
                 <form>
                 <separator colspan="6" string="%s"/>
@@ -85,7 +85,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                         names += _(', %s') % (name)
 
             if parent_so_id != 0:
-                info_string = _('You are about to cancel the products %s, are you sure you wish to proceed ?') % escape(names)
+                info_string = _('You are about to cancel the products %s, are you sure you wish to proceed ?') % escape_html(names)
                 _moves_arch_lst = """
                                 <form>
                                 <separator colspan="6" string="%s"/>
@@ -102,7 +102,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 name = line.product_id.default_code
 
             if hasattr(line, 'name'):
-                info_string = _('You are about to cancel the product %s, are you sure you wish to proceed ?') % escape(name)
+                info_string = _('You are about to cancel the product %s, are you sure you wish to proceed ?') % escape_html(name)
                 _moves_arch_lst = """
                                 <form>
                                 <separator colspan="6" string="%s"/>
