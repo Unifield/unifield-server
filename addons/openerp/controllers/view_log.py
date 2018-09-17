@@ -19,7 +19,7 @@
 #
 ###############################################################################
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, TinyDict
+from openerp.utils import rpc
 
 from openobject.tools import expose
 
@@ -44,6 +44,7 @@ class View_Log(SecuredController):
     def index(self, id=None, model=None):
 
         values = {}
+        fields = self.fields[:]
         if id:
             res = rpc.session.execute('object', 'execute', model,
                                       'perm_read', [id], rpc.session.context)
@@ -55,6 +56,11 @@ class View_Log(SecuredController):
 
                     values[field] = ustr(line.get(field) or '/')
 
-        return {'values':values, 'fields':self.fields}
+            if model == 'product.product':
+                xmlid = rpc.session.execute('object', 'execute', model, 'read', [id], ['xmlid_code'], rpc.session.context)
+                values['xmlid_code'] = xmlid[0]['xmlid_code']
+                fields.append(('xmlid_code', _('UniData xmlid_code')))
+
+        return {'values':values, 'fields': fields}
 
 # vim: ts=4 sts=4 sw=4 si et

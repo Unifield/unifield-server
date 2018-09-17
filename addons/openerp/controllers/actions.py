@@ -207,6 +207,7 @@ def execute_report(name, **data):
                 report_name = datas['target_filename']
             elif datas.get('context', {}).get('_terp_view_name'):
                 report_name = datas['context']['_terp_view_name']
+
         if name != 'custom':
             proxy = rpc.RPCProxy('ir.actions.report.xml')
             res = proxy.search([('report_name','=', name)])
@@ -222,7 +223,7 @@ def execute_report(name, **data):
                     ctx['background_id'] = background_id
                     if 'background_time' not in ctx:
                         max_attempt = 2
-                report_name = report_info['filename']
+                report_name = datas.get('target_filename') or report_info['filename']
 
         report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
         state = False
@@ -258,6 +259,7 @@ def execute_report(name, **data):
         except UnicodeEncodeError:
             # replace all compatibility characters with their equivalents ("e with accent" becomes "e"...)
             report_name = unicodedata.normalize('NFKD', report_name).encode('ascii','ignore')
+        val['filename'] =  attachment + report_name + '.' + report_type
         cherrypy.response.headers['Content-Disposition'] = '%sfilename="' % attachment + report_name + '.' + report_type + '"'
 
         return _print_data(val)
