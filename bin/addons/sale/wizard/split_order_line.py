@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -69,8 +69,9 @@ class split_sale_order_line_wizard(osv.osv_memory):
 
                 # generate sync message manually:
                 return_info = {}
-                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', split.sale_line_id.id, return_info, 
-                                                                                      'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
+                if not split.sale_line_id.order_id.procurement_request:
+                    self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', split.sale_line_id.id, return_info,
+                                                                                          'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
 
                 # copy data
                 so_copy_data = {

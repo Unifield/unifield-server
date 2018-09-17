@@ -562,11 +562,41 @@
             <field name="type">tree</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
                     <field name="complete_name"/>
                     <field name="usage"/>
-                    <field name="stock_real" invisible="'product_id' not in context"/>
-                    <field name="stock_virtual" invisible="'product_id' not in context"/>
+                    <field name="location_category" />
+                    <field name="stock_real" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+                    <field name="stock_virtual" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_location_tree_specific_rule" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="location_category" />
+                    <field name="stock_real_specific" invisible="'specific_rules_tree_view' not in context" />
+                    <field name="stock_virtual_specific" invisible="'specific_rules_tree_view' not in context" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_location_tree_simple" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" hide_new_button="not context.get('from_advanced_menu')">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="location_category" />
                 </tree>
             </field>
         </record>
@@ -576,7 +606,7 @@
             <field name="res_model">stock.location</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
-            <field name="view_id" ref="view_location_tree2"/>
+            <field name="view_id" ref="view_location_tree_simple"/>
             <field name="search_view_id" ref="view_location_search"/>
             <field name="context">{'full':1, 'search_default_in_location':1}</field>
             <field name="help">Define your locations to reflect your warehouse structure and organization. OpenERP is able to manage physical locations (warehouses, shelves, bin, etc), partner locations (customers, suppliers) and virtual locations which are the counterpart of the stock operations like the manufacturing orders consumptions, inventories, etc. Every stock operation in OpenERP moves the products from one location to another one. For instance, if you receive products from a supplier, OpenERP will move products from the Supplier location to the Stock location. Each report can be performed on physical, partner or virtual locations.</field>

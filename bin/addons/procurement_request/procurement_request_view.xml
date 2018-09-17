@@ -149,6 +149,7 @@
                     <field name="requestor" />
                     <field name="ir_total_amount" string="Indicative Total Value"/>
                     <field name="functional_currency_id" />
+                    <field name="line_count"/>
                     <field name="state" />
                     <field name="warehouse_id" invisible="1" />
                 </tree>

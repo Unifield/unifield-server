@@ -162,14 +162,16 @@ class purchase_order_line(osv.osv):
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
-            sale = self.pool.get('sale.order.line')
-            sale._setNomenclatureInfo(cr, uid, vals, context)
+            if 'nomen_manda_0' in vals:
+                sale = self.pool.get('sale.order.line')
+                sale._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
 
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
+
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
 
