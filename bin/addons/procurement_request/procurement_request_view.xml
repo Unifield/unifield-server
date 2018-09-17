@@ -97,7 +97,7 @@
                                         />
                                     <button string="Validate" icon="terp-check" name="validated_ir" type="object" header="True"
                                             attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
-                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
+                                    <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
