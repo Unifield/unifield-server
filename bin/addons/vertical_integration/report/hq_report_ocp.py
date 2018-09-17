@@ -191,6 +191,9 @@ class finance_archive(finance_export.finance_archive):
             line[journal_type_col] = self._get_journal_type_value(cr, uid, line[journal_type_col])
         return new_data
 
+    def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
+        return hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, data, context=context, column_deletion=column_deletion)
+
 
 # request used for OCP and OCG VI
 # Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
@@ -510,6 +513,8 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'key': 'liquidity',
                 'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id,
                                  reg_types, last_day_of_period, tuple(instance_ids)),
+                'function': 'postprocess_liquidity_balances',
+                'fnct_params': context,
             },
             {
                 'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Opening balance', 'Calculated balance',
