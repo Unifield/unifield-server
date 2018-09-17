@@ -5,7 +5,7 @@ import netsvc
 from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+from msf_button_access_rights.osv_override import fakeUid
 
 
 class purchase_order_line(osv.osv):
@@ -74,6 +74,69 @@ class purchase_order_line(osv.osv):
                 linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                 if linked_in_move:
                     self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
+
+                # update qty on linked sale.order.line if has:
+                if pol.original_line_id.linked_sol_id:
+                    self.pool.get('sale.order.line').write(cr, uid, [pol.original_line_id.linked_sol_id.id], {
+                        'product_uom_qty': new_qty,
+                        'product_uos_qty': new_qty,
+                    }, context=context)
+
+                    if pol.linked_sol_id:
+                        # cancel OUT move if has:
+                        out_move_to_cancel = self.pool.get('stock.move').search(cr, uid, [
+                            ('type', '=', 'out'),
+                            ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                            ('product_qty', '=', pol.product_qty),
+                        ], context=context)
+                        if out_move_to_cancel:
+                            if pol.linked_sol_id:
+                                self.pool.get('stock.move').write(cr, uid, out_move_to_cancel, {'sale_line_id': pol.linked_sol_id.id}, context=context)
+                            self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
+
+            elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
+                    pol.original_line_id.linked_sol_id.order_id.procurement_request:
+                # split the sol:
+                split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                    'sale_line_id': pol.original_line_id.linked_sol_id.id,
+                    'original_qty': pol.original_line_id.linked_sol_id.product_uom_qty + pol.product_qty,
+                    'old_line_qty': pol.original_line_id.linked_sol_id.product_uom_qty,
+                    'new_line_qty': pol.product_qty,
+                }, context=context)
+                context.update({'return_new_line_id': True})
+                new_sol_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+                context.update({'return_new_sol_id': True})
+                self.write(cr, uid, pol.id, {'linked_sol_id': new_sol_id}, context=context)
+
+                linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                    ('type', '=', 'out')],
+                    context=context)
+                if len(linked_out_moves) > 1:
+                    for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                        if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == pol.product_qty:
+                            self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol_id}, context=context)
+
+        return True
+
+
+    def cancel_related_in_moves(self, cr, uid, ids, context=None):
+        '''
+        check if PO line has related IN moves, if it is the case, then cancel them
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            related_in_moves = self.pool.get('stock.move').search(cr, uid, [
+                ('purchase_line_id', '=', pol.id),
+                ('type', '=', 'in'),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
+            if related_in_moves:
+                self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
 
         return True
 
@@ -233,6 +296,7 @@ class purchase_order_line(osv.osv):
         So we have to create the sale.order.line from the given purchase.order.line
         @param fo_id: id of sale.order (int)
         '''
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -355,6 +419,45 @@ class purchase_order_line(osv.osv):
 
         return pick_id
 
+    def create_counterpart_fo_for_external_partner_po(self, cr, uid, p_order, context=False):
+        '''
+        US-4165 : Create a Field Order as a loan Purchase Order's counterpart
+        '''
+        if context is None:
+            context = {}
+
+        company_obj = self.pool.get('res.company')
+        curr_obj = self.pool.get('res.currency')
+        pricelist_obj = self.pool.get('product.pricelist')
+
+        pol_ids = self.search(cr, uid, [('order_id', '=', p_order.id), ('state', 'not in', ['cancel', 'cancel_r'])],
+                              context=context)
+        company_currency_id = company_obj.browse(cr, uid, uid, fields_to_fetch=['currency_id'], context=context).currency_id.id
+        pricelist_id = pricelist_obj.search(cr, uid, [('currency_id', '=', company_currency_id), ('type', '=', 'sale')],
+                                            context=context)[0]
+        ftf = ['product_id', 'price_unit', 'product_uom', 'product_qty']
+        counterpart_data = {
+            'order_type': 'loan',
+            'origin': p_order.name,
+            'loan_id': p_order.id,
+            'loan_duration': p_order.loan_duration,
+            'is_a_counterpart': True,
+            'partner_id': p_order.partner_id.id,
+            'partner_order_id': p_order.partner_id.address[0].id,
+            'partner_shipping_id': p_order.partner_id.address[0].id,
+            'partner_invoice_id': p_order.partner_id.address[0].id,
+            'pricelist_id': pricelist_id,
+            'order_line': [(0, 0, {
+                'product_id': x.product_id.id,
+                'price_unit': curr_obj.compute(cr, uid, p_order.pricelist_id.currency_id.id, company_currency_id,
+                                               x.price_unit, round=False, context=context),
+                'product_uom': x.product_uom.id,
+                'product_uom_qty': x.product_qty,
+                'type': 'make_to_stock',
+            }) for x in self.browse(cr, uid, pol_ids, fields_to_fetch=ftf, context=context)],
+        }
+
+        return self.pool.get('sale.order').create(cr, uid, counterpart_data, context=context)
 
     def button_confirmed(self, cr, uid, ids, context=None):
         '''
@@ -372,6 +475,7 @@ class purchase_order_line(osv.osv):
                 open_wizard = True
             if pol.state == 'validated_n':
                 # if line is 'validated_n', pass through 'validated' state to ensure no checks has been missed
+                #self.check_origin_is_set(self, cr, uid, pol, context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'validated', cr)
 
         if open_wizard:
@@ -393,13 +497,27 @@ class purchase_order_line(osv.osv):
         for pol_id in ids:
             wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
 
+        # Create the counterpart FO to a loan PO with an external partner if non-cancelled lines have been confirmed
+        p_order = False
+        for pol in self.browse(cr, uid, ids, context=context):
+            p_order = pol.order_id
+            break
+        if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart\
+                and p_order.partner_type == 'external' and p_order.state == 'confirmed':
+            self.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
+
         return True
 
-
-    def action_validated_n(self, cr, uid, ids, context=None):
+    def action_validated_n(self, cr, real_uid, ids, context=None):
         '''
         wkf method to validate the PO line
         '''
+
+        if real_uid == 1:
+            uid = real_uid
+        else:
+            uid = fakeUid(1, real_uid)
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -431,6 +549,22 @@ class purchase_order_line(osv.osv):
             if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
                 raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
+    def check_origin_for_validation(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
+        if to_complete_ids:
+            error = []
+            for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
+                error.append(_('#%d  %s') % (line['line_number'], line['default_code']))
+            if len(error) == 1:
+                raise osv.except_osv(_('Error'), _("This cannot be validated as line source document information is missing: %s") % error[0])
+            else:
+                raise osv.except_osv(_('Error'), _("These lines cannot be validated as line source document information is missing: \n - %s") % "\n -".join(error))
+
+        return True
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -441,7 +575,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
+
         # checks before validating the line:
+        self.check_origin_for_validation(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)
@@ -490,9 +626,9 @@ class purchase_order_line(osv.osv):
 
         self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-sy (if has)
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
 
@@ -563,7 +699,7 @@ class purchase_order_line(osv.osv):
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel']),
+                    ('state', 'not in', ['done', 'cancel', 'shipped']),
                     ('type', '=', 'in'),
                 ])
                 created = False
@@ -668,6 +804,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
@@ -680,7 +817,7 @@ class purchase_order_line(osv.osv):
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
-        Wkf method called when getting the cancel state
+        Wkf method called when getting the cancel_r state
         '''
         if context is None:
             context = {}
@@ -690,6 +827,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):

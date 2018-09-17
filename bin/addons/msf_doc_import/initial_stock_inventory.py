@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
+import tools
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from datetime import datetime
 from mx import DateTime
@@ -111,7 +112,7 @@ class stock_inventory(osv.osv):
             # Check length of the row
             if len(row) != 6:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
 
             # default values
             product_id = False
@@ -179,7 +180,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             batch = row.cells[3].data
             if batch:
                 if isinstance(batch, int):
-                    batch = str(batch)
+                    batch = tools.ustr(batch)
                 try:
                     batch = batch.strip()
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
@@ -349,7 +350,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 _('Product not found in the database for %s line%s: %s') % (
                     len(product_error) > 1 and 'these' or 'this',
                     len(product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in product_error)),
+                    ' / '.join(tools.ustr(x) for x in product_error)),
             )
         if no_product_error:
             raise osv.except_osv(
@@ -357,7 +358,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 _('Product not defined on %s line%s: %s') % (
                     len(no_product_error) > 1 and 'these' or 'this',
                     len(no_product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in no_product_error)),
+                    ' / '.join(tools.ustr(x) for x in no_product_error)),
             )
 
         # write order line on Inventory
@@ -652,7 +653,7 @@ class initial_stock_inventory(osv.osv):
             # Check length of the row
             if len(row) != 7:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry Date, Quantity"""))
 
             # default values
             product_id = False
@@ -884,7 +885,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 _('Product not found in the database for %s line%s: %s') % (
                     len(product_error) > 1 and 'these' or 'this',
                     len(product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in product_error)),
+                    ' / '.join(tools.ustr(x) for x in product_error)),
             )
         if no_product_error:
             raise osv.except_osv(
@@ -892,7 +893,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 _('Product not defined on %s line%s: %s') % (
                     len(no_product_error) > 1 and 'these' or 'this',
                     len(no_product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in no_product_error)),
+                    ' / '.join(tools.ustr(x) for x in no_product_error)),
             )
 
         # write order line on Inventory

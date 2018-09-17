@@ -151,29 +151,6 @@ class purchase_order_line(osv.osv):
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                             name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
-                             comment='', context=None):
-        '''
-        if the product is short shelf life we display a warning
-        '''
-        # call to super
-        result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-                                                                       partner_id, date_order, fiscal_position, date_planned,
-                                                                       name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
-
-        # if the product is short shelf life, display a warning
-        if product:
-            prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).is_ssl:
-                warning = {
-                    'title': 'Short Shelf Life product',
-                    'message': _(SHORT_SHELF_LIFE_MESS)
-                }
-                result.update(warning=warning)
-
-        return result
 
 purchase_order_line()
 
@@ -1123,7 +1100,7 @@ class stock_production_lot(osv.osv):
                     stock_report_prodlots_virtual
                 where
                     location_id IN %s group by prodlot_id
-                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
@@ -1474,7 +1451,7 @@ class stock_location(osv.osv):
             for f in field_names:
                 result[id].update({f: False,})
         # if product is set to False, it does not make sense to return a stock value, return False for each location
-        if 'product_id' in context and not context['product_id']:
+        if not context.get('product_id'):
             return result
 
         result = super(stock_location, self)._product_value(cr, uid, ids, ['stock_real', 'stock_virtual'], arg, context=context)
@@ -1491,12 +1468,16 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree' and context.get('specific_rules_tree_view', False):
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_location_tree2')
+        if not view_id and view_type == 'tree':
+            view = False
+            if context.get('specific_rules_tree_view', False) and context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_specific_rule')
+            elif not context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_simple')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return result
+
+        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),
@@ -1630,7 +1611,7 @@ class stock_inventory(osv.osv):
                 l.inventory_id in %%s
             GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % (
+            ORDER BY count(l.id) DESC""" % (  # not_a_user_entry
             self._name.replace('.', '_'),
             self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
         )

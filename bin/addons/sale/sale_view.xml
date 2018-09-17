@@ -90,6 +90,7 @@
                     <field name="client_order_ref" groups="base.group_extended"/>
                     <field name="partner_id"/>
                     <field name="user_id" />
+                    <field name="line_count"/>
                     <field name="picked_rate" widget="progressbar"/>
                     <!-- <field name="invoiced_rate" widget="progressbar"/> -->
                     <field name="amount_total" sum="Total Tax Included"/>

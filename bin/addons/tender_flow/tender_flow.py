@@ -264,8 +264,7 @@ class tender(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
                             LEFT JOIN tender t ON l.tender_id = t.id
-                          WHERE (pt.type != 'service_recep' %s) AND t.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                          WHERE (pt.type != 'service_recep' %s) AND t.id in %%s LIMIT 1''' % transport_cat, (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:
@@ -574,13 +573,13 @@ class tender(osv.osv):
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
-                #anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
+                anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
 
                 # attach new PO line:
                 pol_values = {
                     'order_id': po_to_use,
                     'linked_sol_id': tender_line.sale_order_line_id.id or False,
-                    #'origin': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.name or False,
+                    'origin': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.name or False,
                     'name': tender_line.product_id.partner_ref,
                     'product_qty': tender_line.qty,
                     'product_id': tender_line.product_id.id,
@@ -592,8 +591,8 @@ class tender(osv.osv):
                     'notes': tender_line.product_id.description_purchase,
                     'comment': tender_line.comment,
                 }
-                #if anal_dist_to_copy:
-                #    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context)
+                if anal_dist_to_copy:
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context)
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
 
             # when the po is generated, the tender is done - no more modification or comparison
@@ -648,7 +647,8 @@ class tender(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
+            rfq_ids = self.pool.get('purchase.order').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -957,7 +957,7 @@ class tender_line(osv.osv):
         # Variables
         to_remove = []
         to_cancel = []
-        sol_ids = {}
+        sol_to_resource = []
         sol_to_update = {}
         sol_not_to_delete = []
         so_to_update = set()
@@ -974,7 +974,7 @@ class tender_line(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.qty, line.sale_order_line_id.product_uom.id)
 
                 if line.has_to_be_resourced:
-                    sol_ids.update({line.sale_order_line_id.id: diff_qty})
+                    sol_to_resource.append(line.sale_order_line_id.id)
 
                 sol_to_update.setdefault(line.sale_order_line_id.id, 0.00)
                 sol_to_update[line.sale_order_line_id.id] += diff_qty
@@ -986,24 +986,16 @@ class tender_line(osv.osv):
         if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
 
-        if sol_ids:
-            for sol in sol_ids:
-                sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
-
         # Update sale order lines
         so_to_cancel_ids = []
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete
-            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], sol in sol_to_resource, context=context)
             if so_to_cancel_id:
                 so_to_cancel_ids.append(so_to_cancel_id)
 
         if context.get('update_or_cancel_line_not_delete', False):
             del context['update_or_cancel_line_not_delete']
-
-        # Update the FO state
-        # for so in so_to_update:
-        #    wf_service.trg_write(uid, 'sale.order', so, cr)
 
         # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
         # for proceeding to other actions (create PO, Done etc)
@@ -1625,7 +1617,9 @@ class purchase_order(osv.osv):
             if not rfq.rfq_ok:
                 continue
             for rfq_line in rfq.order_line:
-                wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+                if (rfq_line.order_id.partner_type in ('external', 'esc') and rfq_line.state in ('draft', 'validated', 'validated_n'))\
+                        or (rfq_line.order_id.partner_type not in ('external', 'esc') and rfq_line.state == 'draft'):
+                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
 
@@ -2130,8 +2124,8 @@ class ir_values(osv.osv):
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)',
                                                      'Purchase Order',
-                                                     'Allocation report',
-                                                     'Order impact vs. Budget'],
+                                                     'po.allocation.report',
+                                                     'order.impact.vs.budget'],
                               'client_action_relate': ['ir_open_product_list_export_view',
                                                        'View_log_purchase.order',
                                                        'Allocation report'],
