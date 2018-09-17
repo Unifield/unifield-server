@@ -467,7 +467,7 @@ class Float(TinyInputWidget):
                 rounding_value = attrs.get('rounding_value')
 
             if rounding_value in attrs.get('uom_rounding'):
-                rounding = int(abs(math.log(attrs['uom_rounding'][rounding_value])))
+                rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)

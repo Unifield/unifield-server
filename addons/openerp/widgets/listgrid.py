@@ -633,7 +633,7 @@ class Float(Char):
             computation = eval(computation)
 
         if self.attrs.get('rounding'):
-            return format.format_decimal(self.value or 0.0, int(abs(math.log(self.attrs['rounding']))))
+            return format.format_decimal(self.value or 0.0, int(abs(math.log10(self.attrs['rounding']))))
 
         integer, digit = digits
         return format.format_decimal(self.value or 0.0, digit, computation=computation)
