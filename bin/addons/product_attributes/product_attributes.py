@@ -305,7 +305,7 @@ class product_sde_proof_of_concept(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', 'Product'),
         'gtin': fields.char(size=25, string='GTIN'),
-        'packaging': fields.char(size=10, string='Packaging'),
+        'packaging': fields.float(string='Packaging', digits=(16,2)),
     }
 
 product_sde_proof_of_concept()
