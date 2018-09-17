@@ -483,7 +483,7 @@ class purchase_order_line(osv.osv):
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
         'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty'),
+        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
         'original_price': fields.float('Original Price'),
         'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
@@ -510,7 +510,7 @@ class purchase_order_line(osv.osv):
         'set_as_validated_n': lambda *a: False,
         'block_resourced_line_creation': lambda *a: False,
         'change_price_manually': lambda *a: False,
-        'product_qty': lambda *a: 0.00,
+        'product_qty': lambda *a: 0,
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
         'is_line_split': False,  # UTP-972: by default not a split line

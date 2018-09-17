@@ -87,7 +87,7 @@ class product_supplierinfo(osv.osv):
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
-        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
+        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
     }
 
     _defaults = {
@@ -233,7 +233,7 @@ class pricelist_partnerinfo(osv.osv):
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='SoQ Rounding',
                                  help='The ordered quantity must be a multiple of this rounding value.'),
-        'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
+        'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty', related_uom='uom_id'),
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),

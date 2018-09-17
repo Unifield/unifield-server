@@ -31,7 +31,7 @@ class split_memory_move(osv.osv_memory):
     _name = "split.memory.move"
     _description = "Split Memory Move"
     _columns = {
-        'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM')),
+        'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM'), related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
     }
 

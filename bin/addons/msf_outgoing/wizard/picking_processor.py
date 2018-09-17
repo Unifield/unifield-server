@@ -525,6 +525,7 @@ class stock_move_processor(osv.osv):
             string='Quantity',
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
+            related_uom='uom_id',
         ),
         'ordered_quantity': fields.float(
             string='Ordered quantity',
@@ -532,6 +533,7 @@ class stock_move_processor(osv.osv):
             required=True,
             readonly=True,
             help="Expected quantity to receive",
+            related_uom='ordered_uom_id',
         ),
         'uom_id': fields.many2one(
             'product.uom',

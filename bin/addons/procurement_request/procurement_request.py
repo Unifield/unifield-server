@@ -690,7 +690,7 @@ class procurement_request_line(osv.osv):
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
         'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty'),
+        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
         'original_price': fields.float('Original Price'),
         'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),

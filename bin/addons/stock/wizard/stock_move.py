@@ -61,7 +61,7 @@ class stock_move_consume(osv.osv_memory):
 
     _columns = {
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
-        'product_qty': fields.float('Quantity', required=True),
+        'product_qty': fields.float('Quantity', required=True, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True)
     }
@@ -206,7 +206,7 @@ class split_in_production_lot(osv.osv_memory):
         return res
 
     _columns = {
-        'qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'qty': fields.float('Quantity', related_uom='product_uom'),
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
         'product_uom': fields.many2one('product.uom', 'UoM'),
         'line_ids': fields.one2many('stock.move.split.lines', 'lot_id', 'Production Lots'),

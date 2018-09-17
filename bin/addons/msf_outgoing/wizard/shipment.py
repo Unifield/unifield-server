@@ -584,7 +584,7 @@ class memory_additionalitems(osv.osv_memory):
     _description="Additional Items"
 
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True, related_uom='uom'),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
                 'volume': fields.float(digits=(16,2), string=u'Volume[dm³]'),

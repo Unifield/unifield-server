@@ -358,7 +358,7 @@ class kit_selection_sale_line(osv.osv_memory):
                 'wizard_id_kit_selection_sale_line': fields.many2one('kit.selection.sale', string='Kit Selection wizard'),
                 # data
                 'product_id_kit_selection_sale_line': fields.many2one('product.product', string='Product', required=True),
-                'qty_kit_selection_sale_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_kit_selection_sale_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_kit_selection_sale_line'),
                 'uom_id_kit_selection_sale_line': fields.many2one('product.uom', string='UoM', required=True),
                 'price_unit_kit_selection_sale_line': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }

@@ -1197,7 +1197,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
-        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True),
+        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True, related_uom='move_uom_id'),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
         'move_price_unit': fields.function(_get_values, method=True, type='float', string='Price Unit',
                                            digits=(16, 2), store=True, readonly=True, multi='computed'),
@@ -1222,7 +1222,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
-        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True),
+        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True, related_uom='imp_uom_id'),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price_unit': fields.float(digits=(16, 2), string='Price Unit', readonly=True),
         'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',

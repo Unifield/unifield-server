@@ -741,7 +741,7 @@ class sale_order_line_followup(osv.osv_memory):
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True, 
                                      type='many2one', relation='product.product'),
-        'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
+        'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True, related_uom='uom_id'),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                       readonly=True, multi='status'),

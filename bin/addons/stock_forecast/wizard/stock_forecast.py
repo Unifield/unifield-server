@@ -140,7 +140,7 @@ class stock_forecast(osv.osv_memory):
         'product_id': fields.many2one('product.product', 'Product'),
         'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
         'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
-        'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+        'qty' : fields.float('Quantity', digits=(16,2), readonly=True, related_uom='product_uom_id'),
         'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
         'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
         'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),

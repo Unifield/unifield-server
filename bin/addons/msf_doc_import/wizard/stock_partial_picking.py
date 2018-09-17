@@ -41,7 +41,7 @@ class incoming_import_xml_line(osv.osv_memory):
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
-        'quantity': fields.float(digits=(16,2), string='Quantity'),
+        'quantity': fields.float(digits=(16,2), string='Quantity', related_uom='uom_id'),
         'prodlot_id': fields.many2one('stock.production.lot', string='Batch'),
         'expiry_date': fields.date(string='Expiry date'),
         'line_values': fields.text(string='Line values'),
