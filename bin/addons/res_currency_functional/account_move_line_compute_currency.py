@@ -694,7 +694,7 @@ class account_move_line_compute_currency(osv.osv):
                 reconciled_move[vals['reconcile_id']] = True
             elif line.reconcile_id:
                 reconciled_move[line.reconcile_id.id] = True
-        if reconciled_move:
+        if reconciled_move and not context.get('from_remove_move_reconcile', False):  # don't update an FXA about to be reversed
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 

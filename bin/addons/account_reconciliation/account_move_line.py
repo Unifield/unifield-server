@@ -464,6 +464,7 @@ class account_move_line(osv.osv):
                 self._check_instance(cr, uid, reconcile_id, context)
                 fxa_set.update(fxa_line_ids)
         # first we delete the reconciliation for all lines including FXA
+        context.update({'from_remove_move_reconcile': True})
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         if fxa_set:
             # then for each FXA we create a reversal entry and reconcile them together
