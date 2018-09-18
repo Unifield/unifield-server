@@ -24,7 +24,6 @@ from tools.translate import _
 import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import decimal_precision as dp
 import logging
 import tools
 import time
@@ -1143,13 +1142,13 @@ class kit_creation_to_consume(osv.osv):
     _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True, on_delete='cascade'),
                 'module_to_consume': fields.char(string='Module', size=1024, readonly=True),
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
-                'qty_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_to_consume'),
+                'qty_to_consume': fields.float(string='Qty per Kit', readonly=True, related_uom='uom_id_to_consume'),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
                 'availability_to_consume': fields.selection(KIT_TO_CONSUME_AVAILABILITY, string='Availability', readonly=True, required=True),
                 'consumed_to_consume': fields.boolean(string='Consumed', readonly=True),
-                'qty_consumed_to_consume': fields.float(string='Consumed Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_to_consume'),
+                'qty_consumed_to_consume': fields.float(string='Consumed Qty', readonly=True, related_uom='uom_id_to_consume'),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
                 'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Qty', multi='get_vals', store=False, related_uom='uom_id_to_consume'),

@@ -23,7 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import time
 import netsvc
-import decimal_precision as dp
 from datetime import datetime, timedelta
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -194,8 +193,8 @@ class process_to_consume_line(osv.osv_memory):
                 'wizard_id_process_to_consume': fields.many2one('substitute', string='Substitute wizard'),
                 # data
                 'product_id_process_to_consume': fields.many2one('product.product', string='Product', readonly=True, required=True),
-                'qty_process_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True, required=True, related_uom='uom_id_process_to_consume'),
-                'selected_qty_process_to_consume': fields.float(string='Selected Qty per Kit', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_process_to_consume'),
+                'qty_process_to_consume': fields.float(string='Qty per Kit', readonly=True, required=True, related_uom='uom_id_process_to_consume'),
+                'selected_qty_process_to_consume': fields.float(string='Selected Qty per Kit', required=True, related_uom='uom_id_process_to_consume'),
                 'uom_id_process_to_consume': fields.many2one('product.uom', string='UoM', readonly=True, required=True),
                 'location_src_id_process_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 #'consider_child_locations_process_to_consume': fields.boolean(string='Consider Child Locations', help='Consider or not child locations for availability check.'),

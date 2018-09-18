@@ -484,13 +484,11 @@ class stock_move_processor(osv.osv):
         ),
         'quantity': fields.float(
             string='Quantity',
-            digits_compute=dp.get_precision('Product UoM'),
             required=True,
             related_uom='uom_id',
         ),
         'ordered_quantity': fields.float(
             string='Ordered quantity',
-            digits_compute=dp.get_precision('Product UoM'),
             required=True,
             readonly=True,
             help="Expected quantity to receive",

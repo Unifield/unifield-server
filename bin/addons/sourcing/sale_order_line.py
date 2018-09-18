@@ -33,7 +33,6 @@ from tools.translate import _
 from tools import DEFAULT_SERVER_DATE_FORMAT
 from collections import deque
 
-import decimal_precision as dp
 from order_types import ORDER_PRIORITY
 from order_types import ORDER_CATEGORY
 from sale import SALE_ORDER_STATE_SELECTION
@@ -586,7 +585,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             method=True,
             type='float',
             string='Real Stock',
-            digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
             multi='stock_qty',
         ),
@@ -594,7 +593,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             _getVirtualStock, method=True,
             type='float',
             string='Virtual Stock',
-            digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
             multi='stock_qty',
         ),
@@ -603,7 +602,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             method=True,
             type='float',
             string='Available Stock',
-            digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
         ),
         # Fields used for export
