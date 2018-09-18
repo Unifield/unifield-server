@@ -192,7 +192,10 @@ class finance_archive(finance_export.finance_archive):
         return new_data
 
     def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
-        return hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, data, context=context, column_deletion=column_deletion)
+        """
+        Note that the param "column_deletion" is needed (see def archive in finance_export) but NOT used here.
+        """
+        return hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
 
 # request used for OCP and OCG VI

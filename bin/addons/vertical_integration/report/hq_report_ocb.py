@@ -248,7 +248,10 @@ class finance_archive(finance_export.finance_archive):
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
     def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
-        return postprocess_liquidity_balances(self, cr, uid, data, context=context, column_deletion=column_deletion)
+        """
+        Note that the param "column_deletion" is needed (see def archive in finance_export) but NOT used here.
+        """
+        return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
 
 # request & postprocess method used for OCB, OCP, and OCG VI and for Liquidity Balances report
@@ -301,11 +304,10 @@ liquidity_sql = """
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
+def postprocess_liquidity_balances(self, cr, uid, data, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).
-    Note that the param "column_deletion" is needed (see def archive in finance_export) but NOT used here.
     """
     # number and name of the column containing the journal id
     col_nbr = 2

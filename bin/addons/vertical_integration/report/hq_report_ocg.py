@@ -112,7 +112,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                             period.date_stop, tuple(instance_ids))
         cr.execute(liquidity_sql, liquidity_params)
         liquidity_balance_lines = [list(lbl) for lbl in cr.fetchall()]
-        liquidity_balance_lines = hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, liquidity_balance_lines, context=context, column_deletion=False)
+        liquidity_balance_lines = hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, liquidity_balance_lines, context=context)
         return [liquidity_balance_header] + liquidity_balance_lines
 
     def _get_account_balances(self, cr, instance_ids, period, period_yyyymm):
