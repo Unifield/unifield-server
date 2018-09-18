@@ -721,7 +721,7 @@ class product_likely_expire_report_line(osv.osv):
         else:
             return super(product_likely_expire_report_line, self).__getattr__(name, *args, **kwargs)
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         if context is None:
             context = {}
 

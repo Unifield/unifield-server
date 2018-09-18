@@ -1309,7 +1309,7 @@ class orm_template(object):
 
     # returns the definition of each field in the object
     # the optional fields parameter can limit the result to some fields
-    def fields_get(self, cr, user, allfields=None, context=None, write_access=True):
+    def fields_get(self, cr, user, allfields=None, context=None, write_access=True, with_uom_rounding=False):
         if context is None:
             context = {}
         res = {}
@@ -1317,6 +1317,7 @@ class orm_template(object):
         for parent in self._inherits:
             res.update(self.pool.get(parent).fields_get(cr, user, allfields, context))
 
+        uom_rounding = False
         if self._columns.keys():
             for f in self._columns.keys():
                 field_col = self._columns[f]
@@ -1351,6 +1352,11 @@ class orm_template(object):
                 for arg in ('digits', 'invisible', 'filters', 'computation', 'related_uom'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
+
+                if with_uom_rounding and res[f].get('related_uom'):
+                    if not uom_rounding:
+                        uom_rounding = self.pool.get('product.uom').get_rounding(cr, 1)
+                    res[f]['uom_rounding'] = uom_rounding
 
                 context_lang = context and context.get('lang', False) or 'en_US'
                 if field_col.string and context_lang != 'en_US':
@@ -3542,7 +3548,7 @@ class orm(orm_template):
     #    return _proxy
 
 
-    def fields_get(self, cr, user, fields=None, context=None):
+    def fields_get(self, cr, user, fields=None, context=None, with_uom_rounding=False):
         """
         Get the description of list of fields
 
@@ -3557,7 +3563,7 @@ class orm(orm_template):
         ira = self.pool.get('ir.model.access')
         write_access = ira.check(cr, user, self._name, 'write', raise_exception=False, context=context) or \
             ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
-        return super(orm, self).fields_get(cr, user, fields, context, write_access)
+        return super(orm, self).fields_get(cr, user, fields, context, write_access, with_uom_rounding=with_uom_rounding)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         if not ids:

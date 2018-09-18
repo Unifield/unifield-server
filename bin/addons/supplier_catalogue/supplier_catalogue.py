@@ -1228,7 +1228,7 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         '''
         Override the fields to display historical prices according to context
         '''
