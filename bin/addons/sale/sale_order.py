@@ -2215,6 +2215,7 @@ class sale_order_line(osv.osv):
             uom2 = product_uom_obj.browse(cr, uid, uom)
             if product_obj.uom_id.category_id.id != uom2.category_id.id:
                 uom = False
+            result['product_uom'] = uom
         if uos:
             if product_obj.uos_id:
                 uos2 = product_uom_obj.browse(cr, uid, uos)
