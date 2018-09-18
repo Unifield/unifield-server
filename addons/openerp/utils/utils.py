@@ -28,6 +28,7 @@ from openerp import validators
 import formencode
 import openobject
 from openerp.utils import rpc
+import math
 
 crummy_pseudoliteral_matcher = re.compile('^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
 
@@ -366,8 +367,19 @@ class TinyForm(object):
                 kind = 'char'
 
             v = _VALIDATORS.get(kind, openobject.validators.DefaultValidator)()
-            if kind == "float" and attrs.get("digit"):
-                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"))
+            if kind == 'float':
+                rounding = False
+                if attrs.get('rounding_value') and attrs.get('uom_rounding'):
+                    if isinstance(attrs.get('rounding_value'), (list, tuple)):
+                        rounding_value = attrs.get('rounding_value')[0]
+                    else:
+                        rounding_value = attrs.get('rounding_value')
+
+                    if rounding_value in attrs.get('uom_rounding'):
+                        rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
+
+                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"), rounding=rounding)
+
             v.not_empty = (required or False) and True
 
             try:

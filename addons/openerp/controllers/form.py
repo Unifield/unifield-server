@@ -1226,6 +1226,17 @@ class Form(SecuredController):
         # apply validators (transform values from python)
         values = result['value']
         values2 = {}
+
+        float_fields = []
+        float_def = {}
+        for k in values:
+            key = ((prefix or '') and prefix + '/') + k
+            kind = data.get(key, {}).get('type', '')
+            if data.get(key, {}).get('type', '') == 'float':
+                float_fields.append(k)
+        if float_fields:
+            float_def = proxy.fields_get(float_fields, with_uom_rounding=True, context=ctx2)
+
         for k, v in values.items():
             key = ((prefix or '') and prefix + '/') + k
 
@@ -1238,13 +1249,16 @@ class Form(SecuredController):
                 values2[k] = {'value': v}
 
             if kind == 'float':
-                field = proxy.fields_get([k], ctx2)
-                digit = field[k].get('digits')
-                if digit: digit = digit[1]
+                if float_def.get(k, {}).get('related_uom') and float_def.get(k, {}).get('related_uom') in values:
+                    values2[k]['rounding_value'] = values[float_def[k]['related_uom']]
+                    values2[k]['uom_rounding'] = float_def[k].get('uom_rounding')
+                digit = float_def.get(k, {}).get('digits')
+                if digit:
+                    digit = digit[1]
                 values2[k]['digit'] = digit or 2
 
                 # custom fields - decimal_precision computation
-                computation = field[k].get('computation')
+                computation = float_def.get(k, {}).get('computation')
                 values2[k]['computation'] = computation
 
         values = TinyForm(**values2).from_python().make_plain()
