@@ -49,7 +49,7 @@ class assign_to_kit(osv.osv_memory):
                     # negative value
                     errors.update(negative=True)
                     mem.write({'integrity_status': 'negative'}, context=context)
-                if mem.assigned_qty_assign_to_kit_line > obj.qty_assign_to_kit:
+                if abs(mem.assigned_qty_assign_to_kit_line - obj.qty_assign_to_kit) > 0.0001:
                     # quantity assigned is greater than available quantity
                     errors.update(greater_than_available=True)
                     mem.write({'integrity_status': 'greater_than_available'}, context=context)

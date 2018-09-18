@@ -89,7 +89,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
             # for internal or simple out, cannot process more than specified in stock move
             if picking_real_type in ['out', 'internal']:
                 proc_qty = uom_obj._compute_qty(cr, uid, item.product_uom.id, item.quantity, item.uom_ordered.id)
-                if proc_qty > item.ordered_quantity:
+                if abs(proc_qty - item.ordered_quantity) > 0.0001:
                     result = 'greater_than_available'
                 
         # we return the found result
