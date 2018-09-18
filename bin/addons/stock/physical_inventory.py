@@ -1411,8 +1411,8 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
-        'theoretical_qty': fields.float('Theoretical Quantity', readonly=True, related_uom='product_uom_id'),
-        'counted_qty': fields.float('Counted Quantity', related_uom='product_uom_id'),
+        'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
+        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom_id'),
         'counted_qty_is_empty': fields.boolean('False qty', readonly=True, help=_('Has field counted_qty been filled or is it empty ? (internal use)')),
         'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity"), related_uom='product_uom_id'),
         'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
@@ -1422,8 +1422,8 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
 
         # Total for product
-        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', readonly=True, related_uom='product_uom_id'),
-        'total_product_counted_qty': fields.float('Total Counted Quantity for product', readonly=True, related_uom='product_uom_id'),
+        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
+        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product"), related_uom='product_uom_id'),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),

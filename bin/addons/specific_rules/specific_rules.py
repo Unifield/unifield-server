@@ -26,6 +26,8 @@ from osv import osv, fields
 import tools
 from tools.translate import _
 
+import decimal_precision as dp
+
 
 # warning messages
 SHORT_SHELF_LIFE_MESS = 'Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.'
@@ -1281,11 +1283,11 @@ class stock_production_lot(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', 'Batch Sequence', required=True,),
         'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
                                          help="Current available quantity of products with this Batch Numbre Number in company warehouses",
-                                         readonly=True,
+                                         digits_compute=dp.get_precision('Product UoM'), readonly=True,
                                          fnct_search=_stock_search_virtual, related_uom='uom_id'),
         'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
                                            help="Current real quantity of products with this Batch Number in company warehouses",
-                                           related_uom='uom_id'),
+                                           digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
         'kc_check': fields.function(
             _get_checks_all,

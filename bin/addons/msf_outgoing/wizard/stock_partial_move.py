@@ -180,7 +180,7 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     '''
     _name = "stock.move.memory.returnproducts"
     _inherit = "stock.move.memory.picking"
-    _columns = {'qty_to_return': fields.float(string='Qty to return', related_uom='product_uom'),
+    _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom' ),
                 }
 
     def _check_qty_to_return(self, cr, uid, ids, context=None):

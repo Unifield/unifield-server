@@ -22,6 +22,7 @@
 from osv import osv, fields
 from tools.translate import _
 from datetime import datetime
+import decimal_precision as dp
 import logging
 import time
 
@@ -1114,7 +1115,7 @@ class composition_item(osv.osv):
 
     _columns = {'item_module': fields.char(string='Module', size=1024),
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
-                'item_qty': fields.float(string='Qty', required=True, related_uom='item_uom_id'),
+                'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='item_uom_id'),
                 'item_uom_id': fields.many2one('product.uom', string='UoM', required=True),
                 'item_asset_id': fields.many2one('product.asset', string='Asset'),
                 'item_lot': fields.char(string='Batch Nb', size=1024),

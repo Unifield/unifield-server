@@ -275,7 +275,7 @@ class assign_to_kit(osv.osv_memory):
     _columns = {'kit_creation_id_assign_to_kit': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
                 'module_assign_to_kit': fields.char(string='Module', size=1024),
                 'product_id_assign_to_kit': fields.many2one('product.product', string='Product', readonly=True),
-                'qty_assign_to_kit': fields.float(string='Qty Available', readonly=True, related_uom='uom_id_assign_to_kit'),
+                'qty_assign_to_kit': fields.float(string='Qty Available', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_assign_to_kit'),
                 'uom_id_assign_to_kit': fields.many2one('product.uom', string='UoM', readonly=True),
                 'prodlot_id_assign_to_kit': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
                 'move_id_assign_to_kit': fields.many2one('stock.move', string='Corresponding Stock Move', readonly=True),
