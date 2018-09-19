@@ -125,7 +125,11 @@
                     <Data ss:Type="Number">${sptc.new_standard_price|x}</Data>
                 </Cell>
                 <Cell ss:StyleID="line">
+                     % if sptc.transaction_name == 'Product creation':
+                        <Data ss:Type="String">${_('Product creation')|x}</Data>
+                     % else:
                     <Data ss:Type="String">${sptc.transaction_name or ''|x}</Data>
+                    % endif
                 </Cell>
                 <Cell ss:StyleID="line">
                     <Data ss:Type="String">${sptc.in_price_changed and 'X' or ''|x}</Data>
