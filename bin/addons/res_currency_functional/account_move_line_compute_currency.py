@@ -389,7 +389,7 @@ class account_move_line_compute_currency(osv.osv):
                     sql = """
                         UPDATE account_move_line
                         SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
-                        WHERE id=%s
+                        WHERE id=%s;
                     """
                     cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
                     # Update partner line
@@ -404,15 +404,17 @@ class account_move_line_compute_currency(osv.osv):
                     addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
                     if not addendum_counterpart_ids:
                         continue
-                    counterpart_sql = """
-                        UPDATE account_move_line
-                        SET account_id=%s
-                        WHERE id=%s
-                    """
-                    cr.execute(counterpart_sql, [addendum_line_account_id, tuple(addendum_counterpart_ids)])
-                    # then update their analytic lines with default destination
-                    analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', addendum_counterpart_ids)])
-                    al_obj.write(cr, uid, analytic_line_ids, {'general_account_id': addendum_line_account_id, 'destination_id': addendum_line_account_default_destination_id,})
+                    if not context.get('sync_update_execution', False):
+                        # update FXA accounts only if out of synchro, cf. they should be the same in all instances
+                        counterpart_sql = """
+                            UPDATE account_move_line
+                            SET account_id=%s
+                            WHERE id=%s;
+                        """
+                        cr.execute(counterpart_sql, [addendum_line_account_id, tuple(addendum_counterpart_ids)])
+                        # then update their analytic lines with default destination
+                        analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', addendum_counterpart_ids)])
+                        al_obj.write(cr, uid, analytic_line_ids, {'general_account_id': addendum_line_account_id, 'destination_id': addendum_line_account_default_destination_id,})
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
