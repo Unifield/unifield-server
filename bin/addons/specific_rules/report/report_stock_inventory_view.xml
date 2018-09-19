@@ -56,7 +56,7 @@
                         <html>                                                      
                             <div style="align: center">                             
                                 <p style="font-size:14px;align:center">             
-                                    Your file is now ready. You can download it on the right side bar (Attachments).
+                                    <translate>Your file is now ready. You can download it on the right side bar (Attachments).</translate>
                                 </p>                                                
                             </div>
                         </html>
@@ -78,13 +78,13 @@
                         <html>                                                      
                             <div style="align: center">                             
                                 <p style="font-size:14px;align:center">             
-                                    Your export inventory level demand will be treated quickly.<br />
+                                    <translate>Your export inventory level demand will be treated quickly.</translate><br />
                                 </p>                                                
                                 <p style="font-size:14px;align:center">             
-                                    Due to the volume of data, your report cannot be shown immediatly.<br />
+                                    <translate>Due to the volume of data, your report cannot be shown immediatly.</translate><br />
                                 </p>                                                
                                 <p style="font-size:14px;align:center">             
-                                    When the report will be ready, you can access to it by the menu Warehouse / Inventory Management / Export Inventory Level.<br />
+                                    <translate>When the report will be ready, you can access to it by the menu Warehouse / Inventory Management / Export Inventory Level.</translate><br />
                                 </p>                                                
                             </div>                                                  
                         </html>                                                     

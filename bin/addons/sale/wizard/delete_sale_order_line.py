@@ -58,9 +58,9 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 return result
             result['arch'] = """
                 <form>
-                <separator colspan="6" string="You cannot delete product: %s"/>
-                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                </form>""" % ", ".join([sol.product_id.default_code for sol in so_line.browse(cr, uid, prev_lines_ids)]).strip(', ')
+                <separator colspan="6" string="%s: %s"/>
+                <button special="cancel" string="%s" icon="gtk-cancel"/>
+                </form>""" % (_('You cannot delete product'), ", ".join([sol.product_id.default_code for sol in so_line.browse(cr, uid, prev_lines_ids)]).strip(', '), _('Return to previous screen'))
             return result
 
         if len(line_ids) > 1:
@@ -82,13 +82,14 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
             if parent_so_id != 0:
                 escaped_default_code = escape(names)
+                msg = _('You are about to cancel the products %s, are you sure you wish to proceed ?') % escaped_default_code
                 _moves_arch_lst = """
                                 <form>
-                                <separator colspan="6" string="You are about to cancel the products %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, cancel lines" type="object" icon="gtk-apply"
+                                <separator colspan="6" string="%s"/>
+                                <button name="fake_unlink" string="%s" type="object" icon="gtk-apply"
                                     context="{'ids': %s, 'order_id': %s}"/>
-                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                                """ % (escaped_default_code, line_ids, parent_so_id)
+                                <button special="cancel" string="%s" icon="gtk-cancel"/>
+                                """ % (msg, line_ids, _('OK, cancel lines'), parent_so_id, _('Return to previous screen'))
                 _moves_arch_lst += """</form>"""
                 result['arch'] = _moves_arch_lst
         else:
@@ -99,13 +100,14 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
             if hasattr(line, 'name'):
                 escaped_default_code = escape(name)
+                msg = _('You are about to cancel the product %s, are you sure you wish to proceed ?') % escaped_default_code
                 _moves_arch_lst = """
                                 <form>
-                                <separator colspan="6" string="You are about to cancel the product %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, cancel line" type="object" icon="gtk-apply" 
+                                <separator colspan="6" string="%s"/>
+                                <button name="fake_unlink" string="%s" type="object" icon="gtk-apply" 
                                     context="{'line_id': %s, 'order_id': %s}"/>
-                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                                """ % (escaped_default_code, line.id, line.order_id.id)
+                                <button special="cancel" string="%s" icon="gtk-cancel"/>
+                                """ % (msg, _('OK, cancel line'), line.id, line.order_id.id, _('Return to previous screen'))
                 _moves_arch_lst += """</form>"""
                 result['arch'] = _moves_arch_lst
 

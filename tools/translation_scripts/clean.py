@@ -5,7 +5,7 @@ import mypolib as polib
 
 ###############################################################################
 
-keep_keywords = [ "register_accounting" ]
+keep_keywords = [ "standard_price_track_changes" ]
 
 ###############################################################################
 

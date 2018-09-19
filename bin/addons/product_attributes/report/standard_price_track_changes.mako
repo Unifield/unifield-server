@@ -66,7 +66,7 @@
 
             <Row>
                 <Cell ss:StyleID="line_header" ss:MergeAcross="1">
-                    <Data ss:Type="String">Product code</Data>
+                    <Data ss:Type="String">${_('Product code')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line" ss:MergeAcross="3">
                     <Data ss:Type="String">${o.default_code|x}</Data>
@@ -74,7 +74,7 @@
             </Row>
             <Row>
                 <Cell ss:StyleID="line_header" ss:MergeAcross="1">
-                    <Data ss:Type="String">Product description</Data>
+                    <Data ss:Type="String">${_('Product description')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line" ss:MergeAcross="3">
                     <Data ss:Type="String">${o.name|x}</Data>
@@ -86,22 +86,22 @@
 
             <Row>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">Date</Data>
+                    <Data ss:Type="String">${_('Date')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">User</Data>
+                    <Data ss:Type="String">${_('User')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">Old Cost Price</Data>
+                    <Data ss:Type="String">${_('Old Cost Price')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">New Cost Price</Data>
+                    <Data ss:Type="String">${_('New Cost Price')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">Transaction</Data>
+                    <Data ss:Type="String">${_('Transaction')}</Data>
                 </Cell>
                 <Cell ss:StyleID="line_header">
-                    <Data ss:Type="String">Manually changed (at reception)</Data>
+                    <Data ss:Type="String">${_('Manually changed (at reception)')}</Data>
                 </Cell>
             </Row>
             % for sptc in getSPTC(o.id):
