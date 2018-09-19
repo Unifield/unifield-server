@@ -878,7 +878,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
             if cr.fetchone():
                 cr.execute("update ir_model_fields set state='deprecated' where state='base'")
 
-        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps) 
+        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps)
         graph = create_graph(cr, ['base'], force)
         if not graph:
             logger.notifyChannel('init', netsvc.LOG_CRITICAL, 'module base cannot be loaded! (hint: verify addons-path)')
@@ -966,6 +966,9 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
 
         for kind in ('init', 'demo', 'update'):
             tools.config[kind] = {}
+
+        if update_module:
+            pool.get('ir.translation').has_duplicate(cr, 1, verbose=True)
 
         cr.commit()
         if update_module:
