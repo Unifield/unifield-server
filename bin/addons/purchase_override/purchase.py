@@ -433,6 +433,9 @@ class purchase_order_cancel_wizard(osv.osv_memory):
                     if resource and pol.linked_sol_id:
                         signal = 'cancel_r'
                     wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
+            # check if the related CV should be set to Done
+            if po:
+                self.pool.get('purchase.order').check_close_cv(cr, uid, po.id, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
