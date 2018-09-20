@@ -30,23 +30,23 @@ from consumption_calculation.consumption_calculation import _get_asset_mandatory
 class wizard_import_rac(osv.osv_memory):
     _name = 'wizard.import.rac'
     _description = 'Import RAC from Excel sheet'
-    
+
+    _msg =  _("""
+        IMPORTANT : The first line will be ignored by the system.
+
+        The file should be in XML 2003 format.
+        The columns should be in this order :
+           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
+        """)
     _columns = {
         'file': fields.binary(string='File to import', required=True),
         'message': fields.text(string='Message', readonly=True),
         'rac_id': fields.many2one('real.average.consumption', string='Real average consumption', required=True),
     }
-    
+
     _defaults = {
-        'message': lambda *a : _("""
-        IMPORTANT : The first line will be ignored by the system.
-        
-        The file should be in XML 2003 format.
-        The columns should be in this order :
-           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
-        """)
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set rac_id with the active_id value in context
@@ -57,9 +57,9 @@ class wizard_import_rac(osv.osv_memory):
             rac_id = context.get('active_id')
             res = super(wizard_import_rac, self).default_get(cr, uid, fields, context=context)
             res['rac_id'] = rac_id
-            
+        res['message'] = _(self._msg)
         return res
-    
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import file
@@ -77,7 +77,7 @@ class wizard_import_rac(osv.osv_memory):
 
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
-        
+
         ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
         error_log = ''
         line_num = 0
@@ -114,7 +114,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
             expiry_date = None # date type
             batch_mandatory = False
             date_mandatory = False
-            asset_mandatory = False
             line_num += 1
             context.update({'import_in_progress': True, 'noraise': True})
             try:
@@ -124,7 +123,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                         consumed_qty = float(row.cells[6].data)
                     except ValueError:
                         error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[6].data,)
-    
+
                 # Cell 0: Product Code
                 expiry_date = False
                 p_value = {}
@@ -179,7 +178,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
 
                     # Cell 5 : Asset
                     if _get_asset_mandatory(prod):
-                        asset_mandatory = True
                         if not row[5].data:
                             error += _("Line %s of the imported file: Asset form required.\n") % (line_num,)
                         if row[5].data:
@@ -191,7 +189,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                 else:
                     product_id = False
                     error += _('Line %s of the imported file: Product Code [%s] not found ! Details: %s \n') % (line_num, row[0], p_value['error_list'])
-    
+
                 # Cell 2: UOM
                 uom_value = {}
                 # The consistency between the product and the uom used the product_id value contained in the write dictionary.
@@ -208,7 +206,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                     if round_qty.get('warning', {}).get('message'):
                         consumed_qty = round_qty['value']['consumed_qty']
                         error_log += _('Line %s of the imported file: %s') % (line_num, round_qty.get('warning', {}).get('message'))
-    
+
                 # Cell 6: Remark
                 if row.cells[7] and row.cells[7].data:
                     remark = row.cells[7].data
@@ -276,9 +274,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
 ''') % (total_time ,complete_lines, lines_to_correct, ignore_lines, error_log)}
         try:
             self.write(cr, uid, ids, vals, context=context)
-            
+
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
-            
+
             return {'type': 'ir.actions.act_window',
                     'res_model': 'wizard.import.rac',
                     'view_type': 'form',
@@ -290,13 +288,13 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                     }
         except Exception, e:
             raise osv.except_osv(_('Error !'), _('%s !') % e)
-        
+
     def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
         return {'type': 'ir.actions.act_window_close'}
-    
+
 wizard_import_rac()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

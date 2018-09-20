@@ -501,7 +501,7 @@ class product_product(osv.osv):
             xml_view.insert(0, separator_node)
             product_ids = self.pool.get('product.history.consumption').get_data(cr, uid, [context.get('obj_id')], context=context)[0]
             product_ids = self.pool.get('product.product').search(cr, uid, [('id', 'in', product_ids), ('average', '>', 0)], context=context)
-            new_filter = """<filter string="Av.%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (context.get('amc', 'AMC'), product_ids)
+            new_filter = """<filter string="%s%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (_('Av.'), _(context.get('amc', 'AMC')), product_ids)
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
@@ -528,7 +528,7 @@ class product_product(osv.osv):
                 res.update({'average': {'digits': (16,2),
                                         'selectable': True,
                                         'type': 'float',
-                                        'string': 'Av. %s' %context.get('amc')}})
+                                        'string': '%s %s' % (_('Av.'), _(context.get('amc','AMC')))}})
 
         return res
 

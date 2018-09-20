@@ -22371,7 +22371,13 @@ msgstr "Ce champ contient des informations concernant le nombre de mouvements po
 #. module: consumption_calculation
 #: model:ir.actions.act_window,name:consumption_calculation.action_history_consumption
 msgid "History consumptions"
-msgstr "History consumptions"
+msgstr "Historique des consommations"
+
+# module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:707
+#, python-format
+msgid "Av."
+msgstr "Moy."
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.qa
@@ -33329,8 +33335,10 @@ msgstr "America/Mendoza"
 
 #. module: consumption_calculation
 #: field:real.average.consumption.line,rac_id:0
+#: code:addons/consumption_calculation/history_consumption.py:707
+#, python-format
 msgid "RAC"
-msgstr "RAC (Consommations Moyennes Réelles) "
+msgstr "CMR"
 
 #. module: tender_flow
 #: view:tender:0
@@ -33341,7 +33349,7 @@ msgstr "Document source"
 #. module: specific_rules
 #: field:stock.production.lot,src_product_id:0
 msgid "By product"
-msgstr "By product"
+msgstr "Par produit"
 
 #. module: sale
 #: report:msf.product_list:0
@@ -77964,7 +77972,7 @@ msgstr "Code de Projet"
 #, python-format
 msgid "\n"
 "        IMPORTANT : The first line will be ignored by the system.\n"
-"        \n"
+"\n"
 "        The file should be in XML 2003 format.\n"
 "        The columns should be in this order :\n"
 "           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
