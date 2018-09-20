@@ -3553,11 +3553,6 @@ msgstr "Actifs"
 msgid "Account code \"%s\" not found"
 msgstr "Account code \"%s\" not found"
 
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
-msgid "Instance stock"
-msgstr "Instance stock"
-
 #. modules: account_override, register_accounting
 #: field:account.direct.invoice.wizard,register_posting_date:0
 #: field:account.invoice,register_posting_date:0
@@ -3699,6 +3694,11 @@ msgstr "You cannot validate a PO line with 0.0 as price unit !"
 #: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:41
 #: selection:product.history.consumption.product,cons_type:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:69
+#: code:addons/mission_stock/mission_stock.py:59
+#: code:addons/mission_stock/mission_stock.py:74
+#: code:addons/mission_stock/mission_stock.py:87
+#: code:addons/mission_stock/mission_stock.py:103
+#: code:addons/mission_stock/mission_stock.py:524
 #, python-format
 msgid "AMC"
 msgstr "CMM"
@@ -3885,6 +3885,9 @@ msgstr "America/Catamarca"
 #: report:procurement.request.report:0
 #: selection:product.price.type,field:0
 #: selection:product.pricelist.item,base:0
+#: code:addons/mission_stock/mission_stock.py:66
+#: code:addons/mission_stock/mission_stock.py:94
+#: code:addons/mission_stock/mission_stock.py:513
 #, python-format
 msgid "Cost Price"
 msgstr "Prix Coûtant"
@@ -10050,11 +10053,6 @@ msgstr "Importer des lignes de registre"
 msgid "Unable to delete a test file: %s"
 msgstr "Impossible de supprimer un fichier de test: %s"
 
-#. module: mission_stock
-#: view:mission.stock.wizard:0
-msgid "Product in stock"
-msgstr "Product in stock"
-
 #. module: account_mcdb
 #: code:addons/account_mcdb/report/account_mcdb_export.py:277
 #, python-format
@@ -11194,11 +11192,6 @@ msgstr "Facture d'Avoirs basée sur ce type. Vous ne pouvez pas Modifier ni Annu
 #: view:ir.rule:0
 msgid "Groups (no group = global)"
 msgstr "Groupes (pas de groupe = global)"
-
-#. module: mission_stock
-#: field:stock.mission.report.line,international_status:0
-msgid "International status"
-msgstr "International status"
 
 #. module: sync_client
 #: help:sync.client.sync_server_connection,automatic_patching:0
@@ -21510,6 +21503,11 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
+#: code:addons/mission_stock/mission_stock.py:52
+#: code:addons/mission_stock/mission_stock.py:64
+#: code:addons/mission_stock/mission_stock.py:79
+#: code:addons/mission_stock/mission_stock.py:92
+#: code:addons/mission_stock/mission_stock.py:511
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -24190,8 +24188,12 @@ msgid "Europe/Prague"
 msgstr "Europe/Prague"
 
 #. modules: tender_flow,  mission_stock
+#: code:addons/mission_stock/mission_stock.py:67
+#: code:addons/mission_stock/mission_stock.py:95
+#: code:addons/mission_stock/mission_stock.py:514
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:54
 #: field:tender.line,func_currency_id:0
+#, python-format
 msgid "Func. Cur."
 msgstr "Dev. fonc."
 
@@ -27613,7 +27615,7 @@ msgstr "URL"
 #: model:ir.ui.menu,name:mission_stock.mission_stock_wizard_menu
 #: view:mission.stock.wizard:0
 msgid "Mission stock"
-msgstr "Stock Mission"
+msgstr "Stock de Mission"
 
 #. module: product_attributes
 #: field:standard.price.track.changes,old_standard_price:0
@@ -29292,11 +29294,6 @@ msgstr "Message ESC"
 msgid "msr_in_progress"
 msgstr "msr_in_progress"
 
-#. module: mission_stock
-#: field:mission.stock.wizard,export_ok:0
-msgid "XML Export ready"
-msgstr "XML Export ready"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
@@ -29401,11 +29398,6 @@ msgstr "Votre fichier .SXW"
 #: model:ir.model,name:procurement_request.model_procurement_request_sourcing_document
 msgid "procurement.request.sourcing.document"
 msgstr "procurement.request.sourcing.document"
-
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:71
-msgid "In Pipe Qty"
-msgstr "In Pipe Qty"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_moves_all_a
@@ -40890,6 +40882,11 @@ msgstr "De confirmé à attribué."
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:73
 #: field:pricelist.partnerinfo,uom_id:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:574
+#: code:addons/mission_stock/mission_stock.py:53
+#: code:addons/mission_stock/mission_stock.py:65
+#: code:addons/mission_stock/mission_stock.py:80
+#: code:addons/mission_stock/mission_stock.py:93
+#: code:addons/mission_stock/mission_stock.py:512
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -43734,12 +43731,6 @@ msgstr "Compte - Code de base "
 #, python-format
 msgid "Some RfQ are already Closed. Integrity failure."
 msgstr "Certaines Demandes de Devis sont déjà Fermées. Perte d'intégrité."
-
-#. modules: mission_stock, msf_field_access_rights
-#: field:mission.stock.wizard,instance_level:0
-#: field:msf_field_access_rights.field_access_rule,instance_level:0
-msgid "Instance Level"
-msgstr "Instance Level"
 
 #. module: object_query
 #: field:ir.model.fields,is_function:0
@@ -48696,6 +48687,11 @@ msgstr "Comptes de bilan à 0"
 #: selection:product.history.consumption.product,cons_type:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:70
 #: field:stock.mission.report.line,product_consumption:0
+#: code:addons/mission_stock/mission_stock.py:60
+#: code:addons/mission_stock/mission_stock.py:75
+#: code:addons/mission_stock/mission_stock.py:88
+#: code:addons/mission_stock/mission_stock.py:104
+#: code:addons/mission_stock/mission_stock.py:525
 #, python-format
 msgid "FMC"
 msgstr "PCM"
@@ -53632,13 +53628,6 @@ msgstr "Line %s: Expected header column %s got %s"
 msgid "Destination Path"
 msgstr "Chemin de Destination"
 
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:357
-#: code:addons/mission_stock/mission_stock.py:493
-#, python-format
-msgid "Generating instance"
-msgstr "Generating instance"
-
 #. module: procurement
 #: code:addons/procurement/schedulers.py:214
 #, python-format
@@ -57723,6 +57712,11 @@ msgstr "Accounts not set in company settings 'P&L result accounts'"
 
 #. module: mission_stock
 #: field:stock.mission.report.line,cu_qty:0
+#: code:addons/mission_stock/mission_stock.py:58
+#: code:addons/mission_stock/mission_stock.py:73
+#: code:addons/mission_stock/mission_stock.py:86
+#: code:addons/mission_stock/mission_stock.py:102
+#: code:addons/mission_stock/mission_stock.py:523
 msgid "Internal Cons. Unit Qty."
 msgstr "Consommation Interne - Qté Unitaire"
 
@@ -57919,6 +57913,11 @@ msgstr "Update session: %s"
 #. module: mission_stock
 #: field:stock.mission.report.line,secondary_qty:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:67
+#: code:addons/mission_stock/mission_stock.py:57
+#: code:addons/mission_stock/mission_stock.py:72
+#: code:addons/mission_stock/mission_stock.py:85
+#: code:addons/mission_stock/mission_stock.py:101
+#: code:addons/mission_stock/mission_stock.py:522
 msgid "Secondary Stock Qty."
 msgstr "Qté Stock Secondaire"
 
@@ -62221,6 +62220,11 @@ msgstr "Albanie"
 #: field:stock.forecast.line,reference:0
 #: view:stock.move:0
 #: field:threshold.value,name:0
+#: code:addons/mission_stock/mission_stock.py:51
+#: code:addons/mission_stock/mission_stock.py:63
+#: code:addons/mission_stock/mission_stock.py:78
+#: code:addons/mission_stock/mission_stock.py:91
+#: code:addons/mission_stock/mission_stock.py:510
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -62946,11 +62950,6 @@ msgstr "Pacific/Samoa"
 #: help:account.analytic.line,move_state:0
 msgid "Indicates that this line come from an Unposted Journal Entry."
 msgstr "Indique que cette ligne vient d'une écriture comptable non comptabilisée."
-
-#. module: mission_stock
-#: model:ir.model,name:mission_stock.model_stock_mission_report_line_location
-msgid "Stock level by product/location"
-msgstr "Stock level by product/location"
 
 #. module: specific_rules
 #: field:stock.production.lot,sequence_id:0
@@ -65280,11 +65279,6 @@ msgstr "Remplacer la liste"
 #: selection:res.users,context_tz:0
 msgid "Australia/Melbourne"
 msgstr "Australia/Melbourne"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,display_only_in_stock:0
-msgid "Display only products in stock"
-msgstr "Display only products in stock"
 
 #. module: board
 #: code:addons/board/queries_finance.py:29
@@ -67691,7 +67685,7 @@ msgstr "Moniteur de procédés de Synchronisation "
 msgid "New Mexico"
 msgstr "New Mexico"
 
-#. modules: product_attributes, account, msf_outgoing, stock_override, stock
+#. modules: product_attributes, account, msf_outgoing, stock_override, stock, mission_stock
 #: field:account.bank.statement.line,move_ids:0
 #: field:create.picking,product_moves_picking:0
 #: field:create.picking,product_moves_ppl:0
@@ -67722,6 +67716,8 @@ msgstr "New Mexico"
 #: field:shipment.family.processor,move_ids:0
 #: field:stock.incoming.processor,move_ids:0
 #: field:stock.picking.processor,move_ids:0
+#: field:stock.mission.report,move_ids:0
+#: field:stock.mission.report.line,move_ids:0
 msgid "Moves"
 msgstr "Mouvements"
 
@@ -67849,11 +67845,6 @@ msgstr "Partenaire ESC ?"
 msgid "Have you a certificate of donation to attach to this picking ?"
 msgstr "Avez-vous un certificat de donation à attacher à ce Picking?"
 
-#. module: mission_stock
-#: field:msr_in_progress,done_ok:0
-msgid "Processing done"
-msgstr "Processing done"
-
 #. module: vertical_integration
 #: model:ir.model,name:vertical_integration.model_wizard_hq_report_ocg
 msgid "wizard.hq.report.ocg"
@@ -67931,13 +67922,6 @@ msgstr "IN Correspondant pour enchaînement interne"
 #: field:sync.sale.order.line.split,new_sync_order_line_db_id:0
 msgid "Sync order line DB ID of the new created line"
 msgstr "Sync order line DB ID of the new created line"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:360
-#: code:addons/mission_stock/mission_stock.py:497
-#, python-format
-msgid "Instance selection"
-msgstr "Instance selection"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2302
@@ -68900,7 +68884,7 @@ msgstr "Mot de passe du Cloud"
 #: view:mission.stock.wizard:0
 #: model:ir.actions.report.xml,name:mission_stock.stock_mission_report_xls
 msgid "Mission stock report"
-msgstr "Mission - Rapport de Stock"
+msgstr "Rapport Stock de Mission"
 
 #. modules: account, msf_instance
 #: field:account.journal,entry_posted:0
@@ -73202,11 +73186,6 @@ msgstr "Niveau d'Instance"
 msgid "You will find in this list all products you have to deliver to your customers. You can process the deliveries directly from this list using the buttons on the right of each line. You can filter the products to deliver by customer, products or sale order (using the Origin field)."
 msgstr "Vous trouverez dans cette liste tous les produits à livrer aux clients. Vous pouvez traiter les livraisons directement à partir de cette liste en utilisant les boutons à droite de chaque ligne. Vous pouvez filtrer les produits à livrer par client, par produit ou parcommande terrain (en utilisant le champ \"Origine\")."
 
-#. module: mission_stock
-#: model:ir.module.module,shortdesc:mission_stock.module_meta_information
-msgid "Mission Stock"
-msgstr "Mission Stock"
-
 #. module: board
 #: model:ir.module.module,description:board.module_meta_information
 msgid "Base module for all dashboards."
@@ -75378,7 +75357,7 @@ msgstr "Lorsqu'il s'agit d'un champ personnalisé, le nom de la nouvelle colonne
 #. module: mission_stock
 #: field:stock.mission.report.line.location,last_mod_date:0
 msgid "Last modification date"
-msgstr "Last modification date"
+msgstr "Date dernière modification"
 
 #. module: product_attributes
 #: field:product.international.status,no_internal:0
@@ -78759,11 +78738,6 @@ msgstr "Nom de la Banque"
 #: selection:res.users,context_tz:0
 msgid "Asia/Yekaterinburg"
 msgstr "Asie/Yekaterinburg"
-
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:66
-msgid "Cross-Docking Qty."
-msgstr "Cross-Docking Qty."
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -82867,6 +82841,9 @@ msgstr "Ligne de facture qui a été contrepassée par celle-ci via un avoir de 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
 #: field:stock.mission.report.line,wh_qty:0
+#: code:addons/mission_stock/mission_stock.py:55
+#: code:addons/mission_stock/mission_stock.py:70
+#, python-format
 msgid "Warehouse stock"
 msgstr "Stock en entrepôt"
 
@@ -84487,11 +84464,6 @@ msgstr "Msg extrait"
 #: selection:stock.frequence,name:0
 msgid "Daily"
 msgstr "Journalier"
-
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:58
-msgid "Instance stock val."
-msgstr "Instance stock val."
 
 #. module: base
 #: view:ir.ui.view:0
@@ -91410,11 +91382,6 @@ msgstr "La position fiscale détermine les taxes et les comptes utilisés pour l
 msgid "_Close"
 msgstr "_Fermer"
 
-#. module: mission_stock
-#: view:mission.stock.wizard:0
-msgid "Mission stock report CSV file"
-msgstr "Mission stock report CSV file"
-
 #. module: account_mcdb
 #: model:ir.model,name:account_mcdb.model_account_period_state
 msgid "Period States"
@@ -92804,6 +92771,9 @@ msgstr "Produit - Unité de Mesure"
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:62
 #: field:stock.mission.report.line,central_qty:0
+#: code:addons/mission_stock/mission_stock.py:83
+#: code:addons/mission_stock/mission_stock.py:99
+#: code:addons/mission_stock/mission_stock.py:520
 msgid "Unallocated Stock Qty."
 msgstr "Qté de stock non allouée."
 
@@ -95963,6 +95933,9 @@ msgstr "Claim name"
 #. module: mission_stock
 #: field:stock.mission.report.line,stock_qty:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:61
+#: code:addons/mission_stock/mission_stock.py:82
+#: code:addons/mission_stock/mission_stock.py:98
+#: code:addons/mission_stock/mission_stock.py:519
 msgid "Stock Qty."
 msgstr "Stock - Qté"
 
@@ -97706,7 +97679,7 @@ msgstr "The product 'To be defined' is an Unifield internal\n"
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:126
 #, python-format
 msgid "Mission stock report cannot be available if no instance was set on the company !"
-msgstr "Mission - Rapport de Stock non disponible si aucune instance n'a été installée pour la société !"
+msgstr "Rapport Stock de Mission non disponible si aucune instance n'a été installée pour la société !"
 
 #. module: account
 #: help:account.account,active:0
@@ -99751,11 +99724,6 @@ msgstr "Is PO from IR ?"
 #, python-format
 msgid "B/S counterparts accounts credit/debit not set in company settings 'B/S Move to 0 accounts'"
 msgstr "B/S counterparts accounts credit/debit not set in company settings 'B/S Move to 0 accounts'"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,local_report:0
-msgid "Local Report"
-msgstr "Local Report"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:295
@@ -101855,3 +101823,120 @@ msgstr "Valeur à utiliser-"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:425
 msgid "Containing:"
 msgstr "Contenant"
+
+#. module: mission_stock
+#: sql_constraint:stock.mission.report.line.location:0
+msgid "(Location, Product) must be unique"
+msgstr "(zone, produit) doit être unique"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:56
+#: code:addons/mission_stock/mission_stock.py:71
+#: code:addons/mission_stock/mission_stock.py:84
+#: code:addons/mission_stock/mission_stock.py:100
+#: code:addons/mission_stock/mission_stock.py:521
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:66
+#, python-format
+msgid "Cross-Docking Qty."
+msgstr "Transbordement - Qté."
+
+#. module: mission_stock
+#: field:mission.stock.wizard,display_only_in_stock:0
+msgid "Display only products in stock"
+msgstr "N'afficher que les produits en stock"
+
+#. module: mission_stock
+#: field:mission.stock.wizard,full_view:0
+msgid "Full View"
+msgstr "Vue complète"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:357
+#: code:addons/mission_stock/mission_stock.py:495
+#, python-format
+msgid "Generating instance"
+msgstr "Instance génératrice"
+
+#. module: mission_stock
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:71
+#: code:addons/mission_stock/mission_stock.py:61
+#: code:addons/mission_stock/mission_stock.py:76
+#: code:addons/mission_stock/mission_stock.py:89
+#: code:addons/mission_stock/mission_stock.py:105
+#: code:addons/mission_stock/mission_stock.py:526
+#, python-format
+msgid "In Pipe Qty"
+msgstr "Qté en cours"
+
+#. modules: mission_stock, msf_field_access_rights
+#: field:mission.stock.wizard,instance_level:0
+#: field:msf_field_access_rights.field_access_rule,instance_level:0
+msgid "Instance Level"
+msgstr "Niveau de l'instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:360
+#: code:addons/mission_stock/mission_stock.py:499
+#, python-format
+msgid "Instance selection"
+msgstr "Sélection Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:54
+#: code:addons/mission_stock/mission_stock.py:68
+#: code:addons/mission_stock/mission_stock.py:81
+#: code:addons/mission_stock/mission_stock.py:96
+#: code:addons/mission_stock/mission_stock.py:517
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
+#, python-format
+msgid "Instance stock"
+msgstr "Stock de l'Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:69
+#: code:addons/mission_stock/mission_stock.py:97
+#: code:addons/mission_stock/mission_stock.py:518
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:58
+#, python-format
+msgid "Instance stock val."
+msgstr "Intance - Valeur du Stock"
+
+#. module: mission_stock
+#: field:stock.mission.report.line,international_status:0
+msgid "International status"
+msgstr "Statut International"
+
+#. module: mission_stock
+#: field:mission.stock.wizard,local_report:0
+msgid "Local Report"
+msgstr "Rapport Local"
+
+#. module: mission_stock
+#: model:ir.module.module,shortdesc:mission_stock.module_meta_information
+msgid "Mission Stock"
+msgstr "Stock de Mission"
+
+#. module: mission_stock
+#: view:mission.stock.wizard:0
+msgid "Mission stock report CSV file"
+msgstr "Fichier CSV Stock de Mission fichier"
+
+#. module: mission_stock
+#: field:msr_in_progress,done_ok:0
+msgid "Processing done"
+msgstr "Traitement terminé"
+
+#. module: mission_stock
+#: view:mission.stock.wizard:0
+msgid "Product in stock"
+msgstr "Produit en stock"
+
+#. module: mission_stock
+#: model:ir.model,name:mission_stock.model_stock_mission_report_line_location
+msgid "Stock level by product/location"
+msgstr "Niveau de Stock par produit/zone"
+
+#. module: mission_stock
+#: field:mission.stock.wizard,export_ok:0
+msgid "XML Export ready"
+msgstr "Export XML prêt"
