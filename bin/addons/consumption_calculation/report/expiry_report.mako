@@ -131,7 +131,7 @@ now = time.strftime('%Y-%m-%d')
 </Row>
 <Row>
 <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Period of calculation')|x} :</Data></Cell>
-<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${objects[0].week_nb} week${objects[0].week_nb > 1 and 's' or ''}</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${objects[0].week_nb} ${_('week')}${objects[0].week_nb > 1 and 's' or ''}</Data></Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Limit date')|x} :</Data></Cell>

@@ -16,7 +16,7 @@
 	            name="expiry.report_xls"
 	            header="False"
                 report_type="webkit"
-	            file="addons/consumption_calculation/report/expiry_report.mako"
+	            file="consumption_calculation/report/expiry_report.mako"
 	            string="Expiry Report Excel" />
 	            
 	</data>

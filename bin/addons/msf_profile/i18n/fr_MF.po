@@ -1,4 +1,4 @@
-# Translation of OpenERP Server.
+# Translatio of OpenERP Server.
 # This file contains the translation of the following modules:
 # * report_webkit_override
 # * analytic_distribution_supply
@@ -606,6 +606,8 @@ msgstr "Tiers requis - Paie"
 #. module: consumption_calculation
 #: view:expiry.quantity.report:0
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:161
+#: report:addons/consumption_calculation/report/expiry_report.mako:214
 msgid "Exp. Qty"
 msgstr "Quantités Expirées"
 
@@ -6420,6 +6422,8 @@ msgstr "Interrompre"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:163
+#: report:addons/consumption_calculation/report/expiry_report.mako:216
 msgid "Exp. Value"
 msgstr "Valeur d'Expirés"
 
@@ -14639,6 +14643,7 @@ msgstr "Peut être importé comme facture dans le registre?"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:261
 msgid "ALL TOTAL"
 msgstr "Grand TOTAL"
 
@@ -15123,6 +15128,8 @@ msgstr "Pas de journal de type %s trouvé en essayant de créer une facture pour
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
 #: report:stock.forecast.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:154
+#: report:addons/consumption_calculation/report/expiry_report.mako:207
 msgid "CODE"
 msgstr "CODE"
 
@@ -17149,6 +17156,8 @@ msgstr "Noeud record du Pack %s, mauvais attribut %s"
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:155
+#: report:addons/consumption_calculation/report/expiry_report.mako:208
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -17978,6 +17987,7 @@ msgstr "Utilisation unique"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:151
 msgid "Products/batches already expired"
 msgstr "Produits/lots déjà expirés"
 
@@ -26779,6 +26789,8 @@ msgstr "Affectation de la Production ou du Bon de Commande."
 #: selection:stock.location,location_category:0
 #: model:ir.actions.act_window,name:stock.act_stock_tracking_lot_2_stock_report_tracklots
 #: model:stock.location,name:stock.stock_location_stock
+#: report:addons/consumption_calculation/report/expiry_report.mako:157
+#: report:addons/consumption_calculation/report/expiry_report.mako:210
 msgid "Stock"
 msgstr "Stock"
 
@@ -38034,6 +38046,8 @@ msgstr "Oct"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:162
+#: report:addons/consumption_calculation/report/expiry_report.mako:215
 msgid "Unit Cost"
 msgstr "Coût Unitaire"
 
@@ -40895,6 +40909,8 @@ msgstr "De confirmé à attribué."
 #: code:addons/mission_stock/mission_stock.py:80
 #: code:addons/mission_stock/mission_stock.py:93
 #: code:addons/mission_stock/mission_stock.py:512
+#: report:addons/consumption_calculation/report/expiry_report.mako:158
+#: report:addons/consumption_calculation/report/expiry_report.mako:211
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -46265,6 +46281,8 @@ msgstr "Exclure la sélection de journaux"
 #: report:internal.move:0
 #: field:report.stock.move,prodlot_id:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:433
+#: report:addons/consumption_calculation/report/expiry_report.mako:159
+#: report:addons/consumption_calculation/report/expiry_report.mako:212
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -48546,6 +48564,8 @@ msgstr "Point de Trésorerie Banque"
 #: report:addons/purchase_allocation_report/report/po_allocation_report.mako:299
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
 #: report:addons/sale/report/fo_allocation_report.mako:288
+#: report:addons/consumption_calculation/report/expiry_report.mako:194
+#: report:addons/consumption_calculation/report/expiry_report.mako:243
 msgid "TOTAL"
 msgstr "TOTAL"
 
@@ -56371,6 +56391,7 @@ msgstr "Donation (externe)"
 
 #. module: consumption_calculation
 #: field:expiry.quantity.report,date_to:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:137
 msgid "Limit date"
 msgstr "Date limite"
 
@@ -56517,6 +56538,7 @@ msgstr "Export Intl Commitments"
 #: field:stock.warehouse.order.cycle,consumption_period_from:0
 #: field:threshold.value,consumption_period_from:0
 #: view:weekly.forecast.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:133
 msgid "Period of calculation"
 msgstr "Période du calcul"
 
@@ -58282,6 +58304,8 @@ msgstr "%s was not a number, it is set to %d by default."
 #: field:report.stock.move,expiry_date:0
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:192
+#: report:addons/consumption_calculation/report/expiry_report.mako:160
+#: report:addons/consumption_calculation/report/expiry_report.mako:213
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -65192,6 +65216,9 @@ msgstr "Zone - Stock"
 #: field:allocation.stock.setup,error_location_ids:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:85
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:193
+#: report:addons/consumption_calculation/report/expiry_report.mako:129
+#: report:addons/consumption_calculation/report/expiry_report.mako:156
+#: report:addons/consumption_calculation/report/expiry_report.mako:209
 msgid "Location"
 msgstr "Zone"
 
@@ -90663,6 +90690,7 @@ msgstr "Line %s of the imported file: expiry date required\n"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:204
 msgid "Products/batches to expire"
 msgstr "Produits/lots qui vont expirer"
 
@@ -93805,7 +93833,7 @@ msgstr "Support Niveau 1"
 msgid "America/Anguilla"
 msgstr "America/Anguilla"
 
-#. modules: tender_flow, financing_contract, account_voucher, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, account_payment, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup
+#. modules: tender_flow, financing_contract, account_voucher, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, account_payment, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup, consumption_calculation
 #: view:account.account:0
 #: report:account.analytic.account.journal:0
 #: view:account.analytic.line:0
@@ -93988,6 +94016,7 @@ msgstr "America/Anguilla"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:174
 #: field:physical.inventory.counting,currency_id:0
 #: field:physical.inventory.discrepancy,currency_id:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:141
 #, python-format
 msgid "Currency"
 msgstr "Devise"
@@ -94977,6 +95006,7 @@ msgstr "Africa/Asmera"
 
 #. module: consumption_calculation
 #: report:expiry.report:0
+#: report:addons/consumption_calculation/report/expiry_report.mako:207
 msgid "week"
 msgstr "semaine"
 
@@ -100879,8 +100909,9 @@ msgstr "Configuration du planificateur"
 msgid "Export translation %s %s "
 msgstr "Export des traductions %s %s "
 
-#. module: msf_budget
+#. module: msf_budget, consumption_calculation
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:217
+#: report:addons/consumption_calculation/report/expiry_report.mako:125
 msgid "Report date"
 msgstr "Rapport - date"
 
@@ -101948,3 +101979,8 @@ msgstr "Niveau de Stock par produit/zone"
 #: field:mission.stock.wizard,export_ok:0
 msgid "XML Export ready"
 msgstr "Export XML prêt"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/expiry_report.mako:107
+msgid "Expiry report"
+msgstr "Rapport expiration"
