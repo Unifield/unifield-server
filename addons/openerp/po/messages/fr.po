@@ -1649,6 +1649,14 @@ msgstr "Supprimer l'(es) enregistrement(s)."
 msgid "Expand all"
 msgstr "Vue étendue"
 
+#: controllers/templates/tree.mako:48
+msgid "Collapse all"
+msgstr "Vue regroupée"
+
+#: controllers/templates/tree.mako:48
+msgid "Collapse all tree elements."
+msgstr "Regrouper tous les éléments."
+
 #: controllers/templates/tree.mako:47
 msgid "Expand all tree elements."
 msgstr "Étendre tous les éléments de la vue"
