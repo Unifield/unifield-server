@@ -300,7 +300,7 @@
 
 % for p in getPackingList(objects[0]):
    <Row ss:Height="16.5">
-    <Cell ss:StyleID="s104"><Data ss:Type="String">PACKING LIST</Data></Cell>
+    <Cell ss:StyleID="s104"><Data ss:Type="String">${_('PACKING LIST')|x}</Data></Cell>
    </Row>
    <Row>
        <Cell><Data ss:Type="String">${(p['ppl'].name)|x}</Data></Cell>
@@ -310,18 +310,18 @@
     <Cell><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299328"><Data ss:Type="String">Your Ref.:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299328"><Data ss:Type="String">${_('Your Ref.:')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-')|x}</Data></Cell>
-    <Cell ss:StyleID="s16"><Data ss:Type="String">Shipper:</Data></Cell>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Shipper:')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s16"><Data ss:Type="String">Consignee:</Data></Cell>
-    <Cell ss:StyleID="s16"><Data ss:Type="String">Dispatch:</Data></Cell>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Consignee:')|x}</Data></Cell>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Dispatch:')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s16"><Data ss:Type="String">Invoice to:</Data></Cell>
+    <Cell ss:StyleID="s16"><Data ss:Type="String">${_('Invoice to:')|x}</Data></Cell>
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299368"><Data ss:Type="String">Our Ref.:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299368"><Data ss:Type="String">${_('Our Ref.:')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.name or '-')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
@@ -332,7 +332,7 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299388"><Data ss:Type="String">FO Date:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299388"><Data ss:Type="String">${_('FO Date:')|x}</Data></Cell>
     % if p['ppl'].sale_id and isDate(p['ppl'].sale_id.date_order):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].sale_id.date_order|n}T00:00:00.000</Data></Cell>
     % else:
@@ -347,7 +347,7 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">Packing date:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">${_('Packing date:')|x}</Data></Cell>
     % if p['ppl'].date and isDate(p['ppl'].date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
@@ -362,7 +362,7 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">RTS date:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">${_('RTS date:')|x}</Data></Cell>
     % if objects[0].shipment_expected_date and isDate(objects[0].shipment_expected_date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${objects[0].shipment_expected_date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
@@ -377,7 +377,7 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">Transport mode:</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">${_('Transport mode:')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
@@ -411,30 +411,30 @@
 </Row>
    % if not p['pf']:
    <Row>
-       <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">NO PACK FAMILIES IN THIS PPL</Data></Cell>
+       <Cell ss:StyleID="NoPack" ss:MergeAcross="11"><Data ss:Type="String">${_('NO PACK FAMILIES IN THIS PPL')|x}</Data></Cell>
    </Row>
    % endif
    % for pf in getParcel(p['pf']):
    <Row>
-    <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">Parcel No: ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>
-    <Cell ss:StyleID="s135"><Data ss:Type="String">${(pf.num_of_packs)|x} Parcel${(pf.num_of_packs > 1 and 's' or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s135" ss:MergeAcross="3"><Data ss:Type="String">Total weight ${(formatLang(pf.total_weight or 0.00))|x} kg     -     Total volume ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
+    <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">${_('Parcel No:')|x} ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>
+    <Cell ss:StyleID="s135"><Data ss:Type="String">${(pf.num_of_packs)|x} ${_('Parcel')|x}${(pf.num_of_packs > 1 and 's' or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s135" ss:MergeAcross="3"><Data ss:Type="String">${_('Total weight')|x} ${(formatLang(pf.total_weight or 0.00))|x} kg     -     ${_('Total volume')|x} ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
     <Cell ss:StyleID="s135"/>
     <Cell ss:StyleID="s135"/>
     <Cell ss:StyleID="s130" ss:MergeAcross="2"><ss:Data ss:Type="String"
-      xmlns="http://www.w3.org/TR/REC-html40"><Font html:Color="#000000">Containing:</Font></ss:Data></Cell>
+      xmlns="http://www.w3.org/TR/REC-html40"><Font html:Color="#000000">${_('Containing:')|x}</Font></ss:Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="17.25">
-    <Cell ss:StyleID="s131"><Data ss:Type="String">Item</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">Code</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">Description</Data></Cell>
-    <Cell ss:StyleID="s131" ss:MergeAcross="2"><Data ss:Type="String">Comment</Data></Cell>
-    <Cell ss:StyleID="s136"><Data ss:Type="String">Total Qty.</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">Batch</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">Exp. Date</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">KC</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">DG</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">CS</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Item')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+    <Cell ss:StyleID="s131" ss:MergeAcross="2"><Data ss:Type="String">${_('Comment')|x}</Data></Cell>
+    <Cell ss:StyleID="s136"><Data ss:Type="String">${_('Total Qty.')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Exp. Date')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('KC')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('DG')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('CS')|x}</Data></Cell>
    </Row>
    % for m in pf.move_lines:
    <Row ss:AutoFitHeight="0" ss:Height="11.0625">

@@ -5,7 +5,7 @@ import mypolib as polib
 
 ###############################################################################
 
-keep_keywords = [ "standard_price_track_changes" ]
+keep_keywords = [ "packing_list_xls.mako" ]
 
 ###############################################################################
 
