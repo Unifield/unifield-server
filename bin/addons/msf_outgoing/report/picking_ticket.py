@@ -194,11 +194,11 @@ class picking_ticket(report_sxw.rml_parse):
 
         for m in picking.move_lines:
             if m.kc_check:
-                kc = 'heat sensitive'
+                kc = _('heat sensitive')
             if m.dg_check:
-                dg = 'dangerous goods'
+                dg = _('dangerous goods')
             if kc and dg:
-                and_msg = ' and '
+                and_msg = _(' and ')
                 break
 
         if kc or dg:

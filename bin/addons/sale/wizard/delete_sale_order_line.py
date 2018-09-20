@@ -89,7 +89,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                                 <button name="fake_unlink" string="%s" type="object" icon="gtk-apply"
                                     context="{'ids': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="%s" icon="gtk-cancel"/>
-                                """ % (msg, line_ids, _('OK, cancel lines'), parent_so_id, _('Return to previous screen'))
+                                """ % (msg,  _('OK, cancel lines'), line_ids, parent_so_id, _('Return to previous screen'))
                 _moves_arch_lst += """</form>"""
                 result['arch'] = _moves_arch_lst
         else:

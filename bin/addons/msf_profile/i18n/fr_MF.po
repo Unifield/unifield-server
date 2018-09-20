@@ -980,7 +980,7 @@ msgstr "Rechercher Processus"
 #: view:shipment.processor:0
 #, python-format
 msgid "Create shipment"
-msgstr "Créer un Expédition"
+msgstr "Créer une Expédition"
 
 #. module: register_accounting
 #: view:wizard.transfer.with.change:0
@@ -990,7 +990,7 @@ msgstr "Veuillez indiquer un montant et une devise pour lequel le transfert avec
 #. module: purchase
 #: model:process.node,note:purchase.process_node_rfq_done
 msgid "Closed state of request for quotation."
-msgstr "Statut fermé d'une Demande de Devis"
+msgstr "État fermé d'une Demande de Devis"
 
 #. modules: base, consumption_calculation
 #: view:workflow.activity:0
@@ -2062,7 +2062,7 @@ msgstr "Fournisseur sélectionné"
 #: code:addons/return_claim/return_claim.py:930
 #, python-format
 msgid "PPL or Packing should not be selected."
-msgstr "Liste de Pré-Colisage ou Emballage ne ​​devrait pas être sélectionné."
+msgstr "LPC ou Emballage ne devrait pas être sélectionné."
 
 #. module: specific_rules
 #: code:addons/specific_rules/stock.py:100
@@ -4188,7 +4188,7 @@ msgstr "Analyseur Python personnalisé"
 #. module: sourcing
 #: field:sale.order.line,rts:0
 msgid "RTS"
-msgstr "RTS"
+msgstr "PàE"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1263
@@ -4432,7 +4432,7 @@ msgstr "Nom de règle précis pour cette ligne de liste de prix"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "Our Ref:"
-msgstr "Our Ref:"
+msgstr "Notre Réf:"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:366
@@ -7511,7 +7511,7 @@ msgstr "30e"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:472
 #, python-format
 msgid "Please note that %s is temporary not editable during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress"
-msgstr "Please note that %s is temporary not editable during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress"
+msgstr "Veuillez noter que %s est temporairement fermé durant l'import pour éviter des conflicts d'accès (vous pouvez voir le niveau de chargement à partir de l'onglet Note). A la fin du téléchargement, POXX sera remise au statut correct. Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progresion du téléchargement"
 
 #. modules: account, register_accounting
 #: help:account.direct.invoice.wizard,account_id:0
@@ -9354,7 +9354,7 @@ msgstr "Le Système utilise-t-il des stocks non-alloués ?"
 #: code:addons/return_claim/return_claim.py:937
 #, python-format
 msgid "Events are not allowed for selected Claim Type."
-msgstr "Evénements non autorisés pour ce Type de Réclamation."
+msgstr "Événements non autorisés pour ce Type de Réclamation."
 
 #. module: account_journal
 #: code:addons/account_journal/account_journal.py:378
@@ -12228,7 +12228,7 @@ msgstr "Type de Note"
 #: field:memory.additionalitems,picking_id:0
 #: field:stock.move.memory.shipment.additionalitems,picking_id:0
 msgid "PPL"
-msgstr "PPL"
+msgstr "LPC"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:1172
@@ -14704,7 +14704,7 @@ msgstr "Traçabilité en Amont"
 #: code:addons/return_claim/return_claim.py:2656
 #, python-format
 msgid "The new %s Event %s has been created."
-msgstr "Le nouveau %s Evénement %s a été créé."
+msgstr "Le nouveau %s Événement %s a été créé."
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.mw
@@ -14903,7 +14903,7 @@ msgstr "Vous ne pouvez pas valider une écriture non balancée!\n"
 #: code:addons/return_claim/return_claim.py:164
 #, python-format
 msgid "Previous event (%s) does not allow further event."
-msgstr "L'Evénement précédent (%s) ne permet pas d'autres événements"
+msgstr "L'Événement précédent (%s) ne permet pas d'autres événements"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -16793,7 +16793,7 @@ msgstr "Réf Packing:"
 msgid "%s update%s"
 msgstr "%s update%s"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, msf_order_date
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
@@ -16840,6 +16840,8 @@ msgstr "%s update%s"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: code:addons/msf_order_date/wizard/update_lines.py:95
+#: code:addons/msf_order_date/wizard/update_lines.py:109
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -17516,7 +17518,7 @@ msgstr "object.query.wizard.values"
 #: selection:stock.picking,subtype:0
 #: selection:stock.move,picking_subtype:0
 msgid "PPL"
-msgstr "Liste de Pré-Colisage"
+msgstr "LPC"
 
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:280
@@ -17612,7 +17614,7 @@ msgstr "L'objet de base de données de cette pièce jointe sera jointe à"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "Qty Packed"
-msgstr "Qty Packed"
+msgstr "Qté Colisée"
 
 #. module: product_attributes
 #: model:ir.model,name:product_attributes.model_product_cold_chain
@@ -18269,7 +18271,7 @@ msgstr "order"
 #. module: msf_outgoing
 #: model:process.node,name:msf_outgoing.process_node_ppl_assigned
 msgid "PPL - available"
-msgstr "Liste de Pré-Colisage - dispon"
+msgstr "LPC - disponible"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_distribution.py:108
@@ -19108,6 +19110,7 @@ msgstr "Pas pris en charge"
 #: view:audittrail.log.line:0
 #: report:msf.log.line:0
 #: view:audittrail.log.line:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:76
 msgid "Old value"
 msgstr "Ancienne valeur"
 
@@ -19180,7 +19183,7 @@ msgstr "Correspondance d'Objets"
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
 msgid "RTS Date:"
-msgstr "RTS Date:"
+msgstr "Date PàE:"
 
 #. module: msf_config_locations
 #: field:stock.location,non_stockable_ok:0
@@ -23469,7 +23472,7 @@ msgstr "Nombre de Kit à produire doit être supérieur à 0."
 #: field:sale.order,ready_to_ship_date:0
 #: field:purchase.order,ready_to_ship_date:0
 msgid "Ready To Ship Date"
-msgstr "Prêt à être Expédié - Date"
+msgstr "Prêt à Expédier - Date"
 
 #. module: stock
 #: view:physical.inventory.generate.counting.sheet:0
@@ -24289,7 +24292,7 @@ msgstr "Financing Contracts for MSF"
 #. module: product_asset
 #: model:ir.model,name:product_asset.model_product_asset_event
 msgid "Event for asset follow up"
-msgstr "Evénement pour le suivi de bien"
+msgstr "Événement pour le suivi de bien"
 
 #. module: msf_config_locations
 #: view:stock.location.configuration.wizard:0
@@ -25120,7 +25123,7 @@ msgstr "# push data"
 msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
-#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance
+#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_order_date
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -25160,6 +25163,8 @@ msgstr "Europe/Bucharest"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: code:addons/msf_order_date/wizard/update_lines.py:94
+#: code:addons/msf_order_date/wizard/update_lines.py:108
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -25495,7 +25500,7 @@ msgstr "Guide de Références"
 #: field:shipment,additional_items_ids:0
 #: field:shipment.wizard,product_moves_shipment_additionalitems:0
 msgid "Additional Items"
-msgstr "Elèments supplémentaires"
+msgstr "Eléments supplémentaires"
 
 #. module: import_data
 #: field:import_category,import_mode:0
@@ -27866,7 +27871,7 @@ msgstr "  valorisation : pourcentage"
 #. module: return_claim
 #: view:add.event:0
 msgid "Add Event"
-msgstr "Ajouter Evénement"
+msgstr "Ajouter Événement"
 
 #. modules: product, base, product_attributes
 #: selection:ir.actions.act_window,view_type:0
@@ -28599,7 +28604,7 @@ msgstr "Mnt résiduel dev. d'enreg."
 #: field:stock.move.memory.shipment.returnpacks,ppl_id:0
 #: field:stock.move.memory.shipment.returnpacksfromshipment,ppl_id:0
 msgid "PPL Ref"
-msgstr "Réf. Liste de Pré-Colisage"
+msgstr "Réf. LPC"
 
 #. module: account
 #: code:addons/account/invoice.py:1750
@@ -29406,7 +29411,7 @@ msgstr "Cette vue peut être utilisée par des comptables afin d'enregistrer rap
 #: view:sale.order:0
 #: view:sale.order:0
 msgid "Validate Lines"
-msgstr "Validate Lines"
+msgstr "Valider Lignes"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,account_destination_ids:0
@@ -30901,7 +30906,7 @@ msgstr "La génération de ce fichier est en cours. Vous pourrez ouvrir ce rappo
 #: code:addons/msf_outgoing/report/picking_ticket.py:205
 #, python-format
 msgid "You are about to pick %s%s%s products, please refer to the appropriate procedures"
-msgstr "Vous êtes sur le point de prélever %s%s%s produits, veuillez vous référer aux procédures adéquates"
+msgstr "Vous êtes sur le point de prélever des %s%s%s, veuillez vous référer aux procédures adéquates"
 
 #. module: account_voucher
 #: field:account.voucher.line,type:0
@@ -34052,7 +34057,7 @@ msgstr "Export Excel Suivi Commande Terrain"
 #: code:addons/return_claim/return_claim.py:1988
 #, python-format
 msgid "%s Event %s has been processed."
-msgstr "%s Evénement %s a été traité."
+msgstr "%s Événement %s a été traité."
 
 #. module: sync_client
 #: view:sync.client.message_received:0
@@ -36031,7 +36036,7 @@ msgstr "cancel_voucher - (account.voucher)"
 #: field:sync.monitor,status:0
 #, python-format
 msgid "Status"
-msgstr "État"
+msgstr "Statut"
 
 #. module: account
 #: code:addons/account/account.py:3207
@@ -37781,6 +37786,7 @@ msgstr "Sur Plusieurs Documents"
 #: view:sync.client.update_to_send:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:89
+#: report:addons/msf_audittrail/report/log_line_xls.mako:72
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -38294,6 +38300,7 @@ msgstr "Second choice. Article must only be used if the first choice is not avai
 #: field:audittrail.log.line,method:0
 #: report:msf.log.line:0
 #: field:patch.scripts,method:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:74
 msgid "Method"
 msgstr "Méthode"
 
@@ -38470,6 +38477,7 @@ msgstr "Vous ne pouvez pas avoir plus d'une configuration Communication"
 #. module: msf_audittrail
 #: field:audittrail.log.line,log:0
 #: report:msf.log.line:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:71
 msgid "Log ID"
 msgstr "Journal de bord - Identité"
 
@@ -38532,7 +38540,7 @@ msgstr "Gérer la TVA"
 #: report:product.asset:0
 #: view:product.asset:0
 msgid "Event History"
-msgstr "Evénement - Historique"
+msgstr "Événement - Historique"
 
 #. module: msf_outgoing
 #: model:process.transition,note:msf_outgoing.process_transition_ppl_assigned_draft_ship
@@ -40290,7 +40298,7 @@ msgstr "Types de contrôles"
 #: field:shipment.additional.line.processor,ppl_id:0
 #: field:shipment.family.processor,ppl_id:0
 msgid "PPL Ref."
-msgstr "PPL Ref."
+msgstr "Ref. LPC"
 
 #. modules: base, procurement_report, msf_tools
 #: field:ir.cron,interval_type:0
@@ -44695,6 +44703,8 @@ msgstr "Pas de période définie pour cette date : %s !\n"
 
 #. module: msf_outgoing
 #: view:shipment:0
+#: code:addons/msf_outgoing/msf_outgoing.py:5347
+#, python-format
 msgid "Change description"
 msgstr "Changer la description"
 
@@ -45775,6 +45785,7 @@ msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Enga
 #: field:standard.price.track.changes,user_id:0
 #: field:wizard.template,user_id:0
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:92
+#: report:addons/msf_audittrail/report/log_line_xls.mako:78
 msgid "User"
 msgstr "Utilisateur"
 
@@ -47377,6 +47388,7 @@ msgstr "Brunéi Darussalam"
 
 #. module: msf_audittrail
 #: report:msf.log.line:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:75
 msgid "Field description"
 msgstr "Description du champ"
 
@@ -47760,7 +47772,7 @@ msgstr "GUYANESE DOLLAR"
 #. module: msf_doc_import
 #: view:wizard.delete.lines:0
 msgid "Lines to remove"
-msgstr "Lines to remove"
+msgstr "Lignes à supprimer"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -49834,7 +49846,7 @@ msgstr "Moments de décision"
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_ppl_family_processor
 msgid "PPL family"
-msgstr "PPL family"
+msgstr "Famille LPC"
 
 #. module: purchase
 #: help:purchase.order,picking_ids:0
@@ -50274,7 +50286,7 @@ msgstr "Expatriates"
 #: code:addons/return_claim/return_claim.py:944
 #, python-format
 msgid "Event (%s) is not allowed for selected Claim Type."
-msgstr "Evénement (%s) non autorisé pour ce Type de Réclamation"
+msgstr "Événement (%s) non autorisé pour ce Type de Réclamation"
 
 #. module: account_override
 #: code:addons/account_override/account.py:1007
@@ -50310,7 +50322,7 @@ msgstr "De l'Assistant de Picking"
 #: view:ppl.processor:0
 #: view:stock.incoming.processor:0
 msgid "PPL Information - Step 2"
-msgstr "PPL Information - Step 2"
+msgstr "Information LPC - Étape 2"
 
 #. module: base
 #: selection:ir.module.module,license:0
@@ -53118,7 +53130,7 @@ msgstr "Contrepartie Intermission "
 #: report:invoice:0
 #: report:packing.list:0
 msgid "FO Date:"
-msgstr "FO Date:"
+msgstr "Date CdT:"
 
 #. modules: msf_order_date, purchase, account, msf_homere_interface, hr, msf_instance, sale, account_hq_entries, account_override, procurement, base, account_period_closing_level, report_webkit
 #: model:ir.model,name:account.model_res_company
@@ -56815,6 +56827,8 @@ msgstr "Ajouter tous les Employés"
 #: field:purchase.order.merged.line,stock_take_date:0
 #: field:sale.order,stock_take_date:0
 #: field:sale.order.line,stock_take_date:0
+#: code:addons/msf_order_date/wizard/update_lines.py:100
+#, python-format
 msgid "Date of Stock Take"
 msgstr "Date de Prise en Stock"
 
@@ -57740,7 +57754,7 @@ msgstr "Réf Ext."
 #: code:addons/purchase/purchase_order_line.py:1668
 #, python-format
 msgid "Analytic allocation is mandatory for this line: %s!"
-msgstr "Analytic allocation is mandatory for this line: %s!"
+msgstr "Une allocation analytique est obligatoire sur la ligne: %s!"
 
 #. module: tender_flow
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:623
@@ -57935,7 +57949,7 @@ msgid "\n"
 "        Please note that %s is temporary closed during the import to avoid conflict accesses (you can see the loading on the PO note tab check box). At the end of the load, POXX will be back in the right state. You can refresh the screen if you need to follow the upload progress\n"
 ""
 msgstr "\n"
-"        Veuillet noter que %s est temporairement fermé durant l'import pour éviter des conflicts d'accès (vous pouvez voir le niveau de chargement à partir de l'onglet Note). A la fin du téléchargement, POXX sera remise au statut correct. Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progresion du téléchargement\n"
+"        Veuillez noter que %s est temporairement fermé durant l'import pour éviter des conflicts d'accès (vous pouvez voir le niveau de chargement à partir de l'onglet Note). A la fin du téléchargement, POXX sera remise au statut correct. Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progresion du téléchargement\n"
 ""
 
 #. module: partner_modification
@@ -59681,6 +59695,7 @@ msgstr "Fenêtre Actions"
 #: view:purchase.order.line:0
 #: view:sale.order:0
 #: view:sale.order.line:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:76
 msgid "Order Line"
 msgstr "Ligne de Commande"
 
@@ -63286,7 +63301,7 @@ msgstr "Zaïre"
 #. module: stock
 #: view:stock.picking:0
 msgid "Change All destinations"
-msgstr "Changer toutes les destination"
+msgstr "Changer toutes les destinations"
 
 #. module: base
 #: view:res.lang:0
@@ -65045,7 +65060,7 @@ msgstr "Composition - Articles"
 #. module: msf_outgoing
 #: view:ppl.processor:0
 msgid "PPL Information - Step 1"
-msgstr "PPL Information - Step 1"
+msgstr "Information LPC - Étape 1"
 
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_register_creation_form
@@ -67108,7 +67123,7 @@ msgstr "Envoyé par le Fournisseur"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "Box"
-msgstr "Boite"
+msgstr "Boîte"
 
 #. module: base
 #: view:wizard.add.users.synchronized:0
@@ -67569,7 +67584,7 @@ msgstr "Lot expired"
 #: view:add.event:0
 #: view:return.claim:0
 msgid "Event"
-msgstr "Evénement"
+msgstr "Événement"
 
 #. modules: msf_doc_import, consumption_calculation, specific_rules, stock_override
 #: view:weekly.forecast.report:0
@@ -67712,7 +67727,7 @@ msgstr "Source/Destination"
 #. module: return_claim
 #: field:claim.event,event_picking_id_claim_event:0
 msgid "Event Picking"
-msgstr "Evénement Picking"
+msgstr "Événement Picking"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:556
@@ -71132,7 +71147,7 @@ msgstr "Europe/Kiev"
 #: code:addons/msf_order_date/order_dates.py:219
 #, python-format
 msgid "The Ready To Ship Date should be older than the Creation date !"
-msgstr "La date du Prêt à être Expédié devrait être antérieure à la date de Création !"
+msgstr "La date Prêt à Expédier devrait être antérieure à la date de Création !"
 
 #. module: report_webkit
 #: help:res.company,lib_path:0
@@ -72285,7 +72300,7 @@ msgstr "Pacific/Pitcairn"
 #. module: return_claim
 #: field:return.claim,contains_event_return_claim:0
 msgid "Contains Events"
-msgstr "Contient des Evénements"
+msgstr "Contient des Événements"
 
 #. module: base
 #: code:addons/base/res/res_lang.py:176
@@ -74587,7 +74602,7 @@ msgstr "Le processus de validation des écritures comptables est aussi appelé \
 #. module: product_asset
 #: view:product.asset.event:0
 msgid "Asset Event"
-msgstr "Actif - Evénement"
+msgstr "Actif - Événement"
 
 #. modules: base, base_setup, unifield_setup, msf_outgoing
 #: field:res.bank,phone:0
@@ -77919,7 +77934,7 @@ msgstr "Sélection de produits"
 #: field:sale.order.line.followup,line_id:0
 #: field:sale.order.line.followup,line_number:0
 msgid "Order line"
-msgstr "Ligne d'ordre"
+msgstr "Ligne de commande"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -78537,7 +78552,7 @@ msgstr "Si vous annulez le lettrage des écritures, il vous faudra alors aussi v
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:791
 #, python-format
 msgid "PPL Information - step 2"
-msgstr "PPL Information - step 2"
+msgstr "Information LPC - étape 2"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:2529
@@ -78633,7 +78648,7 @@ msgstr "Compte pour distribution analytique"
 #. module: sales_followup
 #: view:ir.followup.location.wizard:0
 msgid "Order statuses"
-msgstr "États de la commande"
+msgstr "Statut de la commande"
 
 #. module: stock_schedule
 #: field:stock.frequence,monthly_day09:0
@@ -78935,7 +78950,7 @@ msgstr "Kentucky"
 #. module: base
 #: view:ir.values:0
 msgid "Values for Event Type"
-msgstr "Valeurs pour le Type d'Evénement"
+msgstr "Valeurs pour le Type d'Événement"
 
 #. module: sync_client
 #: field:sync.client.log_sale_purchase,is_status_modified:0
@@ -79060,7 +79075,7 @@ msgstr "Biélorussie"
 #: code:addons/msf_order_date/order_dates.py:185
 #, python-format
 msgid "The Ready to Ship Date should be older than the Creation date !"
-msgstr "La date Prêt pour expédition devrait être postérieure à la date de création !"
+msgstr "La date Prêt à Expédier devrait être postérieure à la date de création !"
 
 #. module: base
 #: model:res.currency,currency_name:base.SOS
@@ -82649,12 +82664,12 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:sale.order,draft_cancelled:0
 #, python-format
 msgid "State"
-msgstr "État"
+msgstr "Statut"
 
 #. module: sourcing
 #: view:sale.order.line:0
 msgid "Lines to source"
-msgstr "Lines to source"
+msgstr "Lignes"
 
 #. modules: account, msf_instance
 #: help:account.analytic.journal,type:0
@@ -83295,7 +83310,7 @@ msgstr "Journal de bord - Ligne"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "Requester Ref:"
-msgstr "Requester Ref:"
+msgstr "Réf. Demandeur:"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -84489,7 +84504,7 @@ msgstr "Type d'évènement"
 #. module: product_asset
 #: model:ir.ui.menu,name:product_asset.menu_asset_event_sales
 msgid "Asset events & follow up"
-msgstr "Actif -Evénements et suivi"
+msgstr "Actif - Événements et suivi"
 
 #. module: base
 #: field:publisher_warranty.contract,check_opw:0
@@ -84655,7 +84670,7 @@ msgstr "Prodlot Caché"
 #: field:shipment.additional.line.processor,num_of_packs:0
 #: field:shipment.family.processor,num_of_packs:0
 msgid "# Packs"
-msgstr "# Packs"
+msgstr "# Colis"
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_delete_lines
@@ -87052,7 +87067,7 @@ msgstr "Désirez-vous écraser les budgets suivants:"
 #. module: base
 #: view:ir.values:0
 msgid "Connect Events to Actions"
-msgstr "Associer les Evénements aux Actions"
+msgstr "Associer les Événements aux Actions"
 
 #. modules: msf_outgoing, stock_override, report_webkit, stock, delivery_mechanism
 #: view:split.memory.move:0
@@ -88240,7 +88255,7 @@ msgstr "District of Columbia"
 #: model:ir.actions.act_window,name:base.act_values_form_action
 #: model:ir.ui.menu,name:base.menu_values_form_action
 msgid "Client Events"
-msgstr "Evénements Client"
+msgstr "Événements Client"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:790
@@ -90792,7 +90807,7 @@ msgstr "Unifield Instance"
 #. module: return_claim
 #: view:return.claim:0
 msgid "Process Event"
-msgstr "Traiter Evénement"
+msgstr "Traiter Événement"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:968
@@ -93491,7 +93506,7 @@ msgstr "Date de Création"
 #. module: msf_outgoing
 #: model:process.node,name:msf_outgoing.process_node_ppl_done
 msgid "PPL - closed"
-msgstr "Liste de Pré-Colisage - fermé"
+msgstr "LPC - fermé"
 
 #. module: procurement
 #: model:ir.model,name:procurement.model_procurement_orderpoint_compute
@@ -94852,7 +94867,7 @@ msgstr "Rechercher une Période"
 #. module: return_claim
 #: field:return.claim,sequence_id_return_claim:0
 msgid "Events Sequence"
-msgstr "Séquence Evénements"
+msgstr "Séquence Événements"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:292
@@ -94936,7 +94951,7 @@ msgstr "Homere Interface"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "To pack"
-msgstr "A coliser"
+msgstr "A colis"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -95232,7 +95247,7 @@ msgstr "Prix Coûtant"
 #: code:addons/msf_outgoing/msf_outgoing.py:4159
 #, python-format
 msgid "PPL Information - step 1"
-msgstr "PPL Information - step 1"
+msgstr "Information LPC - étape 1"
 
 #. modules: account, msf_currency_revaluation
 #: selection:account.journal.column,field:0
@@ -97112,7 +97127,7 @@ msgstr "Document date wrong format for date: %s: %s"
 #: view:return.claim:0
 #, python-format
 msgid "Add an Event"
-msgstr "Ajouter Evénement"
+msgstr "Ajouter Événement"
 
 #. module: base
 #: model:res.currency,currency_name:base.HRK
@@ -97180,6 +97195,7 @@ msgstr "In - brouillon"
 #: view:audittrail.log.line:0
 #: report:msf.log.line:0
 #: view:audittrail.log.line:0
+#: report:addons/msf_audittrail/report/log_line_xls.mako:77
 msgid "New value"
 msgstr "Nouvelle valeur"
 
@@ -98748,7 +98764,7 @@ msgstr "Ressource"
 #: code:addons/purchase/purchase_workflow.py:39
 #, python-format
 msgid "The Date of Stock Take is required for a Purchase Order if the Partner is an ESC."
-msgstr "The Date of Stock Take is required for a Purchase Order if the Partner is an ESC."
+msgstr "La Date de Prise en Stock est obligatoire si le partenaire est ESC."
 
 #. module: analytic_distribution
 #: report:funding.pool:0
@@ -99260,7 +99276,7 @@ msgstr "Hiérarchie du Compte"
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.ops_event_action
 msgid "Operations Events"
-msgstr "Evénements operationels"
+msgstr "Événements operationels"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.act_account_acount_move_line_open_unreconciled
@@ -99304,11 +99320,6 @@ msgstr "Vue Balance des Tiers"
 #: model:ir.model,name:msf_budget.model_msf_budget
 msgid "MSF Budget"
 msgstr "Budget MSF"
-
-#. module: sale
-#: view:delete.sale.order.line.wizard:0
-msgid "OK, cancel lines"
-msgstr "OK, cancel lines"
 
 #. module: base
 #: field:ir.actions.server,action_id:0
@@ -101761,6 +101772,8 @@ msgstr "Vous êtes sur le point de supprimer les produits %s, êtes vous sûr de
 
 #. module: sale
 #: view:delete.sale.order.line.wizard:0
+#: code:addons/sale/wizard/delete_sale_order_line.py:110
+#, python-format
 msgid "OK, cancel lines"
 msgstr "OK, supprimer les lignes"
 
@@ -101772,6 +101785,8 @@ msgstr "Vous êtes sur le point de supprimer le produit %s, êtes vous sûr de v
 
 #. module: sale
 #: view:delete.sale.order.line.wizard:0
+#: code:addons/sale/wizard/delete_sale_order_line.py:110
+#, python-format
 msgid "OK, cancel line"
 msgstr "OK, supprimer la ligne"
 
@@ -101790,3 +101805,33 @@ msgstr "ATTENTION: Ce document a déjà été validé, êtes vous sûr de vouloi
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:104
 msgid "Manually changed (at reception)"
 msgstr "Modifié manuellemnt (à la réception)"
+
+#. module: msf_audittrail
+#: report:msf.log.line:0
+msgid "on"
+msgstr "de"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:114
+#, python-format
+msgid "Delivery %s date"
+msgstr "Date de livraison %s"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:114
+#, python-format
+msgid "confirmed"
+msgstr "confirmée"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:114
+#, python-format
+msgid "requested"
+msgstr "souhaitée"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:92
+#: code:addons/msf_order_date/wizard/update_lines.py:106
+#, python-format
+msgid "Value to be used-"
+msgstr "Valeur à utiliser-"

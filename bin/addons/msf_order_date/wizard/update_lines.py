@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class update_lines(osv.osv_memory):
     _name = "update.lines"
@@ -86,32 +87,38 @@ class update_lines(osv.osv_memory):
 
         obj_name = obj_obj.browse(cr, uid, obj_ids[0], context=context).name
 
+        yes = _('Yes')
+        no = _('No')
+        value_to_be_used = _('Value to be used-')
+        requested = _('requested')
+        confirmed = ('_confirmed')
+        assert requested
+        assert confirmed
         if str(field_name) == 'stock_take':
             _moves_arch_lst = """
                             <form>
-                            <separator colspan="4" string="%s: Value to be used-"/>
+                            <separator colspan="4" string="%s: %s"/>
                             <field name="stock_take_date" />
-                            <button name="update_stock_take_date" string="Yes" type="object" icon="gtk-apply" />
-                            <button special="cancel" string="No" icon="gtk-cancel"/>
-                            """ % obj_name
+                            <button name="update_stock_take_date" string="%s" type="object" icon="gtk-apply" />
+                            <button special="cancel" string="%s" icon="gtk-cancel"/>
+                            """ % (obj_name, value_to_be_used, yes, no)
 
             _moves_fields = result['fields']
             # add field related to picking type only
-            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': 'Date of Stock Take', 'readonly': True, },})
+            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': _('Date of Stock Take'), 'readonly': True, },})
 
             _moves_arch_lst += """</form>"""
         else:
             _moves_arch_lst = """
                             <form>
-                            <separator colspan="4" string="%s: Value to be used-"/>
+                            <separator colspan="4" string="%s: %s"/>
                             <field name="delivery_%s_date" />
-                            <button name="update_delivery_%s_date" string="Yes" type="object" icon="gtk-apply" />
-                            <button special="cancel" string="No" icon="gtk-cancel"/>
-                            """ % (obj_name, field_name, field_name)
-
+                            <button name="update_delivery_%s_date" string="%s" type="object" icon="gtk-apply" />
+                            <button special="cancel" string="%s" icon="gtk-cancel"/>
+                            """ % (obj_name, value_to_be_used, field_name, field_name, yes, no)
             _moves_fields = result['fields']
             # add field related to picking type only
-            _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : 'Delivery %s date'%field_name, 'readonly': True,},
+            _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : _('Delivery %s date')% _(field_name), 'readonly': True,},
                                   })
 
             _moves_arch_lst += """</form>"""
