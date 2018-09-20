@@ -23816,7 +23816,7 @@ msgstr "Regroupement par monnaies…"
 #. module: stock_override
 #: field:stock.picking,incoming_id:0
 msgid "Incoming ref"
-msgstr "Ref. Réception"
+msgstr "Réf. Réc."
 
 #. module: hr
 #: model:process.transition,name:hr.process_transition_employeeuser0
@@ -41112,7 +41112,7 @@ msgstr "Button Access Rule"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Qty to Pick"
-msgstr "Qty to Pick"
+msgstr "Qté à Prélever"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:468
@@ -44296,7 +44296,7 @@ msgstr "Solde Compte"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Items :"
-msgstr "Items :"
+msgstr "Articles :"
 
 #. modules: register_accounting, msf_audittrail, stock, product_attributes, product, sync_client
 #: view:audittrail.log.line:0
@@ -48637,7 +48637,7 @@ msgstr "La colone \"%s\" n'est pas prise en compte. Merci de corriger. La liste 
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Incoming ref:"
-msgstr "Incoming ref:"
+msgstr "Ref. Réception:"
 
 #. module: register_accounting
 #: selection:account.direct.invoice.wizard,type:0
@@ -53679,7 +53679,7 @@ msgstr "Modèle de Ligne d'Ecriture Comptable"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "PICKING TICKET ("
-msgstr "PICKING TICKET ("
+msgstr "BON DE PICKING ("
 
 #. module: report_webkit
 #: help:ir.actions.report.xml,report_webkit_data:0
@@ -67877,7 +67877,7 @@ msgstr "NL obligatoire"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Qty in stock"
-msgstr "Qty in stock"
+msgstr "Qté en stock"
 
 #. module: stock_override
 #: field:stock.picking,is_esc:0
@@ -71622,7 +71622,7 @@ msgstr "Funding pool - Code"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Total items:"
-msgstr "Total items:"
+msgstr "Total Articles:"
 
 #. module: base
 #: selection:ir.translation,lang:0
@@ -76934,7 +76934,7 @@ msgstr "Liste des Funding pools associés aux coûts réservés"
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:118
 #, python-format
 msgid "Transport mode"
-msgstr "Mode de transport"
+msgstr "Mode Transport"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -80358,7 +80358,7 @@ msgstr "QTÉ totale après INV"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "FO ref.:"
-msgstr "FO ref.:"
+msgstr "Réf. CdT:"
 
 #. module: base
 #: view:ir.module.module:0
@@ -90540,7 +90540,7 @@ msgstr "Sélectionnez la catégorie du produit actuel"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Origin ref.:"
-msgstr "Origin ref.:"
+msgstr "Réf. d'Origine:"
 
 #. module: purchase
 #: view:purchase.order:0
@@ -98432,7 +98432,7 @@ msgstr "Sync Date"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Content:"
-msgstr "Content:"
+msgstr "Contenu:"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0

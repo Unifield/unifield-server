@@ -5,18 +5,18 @@ import mypolib as polib
 
 ###############################################################################
 
-keep_keywords = [ "weekly_forecast_report.py" ]
 
 ###############################################################################
 
 def main():
 
-    if len(sys.argv) != 2 or not sys.argv[1]:
-        print "Usage: clean.py file.po"
+    if len(sys.argv) != 3:
+        print "Usage: clean.py liste,of,terms file.po"
         sys.exit(-1)
 
+    keep_keywords = sys.argv[1].split(',')
     # Load the PO file
-    pofile = sys.argv[1]
+    pofile = sys.argv[2]
     po = polib.pofile(pofile, wrapwidth=0)
 
     # Filter entries in the PO
