@@ -13685,7 +13685,7 @@ msgstr "You should have exactly 8 columns in this order:\n"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:182
 #: report:sales.follow.up.report_pdf:0
 msgid "Order state:"
-msgstr "Order state:"
+msgstr "Statut de la commande:"
 
 #. module: account
 #: view:account.account:0
@@ -13961,7 +13961,7 @@ msgstr "ID"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:162
 #: report:sales.follow.up.report_pdf:0
 msgid "Internal reference:"
-msgstr "Internal reference:"
+msgstr "Référence Interne:"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:749
@@ -28650,7 +28650,7 @@ msgstr "Pièce jointe"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:220
 #: report:sales.follow.up.report_pdf:0
 msgid "ORDERED QTY"
-msgstr "ORDERED QTY"
+msgstr "QTÉ COMMANDÉE"
 
 #. module: account
 #: field:account.tax.code,code:0
@@ -40236,7 +40236,7 @@ msgstr "Spécifier le type de bien au niveau du produit"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:223
 #: report:sales.follow.up.report_pdf:0
 msgid "TENDER"
-msgstr "TENDER"
+msgstr "APPEL D'OFFRES"
 
 #. module: analytic_distribution
 #: view:account.analytic.account:0
@@ -43838,7 +43838,7 @@ msgstr "Délai Client"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:225
 #: report:sales.follow.up.report_pdf:0
 msgid "INCOMING SHIPMENT"
-msgstr "INCOMING SHIPMENT"
+msgstr "LIVRAISON ENTRANTE"
 
 #. module: analytic_override
 #: field:cost.center.distribution.line,distribution_id:0
@@ -45758,7 +45758,7 @@ msgstr "Liste Existante"
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:202
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:217
 msgid "PRODUCT DESCRIPTION"
-msgstr "PRODUCT DESCRIPTION"
+msgstr "DESCRIPTION PRODUIT"
 
 #. module: product_asset
 #: view:product.asset.type:0
@@ -52602,7 +52602,7 @@ msgstr "Quantité commandée"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:187
 #: report:sales.follow.up.report_pdf:0
 msgid "Requested date:"
-msgstr "Requested date:"
+msgstr "Date Souhaitée:"
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -57569,7 +57569,7 @@ msgstr "Intégrité des données financières"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:172
 #: report:sales.follow.up.report_pdf:0
 msgid "Creation date:"
-msgstr "Creation date:"
+msgstr "Date de création:"
 
 #. module: procurement_report
 #: view:procurement.batch.cron:0
@@ -57694,6 +57694,7 @@ msgstr "Art."
 
 #. module: sales_followup
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:284
+#: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:124
 msgid "FO Follow Up"
 msgstr "Suivi CdT"
 
@@ -59155,7 +59156,7 @@ msgstr "Date de début"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:216
 #: report:sales.follow.up.report_pdf:0
 msgid "PRODUCT CODE"
-msgstr "PRODUCT CODE"
+msgstr "CODE PRODUIT"
 
 #. modules: account_override, account
 #: field:account.move.line,is_si_refund:0
@@ -70747,7 +70748,7 @@ msgstr "Aucune version active ne correspond à la liste de prix sélectionnée !
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:224
 #: report:sales.follow.up.report_pdf:0
 msgid "PURCHASE ORDER"
-msgstr "PURCHASE ORDER"
+msgstr "BON DE COMMANDE"
 
 #. module: sync_client
 #: field:sync.client.message_received,create_date:0
@@ -84107,7 +84108,7 @@ msgstr "Module Linguistique"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:197
 #: report:sales.follow.up.report_pdf:0
 msgid "Confirmed date:"
-msgstr "Confirmed date:"
+msgstr "Date confirmée:"
 
 #. modules: account, register_accounting
 #: field:account.invoice,residual:0
@@ -84130,7 +84131,7 @@ msgstr "Stock - Valeur"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:222
 #: report:sales.follow.up.report_pdf:0
 msgid "SOURCED"
-msgstr "SOURCED"
+msgstr "SOURCÉE"
 
 #. module: base
 #: field:ir.actions.configuration.wizard,note:0
@@ -95533,7 +95534,7 @@ msgstr "This Months Sales by type"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:215
 #: report:sales.follow.up.report_pdf:0
 msgid "ORDER LINE"
-msgstr "ORDER LINE"
+msgstr "NUM LIGNE"
 
 #. modules: purchase, purchase_override, sale
 #: selection:purchase.order.line,state:0
