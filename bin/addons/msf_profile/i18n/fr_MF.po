@@ -6053,6 +6053,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:stock.production.lot.revision,description:0
 #: report:stock.card.report:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:294
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:430
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -7047,8 +7048,9 @@ msgstr "Etes-vous sûr de vouloir ouvrir cette facture ?"
 msgid "Sending Goods"
 msgstr "Envoi de Marchandises"
 
-#. module: sale
+#. module: sale, msf_outgoing
 #: report:msf.report_reception_in:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:436
 msgid "DG"
 msgstr "MD"
 
@@ -9665,6 +9667,7 @@ msgstr "La devise dans laquelle le champ est exprimé."
 #: report:invoice:0
 #: report:packing.list:0
 #: report:picking.ticket:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:380
 msgid "Transport mode:"
 msgstr "Mode de transport:"
 
@@ -10519,6 +10522,7 @@ msgstr "Requested date :"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:350
 msgid "Packing date:"
 msgstr "Date Colisage:"
 
@@ -10607,6 +10611,7 @@ msgstr "Mission - Rapport"
 #. modules: msf_outgoing, consumption_calculation
 #: view:expiry.quantity.report:0
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:434
 msgid "Exp. Date"
 msgstr "Date Exp."
 
@@ -10626,6 +10631,7 @@ msgstr "Cannot delete a sales order line which is %s !"
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:317
 msgid "Consignee:"
 msgstr "Destinataire:"
 
@@ -13056,6 +13062,7 @@ msgstr "button_confirm - (procurement.order)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:313
 msgid "Your Ref.:"
 msgstr "Votre Réf.:"
 
@@ -14321,6 +14328,7 @@ msgstr "Account ID"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:432
 msgid "Total Qty."
 msgstr "Qté Totale"
 
@@ -20989,6 +20997,7 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: field:physical.inventory.counting,is_cs:0
 #: view:physical.inventory.select.products:0
 #: report:destruction.location:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:437
 msgid "CS"
 msgstr "CS"
 
@@ -24987,6 +24996,7 @@ msgstr "Stopped products"
 #: field:sync_client.version,comment:0
 #: field:automated.export.job,comment:0
 #: field:real.average.consumption.line,remark:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:431
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -25397,12 +25407,6 @@ msgstr "NOT contre-passée"
 #, python-format
 msgid "The instance code %s is not in the database!"
 msgstr "The instance code %s is not in the database!"
-
-#. module: mission_stock
-#: field:stock.mission.report,move_ids:0
-#: field:stock.mission.report.line,move_ids:0
-msgid "Noves"
-msgstr "Noves"
 
 #. module: base
 #: model:res.currency,currency_name:base.FKP
@@ -26995,6 +26999,7 @@ msgstr "No available IN found for the given PO %s"
 #. module: msf_outgoing
 #: report:packing.list:0
 #: report:labels:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:419
 msgid "Parcel No:"
 msgstr " Numéro de la Parcelle:"
 
@@ -30113,6 +30118,7 @@ msgstr "Fermé"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:324
 msgid "Our Ref.:"
 msgstr "Notre Réf.:"
 
@@ -30741,6 +30747,7 @@ msgstr "Il n'y a pas de compte de charge définit pour ce produit : \"%s\" (id. 
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:420
 msgid "Parcel"
 msgstr "Parcelle"
 
@@ -32123,6 +32130,7 @@ msgstr "Choisir un Bon de Commande"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:421
 msgid "Total volume"
 msgstr "Volume total"
 
@@ -33563,7 +33571,7 @@ msgid "\n"
 "        Stock mission report.\n"
 "        "
 msgstr "\n"
-"        Stock mission report.\n"
+"        Rapport Stock de mission.\n"
 "        "
 
 #. module: msf_instance
@@ -33919,7 +33927,7 @@ msgstr "Référence Auteur de la Commande"
 #: view:msf_field_access_rights.field_access_rule:0
 #: field:msf_field_access_rights.field_access_rule,domain_text:0
 msgid "Advanced Filter"
-msgstr "Advanced Filter"
+msgstr "Filtres Avancés"
 
 #. module: update_client
 #: code:addons/update_client/wizard.py:70
@@ -35392,6 +35400,7 @@ msgstr "Michigan"
 #: report:sales.follow.up.multi.report_pdf:0
 #: field:stock.incoterms,code:0
 #: report:stock.card.report:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:429
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -37112,6 +37121,7 @@ msgstr "Produit: %s, Qté Consommée (%s) ne peut être supérieure à la Qté I
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:318
 msgid "Dispatch:"
 msgstr "Expédition:"
 
@@ -43749,6 +43759,7 @@ msgstr "Cette devise sera utilisée,  à la place de celle par défaut; pour les
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:320
 msgid "Invoice to:"
 msgstr "Facturer à:"
 
@@ -46254,6 +46265,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:delivery.order:0
 #: report:internal.move:0
 #: field:report.stock.move,prodlot_id:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:433
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -53129,6 +53141,7 @@ msgstr "Contrepartie Intermission "
 #: report:empty.picking.ticket:0
 #: report:invoice:0
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:335
 msgid "FO Date:"
 msgstr "Date CdT:"
 
@@ -55836,6 +55849,7 @@ msgstr "Info du traitement de Picking"
 #: report:empty.picking.ticket:0
 #: report:invoice:0
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:315
 msgid "Shipper:"
 msgstr "Expéditeur:"
 
@@ -57646,6 +57660,7 @@ msgstr "Source Type"
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:284
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:428
 msgid "Item"
 msgstr "Art."
 
@@ -67871,6 +67886,7 @@ msgstr "Sous-Liste"
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_kc:0
 #: view:physical.inventory.select.products:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:435
 msgid "KC"
 msgstr "GF"
 
@@ -74807,6 +74823,7 @@ msgstr "Has identifier"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:414
 msgid "NO PACK FAMILIES IN THIS PPL"
 msgstr "PAS DE FAMILLE DE PACK DANS CE LPC"
 
@@ -76170,6 +76187,7 @@ msgstr "Rechercher un Journal de Compte"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:421
 msgid "Total weight"
 msgstr "Poids total"
 
@@ -84385,6 +84403,7 @@ msgstr "PostgreSQL hd"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:365
 msgid "RTS date:"
 msgstr "Date PàE:"
 
@@ -86555,11 +86574,6 @@ msgstr "Gestion Avancée d'Entrepôts"
 #: field:res.company,ye_pl_cp_for_bs_debit_bal_account:0
 msgid "Counterpart for B/S debit balance"
 msgstr "Contrepartie pour les balances de Bilan au débit "
-
-#. module: mission_stock
-#: field:mission.stock.wizard,full_view:0
-msgid "Full View"
-msgstr "Full View"
 
 #. module: procurement_request
 #: code:addons/procurement_request/wizard/wizard_import_list.py:87
@@ -90448,6 +90462,7 @@ msgstr "PANAMANIAN BALBOA"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:303
 msgid "PACKING LIST"
 msgstr "Liste de Colisage"
 
@@ -101835,3 +101850,8 @@ msgstr "souhaitée"
 #, python-format
 msgid "Value to be used-"
 msgstr "Valeur à utiliser-"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:425
+msgid "Containing:"
+msgstr "Contenant"
