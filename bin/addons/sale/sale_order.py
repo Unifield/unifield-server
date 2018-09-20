@@ -1879,7 +1879,7 @@ class sale_order_line(osv.osv):
         res = {}
         for sol in self.browse(cr, uid, ids, context=context):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if sol.resourced_original_line and sol.state != 'done':
+            if (sol.resourced_original_line or (sol.is_line_split and sol.original_line_id and sol.original_line_id.resourced_original_line)) and sol.state != 'done':
                 if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
