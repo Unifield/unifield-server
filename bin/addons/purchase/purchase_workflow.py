@@ -95,7 +95,8 @@ class purchase_order_line(osv.osv):
                             self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
 
             elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
-                    pol.original_line_id.linked_sol_id.order_id.procurement_request:
+                    pol.original_line_id.linked_sol_id.order_id.procurement_request and \
+                    self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', pol.original_line_id.id)], limit=1, context=context):
                 # split the sol:
                 split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
                     'sale_line_id': pol.original_line_id.linked_sol_id.id,
