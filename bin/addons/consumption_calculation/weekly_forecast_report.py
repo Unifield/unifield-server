@@ -411,11 +411,11 @@ class weekly_forecast_report(osv.osv):
                 while i != report.interval:
                     i += 1
                     if report.interval_type == 'week':
-                        interval_name = 'Week %s' % i
+                        interval_name = '%s %s' % (_('Week'), i)
                         interval_from = now() + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
                         interval_to = now() + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
                     else:
-                        interval_name = 'Month %s' % i
+                        interval_name = '%s %s' % (_('Month'), i)
                         interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
                         interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
 
@@ -493,14 +493,23 @@ class weekly_forecast_report(osv.osv):
                     t = t + jump
 
                 line_values = """<Row></Row><Row>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Product Code</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Description</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Unit Price</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Stock value</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">AMC/FMC</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Current Stock Qty</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Pipeline Qty</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">Expiry Qty</Data></Cell>"""
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>""" % (
+                    _('Product Code'),
+                    _('Description'),
+                    _('Unit Price'),
+                    _('Stock value'),
+                    _('AMC/FMC'),
+                    _('Current Stock Qty'),
+                    _('Pipeline Qty'),
+                    _('Expiry Qty'),
+                )
 
                 for interval in intervals:
                     line_values += """<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {
@@ -605,7 +614,7 @@ class weekly_forecast_report(osv.osv):
                     # Sort the key of the dict, to have the values in good order
                     # TODO: Use OrderedDict instead of this sort of dict keys but only available on Python 2.7
                     interval_keys = inter.keys()
-                    interval_keys.sort(key=lambda x: int(x[5:]))
+                    interval_keys.sort(key=lambda x: int(x.split(' ')[-1]))
                     last_value = product['qty_available']
                     for interval_name in interval_keys:
                         interval_values = inter.get(interval_name)

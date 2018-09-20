@@ -5,7 +5,7 @@ import mypolib as polib
 
 ###############################################################################
 
-keep_keywords = [ "expiry_report.mako" ]
+keep_keywords = [ "weekly_forecast_report.py" ]
 
 ###############################################################################
 

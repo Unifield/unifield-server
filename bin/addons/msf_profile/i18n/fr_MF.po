@@ -3701,6 +3701,7 @@ msgstr "You cannot validate a PO line with 0.0 as price unit !"
 #: code:addons/mission_stock/mission_stock.py:87
 #: code:addons/mission_stock/mission_stock.py:103
 #: code:addons/mission_stock/mission_stock.py:524
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:104
 #, python-format
 msgid "AMC"
 msgstr "CMM"
@@ -4786,6 +4787,7 @@ msgstr "Customer address"
 #. module: consumption_calculation
 #: report:product.likely.expire.report_pdf:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:195
+#: code:addons/consumption_calculation/weekly_forecast_report.py:511
 msgid "Expiry Qty"
 msgstr "Qté Expirée"
 
@@ -5942,7 +5944,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export
+#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -6059,6 +6061,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:stock.card.report:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:294
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:430
+#: code:addons/consumption_calculation/weekly_forecast_report.py:505
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -16035,7 +16038,7 @@ msgstr "America/Cancun"
 #: code:addons/consumption_calculation/report/expiry_calculation_report.py:35
 #, python-format
 msgid "RAC -- Real Average Consumption"
-msgstr "RAC -- Consommations Moyennes Réelles"
+msgstr "CMR -- Consommations Moyennes Réelles"
 
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_ir_track_changes_wizard
@@ -33348,6 +33351,7 @@ msgstr "America/Mendoza"
 #. module: consumption_calculation
 #: field:real.average.consumption.line,rac_id:0
 #: code:addons/consumption_calculation/history_consumption.py:707
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:104
 #, python-format
 msgid "RAC"
 msgstr "CMR"
@@ -38748,6 +38752,7 @@ msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'
 #: field:sale.report,month:0
 #: view:report.stock.move:0
 #: field:report.stock.move,month:0
+#: code:addons/consumption_calculation/weekly_forecast_report.py:418
 msgid "Month"
 msgstr "Mois"
 
@@ -43980,6 +43985,7 @@ msgstr "Contient des Produits Dangereux"
 #: field:purchase.report,product_code:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:112
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:189
+#: code:addons/consumption_calculation/weekly_forecast_report.py:504
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -48720,6 +48726,7 @@ msgstr "Comptes de bilan à 0"
 #: code:addons/mission_stock/mission_stock.py:88
 #: code:addons/mission_stock/mission_stock.py:104
 #: code:addons/mission_stock/mission_stock.py:525
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:104
 #, python-format
 msgid "FMC"
 msgstr "PCM"
@@ -51472,8 +51479,9 @@ msgstr "DEMANDE DE DEVIS"
 msgid "Unifield Account Code"
 msgstr "Unifield Account Code"
 
-#. module: specific_rules
+#. module: specific_rules, consumption_calculation
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:88
 msgid "DB/instance name"
 msgstr "BD/nom de l'instance"
 
@@ -52675,8 +52683,9 @@ msgstr "free.1.distribution.line"
 #. modules: consumption_calculation, stock_override
 #: field:product.history.consumption,date_from:0
 #: field:stock.card.wizard,from_date:0
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:93
 msgid "From date"
-msgstr "Date A Partir de "
+msgstr "À Partir du"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:713
@@ -75026,11 +75035,12 @@ msgstr "Compte Parent"
 msgid "Aborted"
 msgstr "Aborted"
 
-#. modules: procurement_cycle, threshold_value
+#. modules: procurement_cycle, threshold_value, consumption_calculation
 #: field:stock.warehouse.order.cycle.line,consumption:0
 #: field:threshold.value.line,consumption:0
+#: code:addons/consumption_calculation/weekly_forecast_report.py:508
 msgid "AMC/FMC"
-msgstr "AMC/FMC"
+msgstr "CMM/PCM"
 
 #. modules: account_override, account, finance, msf_instance, register_accounting, account_corrections, analytic_distribution
 #: selection:account.analytic.journal,type:0
@@ -77275,7 +77285,7 @@ msgstr "Modifié"
 msgid "# of lines imported"
 msgstr "# de lignes importées"
 
-#. modules: purchase, account, msf_outgoing, finance, purchase_override, sales_followup, supplier_catalogue, sale, product, kit, account_override, purchase_allocation_report, order_types, tender_flow, msf_supply_doc_export, msf_doc_import, register_accounting, stock, purchase_followup
+#. modules: purchase, account, msf_outgoing, finance, purchase_override, sales_followup, supplier_catalogue, sale, product, kit, account_override, purchase_allocation_report, order_types, tender_flow, msf_supply_doc_export, msf_doc_import, register_accounting, stock, purchase_followup, consumption_calculation
 #: field:account.invoice.line,price_unit:0
 #: report:account.invoice2:0
 #: report:allocation.invoices.report:0
@@ -77320,6 +77330,7 @@ msgstr "# de lignes importées"
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:75
 #: field:supplier.catalogue.line,unit_price:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:577
+#: code:addons/consumption_calculation/weekly_forecast_report.py:506
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -89078,6 +89089,7 @@ msgstr "Original Data Internal Request Line"
 #: model:ir.actions.act_window,name:consumption_calculation.action_weekly_forecast_report
 #: model:ir.actions.report.xml,name:consumption_calculation.weekly_forecast_report_xls
 #: model:ir.ui.menu,name:consumption_calculation.menu_weekly_forecast_report
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:84
 msgid "Periodical forecast report"
 msgstr "Rapport périodique prévisionnel"
 
@@ -98744,7 +98756,7 @@ msgstr "Etes-vous certain de vouloir ré-ouvrir cette période?"
 #. module: consumption_calculation
 #: field:weekly.forecast.report,interval:0
 msgid "Interval"
-msgstr "Interval"
+msgstr "Intervalle"
 
 #. module: product
 #: report:product.pricelist:0
@@ -101984,3 +101996,52 @@ msgstr "Export XML prêt"
 #: report:addons/consumption_calculation/report/expiry_report.mako:107
 msgid "Expiry report"
 msgstr "Rapport expiration"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:103
+msgid "Consumption calculation method"
+msgstr "Méthode de calcul de la consommation"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
+msgid "Number of"
+msgstr "Nombre de"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
+msgid "from now"
+msgstr "depuis aujourd'hui"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
+msgid "months"
+msgstr "mois"
+
+#. module: consumption_calculation
+#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
+msgid "weeks"
+msgstr "semaines"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/weekly_forecast_report.py:509
+#, python-format
+msgid "Current Stock Qty"
+msgstr "Qté actuelle en Stock"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/weekly_forecast_report.py:510
+#, python-format
+msgid "Pipeline Qty"
+msgstr "Qté en attente"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/weekly_forecast_report.py:507
+#, python-format
+msgid "Stock value"
+msgstr "Valeur du Stock"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/weekly_forecast_report.py:414
+#, python-format
+msgid "Week"
+msgstr "Semaine"
