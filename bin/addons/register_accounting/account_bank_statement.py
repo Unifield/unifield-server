@@ -1791,36 +1791,26 @@ class account_bank_statement_line(osv.osv):
                                                     {'reference': ''}, context=context)
         return True
 
-    def do_direct_expense(self, cr, uid, st_line, context=None):
+    def do_direct_expense(self, cr, uid, st_line, posttype='', context=None):
         """
-        Do a direct expense when the line is hard posted and content a supplier
+        If the statement line...
+            - is being hardposted
+            - has a Partner Third Party
+            - is booked on an income or expense account
+        ... this method creates direct expense lines (JI), adds them to the regline JE, and returns a list of their id
+        that will have to be reconciled once the JE will be posted.
         """
         if context is None:
             context = {}
         if not st_line:
             return False
-        # Do the treatment only if the line is hard posted and have a partner who is a supplier
-        if st_line.state == "hard" and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
+        to_reconcile = []
+        if posttype == 'hard' and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
                 st_line.direct_invoice is False:
             # Prepare some elements
             move_obj = self.pool.get('account.move')
             move_line_obj = self.pool.get('account.move.line')
             curr_date = time.strftime('%Y-%m-%d')
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
-            if not journal_ids:
-                raise osv.except_osv(_('Error'), _('No purchase journal found!'))
-            journal_id = journal_ids[0]
-            # Create a move
-            move_vals= {
-                'journal_id': journal_id,
-                'period_id': st_line.statement_id.period_id.id,
-                'date': st_line.date or curr_date,
-                'document_date': st_line.document_date or curr_date,
-                # name removed from UF-1542 because of a bug from UF-1129
-                #'name': 'DirectExpense/' + st_line.name,
-                'partner_id': st_line.partner_id.id,
-            }
-            move_id = move_obj.create(cr, uid, move_vals, context=context)
             # Create move lines
             account_id = False
             if st_line.account_id.user_type.code == 'expense':
@@ -1828,23 +1818,25 @@ class account_bank_statement_line(osv.osv):
             elif st_line.account_id.user_type.code == 'income':
                 account_id = st_line.partner_id.property_account_receivable.id or False
             if not account_id:
-                raise osv.except_osv(_('Warning'), _('The supplier seems not have an incorrect account. \
-                        Please contact an accountant administrator to resolve this problem.'))
+                raise osv.except_osv(_('Warning'), _('The supplier seems to have an incorrect account. Please contact '
+                                                     'an Accounting Administrator to solve this problem.'))
+            reg_move = st_line.first_move_line_id and st_line.first_move_line_id.move_id or False
+            if not reg_move:
+                raise osv.except_osv(_('Warning'),
+                                     _('Journal Entry linked to the register line %s not found.') % st_line.sequence_for_reference or '')
             val = {
                 'name': st_line.name,
-                'date': st_line.date or curr_date,
-                'document_date': st_line.document_date or curr_date,
-                'ref': st_line.ref or st_line.sequence_for_reference,
-                'reference': st_line.ref or st_line.sequence_for_reference,
-                'move_id': move_id,
+                'date': reg_move.date,
+                'document_date': reg_move.document_date,
+                'move_id': reg_move.id,
                 'partner_id': st_line.partner_id.id or False,
                 'partner_type_mandatory': True,
                 'account_id': account_id,
                 'credit': 0.0,
                 'debit': 0.0,
                 'statement_id': st_line.statement_id.id,
-                'journal_id': journal_id,
-                'period_id': st_line.statement_id.period_id.id,
+                'journal_id': reg_move.journal_id.id,
+                'period_id': reg_move.period_id.id,
                 'currency_id': st_line.statement_id.currency.id,
                 'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
             }
@@ -1856,18 +1848,17 @@ class account_bank_statement_line(osv.osv):
                                                                st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
             val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
             # Optimization: Add check=False because of next post() for the move
+            # (From US-3874: JIs are added to the regline JE to be posted right after the current method is called)
             move_line_debit_id = move_line_obj.create(cr, uid, val, context=context, check=False)
             val.update({'debit': 0.0, 'credit': amount, 'amount_currency': -abs(st_line.amount)})
-            # Optimization: Add check=False because of next post() for the move
             move_line_credit_id = move_line_obj.create(cr, uid, val, context=context, check=False)
-            # Post the move
-            move_obj.post(cr, uid, [move_id], context=context)
-            # Do reconciliation
-            move_line_obj.reconcile_partial(cr, uid, [move_line_debit_id, move_line_credit_id])
+            # the new JIs created will have to be reconciled after the JE will be posted
+            to_reconcile.append(move_line_debit_id)
+            to_reconcile.append(move_line_credit_id)
             # Disable the cash return button on this line
             # Optimization on write() for this field
             self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
-        return True
+        return to_reconcile
 
     def do_import_invoices_reconciliation(self, cr, uid, st_line, context=None):
         """
@@ -2437,11 +2428,13 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
+                    # create direct expense entries if need be: add the JIs to the regline JE and get the JIs to be reconciled
+                    to_reconcile = self.do_direct_expense(cr, uid, absl, posttype=postype, context=context)
+                    # post the regline JE
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
-                    # WARNING: if we don't do a browse before the "do_direct_expense", the system doesn't know that the absl state is hard post. And so the direct expense functionnality doesn't work!
-                    absl = self.browse(cr, uid, absl.id, context=context)
-                    # do a move that enable a complete supplier follow-up
-                    self.do_direct_expense(cr, uid, absl, context=context)
+                    # reconcile direct expense entries together if any
+                    if to_reconcile:
+                        self.pool.get('account.move.line').reconcile_partial(cr, uid, to_reconcile, context=context)
                 if previous_state == 'draft':
                     direct_hard_post = True  # UF-2316
                 else:

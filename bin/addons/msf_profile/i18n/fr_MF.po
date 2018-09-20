@@ -7655,12 +7655,6 @@ msgid "Replacement Tax"
 msgstr "Taxe de Remplacement"
 
 #. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:1807
-#, python-format
-msgid "No purchase journal found!"
-msgstr "No purchase journal found!"
-
-#. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Register closing date:"
@@ -63903,10 +63897,10 @@ msgid "Executive 4   7.5 x 10 inches, 190.5 x 254 mm"
 msgstr "Format exécutif 4 7,5 x 10 pouces, 190,5 x 254 mm"
 
 #. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:1827
+#: code:addons/register_accounting/account_bank_statement.py:1821
 #, python-format
-msgid "The supplier seems not have an incorrect account.                         Please contact an accountant administrator to resolve this problem."
-msgstr "The supplier seems not have an incorrect account.                         Please contact an accountant administrator to resolve this problem."
+msgid "The supplier seems to have an incorrect account. Please contact an Accounting Administrator to solve this problem."
+msgstr "Le fournisseur semble avoir un compte incorrect. Veuillez contacter un Administrateur Finance pour résoudre ce problème."
 
 #. module: account_override
 #: field:account.move.line,reconcile_txt:0
@@ -101860,3 +101854,9 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:1824
+#, python-format
+msgid "Journal Entry linked to the register line %s not found."
+msgstr "Ecriture comptable liée à la ligne de registre %s non trouvée."
