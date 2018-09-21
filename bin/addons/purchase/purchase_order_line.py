@@ -169,7 +169,7 @@ class purchase_order_line(osv.osv):
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if pol.resourced_original_line and pol.state != 'done':
+            if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
                     res[pol.id] = 'Resourced-v'
                 elif pol.state.startswith('sourced'):
@@ -429,6 +429,7 @@ class purchase_order_line(osv.osv):
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
+        'set_as_resourced': fields.boolean(string='Force resourced state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
