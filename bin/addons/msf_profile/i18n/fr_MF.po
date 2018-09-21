@@ -101860,3 +101860,9 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1238
+#, python-format
+msgid "Batch and Expiry attributes do not conform"
+msgstr "Le numéro de lot et la date d'expiration ne sont pas conformes"

@@ -1231,6 +1231,13 @@ class product_attributes(osv.osv):
                         'res_id': res_id,
                     }, context=context)
 
+        if 'batch_management' in vals and 'perishable' in vals and context.get('from_import_menu'):
+            if vals['batch_management'] and not vals['perishable']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Batch and Expiry attributes do not conform')
+                )
+
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
                 vals['default_code'] = vals['default_code'].strip()
