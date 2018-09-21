@@ -107,9 +107,16 @@ class sale_order_line(osv.osv):
 
         # for each line get a new copy:
         for sol in self.browse(cr, uid, ids, context=context):
+            for ad in [sol.analytic_distribution_id, sol.order_id.analytic_distribution_id]:
+                if ad and ad.partner_type != sol.partner_id.partner_type:
+                    self.pool.get('analytic.distribution').write(cr, uid, ad.id, {'partner_type': sol.partner_id.partner_type}, context=context)
+                    cc_ids = [x.id for x in ad.cost_center_lines]
+                    if cc_ids:
+                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_ids, {'partner_type': sol.partner_id.partner_type}, context=context)
+
             if not sol.analytic_distribution_id and sol.order_id.analytic_distribution_id:
                 self.write(cr, uid, sol.id, {
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {}, context=context),
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {'partner_type': sol.partner_id.partner_type}, context=context),
                 })
 
         return True
