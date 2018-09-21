@@ -26029,8 +26029,9 @@ msgstr "Options de Paiement"
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:78
+#: code:addons/msf_doc_import/wizard/__init__.py:61
 msgid "External Ref"
 msgstr "Réf. Externe"
 
@@ -46563,7 +46564,7 @@ msgstr "Date de comptabilisation pour \"%s\" est en dehors de la période de val
 #: field:base.module.update,state:0
 #, python-format
 msgid "state"
-msgstr "satut"
+msgstr "statut"
 
 #. module: product
 #: view:product.product:0
@@ -60176,6 +60177,7 @@ msgstr "Statut Fermé de la Commande de Terrain"
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:80
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:79
+#: code:addons/msf_doc_import/wizard/__init__.py:61
 #, python-format
 msgid "Justification Coordination"
 msgstr "Justification Coordination"
@@ -101380,18 +101382,21 @@ msgstr "Référence de la réévaluation"
 msgid "Entry sequence of the related Revaluation Entry"
 msgstr "Séquence de l'Entrée de Réévaluation associée"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
+#: code:addons/msf_doc_import/wizard/__init__.py:61
 msgid "Cold chain type"
 msgstr "Type de chaîne du froid"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:85
+#: code:addons/msf_doc_import/wizard/__init__.py:61
 msgid "Controlled Substance Type"
 msgstr "Type de substance contrôlée"
 
-#. module: msf_supply_doc_export
+#. module: msf_supply_doc_export, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:84
+#: code:addons/msf_doc_import/wizard/__init__.py:61
 msgid "Dangerous Good Type"
 msgstr "Type de marchandise Dangereuse"
 
@@ -102110,4 +102115,3 @@ msgstr "Si vous cliquez sur 'Annuler & Réallouer', toutes les lignes du Bon de 
 #: view:stock.move.cancel.wizard:0
 msgid "Would you re-source the need sourced by this stock move ?"
 msgstr "Voulez-vous re-sourcer les besoins de ce mouvement de stock ?"
-
