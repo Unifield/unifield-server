@@ -46556,8 +46556,6 @@ msgid "Posting date for \"%s\" is outside the validity period of the default acc
 msgstr "Date de comptabilisation pour \"%s\" est en dehors de la période de validité du compte par défaut de ce registre!"
 
 #. modules: account_corrections, base, msf_doc_import
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: code:addons/msf_doc_import/wizard/__init__.py:63
 #: field:wizard.journal.items.corrections,state:0
 #: field:base.language.install,state:0
 #: field:base.module.import,state:0
@@ -82738,6 +82736,8 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 #: field:automated.export.job,state:0
 #: field:sale.order,draft_cancelled:0
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
 #, python-format
 msgid "State"
 msgstr "Statut"
