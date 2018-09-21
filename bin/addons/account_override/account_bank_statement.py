@@ -61,6 +61,7 @@ class account_bank_statement_line(osv.osv):
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
+        # NOTE: the partner_move_ids field isn't filled in anymore for new entries since US-3874 (kept for old entries)
         'partner_move_ids': fields.one2many('account.move', 'register_line_id', 'Payable Entries', readonly=True, required=False),
     }
 

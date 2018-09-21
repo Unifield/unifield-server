@@ -739,7 +739,7 @@
     </Row>
 % endfor
 
-<!-- if there are Trade Payable Entries (automatically generated) -->
+<!-- if there are Trade Payable Entries (automatically generated) - until US-3874 -->
 <% partner_move_ids = line.partner_move_ids or False %>
 % if partner_move_ids:
 % for partner_move_id in sorted(partner_move_ids, key=lambda x: x.name):
