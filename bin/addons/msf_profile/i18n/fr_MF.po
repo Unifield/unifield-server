@@ -2253,6 +2253,16 @@ msgstr "\n"
 msgid "End period"
 msgstr "Fin de Période"
 
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
+msgid "PO Track Changes"
+msgstr "BdC suivi"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
+msgid "PURCHASE ORDER Track Changes report"
+msgstr "BON DE COMMANDE RAPPORT DE SUIVI DES CHANGEMENTS"
+
 #. modules: sales_followup, purchase_followup
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:246
@@ -9044,7 +9054,7 @@ msgstr "! - Requires national export license"
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 msgid "Cancelled-r"
-msgstr "Cancelled-r"
+msgstr "Annulée-r"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -12479,7 +12489,7 @@ msgstr "Le plan de comptes par défaut correspond au pays sélectionné. Si aucu
 #. module: purchase_followup
 #: report:purchase.follow.up.report_pdf:0
 msgid "PRODUCT"
-msgstr "PRODUCT"
+msgstr "PRODUIT"
 
 #. module: base
 #: model:res.currency,currency_name:base.VUV
@@ -24424,7 +24434,7 @@ msgstr "Numéro de Lot"
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
 msgid "Validated-p"
-msgstr "Validated-p"
+msgstr "Validaté-p"
 
 #. module: stock
 #: field:stock.move,auto_validate:0
@@ -32663,7 +32673,7 @@ msgstr "Montant final en devise fonctionnelle "
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 msgid "Validated-n"
-msgstr "Validated-n"
+msgstr "Validé-n"
 
 #. module: report_webkit
 #: model:ir.actions.act_window,name:report_webkit.wizard_ofdo_report_actions
@@ -39037,7 +39047,7 @@ msgstr "FO created by PO after SYNC"
 #. module: purchase_followup
 #: report:purchase.follow.up.report_pdf:0
 msgid "NEW UoM"
-msgstr "NEW UoM"
+msgstr "NVLL. UdM"
 
 #. module: unifield_setup
 #: model:ir.actions.act_window,name:unifield_setup.action_lang_setup
@@ -48649,7 +48659,7 @@ msgstr "Facture Client"
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 msgid "Sourced-v"
-msgstr "Sourced-v"
+msgstr "Sourcé-v"
 
 #. module: base_setup
 #: field:base.setup.installer,point_of_sale:0
@@ -53956,7 +53966,7 @@ msgstr "Vous ne pouvez pas importer d'écritures de paie.Veuillez d'abord valide
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
 msgid "Sourced-p"
-msgstr "Sourced-p"
+msgstr "Sourcé-p"
 
 #. module: sales_followup
 #: view:sale.order.line.followup:0
@@ -56914,7 +56924,7 @@ msgstr "Fonctionnalité"
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
 msgid "Confirmed-p"
-msgstr "Confirmed-p"
+msgstr "Confirmé-p"
 
 #. module: stock_schedule
 #: view:stock.frequence:0
@@ -63769,7 +63779,7 @@ msgstr "Délai moyen (en jours) pour fabriquer ce produit. Sert uniquement à la
 #: constraint:sale.order:0
 #: constraint:sale.order:0
 msgid "All lines must have a quantity larger than 0.00"
-msgstr "All lines must have a quantity larger than 0.00"
+msgstr "Toutes les lignes doivent avoir une quantié supérieure à 0"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1410
@@ -64868,7 +64878,7 @@ msgstr "Botswana"
 #. module: purchase_followup
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:206
 msgid "% OF LINE RECEIVED"
-msgstr "% OF LINE RECEIVED"
+msgstr "% RÉCEPTIONNÉ"
 
 #. module: base
 #: selection:instance.auto.creation,state:0
@@ -67272,7 +67282,7 @@ msgstr "Nom de la Personne de Contact  de l'Adresse de Destination "
 #. module: purchase_followup
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:210
 msgid "NEW UOM"
-msgstr "NEW UOM"
+msgstr "NVLL. UDM"
 
 #. module: account_hq_entries
 #: view:hq.entries:0
@@ -69195,7 +69205,7 @@ msgstr "_Ajouter à l'ordre de paiement"
 #: code:addons/sourcing/sale_order_line.py:2099
 #, python-format
 msgid "You cannot choose Direct Purchase Order as method to source an Internal Request line."
-msgstr "You cannot choose Direct Purchase Order as method to source an Internal Request line."
+msgstr "Vous ne pouvez pas choisir 'Bon de Commande Direct' pour sourcer une Demande Interne."
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/picking_processor.py:844
@@ -70000,7 +70010,7 @@ msgstr "Réf Commande"
 #. module: purchase_followup
 #: report:purchase.follow.up.report_pdf:0
 msgid "% RECEIVED"
-msgstr "% RECEIVED"
+msgstr "% RECEPTION"
 
 #. module: base
 #: model:res.currency,currency_name:base.MZN
@@ -70214,7 +70224,7 @@ msgstr "Le partenaire choisi n'a pas d'adresse. Merci de définir une adresse av
 #: view:purchase.order.followup.from.menu:0
 #: view:sale.order.followup.from.menu:0
 msgid "Go to followup"
-msgstr "Aller sur suivi"
+msgstr "Afficher le suivi"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:555
@@ -72813,7 +72823,7 @@ msgstr "America/Lima"
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 msgid "Sourced-n"
-msgstr "Sourced-n"
+msgstr "Sourcé-n"
 
 #. module: msf_budget
 #: code:addons/msf_budget/report/msf_budget_summary.py:337
@@ -75967,7 +75977,7 @@ msgstr "Commentaires:"
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:205
 #: report:purchase.follow.up.report_pdf:0
 msgid "DEL. CONF. DATE"
-msgstr "DEL. CONF. DATE"
+msgstr "DATE LIV. CONF."
 
 #. module: account
 #: field:account.entries.report,move_line_state:0
@@ -78785,7 +78795,7 @@ msgstr "Lignes d'appel d'offres"
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:162
 #: report:purchase.follow.up.report_pdf:0
 msgid "Order reference:"
-msgstr "Order reference:"
+msgstr "Référence commande:"
 
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:249
@@ -80171,11 +80181,6 @@ msgstr "wizard.invoice.date"
 msgid "Failed to install new language %s"
 msgstr "Failed to install new language %s"
 
-#. module: sale
-#: model:ir.actions.act_window,name:sale.action_order_line_product_tree
-msgid "Product sales"
-msgstr "Commande produits"
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:364
 #, python-format
@@ -81254,7 +81259,7 @@ msgstr "Si coché, les produits contenus dans des Zones enfant ou d'une Zone sé
 #: code:addons/purchase/purchase_order.py:2486
 #, python-format
 msgid "Commitment Voucher %s has been created."
-msgstr "Commitment Voucher %s has been created."
+msgstr "Le Bon d'Engagement %s a été créé."
 
 #. module: base
 #: field:res.partner.bank,owner_name:0
@@ -84474,7 +84479,7 @@ msgstr "Taxes Fournisseur"
 #. module: purchase_followup
 #: report:purchase.follow.up.report_pdf:0
 msgid "PURCHASE FOLLOW UP"
-msgstr "SUIVI ACHAT"
+msgstr "SUIVI BON DE COMMANDE"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:231
@@ -85100,7 +85105,7 @@ msgstr "Journal Entries to Review"
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:209
 #: report:purchase.follow.up.report_pdf:0
 msgid "NEW QTY"
-msgstr "Nelle Qtté"
+msgstr "NVLL. QTÉ"
 
 #. modules: account, finance, account_override, account_period_closing_level, analytic_distribution
 #: selection:account.balance.report,display_account:0
@@ -91274,7 +91279,7 @@ msgstr "Facture - Taxe"
 #: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:211
 #: report:purchase.follow.up.report_pdf:0
 msgid "NEW DEL. DATE"
-msgstr "NEW DEL. DATE"
+msgstr "NVLL. DATE LIV."
 
 #. module: resource
 #: help:resource.resource,calendar_id:0
@@ -95541,7 +95546,7 @@ msgstr "NUM LIGNE"
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 msgid "Sourced-sy"
-msgstr "Sourced-sy"
+msgstr "Sourcé-sy"
 
 #. module: kit
 #: field:kit.creation.to.consume,qty_to_consume:0
@@ -96313,7 +96318,7 @@ msgstr "Mail :"
 #: code:addons/purchase/purchase_order.py:1604
 #, python-format
 msgid "%s: Only %s order types are allowed for this purchase order"
-msgstr "%s: Only %s order types are allowed for this purchase order"
+msgstr "%s: seuls les types de commandes %s sont autorisés pour ce bon de commande"
 
 #. module: sales_followup
 #: field:sale.order.line.followup,procure_method:0
@@ -102076,3 +102081,33 @@ msgstr "Valeur du Stock"
 #, python-format
 msgid "Week"
 msgstr "Semaine"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1670
+#, python-format
+msgid "The Request for Quotation %s for supplier %s has been created."
+msgstr "La Demande de Devis %s pour le fournisseur %s a été créée."
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1728
+#, python-format
+msgid "The Tender %s has been created."
+msgstr "L'Appel d'Offres %s a été créé."
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1565
+#: code:addons/sourcing/sale_order_line.py:1597
+#, python-format
+msgid "The Purchase Order %s for supplier %s has been created."
+msgstr "Le Bon de Commande %s pour le fournisseur %s a été créé."
+
+#. module: stock_override
+#: view:stock.picking.cancel.wizard:0
+msgid "If you click on 'Cancel & Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced."
+msgstr "Si vous cliquez sur 'Annuler & Réallouer', toutes les lignes du Bon de Livraison attachées à une CdT ou à une Demande Interne seront re-sourcées. Les quantités et les lignes déjà traitées ne seront pas impactées."
+
+#. module: stock_override
+#: view:stock.move.cancel.wizard:0
+msgid "Would you re-source the need sourced by this stock move ?"
+msgstr "Voulez-vous re-sourcer les besoins de ce mouvement de stock ?"
+

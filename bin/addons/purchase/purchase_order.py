@@ -825,7 +825,7 @@ class purchase_order(osv.osv):
             else:
                 json_info = json.loads(order['fixed_order_type'])
                 if json_info and order['order_type'] not in json_info:
-                    allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                    allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                     err.append(_('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 
         if err:
@@ -1627,7 +1627,7 @@ class purchase_order(osv.osv):
                 else:
                     json_info = json.loads(order['fixed_order_type'])
                     if json_info and order_type not in json_info:
-                        allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                        allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                         err.append(
                             _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 

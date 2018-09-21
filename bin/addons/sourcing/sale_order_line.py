@@ -1561,7 +1561,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         if not po_loan:
                             po_loan = self.create_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                             po = self.pool.get('purchase.order').browse(cr, uid, po_loan, context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_loan, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            self.pool.get('purchase.order').log(cr, uid, po_loan, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                         # attach PO line:
@@ -1593,7 +1593,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
                             po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
                             po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
@@ -1666,7 +1666,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new RfQ:
                             rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                            self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
+                            self.pool.get('purchase.order').infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
                         else:
                             rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
 
@@ -1724,7 +1724,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             tender_to_use = self.create_tender_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new tender:
                             tender = self.pool.get('tender').browse(cr, uid, tender_to_use, context=context)
-                            self.pool.get('tender').log(cr, uid, tender_to_use, 'The Tender %s has been created.' % (tender.name,))
+                            self.pool.get('tender').log(cr, uid, tender_to_use, _('The Tender %s has been created.') % (tender.name,))
                             self.pool.get('tender').infolog(cr, uid, 'The Tender %s has been created.' % (tender.name,))
                         # attach tender line:
                         proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
