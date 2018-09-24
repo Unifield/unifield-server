@@ -9,6 +9,12 @@
         fields = ['name', 'state', 'total']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.commitment'), ('name', 'in', fields)], context=context)
 
+        # For the Sequence
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.commitment'), ('name', '=', 'name')], context=context)
+        field_other_id = False
+        if field_other_name:
+            field_other_id = field_other_name[0]
+
         vals = {
             'name': name,
             'object_id': object_ids[0],
@@ -16,6 +22,7 @@
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
+            'field_other_id': field_other_id,
         }
 
         if not rule_id:
@@ -45,6 +52,12 @@
             if field_name:
                 name_id = field_name[0]
 
+        # For the Sequence
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.commitment.line'), ('name', '=', 'commit_number')], context=context)
+        field_other_id = False
+        if field_other_name:
+            field_other_id = field_other_name[0]
+
         vals = {
             'name': name,
             'object_id': object_ids[0],
@@ -54,6 +67,7 @@
             'field_ids': [(6, 0, fields_ids)],
             'parent_field_id': parent_id,
             'name_get_field_id': name_id,
+            'field_other_id': field_other_id,
         }
 
         if not rule_id:

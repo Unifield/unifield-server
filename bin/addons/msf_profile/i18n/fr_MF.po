@@ -101860,3 +101860,8 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: analytic_distribution
+#: field:account.commitment.line,commit_number:0
+msgid "Commitment Voucher Number"
+msgstr "Numéro du Bon d'Engagement"

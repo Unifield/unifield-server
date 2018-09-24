@@ -449,6 +449,8 @@ class account_commitment_line(osv.osv):
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
+        'commit_number': fields.related('commit_id', 'name', type='char', size=64,
+                                        readonly=True, store=False, string="Commitment Voucher Number"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
