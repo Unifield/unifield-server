@@ -115,6 +115,14 @@ class purchase_order(osv.osv):
                     purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
+                # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
+                # (event if some SI amounts have been lowered)
+                po_states = ['done']
+                if purchase.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                    po_states = ['confirmed', 'confirmed_p', 'done']
+                if purchase.state in po_states and all(x.state != 'draft' for x in purchase.invoice_ids):
+                    res[purchase.id] = 100.0
+                    continue
                 tot = 0.0
                 # UTP-808: Deleted invoices amount should be taken in this process. So what we do:
                 # 1/ Take all closed stock picking linked to the purchase
