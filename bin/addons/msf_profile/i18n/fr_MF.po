@@ -23590,8 +23590,8 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"
-msgstr "Cette Action est  IRREVERSIBLE. Il ne vous sera plus possible de changer le solde de fermeture. Etes-vous certain de vouloir geler le solde de fermeture?"
+msgid "Are you sure you want to freeze closing balance?"
+msgstr "Etes-vous certain de vouloir geler le solde de fermeture ?"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -68194,8 +68194,13 @@ msgstr "Module for defining analytic accounting object and commitment voucher.\n
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Confirm End-of-the Month Balance"
+msgid "Confirm End-of-Month Balance"
 msgstr "Confirmer Solde de Fin de Mois"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Re-open End-of-Month Balance"
+msgstr "Ré-ouvrir Solde de Fin de Mois"
 
 #. module: analytic_override
 #: help:account.analytic.account,for_fx_gain_loss:0
@@ -78088,6 +78093,11 @@ msgstr "Prochain Exercice comptable"
 #: view:account.bank.statement:0
 msgid "Confirm month-end cash count"
 msgstr "Confirmer le comptage de caisse fin de mois"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+msgid "Re-open month-end cash count"
+msgstr "Ré-ouvrir le comptage de caisse fin de mois"
 
 #. modules: account, base_setup, res_currency_tables, supplier_catalogue, account_override, base, msf_currency_revaluation, res_currency_functional, sync_so
 #: constraint:res.currency:0
