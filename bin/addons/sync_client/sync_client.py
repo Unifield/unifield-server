@@ -1188,6 +1188,23 @@ class Entity(osv.osv):
         context['lang'] = 'en_US'
         logger = context.get('logger')
         self._logger.info("Start synchronization")
+
+        version_instance_module = self.pool.get('sync.version.instance.monitor')
+        try:
+            version = self.pool.get('backup.config').get_server_version(cr, uid, context=context)
+            postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
+            unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
+            version_instance_module.create(cr, uid, {
+                'version': version,
+                'postgresql_disk_space': postgres_disk_space,
+                'unifield_disk_space': unifield_disk_space,
+            }, context=context)
+
+        except Exception:
+            cr.rollback()
+            logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
+            # do not block sync
+            pass
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -1327,15 +1344,15 @@ class Entity(osv.osv):
 
         # delete sync_client_update_received older than 6 month
         cr.execute("""DELETE FROM sync_client_update_received
-        WHERE create_date < now() - interval '%d month' AND
-        execution_date IS NOT NULL AND run='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        execution_date IS NOT NULL AND run='t'""", (nb_month_to_clean,))
         deleted_update_received = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_received' % deleted_update_received)
 
         # delete sync_client_update_to_send older than 6 month
         cr.execute("""DELETE FROM sync_client_update_to_send
-        WHERE create_date < now() - interval '%d month' AND
-        sent_date IS NOT NULL AND sent='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        sent_date IS NOT NULL AND sent='t'""", (nb_month_to_clean,))
         deleted_update_to_send = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
 

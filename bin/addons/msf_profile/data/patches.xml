@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+
+        <!-- UF10.0 -->
+        <record id="us_3427_update_third_parties_in_gl_selector" model="patch.scripts">
+            <field name="method">us_3427_update_third_parties_in_gl_selector</field>
+        </record>
+
+        <record id="us_4879_fo_from_shipping_except_to_close" model="patch.scripts">
+            <field name="method">us_4879_fo_from_shipping_except_to_close</field>
+        </record>
+        <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
+            <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
+        </record>
+
+        <record id="us_3873_update_display_partner_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_update_display_partner_in_partner_balance_templates</field>
+        </record>
+
+        <record id="us_3873_remove_initial_balance_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_remove_initial_balance_in_partner_balance_templates</field>
+        </record>
+
+        <!-- UF 9.1 -->
+        <record id="change_xml_payment_method" model="patch.scripts">
+            <field name="method">change_xml_payment_method</field>
+        </record>
+
+        <!-- UF9.0 -->
+        <record id="change_fo_seq_to_nogap" model="patch.scripts">
+            <field name="method">change_fo_seq_to_nogap</field>
+        </record>
+
+        <record id="us_4481_monitor_set_null_size" model="patch.scripts">
+            <field name="method">us_4481_monitor_set_null_size</field>
+        </record>
+
+        <record id="us_3319_product_track_price" model="patch.scripts">
+            <field name="method">us_3319_product_track_price</field>
+        </record>
+
+        <record id="us_3015_remove_whitespaces_product_description" model="patch.scripts">
+            <field name="method">us_3015_remove_whitespaces_product_description</field>
+        </record>
+
+        <!-- UF8.2 -->
+        <record id="ud_trans" model="patch.scripts">
+            <field name="method">ud_trans</field>
+        </record>
+
+        <!-- UF8.1 -->
+        <record id="us-4454" model="patch.scripts">
+            <field name="method">cancel_extra_empty_draft_po</field>
+        </record>
+
+        <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
+            <field name="method">us_4430_set_puf_to_reversal</field>
+        </record>
+
         <!-- UF8.0 -->
         <record id="set_sequence_main_nomen" model="patch.scripts">
             <field name="method">set_sequence_main_nomen</field>
@@ -12,6 +69,10 @@
 
         <record id="us_4407_update_free_lines_ad" model="patch.scripts">
             <field name="method">us_4407_update_free_lines_ad</field>
+        </record>
+
+        <record id="us_4151_change_correct_out_currency" model="patch.scripts">
+            <field name="method">us_4151_change_correct_out_currency</field>
         </record>
 
         <!-- UF7.3 -->

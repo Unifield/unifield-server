@@ -888,3 +888,11 @@ msgstr "Currency"
 #, python-format
 msgid "fo_import_comment"
 msgstr "Comment"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#: code:addons/msf_doc_import/wizard/__init__.py:83
+#, python-format
+msgid "state"
+msgstr "Status"

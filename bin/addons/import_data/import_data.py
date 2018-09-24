@@ -316,7 +316,7 @@ class import_data(osv.osv_memory):
             newids = new_obj.search(cr, uid, [(list_obj[1], '=ilike', value)], limit=1)
             if not newids:
                 # no obj
-                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(tools.ustr(value),))
 
             if impobj._name == 'product.product':
                 self._cache[dbname].setdefault(relation, {})
@@ -336,7 +336,7 @@ class import_data(osv.osv_memory):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
                     else:
                         for key, val in fields_def[field]['selection']:
-                            if value.lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
+                            if tools.ustr(value).lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
                                 value = key
                                 if impobj == 'product.product':
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
@@ -360,6 +360,9 @@ class import_data(osv.osv_memory):
         def write_error_row(row, index, error=""):
             if not auto_import and writer:
                 row.append(error)
+                # change data into right format
+                for row_i, row_data in enumerate(row):
+                    row[row_i] = tools.ustr(row_data).encode('utf-8')
                 writer.writerow(row)
             else:
                 rejected.append((index, row, error))

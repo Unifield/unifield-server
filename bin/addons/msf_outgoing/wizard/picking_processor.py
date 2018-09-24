@@ -203,11 +203,28 @@ class stock_picking_processor(osv.osv):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
+            wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
             for move in wizard.picking_id.move_lines:
-                if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
+                        or move.id in wiz_lines_moves_ids:
+                    if move.id in wiz_lines_moves_ids and move.state == 'cancel':
+                        line_ids = line_obj.search(cr, uid, [('move_id', '=', move.id)], context=context)
+                        line_obj.unlink(cr, uid, line_ids, context=context)
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
+                    line_data.update({
+                        'from_pack': move.pack_info_id.parcel_from,
+                        'to_pack': move.pack_info_id.parcel_to,
+                        'weight': move.pack_info_id.total_weight,
+                        'volume': move.pack_info_id.total_volume,
+                        'height': move.pack_info_id.total_height,
+                        'length': move.pack_info_id.total_length,
+                        'width': move.pack_info_id.total_width,
+                        'cost': move.price_unit,
+                        'currency': move.currency_id.id,
+                    })
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True
@@ -788,7 +805,6 @@ class stock_move_processor(osv.osv):
             'currency': move.price_currency_id.id,
             'location_id': move.location_id and move.location_id.id,
         }
-
         return line_data
 
     def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):

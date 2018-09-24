@@ -33,6 +33,7 @@ class res_log(osv.osv):
         'secondary': fields.boolean('Secondary Log', help='Do not display this log if it belongs to the same object the user is working on'),
         'create_date': fields.datetime('Creation Date', readonly=True, select=1),
         'read': fields.boolean('Read', help="If this log item has been read, get() should not send it to the client"),
+        'action_xmlid': fields.char('Xmlid of action to open', size=512),
     }
     _defaults = {
         'user_id': lambda self,cr,uid,ctx: uid,
@@ -48,8 +49,7 @@ class res_log(osv.osv):
         cr.execute('SELECT 1 FROM pg_indexes WHERE indexname=%s',
                    (self._index_name,))
         if not cr.fetchone():
-            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' %
-                       self._index_name)
+            cr.execute('CREATE INDEX %s ON res_log (user_id, read)' % self._index_name)  # not_a_user_entry
 
     def create(self, cr, uid, vals, context=None):
         create_context = context and dict(context) or {}

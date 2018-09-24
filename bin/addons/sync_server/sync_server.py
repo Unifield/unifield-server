@@ -619,7 +619,7 @@ class entity(osv.osv):
             order = order.replace('last_dateactivity', 'datetime')
             limit_str = init_limit and ' limit %d' % init_limit or ''
             offset_str = init_offset and ' offset %d' % init_offset or ''
-            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))
+            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))  # not_a_user_entry
             return [x[0] for x in cr.fetchall()]
         return ids
 

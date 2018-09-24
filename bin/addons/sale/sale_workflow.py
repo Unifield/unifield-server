@@ -131,6 +131,24 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def has_to_create_resourced_line(self, cr, uid, ids, context=None):
+        '''
+        in case of sol set to cancel_r, do we have to create the resourced line ?
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sol = self.browse(cr, uid, ids[0], context=context)
+        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+        if not related_pol:
+            return True
+        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], context=context)
+        if not related_pol.original_line_id:
+            return True
+        return (not related_pol.original_line_id.block_resourced_line_creation)
+
 
     def create_resource_line(self, cr, uid, ids, context=None):
         '''
@@ -145,14 +163,15 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-            new_sol_id = self.copy(cr, uid, sol.id, {
-                'resourced_original_line': sol.id,
-                'resourced_original_remote_line': sol.sync_linked_pol,
-                'resourced_at_state': sol.state,
-                'is_line_split': False,
-                'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-            }, context=context)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
+            if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
+                new_sol_id = self.copy(cr, uid, sol.id, {
+                    'resourced_original_line': sol.id,
+                    'resourced_original_remote_line': sol.sync_linked_pol,
+                    'resourced_at_state': sol.state,
+                    'is_line_split': False,
+                    'analytic_distribution_id': sol.analytic_distribution_id.id or False,
+                }, context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
 
@@ -168,9 +187,14 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         sol = self.browse(cr, uid, ids[0], context=context)
+        if sol.state.startswith('cancel'):
+            return False
 
         if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
             # case the sol has no OUT moves but its normal, so don't close the sol in this case:
+            has_open_moves = True
+        elif sol.state.startswith('cancel'):
+            # if line is already cancelled, then we should not set it to closed
             has_open_moves = True
         else:
             has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
@@ -299,7 +323,7 @@ class sale_order_line(osv.osv):
 
         if pick_to_use:
             # if PICK found above has already been synched, then ignore it:
-            already_synched = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+            already_synched = self.pool.get('sync.client.message_to_send').search_exist(cr, 1, [
                 ('identifier', 'ilike', '%%stock_picking/%s_%%' % pick_to_use[0]),
             ], context=context)
             if already_synched:
@@ -323,13 +347,19 @@ class sale_order_line(osv.osv):
 
         picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
 
+        if picking_data['subtype'] == 'standard':
+            # simple OUT
+            state_dom = ['draft', 'confirmed', 'assigned']
+        else:
+            state_dom = ['draft']
+
         # build domain:
         domain = [
             ('type', '=', picking_data['type']),
             ('subtype', '=', picking_data['subtype']),
             ('sale_id', '=', picking_data['sale_id']),
             ('partner_id2', '=', sol.order_partner_id.id),
-            ('state', 'in', ['draft', 'confirmed', 'assigned']),
+            ('state', 'in', state_dom),
         ]
 
         # ... and search:
@@ -365,7 +395,8 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        wf_service = netsvc.LocalService("workflow")
+        pick_to_check = set()
         for sol in self.browse(cr, uid, ids, context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
                 ('sale_line_id', '=', sol.id),
@@ -374,7 +405,15 @@ class sale_order_line(osv.osv):
             ], context=context)
 
             if out_moves_to_cancel:
+                context.update({'not_resource_move': out_moves_to_cancel})
                 self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+                context.pop('not_resource_move')
+                for move in self.pool.get('stock.move').browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
+                    pick_to_check.add(move.picking_id.id)
+
+        # maybe the stock picking needs to be closed/cancelled :
+        for pick in list(pick_to_check):
+            wf_service.trg_write(uid, 'stock.picking', pick, cr)
 
         return True
 
@@ -501,18 +540,34 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        obj_data = self.pool.get('ir.model.data')
+
         self.check_fo_tax(cr, uid, ids, context=context)
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
+            if not sol.product_uom \
+                    or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
+                raise osv.except_osv(_('Error'),
+                                     _('Line #%s: You cannot validate a line with no UoM.') % (sol.line_number,))
+            elif not self.pool.get('uom.tools').check_uom(cr, uid, sol.product_id.id, sol.product_uom.id, context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
+                    % (sol.line_number,)
+                )
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
+            if sol.order_id.order_type == 'loan':
+                to_write['supplier'] = False
+                to_write['type'] = 'make_to_stock'
+                to_write['po_cft'] = False
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
                     raise osv.except_osv(
                         _('Error'),
-                        _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
+                        _('Line #%s: You cannot validate a line with unit price as zero.') % sol.line_number
                     )
                 # check analytic distribution before validating the line:
                 self.analytic_distribution_checks(cr, uid, [sol.id], context=context)
@@ -604,8 +659,9 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         # generate sync message for resourced line:
-        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
-                                                                              'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        if resourced_sol:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

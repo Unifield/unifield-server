@@ -213,10 +213,19 @@ class ir_values(osv.osv):
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
             clause = ' and '.join(where)
-            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
+            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)  # not_a_user_entry
             result = cr.fetchall()
             if result:
                 break
+
+        # for the admin only add the "Update Sent / Received" links in the menu on the right for all synched objects
+        if key == 'action' and key2 == 'client_action_relate' and uid == 1 and self.pool.get('update.link') and models:
+            obj_model = models[0][0]
+            if self.pool.get('sync.client.rule').search_exist(cr, uid, [('model', '=', obj_model), ('type', '!=', 'USB')]):
+                act_sent_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_sent')[1]
+                result.append((act_sent_id, 'Updates_Sent', u'ir.actions.server,%d' % act_sent_id, True, None, u'action'))
+                act_rcv_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_received')[1]
+                result.append((act_rcv_id, 'Updates_Received', u'ir.actions.server,%d' % act_rcv_id, True, None, u'action'))
 
         if not result:
             return []

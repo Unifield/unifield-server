@@ -332,6 +332,7 @@ form: module.record_id""" % (xml_id,)
         if rec.get('target_filename'):
             res['target_filename'] = rec.get('target_filename')
 
+        res['run_in_background'] = rec.get('run_in_background', False)
         res['multi'] = rec.get('multi') and eval(rec.get('multi','False'))
 
         xml_id = rec.get('id','').encode('utf8')

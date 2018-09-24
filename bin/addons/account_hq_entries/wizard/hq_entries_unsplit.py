@@ -39,9 +39,9 @@ class hq_entries_unsplit(osv.osv_memory):
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
-            line_ids, self._name, context=context)
+                                                               line_ids, self._name, context=context)
         return super(hq_entries_unsplit, self).create(cr, uid, vals,
-            context=context)
+                                                      context=context)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -61,10 +61,10 @@ class hq_entries_unsplit(osv.osv_memory):
             split_ids = []
             original_ids = []
             for line in wiz.process_ids:
-                if line.is_original:
+                if line.is_original and line.split_ids:
                     original_ids.append(line.id)
                     continue
-                if line.is_split:
+                if line.is_split and line.original_id:
                     split_ids.append(line.id)
                     continue
             # Process
