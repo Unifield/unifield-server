@@ -10,6 +10,7 @@ ct = {'keep2': {}, 'delete': {}, 'single': {}}
 # get id of HQ instances
 cr.execute("select id from sync_server_entity where name in ('HQ_OCA', 'OCG_HQ', 'OCBHQ')")
 hq_ids = tuple([x[0] for x in cr.fetchall()])
+cr.execute('ANALYZE')
 
 assert len(hq_ids) == 3
 
@@ -50,7 +51,7 @@ group by source, sdref, model
 having(count(*) >2)""", (hq_ids, min_seq))
 for x in cr.fetchall():
     ct['keep2'].setdefault(x[4], 0)
-    cr.execute("delete from sync_server_update where source=%s and sdref=%s and sequence not in (%s, %s) and model=%s and is_deleted='f'", (x[0], x[1], x[2], x[3], x[4]))
+    cr.execute("delete from sync_server_update where source=%s and sdref=%s and sequence not in (%s, %s) and model=%s and is_deleted='f' and sequence < %s", (x[0], x[1], x[2], x[3], x[4], min_seq))
     ct['keep2'][x[4]] += cr.rowcount
 
 # multiple updates, keep only the last update as we know these xmlids are not used in other sync updates
@@ -63,20 +64,21 @@ group by source, sdref, source, model
 having(count(*) >1)""", (hq_ids, min_seq))
 for x in cr.fetchall():
     ct['single'].setdefault(x[3], 0)
-    cr.execute("delete from sync_server_update where source=%s and sdref=%s and sequence != %s and model=%s", (x[0], x[1], x[2], x[3]))
+    cr.execute("delete from sync_server_update where source=%s and sdref=%s and sequence != %s and model=%s and sequence < %s", (x[0], x[1], x[2], x[3], min_seq))
     ct['single'][x[3]] += cr.rowcount
 
+
 # delete not-masters updates older than 18 months
-cr.execute("""delete from sync_server_update u 
-where u.rule_id in
-  (select id from sync_server_sync_rule where master_data='f')
-and u.create_date < now() - interval '18 months'
-""")
-ct['month18'] = cr.rowcount
+#cr.execute("""delete from sync_server_update u
+#where u.rule_id in
+#  (select id from sync_server_sync_rule where master_data='f')
+#and u.create_date < now() - interval '18 months'
+#""")
+#ct['month18'] = cr.rowcount
 
 # delete orphean "pulled by" records
-cr.execute("delete from sync_server_entity_rel where id in (select r.id from sync_server_entity_rel r left join sync_server_update u on u.id=r.update_id where u.id is null)")
-ct['pulled_by'] = cr.rowcount
+#cr.execute("delete from sync_server_entity_rel where id in (select r.id from sync_server_entity_rel r left join sync_server_update u on u.id=r.update_id where u.id is null)")
+#ct['pulled_by'] = cr.rowcount
 print ct
 
 #print '****** rollback'
