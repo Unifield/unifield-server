@@ -35,6 +35,7 @@ class account_commitment(osv.osv):
     _name = 'account.commitment'
     _description = "Account Commitment Voucher"
     _order = "id desc"
+    _trace = True
 
     def _get_total(self, cr, uid, ids, name, args, context=None):
         """
@@ -405,6 +406,7 @@ class account_commitment_line(osv.osv):
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
     _rec_name = 'account_id'
+    _trace = True
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
