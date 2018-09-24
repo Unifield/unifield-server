@@ -705,7 +705,7 @@ class product_likely_expire_report_line(osv.osv):
         return res
 
     _columns = {
-        'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
+        'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade', select=1),
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'consumption': fields.float(digits=(16, 2), string='Monthly Consumption', required=True),
         'in_stock': fields.float(digits=(16, 2), string='In stock'),
@@ -792,11 +792,11 @@ class product_likely_expire_report_item(osv.osv):
     _rec_name = 'line_id'
 
     _columns = {
-        'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
-        'name': fields.char(size=64, string='Month'),
+        'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade', select=1),
+        'name': fields.char(size=64, string='Month', select=1),
         'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
         'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-        'period_start': fields.date(string='Period start', readonly=True),
+        'period_start': fields.date(string='Period start', readonly=True, select=1),
         'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Batchs'),
     }
 
