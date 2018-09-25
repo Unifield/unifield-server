@@ -183,5 +183,41 @@
         	</field>
         </record>
 
+        <record id="finance_sync_query_form" model="ir.ui.view">
+            <field name="name">finance.sync.query.form</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Finance HQ Query">
+                    <field name="name" />
+                    <field name="model" />
+                </form>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_tree" model="ir.ui.view">
+            <field name="name">finance.sync.query.tree</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Finance HQ Queries" editable="top">
+                    <field name="name" />
+                    <field name="model" />
+                    <button type="object" icon="gtk-ok" name="open_template" string="Open Template" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_action" model="ir.actions.act_window">
+            <field name="name">Finance HQ Queries</field>
+            <field name="res_model">finance.sync.query</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="finance_sync_query_menu"
+                  action="finance_sync_query_action"
+                  parent="menu_preferences" />
+
     </data>
 </openerp>

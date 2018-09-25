@@ -22,6 +22,8 @@
 from osv import fields, osv
 from tools.translate import _
 import time
+from lxml import etree
+
 
 class wizard_template(osv.osv):
     """
@@ -223,6 +225,22 @@ class wizard_template_form(osv.osv_memory):
     _name = 'wizard.template.form'
     _description = 'Wizard Template Form'
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if  context is None:
+            context = {}
+        view = super(wizard_template_form, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('from_query') and view_type == 'form':
+            form = etree.fromstring(view['arch'])
+            fields = form.xpath('//group[@name="wizard_template"]')
+            for field in fields:
+                field.set('invisible', "1")
+            fields = form.xpath('//button[@name="save_query"]')
+            for field in fields:
+                field.set('invisible', "0")
+            view['arch'] = etree.tostring(form)
+
+        return view
+
     def _get_templates(self, cr, uid, context=None):
         """
         Return the recorded templates for the wizard in parameter and the current user,
@@ -274,6 +292,12 @@ class wizard_template_form(osv.osv_memory):
         res = {}
         res['value'] = {'display_load_button': True}
         return res
+
+    def save_query(self, cr, uid, ids, context=None):
+        # TODO
+        print ids
+        print context
+        return True
 
 wizard_template_form()
 

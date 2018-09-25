@@ -24,6 +24,78 @@ import time
 from datetime import datetime
 from tools.translate import _
 
+class finance_sync_query(osv.osv):
+    _name = 'finance.sync.query'
+    _description = 'HQ Finance Templates'
+
+    _columns = {
+        'name': fields.char(size=128, string='Name', required=True),
+        'model': fields.selection([
+            ('account.mcdb.move', 'G/L Selector'),
+            ('account.mcdb.analytic', 'Analytic Selector'),
+            ('account.mcdb.combined', 'Combined Journals Report'),
+            ('account.report.general.ledger', 'General Ledger'),
+            ('account.balance.report', 'Trial Balance'),
+            ('account.bs.report', 'Balance Sheet'),
+            ('account.chart', 'Balance by account'),
+            ('account.analytic.chart', 'Balance by analytic account'),
+            ('account.partner.ledger', 'Partner Ledger'),
+            ('wizard.account.partner.balance.tree', 'Partner Balance'),
+        ], 'Type', required=True),
+    }
+
+    _sql_constraints = [
+        #TODO
+    ]
+    def _get_window_from_menu(self, cr, uid, xmlid, context=None):
+        module, xmlid = xmlid.split('.', 1)
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+        action = self.pool.get('ir.ui.menu').read(cr, uid, menu_id, ['action'], context=context)['action']
+        model, res_id = action.split(',')
+        return self.pool.get(model).read(cr, uid, [res_id],
+                                         ['type', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'name', 'views', 'view_type'],
+                                         context=context)[0]
+
+    def open_template(self, cr, uid, id, context=None):
+        if context is None:
+            context = {}
+
+        query = self.read(cr, uid, id[0], context=context)
+
+        wiz_data = {}
+        if query['model'].startswith('account.mcdb'):
+            child_wiz = self.pool.get('account.mcdb')
+            target_object = {
+                'account.mcdb.analytic': 'account.analytic.line',
+                'account.mcdb.combined': 'combined.line',
+                'account.mcdb.move': 'account.move.line',
+            }
+            context['from'] = target_object.get(query['model'], '')
+            context['from_query'] = True
+
+            template = child_wiz.search(cr, uid, [('name', '=', query['name']), ('model', '=', target_object.get(query['model'], ''))], context=context)
+            if not template:
+                template = [child_wiz.create(cr, uid, {'name': query['name'], 'model': target_object.get(query['model'])}, context=context)]
+
+            new_id = child_wiz.create(cr, uid, {'template': template[0]}, context=context)
+            ret = child_wiz.load_mcdb_template(cr, uid, [new_id], context=context)
+            ret.update({'context': context, 'target': 'new'})
+            return ret
+
+        if query['model'] == 'account.report.general.ledger':
+            child_wiz = self.pool.get('account.report.general.ledger')
+            template = self.pool.get('wizard.template').search(cr, uid, [('name', '=', query['name']), ('wizard_name', '=', query['model'])], context=context)
+            if template:
+                wiz_data = {'saved_templates': template[0]}
+            wizard = child_wiz.create(cr, uid, wiz_data, context=context)
+            context['active_model'] = 'ir.ui.menu'
+            context['active_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account' ,'menu_general_ledger')[1]
+            context['from_query'] = True
+            ret = self.pool.get('wizard.template').load_template(cr, uid, [wizard], query['model'], context=context)
+            return ret
+
+
+finance_sync_query()
 
 class object_query_object(osv.osv):
     _name = 'object.query.object'

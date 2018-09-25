@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools import flatten
+from lxml import etree
+
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
@@ -157,6 +159,24 @@ class account_mcdb(osv.osv):
     }
 
     _order = 'user, description, id'
+
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if  context is None:
+            context = {}
+        view = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('from_query') and view_type == 'form':
+            form = etree.fromstring(view['arch'])
+            fields = form.xpath('//group[@name="wizard_template"]')
+            for field in fields:
+                field.set('invisible', "1")
+            fields = form.xpath('//button[@name="save_query"]')
+            for field in fields:
+                field.set('invisible', "0")
+        view['arch'] = etree.tostring(form)
+        return view
+
+
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """

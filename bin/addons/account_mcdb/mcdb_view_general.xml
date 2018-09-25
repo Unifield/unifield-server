@@ -1,6 +1,6 @@
                     <!-- TEMPLATE section -->
                     <separator string="Selector Template" colspan="4"/>
-                    <group col="5" colspan="4">
+                    <group col="5" colspan="4" name="wizard_template">
                         <field name="display_mcdb_load_button" invisible="1" />
                         <field name="template" on_change="onchange_template()" string="Select an existing template"
                                domain="[('description', '!=', False), ('description', '!=', ''),
@@ -15,6 +15,7 @@
                         <field name="template_name" string="or Choose a new template name" colspan="2" />
                         <button icon="gtk-floppy" name="save_mcdb_template" string="Save new template" type="object" colspan="3" />
                     </group>
+                    <button icon="gtk-save" name="save_query" string="Save" type="object" invisible="1" colspan="2"/>
 
                     <separator string="General" colspan="4" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
                     <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')],
