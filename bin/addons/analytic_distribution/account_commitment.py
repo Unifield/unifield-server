@@ -105,6 +105,9 @@ class account_commitment(osv.osv):
         if not 'period_id' in vals:
             period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
             vals.update({'period_id': period_ids and period_ids[0]})
+        if 'state' not in vals:
+            # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
+            vals['state'] = 'draft'
         # UTP-317 # Check that no inactive partner have been used to create this commitment
         if 'partner_id' in vals:
             partner_id = vals.get('partner_id')
