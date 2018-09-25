@@ -63,7 +63,7 @@ class account_commitment(osv.osv):
         if not context:
             context = {}
         for cvl in self.pool.get('account.commitment.line').browse(cr, uid, ids):
-            if not cvl.commit_id in res:
+            if cvl.commit_id.id not in res:
                 res.append(cvl.commit_id.id)
         return res
 
