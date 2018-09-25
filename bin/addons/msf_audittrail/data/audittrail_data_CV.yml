@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.commitment')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
-        fields = ['name', 'state', 'total']
+        fields = ['name', 'state']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.commitment'), ('name', 'in', fields)], context=context)
 
         # For the Sequence
