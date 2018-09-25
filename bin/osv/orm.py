@@ -618,7 +618,13 @@ class orm_template(object):
 
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+            is_sync = context.get('sync_update_creation') or context.get('sync_update_creation')
+            data_ids = []
+            dom = [('model', '=', r._table_name), ('res_id', '=', r['id'])]
+            if is_sync:
+                data_ids = model_data.search(cr, uid, dom+[('module', '=', 'sd')])
+            if not data_ids:
+                data_ids = model_data.search(cr, uid, dom)
             if len(data_ids):
                 d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                 if d['module']:
