@@ -934,7 +934,8 @@ class wizard_cash_return(osv.osv_memory):
             move_line_obj.write(cr, uid, [adv_closing_id], {'amount_currency': -(wizard.initial_amount + wizard.additional_amount)}, context=context)
 
         # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
-        to_reconcile = {}
+        to_reconcile = {}  # per partner
+        payable_lines = []
         if advances_with_supplier:
             wiz_adv_line_obj = self.pool.get('wizard.advance.line')
             # Browse suppliers
@@ -964,6 +965,9 @@ class wizard_cash_return(osv.osv_memory):
                                                                      account_id, 0.0, total, adv_return_ref, move_id, False, context=context)
                     # mark the lines as to be reconciled, for each supplier
                     to_reconcile[supplier_id] = [supp_move_line_debit_id, supp_move_line_credit_id]
+                    # store all payable lines created
+                    payable_lines.append(supp_move_line_debit_id)
+                    payable_lines.append(supp_move_line_credit_id)
 
         # post the move
         res_move_id = move_obj.post(cr, uid, [move_id], context=context)
@@ -971,6 +975,11 @@ class wizard_cash_return(osv.osv_memory):
         # reconcile partner Payable Entries together if any
         for supp_id in to_reconcile:
             move_line_obj.reconcile_partial(cr, uid, to_reconcile[supp_id], context=context)
+
+        # Update the statement line with the partner_move_line_ids ("Automated entries")
+        if payable_lines and 'statement_line_id' in context:
+            absl_obj.write(cr, uid, context['statement_line_id'], {'partner_move_line_ids': [(6, 0, payable_lines)]},
+                           context=context)
 
         # Create statement lines for invoices and advance closing ONLY IF the move is posted
         # Check that the posting has succeeded

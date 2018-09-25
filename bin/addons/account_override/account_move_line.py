@@ -343,6 +343,9 @@ class account_move_line(osv.osv):
         'revaluation_date': fields.datetime(string='Revaluation date'),
         'revaluation_reference': fields.char(string='Revaluation reference', size=64,
                                              help="Entry sequence of the related Revaluation Entry"),
+        # US-3874
+        'partner_register_line_id': fields.many2one('account.bank.statement.line', string="Register Line", required=False, readonly=True,
+                                                    help="Register line to which this partner automated entry is linked"),
     }
 
     _defaults = {

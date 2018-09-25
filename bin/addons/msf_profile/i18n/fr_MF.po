@@ -43546,11 +43546,12 @@ msgstr "Les dossier %s des pièces jointes n'existe pas. Veuillez vérifier la c
 msgid "done - (sale.order.line)"
 msgstr "done - (sale.order.line)"
 
-#. modules: register_accounting, analytic_distribution
+#. modules: register_accounting, analytic_distribution, account_override
 #: field:analytic.distribution.wizard,register_line_id:0
 #: view:account.bank.statement.line:0
 #: field:wizard.transfer.with.change,absl_id:0
 #: field:account.direct.invoice.wizard,register_line_id:0
+#: field:account.move.line,partner_register_line_id:0
 msgid "Register Line"
 msgstr "Ligne de Registre"
 
@@ -101860,3 +101861,18 @@ msgstr " veuillez vous référer aux procédures adéquates."
 #, python-format
 msgid "Journal Entry linked to the register line %s not found."
 msgstr "Ecriture comptable liée à la ligne de registre %s non trouvée."
+
+#. module: account_override
+#: field:account.bank.statement.line,partner_move_line_ids:0
+msgid "Automated Entries"
+msgstr "Écritures Automatiques"
+
+#. module: account_override
+#: help:account.bank.statement.line,partner_move_line_ids:0
+msgid "Automated entries generated for expense/income register lines linked to a partner"
+msgstr "Écritures Automatiques générées pour les lignes de registre de dépenses/produits liées à un partenaire"
+
+#. module: account_override
+#: help:account.move.line,partner_register_line_id:0
+msgid "Register line to which this partner automated entry is linked"
+msgstr "Ligne de registre à laquelle cette écriture automatique liée à un partenaire est rattachée"

@@ -2083,7 +2083,8 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state == 'hard':
-            if values.get('partner_move_ids') or values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
+            if values.get('partner_move_ids') or values.get('partner_move_line_ids') or \
+                    values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
                     (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
                     'from_correction' in context or context.get('sync_update_execution', False):
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
