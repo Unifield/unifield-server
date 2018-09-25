@@ -26,6 +26,7 @@ WHITE_LIST_MODEL = [
     'account.fiscalyear.state',
     'account.invoice',
     'account.journal',
+    'account.mcdb',
     'account.move',
     'account.move.line',
     'account.move.reconcile',
@@ -161,6 +162,7 @@ WHITE_LIST_MODEL = [
     'cash.request.liquidity.cheque',
     'cash.request.liquidity.total',
     'hr.payment.method',
+    'wizard.template',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

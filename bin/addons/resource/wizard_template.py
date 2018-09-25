@@ -21,7 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
-
+import time
 
 class wizard_template(osv.osv):
     """
@@ -31,17 +31,66 @@ class wizard_template(osv.osv):
     _name = 'wizard.template'
     _description = 'Wizard Template'
 
+    def _get_sync_values(self, cr, uid, ids, field_name, args, context=None):
+
+        ret = {}
+
+        for wizard in self.read(cr, uid, ids, ['values', 'wizard_name'], context=context):
+            data = wizard['values'] and eval(wizard['values']) or {}
+            obj = self.pool.get(wizard['wizard_name'])
+            ret[wizard['id']] = {}
+            for k in data:
+                if data[k] and obj._columns.get(k) and obj._columns.get(k)._type in ('one2many', 'many2one', 'many2many'):
+                    sdref = self.pool.get(obj._columns.get(k)._obj).get_sd_ref(cr, uid, data[k])
+                    if isinstance(sdref, basestring):
+                        ret[wizard['id']][k] = sdref
+                    else:
+                        ret[wizard['id']][k] = ','.join(sdref.values())
+                else:
+                    ret[wizard['id']][k] = data[k]
+        return ret
+
+    def _set_sync_values(self, cr, uid, id, name, value, arg, context):
+        wiz = self.read(cr, uid, id, ['wizard_name'], context=context)
+        obj = self.pool.get(wiz['wizard_name'])
+
+        data = eval(value)
+        new_data = {}
+        for k in data:
+            if obj._columns.get(k) and obj._columns.get(k)._type in ('one2many', 'many2one', 'many2many'):
+                if obj._columns.get(k)._type == 'many2one':
+                    new_data[k] = data[k] and self.pool.get(obj._columns.get(k)._obj).find_sd_ref(cr, uid, data[k])
+                else:
+                    new_data[k] = data[k] and self.pool.get(obj._columns.get(k)._obj).find_sd_ref(cr, uid, data[k].split(',')).values()
+            else:
+                new_data[k] = data[k]
+
+        cr.execute('update wizard_template set values=%s where id=%s', ('%s'%new_data, id))
+        return True
+
+
     _columns = {
         'name': fields.char('Template name', size=128, required=True, select=1),
         'user_id': fields.many2one('res.users', string='User', ondelete='cascade', required=True),
         'wizard_name': fields.char('Wizard name', size=256, required=True),
         'values': fields.text('Values', help='Values from the wizard, stored as a dictionary'),
+        'last_modification': fields.datetime('Last Modification Date'),
+        'sync_values': fields.function(_get_sync_values, string='Sdrefed values', type='text', method=True, fnct_inv=_set_sync_values),
     }
 
+    _defaults = {
+        'user_id': lambda self, cr, uid, *a, **b: uid,
+    }
     _sql_constraints = [
         ('name_user_id_wizard_name_uniq', 'UNIQUE(name, user_id, wizard_name)',
          'This template name already exists for this wizard. Please choose another name.')
     ]
+
+
+    def _clean_data(self, cr, uid, data, context=None):
+        for field in ['template_name', 'id', 'display_load_button', 'saved_templates']:
+            if field in data:
+                del data[field]
 
     def save_template(self, cr, uid, ids, wizard_name, context=None):
         """
@@ -58,19 +107,13 @@ class wizard_template(osv.osv):
             template_name = data['template_name']
             if not template_name:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
-            # don't keep the id, and the values of the fields related to the wizard template itself
-            del data['template_name']
-            if 'id' in data:
-                del data['id']
-            if 'saved_templates' in data:
-                del data['saved_templates']
-            if 'display_load_button' in data:
-                del data['display_load_button']
+            self._clean_data(cr, uid, data, context)
             # create a new wizard_template to store the values
             vals = {'name': template_name,
                     'user_id': uid,
                     'wizard_name': wizard_obj._name,
                     'values': data,
+                    'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
                     }
             self.create(cr, uid, vals, context=context)
         return True
@@ -99,6 +142,7 @@ class wizard_template(osv.osv):
             # so as to hide the load button and to show instead the options for the template loaded (delete...)
             if 'display_load_button':
                 vals.update({'display_load_button': False})
+
         except SyntaxError:
             vals = {}
         # we "format" the many2many fields values to make them look like [(6, 0, [1, 2])]
@@ -158,16 +202,13 @@ class wizard_template(osv.osv):
             selected_template_id = data['saved_templates']
             if not selected_template_id:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template to replace.'))
-            # don't keep the id, and the values of the fields related to the wizard template itself
-            if 'template_name' in data:
-                del data['template_name']
-            if 'id' in data:
-                del data['id']
-            del data['saved_templates']
-            if 'display_load_button' in data:
-                del data['display_load_button']
+            self._clean_data(cr, uid, data, context=context)
+
             # update the existing record with the new values
-            vals = {'values': data}
+            vals = {
+                'values': data,
+                'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
             return self.write(cr, uid, selected_template_id, vals, context=context)
         return True
 
@@ -191,7 +232,8 @@ class wizard_template_form(osv.osv_memory):
         if context is None:
             context = {}
         wizard_template_obj = self.pool.get('wizard.template')
-        template_ids = wizard_template_obj.search(cr, uid, [('wizard_name', '=', self._name), ('user_id', '=', uid)],
+        # TODO user_id filter
+        template_ids = wizard_template_obj.search(cr, uid, [('wizard_name', '=', self._name)],
                                                   context=context, order='name') or []
         templates = template_ids and wizard_template_obj.browse(cr, uid, template_ids,
                                                                 fields_to_fetch=['name'], context=context) or []
