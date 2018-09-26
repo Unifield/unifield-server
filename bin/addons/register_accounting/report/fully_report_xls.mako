@@ -1033,6 +1033,88 @@ endif
 % endfor
 % endif
 
+<!-- AUTOMATED ENTRIES linked to the register line -->
+<!-- Note: they are booked on accounts without AD -->
+<% partner_move_line_ids = line.partner_move_line_ids or [] %>
+% if partner_move_line_ids:
+    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt):
+        <Row ss:Height="14.5134">
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('Automated Entry')|x}</Data>
+            </Cell>
+            % if isDate(partner_aml.document_date):
+              <Cell ss:StyleID="date">
+                <Data ss:Type="DateTime">${partner_aml.document_date|n}T00:00:00.000</Data>
+              </Cell>
+            % else:
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            % if isDate(partner_aml.date):
+              <Cell ss:StyleID="date">
+                <Data ss:Type="DateTime">${partner_aml.date|n}T00:00:00.000</Data>
+              </Cell>
+            % else:
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            <Cell ss:StyleID="left_bold">
+              <!-- SEQUENCE -->
+              <Data ss:Type="String">${partner_aml.move_id.name|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.name|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.ref or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            % if o.journal_id.type == 'cheque':
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${"%s %s" % (partner_aml.account_id.code, partner_aml.account_id.name)|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.partner_txt or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="amount_bold">
+              <Data ss:Type="Number">${partner_aml.credit_currency or 0.0}</Data>
+            </Cell>
+            <Cell ss:StyleID="amount_bold">
+              <Data ss:Type="Number">${partner_aml.debit_currency or 0.0}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.reconcile_id and 'X' or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.move_id.state and getSel(partner_aml.move_id, 'state') or ''|x}</Data>
+            </Cell>
+        </Row>
+    % endfor
+% endif
+
 % endfor
 
 <!-- MANUAL ENTRIES -->

@@ -101862,6 +101862,11 @@ msgstr " veuillez vous référer aux procédures adéquates."
 msgid "Journal Entry linked to the register line %s not found."
 msgstr "Ecriture comptable liée à la ligne de registre %s non trouvée."
 
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:1043
+msgid "Automated Entry"
+msgstr "Écriture Automatique"
+
 #. module: account_override
 #: field:account.bank.statement.line,partner_move_line_ids:0
 msgid "Automated Entries"

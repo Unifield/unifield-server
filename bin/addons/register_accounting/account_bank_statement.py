@@ -2435,7 +2435,7 @@ class account_bank_statement_line(osv.osv):
                     # post regline JE
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     if automated_entries_ids:
-                        # reconcile automated entries
+                        # reconcile automated entries together
                         self.pool.get('account.move.line').reconcile_partial(cr, uid, automated_entries_ids, context=context)
                         # store them in the regline as partner_move_line_ids ("Automated Entries")
                         self.write(cr, uid, absl.id, {'partner_move_line_ids': [(6, 0, automated_entries_ids)]}, context=context)
