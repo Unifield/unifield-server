@@ -1797,14 +1797,14 @@ class account_bank_statement_line(osv.osv):
             - is being hardposted
             - has a Partner Third Party
             - is booked on an income or expense account
-        ... this method creates direct expense lines (JI), adds them to the regline JE, and returns a list of their id
-        that will have to be reconciled once the JE will be posted.
+        ... this method creates automated entries on partner payable or receivable account (JI), adds them to the
+        regline JE, and returns a list of their ids that will have to be reconciled once the JE will be posted.
         """
         if context is None:
             context = {}
         if not st_line:
             return False
-        to_reconcile = []
+        automated_entries_ids = []
         if posttype == 'hard' and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
                 st_line.direct_invoice is False:
             # Prepare some elements
@@ -1853,12 +1853,12 @@ class account_bank_statement_line(osv.osv):
             val.update({'debit': 0.0, 'credit': amount, 'amount_currency': -abs(st_line.amount)})
             move_line_credit_id = move_line_obj.create(cr, uid, val, context=context, check=False)
             # the new JIs created will have to be reconciled after the JE will be posted
-            to_reconcile.append(move_line_debit_id)
-            to_reconcile.append(move_line_credit_id)
+            automated_entries_ids.append(move_line_debit_id)
+            automated_entries_ids.append(move_line_credit_id)
             # Disable the cash return button on this line
             # Optimization on write() for this field
             self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
-        return to_reconcile
+        return automated_entries_ids
 
     def do_import_invoices_reconciliation(self, cr, uid, st_line, context=None):
         """
@@ -2430,13 +2430,16 @@ class account_bank_statement_line(osv.osv):
                     acc_move_obj.write(cr, uid, [x.id for x in absl.move_ids], {'state':'posted'}, context=context)
                     acc_move_obj.write(cr, uid, [absl.invoice_id.move_id.id], {'state':'posted'}, context=context)
                 else:
-                    # create direct expense entries if need be: add the JIs to the regline JE and get the JIs to be reconciled
-                    to_reconcile = self.do_direct_expense(cr, uid, absl, posttype=postype, context=context)
-                    # post the regline JE
+                    # create automated entries if need be: add the JIs to the regline JE and get the JIs to be reconciled
+                    automated_entries_ids = self.do_direct_expense(cr, uid, absl, posttype=postype, context=context)
+                    # post regline JE
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
-                    # reconcile direct expense entries together if any
-                    if to_reconcile:
-                        self.pool.get('account.move.line').reconcile_partial(cr, uid, to_reconcile, context=context)
+                    if automated_entries_ids:
+                        # reconcile automated entries
+                        self.pool.get('account.move.line').reconcile_partial(cr, uid, automated_entries_ids, context=context)
+                        # store them in the regline as partner_move_line_ids ("Automated Entries")
+                        self.write(cr, uid, absl.id, {'partner_move_line_ids': [(6, 0, automated_entries_ids)]}, context=context)
+
                 if previous_state == 'draft':
                     direct_hard_post = True  # UF-2316
                 else:
