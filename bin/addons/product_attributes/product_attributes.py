@@ -1748,7 +1748,9 @@ class product_attributes(osv.osv):
 
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True
-        self.write(cr, uid, ids, {'active': False}, context=context)
+            
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.write(cr, real_uid, ids, {'active': False}, context=context)
 
         return True
 
