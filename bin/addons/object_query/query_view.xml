@@ -213,17 +213,18 @@
             <field name="model">finance.sync.query</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Finance HQ Queries" editable="top">
+                <tree string="Finance Synced HQ Queries" editable="top" colors="red:not template_id">
                     <field name="name" />
                     <field name="model" attrs="{'readonly': [('template_id', '!=', False)]}" />
                     <field name="template_id" invisible="1" />
                     <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
+                    <button type="object" icon="gtk-disconnect" name="unsync" string="Do not sync" />
                 </tree>
             </field>
         </record>
 
         <record id="finance_sync_query_action" model="ir.actions.act_window">
-            <field name="name">Finance HQ Queries</field>
+            <field name="name">Finance Synced HQ Queries</field>
             <field name="res_model">finance.sync.query</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -234,5 +235,42 @@
                   parent="menu_preferences"
                   sequence="2" />
 
+        <record id="finance_query_to_sync_wizard" model="ir.ui.view">
+            <field name="name">finance.query.to_sync.wizard.form</field>
+            <field name="model">finance.query.to_sync.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sync Queries">
+                    <separator colspan="4" string="Sync existing queries" />
+                    <field name="query_ids" colspan="4"/>
+                    <button type="object" icon="gtk-ok" name="sync_queries" string="Save" colspan="2"/>
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="finance_query_template_search" model="ir.ui.view">
+            <field name="name">finance.query.template.search</field>
+            <field name="model">finance.query.template</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name" />
+                    <field name="model" />
+                </search>
+            </field>
+        </record>
+
+        <record id="finance_query_template_tree" model="ir.ui.view">
+            <field name="name">finance.query.template.tree</field>
+            <field name="model">finance.query.template</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Finance Saved Queries">
+                    <field name="name" />
+                    <field name="model" />
+                </tree>
+            </field>
+        </record>
     </data>
 </openerp>

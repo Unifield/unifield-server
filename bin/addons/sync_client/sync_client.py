@@ -461,7 +461,7 @@ class Entity(osv.osv):
         return self._encapsulate_in_dict(nb, ids)
 
     def _get_nb_update_send(self, cr, uid, ids, name, arg, context=None):
-        nb = self.pool.get('sync.client.update_to_send').search_count(cr, uid, [('sent', '=', False)], context=context)
+        nb = self.pool.get('sync.client.update_to_send').search_count(cr, uid, [('sent', '=', False), ('session_id', '!=', False)], context=context)
         return self._encapsulate_in_dict(nb, ids)
 
     def _encapsulate_in_dict(self, value, ids):
@@ -664,6 +664,8 @@ class Entity(osv.osv):
                 entity = self.get_entity(cr, uid, context)
                 session = str(uuid.uuid1())
                 updates_count = prepare_update(session)
+                cr.execute("update sync_client_update_to_send set session_id=%s where coalesce(session_id,'')='' and sent='f'", (session,))
+                updates_count += cr.rowcount
                 if updates_count > 0:
                     self.write(cr, uid, [entity.id], {'session_id' : session})
                 cr.commit()

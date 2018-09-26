@@ -189,6 +189,33 @@ class account_mcdb(osv.osv):
                 default[field] = False
         return super(account_mcdb, self).copy_data(cr, uid, id, default=default, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('sync_update_execution'):
+            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True)], context=context)
+            if ids_tosync:
+                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+        return super(account_mcdb, self).unlink(cr, uid, ids, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution'):
+            if 'hq_template' in vals and not vals['hq_template']:
+                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+                if ids_tosync:
+                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+            elif vals.get('hq_template') and vals.get('hq_template'):
+                self._del_previous_update(cr, uid, ids, context=None)
+        return super(account_mcdb, self).write(cr, uid, ids, vals, context=context)
+
+
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -197,7 +224,7 @@ class account_mcdb(osv.osv):
         for record in reads:
             name = record['description']
             if record['hq_template']:
-                name = '%s (HQ)' % (name,)
+                name = '%s (SYNC)' % (name,)
 
             res.append((record['id'], name))
         return res

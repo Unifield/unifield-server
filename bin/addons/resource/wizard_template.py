@@ -101,6 +101,30 @@ class wizard_template(osv.osv):
                 default[field] = False
         return super(wizard_template, self).copy_data(cr, uid, id, default=default, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('sync_update_execution'):
+            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True)], context=context)
+            if ids_tosync:
+                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+        return super(wizard_template, self).unlink(cr, uid, ids, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution'):
+            if 'hq_template' in vals and not vals['hq_template']:
+                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+                if ids_tosync:
+                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+        return super(wizard_template, self).write(cr, uid, ids, vals, context=context)
+
     def _clean_data(self, cr, uid, data, context=None):
         for field in ['template_name', 'id', 'display_load_button', 'saved_templates']:
             if field in data:
@@ -276,7 +300,7 @@ class wizard_template_form(osv.osv_memory):
                                                   context=context, order='name') or []
         templates = template_ids and wizard_template_obj.browse(cr, uid, template_ids,
                                                                 fields_to_fetch=['name', 'hq_template'], context=context) or []
-        names = [(t.id, '%s%s' % (t.name, t.hq_template and ' (HQ)' or '')) for t in templates]
+        names = [(t.id, '%s%s' % (t.name, t.hq_template and ' (SYNC)' or '')) for t in templates]
         return names
 
     _columns = {

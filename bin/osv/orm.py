@@ -595,7 +595,6 @@ class orm_template(object):
     def __export_row(self, cr, uid, row, fields, context=None):
         if context is None:
             context = {}
-        print 'orm', row, fields
         sync_context = context.get('sync_update_creation')
 
         def check_type(field_type):
