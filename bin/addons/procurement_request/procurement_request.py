@@ -642,7 +642,9 @@ class procurement_request_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment or (line.original_qty and line.product_uom_qty != line.original_qty):
+            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
+                    or (line.original_qty and line.product_uom_qty != line.original_qty) \
+                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
                 changed = True
 
             res[line.id] = changed

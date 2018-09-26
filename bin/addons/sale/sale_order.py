@@ -2005,6 +2005,8 @@ class sale_order_line(osv.osv):
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),
+        'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2024,6 +2026,8 @@ class sale_order_line(osv.osv):
         'soq_updated': False,
         'set_as_sourced_n': False,
         'stock_take_date': _get_stock_take_date,
+        'created_by_sync': False,
+        'cancelled_by_sync': False,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):
@@ -2122,6 +2126,8 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
             'from_cancel_out': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2156,6 +2162,8 @@ class sale_order_line(osv.osv):
             'invoiced': False,
             'invoice_lines': [],
             'set_as_sourced_n': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:

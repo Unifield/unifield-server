@@ -101860,3 +101860,17 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,created_by_sync:0
+#: field:purchase.order.merged.line,created_by_sync:0
+#: field:sale.order.line,created_by_sync:0
+msgid "Created by Synchronisation"
+msgstr "Créé par Synchronisation"
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,cancelled_by_sync:0
+#: field:purchase.order.merged.line,cancelled_by_sync:0
+#: field:sale.order.line,cancelled_by_sync:0
+msgid "Cancelled by Synchronisation"
+msgstr "Annulé par Synchronisation"

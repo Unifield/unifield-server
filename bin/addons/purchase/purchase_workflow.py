@@ -574,7 +574,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
-
+        sol_obj = self.pool.get('sale.order.line')
 
         # checks before validating the line:
         self.check_origin_for_validation(cr, uid, ids, context=context)
@@ -587,6 +587,8 @@ class purchase_order_line(osv.osv):
         self.update_fo_lines(cr, uid, ids, context=context)
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id:
+                if pol.created_by_sync:
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'created_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level
             # doesn't update original qty and uom if already set (from IR)
@@ -801,6 +803,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
@@ -808,12 +811,13 @@ class purchase_order_line(osv.osv):
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
+                if pol.cancelled_by_sync:
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
-
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
@@ -824,6 +828,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
@@ -831,11 +836,14 @@ class purchase_order_line(osv.osv):
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
+                if pol.cancelled_by_sync:
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
         return True
+
 
 purchase_order_line()
 

@@ -277,7 +277,9 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
+            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
+                    or (line.original_qty and line.product_qty != line.original_qty) \
+                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
                 changed = True
 
             res[line.id] = changed
@@ -526,6 +528,8 @@ class purchase_order_line(osv.osv):
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
         'esc_confirmed': fields.boolean(string='ESC confirmed'),
+        'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -544,7 +548,6 @@ class purchase_order_line(osv.osv):
         'controlled_substance': fields.function(_get_product_info, type='char', string='Controlled Substance', multi='product_info', method=True),
         'justification_code_id': fields.function(_get_product_info, type='char', string='Justification Code', multi='product_info', method=True),
     }
-
 
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -567,6 +570,8 @@ class purchase_order_line(osv.osv):
         'confirmed_delivery_date': False,
         'have_analytic_distribution_from_header': lambda *a: True,
         'created_by_vi_import': False,
+        'created_by_sync': False,
+        'cancelled_by_sync': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1155,7 +1160,16 @@ class purchase_order_line(osv.osv):
         if defaults is None:
             defaults = {}
 
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
+        defaults.update({
+            'merged_id': False,
+            'sync_order_line_db_id': False,
+            'linked_sol_id': False,
+            'set_as_sourced_n': False,
+            'set_as_validated_n': False,
+            'esc_confirmed': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
+        })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -1179,7 +1193,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):

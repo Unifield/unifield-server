@@ -27,6 +27,7 @@ assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
 
+
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
     _logger = logging.getLogger('------sync.sale.order.line')
@@ -69,6 +70,7 @@ class sale_order_line_sync(osv.osv):
 
         return message
 
+
 sale_order_line_sync()
 
 
@@ -98,6 +100,7 @@ class sale_order_line_cancel(osv.osv):
         self.create(cr, uid, line_dict, context=context)
 
         return True
+
 
 sale_order_line_cancel()
 
@@ -143,7 +146,6 @@ class sale_order_sync(osv.osv):
     def _manual_create_sync_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
-
 
     def create_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
@@ -227,7 +229,7 @@ class sale_order_sync(osv.osv):
         default = {}
         default.update(header_result)
 
-        self.write(cr, uid, so_id, default , context=context)
+        self.write(cr, uid, so_id, default, context=context)
 
         # Just to print the result message when the sync message got executed
         name = self.browse(cr, uid, so_id, context).name
@@ -367,5 +369,6 @@ class sale_order_sync(osv.osv):
                     ('product_uom_qty' in line_changes)
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
+
 
 sale_order_sync()
