@@ -135,6 +135,8 @@ class account_mcdb(osv.osv):
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
         'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
+        'hq_template': fields.boolean('HQ Template', readonly='1'),
+        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
     }
 
     _defaults = {
@@ -156,6 +158,8 @@ class account_mcdb(osv.osv):
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
+        'hq_template': False,
+        'created_on_hq': False,
     }
 
     _order = 'user, description, id'
@@ -177,6 +181,26 @@ class account_mcdb(osv.osv):
         return view
 
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        for field in ('hq_template', 'created_on_hq'):
+            if field not in default:
+                default[field] = False
+        return super(account_mcdb, self).copy_data(cr, uid, id, default=default, context=context)
+
+    def name_get(self, cr, uid, ids, context=None):
+        if not len(ids):
+            return []
+        reads = self.read(cr, uid, ids, ['description','hq_template'], context=context)
+        res = []
+        for record in reads:
+            name = record['description']
+            if record['hq_template']:
+                name = '%s (HQ)' % (name,)
+
+            res.append((record['id'], name))
+        return res
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -1323,6 +1347,11 @@ class account_mcdb(osv.osv):
         if not copied_id:
             raise osv.except_osv(_('Error'), _('You have to load the template first.'))
         self._format_data(data)
+
+        for field_to_clean in ('hq_template', 'created_on_hq'):
+            if field_to_clean in data:
+                del data[field_to_clean]
+
         return self.write(cr, uid, copied_id, data, context=context)
 
     def save_mcdb_template(self, cr, buid, ids, context=None):

@@ -78,16 +78,28 @@ class wizard_template(osv.osv):
         'values': fields.text('Values', help='Values from the wizard, stored as a dictionary'),
         'last_modification': fields.datetime('Last Modification Date'),
         'sync_values': fields.function(_get_sync_values, string='Sdrefed values', type='text', method=True, fnct_inv=_set_sync_values),
+        'hq_template': fields.boolean('HQ Template', readonly='1'),
+        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
     }
 
     _defaults = {
         'user_id': lambda self, cr, uid, *a, **b: uid,
+        'hq_template': False,
+        'created_on_hq': False,
     }
     _sql_constraints = [
         ('name_user_id_wizard_name_uniq', 'UNIQUE(name, user_id, wizard_name)',
          'This template name already exists for this wizard. Please choose another name.')
     ]
 
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        for field in ('hq_template', 'created_on_hq'):
+            if field not in default:
+                default[field] = False
+        return super(wizard_template, self).copy_data(cr, uid, id, default=default, context=context)
 
     def _clean_data(self, cr, uid, data, context=None):
         for field in ['template_name', 'id', 'display_load_button', 'saved_templates']:
@@ -111,12 +123,17 @@ class wizard_template(osv.osv):
                 raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
             self._clean_data(cr, uid, data, context)
             # create a new wizard_template to store the values
-            vals = {'name': template_name,
-                    'user_id': uid,
-                    'wizard_name': wizard_obj._name,
-                    'values': data,
-                    'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    }
+            vals = {
+                'name': template_name,
+                'user_id': uid,
+                'wizard_name': wizard_obj._name,
+                'values': data,
+                'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            if context.get('from_query'):
+                vals['hq_template'] = True
+                vals['created_on_hq'] = True
+
             self.create(cr, uid, vals, context=context)
         return True
 
@@ -211,6 +228,10 @@ class wizard_template(osv.osv):
                 'values': data,
                 'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
             }
+            if context.get('from_query'):
+                vals['hq_template'] = True
+                vals['created_on_hq'] = True
+
             return self.write(cr, uid, selected_template_id, vals, context=context)
         return True
 
@@ -251,11 +272,11 @@ class wizard_template_form(osv.osv_memory):
             context = {}
         wizard_template_obj = self.pool.get('wizard.template')
         # TODO user_id filter
-        template_ids = wizard_template_obj.search(cr, uid, [('wizard_name', '=', self._name)],
+        template_ids = wizard_template_obj.search(cr, uid, [('wizard_name', '=', self._name), '|', ('user_id', '=', uid), ('hq_template', '=', True)],
                                                   context=context, order='name') or []
         templates = template_ids and wizard_template_obj.browse(cr, uid, template_ids,
-                                                                fields_to_fetch=['name'], context=context) or []
-        names = [(t.id, t.name) for t in templates]
+                                                                fields_to_fetch=['name', 'hq_template'], context=context) or []
+        names = [(t.id, '%s%s' % (t.name, t.hq_template and ' (HQ)' or '')) for t in templates]
         return names
 
     _columns = {

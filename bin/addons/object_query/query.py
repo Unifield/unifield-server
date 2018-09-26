@@ -106,7 +106,7 @@ class finance_sync_query(osv.osv):
 
             #template = child_wiz.search(cr, uid, [('description', '=', query['name']), ('model', '=', target_object.get(query['model'], ''))], context=context)
             if not template_id:
-                template_id = child_wiz.create(cr, uid, {'description': query['name'], 'model': target_object.get(query['model'])}, context=context)
+                template_id = child_wiz.create(cr, uid, {'description': query['name'], 'model': target_object.get(query['model']), 'created_on_hq': True, 'hq_template': True}, context=context)
                 self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
 
             new_id = child_wiz.create(cr, uid, {'template': template_id}, context=context)
@@ -129,7 +129,7 @@ class finance_sync_query(osv.osv):
         child_wiz = self.pool.get(query['model'])
         #template = self.pool.get('wizard.template').search(cr, uid, [('name', '=', query['name']), ('wizard_name', '=', query['model'])], context=context)
         if not template_id:
-            template_id = self.pool.get('wizard.template').create(cr, uid, {'name': query['name'], 'wizard_name':  query['model'], 'values': '{}'}, context=context)
+            template_id = self.pool.get('wizard.template').create(cr, uid, {'name': query['name'], 'wizard_name':  query['model'], 'values': '{}', 'created_on_hq': True, 'hq_template': True}, context=context)
             self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
         wizard = child_wiz.create(cr, uid, {'saved_templates': template_id}, context=context)
         context['active_model'] = 'ir.ui.menu'
