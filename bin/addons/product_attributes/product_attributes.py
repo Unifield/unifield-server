@@ -318,19 +318,19 @@ class product_attributes(osv.osv):
                             touched='[''%s'']'
                         WHERE model = 'product.product'
                         AND res_id IN (%s)
-        ''' % (new_column, ids_req))
+        ''' % (new_column, ids_req))  # not_a_user_entry
 
         # Make the migration
         if new_column == 'standard_ok':
-            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'dangerous_goods':
-            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'short_shelf_life':
-            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'controlled_substance':
@@ -339,7 +339,7 @@ class product_attributes(osv.osv):
                               controlled_substance = 'True',
                               is_cs = True,
                               cs_txt = 'X'
-                            WHERE %s = True OR narcotic = True''' % moved_column
+                            WHERE %s = True OR narcotic = True''' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         return
@@ -1110,6 +1110,8 @@ class product_attributes(osv.osv):
         res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
         if res:
+            if isinstance(error_msg, unicode):
+                error_msg = error_msg.encode('ascii', 'ignore')
             raise osv.except_osv(_('Error'), error_msg)
             return False
 
@@ -1787,7 +1789,7 @@ class product_attributes(osv.osv):
         '''
         res = {}
         if default_code:
-            cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
+            cr.execute("SELECT * FROM product_product pp where pp.default_code = %s", (default_code,))
             duplicate = cr.fetchall()
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
@@ -1913,6 +1915,15 @@ class product_deactivation_error_line(osv.osv_memory):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
+            if line.internal_type == 'stock.picking':
+                pick_obj = self.pool.get('stock.picking')
+                xmlid = pick_obj._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=pick_obj.browse(cr, uid, line.doc_id))
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
+                res['res_id'] = line.doc_id
+                res['target'] = 'current'
+                res['nodestroy'] = True
+                return res
+
             view_id, context = self._get_view(cr, uid, line, context=context)
             return {'type': 'ir.actions.act_window',
                     'name': line.type,

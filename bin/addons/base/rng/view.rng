@@ -81,6 +81,7 @@
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_save_button"/></rng:optional>
+            <rng:optional><rng:attribute name="hide_cancel_button"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
             <rng:ref name="container"/>
         </rng:element>
@@ -446,6 +447,7 @@
             <rng:optional><rng:attribute name="domain"/></rng:optional>
             <rng:optional><rng:attribute name="filter_domain"/></rng:optional>
             <rng:optional><rng:attribute name="invisible"/></rng:optional>
+            <rng:optional><rng:attribute name="displayon"/></rng:optional>
             <rng:optional><rng:attribute name="allow_sort"/></rng:optional>
             <rng:optional><rng:attribute name="password"/></rng:optional>
             <rng:optional><rng:attribute name="comparator"/></rng:optional>
@@ -575,6 +577,7 @@
             <rng:optional><rng:attribute name="colspan"/></rng:optional>
             <rng:optional><rng:attribute name="target"/></rng:optional>
             <rng:optional><rng:attribute name="readonly"/></rng:optional>
+            <rng:optional><rng:attribute name="force_editable"/></rng:optional>
             <rng:optional><rng:attribute name="context"/></rng:optional>
             <rng:optional><rng:attribute name="confirm"/></rng:optional>
             <rng:optional><rng:attribute name="help"/></rng:optional>

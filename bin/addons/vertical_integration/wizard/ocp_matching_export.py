@@ -68,11 +68,11 @@ class ocp_matching_export_wizard(osv.osv_memory):
         # - the first 3 digits of the Prop. Instance code
         # - the year and month of the selected period
         # - the current datetime
-        # Ex: KE1_201610_171116110306_Check on reconcilable entries
+        # Ex: KE1_201610_171116110306_Check_on_reconcilable_entries
         instance_code = inst and inst.code[:3] or ''
         selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        data['target_filename'] = '%s_%s_%s_Check on reconcilable entries' % (instance_code, selected_period, current_time)
+        data['target_filename'] = '%s_%s_%s_Check_on_reconcilable_entries' % (instance_code, selected_period, current_time)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],

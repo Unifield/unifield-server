@@ -56,19 +56,40 @@
             <field name="method_to_call">import_data_with_wizard</field>
         </record>
 
-<!--
         <record id="auto_import_fnct_supplier_catalogue" model="automated.import.function">
             <field name="name">Import Supplier Catalogues</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'supplier.catalogue')]" />
             <field name="method_to_call">auto_import</field>
+            <field name="startswith">SCL_</field>
         </record>
 
         <record id="auto_import_fnct_product_list" model="automated.import.function">
             <field name="name">Import Product List</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'product.list')]" />
             <field name="method_to_call">auto_import</field>
+            <field name="startswith">PL_</field>
         </record>
--->
+
+        <record id="auto_import_fnct_incoming_shipment" model="automated.import.function">
+            <field name="name">Import Incoming Shipment</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'stock.picking')]" />
+            <field name="method_to_call">auto_import_incoming_shipment</field>
+            <field name="startswith">SHPM_</field>
+        </record>
+
+        <record id="auto_import_fnct_purchase_order" model="automated.import.function">
+            <field name="name">Import Purchase Order</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
+            <field name="method_to_call">auto_import_purchase_order</field>
+            <field name="startswith">POV_</field>
+        </record>
+        
+        <record id="auto_import_fnct_confirmed_purchase_order" model="automated.import.function">
+            <field name="name">Import Purchase Order and confirm</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
+            <field name="method_to_call">auto_import_confirmed_purchase_order</field>
+            <field name="startswith">POV_</field>
+        </record>
 
         <record id="auto_import_fnct_product_categories" model="automated.import.function">
             <field name="name">Import Product Categories</field>

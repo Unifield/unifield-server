@@ -52,6 +52,12 @@ MODEL_DICT = {
         'model': 'product.list.line',
         'partial': True,
     },
+    'product_list_update': {
+        'name': 'Products Lists Update',
+        'domain_type': 'supply',
+        'model': 'product.list.line',
+        'partial': True,
+    },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
@@ -71,7 +77,12 @@ MODEL_DICT = {
         'model': 'supplier.catalogue.line',
         'partial': True,
     },
-
+    'supplier_catalogue_update': {
+        'name': 'Supplier Catalogue Update',
+        'domain_type': 'supply',
+        'model': 'supplier.catalogue.line',
+        'partial': True,
+    },
 
     # FINANCE
     'gl_accounts': {
@@ -255,6 +266,34 @@ MODEL_DATA_DICT = {
             'family_id.msfid',
         ],
     },
+    'product_list_update': {
+        'header_info': [
+            'type',
+            'ref',
+            'name',
+            'description',
+            'standard_list_ok',
+            'order_list_print_ok',
+            'warehouse_id',
+            'location_id',
+        ],
+        'header_list': [
+            'name.default_code',
+            'name.name',
+            'comment',
+        ],
+        'required_field_list': [
+            'name.default_code',
+        ],
+        'ignore_field': [
+            'name.name',
+        ],
+        'custom_field_name': {
+            'name.default_code': 'Product Code',
+            'ref': 'Ref',
+            'order_list_print_ok': 'Order List print',
+        },
+    },
     'product_list': {
         'header_list': [
             'name',
@@ -345,7 +384,42 @@ MODEL_DATA_DICT = {
             'product_id.name',
         ],
     },
-
+    'supplier_catalogue_update': {
+        'header_info': [
+            'name',
+            'partner_id',
+            'currency_id',
+            'period_from',
+            'period_to',
+        ],
+        'header_list': [
+            'product_id.default_code',
+            'product_id.name',
+            'product_code',
+            'line_uom_id.name',
+            'min_qty',
+            'unit_price',
+            'rounding',
+            'min_order_qty',
+            'comment',
+        ],
+        'required_field_list': [
+            'product_id.default_code',
+            'line_uom_id.name',
+            'min_qty',
+            'unit_price',
+        ],
+        'ignore_field': [
+            'product_id.name',
+        ],
+        'custom_field_name': {
+            'partner_id': 'Partner Name',
+            'product_id.default_code': 'Product Code',
+            'product_id.name': 'Product Description',
+            'line_uom_id.name': 'UoM',
+            'min_order_qty': 'Min. Order Qty.',
+        },
+    },
 
     # FINANCE
     'gl_accounts': {

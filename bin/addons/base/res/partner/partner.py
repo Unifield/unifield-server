@@ -145,9 +145,36 @@ class res_partner(osv.osv):
             return [context['category_id']]
         return []
 
+    def _default_customer(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner isn't a customer (returns False), else it is (returns True)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return False
+        return True
+
+    def _default_supplier(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner is a supplier (returns True), else it isn't (returns False)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return True
+        return False
+
     _defaults = {
         'active': lambda *a: 1,
-        'customer': lambda *a: 1,
+        'customer': _default_customer,
+        'supplier': _default_supplier,
         'category_id': _default_category,
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner', context=c),
     }
