@@ -15,7 +15,10 @@
                         <field name="template_name" string="or Choose a new template name" colspan="2" />
                         <button icon="gtk-floppy" name="save_mcdb_template" string="Save new template" type="object" colspan="3" />
                     </group>
-                    <button icon="gtk-save" name="save_query" string="Save" type="object" invisible="1" colspan="2"/>
+                    <group colspan="4" name="wizard_hq_query" invisible="1">
+                        <button icon="gtk-save" name="save_query" string="Save" type="object" colspan="2"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2"/>
+                    </group>
 
                     <separator string="General" colspan="4" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
                     <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')],

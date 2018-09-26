@@ -190,8 +190,21 @@
             <field name="arch" type="xml">
                 <form string="Finance HQ Query">
                     <field name="name" />
-                    <field name="model" />
+                    <field name="model" readonly="1"/>
                 </form>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_search" model="ir.ui.view">
+            <field name="name">finance.sync.query.search</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <filter string="Group by Model" name="model" icon="terp-go-year" context="{'group_by':'model'}" help="Group by model"/>
+                    <field name="name" />
+                    <field name="model" />
+                </search>
             </field>
         </record>
 
@@ -202,8 +215,9 @@
             <field name="arch" type="xml">
                 <tree string="Finance HQ Queries" editable="top">
                     <field name="name" />
-                    <field name="model" />
-                    <button type="object" icon="gtk-ok" name="open_template" string="Open Template" />
+                    <field name="model" attrs="{'readonly': [('template_id', '!=', False)]}" />
+                    <field name="template_id" invisible="1" />
+                    <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
                 </tree>
             </field>
         </record>
@@ -217,7 +231,8 @@
 
         <menuitem id="finance_sync_query_menu"
                   action="finance_sync_query_action"
-                  parent="menu_preferences" />
+                  parent="menu_preferences"
+                  sequence="2" />
 
     </data>
 </openerp>

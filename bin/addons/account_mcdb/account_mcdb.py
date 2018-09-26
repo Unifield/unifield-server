@@ -170,10 +170,10 @@ class account_mcdb(osv.osv):
             fields = form.xpath('//group[@name="wizard_template"]')
             for field in fields:
                 field.set('invisible', "1")
-            fields = form.xpath('//button[@name="save_query"]')
+            fields = form.xpath('//group[@name="wizard_hq_query"]')
             for field in fields:
                 field.set('invisible', "0")
-        view['arch'] = etree.tostring(form)
+            view['arch'] = etree.tostring(form)
         return view
 
 
@@ -613,7 +613,6 @@ class account_mcdb(osv.osv):
             search_view_id = search_view_id and search_view_id[1] or False
 
             context['target_filename_prefix'] = name
-
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
@@ -624,6 +623,7 @@ class account_mcdb(osv.osv):
                 'search_view_id': search_view_id,
                 'domain': domain,
                 'context': context,
+                'keep_open': 1,
                 'target': 'current',
             }
         return False
@@ -652,39 +652,7 @@ class account_mcdb(osv.osv):
         # Clear all fields if necessary
         if all_fields:
             res_id = self.create(cr, uid, {'model': res_model}, context=context)
-        # Update context
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-        })
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        elif res_model == 'combined.line':
-            name = _('Selector - Combined Journals Report')
-            view_name = 'account_mcdb_combined_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',  # to display the menu on the right
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def _button_add(self, cr, uid, ids, obj=False, field=False, args=None, context=None):
         """
@@ -703,44 +671,13 @@ class account_mcdb(osv.osv):
             'active_id': ids[0],
             'active_ids': ids,
         })
-        res_id = ids[0]
         # Do search
         if obj and field:
             # Search all elements
             element_ids = self.pool.get(obj).search(cr, uid, args)
             if element_ids:
                 self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
-        # Search model
-        wiz = self.browse(cr, uid, res_id)
-        res_model = wiz and wiz.model or False
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        elif res_model == 'combined.line':
-            name = _('Selector - Combined Journals Report')
-            view_name = 'account_mcdb_combined_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',  # to display the menu on the right
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def button_journal_clear(self, cr, uid, ids, context=None):
         """
@@ -1302,7 +1239,10 @@ class account_mcdb(osv.osv):
         data['output_currency_id'] = output_currency_id
         data['target_filename'] = target_filename
         data['header'] = header
-        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        context['keep_open'] = 1
+        a = export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        a['datas']['keep_open'] = 1
+        return a
 
     def load_mcdb_template(self, cr, buid, ids, context=None):
         """
@@ -1490,6 +1430,12 @@ class account_mcdb(osv.osv):
         """
         return self.combined_export(cr, uid, ids, format='pdf', context=context)
 
+    def save_query(self, cr, buid, ids, context=None):
+        """
+        Save the values of the selector from HQ query
+        """
+        self.edit_mcdb_template(cr, buid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

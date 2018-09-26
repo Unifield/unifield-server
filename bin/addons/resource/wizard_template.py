@@ -293,11 +293,10 @@ class wizard_template_form(osv.osv_memory):
         res['value'] = {'display_load_button': True}
         return res
 
-    def save_query(self, cr, uid, ids, context=None):
-        # TODO
-        print ids
-        print context
-        return True
+    def save_query(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_template_form()
 

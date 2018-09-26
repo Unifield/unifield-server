@@ -29,7 +29,7 @@ class finance_sync_query(osv.osv):
     _description = 'HQ Finance Templates'
 
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True),
+        'name': fields.char(size=128, string='Name', required=True, index=1),
         'model': fields.selection([
             ('account.mcdb.move', 'G/L Selector'),
             ('account.mcdb.analytic', 'Analytic Selector'),
@@ -41,12 +41,37 @@ class finance_sync_query(osv.osv):
             ('account.analytic.chart', 'Balance by analytic account'),
             ('account.partner.ledger', 'Partner Ledger'),
             ('wizard.account.partner.balance.tree', 'Partner Balance'),
-        ], 'Type', required=True),
+        ], string='Type', size=128, required=True, index=1),
+        'template_id': fields.integer('Template id', readonly=1),
     }
 
     _sql_constraints = [
-        #TODO
+        ('unique_name_model', 'unique(name, model)', 'Name / Type must be unique.')
     ]
+
+    def write(self, cr, uid, ids, values, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if values.get('name'):
+            for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
+                if x['template_id']:
+                    if x['model'].startswith('account.mcdb'):
+                        self.pool.get('account.mcdb').write(cr, uid, x['template_id'], {'description': values['name']}, context=context)
+                    else:
+                        self.pool.get('wizard.template').write(cr, uid, x['template_id'], {'name': values['name']}, context=context)
+        return super(finance_sync_query, self).write(cr, uid, ids, values, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
+            if x['template_id']:
+                if x['model'].startswith('account.mcdb'):
+                    self.pool.get('account.mcdb').unlink(cr, uid, x['template_id'], context=context)
+                else:
+                    self.pool.get('wizard.template').unlink(cr, uid, x['template_id'], context=context)
+        return super(finance_sync_query, self).unlink(cr, uid, ids, context=context)
+
     def _get_window_from_menu(self, cr, uid, xmlid, context=None):
         module, xmlid = xmlid.split('.', 1)
         menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
@@ -61,38 +86,57 @@ class finance_sync_query(osv.osv):
             context = {}
 
         query = self.read(cr, uid, id[0], context=context)
+        context['from_query'] = id[0]
+        template_id = query['template_id']
+        # TODO: check template_id match model
 
-        wiz_data = {}
         if query['model'].startswith('account.mcdb'):
             child_wiz = self.pool.get('account.mcdb')
             target_object = {
+                'account.mcdb.move': 'account.move.line',
                 'account.mcdb.analytic': 'account.analytic.line',
                 'account.mcdb.combined': 'combined.line',
-                'account.mcdb.move': 'account.move.line',
+            }
+            view_name = {
+                'account.mcdb.move': _('G/L Selector'),
+                'account.mcdb.analytic': _('Analytic Selector'),
+                'account.mcdb.combined': _('Combined Journals Report'),
             }
             context['from'] = target_object.get(query['model'], '')
-            context['from_query'] = True
 
-            template = child_wiz.search(cr, uid, [('name', '=', query['name']), ('model', '=', target_object.get(query['model'], ''))], context=context)
-            if not template:
-                template = [child_wiz.create(cr, uid, {'name': query['name'], 'model': target_object.get(query['model'])}, context=context)]
+            #template = child_wiz.search(cr, uid, [('description', '=', query['name']), ('model', '=', target_object.get(query['model'], ''))], context=context)
+            if not template_id:
+                template_id = child_wiz.create(cr, uid, {'description': query['name'], 'model': target_object.get(query['model'])}, context=context)
+                self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
 
-            new_id = child_wiz.create(cr, uid, {'template': template[0]}, context=context)
+            new_id = child_wiz.create(cr, uid, {'template': template_id}, context=context)
             ret = child_wiz.load_mcdb_template(cr, uid, [new_id], context=context)
-            ret.update({'context': context, 'target': 'new'})
+            # view_mode: to hide sidebar on button 'Add all Instances'
+            ret.update({'context': context, 'target': 'new', 'view_mode': 'form'})
+            ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], view_name.get(query['model']))
             return ret
 
-        if query['model'] == 'account.report.general.ledger':
-            child_wiz = self.pool.get('account.report.general.ledger')
-            template = self.pool.get('wizard.template').search(cr, uid, [('name', '=', query['name']), ('wizard_name', '=', query['model'])], context=context)
-            if template:
-                wiz_data = {'saved_templates': template[0]}
-            wizard = child_wiz.create(cr, uid, wiz_data, context=context)
-            context['active_model'] = 'ir.ui.menu'
-            context['active_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account' ,'menu_general_ledger')[1]
-            context['from_query'] = True
-            ret = self.pool.get('wizard.template').load_template(cr, uid, [wizard], query['model'], context=context)
-            return ret
+        default_menu = {
+            'account.report.general.ledger': 'account.menu_general_ledger',
+            'account.balance.report': 'account.menu_general_Balance_report',
+            'account.bs.report': 'account.menu_account_bs_report',
+            'account.chart': 'account.menu_action_account_tree2',
+            'account.analytic.chart': 'account.menu_action_analytic_account_tree2',
+            'account.partner.ledger': 'account.menu_account_partner_ledger',
+            'wizard.account.partner.balance.tree': 'finance.menu_account_partner_balance_tree',
+        }
+
+        child_wiz = self.pool.get(query['model'])
+        #template = self.pool.get('wizard.template').search(cr, uid, [('name', '=', query['name']), ('wizard_name', '=', query['model'])], context=context)
+        if not template_id:
+            template_id = self.pool.get('wizard.template').create(cr, uid, {'name': query['name'], 'wizard_name':  query['model'], 'values': '{}'}, context=context)
+            self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
+        wizard = child_wiz.create(cr, uid, {'saved_templates': template_id}, context=context)
+        context['active_model'] = 'ir.ui.menu'
+        context['active_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, default_menu[query['model']].split('.')[0], default_menu[query['model']].split('.')[1])[1]
+        ret = self.pool.get('wizard.template').load_template(cr, uid, [wizard], query['model'], context=context)
+        ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], ret.get('name', ''))
+        return ret
 
 
 finance_sync_query()
