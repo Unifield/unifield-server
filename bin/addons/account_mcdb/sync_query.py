@@ -18,7 +18,7 @@ class finance_sync_query(osv.osv):
             wizard_name as model,
             id as template_id,
             last_modification,
-            hq_template as synced
+            coalesce(hq_template,'f') as synced
             FROM wizard_template
             WHERE coalesce(name, '') != ''
         UNION
@@ -29,7 +29,7 @@ class finance_sync_query(osv.osv):
                 ELSE 'account.mcdb.combined' END as model,
             id as template_id,
             coalesce(write_date, create_date) as last_modification,
-            hq_template as synced
+            coalesce(hq_template, 'f') as synced
             FROM account_mcdb
             WHERE coalesce(description,'') != ''
         )

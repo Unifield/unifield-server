@@ -101927,11 +101927,6 @@ msgid "Group by Model"
 msgstr "Grouper par Modèle"
 
 #. module: account_mcdb
-#: view:finance.sync.query:0
-msgid "Group by model"
-msgstr "Grouper par Modèle"
-
-#. module: account_mcdb
 #: model:ir.model,name:account_mcdb.model_finance_sync_query
 msgid "HQ Finance Synced Queries"
 msgstr "Requêtes Finance Siège Synchronisées"
@@ -101957,11 +101952,6 @@ msgstr "Ouvrir le Modèle"
 #: view:finance.sync.query.activation_wizard:0
 msgid "Queries Sync"
 msgstr "Requêtes Sync"
-
-#. module: account_mcdb
-#: view:finance.sync.query:0
-msgid "Synced"
-msgstr "Synchronisée"
 
 #. module: account_mcdb
 #: field:finance.sync.query,synced:0

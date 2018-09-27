@@ -19,11 +19,11 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search>
-                    <filter string="Group by Model" name="model" icon="terp-go-year" context="{'group_by':'model'}" help="Group by model"/>
+                    <filter string="Group by Model" name="model" icon="terp-go-year" context="{'group_by':'model'}" />
                     <separator />
-                    <filter string="Synced" name="synced" icon="terp-camera_test" domain="[('synced', '=', True)]" />
                     <field name="name" />
                     <field name="model" />
+                    <field name="synced" />
                 </search>
             </field>
         </record>
