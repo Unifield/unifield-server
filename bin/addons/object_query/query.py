@@ -134,7 +134,10 @@ class finance_sync_query(osv.osv):
         for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
             if x['template_id']:
                 model =self._get_target_obj(cr, uid, x)
-                model.write(cr, uid, x['template_id'], {'hq_template': status, 'created_on_hq': status}, context=context)
+                to_write = {'hq_template': status}
+                if status:
+                    to_write['synced'] = True
+                model.write(cr, uid, x['template_id'], to_write, context=context)
         return True
 
     def remove_sync(self, cr, uid, ids, context=None):
@@ -209,10 +212,6 @@ class finance_sync_query(osv.osv):
             }
             context['from'] = target_object.get(query['model'], '')
 
-            if not template_id:
-                template_id = child_wiz.create(cr, uid, {'description': query['name'], 'model': target_object.get(query['model']), 'created_on_hq': True, 'hq_template': True}, context=context)
-                self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
-
             new_id = child_wiz.create(cr, uid, {'template': template_id}, context=context)
             ret = child_wiz.load_mcdb_template(cr, uid, [new_id], context=context)
             # view_mode: to hide sidebar on button 'Add all Instances'
@@ -232,9 +231,6 @@ class finance_sync_query(osv.osv):
         }
 
         child_wiz = self.pool.get(query['model'])
-        if not template_id:
-            template_id = self.pool.get('wizard.template').create(cr, uid, {'name': query['name'], 'wizard_name':  query['model'], 'values': '{}', 'created_on_hq': True, 'hq_template': True}, context=context)
-            self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
         wizard = child_wiz.create(cr, uid, {'saved_templates': template_id}, context=context)
         context['active_model'] = 'ir.ui.menu'
         context['active_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, default_menu[query['model']].split('.')[0], default_menu[query['model']].split('.')[1])[1]

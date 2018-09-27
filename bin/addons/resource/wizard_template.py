@@ -31,12 +31,12 @@ class finance_query_method(osv.osv):
 
     _columns = {
         'hq_template': fields.boolean('HQ Template', readonly='1'),
-        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
+        'synced': fields.boolean('System flag used to set this query as synced', readonly='1', internal=1),
     }
 
     _defaults = {
         'hq_template': False,
-        'created_on_hq': False,
+        'synced': False,
         #'created_on_hq': lambda self, cr, uid, *a, **b: self._is_hq(cr, uid)
     }
 
@@ -46,7 +46,7 @@ class finance_query_method(osv.osv):
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
-        for field in ('hq_template', 'created_on_hq'):
+        for field in ('hq_template', 'synced'):
             if field not in default:
                 default[field] = False
         return super(finance_query_method, self).copy_data(cr, uid, id, default=default, context=context)
@@ -60,7 +60,7 @@ class finance_query_method(osv.osv):
             # set was_synced for each records when hq_template = on, do not reset this value
             # on unlink if was was_synced!=True => delete ir_model_data, so deletion does not trigger update
             # search_deleted: real deleted + records was_synced and hq_template = False, then reset was_synced after
-            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', True), ('hq_template', '=', True)], context=context)
             if ids_tosync:
                 self._gen_update_to_del(cr, uid, ids_tosync, context=None)
         return super(finance_query_method, self).unlink(cr, uid, ids, context=context)
@@ -72,10 +72,10 @@ class finance_query_method(osv.osv):
             context = {}
         if not context.get('sync_update_execution'):
             if 'hq_template' in vals and not vals['hq_template']:
-                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', True), ('hq_template', '=', True)], context=context)
                 if ids_tosync:
                     self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-            elif vals.get('created_on_hq') and vals.get('hq_template'):
+            elif vals.get('synced') and vals.get('hq_template'):
                 self._del_previous_update(cr, uid, ids, context=None)
 
         return super(finance_query_method, self).write(cr, uid, ids, vals, context=context)
@@ -178,7 +178,7 @@ class wizard_template(osv.osv):
             }
             if context.get('from_query'):
                 vals['hq_template'] = True
-                vals['created_on_hq'] = True
+                vals['synced'] = True
 
             self.create(cr, uid, vals, context=context)
         return True
@@ -276,7 +276,7 @@ class wizard_template(osv.osv):
             }
             if context.get('from_query'):
                 vals['hq_template'] = True
-                vals['created_on_hq'] = True
+                vals['synced'] = True
 
             return self.write(cr, uid, selected_template_id, vals, context=context)
         return True

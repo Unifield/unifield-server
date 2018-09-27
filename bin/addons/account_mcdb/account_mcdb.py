@@ -1337,7 +1337,7 @@ class account_mcdb(osv.osv):
             raise osv.except_osv(_('Error'), _('You have to load the template first.'))
         self._format_data(data)
 
-        for field_to_clean in ('hq_template', 'created_on_hq'):
+        for field_to_clean in ('hq_template', 'synced'):
             if field_to_clean in data:
                 del data[field_to_clean]
 
