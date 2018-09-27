@@ -52,8 +52,8 @@ class finance_query_method(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        ir_data_to_del = []
         if not context.get('sync_update_execution'):
-            ir_data_to_del = []
             model_data = self.pool.get('ir.model.data')
             # if record was never synced delete ir_model_data, so deletion does not trigger update
             never_synced_ids = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', False)], context=context)
