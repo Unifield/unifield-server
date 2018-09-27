@@ -45256,12 +45256,8 @@ msgstr "Sélectionnez une devise à appliquer à la facture"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/down_payment.py:98
 #, python-format
-msgid "Maximum amount should be: %s. Register' +\n"
-"                                   ' line amount is higher than (PO confirmed amount - ' +\n"
-"                                   'unexpended DPs - open/paid INV)."
-msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre' +\n"
-"                                   ' est plus élevé que (montant confirmé du BC - ' +\n"
-"                                   'acomptes non utilisés - factures ouvertes / payées)."
+msgid "Maximum amount should be: %s. Register line amount is higher than (PO confirmed amount - unexpended DPs - open/paid INV)."
+msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre est plus élevé que (montant confirmé du BC - acomptes non utilisés - factures ouvertes / payées)."
 
 #. modules: account_override, account, register_accounting, msf_instance, finance
 #: selection:account.analytic.journal,type:0
