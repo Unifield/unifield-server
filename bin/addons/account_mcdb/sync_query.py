@@ -4,34 +4,9 @@ from osv import osv, fields
 from tools.translate import _
 import tools
 
-class finance_query_template(osv.osv):
-    _auto = False
-    _name = 'finance.query.template'
-    _description = "Unsynced Queries"
-    _order = 'model, name, id'
-    _columns = {
-        'name': fields.char(size=128, string='Name'),
-        'model': fields.selection([
-            ('account.mcdb.move', 'G/L Selector'),
-            ('account.mcdb.analytic', 'Analytic Selector'),
-            ('account.mcdb.combined', 'Combined Journals Report'),
-            ('account.report.general.ledger', 'General Ledger'),
-            ('account.balance.report', 'Trial Balance'),
-            ('account.bs.report', 'Balance Sheet'),
-            ('account.chart', 'Balance by account'),
-            ('account.analytic.chart', 'Balance by analytic account'),
-            ('account.partner.ledger', 'Partner Ledger'),
-            ('wizard.account.partner.balance.tree', 'Partner Balance'),
-        ], string='Type', size=128, required=True, index=1),
-        'template_id': fields.integer('Template id', readonly=1),
-    }
-
-
-finance_query_template()
-
 class finance_sync_query(osv.osv):
     _name = 'finance.sync.query'
-    _description = 'HQ Finance Synced Queries'
+    _description = 'Finance Synced Queries'
     _order = 'model, name, id'
     _auto = False
 
@@ -48,7 +23,7 @@ class finance_sync_query(osv.osv):
             WHERE coalesce(name, '') != ''
         UNION
         SELECT 2*id + 1 as id,
-            description as name, 
+            description as name,
             CASE WHEN model='account.move.line' THEN 'account.mcdb.move'
                 WHEN model='account.analytic.line' THEN 'account.mcdb.analytic'
                 ELSE 'account.mcdb.combined' END as model,
@@ -161,7 +136,7 @@ class finance_sync_query(osv.osv):
             ret = child_wiz.load_mcdb_template(cr, uid, [new_id], context=context)
             # view_mode: to hide sidebar on button 'Add all Instances'
             ret.update({'context': context, 'target': 'new', 'view_mode': 'form'})
-            ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], view_name.get(query['model']))
+            ret['name'] = '%s "%s": %s' % (_('Template'), query['name'], view_name.get(query['model']))
             return ret
 
         # Report
@@ -180,7 +155,7 @@ class finance_sync_query(osv.osv):
         context['active_model'] = 'ir.ui.menu'
         context['active_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, default_menu[query['model']].split('.')[0], default_menu[query['model']].split('.')[1])[1]
         ret = self.pool.get('wizard.template').load_template(cr, uid, [wizard], query['model'], context=context)
-        ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], ret.get('name', ''))
+        ret['name'] = '%s "%s": %s' % (_('Template'), query['name'], ret.get('name', ''))
         return ret
 
 finance_sync_query()

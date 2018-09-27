@@ -87,7 +87,9 @@ class wizard_template(osv.osv):
     _inherit = 'finance.query.method'
 
     def _get_sync_values(self, cr, uid, ids, field_name, args, context=None):
-
+        '''
+            Used to sync values field
+        '''
         ret = {}
 
         for wizard in self.read(cr, uid, ids, ['values', 'wizard_name'], context=context):
@@ -106,6 +108,9 @@ class wizard_template(osv.osv):
         return ret
 
     def _set_sync_values(self, cr, uid, id, name, value, arg, context):
+        '''
+            Used to sync values field
+        '''
         wiz = self.read(cr, uid, id, ['wizard_name'], context=context)
         obj = self.pool.get(wiz['wizard_name'])
 
