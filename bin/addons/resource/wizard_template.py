@@ -23,7 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import time
 from lxml import etree
-from msf_field_access_rights.osv_override import _get_instance_level
 
 class finance_query_method(osv.osv):
     _name = 'finance.query.method'
@@ -37,11 +36,7 @@ class finance_query_method(osv.osv):
     _defaults = {
         'hq_template': False,
         'synced': False,
-        #'created_on_hq': lambda self, cr, uid, *a, **b: self._is_hq(cr, uid)
     }
-
-    def _is_hq(self, cr, uid):
-        return _get_instance_level(self, cr, uid) == 'hq'
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:
@@ -57,28 +52,28 @@ class finance_query_method(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not context.get('sync_update_execution'):
-            # set was_synced for each records when hq_template = on, do not reset this value
-            # on unlink if was was_synced!=True => delete ir_model_data, so deletion does not trigger update
-            # search_deleted: real deleted + records was_synced and hq_template = False, then reset was_synced after
-            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', True), ('hq_template', '=', True)], context=context)
-            if ids_tosync:
-                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+            # if record was never synced delete ir_model_data, so deletion does not trigger update
+            never_synced_ids = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', False)], context=context)
+            print never_synced_ids
+            if never_synced_ids:
+                model_data = self.pool.get('ir.model.data')
+                d_ids = model_data.search(cr, 1, [('res_id', 'in', never_synced_ids), ('model', '=', self._name), ('module', '=', 'sd')], context=context)
+                print d_ids
+                model_data.unlink(cr, 1, d_ids, context=context)
         return super(finance_query_method, self).unlink(cr, uid, ids, context=context)
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if not context.get('sync_update_execution'):
-            if 'hq_template' in vals and not vals['hq_template']:
-                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', True), ('hq_template', '=', True)], context=context)
-                if ids_tosync:
-                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-            elif vals.get('synced') and vals.get('hq_template'):
-                self._del_previous_update(cr, uid, ids, context=None)
+    def search_deleted(self, cr, uid, module=None, res_ids=None, context=None):
+        # search unlinked records
+        ids = super(finance_query_method, self).search_deleted(cr, uid, module=module, res_ids=res_ids, context=context)
 
-        return super(finance_query_method, self).write(cr, uid, ids, vals, context=context)
+        if not res_ids:
+            # search old synced records now set as not synced => this must trigger deletion to lower level
+            was_synced = self.search(cr, 1, [('synced', '=', True), ('hq_template', '=', False)], context=context)
+            if was_synced:
+                ids += was_synced
+                # TODO: bypass orm to not change last_modifiaction ?
+                self.write(cr, 1, was_synced, {'synced': False}, context=context)
+        return ids
 
 finance_query_method()
 
