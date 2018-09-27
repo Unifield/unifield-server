@@ -45842,6 +45842,7 @@ msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Enga
 #: field:resource.resource,user_id:0
 #: field:standard.price.track.changes,user_id:0
 #: field:wizard.template,user_id:0
+#: field:finance.sync.query,user_id:0
 msgid "User"
 msgstr "Utilisateur"
 
