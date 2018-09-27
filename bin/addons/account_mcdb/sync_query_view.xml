@@ -8,7 +8,17 @@
             <field name="arch" type="xml">
                 <form string="Finance HQ Query">
                     <field name="name" />
-                    <field name="model" readonly="1"/>
+                    <field name="model" attrs="{'readonly': [('template_id', '!=', 0)]}"/>
+                    <field name="last_modification" />
+                    <field name="synced" />
+                    <field name="template_id" invisible="1" />
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" colspan="2"/>
+                        <button type="object" icon="gtk-connect" name="deactivate_sync" string="Deactivate Sync" attrs="{'invisible': [('synced', '=', False)]}" colspan="2" />
+                        <button type="object" icon="gtk-disconnect" name="activate_sync" string="Activate Sync" attrs="{'invisible': [('synced', '=', True)]}" colspan="2" />
+                    </group>
+
                 </form>
             </field>
         </record>
@@ -33,9 +43,9 @@
             <field name="model">finance.sync.query</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Finance Synced Queries" editable="top" hide_new_button="1">
+                <tree string="Finance Synced Queries">
                     <field name="name" />
-                    <field name="model"  />
+                    <field name="model" />
                     <field name="last_modification" />
                     <field name="synced" />
                     <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />

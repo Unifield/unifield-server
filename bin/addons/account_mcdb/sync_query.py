@@ -52,12 +52,25 @@ class finance_sync_query(osv.osv):
             ('account.analytic.chart', 'Balance by analytic account'),
             ('account.partner.ledger', 'Partner Ledger'),
             ('wizard.account.partner.balance.tree', 'Partner Balance'),
-        ], string='Type', size=128, readonly=1),
+        ], string='Type', size=128, readonly=1, required=1),
         'template_id': fields.integer('Template id', readonly=1),
         'last_modification': fields.datetime('Last Modification', readonly=1),
         'synced': fields.boolean('Synced query', readonly=1),
-        'user_id': fields.many2one('res.user', 'User', readonly=1),
+        'user_id': fields.many2one('res.users', 'User', readonly=1),
     }
+
+    def create(self, cr, uid, values, context=None):
+        if values['model'].startswith('account.mcdb'):
+            map_model = {
+                'account.mcdb.move': 'account.move.line',
+                'account.mcdb.analytic': 'account.analytic.line',
+                'account.mcdb.combined': 'combined.line',
+            }
+            template_id = self.pool.get('account.mcdb').create(cr, uid, {'description': values['name'], 'model': map_model.get(values['model'])}, context=context)
+        else:
+            template_id = self.pool.get('wizard.template').create(cr, uid, {'name': values['name'], 'wizard_name': values['model'], 'values': '{}'}, context=context)
+
+        return self.search(cr, uid, [('template_id', '=', template_id), ('model', '=', values['model'])], context=context)[0]
 
     def write(self, cr, uid, ids, values, context=None):
         if isinstance(ids, (int, long)):
@@ -114,12 +127,14 @@ class finance_sync_query(osv.osv):
                                          ['type', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'name', 'views', 'view_type'],
                                          context=context)[0]
 
-    def open_template(self, cr, uid, id, context=None):
+    def open_template(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        query = self.read(cr, uid, id[0], context=context)
-        context['from_query'] = id[0]
+        query = self.read(cr, uid, ids[0], context=context)
+        context['from_query'] = ids[0]
         template_id = query['template_id']
 
         if query['model'].startswith('account.mcdb'):

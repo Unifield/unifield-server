@@ -178,9 +178,6 @@ class wizard_template(osv.osv):
                 'values': data,
                 'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
             }
-            if context.get('from_query'):
-                vals['hq_template'] = True
-                vals['synced'] = True
 
             self.create(cr, uid, vals, context=context)
         return True
@@ -276,9 +273,6 @@ class wizard_template(osv.osv):
                 'values': data,
                 'last_modification': time.strftime('%Y-%m-%d %H:%M:%S'),
             }
-            if context.get('from_query'):
-                vals['hq_template'] = True
-                vals['synced'] = True
 
             return self.write(cr, uid, selected_template_id, vals, context=context)
         return True
