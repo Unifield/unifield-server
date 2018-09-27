@@ -394,7 +394,7 @@ class purchase_order(osv.osv):
         res = {}.fromkeys(ids, 0)
         line_number_by_order = {}
 
-        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids),  ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
         for l in pol_obj.read(cr, uid, lines, ['order_id', 'line_number'], context=context):
             line_number_by_order.setdefault(l['order_id'][0], set())
             line_number_by_order[l['order_id'][0]].add(l['line_number'])
