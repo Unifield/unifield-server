@@ -1,30 +1,35 @@
 <?xml version="1.0"?>
 <openerp>
     <data>
-         <act_window id="finance_query_add_to_sync"
-            name="Sync saved queries"
-            src_model="finance.sync.query"
-            res_model="finance.query.to_sync.wizard"
-            key2="client_action_multi"
-            view_mode='form'
-            view_type='form'
-            empty_ids='1'
-            target='new' />
 
-        <record id="finance_query_to_unsync_action" model="ir.actions.server">
+        <record id="finance_query_remove_sync_action" model="ir.actions.server">
             <field name="name">Unsync selection</field>
             <field name="model_id" ref="model_finance_sync_query"/>
             <field name="state">code</field>
-            <field name="code">action = obj.unsync_queries(context=context)</field>
+            <field name="code">action = obj.remove_sync_queries(context=context)</field>
         </record>
 
-        <record id="finance_query_to_unsync_link" model="ir.values">
+        <record id="finance_query_remove_sync_link" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">finance.sync.query</field>
             <field name="name">Unsync selection</field>
-            <field eval="'ir.actions.server,%d'%finance_query_to_unsync_action" name="value"/>
+            <field eval="'ir.actions.server,%d'%finance_query_remove_sync_action" name="value"/>
             <field eval="True" name="object"/>
         </record>
 
+        <record id="finance_query_add_sync_action" model="ir.actions.server">
+            <field name="name">Sync selection</field>
+            <field name="model_id" ref="model_finance_sync_query"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.add_sync_queries(context=context)</field>
+        </record>
+
+        <record id="finance_query_add_sync_link" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">finance.sync.query</field>
+            <field name="name">Sync selection</field>
+            <field eval="'ir.actions.server,%d'%finance_query_add_sync_action" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
     </data>
 </openerp>

@@ -23,7 +23,64 @@ from osv import fields, osv
 from tools.translate import _
 import time
 from lxml import etree
+from msf_field_access_rights.osv_override import _get_instance_level
 
+class finance_query_method(osv.osv):
+    _name = 'finance.query.method'
+    _description = 'Common methods to manage sync'
+
+    _columns = {
+        'hq_template': fields.boolean('HQ Template', readonly='1'),
+        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
+    }
+
+    _defaults = {
+        'hq_template': False,
+        'created_on_hq': False,
+        #'created_on_hq': lambda self, cr, uid, *a, **b: self._is_hq(cr, uid)
+    }
+
+    def _is_hq(self, cr, uid):
+        return _get_instance_level(self, cr, uid) == 'hq'
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        for field in ('hq_template', 'created_on_hq'):
+            if field not in default:
+                default[field] = False
+        return super(finance_query_method, self).copy_data(cr, uid, id, default=default, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('sync_update_execution'):
+            # set was_synced for each records when hq_template = on, do not reset this value
+            # on unlink if was was_synced!=True => delete ir_model_data, so deletion does not trigger update
+            # search_deleted: real deleted + records was_synced and hq_template = False, then reset was_synced after
+            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+            if ids_tosync:
+                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+        return super(finance_query_method, self).unlink(cr, uid, ids, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            if 'hq_template' in vals and not vals['hq_template']:
+                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
+                if ids_tosync:
+                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
+            elif vals.get('created_on_hq') and vals.get('hq_template'):
+                self._del_previous_update(cr, uid, ids, context=None)
+
+        return super(finance_query_method, self).write(cr, uid, ids, vals, context=context)
+
+finance_query_method()
 
 class wizard_template(osv.osv):
     """
@@ -32,6 +89,7 @@ class wizard_template(osv.osv):
 
     _name = 'wizard.template'
     _description = 'Wizard Template'
+    _inherit = 'finance.query.method'
 
     def _get_sync_values(self, cr, uid, ids, field_name, args, context=None):
 
@@ -78,52 +136,16 @@ class wizard_template(osv.osv):
         'values': fields.text('Values', help='Values from the wizard, stored as a dictionary'),
         'last_modification': fields.datetime('Last Modification Date'),
         'sync_values': fields.function(_get_sync_values, string='Sdrefed values', type='text', method=True, fnct_inv=_set_sync_values),
-        'hq_template': fields.boolean('HQ Template', readonly='1'),
-        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
     }
 
     _defaults = {
         'user_id': lambda self, cr, uid, *a, **b: uid,
-        'hq_template': False,
-        'created_on_hq': False,
     }
     _sql_constraints = [
         ('name_user_id_wizard_name_uniq', 'UNIQUE(name, user_id, wizard_name)',
          'This template name already exists for this wizard. Please choose another name.')
     ]
 
-
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        if default is None:
-            default = {}
-        for field in ('hq_template', 'created_on_hq'):
-            if field not in default:
-                default[field] = False
-        return super(wizard_template, self).copy_data(cr, uid, id, default=default, context=context)
-
-    def unlink(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not context.get('sync_update_execution'):
-            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True)], context=context)
-            if ids_tosync:
-                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-        return super(wizard_template, self).unlink(cr, uid, ids, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-
-        if not context.get('sync_update_execution'):
-            if 'hq_template' in vals and not vals['hq_template']:
-                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
-                if ids_tosync:
-                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-        return super(wizard_template, self).write(cr, uid, ids, vals, context=context)
 
     def _clean_data(self, cr, uid, data, context=None):
         for field in ['template_name', 'id', 'display_load_button', 'saved_templates']:

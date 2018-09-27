@@ -25,29 +25,6 @@ from datetime import datetime
 from tools.translate import _
 import tools
 
-class finance_query_to_sync_wizard(osv.osv_memory):
-    _name = 'finance.query.to_sync.wizard'
-    _description = 'Sync existing query'
-    _columns = {
-        'query_ids': fields.many2many('finance.query.template', 'sync_add_query_rel', 'wiz_id', 'query_id', string="Saved Queries to sync"),
-    }
-
-    def sync_queries(self, cr, uid, ids, context=None):
-        synced_obj = self.pool.get('finance.sync.query')
-        data = {'created_on_hq': True, 'hq_template': True}
-        for x in self.browse(cr, uid, ids, context=context):
-            for query in x.query_ids:
-                synced_obj.create(cr, uid, {'model': query.model, 'name': query.name , 'template_id': query.template_id} , context=context)
-                if query.model.startswith('account.mcdb'):
-                    target_obj = self.pool.get('account.mcdb')
-                else:
-                    target_obj = self.pool.get('wizard.template')
-                target_obj.write(cr, uid, query.template_id, data, context=context)
-
-        return {'type': 'ir.actions.act_window_close'}
-
-finance_query_to_sync_wizard()
-
 class finance_query_template(osv.osv):
     _auto = False
     _name = 'finance.query.template'
@@ -70,15 +47,6 @@ class finance_query_template(osv.osv):
         'template_id': fields.integer('Template id', readonly=1),
     }
 
-    def init(self, cr):
-        tools.drop_view_if_exists(cr, 'finance_query_template')
-        cr.execute("""CREATE OR REPLACE VIEW finance_query_template AS (
-        SELECT 2*id as id, name as name, wizard_name as model, id as template_id FROM wizard_template WHERE hq_template='f' and coalesce(name, '') != ''
-        UNION
-        SELECT 2*id + 1 as id , description as name, CASE WHEN model='account.move.line' THEN 'account.mcdb.move' WHEN model='account.analytic.line' THEN 'account.mcdb.analytic' ELSE 'account.mcdb.combined' END as model, id as template_id FROM account_mcdb WHERE hq_template='f' and coalesce(description,'') != ''
-        )
-        """
-                   )
 
 finance_query_template()
 
@@ -86,9 +54,35 @@ class finance_sync_query(osv.osv):
     _name = 'finance.sync.query'
     _description = 'HQ Finance Synced Queries'
     _order = 'model, name, id'
+    _auto = False
+
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'finance_sync_query')
+        cr.execute("""CREATE OR REPLACE VIEW finance_sync_query AS (
+        SELECT 2*id as id,
+            name as name,
+            wizard_name as model,
+            id as template_id,
+            last_modification,
+            hq_template as synced
+            FROM wizard_template
+            WHERE coalesce(name, '') != ''
+        UNION
+        SELECT 2*id + 1 as id,
+            description as name, 
+            CASE WHEN model='account.move.line' THEN 'account.mcdb.move'
+                WHEN model='account.analytic.line' THEN 'account.mcdb.analytic'
+                ELSE 'account.mcdb.combined' END as model,
+            id as template_id,
+            coalesce(write_date, create_date) as last_modification,
+            hq_template as synced
+            FROM account_mcdb
+            WHERE coalesce(description,'') != ''
+        )
+        """)
 
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True, index=1),
+        'name': fields.char(size=128, string='Name', required=True),
         'model': fields.selection([
             ('account.mcdb.move', 'G/L Selector'),
             ('account.mcdb.analytic', 'Analytic Selector'),
@@ -100,13 +94,11 @@ class finance_sync_query(osv.osv):
             ('account.analytic.chart', 'Balance by analytic account'),
             ('account.partner.ledger', 'Partner Ledger'),
             ('wizard.account.partner.balance.tree', 'Partner Balance'),
-        ], string='Type', size=128, required=True, index=1),
+        ], string='Type', size=128, readonly=1),
         'template_id': fields.integer('Template id', readonly=1),
+        'last_modification': fields.datetime('Last Modification', readonly=1),
+        'synced': fields.boolean('Synced query', readonly=1),
     }
-
-    _sql_constraints = [
-        ('unique_name_model', 'unique(name, model)', 'Name / Type must be unique.')
-    ]
 
     def write(self, cr, uid, ids, values, context=None):
         if isinstance(ids, (int, long)):
@@ -118,36 +110,49 @@ class finance_sync_query(osv.osv):
                         self.pool.get('account.mcdb').write(cr, uid, x['template_id'], {'description': values['name']}, context=context)
                     else:
                         self.pool.get('wizard.template').write(cr, uid, x['template_id'], {'name': values['name']}, context=context)
-        return super(finance_sync_query, self).write(cr, uid, ids, values, context=context)
+        return True
 
-    def unlink(self, cr, uid, ids, context=None, deletetarget=True):
+
+    def _get_target_obj(self, cr, uid, data):
+        if data['model'].startswith('account.mcdb'):
+            return self.pool.get('account.mcdb')
+        return self.pool.get('wizard.template')
+
+
+    def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
             if x['template_id']:
-                if x['model'].startswith('account.mcdb'):
-                    model = self.pool.get('account.mcdb')
-                else:
-                    model = self.pool.get('wizard.template')
+                model = self._get_target_obj(cr, uid, x)
+                model.unlink(cr, uid, x['template_id'])
+        return True
 
-                if deletetarget:
-                    model.unlink(cr, uid, x['template_id'], context=context)
-                else:
-                    model.write(cr, uid, x['template_id'], {'hq_template': False, 'created_on_hq': False}, context=context)
+    def _set_sync_status(self, cr, uid, ids, status, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
+            if x['template_id']:
+                model =self._get_target_obj(cr, uid, x)
+                model.write(cr, uid, x['template_id'], {'hq_template': status, 'created_on_hq': status}, context=context)
+        return True
 
-        return super(finance_sync_query, self).unlink(cr, uid, ids, context=context)
+    def remove_sync(self, cr, uid, ids, context=None):
+        return self._set_sync_status(cr, uid, ids, False, context=context)
 
-    def unsync_queries(self, cr, uid, ids, context=None):
+    def add_sync(self, cr, uid, ids, context=None):
+        return self._set_sync_status(cr, uid, ids, True, context=context)
+
+    def remove_sync_queries(self, cr, uid, ids, context=None):
         '''
         Executed from the sidebard
         '''
         if context is None:
             context = {}
         if context.get('active_ids'):
-            self.unsync(cr, uid, context['active_ids'], context=context)
+            self.remove_sync(cr, uid, context['active_ids'], context=context)
         return {
             'type': 'ir.actions.act_window',
-            #'name': _('Analytic Journal Items'),
             'res_model': 'finance.sync.query',
             'view_type': 'form',
             'view_mode': 'tree,form',
@@ -155,8 +160,22 @@ class finance_sync_query(osv.osv):
             'context': context,
         }
 
-    def unsync(self, cr, uid, ids, context=None):
-        return self.unlink(cr, uid, ids, context=None, deletetarget=False)
+    def add_sync_queries(self, cr, uid, ids, context=None):
+        '''
+        Executed from the sidebard
+        '''
+        if context is None:
+            context = {}
+        if context.get('active_ids'):
+            self.add_sync(cr, uid, context['active_ids'], context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'finance.sync.query',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'target': 'crush',
+            'context': context,
+        }
 
     def _get_window_from_menu(self, cr, uid, xmlid, context=None):
         module, xmlid = xmlid.split('.', 1)
@@ -174,9 +193,9 @@ class finance_sync_query(osv.osv):
         query = self.read(cr, uid, id[0], context=context)
         context['from_query'] = id[0]
         template_id = query['template_id']
-        # TODO: check template_id match model
 
         if query['model'].startswith('account.mcdb'):
+            # Selector
             child_wiz = self.pool.get('account.mcdb')
             target_object = {
                 'account.mcdb.move': 'account.move.line',
@@ -190,7 +209,6 @@ class finance_sync_query(osv.osv):
             }
             context['from'] = target_object.get(query['model'], '')
 
-            #template = child_wiz.search(cr, uid, [('description', '=', query['name']), ('model', '=', target_object.get(query['model'], ''))], context=context)
             if not template_id:
                 template_id = child_wiz.create(cr, uid, {'description': query['name'], 'model': target_object.get(query['model']), 'created_on_hq': True, 'hq_template': True}, context=context)
                 self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)
@@ -202,6 +220,7 @@ class finance_sync_query(osv.osv):
             ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], view_name.get(query['model']))
             return ret
 
+        # Report
         default_menu = {
             'account.report.general.ledger': 'account.menu_general_ledger',
             'account.balance.report': 'account.menu_general_Balance_report',
@@ -213,7 +232,6 @@ class finance_sync_query(osv.osv):
         }
 
         child_wiz = self.pool.get(query['model'])
-        #template = self.pool.get('wizard.template').search(cr, uid, [('name', '=', query['name']), ('wizard_name', '=', query['model'])], context=context)
         if not template_id:
             template_id = self.pool.get('wizard.template').create(cr, uid, {'name': query['name'], 'wizard_name':  query['model'], 'values': '{}', 'created_on_hq': True, 'hq_template': True}, context=context)
             self.write(cr, uid, query['id'], {'template_id': template_id}, context=context)

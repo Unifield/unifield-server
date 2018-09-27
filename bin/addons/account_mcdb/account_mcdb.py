@@ -30,6 +30,7 @@ from lxml import etree
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
+    _inherit = 'finance.query.method'
     _rec_name = 'description'
 
     _columns = {
@@ -135,8 +136,6 @@ class account_mcdb(osv.osv):
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
         'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
-        'hq_template': fields.boolean('HQ Template', readonly='1'),
-        'created_on_hq': fields.boolean('Flag used on HQ instance only for sync purpose', readonly='1', internal=1),
     }
 
     _defaults = {
@@ -158,8 +157,6 @@ class account_mcdb(osv.osv):
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
-        'hq_template': False,
-        'created_on_hq': False,
     }
 
     _order = 'user, description, id'
@@ -179,41 +176,6 @@ class account_mcdb(osv.osv):
                 field.set('invisible', "0")
             view['arch'] = etree.tostring(form)
         return view
-
-
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        if default is None:
-            default = {}
-        for field in ('hq_template', 'created_on_hq'):
-            if field not in default:
-                default[field] = False
-        return super(account_mcdb, self).copy_data(cr, uid, id, default=default, context=context)
-
-    def unlink(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not context.get('sync_update_execution'):
-            ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True)], context=context)
-            if ids_tosync:
-                self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-        return super(account_mcdb, self).unlink(cr, uid, ids, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-
-        if not context.get('sync_update_execution'):
-            if 'hq_template' in vals and not vals['hq_template']:
-                ids_tosync = self.search(cr,uid, [('id', 'in', ids), ('created_on_hq', '=', True), ('hq_template', '=', True)], context=context)
-                if ids_tosync:
-                    self._gen_update_to_del(cr, uid, ids_tosync, context=None)
-            elif vals.get('hq_template') and vals.get('hq_template'):
-                self._del_previous_update(cr, uid, ids, context=None)
-        return super(account_mcdb, self).write(cr, uid, ids, vals, context=context)
 
 
     def name_get(self, cr, uid, ids, context=None):
