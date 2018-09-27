@@ -1930,6 +1930,25 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
+                    or (line.original_qty and line.product_uom_qty != line.original_qty) \
+                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
+                changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -2001,7 +2020,12 @@ class sale_order_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
+        'original_product': fields.many2one('product.product', 'Original Product'),
+        'original_qty': fields.float('Original Qty'),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),

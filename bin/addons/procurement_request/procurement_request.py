@@ -632,25 +632,6 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
-    def _check_changed(self, cr, uid, ids, name, arg, context=None):
-        '''
-        Check if an original value has been changed
-        '''
-        if context is None:
-            context = {}
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            changed = False
-            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
-                    or (line.original_qty and line.product_uom_qty != line.original_qty) \
-                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
-                changed = True
-
-            res[line.id] = changed
-
-        return res
-
     def button_view_changed(self, cr, uid, ids, context=None):
         """
         Launch wizard to display line information
@@ -694,11 +675,6 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
-        'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty'),
-        'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
-        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):

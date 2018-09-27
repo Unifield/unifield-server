@@ -261,6 +261,8 @@ class purchase_order_line(osv.osv):
                 if ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
+                if pol.created_by_sync:
+                    sol_values['created_by_sync'] = True
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
 
@@ -574,7 +576,6 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
-        sol_obj = self.pool.get('sale.order.line')
 
         # checks before validating the line:
         self.check_origin_for_validation(cr, uid, ids, context=context)
@@ -587,8 +588,6 @@ class purchase_order_line(osv.osv):
         self.update_fo_lines(cr, uid, ids, context=context)
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id:
-                if pol.created_by_sync:
-                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'created_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level
             # doesn't update original qty and uom if already set (from IR)
