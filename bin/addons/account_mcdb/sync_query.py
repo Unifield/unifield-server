@@ -17,7 +17,7 @@ class finance_sync_query(osv.osv):
             name as name,
             wizard_name as model,
             id as template_id,
-            last_modification,
+            coalesce(last_modification, write_date, create_date) as last_modification,
             coalesce(hq_template,'f') as synced,
             user_id as user_id
         FROM wizard_template
