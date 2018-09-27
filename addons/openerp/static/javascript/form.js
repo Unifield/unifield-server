@@ -922,12 +922,17 @@ function onChangePop(caller){
                             }
                             v = value.split(',');
                             ref.value = v[0];
-                            fld.value = v[1] || '';
                             fld._m2o.on_reference_changed();
+                            if (v[1] == '0') {
+                                v[1] = '';
+                            }
+                            fld.value = v[1] || '';
+                            if (v[1]) {
+                                fld._m2o.on_change();
+                            }
                             try {
                                 openobject.dom.get(prefix + k + '_text').value = v[2] || '';
-                            }
-                            catch (e) {
+                            } catch(e) {
                             }
                         }
                         break;
