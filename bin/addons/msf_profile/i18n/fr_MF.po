@@ -101848,3 +101848,9 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: account_override
+#: code:addons/account_override/account.py:517
+#, python-format
+msgid "An account set as \"Included in revaluation\" must be set as \"Reconcile\"."
+msgstr "Un compte marqué comme inclus dans la Réévaluation doit être défini comme Lettrable."
