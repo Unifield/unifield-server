@@ -33,7 +33,7 @@
             <field name="model">finance.sync.query</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Finance Synced HQ Queries" editable="top" hide_new_button="1">
+                <tree string="Finance Synced Queries" editable="top" hide_new_button="1">
                     <field name="name" />
                     <field name="model"  />
                     <field name="last_modification" />
@@ -46,7 +46,7 @@
         </record>
 
         <record id="finance_sync_query_action" model="ir.actions.act_window">
-            <field name="name">Finance Synced HQ Queries</field>
+            <field name="name">Finance Synced Queries</field>
             <field name="res_model">finance.sync.query</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -58,34 +58,44 @@
                   sequence="2" />
 
         <!-- Actions -->
-        <record id="finance_query_deactivate_sync_action" model="ir.actions.server">
-            <field name="name">Deactivate Sync</field>
-            <field name="model_id" ref="model_finance_sync_query"/>
-            <field name="state">code</field>
-            <field name="code">action = obj.deactivate_sync_queries(context=context)</field>
-        </record>
+        <act_window name="Activate Sync"
+            res_model="finance.sync.query.activation_wizard"
+            src_model="finance.sync.query"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            context="{'state': 'activate'}"
+            id="finance_sync_query_wiz_activate"/>
 
-        <record id="finance_query_deactivate_sync_link" model="ir.values">
-            <field name="key2">client_action_multi</field>
-            <field name="model">finance.sync.query</field>
-            <field name="name">Deactivate Sync</field>
-            <field eval="'ir.actions.server,%d'%finance_query_deactivate_sync_action" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
+        <act_window name="Deactivate Sync"
+            res_model="finance.sync.query.activation_wizard"
+            src_model="finance.sync.query"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            context="{'state': 'deactivate'}"
+            id="finance_sync_query_wiz_deactivate"/>
 
-        <record id="finance_query_activate_sync_action" model="ir.actions.server">
-            <field name="name">Activate Sync</field>
-            <field name="model_id" ref="model_finance_sync_query"/>
-            <field name="state">code</field>
-            <field name="code">action = obj.activate_sync_queries(context=context)</field>
-        </record>
-
-        <record id="finance_query_activate_sync_link" model="ir.values">
-            <field name="key2">client_action_multi</field>
-            <field name="model">finance.sync.query</field>
-            <field name="name">Activate Sync</field>
-            <field eval="'ir.actions.server,%d'%finance_query_activate_sync_action" name="value"/>
-            <field eval="True" name="object"/>
+        <!-- Wizard -->
+        <record id="finance_sync_query_activation_wizard_form" model="ir.ui.view">
+            <field name="name">finance.sync.query.activation_wizard.form</field>
+            <field name="model">finance.sync.query.activation_wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Queries Sync">
+                    <field name="state" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'activate')]}">
+                        <separator string="Do you want to Deactivate sync on the selected queries ?" />
+                            <button type="object" icon="gtk-disconnect" name="deactivate_sync" string="Deactivate Sync"/>
+                            <button string="Cancel" special="cancel" icon="gtk-cancel"/> 
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'deactivate')]}" >
+                        <separator string="Do you want to Activate sync on the selected queries ?" />
+                        <button type="object" icon="gtk-connect" name="activate_sync" string="Activate Sync" />
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
         </record>
     </data>
 </openerp>

@@ -569,34 +569,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         return self.unlink(cr, uid, [res_id], context=context)
 
-    def _del_previous_update(self, cr, uid, ids, context=None):
-        rule_ids = self.pool.get('sync.client.rule').search(cr, uid, [('model', '=', self._name), ('type', '!=', 'USB')], context=context)
-        if not rule_ids:
-            return False
-
-        sdrefs = self.get_sd_ref(cr, 1, ids, context=context)
-        for id in ids:
-            to_del = self.pool.get('sync.client.update_to_send').search(cr, 1, [('session_id', '=', False), ('rule_id', '=', rule_ids[0]), ('sdref', '=', sdrefs[id]), ('is_deleted', '=', True), ('sent', '=', False)], context=context)
-            if to_del:
-                self.pool.get('sync.client.update_to_send').write(cr, 1, to_del, {'sent': True}, context=context)
-        return True
-
-    def _gen_update_to_del(self, cr, uid, ids, context=None):
-        rule_ids = self.pool.get('sync.client.rule').search(cr, uid, [('model', '=', self._name), ('type', '!=', 'USB')], context=context)
-        if not rule_ids:
-            return False
-
-        sdrefs = self.get_sd_ref(cr, 1, ids, context=context)
-        for id in ids:
-            self.pool.get('sync.client.update_to_send').create(cr, 1, {
-                'session_id': False,
-                'model': self._name,
-                'rule_id': rule_ids[0],
-                'sdref': sdrefs[id],
-                'is_deleted': True,
-            }, context=context)
-        return True
-
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True

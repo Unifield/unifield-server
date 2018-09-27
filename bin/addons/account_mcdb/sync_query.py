@@ -125,40 +125,6 @@ class finance_sync_query(osv.osv):
     def activate_sync(self, cr, uid, ids, context=None):
         return self._set_sync_status(cr, uid, ids, True, context=context)
 
-    def deactive_sync_queries(self, cr, uid, ids, context=None):
-        '''
-        Executed from the sidebard
-        '''
-        if context is None:
-            context = {}
-        if context.get('active_ids'):
-            self.deactivate_sync(cr, uid, context['active_ids'], context=context)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'finance.sync.query',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'target': 'crush',
-            'context': context,
-        }
-
-    def activate_sync_queries(self, cr, uid, ids, context=None):
-        '''
-        Executed from the sidebard
-        '''
-        if context is None:
-            context = {}
-        if context.get('active_ids'):
-            self.activate_sync(cr, uid, context['active_ids'], context=context)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'finance.sync.query',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'target': 'crush',
-            'context': context,
-        }
-
     def _get_window_from_menu(self, cr, uid, xmlid, context=None):
         module, xmlid = xmlid.split('.', 1)
         menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
@@ -217,5 +183,38 @@ class finance_sync_query(osv.osv):
         ret['name'] = '%s "%s": %s' % (_('Query'), query['name'], ret.get('name', ''))
         return ret
 
-
 finance_sync_query()
+
+class finance_sync_query_activation_wizard(osv.osv_memory):
+    _name = 'finance.sync.query.activation_wizard'
+    _description = 'Wizard to mass (de)activate queries'
+
+    _columns = {
+        'state': fields.selection([('activate', 'Activate'), ('deactivate', 'Deactivate')], 'State', readonly=1)
+    }
+
+    _defaults = {
+        'state': lambda self, cr, uid, context: context.get('state', 'activate'),
+    }
+
+    def deactivate_sync(self, cr, uid, ids, context=None):
+        '''
+        Executed from the sidebard
+        '''
+        if context is None:
+            context = {}
+        if context.get('active_ids'):
+            self.pool.get('finance.sync.query').deactivate_sync(cr, uid, context['active_ids'], context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+    def activate_sync(self, cr, uid, ids, context=None):
+        '''
+        Executed from the sidebard
+        '''
+        if context is None:
+            context = {}
+        if context.get('active_ids'):
+            self.pool.get('finance.sync.query').activate_sync(cr, uid, context['active_ids'], context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+finance_sync_query_activation_wizard()
