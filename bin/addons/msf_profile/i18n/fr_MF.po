@@ -69788,11 +69788,12 @@ msgstr "America/Argentina/Catamarca"
 msgid "Taxes Report"
 msgstr "Rapport des Taxes"
 
-#. modules: account, register_accounting
+#. modules: account, register_accounting, account_corrections
 #: field:account.bank.statement.line,partner_type_mandatory:0
 #: field:account.move.line,partner_type_mandatory:0
 #: selection:account.journal.column,field:0
 #: field:wizard.register.import.lines,partner_type_mandatory:0
+#: field:wizard.journal.items.corrections.lines,partner_type_mandatory:0
 msgid "Third Party Mandatory"
 msgstr "Tiers Obligatoire"
 
@@ -89463,9 +89464,10 @@ msgstr "Créditeurs"
 msgid "From assigned to backorder."
 msgstr "De attribué à reliquat de commande."
 
-#. module: register_accounting
+#. modules: register_accounting, account_corrections
 #: help:account.bank.statement.line,third_parties:0
 #: help:account.move.line,third_parties:0
+#: help:wizard.journal.items.corrections.lines,third_parties:0
 msgid "To use for python code when registering"
 msgstr "A utiliser pour le code python lors de l'enregistrement"
 
@@ -94606,7 +94608,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail
+#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:226
 #: field:hr.payroll.msf,partner_type:0
@@ -94616,6 +94618,8 @@ msgstr "Information Complémentaire"
 #: field:account.move.line,partner_txt:0
 #: field:account.move.line,partner_type:0
 #: field:account.move.line,third_parties:0
+#: field:wizard.journal.items.corrections.lines,partner_type:0
+#: field:wizard.journal.items.corrections.lines,third_parties:0
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:169
 #: report:addons/register_accounting/report/open_advances_xls.mako:151
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:225
@@ -101860,3 +101864,9 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:157
+#, python-format
+msgid "The account %s - %s requires a Journal Third Party."
+msgstr "Le compte %s - %s requiert un Tiers de type Journal."
