@@ -101903,3 +101903,27 @@ msgstr "Vous êtes sur le point d'annuler les produits %s, voulez-vous vraiment 
 #, python-format
 msgid "OK, cancel lines"
 msgstr "OK, annuler les lignes"
+
+#. module: account
+#: field:account.account,reconciliation_debit_account_id:0
+msgid "Default Debit Account for Reconciliation"
+msgstr "Compte de Débit par Défaut pour le Lettrage"
+
+#. module: account
+#: field:account.account,reconciliation_credit_account_id:0
+msgid "Default Credit Account for Reconciliation"
+msgstr "Compte de Crédit par Défaut pour le Lettrage"
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:139
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:149
+#, python-format
+msgid "The account %s - %s has no Default Destination. FX adjustment entry can't be created."
+msgstr "Le compte %s - %s n'a pas de Destination par défaut. L'écriture de différence de change ne peut pas être créée."
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:355
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:365
+#, python-format
+msgid "The account %s - %s used for the FX adjustment entry has no Default Destination."
+msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a pas de Destination par défaut."
