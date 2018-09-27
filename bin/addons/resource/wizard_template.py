@@ -51,16 +51,18 @@ class finance_query_method(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         if not context.get('sync_update_execution'):
+            ir_data_to_del = []
+            model_data = self.pool.get('ir.model.data')
             # if record was never synced delete ir_model_data, so deletion does not trigger update
             never_synced_ids = self.search(cr,uid, [('id', 'in', ids), ('synced', '=', False)], context=context)
-            print never_synced_ids
             if never_synced_ids:
-                model_data = self.pool.get('ir.model.data')
-                d_ids = model_data.search(cr, 1, [('res_id', 'in', never_synced_ids), ('model', '=', self._name), ('module', '=', 'sd')], context=context)
-                print d_ids
-                model_data.unlink(cr, 1, d_ids, context=context)
-        return super(finance_query_method, self).unlink(cr, uid, ids, context=context)
+                ir_data_to_del += model_data.search(cr, 1, [('res_id', 'in', never_synced_ids), ('model', '=', self._name), ('module', '=', 'sd')], context=context)
+        super(finance_query_method, self).unlink(cr, uid, ids, context=context)
+        if ir_data_to_del:
+            model_data.unlink(cr, 1, ir_data_to_del, context=context)
+        return True
 
     def search_deleted(self, cr, uid, module=None, res_ids=None, context=None):
         # search unlinked records
