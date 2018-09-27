@@ -203,9 +203,9 @@ class finance_sync_query_activation_wizard(osv.osv_memory):
             by_model.setdefault(x['model'], []).append(x['name'])
 
         for model in by_model:
-            txt += "%s\n" % sel.get(model, model)
+            txt += "%s :\n" % sel.get(model, model)
             for name in by_model[model]:
-                txt += "    %s\n" % name
+                txt += "   - %s\n" % name
             txt += "\n"
         return txt
 
