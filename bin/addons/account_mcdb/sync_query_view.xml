@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="finance_sync_query_form" model="ir.ui.view">
+            <field name="name">finance.sync.query.form</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Finance HQ Query">
+                    <field name="name" />
+                    <field name="model" readonly="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_search" model="ir.ui.view">
+            <field name="name">finance.sync.query.search</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <filter string="Group by Model" name="model" icon="terp-go-year" context="{'group_by':'model'}" help="Group by model"/>
+                    <separator />
+                    <filter string="Synced" name="synced" icon="terp-camera_test" domain="[('synced', '=', True)]" />
+                    <field name="name" />
+                    <field name="model" />
+                </search>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_tree" model="ir.ui.view">
+            <field name="name">finance.sync.query.tree</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Finance Synced HQ Queries" editable="top" hide_new_button="1">
+                    <field name="name" />
+                    <field name="model"  />
+                    <field name="last_modification" />
+                    <field name="synced" />
+                    <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
+                    <button type="object" icon="gtk-connect" name="deactivate_sync" string="Deactivate Sync" attrs="{'invisible': [('synced', '=', False)]}"/>
+                    <button type="object" icon="gtk-disconnect" name="activate_sync" string="Activate Sync" attrs="{'invisible': [('synced', '=', True)]}"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_action" model="ir.actions.act_window">
+            <field name="name">Finance Synced HQ Queries</field>
+            <field name="res_model">finance.sync.query</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="finance_sync_query_menu"
+                  action="finance_sync_query_action"
+                  parent="object_query.menu_preferences"
+                  sequence="2" />
+
+        <!-- Actions -->
+        <record id="finance_query_deactivate_sync_action" model="ir.actions.server">
+            <field name="name">Deactivate Sync</field>
+            <field name="model_id" ref="model_finance_sync_query"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.deactivate_sync_queries(context=context)</field>
+        </record>
+
+        <record id="finance_query_deactivate_sync_link" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">finance.sync.query</field>
+            <field name="name">Deactivate Sync</field>
+            <field eval="'ir.actions.server,%d'%finance_query_deactivate_sync_action" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="finance_query_activate_sync_action" model="ir.actions.server">
+            <field name="name">Activate Sync</field>
+            <field name="model_id" ref="model_finance_sync_query"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.activate_sync_queries(context=context)</field>
+        </record>
+
+        <record id="finance_query_activate_sync_link" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">finance.sync.query</field>
+            <field name="name">Activate Sync</field>
+            <field eval="'ir.actions.server,%d'%finance_query_activate_sync_action" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    </data>
+</openerp>
