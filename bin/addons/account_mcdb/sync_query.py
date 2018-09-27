@@ -185,11 +185,34 @@ class finance_sync_query_activation_wizard(osv.osv_memory):
     _description = 'Wizard to mass (de)activate queries'
 
     _columns = {
-        'state': fields.selection([('activate', 'Activate'), ('deactivate', 'Deactivate')], 'State', readonly=1)
+        'state': fields.selection([('activate', 'Activate'), ('deactivate', 'Deactivate')], 'State', readonly=1),
+        'nb': fields.integer('Number of selected queries', readonly=1),
+        'list': fields.text('Queries', readonly=1),
     }
 
+    def _get_list(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if not context.get('active_ids'):
+            return ''
+        txt = ''
+        by_model = {}
+        obj = self.pool.get('finance.sync.query')
+        sel = dict(obj.fields_get(cr, uid, ['model'], context=context)['model']['selection'])
+        for x in obj.read(cr, uid, context['active_ids'], ['name', 'model'], context=context):
+            by_model.setdefault(x['model'], []).append(x['name'])
+
+        for model in by_model:
+            txt += "%s\n" % sel.get(model, model)
+            for name in by_model[model]:
+                txt += "    %s\n" % name
+            txt += "\n"
+        return txt
+
     _defaults = {
-        'state': lambda self, cr, uid, context: context.get('state', 'activate'),
+        'state': lambda self, cr, uid, context: context and context.get('state', 'activate') or 'activate',
+        'nb': lambda self, cr, uid, context: context and len(context.get('active_ids', [])) or False,
+        'list': _get_list
     }
 
     def deactivate_sync(self, cr, uid, ids, context=None):

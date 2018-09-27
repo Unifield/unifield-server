@@ -4037,6 +4037,11 @@ msgstr "Enreg.Montant"
 msgid "Activate"
 msgstr "Activer"
 
+#. module: account_mcdb
+#: field:finance.sync.query.activation_wizard,nb:0
+msgid "Number of selected queries"
+msgstr "Nombre de requêtes sélectionnées"
+
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:313
 #, python-format
