@@ -15,7 +15,7 @@
                     <field name="account_id"
                         domain="[('restricted_area', '=', 'correction_wizard')]"
                         attrs="{'readonly': [('is_account_correctible', '=', False)]}"
-                        on_change="onchange_correction_line_account_id(account_id)"
+                        on_change="onchange_correction_line_account_id(account_id, partner_type)"
                     />
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="partner_type" readonly="0"

@@ -136,7 +136,7 @@ class journal_items_corrections_lines(osv.osv_memory):
             self.write(cr, uid, obj_id, vals, context=context)
         return True
 
-    def onchange_correction_line_account_id(self, cr, uid, ids, account_id=False):
+    def onchange_correction_line_account_id(self, cr, uid, ids, account_id=False, current_tp=False):
         """
         Adapts the "Third Parties" selectable on the wizard line according to the account selected
         """
@@ -149,9 +149,6 @@ class journal_items_corrections_lines(osv.osv_memory):
             third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
             third_required = False
             third_selection = 'res.partner,0'
-            # get the Third Party of the current line (only one line is handled at the same time)
-            line_id = isinstance(ids, (list, tuple)) and ids[0] or ids
-            current_tp = self.browse(cr, uid, line_id, fields_to_fetch=['third_parties']).third_parties or False
             account = acc_obj.browse(cr, uid, [account_id], fields_to_fetch=['code', 'name', 'type_for_register'])[0]
             acc_type = account.type_for_register
             if acc_type in ['transfer', 'transfer_same']:  # requires a journal 3d party on which corr. are forbidden
@@ -175,13 +172,12 @@ class journal_items_corrections_lines(osv.osv_memory):
                 third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'res.partner,0'
-            # keep the current Third Party if it is compatible with new account selected
+            # keep the current Third Party if it is compatible with the new account selected
             if current_tp:
-                current_tp_type = current_tp._table_name
-                current_tp_selection = ','.join([str(current_tp_type), str(current_tp.id)])
+                current_tp_type = current_tp.split(',')[0]  # ex: 'res.partner'
                 for th_type in third_type:
-                    if current_tp_type in th_type[0]:
-                        third_selection = current_tp_selection
+                    if current_tp_type == th_type[0]:
+                        third_selection = current_tp
                         continue
             vals.update({'partner_type_mandatory': third_required,
                          'partner_type': {'options': third_type,
