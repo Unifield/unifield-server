@@ -18,10 +18,13 @@ class finance_sync_query(osv.osv):
             wizard_name as model,
             id as template_id,
             last_modification,
-            coalesce(hq_template,'f') as synced
-            FROM wizard_template
-            WHERE coalesce(name, '') != ''
+            coalesce(hq_template,'f') as synced,
+            user_id as user_id
+        FROM wizard_template
+        WHERE coalesce(name, '') != ''
+
         UNION
+
         SELECT 2*id + 1 as id,
             description as name,
             CASE WHEN model='account.move.line' THEN 'account.mcdb.move'
@@ -29,9 +32,10 @@ class finance_sync_query(osv.osv):
                 ELSE 'account.mcdb.combined' END as model,
             id as template_id,
             coalesce(write_date, create_date) as last_modification,
-            coalesce(hq_template, 'f') as synced
-            FROM account_mcdb
-            WHERE coalesce(description,'') != ''
+            coalesce(hq_template, 'f') as synced,
+            "user" as user_id
+        FROM account_mcdb
+        WHERE coalesce(description,'') != ''
         )
         """)
 
@@ -52,6 +56,7 @@ class finance_sync_query(osv.osv):
         'template_id': fields.integer('Template id', readonly=1),
         'last_modification': fields.datetime('Last Modification', readonly=1),
         'synced': fields.boolean('Synced query', readonly=1),
+        'user_id': fields.many2one('res.user', 'User', readonly=1),
     }
 
     def write(self, cr, uid, ids, values, context=None):
