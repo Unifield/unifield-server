@@ -7800,7 +7800,7 @@ msgstr "Selected Origin must not be in Cancelled state for Incoming Shipments."
 msgid "Africa/Mbabane"
 msgstr "Africa/Mbabane"
 
-#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client
+#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client, msf_audittrail
 #: field:account.bank.statement.line,sequence:0
 #: field:account.bank.statement.line.deleted,sequence:0
 #: field:account.invoice.tax,sequence:0
@@ -7812,6 +7812,7 @@ msgstr "Africa/Mbabane"
 #: field:account.sequence.fiscalyear,sequence_id:0
 #: field:account.tax,sequence:0
 #: field:account.tax.template,sequence:0
+#: field:audittrail.log.line,other_column:0
 #: view:audittrail.log.line:0
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
@@ -15494,7 +15495,6 @@ msgstr "Niveaux obligatoires"
 
 #. modules: account, msf_audittrail, hr
 #: view:account.analytic.line:0
-#: field:audittrail.log.line,other_column:0
 #: model:process.node,note:hr.process_node_employeecontact0
 msgid "Other information"
 msgstr "Autre information"
