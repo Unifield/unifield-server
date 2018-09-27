@@ -193,6 +193,9 @@ class sale_order_line(osv.osv):
         if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
             # case the sol has no OUT moves but its normal, so don't close the sol in this case:
             has_open_moves = True
+        elif sol.state.startswith('cancel'):
+            # if line is already cancelled, then we should not set it to closed
+            has_open_moves = True
         else:
             has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
                 ('sale_line_id', '=', sol.id),
@@ -555,12 +558,16 @@ class sale_order_line(osv.osv):
                 )
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
+            if sol.order_id.order_type == 'loan':
+                to_write['supplier'] = False
+                to_write['type'] = 'make_to_stock'
+                to_write['po_cft'] = False
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
                     raise osv.except_osv(
                         _('Error'),
-                        _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
+                        _('Line #%s: You cannot validate a line with unit price as zero.') % sol.line_number
                     )
                 # check analytic distribution before validating the line:
                 self.analytic_distribution_checks(cr, uid, [sol.id], context=context)

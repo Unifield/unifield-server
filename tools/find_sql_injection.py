@@ -72,7 +72,7 @@ class Checker(ast.NodeVisitor):
             lines = [node.lineno]
         elif isinstance(node, ast.Subscript):
             pass
-        elif isinstance(node, ast.Name):
+        elif isinstance(node, (ast.Name, ast.Attribute)):
             pass
         elif node.args:
             if isinstance(node.args[-1], ast.BinOp):

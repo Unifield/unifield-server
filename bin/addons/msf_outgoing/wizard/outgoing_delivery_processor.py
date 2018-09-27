@@ -38,6 +38,7 @@ class outgoing_delivery_processor(osv.osv):
             'wizard_id',
             string='Moves',
         ),
+        'draft': fields.boolean('Draft'),
     }
 
     """
@@ -61,6 +62,9 @@ class outgoing_delivery_processor(osv.osv):
                 _('Processing Error'),
                 _('No data to process !'),
             )
+
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
 
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
 
@@ -113,6 +117,40 @@ class outgoing_delivery_processor(osv.osv):
                         'context': context}
 
         return {'type': 'ir.actions.act_window_close'}
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
 
 outgoing_delivery_processor()
 

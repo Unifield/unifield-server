@@ -303,22 +303,18 @@ class composition_kit(osv.osv):
 
         for kit in self.browse(cr, uid, ids, context=context):
 
-            def qty_available(id_):
-                request_context = context.copy()
-                request_context.update({ 'states': ('done',),
-                                         'what': ('in', 'out'),
-                                         'location_usage': ['internal'],
-                                         'location_category': ['stock', 'consumption_unit'] })
-                return self.pool.get("product.product").get_product_available(cr, uid, [id_], context=request_context)[id_]
 
             # For kits with a batch, take the stock of the batch
             # Otherwise, take the global stock of the product
-            if kit.composition_reference:
-                product_id = kit.composition_product_id.id
-            else:
-                product_id = kit.composition_lot_id.id
+            request_context = context.copy()
+            request_context.update({ 'states': ('done',),
+                                     'what': ('in', 'out'),
+                                     'location_usage': ['internal'],
+                                     'location_category': ['stock', 'consumption_unit'] })
+            if not kit.composition_reference and kit.composition_lot_id:
+                request_context['prodlot_id'] = kit.composition_lot_id.id
 
-            stock = qty_available(product_id)
+            stock = self.pool.get("product.product").get_product_available(cr, uid, [kit.composition_product_id.id], context=request_context)[kit.composition_product_id.id]
 
             if stock <= 0:
                 raise osv.except_osv(_('Error'),
@@ -1020,7 +1016,7 @@ class composition_item(osv.osv):
             if context.get('composition_type', False) == 'theoretical':
                 # load the xml tree
                 root = etree.fromstring(result['arch'])
-                # get the original empty separator ref and hide it 
+                # get the original empty separator ref and hide it
                 # fields to be modified
                 list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
                 fields = []

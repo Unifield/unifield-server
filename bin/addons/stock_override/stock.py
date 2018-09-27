@@ -657,6 +657,52 @@ You cannot choose this supplier because some destination locations are not avail
 
         return True
 
+    def expired_assign(self, cr, uid, ids, context=False):
+        '''
+        Check the moves' availability for INT created to quarantine/destroy expired products
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+        lot_obj = self.pool.get('stock.production.lot')
+        wf_service = netsvc.LocalService("workflow")
+
+        new_moves_ids_to_confirm = []
+        move_ids_to_assign = []
+        pick_ids_to_assign = []
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if pick.from_manage_expired and not move.prodlot_id:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('All lines of Internal Moves created with Manage Expired Stock should have a batch number.'))
+                if move.state == 'confirmed':
+                    available_qty = lot_obj.read(cr, uid, move.prodlot_id.id, ['stock_available'],
+                                                 context={'location_id': move.location_id.id})['stock_available']
+                    if available_qty >= move.product_qty > 0.00:
+                        move_ids_to_assign.append(move.id)
+                        # picking to available
+                        if pick.id not in pick_ids_to_assign:
+                            pick_ids_to_assign.append(pick.id)
+                    elif move.product_qty > available_qty > 0.00:
+                        # update the move
+                        move_obj.write(cr, uid, move.id, {'product_qty': available_qty}, context=context)
+                        move_ids_to_assign.append(move.id)
+                        # split with new qty
+                        split_move_id = move_obj.copy(cr, uid, move.id, {'product_qty': move.product_qty - available_qty}, context=context)
+                        new_moves_ids_to_confirm.append(split_move_id)
+                        # picking to available
+                        if pick.id not in pick_ids_to_assign:
+                            pick_ids_to_assign.append(pick.id)
+
+        move_obj.action_confirm(cr, uid, new_moves_ids_to_confirm, context=context)
+        move_obj.force_assign(cr, uid, move_ids_to_assign, context=context)
+        for pick_id in pick_ids_to_assign:
+            wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+
+        return True
+
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
@@ -690,6 +736,51 @@ You cannot choose this supplier because some destination locations are not avail
             ))
         return res
 
+    def check_availability_manually(self, cr, uid, ids, context=None):
+        '''
+        US-2677 : Cancel assigned moves' availability and re-check it
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        prodlot_obj = self.pool.get('stock.production.lot')
+
+        moves_ids_to_reassign = []
+        product_data = {}
+        qties = {}
+        move_ids = move_obj.search(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'assigned')], context=context)
+        if move_ids:
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
+                prodlot_id = move.prodlot_id and move.prodlot_id.id or False
+                key = (move.product_id.id, move.location_id.id, prodlot_id)
+
+                if key in product_data:
+                    product_data[key] += uom_obj._compute_qty(cr, uid, move.product_uom.id,
+                                                              move.product_qty, move.product_id.uom_id.id)
+                else:
+                    product_data[key] = uom_obj._compute_qty(cr, uid, move.product_uom.id,
+                                                             move.product_qty, move.product_id.uom_id.id)
+
+                if key not in qties:
+                    if prodlot_id:
+                        qties[key] = prodlot_obj.read(cr, uid, prodlot_id, ['stock_available'],
+                                                      context={'location_id': move.location_id.id})['stock_available']
+                    else:
+                        qties[key] = prod_obj.read(cr, uid, move.product_id.id, ['qty_available'],
+                                                   context={'location_id': move.location_id.id})['qty_available']
+
+                if product_data[key] > qties[key] or (move.product_id.batch_management and not key[2] and qties[key]):
+                    moves_ids_to_reassign.append(move.id)
+
+        if moves_ids_to_reassign:
+            move_obj.cancel_assign(cr, uid, moves_ids_to_reassign, context=context)
+            for pick_id in ids:
+                # trigger transition from Assigned to Confirmed if needed
+                netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
+        return self.action_assign(cr, uid, ids, context=context)
 
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
