@@ -101860,3 +101860,9 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:879
+#, python-format
+msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgstr "Ligne #%s: La date de livraison confirmée est un champ obligatoire."
