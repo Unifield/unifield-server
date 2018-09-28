@@ -101860,3 +101860,10 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:361
+#, python-format
+msgid "At HQ level you can only mass reallocate FP !"
+msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !""
+
