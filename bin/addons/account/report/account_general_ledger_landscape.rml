@@ -329,6 +329,36 @@
       </blockTable>
 
       <section>
+        <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
+        <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
+          [[ o.displayed or removeParentNode('blockTable') ]]
+          <tr>
+            <td>
+              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">Sub Total</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ ccy ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+            </td>
+             <td>
+              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+            </td>
+            <td>
+              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')) ]]</para>
+            </td>
+          </tr>
+        </blockTable>
+      </section>
+
+      <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
         <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
           [[ o.displayed or removeParentNode('blockTable') ]]
@@ -389,36 +419,6 @@
             </td>
            </tr>
         </blockTable>
-      </section>
-
-      <section>
-      <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
-      <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
-        [[ o.displayed or removeParentNode('blockTable') ]]
-        <tr>
-          <td>
-              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9_Right">Sub Total</para>
-          </td>
-          <td>
-              <para style="terp_default_9_Right">[[ ccy ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')) ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
-          </td>
-           <td>
-            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')) ]]</para>
-          </td>
-        </tr>
-      </blockTable>
       </section>
 
     </section>

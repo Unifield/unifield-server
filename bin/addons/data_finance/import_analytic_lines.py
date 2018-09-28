@@ -105,7 +105,7 @@ class import_analytic_lines(osv.osv_memory):
                                                 ('type', '=', 'bank'),
                                                 ('is_current_instance', '=', True)])
             if not jids:
-                cr.execute('SELECT max(code) from account_account where parent_id=%s'%(parent_account,))
+                cr.execute('SELECT max(code) from account_account where parent_id=%s', (parent_account,))
 
                 code = int(cr.fetchone()[0])+1
                 acc_id = account_obj.create(cr, uid, {

@@ -818,7 +818,7 @@
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
 <% index = 0 %>
    </Row>
-   % for index,item in enumerate(objects[0].discrepancy_line_ids):
+   % for index,item in enumerate([x for x in objects[0].discrepancy_line_ids if not x.ignored]):
    <Row>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.nomen_manda_2 and item.nomen_manda_2.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>

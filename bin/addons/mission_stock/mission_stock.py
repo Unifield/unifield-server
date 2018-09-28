@@ -39,6 +39,8 @@ from datetime import datetime
 from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
+from mx.DateTime import DateTime as mxdt
+
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -187,7 +189,7 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
-    logger = logging.getLogger('MSR') 
+    logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the mission stock report is a local report or not
@@ -414,29 +416,31 @@ class stock_mission_report(osv.osv):
     def generate_full_xls(self, cr, uid, xls_name):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
-        instance_ids = instance_obj.search(cr, uid, [])
+        instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
 
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
             instance_dict[x['id']] = x['name']
 
-
         instance_loc = {}
-        cr.execute('select distinct remote_location_name, remote_instance_id from stock_mission_report_line_location where remote_instance_id is not null order by remote_location_name')
+        cr.execute("""
+            select distinct s.remote_location_name, s.remote_instance_id 
+            from stock_mission_report_line_location s
+            left join msf_instance i on (s.remote_instance_id=i.id)
+            where s.remote_instance_id is not null and i.state != 'inactive' 
+            order by remote_location_name
+        """)
         for x in cr.fetchall():
             instance_loc.setdefault(x[1], []).append(x[0])
 
         all_instances = instance_loc.keys()
         all_instances.insert(0, local_instance.id)
         cr.execute("""
-            select distinct location.name from
-            stock_mission_report_line_location l,
-            stock_location location
-            where
-                location.id=l.location_id and
-                remote_instance_id is null and
-                location.usage = 'internal'
+            select distinct location.name
+            from stock_mission_report_line_location l, stock_location location
+            where location.id=l.location_id
+                and remote_instance_id is null and location.usage = 'internal'
             order by location.name
         """)
         for x in cr.fetchall():
@@ -561,14 +565,16 @@ class stock_mission_report(osv.osv):
         cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
-        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom from
-            stock_mission_report_line_location l
+        cr1.execute("""
+            select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom 
+            from stock_mission_report_line_location l
             inner join product_product p on p.id = l.product_id
             inner join product_template t on t.id = p.product_tmpl_id
             left join stock_location location on location.id = l.location_id
-            where
-                (location.usage = 'internal' or location.id is null)
-            order by p.default_code''')
+            left join msf_instance i on l.remote_instance_id=i.id
+            where (location.usage = 'internal' or location.id is null) and coalesce(i.state,'') != 'inactive'
+            order by p.default_code
+        """)
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
@@ -820,7 +826,7 @@ class stock_mission_report(osv.osv):
                                 FROM
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
-                            ''' % report['id'])
+                            ''', (report['id'],))
                 for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
                     line_obj.create(cr, uid, {
                         'product_id': product,
@@ -983,11 +989,10 @@ class stock_mission_report(osv.osv):
                         FROM stock_move
                         WHERE state = 'done'
                         AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''' % (report_id))
+            ''', (report_id,))
             res = cr.fetchall()
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
-                           (report_id, move[0]))
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)', (report_id, move[0]))
                 product = product_obj.browse(cr, uid, move[1],
                                              fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
@@ -1170,7 +1175,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, long, float, type(None))) and s.encode("utf-8") or s for s in row])
+        self.writer.writerow([not isinstance(s, (int, long, float, type(None), type(mxdt(10)))) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
@@ -1322,7 +1327,8 @@ class stock_mission_report_line_location(osv.osv):
 
     def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
         # set instance and location name to process received updates
-        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id))
+        assert name in ('instance_id', 'location_name'), 'Bad query'
+        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id)) # not_a_user_entry
         return True
 
     _columns = {
@@ -1569,6 +1575,9 @@ class stock_mission_report_line(osv.osv):
                        LEFT JOIN
                           product_template t
                        ON p.product_tmpl_id = t.id
+                       LEFT JOIN
+                          msf_instance i
+                       ON m.instance_id = i.id
                      WHERE m.full_view = False
                        AND (l.internal_qty != 0.00
                        OR l.stock_qty != 0.00
@@ -1578,6 +1587,7 @@ class stock_mission_report_line(osv.osv):
                        OR l.cu_qty != 0.00
                        OR l.in_pipe_qty != 0.00
                        OR l.in_pipe_coor_qty != 0.00)
+                       AND i.state != 'inactive'
                      GROUP BY l.product_id, t.standard_price'''
 
         cr.execute(request)
@@ -1605,7 +1615,7 @@ class stock_mission_report_line(osv.osv):
                     cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
                     wh_qty=%s
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
-                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id))
+                                      line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id)) # not_a_user_entry
         return True
 
 stock_mission_report_line()

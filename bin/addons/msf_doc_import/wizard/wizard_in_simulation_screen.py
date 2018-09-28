@@ -55,7 +55,7 @@ LINES_COLUMNS = [
 HEADER_COLUMNS = [
     (1, _('Freight'), 'optionnal'),
     (2, _('Picking Reference'), 'optionnal'),
-    (1, _('Origin'), 'optionnal'),
+    (1, _('Origin'), 'mandatory'),
     (4, _('Supplier'), 'optionnal'),
     (5, _('Transport mode'), 'optionnal'),
     (6, _('Notes'), 'optionnal'),
@@ -198,18 +198,9 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
-        context['pick_type'] = 'incoming'
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'res_id': picking_id,
-                'view_type': 'form',
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'context': context}
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree4', ['form', 'tree'], context=context)
+        res['res_id'] = picking_id
+        return res
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
@@ -268,10 +259,34 @@ class wizard_import_in_simulation_screen(osv.osv):
     def launch_import_pack(self, cr, uid, ids, context=None):
         return self.launch_import(cr, uid, ids, context)
 
+    def populate(self, cr, uid, import_id, picking_id, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {
+                    'move_id': move.id,
+                    'simu_id': import_id,
+                    'move_product_id': move.product_id and move.product_id.id or False,
+                    'move_product_qty': move.product_qty or 0.00,
+                    'move_uom_id': move.product_uom and move.product_uom.id or False,
+                    'move_price_unit': move.price_unit or move.product_id.standard_price,
+                    'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                    'line_number': move.line_number,
+                    'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                }, context=context)
+
+        return True
+
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
         Launch the simulation routine in background
         '''
+        global SIMU_LINES, LN_BY_EXT_REF
         if context is None:
             context = {}
 
@@ -298,22 +313,33 @@ class wizard_import_in_simulation_screen(osv.osv):
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
-            self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+            self.pool.get('wizard.import.in.line.simulation.screen').unlink(cr, uid, [line.id for line in wiz.line_ids],
+                                                                            context=context)
+            self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
+                                      'percent_completed': 0, 'import_error_ok': False}, context=context)
+            if wiz.id in SIMU_LINES:
+                del SIMU_LINES[wiz.id]
+            if wiz.id in LN_BY_EXT_REF:
+                del LN_BY_EXT_REF[wiz.id]
+
+            self.populate(cr, uid, wiz.id, wiz.picking_id.id, context=context)
             cr.commit()
-            new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
-            new_thread.start()
-            new_thread.join(10.0)
+            if context.get('do_not_import_with_thread'):
+                self.simulate(cr.dbname, uid, ids, context=context)
+            else:
+                new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
+                new_thread.start()
+                new_thread.join(10.0)
 
             return self.go_to_simulation(cr, uid, ids, context=context)
 
-    def get_values_from_xml(self, cr, uid, file_to_import, with_pack, context=None):
+    def get_values_from_xml(self, cr, uid, file_to_import, with_pack=False, context=None):
         '''
         Read the XML file and put data in values
         '''
-
         values = {}
         # Read the XML file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
         error = []
 
         root = ET.fromstring(xml_file)
@@ -394,13 +420,13 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         return values, nb_line, error
 
-    def get_values_from_excel(self, cr, uid, file_to_import, with_pack, context=None):
+    def get_values_from_excel(self, cr, uid, file_to_import, with_pack=False, context=None):
         '''
         Read the Excel XML file and put data in values
         '''
         values = {}
         # Read the XML Excel file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines
@@ -441,8 +467,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
                     if row.cells[nb].data and x[3] == 'int':
                         try:
-                            if row.cells[nb].type == 'float':
-                                raise
                             int(row.cells[nb].data)
                         except:
                             error.append(_('Line %s, column %s, integer expected, found %s') % (index, nb+1, row.cells[nb].data))
@@ -585,6 +609,9 @@ the date has a wrong format: %s') % (index+1, str(e)))
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
+                if context.get('auto_import_ok') and file_parse_errors:
+                    raise Exception('\n'.join(file_parse_errors))
+
                 '''
                 We check for each line if the number of columns is consistent
                 with the expected number of columns :
@@ -622,8 +649,15 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                header_values['imp_origin'] = origin
-
+                if wiz.purchase_id.name not in origin:
+                    message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
+                        % (origin, wiz.picking_id.name, wiz.origin)
+                    self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
+                    res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
+                    cr.commit()
+                    cr.close(True)
+                    return res
+                header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]
@@ -980,7 +1014,6 @@ Nothing has been imported because of %s. See below:
         # Create new cursor
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
-
         try:
             for wiz in inc_proc_obj.browse(new_cr, uid, partial_id, context=context):
                 for line in wiz.move_ids:
@@ -988,7 +1021,9 @@ Nothing has been imported because of %s. See below:
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
-            picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            if isinstance(new_picking, (int,long)):
+                context['new_picking'] = new_picking
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
@@ -1043,23 +1078,25 @@ Nothing has been imported because of %s. See below:
 
         if simu_id.with_pack:
             cr.commit()
-            new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
-            new_thread.start()
-            new_thread.join(20)
-            if new_thread.isAlive():
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
-                prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
-
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'stock.picking.processing.info',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': prog_id,
-                    'view_id': [view_id],
-                    'context': context,
-                    'target': 'new',
-                }
+            if context.get('do_not_import_with_thread'):
+                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
+            else:
+                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+                new_thread.start()
+                new_thread.join(20)
+                if new_thread.isAlive():
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
+                    prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'stock.picking.processing.info',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': prog_id,
+                        'view_id': [view_id],
+                        'context': context,
+                        'target': 'new',
+                    }
 
             return self.return_to_in(cr, uid, simu_id.id, context=context)
 
@@ -1519,7 +1556,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_exp_date': exp_date,
                     })
 
-                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name'):
+                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name') and not context.get('simulation_bypass_missing_lot', False):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
 
@@ -1531,7 +1568,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             # Message ESC 2
             write_vals['message_esc2'] = values.get('message_esc2')
 
-            write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, context=context)
+            write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, warnings=warnings, context=context)
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
 
@@ -1554,6 +1591,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 error_msg += warn
 
             write_vals['error_msg'] = error_msg
+            job_comment = context.get('job_comment', [])
+            for msg in warnings:
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': line.simu_id.picking_id.id,
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                })
+            context['job_comment'] = job_comment
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
@@ -1584,10 +1629,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return True
 
-    def check_integrity_status(self, cr, uid, vals, context=None):
+    def check_integrity_status(self, cr, uid, vals, warnings=None, context=None):
         '''
         Return the integrity_status of the line
         '''
+        if context is None:
+            context = {}
+
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         product = vals.get('imp_product_id') and product_obj.browse(cr, uid, vals['imp_product_id'], context=context) or False
@@ -1603,15 +1651,19 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 return 'no_lot_needed'
 
         if product.batch_management:
-            if not prodlot_id and not prodlot_name:
+            if not prodlot_id and not prodlot_name and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_lot'
+            elif not prodlot_id and not prodlot_name and context.get('simulation_bypass_missing_lot', False) and warnings is not None:
+                warnings.append(_('Batch Number is Missing'))
 
             if prodlot_id and prodlot_id.type != 'standard':
                 return 'wrong_lot_type_need_standard'
 
         if product.perishable:
-            if not exp_date:
+            if not exp_date and not context.get('simulation_bypass_missing_lot', False):
                 return 'missing_date'
+            elif not exp_date and context.get('simulation_bypass_missing_lot', False) and warnings is not None:
+                warnings.append(_('Expiry Date is Missing'))
 
             if not product.batch_management and prodlot_id and prodlot_id.type != 'internal':
                 return 'wrong_lot_type_need_internal'
@@ -1692,6 +1744,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,
@@ -1706,5 +1759,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 move_ids.append(move.id)
 
         return mem_move_ids, move_ids
+
 
 wizard_import_in_line_simulation_screen()

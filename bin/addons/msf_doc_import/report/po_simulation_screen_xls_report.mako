@@ -269,9 +269,9 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.in_currency and obj_name_get('res.currency', l.in_currency.id) or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.in_line_number)|x}</Data></Cell>
         % if l.type_change == 'del':
-            <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'chg_text') or '')|x}</Data></Cell>
         % else:
-            <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(l, 'chg_text') or '')|x}</Data></Cell>
         % endif
         % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_product_id != l.imp_product_id):
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_product_id and obj_name_get('product.product', l.imp_product_id.id) or '')|x}</Data></Cell>
