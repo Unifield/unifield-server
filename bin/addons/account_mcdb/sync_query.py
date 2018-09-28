@@ -10,8 +10,16 @@ class finance_sync_query(osv.osv):
     _order = 'model, name, id'
     _auto = False
 
+    _map_mcdb_model = {
+        'account.mcdb.move': 'account.move.line',
+        'account.mcdb.analytic': 'account.analytic.line',
+        'account.mcdb.combined': 'combined.line',
+    }
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'finance_sync_query')
+        CASE_QUERY = ' '.join(["WHEN model='%s' THEN '%s'" % (y,x) for x,y in self._map_mcdb_model.iteritems()])
+
         cr.execute("""CREATE OR REPLACE VIEW finance_sync_query AS (
         SELECT 2*id as id,
             name as name,
@@ -27,9 +35,7 @@ class finance_sync_query(osv.osv):
 
         SELECT 2*id + 1 as id,
             description as name,
-            CASE WHEN model='account.move.line' THEN 'account.mcdb.move'
-                WHEN model='account.analytic.line' THEN 'account.mcdb.analytic'
-                ELSE 'account.mcdb.combined' END as model,
+            CASE %s END as model,
             id as template_id,
             coalesce(write_date, create_date) as last_modification,
             coalesce(hq_template, 'f') as synced,
@@ -37,7 +43,7 @@ class finance_sync_query(osv.osv):
         FROM account_mcdb
         WHERE coalesce(description,'') != ''
         )
-        """)
+        """ % (CASE_QUERY,)) # not_a_user_entry
 
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
@@ -61,12 +67,7 @@ class finance_sync_query(osv.osv):
 
     def create(self, cr, uid, values, context=None):
         if values['model'].startswith('account.mcdb'):
-            map_model = {
-                'account.mcdb.move': 'account.move.line',
-                'account.mcdb.analytic': 'account.analytic.line',
-                'account.mcdb.combined': 'combined.line',
-            }
-            template_id = self.pool.get('account.mcdb').create(cr, uid, {'description': values['name'], 'model': map_model.get(values['model'])}, context=context)
+            template_id = self.pool.get('account.mcdb').create(cr, uid, {'description': values['name'], 'model': self._map_mcdb_model.get(values['model'])}, context=context)
         else:
             template_id = self.pool.get('wizard.template').create(cr, uid, {'name': values['name'], 'wizard_name': values['model'], 'values': '{}'}, context=context)
 
@@ -140,17 +141,12 @@ class finance_sync_query(osv.osv):
         if query['model'].startswith('account.mcdb'):
             # Selector
             child_wiz = self.pool.get('account.mcdb')
-            target_object = {
-                'account.mcdb.move': 'account.move.line',
-                'account.mcdb.analytic': 'account.analytic.line',
-                'account.mcdb.combined': 'combined.line',
-            }
             view_name = {
                 'account.mcdb.move': _('G/L Selector'),
                 'account.mcdb.analytic': _('Analytic Selector'),
                 'account.mcdb.combined': _('Combined Journals Report'),
             }
-            context['from'] = target_object.get(query['model'], '')
+            context['from'] = self._map_mcdb_model.get(query['model'], '')
 
             new_id = child_wiz.create(cr, uid, {'template': template_id}, context=context)
             ret = child_wiz.load_mcdb_template(cr, uid, [new_id], context=context)
