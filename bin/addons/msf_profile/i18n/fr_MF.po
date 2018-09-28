@@ -66359,10 +66359,10 @@ msgid "Destruction Report"
 msgstr "Rapport Destruction"
 
 #. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:714
+#: code:addons/account_corrections/account_move_line.py:721
 #, python-format
-msgid "You cannot change the G/L account since it is used in a closed financing contract."
-msgstr "Vous ne pouvez pas modifier le compte du Grand livre parce qu'il est utilisé dans un contrat de financement clôturé."
+msgid "You cannot change this entry since one of its accounts is used in a closed financing contract."
+msgstr "Vous ne pouvez pas modifier cette écriture car l'un de ses comptes est utilisé dans un contrat de financement clôturé."
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0

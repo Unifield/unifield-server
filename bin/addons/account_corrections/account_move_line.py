@@ -718,7 +718,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for aal in self.pool.get('account.analytic.line').browse(cr, uid, aal_ids):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
-                    raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
+                    raise osv.except_osv(_('Warning'), _('You cannot change this entry since one of its accounts is '
+                                                         'used in a closed financing contract.'))
             # (US-815) use the right period for December HQ Entries
             period_id_dec_hq_entry = False
             if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
@@ -789,7 +790,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     'transfer_journal_id': new_transfer_journal_id,
                 })
                 # if no Third Party: reset partner_txt (this field is automatically updated only when there is one)
-                if not new_partner_id and not new_employee_id:
+                if not new_partner_id and not new_employee_id and not new_transfer_journal_id:
                     cor_vals['partner_txt'] = ''
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # check the account compatibility with the new Third Party
