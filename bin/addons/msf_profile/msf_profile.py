@@ -51,6 +51,55 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
+        """
+        recompute cu_qty
+        """
+        report_id = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', False)])
+        if not report_id:
+            return True
+        report_id = report_id[0]
+
+        cu_loc = self.pool.get('stock.location').search(cr, uid, [
+            ('usage', '=', 'internal'), 
+            ('location_category', '=', 'consumption_unit'),
+        ])
+        if cu_loc:
+            cu_loc = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', cu_loc)])
+
+        cr.execute('''
+            SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
+            FROM stock_move
+            WHERE state = 'done'
+            AND id in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
+        ''', (report_id,))
+        res = cr.fetchall()
+
+        report_lines = self.pool.get('stock.mission.report.line').search(cr, uid, [('mission_report_id', '=', report_id)])
+        self.pool.get('stock.mission.report.line').write(cr, uid, report_lines, {'cu_qty': 0.0})
+
+        for move in res:
+            product = self.pool.get('product.product').browse(cr, uid, move[1], fields_to_fetch=['uom_id'])
+            smrl_id = self.pool.get('stock.mission.report.line').search(cr, uid, [
+                ('product_id', '=', move[1]),
+                ('mission_report_id', '=', report_id)
+            ])
+            if smrl_id:
+                line = self.pool.get('stock.mission.report.line').browse(cr, uid, smrl_id[0])
+                qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
+                vals = {
+                    'cu_qty': line.cu_qty or 0.00,
+                }
+
+                if move[4] in cu_loc:
+                    vals['cu_qty'] -= qty
+                if move[5] in cu_loc:
+                    vals['cu_qty'] += qty
+
+                self.pool.get('stock.mission.report.line').write(cr, uid, line.id, vals)
+        return True
+
+
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
