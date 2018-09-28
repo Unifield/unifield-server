@@ -620,9 +620,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, context=None):
+    def correct_aml(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, new_third_party=None, context=None):
         """
-        Correct given account_move_line by only changing account
+        Corrects the G/L account and/or the Third Party of the JIs having their ids in param.
+        Generates the related REV/COR lines.
+
+        /!\ WARNING /!\
+        new_third_party is a partner_type, i.e. it can be a res.partner, hr.employee... If it is None: no change
+        regarding Third Party should be made, whereas if it is False/empty/browse_null, the COR line must have an empty
+        Third Party.
         """
         # Verification
         if not context:
@@ -638,6 +644,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
         al_obj = self.pool.get('account.analytic.line')
+        wiz_obj = self.pool.get('wizard.journal.items.corrections')
         success_move_line_ids = []
 
         # New account
@@ -765,7 +772,29 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 cor_vals['analytic_distribution_id'] = distrib_id
             elif ml.analytic_distribution_id:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
+            if new_third_party is not None:  # if None: no correction on Third Party should be made
+                new_partner_id = False
+                new_employee_id = False
+                new_transfer_journal_id = False
+                if new_third_party:
+                    if new_third_party._table_name == 'res.partner':
+                        new_partner_id = new_third_party.id
+                    elif new_third_party._table_name == 'hr.employee':
+                        new_employee_id = new_third_party.id
+                    elif new_third_party._table_name == 'account.journal':
+                        new_transfer_journal_id = new_third_party.id
+                cor_vals.update({
+                    'partner_id': new_partner_id,
+                    'employee_id': new_employee_id,
+                    'transfer_journal_id': new_transfer_journal_id,
+                })
+                # if no Third Party: reset partner_txt (this field is automatically updated only when there is one)
+                if not new_partner_id and not new_employee_id:
+                    cor_vals['partner_txt'] = ''
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
+            # check the account compatibility with the new Third Party
+            correction_line = self.browse(cr, uid, correction_line_id, context=context)
+            wiz_obj._check_account_partner_compatibility(cr, uid, new_account, correction_line, context)
             # UF-2231: Remove the update to the statement line
             # Update register line if exists
 
@@ -803,6 +832,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Mark it as "corrected_upstream" if needed
             self.corrected_upstream_marker(cr, uid, [ml.id], context=context)
         return success_move_line_ids
+
+    def correct_account(self, cr, uid, aml_ids, date=None, new_account_id=None, distrib_id=False, context=None):
+        """
+        Corrects the G/L account (only) of the amls
+        """
+        return self.correct_aml(cr, uid, aml_ids, date=date, new_account_id=new_account_id, distrib_id=distrib_id, context=context)
 
     def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context=None):
         """

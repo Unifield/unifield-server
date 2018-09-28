@@ -15951,12 +15951,6 @@ msgstr "Total Selection"
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
 
-#. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:422
-#, python-format
-msgid "No partner changed! Verify that the Journal Entries attached to this line was not modify previously."
-msgstr "No partner changed! Verify that the Journal Entries attached to this line was not modify previously."
-
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:812
 #, python-format
@@ -31136,10 +31130,10 @@ msgid "Allocatable"
 msgstr "Attribuable"
 
 #. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:426
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:538
 #, python-format
-msgid "You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"
-msgstr "Vous ne pouvez changer qu'UN champ parmi:  Compte, Tiers, Allocation Analytique"
+msgid "You can't modify the Analytic Distribution at the same time as the account and/or the Third Party."
+msgstr "Vous ne pouvez pas modifier la Distribution Analytique en même temps que le compte et/ou le Tiers."
 
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:493

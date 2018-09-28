@@ -401,14 +401,13 @@ class journal_items_corrections(osv.osv_memory):
         # Fields
         old_account = old_line.account_id and old_line.account_id.id or False
         new_account = new_line.account_id and new_line.account_id.id or False
-        old_partner = old_line.partner_id and old_line.partner_id.id or False
-        new_partner = new_line.partner_id and new_line.partner_id.id or False
+        old_third_party = old_line.partner_id or old_line.employee_id or old_line.transfer_journal_id or False
+        new_third_party = new_line.partner_id or new_line.employee_id or new_line.transfer_journal_id or False
         old_distrib = old_line.analytic_distribution_id and old_line.analytic_distribution_id.id or False
         new_distrib = new_line.analytic_distribution_id and new_line.analytic_distribution_id.id or False
         if cmp(old_account, new_account):
             res += 1
-        if cmp(old_partner, new_partner): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or
-            # cmp(old_line.register_id, new_line.register_id):
+        if cmp(old_third_party, new_third_party):
             res += 2
         if cmp(old_distrib, new_distrib):
             # UFTP-1187
@@ -447,7 +446,7 @@ class journal_items_corrections(osv.osv_memory):
         """
         Check the compatibility between the account and the aml Third Party: raise a warning if they are not compatible.
         :param account: new account selected in the Correction Wizard
-        :param aml: Journal Item to be corrected
+        :param aml: Journal Item with the Third Party to check
         """
         acc_obj = self.pool.get('account.account')
         acc_type = account.type_for_register
@@ -527,23 +526,16 @@ class journal_items_corrections(osv.osv_memory):
         comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
         # Result
         res = [] # no result yet
-        # Correct account
-        if comparison == 1:
-            self._check_account_partner_compatibility(cr, uid, new_lines[0].account_id, old_line, context)
-            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
+        # Major correction that will generate REV/COR, i.e. correction on G/L account and/or Third Party
+        if 0 < comparison <= 3:
+            res = aml_obj.correct_aml(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id,
+                                      new_third_party=new_lines[0].partner_type, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
-        # Correct third parties
-        elif comparison == 2:
-            if not old_line.statement_id:
-                res = aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
-                if not res:
-                    raise osv.except_osv(_('Error'),
-                                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
-        elif comparison in [3, 5, 7]:
-            raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"))
+        elif comparison > 4:
+            raise osv.except_osv(_('Error'), _("You can't modify the Analytic Distribution at the same time as the account and/or the Third Party."))
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
