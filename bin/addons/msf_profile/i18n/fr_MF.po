@@ -98079,8 +98079,8 @@ msgstr "You can only duplicate manual journal entries."
 
 #. module: account_corrections
 #: field:analytic.distribution.wizard,old_account_id:0
-msgid "New account given by correction wizard"
-msgstr "Nouveau compte donné par l'assistant de correction "
+msgid "Original account of the line to be corrected"
+msgstr "Compte d'origine de la ligne à corriger"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:139
@@ -101864,3 +101864,23 @@ msgstr " veuillez vous référer aux procédures adéquates."
 #, python-format
 msgid "The account %s - %s requires a Journal Third Party."
 msgstr "Le compte %s - %s requiert un Tiers de type Journal."
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,old_partner_id:0
+msgid "Original partner of the line to be corrected"
+msgstr "Partenaire d'origine de la ligne à corriger"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,old_employee_id:0
+msgid "Original employee of the line to be corrected"
+msgstr "Employé d'origine de la ligne à corriger"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,new_partner_id:0
+msgid "New partner selected in the correction wizard"
+msgstr "Nouveau partenaire sélectionné dans l'assistant de correction"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,new_employee_id:0
+msgid "New employee selected in the correction wizard"
+msgstr "Nouvel employé sélectionné dans l'assistant de correction"

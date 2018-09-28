@@ -269,10 +269,14 @@ class journal_items_corrections_lines(osv.osv_memory):
             'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
             'currency_id': currency or False,
             'old_account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'old_partner_id': wiz.move_line_id and wiz.move_line_id.partner_id and wiz.move_line_id.partner_id.id or False,
+            'old_employee_id': wiz.move_line_id and wiz.move_line_id.employee_id and wiz.move_line_id.employee_id.id or False,
             'distribution_id': distrib_id,
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
             'date': wiz.date or strftime('%Y-%m-%d'),
             'account_id': this_line.account_id and this_line.account_id.id or False,
+            'new_partner_id': this_line.partner_id and this_line.partner_id.id or False,
+            'new_employee_id': this_line.employee_id and this_line.employee_id.id or False,
             'document_date': wiz.move_line_id.document_date,
             'posting_date': wiz.date or wiz.move_line_id.date,
         }
