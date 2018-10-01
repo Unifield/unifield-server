@@ -101860,3 +101860,15 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. modules: purchase, tender_flow, sale
+#: sql_constraint:purchase.order:0
+#: sql_constraint:sale.order:0
+#: sql_constraint:purchase.order:0
+msgid "Order category should not be empty !"
+msgstr "Le champ categorie ne doit pas être vide !"
+
+#. module: tender_flow
+#: sql_constraint:tender:0
+msgid "Tender category should not be empty !"
+msgstr "Le champ categorie ne doit pas être vide !"
