@@ -776,7 +776,7 @@ class purchase_order(osv.osv):
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: 'empty',
         'loan_duration': 2,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
@@ -804,6 +804,7 @@ class purchase_order(osv.osv):
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
+        ('order_categ_not_null_check', '''check(categ != 'empty')''', 'Order category should not be empty !'),
     ]
 
     def _check_order_type(self, cr, uid, ids, context=None):
