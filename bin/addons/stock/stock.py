@@ -2216,47 +2216,6 @@ class stock_move(osv.osv):
         '''
         return kwargs.get('dest')
 
-    def _chain_compute(self, cr, uid, moves, context=None):
-        """ Finds whether the location has chained location type or not.
-        @param moves: Stock moves
-        @return: Dictionary containing destination location with chained location type.
-        """
-        result = {}
-        if context is None:
-            context = {}
-        stock_location_obj = self.pool.get('stock.location')
-        stock_picking_obj = self.pool.get('stock.picking')
-        for m in moves:
-            dest = stock_location_obj.chained_location_get(
-                cr,
-                uid,
-                m.location_dest_id,
-                m.picking_id and m.picking_id.address_id and m.picking_id.address_id.partner_id,
-                m.product_id,
-                context
-            )
-            #if dest:
-            if self._hook_dest(cr, uid, dest=dest, m=m):
-                if dest[1] == 'transparent' and context.get('action_confirm', False):
-                    newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
-                    self.write(cr, uid, [m.id], {
-                        'date': newdate,
-                        'location_dest_id': dest[0].id})
-                    if m.picking_id and (dest[3] or dest[5]):
-                        stock_picking_obj.write(cr, uid, [m.picking_id.id], {
-                            'stock_journal_id': dest[3] or m.picking_id.stock_journal_id.id,
-                            'type': m.picking_id.type
-                        }, context=context)
-                    m.location_dest_id = dest[0]
-                    res2 = self._chain_compute(cr, uid, [m], context=context)
-                    for pick_id in res2.keys():
-                        result.setdefault(pick_id, [])
-                        result[pick_id] += res2[pick_id]
-                elif not context.get('action_confirm', False):
-                    result.setdefault(m.picking_id, [])
-                    result[m.picking_id].append( (m, dest) )
-        return result
-
     def hook__create_chained_picking(self, cr, uid, pick_values, picking):
         return pick_values
 

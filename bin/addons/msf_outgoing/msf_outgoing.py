@@ -163,7 +163,6 @@ class shipment(osv.osv):
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id'])], order='id', context=context)
             # fields to check and get
             state = None
-            first_shipment_packing_id = None
             backshipment_id = None
             # delivery validated
             delivery_validated = None
@@ -172,7 +171,6 @@ class shipment(osv.osv):
                                               fields_to_fetch=[
                                                   'state',
                                                   'delivered',
-                                                  'first_shipment_packing_id',
                                                   'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
@@ -189,20 +187,13 @@ class shipment(osv.osv):
                     # update the value
                     delivery_validated = packing.delivered
 
-                # first_shipment_packing_id check - no check for the same reason
-                first_shipment_packing_id = packing.first_shipment_packing_id.id
-
                 # backshipment_id check
                 if backshipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
                     assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s' % (backshipment_id, packing.backorder_id.shipment_id.id)
                 backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or False
             # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
-                if first_shipment_packing_id:
-                    # second step of shipment : shipped
-                    state = 'shipped'
-                else:
-                    state = 'packed'
+                state = 'shipped'
             elif state == 'done':
                 if delivery_validated:
                     # special state corresponding to delivery validated
@@ -711,6 +702,12 @@ class shipment(osv.osv):
                     'non_stock_noupdate': False,
                     'draft_packing_id': False,
                 })
+
+                new_packing = picking_obj.browse(cr, uid, new_packing_id, fields_to_fetch=['move_lines'], context=context)
+                # update locations of stock moves
+                for move in new_packing.move_lines:
+                    move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
+                                'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -1332,7 +1329,7 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             # shipment state should be 'packed'
-            if shipment.state != 'packed':
+            if shipment.state != 'shipped':
                 raise osv.except_osv(_('Error, packing in wrong state !'),
                                      _('Cannot process a Shipment which is in an incorrect state'))
 
@@ -1352,48 +1349,19 @@ class shipment(osv.osv):
 
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
-                # update the packing object for the same reason
-                # - an integrity check at _get_vals level of shipment states that all packing linked to a shipment must have the same state
-                # we therefore modify it before the copy, otherwise new (assigned) and old (done) are linked to the same shipment
-                # -> integrity check has been removed
-                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False}, context=context)
-                # copy each packing
-                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
-                                                                     'first_shipment_packing_id': packing.id,
-                                                                     # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
-                                                                     'shipment_id': shipment.id, }, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
-
-                pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
-                if packing.claim:
-                    pick_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
-                new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
-
-                if new_packing.move_lines and pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):  # RW Sync - set the replicated to True for not syncing it again
-                    pick_obj.write(cr, uid, [new_packing_id], {'for_shipment_replicate': True}, context=context)
 
                 # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
-                if new_packing.sale_id and not new_packing.sale_id.shipment_date:
+                if packing.sale_id and not packing.sale_id.shipment_date:
                     # get the date format
                     date_tools = self.pool.get('date.tools')
                     date_format = date_tools.get_date_format(cr, uid, context=context)
                     db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
-                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
+                    so_obj.write(cr, uid, [packing.sale_id.id], {'shipment_date': today_db, }, context=context)
+                    so_obj.log(cr, uid, packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (packing.sale_id.name, tools.ustr(today)))
 
-                # update locations of stock moves
-                for move in new_packing.move_lines:
-                    move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
-                                'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
 
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
-                # simulate check assign button, as stock move must be available
-                pick_obj.force_assign(cr, uid, [new_packing_id])
-                # trigger standard workflow
-                pick_obj.action_move(cr, uid, [packing.id])
-                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
 
             # log the ship action
             self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.') % (shipment.name,))
