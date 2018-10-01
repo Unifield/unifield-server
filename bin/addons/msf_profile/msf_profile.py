@@ -77,12 +77,14 @@ class patch_scripts(osv.osv):
         res = cr.fetchall()
 
         # reset cu_qty on report lines:
+        smrl_to_reset = set()
         for move in res:
             smrl_id = self.pool.get('stock.mission.report.line').search(cr, uid, [
                 ('product_id', '=', move[PRODUCT_ID]),
                 ('mission_report_id', '=', report_id)
             ])
-            self.pool.get('stock.mission.report.line').write(cr, uid, smrl_id, {'cu_qty': 0.0})
+            smrl_to_reset.update(smrl_id)
+        self.pool.get('stock.mission.report.line').write(cr, uid, list(smrl_to_reset), {'cu_qty': 0.0})
 
         # recalculation of the cu_qty:
         for move in res:
