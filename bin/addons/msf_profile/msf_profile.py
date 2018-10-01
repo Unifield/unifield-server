@@ -67,6 +67,7 @@ class patch_scripts(osv.osv):
         if cu_loc:
             cu_loc = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', cu_loc)])
 
+        ID, PRODUCT_ID, PRODUCT_UOM, PRODUCT_QTY, LOCATION_ID, LOCATION_DEST_ID = 0, 1, 2, 3, 4, 5
         cr.execute('''
             SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
             FROM stock_move
@@ -75,28 +76,35 @@ class patch_scripts(osv.osv):
         ''', (report_id,))
         res = cr.fetchall()
 
-        report_lines = self.pool.get('stock.mission.report.line').search(cr, uid, [('mission_report_id', '=', report_id)])
-        self.pool.get('stock.mission.report.line').write(cr, uid, report_lines, {'cu_qty': 0.0})
-
+        # reset cu_qty on report lines:
         for move in res:
-            product = self.pool.get('product.product').browse(cr, uid, move[1], fields_to_fetch=['uom_id'])
             smrl_id = self.pool.get('stock.mission.report.line').search(cr, uid, [
-                ('product_id', '=', move[1]),
+                ('product_id', '=', move[PRODUCT_ID]),
+                ('mission_report_id', '=', report_id)
+            ])
+            self.pool.get('stock.mission.report.line').write(cr, uid, smrl_id, {'cu_qty': 0.0})
+
+        # recalculation of the cu_qty:
+        for move in res:
+            product = self.pool.get('product.product').browse(cr, uid, move[PRODUCT_ID], fields_to_fetch=['uom_id'])
+            smrl_id = self.pool.get('stock.mission.report.line').search(cr, uid, [
+                ('product_id', '=', move[PRODUCT_ID]),
                 ('mission_report_id', '=', report_id)
             ])
             if smrl_id:
-                line = self.pool.get('stock.mission.report.line').browse(cr, uid, smrl_id[0])
-                qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
+                smrl = self.pool.get('stock.mission.report.line').browse(cr, uid, smrl_id[0])
+                qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[PRODUCT_UOM], move[PRODUCT_QTY], product.uom_id.id)
                 vals = {
-                    'cu_qty': line.cu_qty or 0.00,
+                    'cu_qty': smrl.cu_qty or 0.00,
                 }
 
-                if move[4] in cu_loc:
+                if move[LOCATION_ID] in cu_loc:
                     vals['cu_qty'] -= qty
-                if move[5] in cu_loc:
+                if move[LOCATION_DEST_ID] in cu_loc:
                     vals['cu_qty'] += qty
 
-                self.pool.get('stock.mission.report.line').write(cr, uid, line.id, vals)
+                self.pool.get('stock.mission.report.line').write(cr, uid, smrl.id, vals)
+                
         return True
 
 
