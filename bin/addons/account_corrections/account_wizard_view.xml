@@ -21,7 +21,7 @@
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="partner_type"
                            attrs="{'required': [('partner_type_mandatory', '=', True)],
-                                   'readonly': [('partner_txt_only', '=', True)]}"/>
+                                   'readonly': ['|', ('partner_txt_only', '=', True), ('is_account_correctible', '=', False)]}"/>
                     <button name="button_analytic_distribution" type="object"
                             icon="terp-stock_symbol-selection" string="Ana. Distri."
                             attrs="{'invisible': [('is_analytic_target', '=', False)]}" />
