@@ -672,7 +672,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'order_type': lambda *a: 'regular',
         'invoice_quantity': lambda *a: 'procurement',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: 'empty',
         'loan_duration': lambda *a: 2,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
@@ -684,6 +684,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
+        ('sale_categ_not_null_check', '''check(categ != 'empty')''', 'Order category should not be empty !'),
     ]
 
     _constraints = [
