@@ -101866,6 +101866,16 @@ msgid "The account %s - %s requires a Journal Third Party."
 msgstr "Le compte %s - %s requiert un Tiers de type Journal."
 
 #. module: account_corrections
+#: field:wizard.journal.items.corrections.lines,partner_txt_only:0
+msgid "Has a \"partner_txt\" without any related partner/employee/transfer journal"
+msgstr "A un \"partner_txt\" sans partenaire/employé/journal de transfert associé"
+
+#. module: account_corrections
+#: help:wizard.journal.items.corrections.lines,partner_txt_only:0
+msgid "The Third Party of the line to be corrected hasn't been synched to this instance"
+msgstr "Le Tiers de la ligne à corriger n'a pas été synchronisé vers cette instance"
+
+#. module: account_corrections
 #: field:analytic.distribution.wizard,old_partner_id:0
 msgid "Original partner of the line to be corrected"
 msgstr "Partenaire d'origine de la ligne à corriger"

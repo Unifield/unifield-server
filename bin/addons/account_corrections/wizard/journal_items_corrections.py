@@ -136,6 +136,25 @@ class journal_items_corrections_lines(osv.osv_memory):
             self.write(cr, uid, obj_id, vals, context=context)
         return True
 
+    def _get_partner_txt_only(self, cr, uid, ids, name, args, context=None):
+        """
+        True if the JI to be corrected has got a partner_txt without any partner/employee/transfer_journal
+        Ex.: coordo line with an internal partner synched to HQ
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        for corr_line in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id'], context=context):
+            res[corr_line.id] = False
+            aml = corr_line.move_line_id
+            if aml.partner_txt and not (aml.partner_id or aml.employee_id or aml.transfer_journal_id):
+                res[corr_line.id] = True
+        return res
+
     def onchange_correction_line_account_id(self, cr, uid, ids, account_id=False, current_tp=False):
         """
         Adapts the "Third Parties" selectable on the wizard line according to the account selected
@@ -216,6 +235,9 @@ class journal_items_corrections_lines(osv.osv_memory):
                                          string="Third Parties",
                                          selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')],
                                          help="To use for python code when registering", multi="third_parties_key"),
+        'partner_txt_only': fields.function(_get_partner_txt_only, type='boolean', method=True, invisible=True,
+                                            string='Has a "partner_txt" without any related partner/employee/transfer journal',
+                                            help="The Third Party of the line to be corrected hasn't been synched to this instance"),
     }
 
     _defaults = {
@@ -532,8 +554,14 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Major correction that will generate REV/COR, i.e. correction on G/L account and/or Third Party
         if 0 < comparison <= 3:
+            if new_lines[0].partner_txt_only:
+                # prevent change on 3d Party if the 3d Party of the initial line hasn't been synched to the current
+                # instance (=> only partner_txt exists)
+                new_tp = None
+            else:
+                new_tp = new_lines[0].partner_type
             res = aml_obj.correct_aml(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id,
-                                      new_third_party=new_lines[0].partner_type, context=context)
+                                      new_third_party=new_tp, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
         elif comparison == 4:

@@ -17,9 +17,11 @@
                         attrs="{'readonly': [('is_account_correctible', '=', False)]}"
                         on_change="onchange_correction_line_account_id(account_id, partner_type)"
                     />
+                    <field name="partner_txt_only" invisible="1"/>
                     <field name="partner_type_mandatory" invisible="1"/>
-                    <field name="partner_type" readonly="0"
-                           attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                    <field name="partner_type"
+                           attrs="{'required': [('partner_type_mandatory', '=', True)],
+                                   'readonly': [('partner_txt_only', '=', True)]}"/>
                     <button name="button_analytic_distribution" type="object"
                             icon="terp-stock_symbol-selection" string="Ana. Distri."
                             attrs="{'invisible': [('is_analytic_target', '=', False)]}" />

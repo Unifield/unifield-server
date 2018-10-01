@@ -626,9 +626,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
         Generates the related REV/COR lines.
 
         /!\ WARNING /!\
-        new_third_party is a partner_type, i.e. it can be a res.partner, hr.employee... If it is None: no change
-        regarding Third Party should be made, whereas if it is False/empty/browse_null, the COR line must have an empty
-        Third Party.
+        new_third_party is a partner_type, i.e. it can be a res.partner, hr.employee... If it is None (= no 3d party
+        passed as a parameter): no change regarding 3d Party should be made, whereas if it is False/empty/browse_null,
+        the COR line must have an empty Third Party.
         """
         # Verification
         if not context:
@@ -793,7 +793,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 if not new_partner_id and not new_employee_id and not new_transfer_journal_id:
                     cor_vals['partner_txt'] = ''
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
-            # check the account compatibility with the new Third Party
+            # check the account compatibility with the Third Party on the COR line created
             correction_line = self.browse(cr, uid, correction_line_id, context=context)
             wiz_obj._check_account_partner_compatibility(cr, uid, new_account, correction_line, context)
             # UF-2231: Remove the update to the statement line
