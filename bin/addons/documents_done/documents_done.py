@@ -548,7 +548,16 @@ class documents_done_problem(osv.osv_memory):
         '''
         if not context:
             context = {}
+        wf_service = netsvc.LocalService("workflow")
+
         for wiz in self.browse(cr, uid, ids, context=context):
+            # cancel associated document:
+            for wiz_line in wiz.pb_lines:
+                if wiz_line.doc_model in ('purchase.order', 'sale.order', 'tender'):
+                    for order in self.pool.get(wiz_line.doc_model).browse(cr, uid, [wiz_line.doc_id], context=context):
+                        for line in order.order_line:
+                            wf_service.trg_validate(uid, line._name, line.id, 'cancel', cr)
+
             return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=True, context=context)
 
         return True
