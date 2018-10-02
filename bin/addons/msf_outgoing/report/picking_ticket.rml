@@ -140,8 +140,8 @@
                     <para style="HeaderInfosTitle">Total items:</para>
                 </td>
                 <td>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</para>
+                    <parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</parawrap>
+                    <parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</parawrap>
                     <para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.packing_list or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>

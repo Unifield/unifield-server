@@ -126,7 +126,7 @@
               <para style="P4"><i>Supplier Packing List</i></para>
             </td>
             <td>
-              <para style="P3"><i>[[ stock_picking.packing_list or ' ' ]]</i></para>
+              <parawrap style="P3"><i>[[ stock_picking.packing_list or ' ' ]]</i></parawrap>
             </td>
           </tr>
           <tr>

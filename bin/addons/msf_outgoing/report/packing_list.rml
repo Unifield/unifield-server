@@ -123,9 +123,9 @@
                             <para style="HeaderInfosTitle"><font color="blue"> </font></para>
                         </td>
                         <td>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ p['ppl'].packing_list or '-' ]]</para>
+                            <parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</parawrap>
+                            <parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</parawrap>
+                            <parawrap style="HeaderInfosValue">[[ p['ppl'].packing_list or '-' ]]</parawrap>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(p['ppl'].date[0:10], date=True) ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(objects[0].shipment_expected_date[0:10], date=True) ]]</para>
