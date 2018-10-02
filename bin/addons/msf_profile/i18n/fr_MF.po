@@ -102145,6 +102145,11 @@ msgstr "Volume\\nTotal[dm³]"
 msgid "Weight\\nP.P.[KG]"
 msgstr "Poids\\nP.C.[KG]"
 
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Total\\nWeight[KG]"
+msgstr "Poids\\nTotal[KG]"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/sale_order.py:257
 #: code:addons/msf_doc_import/tender.py:288

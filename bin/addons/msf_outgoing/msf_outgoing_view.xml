@@ -1286,7 +1286,7 @@
 									<field name="pack_type"/>
 									<field name="total_volume" string="Total\nVolume[dm³]"/>
 									<field name="weight" string="Weight\nP.P.[KG]"/>
-									<field name="total_weight" string="Weight\nP.P.[KG]"/>
+									<field name="total_weight" string="Total\nWeight[KG]"/>
 									<field name="amount" />
 									<field name="total_amount" />
 									<field name="currency_id" />
