@@ -21,6 +21,7 @@
             <field name="total_height"></field>
             <field name="total_length"></field>
             <field name="total_width"></field>
+            <field name="packing_list"></field>
             <field name="message_esc1"></field>
             <field name="message_esc2"></field>
         % for l in o.move_lines:
@@ -45,7 +46,6 @@
                 % else:
                 <field name="expired_date"></field>
                 % endif
-                <field name="packing_list"></field>
                 <field name="message_esc1"></field>
                 <field name="message_esc2"></field>
             </record>

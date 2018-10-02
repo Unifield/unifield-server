@@ -45,8 +45,6 @@ LINES_COLUMNS = [
     (_('Currency'), 'price_currency_id', 'mandatory'),
     (_('Batch'), 'prodlot_id', ''),
     (_('Expiry Date'), 'expired_date', ''),
-    (_('Qty. p.p.'), 'qty_pp', ''),
-    (_('Packing List'), 'packing_list', ''),
     (_('ESC message 1'), 'message_esc1', ''),
     (_('ESC message 2'), 'message_esc2', ''),
 ]
@@ -69,19 +67,17 @@ PACK_HEADER = [
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
     (_('Weight*'), 'total_weight', 'mandatory', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
-    (_('Height'), 'total_height', '', 'float'),
-    (_('Length'), 'total_length', '', 'float',),
-    (_('Width'), 'total_width', '', 'float'),
-    ('', '', '', ''),
-    ('', '', '', ''),
-    ('', '', '', ''),
+    (_('Height'), 'total_height', '', 'float', 10),
+    (_('Length'), 'total_length', '', 'float', 10),
+    (_('Width'), 'total_width', '', 'float', 10),
+    (_('Packing List'), 'supplier_pl', '', ''),
     (_('ESC Message 1'), 'message_esc1', '', ''),
     (_('ESC Message 2'), 'message_esc2', '', ''),
 ]
 
 pack_header = [x[1] for x in PACK_HEADER if x[0]]
 pack_header_mandatory = [x[1] for x in PACK_HEADER if x[2] == 'mandatory']
-
+pack_coeff = dict((x[1], x[4]) for x in PACK_HEADER if len(x) == 5)
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
@@ -131,6 +127,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines',
                                         readonly=True),
+        'extra_info': fields.text('Extra Info'),
         'nb_treated_lines': fields.integer(string='Nb treated lines',
                                            readonly=True),
         'percent_completed': fields.float(string='Percent completed',
@@ -677,12 +674,13 @@ Nothing has been imported because of %s. See below:
                 '''
                 file_lines = {}
                 file_in_lines = {}
+                data_per_pack = {}
                 new_in_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
 
                 x = NB_OF_HEADER_LINES + 1
-                pack_sequences = []
+                pack_sequences = {}
                 pack_id = False
                 while x < len(values) + 1:
                     not_ok = False
@@ -695,8 +693,10 @@ Nothing has been imported because of %s. See below:
                             pack_info = {'wizard_id': wiz.id}
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
+                                if pack_coeff.get(key):
+                                    pack_info[key] = pack_info[key] * pack_coeff[key]
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            pack_sequences.setdefault(pack_info.get('supplier_pl', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
                         x += 2
 
                     if pack_id:
@@ -782,6 +782,8 @@ Nothing has been imported because of %s. See below:
                             prodlot_cache[product_id].setdefault(tools.ustr(vals['prodlot_id']), exp_value)
 
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, pack_id)
+                    if pack_id:
+                        data_per_pack.setdefault(pack_id, []).append(file_lines[x])
 
                     x += 1
                 '''
@@ -796,12 +798,24 @@ Nothing has been imported because of %s. See below:
                 '''
 
                 if pack_sequences:
-                    self.pool.get('ppl.processor').check_sequences(cr, uid, pack_sequences, pack_info_obj)
-                    pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences]), ('integrity_status', '!=', 'empty')], context=context)
-                    if pack_errors_ids:
-                        pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
-                        for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                            values_header_errors.append("Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                    uom_ids = uom_obj.search(cr, uid, [])
+                    uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))
+                    ppl_processor = self.pool.get('ppl.processor')
+                    self.write(cr, uid, wiz.id, {'extra_info': _('There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created') % {'num_pl': len(pack_sequences)}}, context=context)
+                    for ppl in pack_sequences:
+                        ppl_processor.check_sequences(cr, uid, pack_sequences[ppl], pack_info_obj)
+                        for pack_d in pack_sequences[ppl]:
+                            num_of_pack = pack_d[1] -  pack_d[0] + 1
+                            if num_of_pack:
+                                for line in data_per_pack.get(pack_d[2], []):
+                                    if line[3]:
+                                        ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3], pack_info_obj)
+
+                        pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)
+                        if pack_errors_ids:
+                            pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
+                            for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
+                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.supplier_pl or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
 
 
                 to_del = []
@@ -1124,6 +1138,7 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
         'total_height': fields.float('Height', digits=(16,2)),
         'total_length': fields.float('Length', digits=(16,2)),
         'total_width': fields.float('Width', digits=(16,2)),
+        'supplier_pl': fields.char('Supplier Packing List', size=30),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
     }
 
@@ -1560,8 +1575,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
 
-            # Packing list
-            write_vals['imp_packing_list'] = values.get('packing_list')
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')
@@ -1602,6 +1615,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
+                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'supplier_pl'])
+                write_vals['imp_packing_list'] = '%(supplier_pl)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
 
             self.write(cr, uid, [line.id], write_vals, context=context)
 

@@ -65,6 +65,7 @@
                         <page string="Information">
                             <field name="nb_file_lines" />
                             <field name="nb_treated_lines" />
+                            <field name="extra_info" widget="full_text" nolabel="1" attrs="{'invisible': [('with_pack', '!=', True)]}" colspan="4"/>
                         </page>
 
 

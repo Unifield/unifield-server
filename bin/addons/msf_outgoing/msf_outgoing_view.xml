@@ -156,6 +156,7 @@
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
+					<field name="supplier_pl"/>
 					<field name="incoming_id" />
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
@@ -200,9 +201,10 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="supplier_pl" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
@@ -396,6 +398,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+                        <field name="supplier_pl" />
                         <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
@@ -554,6 +557,7 @@
 					<field name="partner_id2"/>
 					<field name="backorder_id" />
 					<field name="origin"/>
+                    <field name="supplier_pl" />
 					<field name="reason_type_id" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pack Date" />
@@ -597,6 +601,7 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="supplier_pl" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}"/>
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
 								   domain="[('partner_id', '=', partner_id2)]"
@@ -632,11 +637,9 @@
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" />
 									<field name="asset_id" />
 									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
-									<field name="kc_dg" />
 									<field name="location_id" string="Src. Loc" />
 									<field name="location_dest_id" string="Dest. Loc" />
 									<field name="qty_per_pack" />
@@ -757,6 +760,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+						<field name="supplier_pl" />
 						<field name="reason_type_id" widget="selection" />
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
 						<field name="date" />
@@ -1262,6 +1266,7 @@
 									<field name="fake_state" invisible="True" />
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
+                                    <field name="supplier_pl" />
                                     <field name="description_ppl" />
 									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
 									<field name="from_pack"/>
@@ -1416,6 +1421,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
                         <field name="picking_ids" />
+                        <field name="supplier_pl" />
                         <field name="date" widget="date" />
                         <newline/>
                         <field name="shipment_expected_date" widget="date" />

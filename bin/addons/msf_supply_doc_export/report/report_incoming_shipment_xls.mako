@@ -143,9 +143,7 @@
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Height')}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Length')}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Width')}</Data></Cell>
-    <Cell ss:StyleID="s64"/>
-    <Cell ss:StyleID="s64"/>
-    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Packing List')}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
    </Row>
@@ -159,9 +157,7 @@
     <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
-    <Cell ss:StyleID="s67"/>
-    <Cell ss:StyleID="s67"/>
-    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
    </Row>
@@ -179,8 +175,6 @@
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Expiry date')}</Data></Cell>
-        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Qty. p.p.')}</Data></Cell>
-        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Packing List')}</Data></Cell>
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
     </Row>
@@ -200,8 +194,6 @@
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>

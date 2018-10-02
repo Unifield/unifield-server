@@ -24,7 +24,7 @@ from osv import osv
 from tools.translate import _
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
-
+from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 import threading
 
 
@@ -36,7 +36,7 @@ class in_family_processor(osv.osv):
     _name = 'in.family.processor'
     _description = 'IN family'
     _rec_name = 'from_pack'
-
+    _order = 'supplier_pl, from_pack'
     _columns = {
         'name': fields.char('IN family', size=64),
         'wizard_id': fields.many2one(
@@ -58,6 +58,7 @@ class in_family_processor(osv.osv):
         'height': fields.float(digits=(16, 2), string='Height [cm]'),
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         'volume': fields.float('Volume', digits=(16,2)),
+        'supplier_pl': fields.char('Supplier Packing List', size=30),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -613,80 +614,23 @@ class stock_incoming_processor(osv.osv):
         return data
 
 
-    def check_sequences(self, cr, uid, sequences, in_move_obj, context=None):
-        """
-        check pack sequences integrity
-        sequences is a list of tuples: [(from, to, internal_id), ...]
-        """
-        if context is None:
-            context = {}
-
-        missing_ids = []
-        to_smaller_ids = []
-        overlap_ids = []
-        gap_ids = []
-        # Sort the sequence according to from value
-        sequences = sorted(sequences, key=lambda seq: seq[0])
-
-        # Rule #1, the first from value must be equal o 1
-        if sequences[0][0] != 1:
-            missing_ids.append(sequences[0][2])
-
-        # Go through the list of sequences applying the rules
-        for i in range(len(sequences)):
-            seq = sequences[i]
-            # Rules #2-#3 applies from second element
-            if i > 0:
-                # Previous sequence
-                seqb = sequences[i - 1]
-                # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
-                if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
-                    overlap_ids.append(seq[2])
-                # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
-                    if seq[0] < seqb[1] + 1:
-                        overlap_ids.append(seq[2])
-                    if seq[0] > seqb[1] + 1:
-                        gap_ids.append(seq[2])
-            # rule #4: to[i] >= from[i]
-            if not (seq[1] >= seq[0]):
-                to_smaller_ids.append(seq[2])
-
-        in_move_ids = [s[2] for s in sequences]
-        in_move_obj.write(cr, uid, in_move_ids, {'sequence_issue': 'empty'}, context=context)
-
-        ok = True
-        if missing_ids:
-            in_move_obj.write(cr, uid, missing_ids, {'sequence_issue': 'missing_1'}, context=context)
-            ok = False
-        if to_smaller_ids:
-            in_move_obj.write(cr, uid, to_smaller_ids, {'sequence_issue': 'to_smaller_than_from'}, context=context)
-            ok = False
-        if overlap_ids:
-            in_move_obj.write(cr, uid, overlap_ids, {'sequence_issue': 'overlap'}, context=context)
-            ok = False
-        if gap_ids:
-            in_move_obj.write(cr, uid, gap_ids, {'sequence_issue': 'gap'}, context=context)
-            ok = False
-
-        return ok
-
-
     def check_before_creating_pack_lines(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        sequence_ok_ids = []
         sequence_ok = True
         for wizard in self.browse(cr, uid, ids, context=context):
             total_qty = 0
-            sequences = []
+            sequences = {}
             for move in wizard.move_ids:
                 total_qty += move.quantity
-                sequences.append((move.from_pack, move.to_pack, move.id))
-                sequence_ok_ids.append(move.id)
+                if move.quantity:
+                    sequences.setdefault(move.supplier_pl, []).append((move.from_pack, move.to_pack, move.id))
+                    num_of_packs = move.to_pack - move.from_pack + 1
+                    if num_of_packs:
+                        sequence_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', context=False)
                 if move.integrity_status and move.integrity_status != 'empty':
                     raise osv.except_osv(
                         _('Error'),
@@ -700,9 +644,10 @@ class stock_incoming_processor(osv.osv):
                 )
             if not sequences:
                 return False
-            sequence_ok = sequence_ok and self.check_sequences(cr, uid, sequences, self.pool.get('stock.move.in.processor'))
-            if not sequence_ok:
-                return False
+            for pl in sequences:
+                sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
+        if not sequence_ok:
+            return False
 
         return True
 
@@ -718,27 +663,29 @@ class stock_incoming_processor(osv.osv):
 
             families_data = {}
             for sm_in_proc in wizard.move_ids:
-                key = 'f%st%s' % (sm_in_proc.from_pack, sm_in_proc.to_pack)
-                families_data.setdefault(key, {
-                    'wizard_id': wizard.id,
-                    'move_ids': [],
-                    'from_pack': sm_in_proc.from_pack,
-                    'to_pack': sm_in_proc.to_pack,
-                })
-                families_data[key]['move_ids'].append(sm_in_proc.id)
+                if sm_in_proc.quantity:
+                    key = 'pl%sf%st%s' % (sm_in_proc.supplier_pl,sm_in_proc.from_pack, sm_in_proc.to_pack)
+                    families_data.setdefault(key, {
+                        'wizard_id': wizard.id,
+                        'move_ids': [],
+                        'from_pack': sm_in_proc.from_pack,
+                        'to_pack': sm_in_proc.to_pack,
+                        'supplier_pl': sm_in_proc.supplier_pl,
+                    })
+                    families_data[key]['move_ids'].append(sm_in_proc.id)
 
             for family_data in families_data.values():
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
 
-                pack_count = 0
-                if family_data.get('from_pack') and family_data.get('to_pack'):
-                    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
+                #pack_count = 0
+                #if family_data.get('from_pack') and family_data.get('to_pack'):
+                #    pack_count = family_data.get('to_pack') - family_data.get('from_pack') + 1
 
                 for move in self.pool.get('stock.move.in.processor').browse(cr, uid, move_ids, context=context):
                     family_data.update({
-                        'weight': move.weight / pack_count,
+                        'weight': move.weight,
                         'height': move.height,
                         'length': move.length,
                         'width': move.width,
@@ -826,8 +773,9 @@ class stock_incoming_processor(osv.osv):
                     'total_width': fam.width,
                     'total_volume': fam.volume,
                     'integrity_status': fam.integrity_status,
+                    'supplier_pl': fam.supplier_pl,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight', 'supplier_pl']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
@@ -857,7 +805,7 @@ class stock_move_in_processor(osv.osv):
 
     def _get_integrity_status(self, cr, uid, ids, field_name, args, context=None):
         res = super(stock_move_in_processor, self)._get_integrity_status(cr, uid, ids, field_name, args, context=context)
-        for move in self.browse(cr, uid, ids, context=context):
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['sequence_issue'], context=context):
             if res.get(move.id, '') == 'empty' and move.sequence_issue and move.sequence_issue != 'empty':
                 res[move.id] = move.sequence_issue
         return res
@@ -1189,7 +1137,8 @@ class stock_move_in_processor(osv.osv):
         'length': fields.float('Length', digits=(16,2)),
         'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
-        'sequence_issue': fields.selection(INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
+        'supplier_pl': fields.char('Supplier Packing List', size=30),
+        'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
     }
 

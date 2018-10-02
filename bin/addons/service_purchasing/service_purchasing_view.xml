@@ -118,7 +118,7 @@
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_tree" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//field[@name='origin']" position="after">
+                    <xpath expr="//field[@name='supplier_pl']" position="after">
                         <field name="order_category" />
                     </xpath>
                 </data>
@@ -147,7 +147,7 @@
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_search" />
             <field name="arch" type="xml">
                 <data>
-                    <field name="origin" position="after">
+                    <field name="supplier_pl" position="after">
                         <field name="order_category" />
                     </field>
                     <filter string="Partner" position="after">
@@ -166,7 +166,7 @@
             <field name="inherit_id" ref="msf_outgoing.view_ppl_tree" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//field[@name='origin']" position="after">
+                    <xpath expr="//field[@name='supplier_pl']" position="after">
                         <field name="order_category" />
                     </xpath>
                 </data>
@@ -195,7 +195,7 @@
             <field name="inherit_id" ref="msf_outgoing.view_ppl_search" />
             <field name="arch" type="xml">
                 <data>
-                    <field name="origin" position="after">
+                    <field name="supplier_pl" position="after">
                         <field name="order_category" />
                     </field>
                     <filter string="Partner" position="after">
