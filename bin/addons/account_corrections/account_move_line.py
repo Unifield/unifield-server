@@ -582,12 +582,27 @@ receivable, item have not been corrected, item have not been reversed and accoun
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
 
-    def update_account_on_st_line(self, cr, uid, ids, account_id=None, context=None):
+    def _get_third_party_fields(self, third_party):
         """
-        Update the account from the statement line attached if different
+        Returns the partner_id, employee_id, transfer_journal_id corresponding to the third_party in parameter
         """
-        # Some verifications
-        if not context:
+        partner_id = False
+        employee_id = False
+        transfer_journal_id = False
+        if third_party:
+            if third_party._table_name == 'res.partner':
+                partner_id = third_party.id
+            elif third_party._table_name == 'hr.employee':
+                employee_id = third_party.id
+            elif third_party._table_name == 'account.journal':
+                transfer_journal_id = third_party.id
+        return partner_id, employee_id, transfer_journal_id
+
+    def update_st_line(self, cr, uid, ids, account_id=None, third_party=None, context=None):
+        """
+        Update the account of the statement line, and the Third Party ONLY IF it is not None
+        """
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -595,6 +610,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
             raise osv.except_osv(_('Warning'), _('No account_id given. No update on account will be done.'))
         # Prepare some values
         absl_obj = self.pool.get('account.bank.statement.line')
+        cor_vals = {'account_id': account_id}
+        if third_party is not None:  # if None: no correction on Third Party should be made
+            partner_id, employee_id, transfer_journal_id = self._get_third_party_fields(third_party)
+            cor_vals.update({
+                'partner_id': partner_id,
+                'employee_id': employee_id,
+                'transfer_journal_id': transfer_journal_id,
+            })
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
             # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
@@ -607,17 +630,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     # US-303: only update the statement line that links to this move line
                     if st_line.cash_return_move_line_id:
                         if st_line.cash_return_move_line_id.id == ml.id:
-                            absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                            absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                             # we informs new move line that it have correct a statement line
                             self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
                             break
                     elif not st_line.from_cash_return: #US-1044: only update the account on line if the regline is not cash return!
                         #US-303: If not the case, then we inform the new move line that it has corrected a statement line
-                        absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                        absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                         self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
             # if not, this move line should have a direct link to a register line
             elif ml.statement_id and ml.corrected_st_line_id:
-                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
+                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], cor_vals, context=context)
         return True
 
     def correct_aml(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, new_third_party=None, context=None):
@@ -774,16 +797,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             elif ml.analytic_distribution_id:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
             if new_third_party is not None:  # if None: no correction on Third Party should be made
-                new_partner_id = False
-                new_employee_id = False
-                new_transfer_journal_id = False
-                if new_third_party:
-                    if new_third_party._table_name == 'res.partner':
-                        new_partner_id = new_third_party.id
-                    elif new_third_party._table_name == 'hr.employee':
-                        new_employee_id = new_third_party.id
-                    elif new_third_party._table_name == 'account.journal':
-                        new_transfer_journal_id = new_third_party.id
+                new_partner_id, new_employee_id, new_transfer_journal_id = self._get_third_party_fields(new_third_party)
                 cor_vals.update({
                     'partner_id': new_partner_id,
                     'employee_id': new_employee_id,
@@ -801,7 +815,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 
             # UFTP-119: Reverted a code that has been commented out in UF-2231 without explanation, and which caused the problem of updating back the Reg line
             if ml.statement_id:
-                self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
+                self.update_st_line(cr, uid, [ml.id], new_account_id, third_party=new_third_party, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
