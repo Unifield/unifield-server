@@ -22,6 +22,7 @@
 					<field name="destination_address" />
 					<field name="weight" />
 					<field name="specific_information" />
+                    <field name="packing_list" />
 				</tree>
 			</field>
 		</record>
@@ -43,6 +44,7 @@
 							<field name="destination_address" />
 							<field name="weight" />
 							<field name="specific_information" />
+                            <field name="packing_list" />
 						</page>
 						<page string="Notes">
 							<field name="notes" nolabel="True" />
@@ -606,7 +608,7 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}"/>
+                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
 								   domain="[('partner_id', '=', partner_id2)]"

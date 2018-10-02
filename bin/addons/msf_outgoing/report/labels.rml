@@ -85,7 +85,7 @@
         <para style="P7">[[repeatIn(range(1,stock_picking.num_of_packs+1),'titi')]]</para>
         <blockTable colWidths="150.0,230.0" style="Table6">
           <tr>
-            <td><image x="0" y="0" height="79.95" width="150">[[ company.logo or removeParentNode('image') ]]</image></td>
+            <td><image x="0" y="0" height="79.95" width="150">[[ stock_picking.ppl_customize_label.logo and company.logo or removeParentNode('image') ]]</image></td>
             <td></td>
           </tr>
           <tr>
@@ -122,10 +122,11 @@
           </tr>
           <tr> 
             <td>
-              <para style="P4"><i>Packing List</i></para>
+             [[ stock_picking.ppl_customize_label.packing_list or removeParentNode('tr') ]]
+              <para style="P4"><i>Supplier Packing List</i></para>
             </td>
             <td>
-              <para style="P3"><i>[[ stock_picking.packing_list or removeParentNode('tr') ]]</i></para>
+              <para style="P3"><i>[[ stock_picking.packing_list or ' ' ]]</i></para>
             </td>
           </tr>
           <tr>

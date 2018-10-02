@@ -1922,6 +1922,7 @@ class ppl_customize_label(osv.osv):
                 # 'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
                 'specific_information': fields.boolean(string='Specific Information'),
                 'logo': fields.boolean(string='Company Logo'),
+                'packing_list': fields.boolean(string='Supplier Packing List'),
                 }
 
     _defaults = {'name': 'My Customization',
@@ -1937,6 +1938,7 @@ class ppl_customize_label(osv.osv):
                  # 'expedition_parcel_number': True,
                  'specific_information': True,
                  'logo': True,
+                 'packing_list': False,
                  }
 
 ppl_customize_label()
@@ -2767,6 +2769,19 @@ class stock_picking(osv.osv):
                 return res['last_value']
         return False
 
+    def get_packing_list_label(self, cr, uid, context=None):
+        try:
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'default_label_packing_list')[1]
+        except:
+            return False
+
+    def change_packing_list(self, cr, uid, ids, pl, context=None):
+        if pl:
+            label = self.get_packing_list_label(cr, uid, context=context)
+            if label:
+                return {'value': {'ppl_customize_label': label}}
+        return {}
+
     def create(self, cr, uid, vals, context=None):
         '''
         creation of a stock.picking of subtype 'packing' triggers
@@ -2790,6 +2805,11 @@ class stock_picking(osv.osv):
 
         if context is None:
             context = {}
+
+        if vals.get('packing_list'):
+            label = self.get_packing_list_label(cr, uid, context=context)
+            if label:
+                vals['ppl_customize_label'] = label
 
         if context.get('sync_update_execution', False) or context.get('sync_message_execution', False):
             # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert.
