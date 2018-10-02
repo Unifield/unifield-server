@@ -31129,12 +31129,6 @@ msgstr "Délai Fournisseur "
 msgid "Allocatable"
 msgstr "Attribuable"
 
-#. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:538
-#, python-format
-msgid "You can't modify the Analytic Distribution at the same time as the account and/or the Third Party."
-msgstr "Vous ne pouvez pas modifier la Distribution Analytique en même temps que le compte et/ou le Tiers."
-
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:493
 msgid "Total Project - %used"
@@ -31857,10 +31851,10 @@ msgid "Field Order Line %s of %s has already been sourced from order. Impossible
 msgstr "Field Order Line %s of %s has already been sourced from order. Impossible to forward the claim."
 
 #. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:415
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:551
 #, python-format
-msgid "No account changed!"
-msgstr "Pas de compte changé!"
+msgid "No change made!"
+msgstr "Aucun changement effectué !"
 
 #. modules: stock_override, stock
 #: help:stock.move,prodlot_id:0
@@ -37214,12 +37208,6 @@ msgstr "Africa/Maseru"
 #: field:stock.location,chained_location_type:0
 msgid "Chained Location Type"
 msgstr "Type de Zone Liée"
-
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:863
-#, python-format
-msgid "No account found for this partner!"
-msgstr "Pas de compte trouvé pour ce partenaire!"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -45382,12 +45370,6 @@ msgstr "cost.center.distribution.line"
 #: field:res.partner.address,partner_id:0
 msgid "Partner Name"
 msgstr "Nom du Partenaire"
-
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:821
-#, python-format
-msgid "No new partner_id given!"
-msgstr "Pas de nouveau partner_id fournie!"
 
 #. module: product_attributes
 #: view:product.where.used:0

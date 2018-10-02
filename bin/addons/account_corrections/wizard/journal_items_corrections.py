@@ -408,14 +408,12 @@ class journal_items_corrections(osv.osv_memory):
 
     def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context=None):
         """
-        Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
+        Compare an account move line to a wizard journal items corrections line regarding 2 fields:
          - account_id (1)
          - partner_type (partner_id, employee_id or transfer_journal_id) (2)
-         - analytic_distribution_id (4)
         Then return the sum.
         """
-        # Verifications
-        if not context:
+        if context is None:
             context = {}
         if not old_line_id or not new_line_id:
             raise osv.except_osv(_('Error'), _('An ID is missing!'))
@@ -429,20 +427,10 @@ class journal_items_corrections(osv.osv_memory):
         new_account = new_line.account_id and new_line.account_id.id or False
         old_third_party = old_line.partner_id or old_line.employee_id or old_line.transfer_journal_id or False
         new_third_party = new_line.partner_id or new_line.employee_id or new_line.transfer_journal_id or False
-        old_distrib = old_line.analytic_distribution_id and old_line.analytic_distribution_id.id or False
-        new_distrib = new_line.analytic_distribution_id and new_line.analytic_distribution_id.id or False
         if cmp(old_account, new_account):
             res += 1
         if cmp(old_third_party, new_third_party):
             res += 2
-        if cmp(old_distrib, new_distrib):
-            # UFTP-1187
-            if old_line.account_id.is_analytic_addicted and \
-                    new_account.account_id.is_analytic_addicted:
-                # tolerate this diff (no +4)
-                # if we correct an account with no AD required to a new account
-                # with AD required or from AD required to no AD
-                res += 4
         return res
 
     # UF-2056: Delete reverse button
@@ -550,10 +538,7 @@ class journal_items_corrections(osv.osv_memory):
         new_lines = wizard.to_be_corrected_ids
         # compare lines
         comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
-        # Result
-        res = [] # no result yet
-        # Major correction that will generate REV/COR, i.e. correction on G/L account and/or Third Party
-        if 0 < comparison <= 3:
+        if 1 <= comparison <= 3:  # corr. on account and 3d Party are currently handled the same way (REV/COR generated)
             if new_lines[0].partner_txt_only:
                 # prevent change on 3d Party if the 3d Party of the initial line hasn't been synched to the current
                 # instance (=> only partner_txt exists)
@@ -563,11 +548,7 @@ class journal_items_corrections(osv.osv_memory):
             res = aml_obj.correct_aml(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id,
                                       new_third_party=new_tp, context=context)
             if not res:
-                raise osv.except_osv(_('Error'), _('No account changed!'))
-        elif comparison == 4:
-            raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
-        elif comparison > 4:
-            raise osv.except_osv(_('Error'), _("You can't modify the Analytic Distribution at the same time as the account and/or the Third Party."))
+                raise osv.except_osv(_('Error'), _('No change made!'))
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
