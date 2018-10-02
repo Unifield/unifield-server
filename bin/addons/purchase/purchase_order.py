@@ -2215,7 +2215,7 @@ class purchase_order(osv.osv):
                     raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
                 for pol in order_id.order_line:
                     if pol.state not in ('done', 'cancel', 'cancel_r'):
-                        wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
+                        wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'cancel', cr)
 
         return True
 

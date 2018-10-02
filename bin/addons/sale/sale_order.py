@@ -1621,13 +1621,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for order_id in self.browse(cr, uid, ids, context=context):
                 for sol in order_id.order_line:
                     if sol.state not in ('done', 'cancel', 'cancel_r'):
-                        if not wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'done', cr):
+                        if not wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'cancel', cr):
                             # sol are in 'exception' state, this is causing issue when UF is trying to compute the SO state ...
-                            cr.execute("update sale_order_line set state = 'done' where id = %s" % sol.id)
-                self.write(cr, uid, [order_id.id], {'state': 'done'}, context=context)
-                if self.read(cr, uid, order_id.id, ['state'])['state'] != 'done':
-                    # idk why but sometimes the write statement doesn't update the SO state ...
-                    cr.execute("update sale_order set state = 'done' where id = %s" % order_id.id)
+                            cr.execute("update sale_order_line set state = 'cancel' where id = %s" % sol.id)
+                self.write(cr, uid, [order_id.id], {'state': 'cancel'}, context=context)
+                if self.read(cr, uid, order_id.id, ['state'])['state'] != 'cancel':
+                    # idk why but sometimes the write statement doesn't update the SO state
+                    cr.execute("update sale_order set state = 'cancel' where id = %s" % order_id.id)
 
         return True
 
