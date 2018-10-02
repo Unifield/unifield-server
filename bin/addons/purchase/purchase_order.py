@@ -2202,41 +2202,20 @@ class purchase_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
 
-            # Done picking
-            for pick in order.picking_ids:
-                if pick.state not in ('cancel', 'done'):
-                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
-
             # Done loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
                 so_obj.set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
-        # Done stock moves
-        move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
-        move_obj.set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
-
-        # Cancel all procurement ordes which have generated one of these PO
-        proc_ids = self.pool.get('procurement.order').search(cr, uid, [('purchase_id', 'in', ids)], context=context)
-        for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
-            if proc.move_id and proc.move_id.id:
-                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
-            wf_service.trg_validate(uid, 'procurement.order', proc.id, 'subflow.cancel', cr)
-
         if all_doc:
             # Detach the PO from his workflow and set the state to done
             for order_id in self.browse(cr, uid, ids, context=context):
-                if order_id.rfq_ok and order_id.state == 'draft':
-                    wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
-                elif order_id.tender_id:
+                if order_id.tender_id:
                     raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
-                else:
-                    wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
-                    # Search the method called when the workflow enter in last activity
-                    wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
-                    activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                    _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
+                for pol in order_id.order_line:
+                    if pol.state not in ('done', 'cancel', 'cancel_r'):
+                        wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'cancel', cr)
 
         return True
 
