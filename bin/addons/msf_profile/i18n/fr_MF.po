@@ -2839,6 +2839,7 @@ msgstr "Modèles de Plans de Comptes"
 #: selection:product.price.type,field:0
 #: field:product.template,volume:0
 #: report:msf.freight_manifest:0
+#: field:in.family.processor,volume:0
 #, python-format
 msgid "Volume"
 msgstr "Volume"
@@ -8764,6 +8765,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:tender,state:0
 #: selection:tender.line,line_state:0
 #: selection:tender.line,state:0
+#: field:internal.picking.processor,draft:0
+#: field:outgoing.delivery.processor,draft:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -16909,6 +16912,8 @@ msgstr ","
 #: report:delivery.order:0
 #: report:internal.move:0
 #: field:stock.location.chained.options,dest_location_id:0
+#: view:manage.expired.stock:0
+#: field:manage.expired.stock,dest_loc_id:0
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -19755,6 +19760,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: report:delivery.order:0
 #: report:internal.move:0
 #: view:stock.move:0
+#: view:manage.expired.stock:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -65236,6 +65242,7 @@ msgstr "Zone - Stock"
 #: field:allocation.stock.setup,error_location_ids:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:85
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:193
+#: field:manage.expired.stock,location_id:0
 msgid "Location"
 msgstr "Zone"
 
@@ -65533,6 +65540,8 @@ msgstr "Etc/GMT-5"
 #: view:ppl.processor:0
 #: view:shipment.processor:0
 #: view:validate.picking.processor:0
+#: view:internal.picking.processor:0
+#: view:outgoing.delivery.processor:0
 msgid "Save as draft"
 msgstr "Sauvegarder brouillon"
 
@@ -69087,6 +69096,8 @@ msgstr "Fournisseur - Informations"
 #: view:shipment.processor:0
 #: view:stock.incoming.processor:0
 #: view:validate.picking.processor:0
+#: view:internal.picking.processor:0
+#: view:outgoing.delivery.processor:0
 msgid "Reset"
 msgstr "Reset"
 
@@ -84564,8 +84575,9 @@ msgstr "Journalier"
 msgid "Instance stock val."
 msgstr "Instance stock val."
 
-#. module: base
+#. module: base, msf_doc_import
 #: view:ir.ui.view:0
+#: field:wizard.import.in.simulation.screen,extra_info:0
 msgid "Extra Info"
 msgstr "Information supplémentaire"
 
@@ -93654,11 +93666,12 @@ msgstr "----------------------------------------------------"
 msgid "Latvian / latviešu valoda"
 msgstr "Letton / latviešu valoda"
 
-#. modules: purchase, sale, procurement_request, stock
+#. modules: purchase, sale, procurement_request, stock, msf_outgoing
 #: view:sale.order:0
 #: view:purchase.order:0
 #: view:sale.order:0
 #: view:physical.inventory:0
+#: view:stock.picking:0
 msgid "Show all"
 msgstr "Tout afficher"
 
@@ -101342,6 +101355,26 @@ msgstr "Vérifier Disponibilité des produits expirés"
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
+#: selection:wizard.import.in.line.simulation.screen,integrity_status:0
+#: selection:create.picking.move.processor,integrity_status:0
+#: selection:internal.move.processor,integrity_status:0
+#: selection:outgoing.delivery.move.processor,integrity_status:0
+#: selection:stock.move.in.processor,integrity_status:0
+#: selection:stock.move.in.processor,sequence_issue:0
+#: selection:stock.move.memory.families,integrity_status:0
+#: selection:stock.move.memory.in,integrity_status:0
+#: selection:stock.move.memory.out,integrity_status:0
+#: selection:stock.move.memory.picking,integrity_status:0
+#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.ppl,integrity_status:0
+#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.returnproducts,integrity_status:0
+#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.shipment.create,integrity_status:0
+#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
+#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
+#: selection:stock.move.processor,integrity_status:0
+#: selection:validate.move.processor,integrity_status:0
 msgid "The quantity per pack must be an integer for this UoM"
 msgstr "La quantité par paquet doit être un entier pour cette UdM"
 
@@ -101349,6 +101382,26 @@ msgstr "La quantité par paquet doit être un entier pour cette UdM"
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
+#: selection:wizard.import.in.line.simulation.screen,integrity_status:0
+#: selection:create.picking.move.processor,integrity_status:0
+#: selection:internal.move.processor,integrity_status:0
+#: selection:outgoing.delivery.move.processor,integrity_status:0
+#: selection:stock.move.in.processor,integrity_status:0
+#: selection:stock.move.in.processor,sequence_issue:0
+#: selection:stock.move.memory.families,integrity_status:0
+#: selection:stock.move.memory.in,integrity_status:0
+#: selection:stock.move.memory.out,integrity_status:0
+#: selection:stock.move.memory.picking,integrity_status:0
+#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.ppl,integrity_status:0
+#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.returnproducts,integrity_status:0
+#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
+#: selection:stock.move.memory.shipment.create,integrity_status:0
+#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
+#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
+#: selection:stock.move.processor,integrity_status:0
+#: selection:validate.move.processor,integrity_status:0
 msgid "The quantity per pack must be a multiple of UoM's rounding"
 msgstr "La quantité par paquet doit être un multiple de l'arrondi de l'UdM"
 
@@ -101935,3 +101988,171 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Order\\nCategory"
+msgstr "Catégorie\\nCommande"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1614
+#, python-format
+msgid "%s Line %s: %s"
+msgstr "%s Ligne %s: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:284
+#, python-format
+msgid "%s line #%s cannot be confirmed"
+msgstr "%s ligne #%s ne peut pas être confirmée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:289
+#, python-format
+msgid "%s: %s out of %s lines have been confirmed"
+msgstr "%s: %s sur %s lignes ont été confirmées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1784
+#, python-format
+msgid "%s: Line #%s has been split."
+msgstr "%s: Ligne #%s a été scindée.""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1816
+#, python-format
+msgid "%s: New line #%s created."
+msgstr "%s: Nouvelle ligne #%s créée.""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1688
+#, python-format
+msgid "%s: error on line %s %s"
+msgstr "%s: erreur à la ligne %s %s"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Expected\\nPack Date"
+msgstr "Date Prévue\\nde Colisage"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Expected\\nPick Date"
+msgstr "Date Prévue\\nde Picking"
+
+#. module: msf_outgoing
+#: field:stock.move,ppl_returned_ok:0
+msgid "Has been returned ?"
+msgstr "A été retrourné ?"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:455
+#, python-format
+msgid "Header info fields must be the following: %s"
+msgstr "Les champs de l'en-tête doivent être: %s"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Hide returned"
+msgstr "Cacher les retours"
+
+#. module: stock
+#: field:physical.inventory.discrepancy,inv_state:0
+msgid "Inventory state"
+msgstr "Statut de l'Inventaire"
+
+#. module: msf_outgoing
+#: field:stock.move.in.processor,split_move_ok:0
+msgid "Is split move ?"
+msgstr "Est un mouvement scindé ?"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:3820
+#, python-format
+msgid "Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed"
+msgstr "Ligne %s :: Vous ne pouvez pas traiter une quantité supérieure à la quantié du mouvement - La ligne a peut être déjà été traitée "
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/report/packing_list.py:90
+#, python-format
+msgid "No PPL to export !"
+msgstr "Aucune LPC à exporter!"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Our Order Reference:"
+msgstr "Notre Référence de Commande"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1491
+#, python-format
+msgid "Product %s not found in database"
+msgstr "Produit %s non trouvé"
+
+#. module: stock
+#: view:manage.expired.stock:0
+msgid "Select the locations"
+msgstr "Sélectionner les zones"
+
+#. module: msf_printed_documents
+#: code:addons/msf_printed_documents/report/freight_manifest.py:95
+#, python-format
+msgid "Supplier PL"
+msgstr "PL Fournisseur"
+
+#. modules: msf_doc_import, msf_outgoing, stock
+#: field:wizard.import.in.pack.simulation.screen,packing_list:0
+#: field:in.family.processor,packing_list:0
+#: report:labels:0
+#: field:pack.family.memory,packing_list:0
+#: field:ppl.customize.label,packing_list:0
+#: field:shipment,packing_list:0
+#: field:stock.move.in.processor,packing_list:0
+#: field:stock.picking,packing_list:0
+msgid "Supplier Packing List"
+msgstr "Packing List Fournisseur"
+
+#. module: msf_outgoing
+#: report:empty.picking.ticket:0
+#: report:packing.list:0
+#: report:picking.ticket:0
+msgid "Supplier Packing List:"
+msgstr "Packing List Fournisseur:"
+
+#. module: stock
+#: help:manage.expired.stock,dest_loc_id:0
+msgid "The requested Destination Location"
+msgstr "La zone de destination demandée"
+
+#. module: stock
+#: help:manage.expired.stock,location_id:0
+msgid "The requested Location"
+msgstr "La zone demandée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:804
+#, python-format
+msgid "There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created"
+msgstr "Le fichier d’import IN contient %(num_pl)d Packing lists: quand vous confirmerez l’import, %(num_pl)d PICK et %(num_pl)d PPL seront créés"
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Total\\nVolume[dm³]"
+msgstr "Volume\\nTotal[dm³]"
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Weight\\nP.P.[KG]"
+msgstr "Poids\\nP.C.[KG]"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/sale_order.py:257
+#: code:addons/msf_doc_import/tender.py:288
+#, python-format
+msgid "You have to select a product UOM in the same category than the purchase UOM of the product"
+msgstr "Vous devez sélectionner une UdM du produit dans la même catégorie que l'unité de mesure de l'achat du produit"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Your Order Reference:"
+msgstr "Votre Référence de Commande:"
