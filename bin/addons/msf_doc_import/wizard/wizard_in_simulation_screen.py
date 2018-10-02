@@ -991,6 +991,8 @@ Nothing has been imported because of %s. See below:
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
+                    if wiz.with_pack:
+                        can_be_imported = False
 
                 header_values['message'] = message
                 header_values['state'] = can_be_imported and 'simu_done' or 'error'
