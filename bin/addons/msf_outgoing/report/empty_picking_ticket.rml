@@ -39,6 +39,12 @@
             <blockValign value="TOP" />
         </blockTableStyle>
 
+        <blockTableStyle id="HeaderInfos2">
+            <blockLeading length="0" />
+            <blockBottomPadding length="0" />
+            <blockTopPadding length="0" />
+        </blockTableStyle>
+
         <blockTableStyle id="HeaderBigInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
@@ -152,12 +158,30 @@
         <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderInfos">
             <tr>
                 <td>
-                    <para style="HeaderInfosTitle">Requester Ref:      [[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]</para>
-                    <para style="HeaderInfosTitle">Our Ref:                [[ pt.sale_id and pt.sale_id.name or '' ]]</para>
-                    <para style="HeaderInfosTitle">FO Date:               [[ pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or '' ]]</para>
-                    <para style="HeaderInfosTitle">Packing Date:       [[ pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or '' ]]</para>
-                    <para style="HeaderInfosTitle">RTS Date:             [[ pt.sale_id and formatLang(pt.sale_id.ready_to_ship_date, date=True) or '' ]]</para>
-                    <para style="HeaderInfosTitle">Transport mode:  [[ pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or '' ]]</para>
+                    <blockTable colWidths="100.0,200.0" style="HeaderInfos2">
+                    <tr>
+                    <td><para style="HeaderInfosTitle">Requester Ref:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]</para></td>
+                    </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">Our Ref:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.name or '' ]]</para></td>
+                    </tr>
+                    <tr>
+
+                    <td><para style="HeaderInfosTitle">Supplier Packing List:</para></td><td><para style="HeaderInfosTitle">[[ pt.packing_list or '' ]]</para></td>
+                    </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">FO Date:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or '' ]]</para></td>
+                    </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">Packing Date:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or '' ]]</para></td>
+                    </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">RTS Date:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and formatLang(pt.sale_id.ready_to_ship_date, date=True) or '' ]]</para></td>
+                    </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">Transport mode:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or '' ]]</para></td>
+                    </tr>
+                    </blockTable>
                 </td>
                 <td>
                     [[ repeatIn(getShipper(), 'ship', 'td') ]]

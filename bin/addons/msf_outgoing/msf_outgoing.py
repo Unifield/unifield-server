@@ -155,7 +155,7 @@ class shipment(osv.osv):
                 'total_volume': 0.0,
                 'state': 'draft',
                 'backshipment_id': False,
-                'supplier_pl': False,
+                'packing_list': False,
             }
             result[shipment['id']] = default_values
             current_result = result[shipment['id']]
@@ -252,7 +252,7 @@ class shipment(osv.osv):
                 result.append(packing['shipment_id'][0])
         return result
 
-    def _search_supplier_pl(self, cr, uid, obj, name, args, context=None):
+    def _search_packing_list(self, cr, uid, obj, name, args, context=None):
         ret_ids = self.pool.get('pack.family.memory').search(cr, uid, args, context=context)
         return [('pack_family_memory_ids', 'in', ret_ids)]
 
@@ -373,7 +373,7 @@ class shipment(osv.osv):
             'shipment_id',
             string='Associated Packing List',
         ),
-        'supplier_pl': fields.function(_vals_get, method=True, type='char', multi='get_vals', string='Supplier Packing List', fnct_search=_search_supplier_pl),
+        'packing_list': fields.function(_vals_get, method=True, type='char', multi='get_vals', string='Supplier Packing List', fnct_search=_search_packing_list),
         'in_ref': fields.char(string='IN Reference', size=1024),
         'is_company': fields.function(
             _get_is_company,
@@ -5311,7 +5311,7 @@ class pack_family_memory(osv.osv):
                 to_pack as to_pack,
                 array_agg(m.id) as move_lines,
                 min(from_pack) as from_pack,
-                min(supplier_pl) as supplier_pl,
+                min(packing_list) as packing_list,
                 case when to_pack=0 then 0 else to_pack-min(from_pack)+1 end as num_of_packs,
                 p.sale_id as sale_order_id,
                 case when p.subtype = 'ppl' then p.id else p.previous_step_id end as ppl_id,
@@ -5413,7 +5413,7 @@ class pack_family_memory(osv.osv):
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         # functions
         'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
-        'supplier_pl': fields.char('Supplier Packing List', size=30),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'fake_state': fields.function(_vals_get, method=True, type='char', String='Fake state', multi='get_vals'),
         'state': fields.selection(selection=[
             ('draft', 'Draft'),

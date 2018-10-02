@@ -36,7 +36,7 @@ class in_family_processor(osv.osv):
     _name = 'in.family.processor'
     _description = 'IN family'
     _rec_name = 'from_pack'
-    _order = 'supplier_pl, from_pack'
+    _order = 'packing_list, from_pack'
     _columns = {
         'name': fields.char('IN family', size=64),
         'wizard_id': fields.many2one(
@@ -58,7 +58,7 @@ class in_family_processor(osv.osv):
         'height': fields.float(digits=(16, 2), string='Height [cm]'),
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         'volume': fields.float('Volume', digits=(16,2)),
-        'supplier_pl': fields.char('Supplier Packing List', size=30),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'integrity_status': fields.selection(
             string='Integrity status',
             selection=[
@@ -627,7 +627,7 @@ class stock_incoming_processor(osv.osv):
             for move in wizard.move_ids:
                 total_qty += move.quantity
                 if move.quantity:
-                    sequences.setdefault(move.supplier_pl, []).append((move.from_pack, move.to_pack, move.id))
+                    sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
                     num_of_packs = move.to_pack - move.from_pack + 1
                     if num_of_packs:
                         sequence_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', context=False)
@@ -664,13 +664,13 @@ class stock_incoming_processor(osv.osv):
             families_data = {}
             for sm_in_proc in wizard.move_ids:
                 if sm_in_proc.quantity:
-                    key = 'pl%sf%st%s' % (sm_in_proc.supplier_pl,sm_in_proc.from_pack, sm_in_proc.to_pack)
+                    key = 'pl%sf%st%s' % (sm_in_proc.packing_list,sm_in_proc.from_pack, sm_in_proc.to_pack)
                     families_data.setdefault(key, {
                         'wizard_id': wizard.id,
                         'move_ids': [],
                         'from_pack': sm_in_proc.from_pack,
                         'to_pack': sm_in_proc.to_pack,
-                        'supplier_pl': sm_in_proc.supplier_pl,
+                        'packing_list': sm_in_proc.packing_list,
                     })
                     families_data[key]['move_ids'].append(sm_in_proc.id)
 
@@ -773,9 +773,9 @@ class stock_incoming_processor(osv.osv):
                     'total_width': fam.width,
                     'total_volume': fam.volume,
                     'integrity_status': fam.integrity_status,
-                    'supplier_pl': fam.supplier_pl,
+                    'packing_list': fam.packing_list,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight', 'supplier_pl']:
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight', 'packing_list']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)
@@ -1137,7 +1137,7 @@ class stock_move_in_processor(osv.osv):
         'length': fields.float('Length', digits=(16,2)),
         'width': fields.float('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
-        'supplier_pl': fields.char('Supplier Packing List', size=30),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
     }

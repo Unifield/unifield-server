@@ -109,11 +109,12 @@
                 </para>
 
                 <!-- Shipment header values -->
-                <blockTable colWidths="80.0,170.0,140.0,145.0,140.0,145.0" style="HeaderInfos">
+                <blockTable colWidths="100.0,150.0,140.0,145.0,140.0,145.0" style="HeaderInfos">
                     <tr>
                         <td>
                             <para style="HeaderInfosTitle">Your Ref.:</para>
                             <para style="HeaderInfosTitle">Our Ref.:</para>
+                            <para style="HeaderInfosTitle">Supplier Packing List:</para>
                             <para style="HeaderInfosTitle">FO Date:</para>
                             <para style="HeaderInfosTitle">Packing date:</para>
                             <para style="HeaderInfosTitle">RTS date:</para>
@@ -124,6 +125,7 @@
                         <td>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</para>
+                            <para style="HeaderInfosValue">[[ p['ppl'].packing_list or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '-' ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(p['ppl'].date[0:10], date=True) ]]</para>
                             <para style="HeaderInfosValue">[[ formatLang(objects[0].shipment_expected_date[0:10], date=True) ]]</para>

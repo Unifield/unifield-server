@@ -70,7 +70,7 @@ PACK_HEADER = [
     (_('Height'), 'total_height', '', 'float', 10),
     (_('Length'), 'total_length', '', 'float', 10),
     (_('Width'), 'total_width', '', 'float', 10),
-    (_('Packing List'), 'supplier_pl', '', ''),
+    (_('Packing List'), 'packing_list', '', ''),
     (_('ESC Message 1'), 'message_esc1', '', ''),
     (_('ESC Message 2'), 'message_esc2', '', ''),
 ]
@@ -694,9 +694,9 @@ Nothing has been imported because of %s. See below:
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
                                 if pack_coeff.get(key):
-                                    pack_info[key] = pack_info[key] * pack_coeff[key]
+                                    pack_info[key] = float(pack_info[key]) * pack_coeff[key]
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.setdefault(pack_info.get('supplier_pl', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
                         x += 2
 
                     if pack_id:
@@ -815,7 +815,7 @@ Nothing has been imported because of %s. See below:
                         if pack_errors_ids:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.supplier_pl or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
 
 
                 to_del = []
@@ -1138,7 +1138,7 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
         'total_height': fields.float('Height', digits=(16,2)),
         'total_length': fields.float('Length', digits=(16,2)),
         'total_width': fields.float('Width', digits=(16,2)),
-        'supplier_pl': fields.char('Supplier Packing List', size=30),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
     }
 
@@ -1615,8 +1615,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
-                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'supplier_pl'])
-                write_vals['imp_packing_list'] = '%(supplier_pl)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
+                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
+                write_vals['imp_packing_list'] = '%(packing_list)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
 
             self.write(cr, uid, [line.id], write_vals, context=context)
 

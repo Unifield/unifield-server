@@ -1458,7 +1458,7 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('In progress'),
                 }, context=context)
                 pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
-                for pack in pack_obj.read_group(cr, uid, [('id', 'in', all_pack_info.keys())], ['supplier_pl'], ['supplier_pl'], offset=0, orderby='supplier_pl'):
+                for pack in pack_obj.read_group(cr, uid, [('id', 'in', all_pack_info.keys())], ['packing_list'], ['packing_list'], offset=0, orderby='packing_list'):
                     pack_ids = pack_obj.search(cr, uid, pack['__domain'], context=context)
 
                     move_to_process_ids = self.pool.get('stock.move').search(cr, uid,
@@ -1487,8 +1487,8 @@ class stock_picking(osv.osv):
 
                         # Validate sub pick
                         new_pick = res_wiz['res_id']
-                        if  pack['supplier_pl']:
-                            self.pool.get('stock.picking').write(cr, uid, [new_pick], {'supplier_pl': pack['supplier_pl']}, context=context)
+                        if  pack['packing_list']:
+                            self.pool.get('stock.picking').write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
                         pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
                         self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
                         ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
