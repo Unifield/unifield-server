@@ -143,9 +143,6 @@ class reserved_products_wizard(osv.osv):
             if i == len(lines) - 1:
                 lines_data.insert(index, line_sum)
 
-        if not lines_data:
-            raise osv.except_osv(_('Error'), _('No data found with these parameters'))
-
         return {'loc_name': loc_name, 'prod_name': prod_name, 'lines_data': lines_data}
 
     def export_reserved_products_report_xls(self, cr, uid, ids, context=None):
@@ -155,9 +152,32 @@ class reserved_products_wizard(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if wiz.location_id and wiz.product_id:
+            cr.execute('''
+                SELECT COUNT(id) FROM stock_move 
+                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
+                    AND location_id = %s AND product_id = %s''', (wiz.location_id.id, wiz.product_id.id))
+        elif wiz.location_id and not wiz.product_id:
+            cr.execute('''
+                SELECT COUNT(id) FROM stock_move 
+                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
+            ''', (wiz.location_id.id,))
+        elif not wiz.location_id and wiz.product_id:
+            cr.execute('''
+                SELECT COUNT(id) FROM stock_move 
+                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
+            ''', (wiz.product_id.id,))
+        else:
+            cr.execute('''
+                SELECT COUNT(id) FROM stock_move 
+                WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
+            ''')
+        nb_res = cr.fetchall()
+        if nb_res[0][0] == 0:
+            raise osv.except_osv(_('Error'), _('No data found with these parameters'))
+
         file_name = _('%s-Product reservation report - excel export') % (datetime.today().strftime('%Y%m%d'),)
-        datas = self.get_lines_data(cr, uid, ids, context=context)
-        datas['target_filename'] = file_name
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': file_name,
@@ -169,7 +189,7 @@ class reserved_products_wizard(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'reserved.products.report_xls',
-            'datas': datas,
+            'datas': {'wizard_id': ids, 'target_filename': file_name},
             'context': context,
         }
 

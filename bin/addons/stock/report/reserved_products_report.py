@@ -29,12 +29,17 @@ class reserved_products_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(reserved_products_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
+            'initData': self.init_data,
             'getInstanceName': self.get_instance_name,
             'getDate': self.get_date,
             'getLoc': self.get_loc,
             'getProd': self.get_prod,
             'getLines': self.get_lines,
         })
+
+    def init_data(self):
+        wiz_obj = self.pool.get('reserved.products.wizard')
+        self._datas = wiz_obj.get_lines_data(self.cr, self.uid, self.datas['wizard_id'], context=self.localcontext)
 
     def get_instance_name(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
@@ -43,13 +48,13 @@ class reserved_products_report(report_sxw.rml_parse):
         return datetime.date.today()
 
     def get_loc(self):
-        return self.datas['loc_name']
+        return self._datas['loc_name']
 
     def get_prod(self):
-        return self.datas['prod_name']
+        return self._datas['prod_name']
 
     def get_lines(self):
-        return self.datas['lines_data']
+        return self._datas['lines_data']
 
 
 SpreadsheetReport(

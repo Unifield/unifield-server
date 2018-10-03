@@ -2769,11 +2769,16 @@ class ir_values(osv.osv):
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
             Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
+            Reserved = trans_obj.tr_view(cr, 'Reserved Products', context)
             for v in values:
-                if key == 'action' and v[1] in move_accepted_values[key2]:
+                if context.get('_terp_view_name', False) == Reserved:
+                    if v[1] == 'wizard_reserved_products_export':
+                        new_values.append(v)
+                elif key == 'action' and v[1] in move_accepted_values[key2]:
                     new_values.append(v)
                 elif context.get('_terp_view_name', False) == Destruction_Report:
-                    new_values.append(v)
+                    if v[1] != 'wizard_reserved_products_export':
+                        new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
             for v in values:

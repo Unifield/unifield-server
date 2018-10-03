@@ -94,9 +94,9 @@
 <ss:Worksheet ss:Name="${_('Reserved Products Excel Export')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Location
-        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Product code
-        <Column ss:AutoFitWidth="1" ss:Width="135.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="145.25" />
         ## Product description
         <Column ss:AutoFitWidth="1" ss:Width="260.25" />
         ## UoM
@@ -117,6 +117,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="85.0" />
 
         ## WORKSHEET HEADER
+
+        ${initData()}
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('PRODUCT RESERVATION REPORT')|x}</Data></Cell>
