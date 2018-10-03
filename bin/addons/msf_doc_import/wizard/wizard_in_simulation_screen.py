@@ -695,7 +695,7 @@ Nothing has been imported because of %s. See below:
                                 pack_info[key] = values[x].get(key)
                                 if pack_coeff.get(key):
                                     pack_info[key] = float(pack_info[key]) * pack_coeff[key]
-                            if len(pack_info.get('packing_list', '')) > 30:
+                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
                             pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
@@ -1620,6 +1620,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
                 pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
+                if not pack_info_data['packing_list']:
+                    pack_info_data['packing_list'] = ''
                 write_vals['imp_packing_list'] = '%(packing_list)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
 
             self.write(cr, uid, [line.id], write_vals, context=context)
