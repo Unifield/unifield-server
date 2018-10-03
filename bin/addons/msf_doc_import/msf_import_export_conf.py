@@ -474,6 +474,9 @@ MODEL_DATA_DICT = {
             'parent_id.code',
             'type',
             'date_start',
+            'date',  # "inactive from"
+            'cost_center_ids',
+            'instance_id.code',
         ],
         'required_field_list': [
             'name',
