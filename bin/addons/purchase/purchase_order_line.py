@@ -521,7 +521,7 @@ class purchase_order_line(osv.osv):
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
         'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
-        'original_price': fields.float('Original Price'),
+        'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),

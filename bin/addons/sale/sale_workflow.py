@@ -562,6 +562,10 @@ class sale_order_line(osv.osv):
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'
                 to_write['po_cft'] = False
+            to_write['original_product'] = sol.product_id.id
+            to_write['original_qty'] = sol.product_uom_qty
+            to_write['original_price'] = sol.price_unit
+            to_write['original_uom'] = sol.product_uom.id
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
@@ -577,11 +581,6 @@ class sale_order_line(osv.osv):
                     to_write['type'] = 'make_to_stock'
 
             elif sol.order_id.procurement_request:  # in case of IR
-                to_write['original_product'] = sol.product_id.id
-                to_write['original_qty'] = sol.product_uom_qty
-                to_write['original_price'] = sol.price_unit
-                to_write['original_uom'] = sol.product_uom.id
-
                 self.check_product_or_nomenclature(cr, uid, ids, context=context)
 
             if to_write:
@@ -611,7 +610,6 @@ class sale_order_line(osv.osv):
 
         return True
 
-
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         Workflow method called when SO line is getting the cancel state
@@ -624,7 +622,11 @@ class sale_order_line(osv.osv):
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
 
         context.update({'no_check_line': True})
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        vals = {'state': 'cancel'}
+        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context)
+        if so_line and (so_line[0].order_id.fo_created_by_po_sync or so_line[0].state != 'draft'):
+            vals.update({'cancelled_by_sync': True})
+        self.write(cr, uid, ids, vals, context=context)
         context.pop('no_check_line')
 
         # generate sync message:
@@ -634,7 +636,6 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
-
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
@@ -649,7 +650,11 @@ class sale_order_line(osv.osv):
         resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
 
         context.update({'no_check_line': True})
-        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        vals = {'state': 'cancel_r'}
+        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context)
+        if so_line and (so_line[0].order_id.fo_created_by_po_sync or so_line[0].state != 'draft'):
+            vals.update({'cancelled_by_sync': True})
+        self.write(cr, uid, ids, vals, context=context)
         context.pop('no_check_line')
 
         # generate sync message for original FO line:

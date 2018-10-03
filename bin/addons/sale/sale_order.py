@@ -1940,9 +1940,10 @@ class sale_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
-                    or (line.original_qty and line.product_uom_qty != line.original_qty) \
-                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
+            if (line.order_id.procurement_request or line.order_id.fo_created_by_po_sync or line.state != 'draft')\
+                    and (line.modification_comment or line.created_by_sync or line.cancelled_by_sync
+                    or (line.original_qty and line.product_uom_qty != line.original_qty)
+                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id)):
                 changed = True
 
             res[line.id] = changed
@@ -2022,7 +2023,7 @@ class sale_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
         'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
-        'original_price': fields.float('Original Price'),
+        'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Sale Price Computation')),
         'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
@@ -2842,11 +2843,15 @@ class sale_order_line(osv.osv):
         pricelist = False
         order_id = vals.get('order_id', False)
         if order_id:
-            order_data = self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request', 'pricelist_id'], context)
+            order_data = self.pool.get('sale.order').\
+                read(cr, uid, order_id, ['procurement_request', 'pricelist_id', 'fo_created_by_po_sync'], context)
             if order_data['procurement_request']:
                 vals.update({'cost_price': vals.get('cost_price', False)})
             if order_data['pricelist_id']:
                 pricelist = order_data['pricelist_id'][0]
+            # New line created out of synchro on a FO/IR created by synchro
+            if order_data['fo_created_by_po_sync'] and not context.get('sync_message_execution'):
+                vals.update({'created_by_sync': True})
 
         # force the line creation with the good state, otherwise track changes for order state will
         # go back to draft (US-3671):
