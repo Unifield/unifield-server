@@ -101941,3 +101941,9 @@ msgstr "Numéro du Bon d'Engagement"
 #, python-format
 msgid "Cost Center \"%s\" not found."
 msgstr "Centre de Coût \"%s\" non trouvé."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:963
+#, python-format
+msgid "Account/Destination \"%s\" not found."
+msgstr "Association Compte/Destination \"%s\" non trouvée."

@@ -476,6 +476,7 @@ MODEL_DATA_DICT = {
             'date_start',
             'date',  # "inactive from"
             'cost_center_ids',
+            'tuple_destination_account_ids',
             'instance_id.code',
         ],
         'required_field_list': [

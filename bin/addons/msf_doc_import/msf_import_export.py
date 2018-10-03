@@ -631,6 +631,8 @@ class msf_import_export(osv.osv_memory):
         cr = pooler.get_db(dbname).cursor()
         model = MODEL_DICT[import_brw.model_list_selection]['model']
         impobj = self.pool.get(model)
+        acc_obj = self.pool.get('account.account')
+        acc_dest_obj = self.pool.get('account.destination.link')
 
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
@@ -930,19 +932,38 @@ class msf_import_export(osv.osv_memory):
                 # Analytic Accounts
                 if import_brw.model_list_selection == 'analytic_accounts':
                     # Cost Centers
-                    if not data.get('category', '') == 'FUNDING' or not data.get('cost_center_ids'):
-                        data['cost_center_ids'] = [(6, 0, [])]
-                    else:
-                        cc_ids = []
-                        for cc in data.get('cost_center_ids').split(','):
-                            cc = cc.strip()
+                    if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
+                        cc_list = []
+                        for cost_center in data.get('cost_center_ids').split(','):
+                            cc = cost_center.strip()
                             cc_dom = [('category', '=', 'OC'), '|', ('code', '=', cc), ('name', '=', cc)]
-                            cc_id = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
-                            if cc_id:
-                                cc_ids.append(cc_id[0])
+                            cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            if cc_ids:
+                                cc_list.append(cc_ids[0])
                             else:
                                 raise Exception(_('Cost Center "%s" not found.') % cc)
-                        data['cost_center_ids'] = [(6, 0, cc_ids)]
+                        data['cost_center_ids'] = [(6, 0, cc_list)]
+                    else:
+                        data['cost_center_ids'] = [(6, 0, [])]
+                    # Account/Destination
+                    if data.get('tuple_destination_account_ids') and data.get('category', '') == 'FUNDING':
+                        dest_acc_list = []
+                        for destination_account in data.get('tuple_destination_account_ids').split(','):
+                            dest_acc_ids = []
+                            dest_acc = destination_account.strip().split()  # ex: ['65000', 'EXP']
+                            if len(dest_acc) == 2:
+                                gl_acc_ids = acc_obj.search(cr, uid, [('code', '=', dest_acc[0])], limit=1, context=context)
+                                dest_ids = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', dest_acc[1])], limit=1, context=context)
+                                if gl_acc_ids and dest_ids:
+                                    acc_dest_dom = [('account_id', '=', gl_acc_ids[0]), ('destination_id', '=', dest_ids[0])]
+                                    dest_acc_ids = acc_dest_obj.search(cr, uid, acc_dest_dom, limit=1, context=context)
+                            if dest_acc_ids:
+                                dest_acc_list.append(dest_acc_ids[0])
+                            else:
+                                raise Exception(_('Account/Destination "%s" not found.') % destination_account.strip())
+                        data['tuple_destination_account_ids'] = [(6, 0, dest_acc_list)]
+                    else:
+                        data['tuple_destination_account_ids'] = [(6, 0, [])]
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
