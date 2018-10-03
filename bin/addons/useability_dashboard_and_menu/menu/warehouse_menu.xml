@@ -107,6 +107,12 @@
                   sequence="23"
                   action="mission_stock.mission_stock_wizard_action" />
 
+        <menuitem name="Reserved Products"
+                  id="stock.reserved_products_menu"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="23"
+                  action="stock.reserved_products_action" />
+
         <menuitem name="Last Product Inventories"
                   parent="stock.menu_stock_inventory_control"
                   action="stock.action_stock_line_date"

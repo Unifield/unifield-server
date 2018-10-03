@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="view_reserved_products_search" model="ir.ui.view">
+            <field name="name">stock.move.reserved.products.search</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field eval="100" name="priority"/>
+            <field name="arch" type="xml">
+                <search string="Reserved Products">
+                    <group col="4" colspan="4">
+                        <field name="location_id" />
+                        <field name="product_id" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_reserved_products_tree" model="ir.ui.view">
+            <field name="name">stock.move.reserved.products.tree</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field eval="101" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Moves" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                    <field name="location_id" />
+                    <field name="product_id" />
+                    <field name="prodlot_id" />
+                    <field name="expired_date" />
+                    <field name="product_qty" string="Reserved Qty" />
+                    <field name="picking_id" string="Document" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock.reserved_products_action" model="ir.actions.act_window">
+            <field name="name">Reserved Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_reserved_products_search" />
+            <field name="view_id" ref="view_reserved_products_tree" />
+            <field name="domain">[('state', '=', 'assigned'), ('product_qty', '>', 0.00), ('type', 'in', ['internal', 'out'])]</field>
+            <field name="context">{'group_by': ['location_id', 'product_id', 'prodlot_id']}</field>
+        </record>
+
+        <act_window id="wizard_reserved_products_export"
+            name="Export Reserved Products Report"
+            res_model="reserved.products.wizard"
+            src_model="stock.move"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="wizard_reserved_products_form_view"
+            empty_ids="1"
+        />
+    </data>
+</openerp>
