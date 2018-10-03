@@ -646,7 +646,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if wiz.purchase_id.name not in origin:
+                if origin and wiz.purchase_id.name not in origin:
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
