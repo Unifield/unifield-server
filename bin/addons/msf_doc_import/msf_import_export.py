@@ -930,17 +930,18 @@ class msf_import_export(osv.osv_memory):
                 # Analytic Accounts
                 if import_brw.model_list_selection == 'analytic_accounts':
                     # Cost Centers
-                    if not data.get('cost_center_ids'):
+                    if not data.get('category', '') == 'FUNDING' or not data.get('cost_center_ids'):
                         data['cost_center_ids'] = [(6, 0, [])]
                     else:
                         cc_ids = []
                         for cc in data.get('cost_center_ids').split(','):
                             cc = cc.strip()
                             cc_dom = [('category', '=', 'OC'), '|', ('code', '=', cc), ('name', '=', cc)]
-                            cc_id = self.pool.get('account.analytic.account').search(cr, uid, cc_dom, order='id',
-                                                                                     limit=1, context=context)
+                            cc_id = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
                             if cc_id:
                                 cc_ids.append(cc_id[0])
+                            else:
+                                raise Exception(_('Cost Center "%s" not found.') % cc)
                         data['cost_center_ids'] = [(6, 0, cc_ids)]
 
                 if import_brw.model_list_selection == 'record_rules':
