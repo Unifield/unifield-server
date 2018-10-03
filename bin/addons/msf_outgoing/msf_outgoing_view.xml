@@ -1316,6 +1316,7 @@
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
 								<field name="is_company" invisible="1" />
+								<field name="num_of_packs" invisible="1" />
                                 <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" context="{'from_button': True}" />
 								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" icon="gtk-cancel" />
@@ -1323,9 +1324,9 @@
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" />
+                                        attrs="{'invisible': ['|','|', '&amp;', ('num_of_packs', '=', 0), ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|', '|', ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
+                                        attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
