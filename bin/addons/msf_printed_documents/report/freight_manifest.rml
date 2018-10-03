@@ -115,7 +115,7 @@
 
 
             <blockAlignment value="LEFT" />
-            <blockVAlign value="MIDDLE"  />
+            <blockValign value="MIDDLE"  />
             <blockBackground colorName="silver"  />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5"  />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />

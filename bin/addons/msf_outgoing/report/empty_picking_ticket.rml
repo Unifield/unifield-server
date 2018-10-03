@@ -43,6 +43,7 @@
             <blockLeading length="0" />
             <blockBottomPadding length="0" />
             <blockTopPadding length="0" />
+            <blockValign value="MIDDLE" />
         </blockTableStyle>
 
         <blockTableStyle id="HeaderBigInfos">

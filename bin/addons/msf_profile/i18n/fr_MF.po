@@ -27029,7 +27029,7 @@ msgstr "No available IN found for the given PO %s"
 #: report:packing.list:0
 #: report:labels:0
 msgid "Parcel No:"
-msgstr " Numéro de la Parcelle:"
+msgstr "No. Parcelle:"
 
 #. module: object_query
 #: view:object.query:0
@@ -82821,7 +82821,7 @@ msgstr "Champ Objet"
 #. module: msf_outgoing
 #: report:labels:0
 msgid "Our Pre Packing List Reference:"
-msgstr "Notre Référence Liste de Pré-Colisage:"
+msgstr "N/ Réf. Liste Pé-Colisage:"
 
 #. module: stock
 #: help:stock.location,posx:0
@@ -88075,7 +88075,7 @@ msgstr "Jobs with error"
 #: code:addons/stock/product.py:375
 #, python-format
 msgid "Received Qty"
-msgstr " Qté Receptionée"
+msgstr "Qté Receptionée"
 
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_labels_tree
@@ -102081,7 +102081,7 @@ msgstr "Aucune LPC à exporter!"
 #. module: msf_outgoing
 #: report:labels:0
 msgid "Our Order Reference:"
-msgstr "Notre Référence de Commande"
+msgstr "N/ Réf. de Commande:"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1491
@@ -102103,7 +102103,6 @@ msgstr "PL Fournisseur"
 #. modules: msf_doc_import, msf_outgoing, stock
 #: field:wizard.import.in.pack.simulation.screen,packing_list:0
 #: field:in.family.processor,packing_list:0
-#: report:labels:0
 #: field:pack.family.memory,packing_list:0
 #: field:ppl.customize.label,packing_list:0
 #: field:shipment,packing_list:0
@@ -102116,6 +102115,7 @@ msgstr "Packing List Fournisseur"
 #: report:empty.picking.ticket:0
 #: report:packing.list:0
 #: report:picking.ticket:0
+#: report:labels:0
 msgid "Supplier Packing List:"
 msgstr "Packing List Fournisseur:"
 
@@ -102160,4 +102160,10 @@ msgstr "Vous devez sélectionner une UdM du produit dans la même catégorie que
 #. module: msf_outgoing
 #: report:labels:0
 msgid "Your Order Reference:"
-msgstr "Votre Référence de Commande:"
+msgstr "V/ Réf. de Commande:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:697
+#, python-format
+msgid "Packing List %s, max characters length is 30, found %s"
+msgstr "Packing List %s, taille max 30 caractères, présents %s"
