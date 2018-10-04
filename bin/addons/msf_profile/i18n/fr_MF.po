@@ -16260,7 +16260,12 @@ msgstr "unconsistent.stock.report"
 #. module: register_accounting
 #: report:cash.inventory:0
 msgid "CashBox Balance:"
-msgstr "Solde de Caisse "
+msgstr "Solde de Caisse :"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:508
+msgid "Bank Statement balance:"
+msgstr "Solde Registre de Banque :"
 
 #. modules: msf_outgoing, specific_rules
 #: code:addons/msf_outgoing/wizard/picking_processor.py:952
@@ -68420,7 +68425,7 @@ msgstr "Sequence issue"
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Gap:"
-msgstr "Écart"
+msgstr "Écart :"
 
 #. module: product_asset
 #: view:product.asset.event:0
@@ -71078,9 +71083,14 @@ msgid "Closing balance"
 msgstr "Solde de clôture"
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:508
-msgid "Closing balance:"
-msgstr "Solde de clôture :"
+#: report:addons/register_accounting/report/fully_report_xls.mako:512
+msgid "Closing Balance:"
+msgstr "Solde de Clôture :"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:510
+msgid "CashBox balance:"
+msgstr "Solde de Caisse :"
 
 #. modules: account, finance, account_voucher, account_override, analytic, register_accounting, msf_doc_import
 #: report:account.account.balance:0
@@ -84284,7 +84294,7 @@ msgstr "Done (%s/%s)"
 #. module: register_accounting
 #: report:cash.inventory:0
 msgid "Theoretical balance:"
-msgstr "Solde théorique"
+msgstr "Solde théorique :"
 
 #. module: msf_config_locations
 #: model:ir.actions.act_window,name:msf_config_locations.action_configurable_location_setup
