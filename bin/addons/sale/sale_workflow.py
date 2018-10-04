@@ -171,9 +171,6 @@ class sale_order_line(osv.osv):
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
                 }
-                if sol.procurement_request:
-                    sol_vals['date_planned'] = sol.date_planned
-
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
