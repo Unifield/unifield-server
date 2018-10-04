@@ -101935,3 +101935,14 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
+
+#. modules: stock_override, procurement_request
+#: report:procurement.request.report:0
+#: report:delivery.order:0
+msgid "Requestor :"
+msgstr "Demandeur :"
+
+#. module: msf_outgoing
+#: field:stock.picking,requestor:0
+msgid "Requestor"
+msgstr "Demandeur"

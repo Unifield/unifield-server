@@ -1458,6 +1458,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'subtype': 'standard',
                         'already_replicated': False,
                         'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
                 else:
