@@ -233,6 +233,13 @@ class sync_server_user_rights(osv.osv):
     def get_active_user_rights(self, cr, uid, context=None):
         return self.search(cr, uid, [('state', '=', 'confirmed')], context=context)
 
+    def get_last_user_rights_info(self, cr, uid, context=None):
+        ids = self.search(cr, uid, [('state', '=', 'confirmed')], context=context)
+        if not ids:
+            return {'name': False, 'sum': False}
+        data = self.read(cr, uid, ids[0], ['name', 'sum'], context=context)
+        return {'name': data['name'], 'sum': data['sum']}
+
     def activate(self, cr, uid, ids, context=None):
         rec = self.read(cr, uid, ids[0], ['zip_file'])
         plain_zip = decodestring(rec['zip_file'])
@@ -286,6 +293,11 @@ class sync_server_user_rights(osv.osv):
             'report_name': 'sync_server.user_rights.download',
             'datas': {'ids': [ids[0]], 'target_filename': name}
         }
+
+    def get_md5_zip(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.read(cr, uid, ids[0], ['zip_file'], context=context)['zip_file']
 
     def get_plain_zip(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):

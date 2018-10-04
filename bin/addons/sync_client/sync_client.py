@@ -50,6 +50,10 @@ from sync_common import WHITE_LIST_MODEL
 from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
+from base64 import decodestring, encodestring
+from cStringIO import StringIO
+from zipfile import ZipFile
+import csv
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -762,6 +766,130 @@ class Entity(osv.osv):
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
+    def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):
+        ur = {
+            'UAC': False,
+            'msf_button_access_rights.button_access_rule': [],
+            'ir.model.access': False,
+            'msf_field_access_rights.field_access_rule': False,
+            'msf_field_access_rights.field_access_rule_line': False,
+            'ir.rule': False,
+            'ir.actions.act_window': False,
+        }
+
+        expected_files = 9
+        z = ZipFile(zfile)
+        nb = 0
+        for f in z.infolist():
+            if f.filename.endswith('/'):
+                continue
+            nb += 1
+            if 'bar' in f.filename.lower():
+                ur['msf_button_access_rights.button_access_rule'].append(f.filename)
+            elif 'acl' in f.filename.lower():
+                ur['ir.model.access'] = f.filename
+            elif 'record rules' in f.filename.lower():
+                ur['ir.rule'] = f.filename
+            elif 'windows' in f.filename.lower():
+                ur['ir.actions.act_window'] = f.filename
+            elif f.filename.lower().endswith('xml'):
+                ur['UAC'] = f.filename
+            elif 'rule lines' in f.filename.lower():
+                ur['msf_field_access_rights.field_access_rule_line'] = f.filename
+            elif 'field access' in f.filename.lower():
+                ur['msf_field_access_rights.field_access_rule'] = f.filename
+            elif raise_error:
+                raise osv.except_osv(_('Warning !'), _('Extra file "%s" found in zip !') % (f.filename))
+
+        if raise_error:
+            if nb != expected_files:
+                raise osv.except_osv(_('Warning !'), _("%s files found, %s expected.") % (nb, expected_files))
+
+        z.close()
+
+        return ur
+
+    def install_user_rights(self, cr, uid, context=None):
+        if not context:
+            context = {}
+
+        logger = context.get('logger')
+        entity = self.get_entity(cr, uid, context)
+        encoded_zip = entity.user_rights_data
+        plain_zip = decodestring(encoded_zip)
+        zp = StringIO(plain_zip)
+
+        ur = self.unzip_file(cr, uid, zp, context=context)
+        z = ZipFile(zp)
+
+
+        if logger:
+            logger.append('Importing User Access from file')
+            logger.write()
+
+        uac_processor = self.pool.get('user.access.configurator')
+        f = z.open(ur['UAC'])
+        data = encodestring(f.read())
+        f.close()
+        wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
+        uac_processor.do_process_uac(cr, uid, [wiz_id])
+        # TODO: check error
+        for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
+            zip_to_import = ur[model]
+            if not isinstance(zip_to_import, list):
+                zip_to_import = [zip_to_import]
+
+            for zp_f in zip_to_import:
+                if logger:
+                    logger.append('Importing %s' % (zp_f))
+                    logger.write()
+
+                with z.open(zp_f, 'r') as csvfile:
+                    reader = csv.reader(csvfile, delimiter=',')
+                    fields = False
+                    data = []
+                    for row in reader:
+                        if not fields:
+                            fields = row
+                        else:
+                            data.append(row)
+                    ret = self.pool.get(model).import_data(cr, uid, fields, data, display_all_errors=False, has_header=True)
+                    if ret and ret[0] == -1:
+                        raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
+        z.close()
+        return True
+
+    @sync_process('user_rights')
+    def check_user_rights(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_US'
+        logger = context.get('logger')
+
+        entity = self.get_entity(cr, uid, context)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
+        if not res.get('sum'):
+            return True
+
+        to_install = False
+        if res.get('sum') != entity.user_rights_sum:
+            if logger:
+                logger.append(_("Download new User Rights: %s") % res.get('name'))
+                logger.write()
+            ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
+            ur_data = decodestring(ur_data_encoded)
+            computed_hash = hashlib.md5(ur_data).hexdigest()
+            if computed_hash != res.get('sum'):
+                raise Exception, 'User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum'))
+            entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
+            to_install = True
+
+        if to_install or entity.user_rights_state == 'to_install':
+            self.install_user_rights(cr, uid, context=context)
+            entity.write({'user_rights_state': 'installed'})
+        return True
+
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
         """
@@ -1200,6 +1328,7 @@ class Entity(osv.osv):
             logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
             # do not block sync
             pass
+        self.check_user_rights(cr, uid, context=context)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)

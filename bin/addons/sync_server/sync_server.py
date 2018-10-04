@@ -640,6 +640,21 @@ class sync_manager(osv.osv):
         Data synchronization
     """
     @check_validated
+    def get_last_user_rights_info(self, cr, uid, entity, context=None):
+        data = self.pool.get('sync_server.user_rights').get_last_user_rights_info(cr, uid, context)
+        self._logger.info("::::::::[%s] get UR info sum: %s" % (entity.name, data['sum']))
+        return data
+
+    @check_validated
+    def get_last_user_rights_file(self, cr, uid, entity, check_sum, context=None):
+        ur_obj = self.pool.get('sync_server.user_rights')
+        ids = ur_obj.search(cr, uid, [('sum', '=', check_sum)], context=context)
+        self._logger.info("::::::::[%s] donwload UR (sum: %s)" % (entity.name, check_sum))
+        if not ids:
+            return ''
+        return ur_obj.get_md5_zip(cr, uid, ids[0], context=context)
+
+    @check_validated
     def get_model_to_sync(self, cr, uid, entity, context=None):
         """
             Initialize a Push session, send the session id and the list of rule
