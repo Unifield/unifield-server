@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+<record id="manage_expired_stock_form_view" model="ir.ui.view">
+            <field name="name">manage.expired.stock.form.view</field>
+            <field name="model">manage.expired.stock</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Manage Expired Stock">
+                    <separator colspan="4" string="Select the locations" />
+                    <field name="location_id" string="Source Location" colspan="2" />
+                    <field name="dest_loc_id" string="Destination Location" colspan="2" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="create_int_expired_stock" string="Create Internal Move with expired stock"
+                            icon="terp-document-new" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock.action_manage_expired_stock" model="ir.actions.act_window">
+            <field name="name">Manage Expired Stock</field>
+            <field name="res_model">manage.expired.stock</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="stock.action_manage_expired_stock"
+                  id="stock.menu_action_manage_expired_stock"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="100"/>
+
+    </data>
+</openerp>

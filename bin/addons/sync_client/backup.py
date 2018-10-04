@@ -67,7 +67,7 @@ class BackupConfig(osv.osv):
         'aftermanualsync':fields.boolean('Backup after manual sync'),
         'afterautomaticsync':fields.boolean('Backup after automatic sync'),
         'scheduledbackup':fields.boolean('Scheduled backup'),
-        'beforepatching': fields.boolean('Before patching'),
+        'beforepatching': fields.boolean('Before patching', readonly=1),
         'cloud_date': fields.function(_get_bck_info, type='datetime', string='Last Cloud Date', method=True, multi='cloud'),
         'cloud_backup': fields.function(_get_bck_info, type='char', string='Last Cloud', method=True, multi='cloud'),
         'cloud_url': fields.function(_get_bck_info, type='char', string='Cloud URL', method=True, multi='cloud'),
@@ -84,7 +84,7 @@ class BackupConfig(osv.osv):
         'beforeautomaticsync' : True,
         'aftermanualsync' : True,
         'afterautomaticsync' : True,
-        'beforepatching': False,
+        'beforepatching': True,
     }
 
     def _send_to_cloud_bg(self, cr, uid, wiz_id, context=None):

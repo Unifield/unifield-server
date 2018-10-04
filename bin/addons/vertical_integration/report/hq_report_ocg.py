@@ -26,6 +26,10 @@ import pooler
 import zipfile
 from tempfile import NamedTemporaryFile
 import os
+from time import strptime
+
+import hq_report_ocb
+import hq_report_ocp
 
 from report import report_sxw
 
@@ -88,7 +92,51 @@ class hq_report_ocg(report_sxw.report_sxw):
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      currency.name]]
 
+    def _get_liquidity_balances(self, cr, uid, instance_ids, period, period_yyyymm, context=None):
+        """
+        Returns the content of the Liquidity Balances Report as a list of lists
+        """
+        if context is None:
+            context = {}
+        reg_types = ('cash', 'bank', 'cheque')
+        liquidity_balance_header = ['Instance',
+                                    'Code',
+                                    'Name',
+                                    'Period',
+                                    'Opening balance',
+                                    'Calculated balance',
+                                    'Closing balance',
+                                    'Currency']
+        liquidity_sql = hq_report_ocb.liquidity_sql
+        liquidity_params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.id, reg_types,
+                            period.date_stop, tuple(instance_ids))
+        cr.execute(liquidity_sql, liquidity_params)
+        liquidity_balance_lines = [list(lbl) for lbl in cr.fetchall()]
+        liquidity_balance_lines = hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, liquidity_balance_lines, context=context)
+        return [liquidity_balance_header] + liquidity_balance_lines
+
+    def _get_account_balances(self, cr, instance_ids, period, period_yyyymm):
+        """
+        Returns the content of the Account Balances Report as a list of lists
+        """
+        acc_balance_header = ['Instance',
+                              'Account',
+                              'Account Name',
+                              'Period',
+                              'Opening balance',
+                              'Calculated balance',
+                              'Closing balance',
+                              'Booking Currency']
+        acc_balance_sql = hq_report_ocp.account_balances_per_currency_sql
+        acc_balance_params = (tuple([period_yyyymm]), period.date_start, tuple(instance_ids), period.id,
+                              tuple(instance_ids), period.date_stop, tuple(instance_ids))
+        cr.execute(acc_balance_sql, acc_balance_params)
+        acc_balance_lines = [list(abl) for abl in cr.fetchall()]
+        return [acc_balance_header] + acc_balance_lines
+
     def create(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
         pool = pooler.get_pool(cr.dbname)
         # Create the header
         first_header = ['Proprietary Instance',
@@ -130,6 +178,12 @@ class hq_report_ocg(report_sxw.report_sxw):
                          'Booking Currency',
                          'Field Activity']
 
+        period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
+        tm = strptime(period.date_start, '%Y-%m-%d')
+        year = str(tm.tm_year)
+        month = '%02d' % (tm.tm_mon)
+        period_yyyymm = "{0}{1}".format(year, month)
+
         # Initialize lists: one for the first report...
         first_result_lines = []
         # ...and subdivisions for the second report.
@@ -147,7 +201,7 @@ class hq_report_ocg(report_sxw.report_sxw):
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
-                                                                       ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind'])], context=context)
+                                                                       ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind', 'extra'])], context=context)
 
         nb_move_line = len(move_line_ids)
         move_line_count = 0
@@ -156,8 +210,8 @@ class hq_report_ocg(report_sxw.report_sxw):
         else:
             bg_id = None
 
-        # assume that this for loop is about 40% of the total treatment
-        move_share = 0.4
+        # assume that this for loop is about 30% of the total treatment
+        move_share = 0.3
 
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             # UFTP-194: Just take posted move lines
@@ -219,13 +273,13 @@ class hq_report_ocg(report_sxw.report_sxw):
 
         analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
+                                                                               ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind', 'extra']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
         nb_analytic_line = len(analytic_line_ids)
         analytic_line_count = 0
 
-        # assume that this for loop is about 50% of the total treatment
-        analytic_share = 0.5
+        # assume that this for loop is about 40% of the total treatment
+        analytic_share = 0.4
 
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             # Just take analytic lines that comes from posted move lines
@@ -291,7 +345,6 @@ class hq_report_ocg(report_sxw.report_sxw):
         first_report = [first_header] + first_result_lines
 
         # Regroup second report lines
-        period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
         counterpart_date = period and period.date_stop and \
             datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
         period_name = period and period.code or ""
@@ -312,7 +365,21 @@ class hq_report_ocg(report_sxw.report_sxw):
                                    share=0.05, finished=True,
                                    already_done=move_share+analytic_share)
 
-        second_report = [second_header] + second_result_lines    
+        second_report = [second_header] + second_result_lines
+
+        liquidity_report = self._get_liquidity_balances(cr, uid, data['form'].get('instance_ids', False),
+                                                        period, period_yyyymm, context=context)
+        liquidity_share = 0.05  # 5% of the process
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=liquidity_share, finished=True,
+                                   already_done=move_share + analytic_share + 0.05)
+
+        acc_balance_report = self._get_account_balances(cr, data['form'].get('instance_ids', False),
+                                                        period, period_yyyymm)
+        acc_balance_share = 0.15  # 15% of the process
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=acc_balance_share, finished=True,
+                                   already_done=move_share + analytic_share + 0.05 + liquidity_share)
 
         # file names
         prefix = ""
@@ -331,6 +398,8 @@ class hq_report_ocg(report_sxw.report_sxw):
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
+        liquidity_fileobj = NamedTemporaryFile('w+b', delete=False)
+        acc_balance_fileobj = NamedTemporaryFile('w+b', delete=False)
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL)
         for line in first_report:
             writer.writerow(map(self._enc,line))
@@ -339,16 +408,29 @@ class hq_report_ocg(report_sxw.report_sxw):
         for line in second_report:
             writer.writerow(map(self._enc,line))
         second_fileobj.close()
+
+        writer = csv.writer(liquidity_fileobj, quoting=csv.QUOTE_ALL)
+        for liquidity_line in liquidity_report:
+            writer.writerow(map(self._enc, liquidity_line))
+        liquidity_fileobj.close()
+
+        writer = csv.writer(acc_balance_fileobj, quoting=csv.QUOTE_ALL)
+        for acc_bal_line in acc_balance_report:
+            writer.writerow(map(self._enc, acc_bal_line))
+        acc_balance_fileobj.close()
+
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
         out_zipfile.write(first_fileobj.name, prefix + "raw data UF export.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.write(second_fileobj.name, prefix + "formatted data AX import.csv", zipfile.ZIP_DEFLATED)
+        out_zipfile.write(liquidity_fileobj.name, prefix + "Liquidity balances.csv", zipfile.ZIP_DEFLATED)
+        out_zipfile.write(acc_balance_fileobj.name, prefix + "Account balances.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.close()
         out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
         self.shared_update_percent(cr, uid, pool, [bg_id],
                                    share=0.02, finished=True,
-                                   already_done=move_share+analytic_share+0.05)
+                                   already_done=move_share+analytic_share+0.05+liquidity_share+acc_balance_share)
         return (out, 'zip')
 
 hq_report_ocg('report.hq.ocg', 'account.move.line', False, parser=False)
