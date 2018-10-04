@@ -71084,7 +71084,7 @@ msgstr "Solde de clôture"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:512
-msgid "Closing Balance:"
+msgid "Closing balance:"
 msgstr "Solde de Clôture :"
 
 #. module: register_accounting
