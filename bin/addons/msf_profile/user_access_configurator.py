@@ -581,20 +581,22 @@ class user_access_configurator(osv.osv_memory):
         # drop all ACL
         access_obj.unlink(cr, uid, access_ids, context=context)
         # first line, for admin group, all access
-        acl_admin_values = {'name': 'admin',
-                            'group_id': admin_group_user_rights_id,
-                            'perm_read': True,
-                            'perm_write': True,
-                            'perm_create': True,
-                            'perm_unlink': True,
-                            }
-        acl_read_values = {'name': 'admin',
-                           'group_id': False,
-                           'perm_read': True,
-                           'perm_write': False,
-                           'perm_create': False,
-                           'perm_unlink': False,
-                           }
+        acl_admin_values = {
+            'name': 'admin',
+            'group_id': admin_group_user_rights_id,
+            'perm_read': True,
+            'perm_write': True,
+            'perm_create': True,
+            'perm_unlink': True,
+        }
+        acl_read_values = {
+            'name': 'user read',
+            'group_id': False,
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+        }
         # create lines for theses models with deletion of existing ACL
         # [(0, 0, {'field_name':field_value_record1, ...}), (0, 0, {'field_name':field_value_record2, ...})]
         model_obj.write(cr, uid, two_lines_ids.keys(), {'access_ids' : [(0, 0, acl_admin_values), (0, 0, acl_read_values)]}, context=context)

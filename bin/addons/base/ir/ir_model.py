@@ -458,6 +458,9 @@ class ir_model_access(osv.osv):
         'perm_unlink': fields.boolean('Delete Access'),
     }
 
+    _sql_constraints = [
+        ('unique_name_model', 'unique(name, model_id)', '(name, model) must be unique'),
+    ]
     def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.

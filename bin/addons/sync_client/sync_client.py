@@ -55,6 +55,8 @@ from cStringIO import StringIO
 from zipfile import ZipFile
 import csv
 
+from msf_field_access_rights.osv_override import _get_instance_level
+
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
@@ -866,12 +868,16 @@ class Entity(osv.osv):
         context['lang'] = 'en_US'
         logger = context.get('logger')
 
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
         entity = self.get_entity(cr, uid, context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
         if not res.get('sum'):
             return True
 
+        first_sync = not entity.user_rights_sum
         to_install = False
         if res.get('sum') != entity.user_rights_sum:
             if logger:
@@ -886,6 +892,9 @@ class Entity(osv.osv):
             to_install = True
 
         if to_install or entity.user_rights_state == 'to_install':
+            if first_sync:
+                self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ir_model_access'})
+                self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid, context)
             self.install_user_rights(cr, uid, context=context)
             entity.write({'user_rights_state': 'installed'})
         return True

@@ -1,2 +1,1 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-button_access_rule_group_rules,Button Access Rules Group,model_msf_button_access_rights_button_access_rule,button_access_rule_group,1,1,1,1

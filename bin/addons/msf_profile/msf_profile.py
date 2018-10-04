@@ -57,6 +57,26 @@ class patch_scripts(osv.osv):
             cr.execute("update backup_config set beforepatching='t'")
         return True
 
+    def us_4375_build_xmlid_admin_acl(self, cr, uid, *a, **b):
+        '''
+            some system acl don't have any sdref, recreate a clean unique sdref for all system acl
+        '''
+        access_obj = self.pool.get('ir.model.access')
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        access_ids = access_obj.search(cr, uid, [('name', '=', 'admin'), ('group_id', '=', False)])
+        if access_ids:
+            access_obj.write(cr, uid, access_ids, {'name': 'user read'})
+
+        access_ids += access_obj.search(cr, uid, [('name', '=', 'admin')])
+
+        if access_ids:
+            cr.execute("delete from ir_model_data where model='ir.model.access' and res_id in %s", (tuple(access_ids),))
+            access_obj.get_sd_ref(cr, uid, access_ids)
+
+        return True
+
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
@@ -2892,14 +2912,30 @@ class sync_tigger_something(osv.osv):
     _name = 'sync.trigger.something'
 
     _columns = {
-        'name': fields.char('Name', size=16),
+        'name': fields.char('Name', size=256),
     }
+
+    def delete_ir_model_access(self, cr, uid, context=None):
+        _logger = logging.getLogger('trigger')
+        ir_model_access = self.pool.get('ir.model.access')
+
+        access_ids_to_keep = ir_model_access.search(cr, uid, [('name', 'in', ['admin', 'user read'])])
+        cr.execute("select res_id from ir_model_data where  model='ir.model.access' and module in ('sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server')")
+        access_ids_to_keep += [x[0] for x in cr.fetchall()]
+
+        cr.execute("select id from ir_model_access where id not in %s", (tuple(access_ids_to_keep),))
+        ids_to_del = [x[0] for x in cr.fetchall()]
+
+        if ids_to_del:
+            cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
+            cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))
+            _logger.warn('Purge %d ir_model_access %d kept'  % (len(ids_to_del), len(access_ids_to_keep)))
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        _logger = logging.getLogger('trigger')
         if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
-            _logger = logging.getLogger('tigger')
 
             data_obj = self.pool.get('ir.model.data')
             unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
@@ -2913,6 +2949,9 @@ class sync_tigger_something(osv.osv):
             _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
             cr.execute("delete "+ trans_to_delete) # not_a_user_entry
             _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ir_model_access':
+            self.delete_ir_model_access(cr, uid, context=context)
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
