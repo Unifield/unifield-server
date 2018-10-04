@@ -931,6 +931,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Analytic Accounts
                 if import_brw.model_list_selection == 'analytic_accounts':
+                    context['from_import_menu'] = True
                     # Cost Centers
                     if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
                         cc_list = []
