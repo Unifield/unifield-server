@@ -189,6 +189,8 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
+    _order = 'fake_name'
+
     logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -230,8 +232,23 @@ class stock_mission_report(osv.osv):
 
         return res
 
+    def _get_fake_name(self, cr, uid, ids, name, args, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        for smr in self.browse(cr, uid, ids, context=context):
+            if smr.full_view:
+                res[smr.id] = '000_%s' % smr.name
+            else:
+                res[smr.id] = smr.name
+
+        return res
+
+
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
+        'fake_name': fields.function(_get_fake_name, method=True, type='char', size=128, string='Fake name', store=True),
         'instance_id': fields.many2one('msf.instance', string='Instance', required=True),
         'full_view': fields.boolean(string='Is a full view report ?'),
         'local_report': fields.function(_get_local_report, fnct_search=_src_local_report,
