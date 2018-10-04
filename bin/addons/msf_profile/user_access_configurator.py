@@ -588,6 +588,7 @@ class user_access_configurator(osv.osv_memory):
             'perm_write': True,
             'perm_create': True,
             'perm_unlink': True,
+            'from_system': True,
         }
         acl_read_values = {
             'name': 'user read',
@@ -596,6 +597,7 @@ class user_access_configurator(osv.osv_memory):
             'perm_write': False,
             'perm_create': False,
             'perm_unlink': False,
+            'from_system': True,
         }
         # create lines for theses models with deletion of existing ACL
         # [(0, 0, {'field_name':field_value_record1, ...}), (0, 0, {'field_name':field_value_record2, ...})]

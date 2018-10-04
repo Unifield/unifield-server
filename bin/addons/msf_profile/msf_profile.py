@@ -67,10 +67,12 @@ class patch_scripts(osv.osv):
 
         access_ids = access_obj.search(cr, uid, [('name', '=', 'admin'), ('group_id', '=', False)])
         if access_ids:
-            access_obj.write(cr, uid, access_ids, {'name': 'user read'})
+            access_obj.write(cr, uid, access_ids, {'name': 'user read', 'from_system': True})
 
-        access_ids += access_obj.search(cr, uid, [('name', '=', 'admin')])
+        admin_acl_ids = access_obj.search(cr, uid, [('name', '=', 'admin')])
+        access_obj.write(cr, uid, admin_acl_ids, {'from_system': True})
 
+        access_ids += admin_acl_ids
         if access_ids:
             cr.execute("delete from ir_model_data where model='ir.model.access' and res_id in %s", (tuple(access_ids),))
             access_obj.get_sd_ref(cr, uid, access_ids)

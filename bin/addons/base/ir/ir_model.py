@@ -456,8 +456,12 @@ class ir_model_access(osv.osv):
         'perm_write': fields.boolean('Write Access'),
         'perm_create': fields.boolean('Create Access'),
         'perm_unlink': fields.boolean('Delete Access'),
+        'from_system': fields.boolean('ACL created by dev'),
     }
 
+    _defaults = {
+        'from_system': False,
+    }
     _sql_constraints = [
         ('unique_name_model', 'unique(name, model_id)', '(name, model) must be unique'),
     ]
@@ -611,14 +615,23 @@ class ir_model_access(osv.osv):
     #
     # Check rights on actions
     #
-    def write(self, cr, uid, *args, **argv):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('from_system'):
+            vals['from_system'] = True
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).write(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).write(cr, uid, ids, vals, context=context)
         return res
 
-    def create(self, cr, uid, *args, **argv):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_system'):
+            vals['from_system'] = True
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).create(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).create(cr, uid, vals, context=context)
         return res
 
     def unlink(self, cr, uid, *args, **argv):

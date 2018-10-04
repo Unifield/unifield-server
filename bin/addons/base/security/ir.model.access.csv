@@ -13,6 +13,7 @@ access_ir_model_fields_all,ir_model_fields all,model_ir_model_fields,,1,0,0,0
 access_ir_module_module_user,ir_module_module user,model_ir_module_module,,1,0,0,0
 access_ir_module_module_dependency_all,ir_module_module_dependency all,model_ir_module_module_dependency,,1,0,0,0
 access_ir_property_group_user,ir_property group_user,model_ir_property,,1,0,0,0
+access_ir_rule_group_erp_manager,ir_rule group_erp_manager,model_ir_rule,group_erp_manager,1,1,1,1
 access_ir_rule_group_user,ir_rule group_user,model_ir_rule,,1,0,0,0
 access_ir_sequence_group_user,ir_sequence group_user,model_ir_sequence,,1,0,0,0
 access_ir_sequence_type_group_user,ir_sequence_type group_user,model_ir_sequence_type,,1,0,0,0
