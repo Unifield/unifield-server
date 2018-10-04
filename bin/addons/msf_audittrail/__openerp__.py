@@ -46,6 +46,7 @@
         'data/audittrail_data_purchase.yml',
         'data/audittrail_data_products.yml',
         'data/audittrail_data_JI.yml',
+        'data/audittrail_data_CV.yml',
         'data/audittrail_res_users.yml',
         'data/audittrail_hr_employee.yml',
         'data/audittrail_res_partner.yml',

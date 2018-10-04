@@ -77,6 +77,7 @@ Thanks to the double entry management, the inventory controlling is powerful and
         "wizard/physical_inventory_select_products_view.xml",
         "wizard/physical_inventory_generate_counting_sheet_view.xml",
         "wizard/physical_inventory_import_view.xml",
+        'wizard/manage_expired_stock.xml',
     ],
     'installable': True,
     'active': False,

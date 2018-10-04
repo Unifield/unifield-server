@@ -319,8 +319,8 @@ class import_commitment_wizard(osv.osv_memory):
                                 " compatible for entry name:'%s', ref:'%s'" \
                                 " reason: '%s'")
                         raise osv.except_osv(_('Error'), msg % (
-                            vals.get('name', ''), vals.get('ref', ''),
-                            no_compat[2] or '', )
+                            tools.ustr(vals.get('name', '')), tools.ustr(vals.get('ref', '')),
+                            _(no_compat[2]) or '', )
                         )
 
                     analytic_obj.create(cr, uid, vals, context=context)

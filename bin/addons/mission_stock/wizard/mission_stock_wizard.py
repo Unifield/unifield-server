@@ -60,6 +60,7 @@ class mission_stock_wizard(osv.osv_memory):
         'report_id': fields.many2one(
             'stock.mission.report',
             string='Report',
+            domain=[('instance_id.state', '!=', 'inactive')]
         ),
         'with_valuation': fields.selection(
             [('true', 'Yes'), ('false', 'No')],
