@@ -164,13 +164,17 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
-                new_sol_id = self.copy(cr, uid, sol.id, {
+                sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol,
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-                }, context=context)
+                }
+                if sol.procurement_request:
+                    sol_vals['date_planned'] = sol.date_planned
+
+                new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
