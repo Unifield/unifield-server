@@ -101997,3 +101997,8 @@ msgstr "Nom BDD/Instance"
 #: field:reserved.products.wizard,product_id:0
 msgid "Product"
 msgstr "Produit"
+
+#. module: stock
+#: view:reserved.products.wizard:0
+msgid "Export Reserved Products XML Report"
+msgstr "Exporter le Rapport XML des Produits Réservés"

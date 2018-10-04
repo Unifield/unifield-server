@@ -14,9 +14,9 @@
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="3" groups="base.group_extended">
-                        <filter string="Location" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'location_id'}"/>
-                        <filter string="Product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_id'}"/>
-                        <filter string="Batch" icon="terp-go-month" domain="[]" context="{'group_by':'prodlot_id'}"/>
+                        <filter string="Location" name="location" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'location_id'}"/>
+                        <filter string="Product" name="product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_id'}"/>
+                        <filter string="Batch" name="batch" icon="terp-go-month" domain="[]" context="{'group_by':'prodlot_id'}"/>
                     </group>
                 </search>
             </field>
@@ -48,7 +48,7 @@
             <field name="search_view_id" ref="view_reserved_products_search" />
             <field name="view_id" ref="view_reserved_products_tree" />
             <field name="domain">[('state', '=', 'assigned'), ('product_qty', '>', 0.00), ('type', 'in', ['internal', 'out'])]</field>
-            <field name="context">{'group_by': ['location_id', 'product_id', 'prodlot_id']}</field>
+            <field name="context">{'search_default_location': 1, 'search_default_product': 1, 'search_default_batch': 1}</field>
         </record>
 
         <act_window id="wizard_reserved_products_export"
