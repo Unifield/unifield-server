@@ -937,7 +937,8 @@ class msf_import_export(osv.osv_memory):
                         cc_list = []
                         for cost_center in data.get('cost_center_ids').split(','):
                             cc = cost_center.strip()
-                            cc_dom = [('category', '=', 'OC'), '|', ('code', '=', cc), ('name', '=', cc)]
+                            cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
+                                      '|', ('code', '=', cc), ('name', '=', cc)]
                             cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
                             if cc_ids:
                                 cc_list.append(cc_ids[0])
@@ -954,7 +955,8 @@ class msf_import_export(osv.osv_memory):
                             dest_acc = destination_account.strip().split()  # ex: ['65000', 'EXP']
                             if len(dest_acc) == 2:
                                 gl_acc_ids = acc_obj.search(cr, uid, [('code', '=', dest_acc[0])], limit=1, context=context)
-                                dest_ids = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', dest_acc[1])], limit=1, context=context)
+                                dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), ('code', '=', dest_acc[1])]
+                                dest_ids = impobj.search(cr, uid, dest_dom, limit=1, context=context)
                                 if gl_acc_ids and dest_ids:
                                     acc_dest_dom = [('account_id', '=', gl_acc_ids[0]), ('destination_id', '=', dest_ids[0])]
                                     dest_acc_ids = acc_dest_obj.search(cr, uid, acc_dest_dom, limit=1, context=context)
