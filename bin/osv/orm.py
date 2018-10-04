@@ -1103,6 +1103,7 @@ class orm_template(object):
                     error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                                                           tools.ustr(e) + "\n" +
                                                           tools.ustr(traceback.format_exc())))
+                    cr.rollback()
                     continue
                 else:
                     return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
