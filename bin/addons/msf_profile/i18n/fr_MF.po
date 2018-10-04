@@ -4576,8 +4576,8 @@ msgstr "Il n'y a pas de compte de produit défini pour ce produit : \"%s\" (id :
 
 #. module: register_accounting
 #: view:wizard.register.opening.confirmation:0
-msgid "Register Opening Balance"
-msgstr "Solde d'Ouverture du Registre"
+msgid "Register Starting Balance"
+msgstr "Solde Initial du Registre"
 
 #. module: finance
 #: code:addons/finance/cash_request.py:276
@@ -12067,7 +12067,7 @@ msgstr "Annulation d'Appel d'Offre"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 msgid "Starting Balance:"
-msgstr "Solde d'ouverture:"
+msgstr "Solde Initial :"
 
 #. module: sync_so
 #: field:purchase.order,fo_sync_date:0
@@ -13849,8 +13849,8 @@ msgstr "ir.attachment"
 #: field:cash.request.liquidity.cash,opening_balance:0
 #: field:cash.request.liquidity.cheque,opening_balance:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:330
-msgid "Opening Balance in register currency"
-msgstr "Solde d'Ouverture dans la devise du registre"
+msgid "Starting Balance in register currency"
+msgstr "Solde Initial dans la devise du registre"
 
 #. module: kit
 #: model:ir.model,name:kit.model_kit_selection_sale_line
@@ -19629,8 +19629,15 @@ msgstr "Wizard ID"
 
 #. module: register_accounting
 #: report:cash.inventory:0
-msgid "Opening balance:"
-msgstr "Solde d'ouverture: "
+#: report:addons/register_accounting/report/fully_report_xls.mako:500
+msgid "Starting balance:"
+msgstr "Solde initial :"
+
+#. modules: register_accounting, account
+#: report:cash.inventory:0
+#: report:addons/account/report/account_liquidity_balance.mako:168
+msgid "Starting balance"
+msgstr "Solde initial"
 
 #. module: product_attributes
 #: field:product.product,kc_txt:0
@@ -30097,11 +30104,6 @@ msgstr "Prix unitaire"
 #: view:account.invoice:0
 msgid "Statement"
 msgstr "Relevé"
-
-#. module: account
-#: field:account.bank.statement,balance_start:0
-msgid "Starting Balance"
-msgstr "Solde Initial"
 
 #. module: financing_contract
 #: view:financing.contract.contract:0
@@ -57373,8 +57375,8 @@ msgstr "cancel_to_draft - (account.voucher)"
 
 #. module: register_accounting
 #: help:account.bank.statement,msf_calculated_balance:0
-msgid "Opening balance + Cash Transaction"
-msgstr "Solde initial + Transaction en espèce"
+msgid "Starting Balance + Cash Transactions"
+msgstr "Solde Initial + Transactions en espèces"
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_purchase_line_import_xml_line
@@ -61587,8 +61589,8 @@ msgstr "En Cours..."
 
 #. module: register_accounting
 #: field:wizard.register.opening.confirmation,confirm_opening_balance:0
-msgid "Do you want to open the register with the following opening balance?"
-msgstr "Voulez-vous ouvrir le registre avec le solde d'ouverture suivant ?"
+msgid "Do you want to open the register with the following starting balance?"
+msgstr "Voulez-vous ouvrir le registre avec le solde initial suivant ?"
 
 #. module: msf_outgoing
 #: field:stock.move.memory.shipment.create,selected_weight:0
@@ -62141,8 +62143,9 @@ msgstr "Save new settings and close the wizard"
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
 #: field:wizard.register.opening.confirmation,opening_balance:0
-msgid "Opening Balance"
-msgstr "Solde d'ouverture"
+#: field:account.bank.statement,balance_start:0
+msgid "Starting Balance"
+msgstr "Solde Initial"
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:47
@@ -70333,12 +70336,6 @@ msgstr "Séquence Principale"
 #: view:sale.order.line:0
 msgid "Confirmed sale order lines, not yet delivered"
 msgstr "Confirmed sale order lines, not yet delivered"
-
-#. modules: account, register_accounting
-#: report:addons/account/report/account_liquidity_balance.mako:168
-#: report:cash.inventory:0
-msgid "Opening balance"
-msgstr "Solde d'ouverture"
 
 #. module: product_attributes
 #: model:product.justification.code,code:product_attributes.justification_code_jme
@@ -98409,8 +98406,8 @@ msgstr "Cascade"
 #. module: finance
 #: view:cash.request.liquidity.bank:0
 #: view:cash.request.liquidity.cash:0
-msgid "Total Opening Balance"
-msgstr "Total Solde d'Ouverture"
+msgid "Total Starting Balance"
+msgstr "Total Solde Initial"
 
 #. module: product_list
 #: field:old.product.list.line,removal_date:0
@@ -101089,11 +101086,6 @@ msgstr "Le Chèque %s a déjà été importé."
 #: report:addons/register_accounting/report/fully_report_xls.mako:560
 msgid "Acct"
 msgstr "Cmpt"
-
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:500
-msgid "Starting balance:"
-msgstr "Solde d'ouverture:"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:469
