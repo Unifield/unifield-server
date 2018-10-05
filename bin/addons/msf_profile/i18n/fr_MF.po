@@ -14692,7 +14692,7 @@ msgstr "Attributs Produit"
 #: view:cash.request:0
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Functional"
-msgstr "Solde Total du Relevé Bancaire en Devise Fonc."
+msgstr "Solde Total Registre de Banque en Devise Fonc."
 
 #. module: sync_client
 #: field:sync.client.rule,owner_field:0
@@ -26931,7 +26931,7 @@ msgstr "Avertissement sur la confirmation"
 #. module: finance
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Booking"
-msgstr "Solde Total du Relevé Bancaire en Devise d'Enreg."
+msgstr "Solde Total Registre de Banque en Devise d'Enreg."
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -28260,7 +28260,7 @@ msgstr "Quantité QS"
 #: field:cash.request.liquidity.bank,bank_statement_balance_functional:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:352
 msgid "Bank Statement Balance in functional currency"
-msgstr "Solde du Relevé Bancaire en devise fonctionnelle"
+msgstr "Solde Registre de Banque en devise fonctionnelle"
 
 #. module: msf_instance
 #: help:res.company,instance_id:0
@@ -93163,7 +93163,7 @@ msgstr "Stock forecast by week"
 #: field:cash.request.liquidity.bank,bank_statement_balance_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:339
 msgid "Bank Statement Balance in register currency"
-msgstr "Solde du Relevé Bancaire dans la devise du registre"
+msgstr "Solde Registre de Banque dans la devise du registre"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
