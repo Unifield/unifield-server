@@ -953,16 +953,14 @@ class report_spool(netsvc.ExportService):
         self.id_protect.release()
         model_obj = pool.get(model)
         view_name = context.get('_terp_view_name', '')
-        tools_obj = pool.get('date.tools')
-        time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
-        title = 'Export %s %s' % (view_name, time_stamp)
+        title = '%s_%s' % (view_name, time.strftime('%Y%m%d'))
         self._reports[report_id] = {
             'uid': uid,
             'result': False,
             'state': False,
             'exception': None,
             'format': export_format,
-            'filename': '%s_%s' % (view_name, time.strftime('%Y%m%d')),
+            'filename': title,
         }
 
         bg_obj = pool.get('memory.background.report')
