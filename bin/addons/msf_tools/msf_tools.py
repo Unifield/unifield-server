@@ -929,10 +929,11 @@ class user_rights_tools(osv.osv_memory):
                         cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
                                 left join ir_model_fields f on f.id = line.field
                                 left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
-                            where f.state='depecrated'
+                            where f.state='deprecated'
                             """)
-                        if cr.rowcount:
-                            raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, ' - '.join([x[0] for x in cr.fetchall()])))
+                        error = [x[0] for x in cr.fetchall()]
+                        if error:
+                            raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
 
             if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
                 dom = [('imported_flag', '=', False)]
