@@ -833,6 +833,14 @@ class orm_template(object):
 
         return processed, rejected, headers
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init',
+                        current_module='', noupdate=False, context=None, filename=None,
+                        display_all_errors=False, has_header=False):
+        if context is None:
+            context = {}
+        context['import_from_web_interface'] = True
+        return self.import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename, display_all_errors=display_all_errors, has_header=has_header)
+
     def import_data(self, cr, uid, fields, datas, mode='init',
                     current_module='', noupdate=False, context=None, filename=None,
                     display_all_errors=False, has_header=False):
