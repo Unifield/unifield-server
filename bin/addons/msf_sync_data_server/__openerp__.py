@@ -36,6 +36,9 @@
     ],
     'demo_xml': [
     ],
+    'function': [
+        ('user.rights.auto.load', 'load'),
+    ],
     'test':[
     ],
     'installable': True,

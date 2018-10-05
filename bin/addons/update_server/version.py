@@ -281,6 +281,9 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
     def import_zip(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
         wiz = self.browse(cr, uid, ids[0], context=context)
         plain_zip = decodestring(wiz.zip_file)
         zp = StringIO(plain_zip)
@@ -306,8 +309,11 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         for x in ur:
             if not ur[x]:
                 raise osv.except_osv(_('Warning !'), _("File %s not found!") % (ur_meaning[x]))
-        threading.Thread(target=self.load_bg, args=(cr.dbname, uid, wiz.id, plain_zip, context)).start()
-        self.write(cr, uid, ids[0], {'state': 'inprogress', 'message': 'Import in progess'}, context=context)
+        if context.get('run_foreground'):
+            self.load_bg(cr.dbname, uid, wiz.id, plain_zip, context)
+        else:
+            threading.Thread(target=self.load_bg, args=(cr.dbname, uid, wiz.id, plain_zip, context)).start()
+            self.write(cr, uid, ids[0], {'state': 'inprogress', 'message': 'Import in progess'}, context=context)
         return True
 
 sync_server_user_rights_add_file()

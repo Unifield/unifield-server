@@ -36,6 +36,7 @@ import csv
 from cStringIO import StringIO
 from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import logging
 
 class lang(osv.osv):
     '''
@@ -878,7 +879,7 @@ finance_tools()
 
 class user_rights_tools(osv.osv_memory):
     _name = 'user_rights.tools'
-
+    _logger = logging.getLogger('UR imported')
     def load_ur_zip(self, cr, uid, plain_zip, sync_server=False, logger=False, context=None):
         '''
             load UR from zip file
@@ -897,7 +898,9 @@ class user_rights_tools(osv.osv_memory):
         data = encodestring(f.read())
         f.close()
         if logger:
-            logger.append('Importing UAC xml file')
+            log_line = 'Importing UAC xml file'
+            self._logger.info(log_line)
+            logger.append(log_line)
             logger.write()
 
         wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
@@ -911,7 +914,9 @@ class user_rights_tools(osv.osv_memory):
 
             for zp_f in zip_to_import:
                 if logger:
-                    logger.append('Importing %s' % (zp_f))
+                    log_line = 'Importing %s' % (zp_f)
+                    self._logger.info(log_line)
+                    logger.append(log_line)
                     logger.write()
                 with z.open(zp_f, 'r') as csvfile:
                     reader = csv.reader(csvfile, delimiter=',')
