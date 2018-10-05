@@ -14,12 +14,10 @@ from updater import base_version, server_version
 import logging
 import time
 
-from zipfile import ZipFile
 from zipfile import is_zipfile
-from base64 import decodestring, encodestring
+from base64 import decodestring
 from cStringIO import StringIO
 import hashlib
-import csv
 
 
 class version(osv.osv):
@@ -187,48 +185,6 @@ class sync_server_user_rights(osv.osv):
         ('unique_name', 'unique(name)', 'Name must be unique!'),
     ]
     # TODO: python constraint 1 active, confirmed status
-    def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):
-        ur = {
-            'UAC': False,
-            'msf_button_access_rights.button_access_rule': [],
-            'ir.model.access': False,
-            'msf_field_access_rights.field_access_rule': False,
-            'msf_field_access_rights.field_access_rule_line': False,
-            'ir.rule': False,
-            'ir.actions.act_window': False,
-        }
-
-        expected_files = 9
-        z = ZipFile(zfile)
-        nb = 0
-        for f in z.infolist():
-            if f.filename.endswith('/'):
-                continue
-            nb += 1
-            if 'bar' in f.filename.lower():
-                ur['msf_button_access_rights.button_access_rule'].append(f.filename)
-            elif 'acl' in f.filename.lower():
-                ur['ir.model.access'] = f.filename
-            elif 'record rules' in f.filename.lower():
-                ur['ir.rule'] = f.filename
-            elif 'windows' in f.filename.lower():
-                ur['ir.actions.act_window'] = f.filename
-            elif f.filename.lower().endswith('xml'):
-                ur['UAC'] = f.filename
-            elif 'rule lines' in f.filename.lower():
-                ur['msf_field_access_rights.field_access_rule_line'] = f.filename
-            elif 'field access' in f.filename.lower():
-                ur['msf_field_access_rights.field_access_rule'] = f.filename
-            elif raise_error:
-                raise osv.except_osv(_('Warning !'), _('Extra file "%s" found in zip !') % (f.filename))
-
-        if raise_error:
-            if nb != expected_files:
-                raise osv.except_osv(_('Warning !'), _("%s files found, %s expected.") % (nb, expected_files))
-
-        z.close()
-
-        return ur
 
     def get_active_user_rights(self, cr, uid, context=None):
         return self.search(cr, uid, [('state', '=', 'confirmed')], context=context)
@@ -243,43 +199,14 @@ class sync_server_user_rights(osv.osv):
     def activate(self, cr, uid, ids, context=None):
         rec = self.read(cr, uid, ids[0], ['zip_file'])
         plain_zip = decodestring(rec['zip_file'])
-        zp = StringIO(plain_zip)
-
-        ur = self.unzip_file(cr, uid, zp, context=context)
-        z = ZipFile(zp)
 
         try:
             cr.commit_org, cr.commit = cr.commit, lambda:None
-
-            uac_processor = self.pool.get('user.access.configurator')
-            f = z.open(ur['UAC'])
-            data = encodestring(f.read())
-            f.close()
-            wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
-            uac_processor.do_process_uac(cr, uid, [wiz_id])
-            # TODO: check error
-            for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
-                zip_to_import = ur[model]
-                if not isinstance(zip_to_import, list):
-                    zip_to_import = [zip_to_import]
-
-                for zp_f in zip_to_import:
-                    with z.open(zp_f, 'r') as csvfile:
-                        reader = csv.reader(csvfile, delimiter=',')
-                        fields = False
-                        data = []
-                        for row in reader:
-                            if not fields:
-                                fields = row
-                            else:
-                                data.append(row)
-                        ret = self.pool.get(model).import_data(cr, uid, fields, data, display_all_errors=False, has_header=True)
-                        if ret and ret[0] == -1:
-                            raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
+            self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, context=context)
         finally:
             cr.rollback()
             cr.commit = cr.commit_org
-        z.close()
+
         current_active = self.get_active_user_rights(cr, uid, context=context)
         self.write(cr, uid, current_active, {'state': 'deprecated'}, context=context)
         self.write(cr, uid, ids[0], {'state': 'confirmed', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -333,9 +260,9 @@ class sync_server_user_rights_add_file(osv.osv_memory):
             'ir.actions.act_window': 'Actions Windows',
         }
 
-        ur_obj = self.pool.get('sync_server.user_rights')
 
-        ur = ur_obj.unzip_file(cr, uid, zp, True, context=context)
+        ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, True, context=context)
+
         if len(ur['msf_button_access_rights.button_access_rule']) != 3:
             raise osv.except_osv(_('Warning !'), _("Found %d BAR files, expected 3.") % (len(ur['msf_button_access_rights.button_access_rule'])))
         for x in ur:

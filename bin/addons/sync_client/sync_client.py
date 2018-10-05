@@ -50,10 +50,7 @@ from sync_common import WHITE_LIST_MODEL
 from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
-from base64 import decodestring, encodestring
-from cStringIO import StringIO
-from zipfile import ZipFile
-import csv
+from base64 import decodestring
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -768,49 +765,6 @@ class Entity(osv.osv):
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
-    def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):
-        ur = {
-            'UAC': False,
-            'msf_button_access_rights.button_access_rule': [],
-            'ir.model.access': False,
-            'msf_field_access_rights.field_access_rule': False,
-            'msf_field_access_rights.field_access_rule_line': False,
-            'ir.rule': False,
-            'ir.actions.act_window': False,
-        }
-
-        expected_files = 9
-        z = ZipFile(zfile)
-        nb = 0
-        for f in z.infolist():
-            if f.filename.endswith('/'):
-                continue
-            nb += 1
-            if 'bar' in f.filename.lower():
-                ur['msf_button_access_rights.button_access_rule'].append(f.filename)
-            elif 'acl' in f.filename.lower():
-                ur['ir.model.access'] = f.filename
-            elif 'record rules' in f.filename.lower():
-                ur['ir.rule'] = f.filename
-            elif 'windows' in f.filename.lower():
-                ur['ir.actions.act_window'] = f.filename
-            elif f.filename.lower().endswith('xml'):
-                ur['UAC'] = f.filename
-            elif 'rule lines' in f.filename.lower():
-                ur['msf_field_access_rights.field_access_rule_line'] = f.filename
-            elif 'field access' in f.filename.lower():
-                ur['msf_field_access_rights.field_access_rule'] = f.filename
-            elif raise_error:
-                raise osv.except_osv(_('Warning !'), _('Extra file "%s" found in zip !') % (f.filename))
-
-        if raise_error:
-            if nb != expected_files:
-                raise osv.except_osv(_('Warning !'), _("%s files found, %s expected.") % (nb, expected_files))
-
-        z.close()
-
-        return ur
-
     def install_user_rights(self, cr, uid, context=None):
         if not context:
             context = {}
@@ -819,56 +773,13 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context)
         encoded_zip = entity.user_rights_data
         plain_zip = decodestring(encoded_zip)
-        zp = StringIO(plain_zip)
-
-        ur = self.unzip_file(cr, uid, zp, context=context)
-        z = ZipFile(zp)
 
 
         if logger:
             logger.append('Importing User Access from file')
             logger.write()
 
-        uac_processor = self.pool.get('user.access.configurator')
-        f = z.open(ur['UAC'])
-        data = encodestring(f.read())
-        f.close()
-        wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
-        uac_processor.do_process_uac(cr, uid, [wiz_id])
-        # TODO: check error
-        for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
-            zip_to_import = ur[model]
-            obj_to_import =  self.pool.get(model)
-            if not isinstance(zip_to_import, list):
-                zip_to_import = [zip_to_import]
-
-            for zp_f in zip_to_import:
-                if logger:
-                    logger.append('Importing %s' % (zp_f))
-                    logger.write()
-
-                with z.open(zp_f, 'r') as csvfile:
-                    reader = csv.reader(csvfile, delimiter=',')
-                    fields = False
-                    data = []
-                    for row in reader:
-                        if not fields:
-                            fields = row
-                        else:
-                            data.append(row)
-                    ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True, context={'from_synced_ur': True})
-                    if ret and ret[0] == -1:
-                        raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
-
-            if hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
-                dom = [('imported_flag', '=', False)]
-                if model == 'ir.model.access':
-                    dom += [('from_system', '=', False)]
-                to_del_ids = obj_to_import.search(cr, uid, dom, context=context)
-                if to_del_ids:
-                    self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
-                    obj_to_import.unlink(cr, uid, to_del_ids, context=context)
-        z.close()
+        self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=False, logger=logger, context=context)
         return True
 
     @sync_process('user_rights')
