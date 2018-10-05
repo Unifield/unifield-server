@@ -258,6 +258,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
             self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, logger=logger(wiz), context=context)
             wiz.write({'state': 'done', 'message': 'Import Done'})
         except Exception, e:
+            cr.rollback()
             if isinstance(e, osv.except_osv):
                 error = e.value
             else:
