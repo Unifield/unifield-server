@@ -23,8 +23,6 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
-import logging
 
 class button_access_rule(osv.osv):
     """
@@ -52,10 +50,12 @@ class button_access_rule(osv.osv):
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'group_names': fields.function(_get_group_names, type='char', method=True, string='Group Names', help='A list of all group names given button access by this rule'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied.'),
+        'deprecated': fields.boolean('Depecrated'),
     }
 
     _defaults = {
         'active': True,
+        'deprecated': True,
     }
 
     _sql_constraints = [
@@ -80,6 +80,7 @@ class button_access_rule(osv.osv):
         elif not context.get('sync_update_execution') and vals.get('type') == 'action' and not vals.get('xmlname') and vals.get('name'):
             vals['xmlname'] = self.pool.get('ir.ui.view')._get_xmlname(cr, uid, vals.get('type'), vals.get('name'))
 
+        vals['deprecated'] = False
         return super(button_access_rule, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -91,6 +92,7 @@ class button_access_rule(osv.osv):
             new_name = self._update_name_for_action(cr, uid, vals['xmlname'])
             if new_name:
                 vals['name'] = new_name
+        vals['deprecated'] = False
         return super(button_access_rule, self).write(cr, uid, ids, vals, context)
 
     def get_family_ids(self, cr, uid, view_id):

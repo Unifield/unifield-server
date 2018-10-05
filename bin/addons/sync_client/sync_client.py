@@ -838,6 +838,7 @@ class Entity(osv.osv):
         # TODO: check error
         for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
             zip_to_import = ur[model]
+            obj_to_import =  self.pool.get(model)
             if not isinstance(zip_to_import, list):
                 zip_to_import = [zip_to_import]
 
@@ -855,9 +856,18 @@ class Entity(osv.osv):
                             fields = row
                         else:
                             data.append(row)
-                    ret = self.pool.get(model).import_data(cr, uid, fields, data, display_all_errors=False, has_header=True)
+                    ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True, context={'from_synced_ur': True})
                     if ret and ret[0] == -1:
                         raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
+
+            if hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
+                dom = [('imported_flag', '=', False)]
+                if model == 'ir.model.access':
+                    dom += [('from_system', '=', False)]
+                to_del_ids = obj_to_import.search(cr, uid, dom, context=context)
+                if to_del_ids:
+                    self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
+                    obj_to_import.unlink(cr, uid, to_del_ids, context=context)
         z.close()
         return True
 
@@ -894,7 +904,6 @@ class Entity(osv.osv):
         if to_install or entity.user_rights_state == 'to_install':
             if first_sync:
                 self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ir_model_access'})
-                self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid, context)
             self.install_user_rights(cr, uid, context=context)
             entity.write({'user_rights_state': 'installed'})
         return True

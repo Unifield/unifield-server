@@ -56,6 +56,34 @@ def _in_modules(self, cr, uid, ids, field_name, arg, context=None):
     return result
 
 
+class common_import_ur(osv.osv):
+    _name = 'common.import.ur'
+    _description = 'Object used to delete non imported records'
+    _auto = False
+    _common_import = True
+    _columns = {
+        'imported_flag': fields.boolean('Record imported', internal=1),
+    }
+    _defaults = {
+        'imported_flag': False,
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).write(cr, uid, ids, vals, context=context)
+
+common_import_ur()
+
 class ir_model(osv.osv):
     _name = 'ir.model'
     _description = "Objects"
@@ -448,6 +476,9 @@ ir_model_fields()
 
 class ir_model_access(osv.osv):
     _name = 'ir.model.access'
+    _inherit = 'common.import.ur'
+    _auto = True
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'model_id': fields.many2one('ir.model', 'Object', required=True, domain=[('osv_memory','=', False)], select=True, ondelete='cascade'),
@@ -463,6 +494,7 @@ class ir_model_access(osv.osv):
         'from_system': False,
     }
     _sql_constraints = [
+        # TODO : fixme where msf_profile is reloaded
         ('unique_name_model', 'unique(name, model_id)', '(name, model) must be unique'),
     ]
     def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):

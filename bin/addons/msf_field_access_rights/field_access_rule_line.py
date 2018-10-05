@@ -33,7 +33,9 @@ class field_access_rule_line(osv.osv):
     _name = "msf_field_access_rights.field_access_rule_line"
     _description = 'Field Access Rule Line'
     _rec_name = "field_name"
-    
+    _inherit = "common.import.ur"
+    _auto = True
+
     _columns = {
         'field': fields.many2one('ir.model.fields', 'Field', help='The field of the model for which this rule applies', required=True),
         'field_name': fields.char('Field Name', size=256, help='The technical name for the field. This is used to make searching for Field Access Rule Lines easier.'),
@@ -56,7 +58,7 @@ class field_access_rule_line(osv.osv):
     ]
 
     def _get_field_name_from_id(self, cr, uid, field, context={}):
-        if field: 
+        if field:
             fields_pool = self.pool.get('ir.model.fields')
             fields = fields_pool.browse(cr, uid, field, context=context)
             return fields.name
@@ -81,7 +83,7 @@ class field_access_rule_line(osv.osv):
     def onchange_field(self, cr, uid, ids, field, context={}):
         field_name = self._get_field_name_from_id(cr, uid, field, context=context)
         return {'value': {'field_name' : field_name}}
-    
+
     def onchange_field_access_rule(self, cr, uid, ids, field_access_rule, context=None):
         if field_access_rule:
             model_id = self.pool.get('msf_field_access_rights.field_access_rule').browse(cr, uid, field_access_rule).model_id.id

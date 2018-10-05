@@ -2921,6 +2921,13 @@ class sync_tigger_something(osv.osv):
         _logger = logging.getLogger('trigger')
         ir_model_access = self.pool.get('ir.model.access')
 
+        ids_to_del = ir_model_access.search(cr, uid, [('from_system', '=', 'f')])
+        access_ids_to_keep = ir_model_access.search(cr, uid, [('from_system', '=', 't')])
+        if ids_to_del:
+            cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
+            cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))
+            _logger.warn('Purge %d ir_model_access %d kept'  % (len(ids_to_del), len(access_ids_to_keep)))
+        """
         access_ids_to_keep = ir_model_access.search(cr, uid, [('name', 'in', ['admin', 'user read'])])
         cr.execute("select res_id from ir_model_data where  model='ir.model.access' and module in ('sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server')")
         access_ids_to_keep += [x[0] for x in cr.fetchall()]
@@ -2932,6 +2939,7 @@ class sync_tigger_something(osv.osv):
             cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
             cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))
             _logger.warn('Purge %d ir_model_access %d kept'  % (len(ids_to_del), len(access_ids_to_keep)))
+        """
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
