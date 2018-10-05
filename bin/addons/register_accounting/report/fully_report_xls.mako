@@ -504,19 +504,24 @@
         </Cell>
       </Row>
       <%
-      if o.journal_id.type == 'bank':
-          closing_bal_title = _('Bank Statement balance:')
-      elif o.journal_id.type == 'cash':
+      if o.journal_id.type == 'cash':
           closing_bal_title = _('CashBox balance:')
+          closing_bal = o.balance_end_cash or 0.0
+          calculated_bal = o.msf_calculated_balance or 0.0
       else:
-          closing_bal_title = _('Closing balance:')
+          if o.journal_id.type == 'bank':
+              closing_bal_title = _('Bank Statement balance:')
+          else:
+              closing_bal_title = _('Closing balance:')
+          closing_bal = o.balance_end_real or 0.0
+          calculated_bal = o.balance_end or 0.0
       %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${closing_bal_title|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.journal_id.type == 'cash' and o.balance_end_cash or o.balance_end_real or 0.0|x}</Data>
+          <Data ss:Type="Number">${closing_bal|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -524,7 +529,7 @@
           <Data ss:Type="String">${_('Calculated balance:')|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.balance_end or 0.0|x}</Data>
+          <Data ss:Type="Number">${calculated_bal|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
