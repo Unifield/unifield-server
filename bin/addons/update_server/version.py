@@ -10,14 +10,16 @@ from osv import fields
 from tools.translate import _
 import sync_server
 from updater import base_version, server_version
+import pooler
 
 import logging
 import time
-
+import tools
 from zipfile import is_zipfile
 from base64 import decodestring
 from cStringIO import StringIO
 import hashlib
+import threading
 
 
 class version(osv.osv):
@@ -197,16 +199,6 @@ class sync_server_user_rights(osv.osv):
         return {'name': data['name'], 'sum': data['sum']}
 
     def activate(self, cr, uid, ids, context=None):
-        rec = self.read(cr, uid, ids[0], ['zip_file'])
-        plain_zip = decodestring(rec['zip_file'])
-
-        try:
-            cr.commit_org, cr.commit = cr.commit, lambda:None
-            self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, context=context)
-        finally:
-            cr.rollback()
-            cr.commit = cr.commit_org
-
         current_active = self.get_active_user_rights(cr, uid, context=context)
         self.write(cr, uid, current_active, {'state': 'deprecated'}, context=context)
         self.write(cr, uid, ids[0], {'state': 'confirmed', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -234,13 +226,59 @@ class sync_server_user_rights(osv.osv):
 
 sync_server_user_rights()
 
+class logger(object):
+    def __init__(self, obj):
+        self.message = []
+        self.obj = obj
+
+    def append(self, msg):
+        self.message.append(msg)
+
+    def write(self):
+        self.obj.write({'message': "\n".join(self.message)})
+
 class sync_server_user_rights_add_file(osv.osv_memory):
     _name = 'sync_server.user_rights.add_file'
 
     _columns = {
         'name': fields.char(string='Version', size=256, required=1),
         'zip_file': fields.binary('File', required=1),
+        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done')],'State', readonly=1),
+        'message': fields.text('Message', readonly=1),
     }
+
+    _defaults = {
+        'state': 'draft',
+    }
+    def load_bg(self, dbname, uid, wiz_id, plain_zip, context=None):
+        cr = pooler.get_db(dbname).cursor()
+        try:
+            cr.commit_org, cr.commit = cr.commit, lambda:None
+            wiz = self.browse(cr, uid, wiz_id, context=context)
+            self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, logger=logger(wiz), context=context)
+            wiz.write({'state': 'done', 'message': 'Import Done'})
+        except Exception, e:
+            if isinstance(e, osv.except_osv):
+                error = e.value
+            else:
+                error = e
+            wiz.write({'state': 'error', 'message': tools.ustr(error)})
+        finally:
+            cr.rollback()
+            cr.commit = cr.commit_org
+            cr.close(True)
+
+    def dummy(self, *a, **b):
+        return True
+
+    def done(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        plain_zip = decodestring(wiz.zip_file)
+
+        ur_obj = self.pool.get('sync_server.user_rights')
+        new_ur_id = ur_obj.create(cr, uid, {'name': wiz.name, 'sum': hashlib.md5(plain_zip).hexdigest(), 'zip_file': wiz.zip_file}, context=context)
+        ur_obj.activate(cr, uid, [new_ur_id], context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def import_zip(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
@@ -268,8 +306,8 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         for x in ur:
             if not ur[x]:
                 raise osv.except_osv(_('Warning !'), _("File %s not found!") % (ur_meaning[x]))
-
-        self.pool.get('sync_server.user_rights').create(cr, uid, {'name': wiz.name, 'sum': hashlib.md5(plain_zip).hexdigest(), 'zip_file': wiz.zip_file}, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        threading.Thread(target=self.load_bg, args=(cr.dbname, uid, wiz.id, plain_zip, context)).start()
+        self.write(cr, uid, ids[0], {'state': 'inprogress', 'message': 'Import in progess'}, context=context)
+        return True
 
 sync_server_user_rights_add_file()

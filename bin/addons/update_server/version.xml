@@ -39,7 +39,6 @@
                     <field name="sum" />
                     <field name="date" />
                     <field name="state" invisible="1"/>
-                    <button name="activate" type="object" icon="gtk-ok" string="Activate" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     <button type="object" name="download_file" string="Download File" icon="gtk-go-forward"/>
                 </tree>
             </field>
@@ -77,10 +76,39 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="User Right: import new file">
-                    <field name="name"/>
-                    <field name="zip_file" />
-                    <button name="import_zip" type="object" icon="gtk-ok" string="Import" colspan="2" />
-                    <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2" />
+                    <group colspan="4">
+                    <field name="name" />
+                    <newline />
+                    <field name="zip_file" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <separator colspan="4" string="Message" />
+                        <field name="message" colspan="4" nolabel="1"  widget="full_text"/>
+                    </group>
+                    <field name="state" invisible="1" />
+                    <html>
+                        <script language="javascript">
+                            $(document).ready(function() {
+                                if ($('#state').val() == 'inprogress') {
+                                    setTimeout(function(){
+                                       $('#dummy').click();
+                                    },2400)
+                                }
+                            });
+                        </script>
+                    </html>
+
+                    <group colspan="4">
+                        <separator colspan="4" string="Actions" />
+                        <button name="import_zip" type="object" icon="gtk-ok" string="Import" colspan="2"  attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <button name="dummy" string="Update" icon="gtk-refresh" type="object" attrs="{'invisible':[('state', '!=', 'inprogress')]}"/>
+                        <button name="done" string="Deploy on server" icon="gtk-ok" type="object" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                    </group>
+                    <newline />
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'inprogress')]}">
+                        <separator colspan="4" string="Cancel" />
+                        <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2" />
+                    </group>
                 </form>
             </field>
         </record>

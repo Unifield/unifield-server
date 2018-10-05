@@ -896,9 +896,13 @@ class user_rights_tools(osv.osv_memory):
         f = z.open(ur['UAC'])
         data = encodestring(f.read())
         f.close()
+        if logger:
+            logger.append('Importing UAC xml file')
+            logger.write()
+
         wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
         uac_processor.do_process_uac(cr, uid, [wiz_id])
-        # TODO: check error
+
         for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
             zip_to_import = ur[model]
             obj_to_import = self.pool.get(model)
