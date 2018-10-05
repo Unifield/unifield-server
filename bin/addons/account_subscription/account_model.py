@@ -137,10 +137,27 @@ class account_model_line(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        account_obj = self.pool.get('account.account')
         model = self.pool.get('account.model').browse(cr, uid, vals['model_id'], context=context)
         # just add the next line
         vals['sequence'] = len(model.lines_id) + 1
+        # Check account/Third Party compatibility
+        if vals.get('account_id', False) and 'partner_id' in vals:
+            account_obj.check_type_for_specific_treatment(cr, uid, [vals['account_id']], partner_id=vals['partner_id'], context=context)
+            account_obj.is_allowed_for_thirdparty(cr, uid, [vals['account_id']], partner_id=vals['partner_id'], raise_it=True, context=context)
         return super(account_model_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        account_obj = self.pool.get('account.account')
+        # Check account/Third Party compatibility
+        if vals.get('account_id', False) and 'partner_id' in vals:
+            account_obj.check_type_for_specific_treatment(cr, uid, [vals['account_id']], partner_id=vals['partner_id'], context=context)
+            account_obj.is_allowed_for_thirdparty(cr, uid, [vals['account_id']], partner_id=vals['partner_id'], raise_it=True, context=context)
+        return super(account_model_line, self).write(cr, uid, ids, vals, context=context)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """

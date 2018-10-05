@@ -38,6 +38,7 @@ class account_subscription_generate(osv.osv_memory):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         sub_line_obj = self.pool.get('account.subscription.line')
+        account_obj = self.pool.get('account.account')
         moves_created=[]
         for data in  self.read(cr, uid, ids, context=context):
             cr.execute('select id from account_subscription_line where date<%s and move_id is null', (data['date'],))
@@ -54,6 +55,11 @@ class account_subscription_generate(osv.osv_memory):
                     credit = 0.0
                     debit = 0.0
                     for line in acc_model_lines:
+                        # Check account/Third Party compatibility
+                        account_id = line.account_id.id
+                        partner_id = line.partner_id and line.partner_id.id or False
+                        account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id, context=context)
+                        account_obj.is_allowed_for_thirdparty(cr, uid, [account_id], partner_id=partner_id, raise_it=True, context=context)
                         credit += line.credit or 0.0
                         debit += line.debit or 0.0
                     if abs(debit - credit) > 10 ** -4:
