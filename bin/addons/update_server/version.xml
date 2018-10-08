@@ -34,11 +34,11 @@
             <field name="model">sync_server.user_rights</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="User Rights" colors="blue:state=='confirmed';gray:state=='deprecated';red:state=='draft'">
+                <tree string="User Rights" colors="blue:state=='confirmed';gray:state=='deprecated';red:state=='draft'" editable="top">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
-                    <field name="state" invisible="1"/>
+                    <field name="state" />
                     <button type="object" name="download_file" string="Download File" icon="gtk-go-forward"/>
                 </tree>
             </field>

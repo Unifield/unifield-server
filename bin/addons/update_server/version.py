@@ -172,11 +172,11 @@ class sync_server_user_rights(osv.osv):
     _order = 'id desc'
 
     _columns = {
-        'name' : fields.char(string='Version', size=256, readonly=True),
+        'name' : fields.char(string='Version', size=256),
         'zip_file' : fields.binary('File', readonly=True),
-        'sum' : fields.char(string="Check Sum", size=256, readonly=True),
+        'sum' : fields.char(string="Check Sum", size=256, readonly=True, select=1),
         'date' : fields.datetime(string="Revision Date", readonly=True),
-        'state' : fields.selection([('draft','Draft'),('confirmed','Confirmed'),('deprecated', 'Deprecated')], string="State", readonly=True),
+        'state' : fields.selection([('draft','Draft'),('confirmed','Confirmed'),('deprecated', 'Deprecated')], string="State", readonly=True, select=1),
     }
 
     _defaults = {
@@ -187,8 +187,16 @@ class sync_server_user_rights(osv.osv):
         ('unique_sum', 'unique(sum)', 'File must be unique!'),
         ('unique_name', 'unique(name)', 'Name must be unique!'),
     ]
-    # TODO: python constraint 1 active, confirmed status
 
+    def _check_unicity(self, cr, uid, ids, context=None):
+        ids = self.search(cr, uid, [('state', '=', 'confirmed')])
+        if len(ids) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You can activate only 1 UR file!', []),
+    ]
     def get_active_user_rights(self, cr, uid, context=None):
         return self.search(cr, uid, [('state', '=', 'confirmed')], context=context)
 
@@ -292,6 +300,13 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         if not is_zipfile(zp):
             raise osv.except_osv(_('Warning !'), _("The file is not a zip file !"))
 
+
+        md5 = hashlib.md5(plain_zip).hexdigest()
+        if self.pool.get('sync_server.user_rights').search_exist(cr, uid, [('sum', '=', md5)]):
+            raise osv.except_osv(_('Warning !'), _("Sum %s exists on server") % (md5,))
+
+        if self.pool.get('sync_server.user_rights').search_exist(cr, uid, [('name', '=', wiz.name)]):
+            raise osv.except_osv(_('Warning !'), _("Version %s exists on server") % (wiz.name,))
 
         ur_meaning = {
             'UAC': 'User Access from file',

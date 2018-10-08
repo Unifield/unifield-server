@@ -66,7 +66,7 @@ class field_access_rule_line(osv.osv):
             fields_pool = self.pool.get('ir.model.fields')
             fields = fields_pool.browse(cr, uid, field, fields_to_fetch=['name', 'state'], context=context)
             if context.get('import_from_web_interface') and fields.state == 'deprecated':
-                raise osv.except_osv(_('Warning !'), _("Fields %s is deprecated") % (fields.name))
+                raise osv.except_osv(_('Warning !'), _("Field %s is deprecated") % (fields.name))
             return fields.name
         else:
             return ''

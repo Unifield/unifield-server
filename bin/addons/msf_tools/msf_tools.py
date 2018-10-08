@@ -929,7 +929,7 @@ class user_rights_tools(osv.osv_memory):
                             data.append(row)
                     ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True, context={'from_synced_ur': True})
                     if ret and ret[0] == -1:
-                        raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
+                        raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s") % (zp_f,ret[1], ret[2]))
                     if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
                         cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
                                 left join ir_model_fields f on f.id = line.field

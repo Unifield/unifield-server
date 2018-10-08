@@ -50,7 +50,7 @@ class button_access_rule(osv.osv):
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'group_names': fields.function(_get_group_names, type='char', method=True, string='Group Names', help='A list of all group names given button access by this rule'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied.'),
-        'deprecated': fields.boolean('Depecrated'),
+        'deprecated': fields.boolean('Deprecated'),
     }
 
     _defaults = {
