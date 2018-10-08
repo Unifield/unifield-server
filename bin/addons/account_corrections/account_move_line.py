@@ -598,7 +598,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 transfer_journal_id = third_party.id
         return partner_id, employee_id, transfer_journal_id
 
-    def update_st_line(self, cr, uid, ids, account_id=None, third_party=None, context=None):
+    def update_st_line(self, cr, uid, ids, account_id=None, context=None):
         """
         Update the account of the statement line
         """
@@ -808,7 +808,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 
             # UFTP-119: Reverted a code that has been commented out in UF-2231 without explanation, and which caused the problem of updating back the Reg line
             if ml.statement_id:
-                self.update_st_line(cr, uid, [ml.id], new_account_id, third_party=new_third_party, context=context)
+                self.update_st_line(cr, uid, [ml.id], account_id=new_account_id, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
