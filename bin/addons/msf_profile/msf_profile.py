@@ -2921,8 +2921,8 @@ class sync_tigger_something(osv.osv):
         _logger = logging.getLogger('trigger')
         ir_model_access = self.pool.get('ir.model.access')
 
-        ids_to_del = ir_model_access.search(cr, uid, [('from_system', '=', 'f')])
-        access_ids_to_keep = ir_model_access.search(cr, uid, [('from_system', '=', 't')])
+        ids_to_del = ir_model_access.search(cr, uid, [('from_system', '=', False)])
+        access_ids_to_keep = ir_model_access.search(cr, uid, [('from_system', '=', True)])
         if ids_to_del:
             cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
             cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))

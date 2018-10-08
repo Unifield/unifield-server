@@ -774,11 +774,6 @@ class Entity(osv.osv):
         encoded_zip = entity.user_rights_data
         plain_zip = decodestring(encoded_zip)
 
-
-        if logger:
-            logger.append('Importing User Access from file')
-            logger.write()
-
         self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=False, logger=logger, context=context)
         return True
 
@@ -815,6 +810,8 @@ class Entity(osv.osv):
         if to_install or entity.user_rights_state == 'to_install':
             if first_sync:
                 self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ir_model_access'})
+                # to generate all sync updates
+                self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid)
             self.install_user_rights(cr, uid, context=context)
             entity.write({'user_rights_state': 'installed'})
         return True

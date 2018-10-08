@@ -27,6 +27,9 @@ class user_rights_auto_load(osv.osv_memory):
             f.close()
             md5 = hashlib.md5(plain_zip).hexdigest()
             ur_obj = self.pool.get('sync_server.user_rights')
+            if ur_obj.search_exist(cr, uid, [('sum', '=', md5)], context=context):
+                self._logger.info('UR file exists on server')
+                return True
             cur_data = ur_obj.get_last_user_rights_info(cr, uid, context=context)
             if cur_data.get('sum') != md5:
                 ur_name = release.version

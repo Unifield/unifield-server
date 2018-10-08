@@ -641,18 +641,18 @@ class sync_manager(osv.osv):
     """
     @check_validated
     def get_last_user_rights_info(self, cr, uid, entity, context=None):
-        data = self.pool.get('sync_server.user_rights').get_last_user_rights_info(cr, uid, context)
+        data = self.pool.get('sync_server.user_rights').get_last_user_rights_info(cr, 1, context)
         self._logger.info("::::::::[%s] get UR info sum: %s" % (entity.name, data['sum']))
         return data
 
     @check_validated
     def get_last_user_rights_file(self, cr, uid, entity, check_sum, context=None):
         ur_obj = self.pool.get('sync_server.user_rights')
-        ids = ur_obj.search(cr, uid, [('sum', '=', check_sum)], context=context)
-        self._logger.info("::::::::[%s] donwload UR (sum: %s)" % (entity.name, check_sum))
+        ids = ur_obj.search(cr, 1, [('sum', '=', check_sum)], context=context)
+        self._logger.info("::::::::[%s] download UR (sum: %s)" % (entity.name, check_sum))
         if not ids:
             return ''
-        return ur_obj.get_md5_zip(cr, uid, ids[0], context=context)
+        return ur_obj.get_md5_zip(cr, 1, ids[0], context=context)
 
     @check_validated
     def get_model_to_sync(self, cr, uid, entity, context=None):

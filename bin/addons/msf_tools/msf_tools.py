@@ -879,7 +879,7 @@ finance_tools()
 
 class user_rights_tools(osv.osv_memory):
     _name = 'user_rights.tools'
-    _logger = logging.getLogger('UR imported')
+    _logger = logging.getLogger('UR import')
     def load_ur_zip(self, cr, uid, plain_zip, sync_server=False, logger=False, context=None):
         '''
             load UR from zip file
@@ -898,7 +898,7 @@ class user_rights_tools(osv.osv_memory):
         data = encodestring(f.read())
         f.close()
         if logger:
-            log_line = 'Importing UAC xml file'
+            log_line = 'Importing %s' % (ur['UAC'],)
             self._logger.info(log_line)
             logger.append(log_line)
             logger.write()
@@ -927,7 +927,7 @@ class user_rights_tools(osv.osv_memory):
                             fields = row
                         else:
                             data.append(row)
-                    ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True)
+                    ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True, context={'from_synced_ur': True})
                     if ret and ret[0] == -1:
                         raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s" % (zp_f,ret[1], ret[2])))
                     if sync_server and model == 'msf_field_access_rights.field_access_rule_line':

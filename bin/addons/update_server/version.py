@@ -160,6 +160,7 @@ class sync_manager(osv.osv):
 
     @sync_server.sync_server.check_validated
     def get_zip(self, cr, uid, entity, revision, context=None):
+        self._logger.info("::::::::[%s] download patch" % (entity.name, ))
         return self.pool.get('sync_server.version')._get_zip(cr, 1, revision)
 
 sync_manager()
