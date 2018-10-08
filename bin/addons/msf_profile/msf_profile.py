@@ -62,7 +62,7 @@ class patch_scripts(osv.osv):
             some system acl don't have any sdref, recreate a clean unique sdref for all system acl
         '''
         access_obj = self.pool.get('ir.model.access')
-        if not self.pool.get('sync.client.entity'):
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.message'):
             return True
 
         access_ids = access_obj.search(cr, uid, [('name', '=', 'admin'), ('group_id', '=', False)])
