@@ -600,7 +600,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 
     def update_st_line(self, cr, uid, ids, account_id=None, third_party=None, context=None):
         """
-        Update the account of the statement line, and the Third Party ONLY IF it is not None
+        Update the account of the statement line
         """
         if context is None:
             context = {}
@@ -611,13 +611,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Prepare some values
         absl_obj = self.pool.get('account.bank.statement.line')
         cor_vals = {'account_id': account_id}
-        if third_party is not None:  # if None: no correction on Third Party should be made
-            partner_id, employee_id, transfer_journal_id = self._get_third_party_fields(third_party)
-            cor_vals.update({
-                'partner_id': partner_id,
-                'employee_id': employee_id,
-                'transfer_journal_id': transfer_journal_id,
-            })
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
             # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
