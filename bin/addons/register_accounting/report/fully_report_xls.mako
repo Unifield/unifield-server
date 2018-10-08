@@ -874,7 +874,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -943,7 +943,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -1001,7 +1001,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -1211,7 +1211,7 @@ endif
             <Data ss:Type="String">${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</Data>
           </Cell>
           <Cell ss:StyleID="${aal_color}_ana_left">
-            <Data ss:Type="String"></Data>
+            <Data ss:Type="String">${manual_aal.partner_txt or ''|x}</Data>
           </Cell>
           <Cell ss:StyleID="${aal_color}_ana_left">
             <Data ss:Type="String"></Data>
@@ -1256,7 +1256,7 @@ endif
           <Data ss:Type="String">${"%s %s" % (free_line.general_account_id.code, free_line.general_account_id.name)|x}</Data>
         </Cell>
         <Cell ss:StyleID="${aal_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${free_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${aal_color}_ana_left">
           <Data ss:Type="String"></Data>
