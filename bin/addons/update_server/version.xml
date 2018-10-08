@@ -61,7 +61,7 @@
 
 
         <record model="ir.actions.act_window" id="sync_server_user_rights_action">
-            <field name="name">Sync Server User Rights</field>
+            <field name="name">Instances User Rights</field>
             <field name="res_model">sync_server.user_rights</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
