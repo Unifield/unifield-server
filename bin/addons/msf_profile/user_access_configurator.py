@@ -674,6 +674,10 @@ class user_access_configurator(osv.osv_memory):
 
         reset data potentially reset to default values
         '''
+        logger = logging.getLogger('ACL')
+        cr.execute("select name, model_id from ir_model_access group by name, model_id having (count(*) > 1)")
+        for x in cr.fetchall():
+            logger.error('Duplicates ACL (ir.model.access) name: %s module_id: %s'% (x[0], x[1]))
         if mode == 'init':
             # process ACL
             self._process_objects_uac(cr, uid, context=context)
