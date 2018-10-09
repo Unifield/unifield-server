@@ -50567,9 +50567,10 @@ msgstr "Confirm line"
 msgid "Production Lot Revisions"
 msgstr "Révisions du Lot de Production"
 
-#. module: consumption_calculation
+#. modules: consumption_calculation, supplier_catalogue
 #: view:monthly.review.consumption:0
 #: view:real.average.consumption:0
+#: model:ir.actions.server,name:supplier_catalogue.action_server_export_catalogue_lines
 msgid "Export lines"
 msgstr "Exporter des lignes"
 
@@ -80632,11 +80633,6 @@ msgstr "Montant à saisir en devise fonctionnelle"
 #: field:hr.payroll.msf,has_third_party:0
 msgid "Has a Third Party"
 msgstr "A un Tiers"
-
-#. module: supplier_catalogue
-#: model:ir.actions.server,name:supplier_catalogue.action_server_export_catalogue_lines
-msgid "Export lines (csv)"
-msgstr "Export lines (csv)"
 
 #. module: base
 #: selection:ir.property,value_reference:0
