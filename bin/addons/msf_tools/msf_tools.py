@@ -912,6 +912,9 @@ class user_rights_tools(osv.osv_memory):
             if not isinstance(zip_to_import, list):
                 zip_to_import = [zip_to_import]
 
+            if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
+                cr.execute("update %s set imported_flag='f'" % (obj_to_import._table)) # not_a_user_entry
+
             for zp_f in zip_to_import:
                 if logger:
                     log_line = 'Importing %s' % (zp_f)
