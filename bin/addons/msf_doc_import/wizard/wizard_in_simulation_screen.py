@@ -695,6 +695,8 @@ Nothing has been imported because of %s. See below:
                                 pack_info[key] = values[x].get(key)
                                 if pack_coeff.get(key):
                                     pack_info[key] = float(pack_info[key]) * pack_coeff[key]
+                                if key == 'packing_list' and pack_info[key]:
+                                    pack_info[key] = '%s' % pack_info[key]
                             if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
