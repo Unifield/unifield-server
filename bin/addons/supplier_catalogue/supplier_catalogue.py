@@ -369,6 +369,8 @@ class supplier_catalogue(osv.osv):
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
         #line_obj = self.pool.get('supplier.catalogue.line')
+        ir_model = self.pool.get('ir.model')
+        supplinfo_obj = self.pool.get('product.supplierinfo')
 
         #line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
@@ -377,6 +379,23 @@ class supplier_catalogue(osv.osv):
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        # US-3531: Add a Track Changes line to each product in the catalogue
+        catalog = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'line_ids'], context=context)
+        for line in catalog.line_ids:
+            if line.product_id:
+                old_seller = []
+                for seller in line.product_id.seller_ids:
+                    old_seller.append((seller.sequence, seller.name.name))
+                new_seller = list(old_seller)
+                for i, seller in enumerate(new_seller):
+                    if catalog.partner_id.name in seller[1]:
+                        new_seller.remove(new_seller[i])
+                        break
+                object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
+                supplinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False,
+                                             False, self.pool.get('product.template')._columns['seller_ids'].string,
+                                             False, new_seller, old_seller, context=context)
 
         # Update lines
         #line_obj.write(cr, uid, line_ids, {}, context=context)
@@ -391,7 +410,6 @@ class supplier_catalogue(osv.osv):
                                      where catalogue_id = %s)
                         and id not in (select suppinfo_id from
                                     pricelist_partnerinfo ) ''', (ids[0],))
-
 
         return True
 
