@@ -51,6 +51,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF11.0
+    def us_4996_bck_beforepatch(self, cr, uid, *a, **b):
+        if self.pool.get('backup.config'):
+            cr.execute("update backup_config set beforepatching='t'")
+        return True
+
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
