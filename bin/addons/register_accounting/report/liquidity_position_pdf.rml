@@ -60,7 +60,7 @@
           <td><para style="text">Instance</para></td>
           <td><para style="text">Journal Code - Journal Name</para></td>
           <td><para style="text">State</para></td>
-          <td><para style="text">Opening Balance</para></td>
+          <td><para style="text">Starting Balance</para></td>
           <td><para style="text">Calculated Balance</para></td>
           <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
           <td><para style="text">Reg. ccy</para></td>
