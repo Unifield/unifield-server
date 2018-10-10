@@ -36,6 +36,7 @@ class tender(osv.osv):
     '''
     _name = 'tender'
     _description = 'Tender'
+    _trace = True
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
@@ -775,6 +776,7 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _rec_name = 'product_id'
     _description = 'Tender Line'
+    _trace = True
 
     _SELECTION_TENDER_STATE = [('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ]
 

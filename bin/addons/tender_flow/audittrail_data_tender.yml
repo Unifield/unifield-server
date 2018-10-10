@@ -1,0 +1,183 @@
+-
+  For Tender, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name', 'requested_date']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For TENDER, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['state', 'supplier_ids', 'requested_date']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender'), ('name', 'in', fields)], context=context)
+        vals= {'name': name,
+               'object_id': object_ids[0],
+               'log_create': False,
+               'log_write': True,
+               'log_unlink': False,
+               'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals,context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For Tender, rule for the DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals,context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For Tender lines, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER LINE CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'purchase_order_line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'tender_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+        
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For Tender lines, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER LINE WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['purchase_order_line_number', 'product_id', 'line_state', 'supplier_id']
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'purchase_order_line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'tender_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+        
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For Tender lines, rule for the DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'TENDER LINE DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'purchase_order_line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'tender_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+        
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
