@@ -93042,10 +93042,10 @@ msgid "Enter a Start date !"
 msgstr "Inscrire une date de début !"
 
 #. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:683
+#: code:addons/account_corrections/account_move_line.py:706
 #, python-format
-msgid "The line '%s' with new account '%s - %s' need an analytic distribution (you may have changed account from one with no AD required to a new one with AD required)."
-msgstr "The line '%s' with new account '%s - %s' need an analytic distribution (you may have changed account from one with no AD required to a new one with AD required)."
+msgid "The line '%s' with the new account '%s - %s' needs an analytic distribution (you may have changed the account from one with no AD required to a new one with AD required)."
+msgstr "La ligne '%s' avec le nouveau compte '%s - %s' a besoin d'une distribution analytique (il se peut que vous ayez passé la ligne d'un compte sans Distribution Analytique requise à un compte qui en requiert une)."
 
 #. module: product_attributes
 #: field:product.international.status,no_storage:0

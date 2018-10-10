@@ -703,8 +703,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 not initial_al_ids and new_account and \
                     new_account.is_analytic_addicted:
                 # we check only if no distrib_id arg passed to function
-                msg = _("The line '%s' with new account '%s - %s' need an" \
-                        " analytic distribution (you may have changed account from" \
+                msg = _("The line '%s' with the new account '%s - %s' needs an" \
+                        " analytic distribution (you may have changed the account from" \
                         " one with no AD required to a new one with AD required).")
                 raise osv.except_osv(_('Error'), msg % (ml.move_id.name,
                                                         new_account.code, new_account.name, ))
