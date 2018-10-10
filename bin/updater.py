@@ -620,8 +620,30 @@ def _find_pg_patch():
     """
     import glob
     pfiles = glob.glob('pgsql-*-*-patch')
+    pfiles.sort()
     if len(pfiles) == 0:
         return None, None, None
+    if len(pfiles) == 2:
+        (oldVer1, newVer1) = pfiles[0].split('-')[1:3]
+        (oldVer2, newVer2) = pfiles[1].split('-')[1:3]
+        if oldVer1 == '9.6.32' and oldVer1 == '9.6.33' and newVer1 == newVer2:
+            try:
+                with open(r'../pgsql/bin/psql.exe', 'rb') as f:
+                    psql_exe_md5 = md5(f.read()).hexdigest()
+                if psql_exe_md5 == '1ee9b41ee3f9d63816c5fc0f00862cbd':
+                    # 9.6.3-2
+                    _archive_patch(pfiles[1])
+                    pfiles = [pfiles[0]]
+                elif psql_exe_md5 == '8651954c8b170a2b2de004df446d6693':
+                    # 9.6.3-3
+                    _archive_patch(pfiles[0])
+                    pfiles = [pfiles[1]]
+                else:
+                    warn("md5 %s does not match" % (psql_exe_md5,))
+                    return None, None, None
+            except:
+                warn("Unable to compute md5 on ../pgsql/bin/psql.exe")
+                return None, None, None
     if len(pfiles) != 1:
         warn("Too many PostgreSQL patch files: %s" % pfiles)
         warn("PostgreSQL will not be updated.")
