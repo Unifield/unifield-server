@@ -799,6 +799,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 # if no Third Party: reset partner_txt (this field is automatically updated only when there is one)
                 if not new_partner_id and not new_employee_id and not new_transfer_journal_id:
                     cor_vals['partner_txt'] = ''
+            # set the partner_type_mandatory tag
+            third_required = False
+            if new_account.type_for_register in ['advance', 'down_payment', 'payroll', 'transfer', 'transfer_same']:
+                third_required = True
+            cor_vals['partner_type_mandatory'] = third_required
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
             # check the account compatibility with the Third Party on the COR line created
             correction_line = self.browse(cr, uid, correction_line_id, context=context)

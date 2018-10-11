@@ -168,7 +168,7 @@ class journal_items_corrections_lines(osv.osv_memory):
             third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
             third_required = False
             third_selection = 'res.partner,0'
-            account = acc_obj.browse(cr, uid, [account_id], fields_to_fetch=['code', 'name', 'type_for_register'])[0]
+            account = acc_obj.browse(cr, uid, account_id, fields_to_fetch=['code', 'name', 'type_for_register'])
             acc_type = account.type_for_register
             if acc_type in ['transfer', 'transfer_same']:  # requires a journal 3d party on which corr. are forbidden
                 warning = {
@@ -400,7 +400,7 @@ class journal_items_corrections(osv.osv_memory):
                 'partner_id': move_line.partner_id and move_line.partner_id.id or None,
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
                 'transfer_journal_id': move_line.transfer_journal_id and move_line.transfer_journal_id.id or None,
-                #                'partner_type_mandatory': move_line.partner_type_mandatory or None,
+                'partner_type_mandatory': move_line.partner_type_mandatory or False,
                 'analytic_distribution_id': move_line.analytic_distribution_id and move_line.analytic_distribution_id.id or None,
             }
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
