@@ -894,8 +894,19 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                           row_index, len(row))
                 break
 
-            # Check if product is non-stockable
             product_code = row.cells[2].data
+            line_no = row.cells[0].data
+            # check if line number and product code are matching together
+            product_id = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            disc_line_found = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [
+                ('inventory_id', '=', inventory_rec.id),
+                ('line_no', '=', int(line_no)),
+                ('product_id', 'in', product_id),
+            ], context=context)
+            if not disc_line_found:
+                add_error(_("""Unable to update line #%s with product %s: line not found in the discrepency report""") % (line_no, product_code), row_index, 2)
+
+            # Check if product is non-stockable
             if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
                                                   ('type', 'in', ['service_recep', 'consu'])],
                                         context=context):
@@ -920,7 +931,6 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
             comment = row.cells[19].data
 
-            line_no = row.cells[0].data
             line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
             if line_ids:
                 line_no = line_ids[0]
