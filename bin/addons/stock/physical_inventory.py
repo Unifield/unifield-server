@@ -904,7 +904,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 ('product_id', 'in', product_id),
             ], context=context)
             if not disc_line_found:
-                add_error(_("""Unable to update line #%s with product %s: line not found in the discrepency report""") % (line_no, product_code), row_index, 2)
+                add_error(_("""Unable to update line #%s product %s: line not found in the discrepancy report""") % (line_no, product_code), row_index, 2)
 
             # Check if product is non-stockable
             if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
