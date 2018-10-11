@@ -104,7 +104,12 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Stock Take Date')}</Data></Cell>
+        % if isDate(o.stock_take_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.stock_take_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
+
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
@@ -131,7 +136,7 @@
         % if o.order_type == 'direct':
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getContactName(o.dest_address_id.id) or ''|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.name or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.office_name or ''|x}</Data></Cell>
         % endif
     </Row>
     <Row>
@@ -144,7 +149,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address name')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress() or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress()|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address')}</Data></Cell>
@@ -265,7 +270,11 @@
             <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
+            % if isDate(line.stock_take_date):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            % endif
             % if isDate(line.date_planned):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
             % elif isDate(o.delivery_requested_date):

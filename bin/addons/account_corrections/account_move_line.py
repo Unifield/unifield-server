@@ -136,11 +136,11 @@ class account_move_line(osv.osv):
         'corrected': fields.boolean(string="Corrected?", readonly=True,
                                     help="If true, this line has been corrected by an accounting correction wizard"),
         'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True,
-                                             help="Line that have been corrected by this one."),
+                                             help="Line that have been corrected by this one.", select=1),
         'reversal': fields.boolean(string="Reversal?", readonly=True,
                                    help="If true, this line is a reversal of another (This was done via a correction wizard)."),
         'reversal_line_id': fields.many2one('account.move.line', string="Reversal Line", readonly=True,
-                                            help="Line that have been reversed by this one."),
+                                            help="Line that have been reversed by this one.", select=1),
         'have_an_historic': fields.boolean(string="Display historic?", readonly=True,
                                            help="If true, this implies that this line have historical correction(s)."),
         'is_corrigible': fields.function(_is_corrigible, method=True, string="Is corrigible?", type='boolean',
@@ -930,7 +930,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ji_ids, (int, long)):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
-        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
+        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id', 'account_id'], context=context):
             # check that the account can be corrected
             if ji.account_id.is_not_hq_correctible:
                 raise osv.except_osv(_('Error'), _('The account "%s - %s" is set as "Prevent correction on '

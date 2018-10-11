@@ -300,7 +300,7 @@
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}">
+                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}">
                                 <tree string="Lines" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="default_code"/>
@@ -527,13 +527,13 @@
                     <group colspan="4" col="6" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <separator string="Actions" colspan="6" />
                         <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" />
+                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" context="{'has_to_be_resourced': False}" />
                         <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
                     </group>
                     <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', False)]}">
                         <separator string="Actions" colspan="4" />
                         <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="Confirm cancelation" type="object" icon="gtk-execute" colspan="2" />
+                        <button name="just_cancel" string="Confirm cancelation" type="object" icon="gtk-execute" colspan="2" context="{'has_to_be_resourced': False}" />
                     </group>
                 </form>
             </field>
@@ -554,7 +554,7 @@
                     <newline />
                     <separator string="Actions" colspan="4" />
                     <button name="close_window" string="No" type="object" icon="gtk-execute" colspan="2" />
-                    <button name="just_cancel" string="Yes" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="just_cancel" string="Yes" type="object" icon="gtk-execute" colspan="2" context="{'has_to_be_resourced': False}" />
                 </form>
             </field>
         </record>
@@ -578,7 +578,7 @@
                     </group>
                     <newline />
                     <separator string="Actions" />
-                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" context="{'has_to_be_resourced': False}" />
                     <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
                 </form>
             </field>

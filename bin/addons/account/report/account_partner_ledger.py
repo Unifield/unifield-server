@@ -31,7 +31,15 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
+        self.fctal_totals = {}  # to store the totals in functional currency
+        self.subtotals = {}  # to store the subtotals per booking currency
+        self.accounts_to_display = {}
+        self.report_lines = {}
+        self.debit_balances = {}
+        self.credit_balances = {}
+        self.current_partner_number = 0
         self.localcontext.update({
+            'partners_to_display': self._partners_to_display,
             'time': time,
             'lines': self.lines,
             'sum_debit_partner': self._sum_debit_partner,
@@ -48,9 +56,17 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_journals_str': self._get_journals_str,
             'get_partners':self._get_partners,
             'get_target_move': self._get_target_move,
+            'get_reconcile_selection': self._get_reconcile_selection,
+            'get_display_partners_selection': self._get_display_partners_selection,
             'get_instances_str': self._get_instances_str,
             'get_accounts_str': self._get_accounts_str,
             'format_entry_label': self._format_entry_label,
+            'get_accounts_to_display': self._get_accounts_to_display,
+            'get_fctal_totals': self._get_fctal_totals,
+            'get_subtotals': self._get_subtotals,
+            'nb_partners': lambda partners: len(self._partners_to_display(partners)),
+            'update_current_partner_number': self._update_current_partner_number,
+            'get_current_partner_number': lambda: self.current_partner_number,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -58,7 +74,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         obj_partner = self.pool.get('res.partner')
         obj_fy = self.pool.get('account.fiscalyear')
         used_context = data['form'].get('used_context', {})
-        self.reconcil = data['form'].get('reconcil', False)
+        self.reconciled = data['form'].get('reconciled', False)
         self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.target_move = data['form'].get('target_move', 'all')
         self.period_id = data['form'].get('period_from', False)
@@ -66,10 +82,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.exclude_tax = data['form'].get('tax', False)
         self.instance_ids = data['form'].get('instance_ids', False)
         self.account_ids = data['form'].get('account_ids', False)
-        PARTNER_REQUEST = ''
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted']
+        self.display_partner = data['form'].get('display_partner', '')
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if self.fiscalyear_id:
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
@@ -109,10 +122,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(self.instance_ids),)
 
-        if (data['model'] == 'res.partner'):
-            ## Si on imprime depuis les partenaires
-            if ids:
-                PARTNER_REQUEST =  "AND line.partner_id IN %s",(tuple(ids),)
         if self.result_selection == 'supplier':
             self.ACCOUNT_TYPE = ['payable']
         elif self.result_selection == 'customer':
@@ -126,34 +135,24 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 "SELECT a.id " \
                 "FROM account_account a " \
                 "LEFT JOIN account_account_type t " \
-                    "ON (a.user_type=t.id) " \
-                    'WHERE a.type IN %s' \
-                    " " + self.TAX_REQUEST + " " \
-                    "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
+                "ON (a.user_type=t.id) " \
+                'WHERE a.type IN %s' \
+                " " + self.TAX_REQUEST + " " \
+                "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
             self.account_ids = [a for (a,) in self.cr.fetchall()]
         if data['form'].get('partner_ids', False):
             new_ids = data['form']['partner_ids']  # some partners are specifically selected
         else:
-            # by default display the report only for the partners linked to entries having the requested state
             partner_to_use = []
             # check if we should display all partners or only active ones
             active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
             self.cr.execute(
-                "SELECT DISTINCT l.partner_id, rp.name "
-                    "FROM account_move_line AS l, account_account AS account, "
-                    "account_move AS am, res_partner AS rp "
-                    "WHERE l.partner_id IS NOT NULL "
-                    "AND l.account_id = account.id "
-                    "AND am.id = l.move_id "
-                    "AND am.state IN %s"
-                    "AND l.partner_id = rp.id "
-                    "AND l.account_id IN %s "
-                    " " + self.INSTANCE_REQUEST + " "
-                    " " + PARTNER_REQUEST + " "
-                    "AND rp.active IN %s "
-                    "AND account.active "
-                    "ORDER BY rp.name",
-                    (tuple(move_state), tuple(self.account_ids), active_selection,))
+                "SELECT id as partner_id, name "
+                "FROM res_partner "
+                "WHERE active IN %s "
+                "AND name != 'To be defined'"
+                "ORDER BY name;",
+                (active_selection,))
             res = self.cr.dictfetchall()
             for res_line in res:
                 partner_to_use.append(res_line['partner_id'])
@@ -195,99 +194,233 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             x += index
         return "\n".join(parts)
 
-    def lines(self, partner):
+    def _get_accounts_to_display(self, partner):
+        """
+        Returns the list of account codes to be displayed for the partner in parameter
+        """
+        if self.accounts_to_display:
+            return self.accounts_to_display.get(partner.id, [])
+        move_state = ['draft', 'posted']
+        if self.target_move == 'posted':
+            move_state = ['posted']
+        if self.reconciled == 'yes':
+            reconcile_tag = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            reconcile_tag = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
+            reconcile_tag = " "
+        self.cr.execute(
+            "SELECT l.partner_id, acc.code "
+            "FROM account_move_line l "
+            "LEFT JOIN account_journal j ON l.journal_id = j.id "
+            "LEFT JOIN account_account acc ON l.account_id = acc.id "
+            "LEFT JOIN res_currency c ON l.currency_id = c.id "
+            "LEFT JOIN account_move m ON m.id = l.move_id "
+            "WHERE "
+            " l.account_id IN %s AND " + self.query + " "
+            "AND m.state IN %s "
+            " " + reconcile_tag + " "
+            " " + self.DATE_FROM + " "
+            " " + self.INSTANCE_REQUEST + " "
+            "GROUP BY l.partner_id, acc.code ORDER BY acc.code;",
+            (tuple(self.account_ids), tuple(move_state)))
+        for x in self.cr.fetchall():
+            self.accounts_to_display.setdefault(x[0], []).append(x[1])
+        return self.accounts_to_display.get(partner.id, [])
+
+    def lines(self, partner, account_code):
+        if partner.id in self.report_lines and account_code in self.report_lines[partner.id]:
+            return self.report_lines[partner.id][account_code]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
 
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL"
         self.cr.execute(
             "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, "
             "COALESCE(l.debit_currency, 0) as debit, COALESCE(l.credit_currency, 0) as credit, "
-            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code "
+            "COALESCE(l.debit, 0) AS debit_functional, COALESCE(l.credit, 0) AS credit_functional, "
+            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code, "
+            "l.reconcile_txt "
             "FROM account_move_line l " \
             "LEFT JOIN account_journal j " \
-                "ON (l.journal_id = j.id) " \
+            "ON (l.journal_id = j.id) " \
             "LEFT JOIN account_account acc " \
-                "ON (l.account_id = acc.id) " \
+            "ON (l.account_id = acc.id) " \
             "LEFT JOIN res_currency c ON (l.currency_id=c.id)" \
             "LEFT JOIN account_move m ON (m.id=l.move_id)" \
             "WHERE l.partner_id = %s " \
-                "AND l.account_id IN %s AND " + self.query +" " \
-                "AND m.state IN %s " \
-                " " + RECONCILE_TAG + " "\
-                " " + self.DATE_FROM + " "\
-                " " + self.INSTANCE_REQUEST + " "
-                "ORDER BY l.date",
-                (partner.id, tuple(self.account_ids), tuple(move_state)))
-        return self.cr.dictfetchall()
+            "AND l.account_id = (SELECT id FROM account_account WHERE code = %s LIMIT 1) "
+            "AND " + self.query + " " \
+            "AND m.state IN %s " \
+            " " + RECONCILE_TAG + " "\
+            " " + self.DATE_FROM + " "\
+            " " + self.INSTANCE_REQUEST + " "
+            "ORDER BY l.date;",
+            (partner.id, account_code, tuple(move_state)))
+        if partner.id not in self.report_lines:
+            self.report_lines[partner.id] = {}
+        self.report_lines[partner.id][account_code] = self.cr.dictfetchall()
+        # initialize totals in functional currency
+        if partner.id not in self.fctal_totals:
+            self.fctal_totals[partner.id] = {}
+        if account_code not in self.fctal_totals[partner.id]:
+            self.fctal_totals[partner.id][account_code] = {
+                'debit_functional': 0.0,
+                'credit_functional': 0.0,
+                'total_functional': 0.0,
+            }
+        # initialize subtotals in booking currency
+        if partner.id not in self.subtotals:
+            self.subtotals[partner.id] = {}
+        if account_code not in self.subtotals[partner.id]:
+            self.subtotals[partner.id][account_code] = {}
+        # fill in fctal_totals/subtotals
+        for line in self.report_lines[partner.id][account_code]:
+            self.fctal_totals[partner.id][account_code]['debit_functional'] += line['debit_functional'] or 0.0
+            self.fctal_totals[partner.id][account_code]['credit_functional'] += line['credit_functional'] or 0.0
+            self.fctal_totals[partner.id][account_code]['total_functional'] += line['total_functional'] or 0.0
+            if line['currency_code'] not in self.subtotals[partner.id][account_code]:
+                self.subtotals[partner.id][account_code][line['currency_code']] = {
+                    'debit': 0.0,
+                    'credit': 0.0,
+                    'amount_currency': 0.0,
+                    'total_functional': 0.0,
+                }
+            self.subtotals[partner.id][account_code][line['currency_code']]['debit'] += line['debit'] or 0.0
+            self.subtotals[partner.id][account_code][line['currency_code']]['credit'] += line['credit'] or 0.0
+            self.subtotals[partner.id][account_code][line['currency_code']]['amount_currency'] += line['amount_currency'] or 0.0
+            self.subtotals[partner.id][account_code][line['currency_code']]['total_functional'] += line['total_functional'] or 0.0
+        return self.report_lines[partner.id][account_code]
+
+    def _get_subtotals(self, partner, account_code):
+        """
+        Returns a dictionary with key = currency code, and value = dict. of the subtotals values for the
+        partner/account_code, i.e. {'credit': xxx, 'debit': xxx, 'amount_currency': xxx, 'total_functional': xxx}
+        """
+        if partner.id not in self.subtotals or account_code not in self.subtotals[partner.id]:
+            self.lines(partner, account_code)  # fills in the self.subtotals dictionary
+        return self.subtotals[partner.id][account_code]
+
+    def _get_fctal_totals(self, partner, account_code):
+        """
+        Returns a dictionary with the total values in functional currency for the partner/code in param:
+        {'credit_functional': xxx, 'debit_functional': xxx, 'total_functional': xxx}
+        """
+        if partner.id not in self.fctal_totals or account_code not in self.fctal_totals[partner.id]:
+            self.lines(partner, account_code)  # fills in the self.fctal_totals dictionary
+        return self.fctal_totals[partner.id][account_code]
+
+    def _update_current_partner_number(self):
+        """
+        Increments the current partner number and always returns True (used for the display in rml template)
+        """
+        self.current_partner_number += 1
+        return True
 
     def _sum_debit_partner(self, partner):
+        if partner.id in self.debit_balances:
+            # compute the result only once per partner
+            return self.debit_balances[partner.id]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
 
         result_tmp = 0.0
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND reconcile_id IS NULL"
 
         self.cr.execute(
             "SELECT sum(debit) " \
-                "FROM account_move_line AS l, " \
-                "account_move AS m "
-                "WHERE l.partner_id = %s " \
-                    "AND m.id = l.move_id " \
-                    "AND m.state IN %s "
-                    "AND account_id IN %s" \
-                    " " + RECONCILE_TAG + " " \
-                    " " + self.DATE_FROM + " " \
-                    " " + self.INSTANCE_REQUEST + " "
-                    "AND " + self.query + " ",
-                (partner.id, tuple(move_state), tuple(self.account_ids),))
+            "FROM account_move_line AS l, " \
+            "account_move AS m, "
+            "account_account AS acc "
+            "WHERE l.partner_id = %s " \
+            "AND m.id = l.move_id " \
+            "AND l.account_id = acc.id "
+            "AND m.state IN %s "
+            "AND account_id IN %s" \
+            " " + RECONCILE_TAG + " " \
+            " " + self.DATE_FROM + " " \
+            " " + self.INSTANCE_REQUEST + " "
+            "AND " + self.query + " ",
+            (partner.id, tuple(move_state), tuple(self.account_ids),))
 
         contemp = self.cr.fetchone()
         if contemp != None:
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
+        self.debit_balances[partner.id] = result_tmp
         return result_tmp
 
     def _sum_credit_partner(self, partner):
+        if partner.id in self.credit_balances:
+            # compute the result only once per partner
+            return self.credit_balances[partner.id]
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
 
         result_tmp = 0.0
-        if self.reconcil:
+        if self.reconciled == 'yes':
+            RECONCILE_TAG = "AND l.reconcile_id IS NOT NULL"
+        elif self.reconciled == 'no':
+            RECONCILE_TAG = "AND l.reconcile_id IS NULL AND acc.reconcile='t'"  # reconcilable entries not reconciled
+        else:  # 'empty'
             RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND reconcile_id IS NULL"
 
         self.cr.execute(
             "SELECT sum(credit) " \
-                "FROM account_move_line AS l, " \
-                "account_move AS m "
-                "WHERE l.partner_id=%s " \
-                    "AND m.id = l.move_id " \
-                    "AND m.state IN %s "
-                    "AND account_id IN %s" \
-                    " " + RECONCILE_TAG + " " \
-                    " " + self.DATE_FROM + " " \
-                    " " + self.INSTANCE_REQUEST + " "\
-                    "AND " + self.query + " ",
-                (partner.id, tuple(move_state), tuple(self.account_ids),))
+            "FROM account_move_line AS l, " \
+            "account_move AS m, "
+            "account_account AS acc "
+            "WHERE l.partner_id=%s " \
+            "AND m.id = l.move_id " \
+            "AND l.account_id = acc.id "
+            "AND m.state IN %s "
+            "AND account_id IN %s" \
+            " " + RECONCILE_TAG + " " \
+            " " + self.DATE_FROM + " " \
+            " " + self.INSTANCE_REQUEST + " "\
+            "AND " + self.query + " ",
+            (partner.id, tuple(move_state), tuple(self.account_ids),))
 
         contemp = self.cr.fetchone()
         if contemp != None:
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
+        self.credit_balances[partner.id] = result_tmp
         return result_tmp
+
+    def _partners_to_display(self, partners):
+        """
+        Returns the partners to be displayed in the report as a list of res.partner browse records
+        """
+        to_display = partners
+        if self.display_partner == 'non-zero_balance':
+            for p in partners:
+                # fill in the dictionaries self.debit_balances and self.credit_balances
+                self._sum_debit_partner(p)
+                self._sum_credit_partner(p)
+            to_display = [p for p in partners if abs(self.debit_balances[p.id] - self.credit_balances[p.id]) > 10**-3]
+        elif self.display_partner == 'with_movements':
+            for p in partners:
+                for account_code in self._get_accounts_to_display(p):
+                    # fill in the dictionary self.report_lines
+                    self.lines(p, account_code)
+            to_display = [p for p in partners if p.id in self.report_lines and self.report_lines[p.id]]
+        return to_display
 
     def _get_partners(self):
         if self.result_selection == 'customer':
@@ -297,6 +430,30 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         elif self.result_selection == 'customer_supplier':
             return _('Receivable and Payable Accounts')
         return ''
+
+    def _get_reconcile_selection(self):
+        """
+        Returns "Yes" if "Reconciled: Yes" is selected in the wizard
+        """
+        selection = _('All')
+        if self.reconciled == 'yes':
+            selection = _('Yes')
+        elif self.reconciled == 'no':
+            selection = _('No')
+        return selection
+
+    def _get_display_partners_selection(self):
+        """
+        Returns the String to display in the "Display Partners" section of the report header
+        """
+        selection = '-'
+        if self.display_partner == 'all':
+            selection = _('All Partners')
+        elif self.display_partner == 'with_movements':
+            selection = _('With movements')
+        elif self.display_partner == 'non-zero_balance':
+            selection = _('With balance is not equal to 0')
+        return selection
 
     def _sum_currency_amount_account(self, account, form):
         self._set_get_account_currency_code(account.id)
