@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'tender')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'requested_date']
+        fields = ['name', 'requested_date', 'supplier_ids']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
