@@ -33,6 +33,7 @@ HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Re
 class product_history_consumption(osv.osv):
     _name = 'product.history.consumption'
     _rec_name = 'location_id'
+    _order = 'create_date'
 
     def _get_status(self, cr, uid, ids, field_name, args, context=None):
         '''
