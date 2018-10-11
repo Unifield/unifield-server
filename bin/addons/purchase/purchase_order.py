@@ -1919,10 +1919,11 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         so_ids = set()
-        for po in self.browse(cr, uid, ids, context=context):
-            for pol in po.order_line:
-                if pol.linked_sol_id:
-                    so_ids.add(pol.linked_sol_id.order_id.id)
+        if ids:  # Even if the browse is None, it would still go in the for in some cases and trigger an error
+            for po in self.browse(cr, uid, ids, context=context):
+                for pol in po.order_line:
+                    if pol.linked_sol_id:
+                        so_ids.add(pol.linked_sol_id.order_id.id)
 
         return list(so_ids)
 
