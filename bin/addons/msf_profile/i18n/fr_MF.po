@@ -4077,7 +4077,7 @@ msgstr "Antarctica/Mawson"
 #: code:addons/msf_doc_import/supplier_catalogue.py:134
 #, python-format
 msgid "Supplier Catalogue template.xls"
-msgstr "Modele.xls Catalogue Fournisseur"
+msgstr "Modele Catalogue Fournisseur.xls"
 
 #. modules: purchase, account, sync_client, analytic_distribution
 #: field:account.invoice.tax,manual:0
