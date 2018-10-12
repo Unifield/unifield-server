@@ -157,6 +157,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
+        'pack_found': fields.boolean('Pack Found'),
 
     }
 
@@ -164,6 +165,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'state': 'draft',
         'filetype': 'excel',
         'with_pack': False,
+        'pack_found': False,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -682,6 +684,7 @@ Nothing has been imported because of %s. See below:
                 x = NB_OF_HEADER_LINES + 1
                 pack_sequences = {}
                 pack_id = False
+                pack_found = False
                 while x < len(values) + 1:
                     not_ok = False
                     file_line_error = []
@@ -701,6 +704,8 @@ Nothing has been imported because of %s. See below:
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
                             pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            if values[x]['parcel_from']:
+                                pack_found = True
                         x += 2
 
                     if pack_id:
@@ -800,7 +805,8 @@ Nothing has been imported because of %s. See below:
                 If a matching line is found in one of these cases, keep the link between the
                 file line and the simulation screen line.
                 '''
-
+                if pack_found:
+                    self.write(cr, uid, [wiz.id], {'pack_found': True}, context=context)
                 if pack_sequences:
                     uom_ids = uom_obj.search(cr, uid, [])
                     uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))

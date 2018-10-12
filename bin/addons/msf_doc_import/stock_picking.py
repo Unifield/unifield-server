@@ -237,10 +237,8 @@ class stock_picking(osv.osv):
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
             self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
             if filetype == 'xml' and not self.xml_has_pack_info(cr, uid, file_content, context=context):
-                with_pack = False
                 self.pool.get('stock.incoming.processor').launch_simulation(cr, uid, in_processor, context=context)
             else:
-                with_pack = True
                 self.pool.get('stock.incoming.processor').launch_simulation_pack(cr, uid, in_processor, context=context)
 
             simu_id = context.get('simu_id')
@@ -253,6 +251,7 @@ class stock_picking(osv.osv):
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
+            with_pack = self.pool.get('wizard.import.in.simulation.screen').read(cr, uid, simu_id, ['pack_found'], context=context)['pack_found']
             if with_pack:
                 info_wiz = self.pool.get('wizard.import.in.simulation.screen').read(cr,uid, [simu_id], ['state', 'message'])[0]
                 if info_wiz['state'] == 'error':
