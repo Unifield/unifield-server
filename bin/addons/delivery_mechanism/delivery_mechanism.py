@@ -1069,13 +1069,11 @@ class stock_picking(osv.osv):
 
                     # Sort the OUT moves to get the closest quantities as the IN quantity
                     out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
-
                     for lst_out_move in out_moves:
                         if remaining_out_qty <= 0.00:
                             break
 
                         out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
-
                         if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
                             price_unit = cur_obj.compute(
                                 cr,
@@ -1126,7 +1124,10 @@ class stock_picking(osv.osv):
                                             ('in_out_updated', '=', False),
                                         ], context=context))
 
-                        if uom_partial_qty < out_move.product_qty:
+                        # we need to check if the current IN has already been modified by this loop (out_move.id not in processed_out_moves)
+                        # to not change again an already modifier qty
+                        # split IN lines two times and set the whole original qty on the 3 lines (ie: extra qty received with split)
+                        if uom_partial_qty < out_move.product_qty and out_move.id not in processed_out_moves:
                             # Splt the out move
                             out_values.update({
                                 'product_qty': remaining_out_qty,
@@ -1155,7 +1156,7 @@ class stock_picking(osv.osv):
                                 if self.pool.get('sale.order.line').browse(cr, uid, sol_to_relink[0], context=context).state.startswith('cancel'):
                                     move_obj.action_cancel(cr, uid, [out_move.id], context=context)
                             processed_out_moves.append(new_out_move_id)
-                        elif uom_partial_qty == out_move.product_qty:
+                        elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
@@ -1164,7 +1165,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1]:
+                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
                             # Just update the out move with the value of the out move with UoM of IN
                             out_qty = out_move.product_qty
                             if line.uom_id.id != out_move.product_uom.id:
@@ -1186,8 +1187,14 @@ class stock_picking(osv.osv):
                                 'product_uom': line.uom_id.id,
                                 'in_out_updated': in_out_updated,
                             })
-                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
-                            processed_out_moves.append(out_move.id)
+                            if out_move.id in processed_out_moves:
+                                context['keepLineNumber'] = True
+                                new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
+                                context['keepLineNumber'] = False
+                                processed_out_moves.append(new_out_move_id)
+                            else:
+                                move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                                processed_out_moves.append(out_move.id)
 
                             if line.uom_id.id != out_move.product_uom.id:
                                 uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
@@ -1225,7 +1232,6 @@ class stock_picking(osv.osv):
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
             }, context=context)
-
             # Create the backorder if needed
             if backordered_moves:
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
