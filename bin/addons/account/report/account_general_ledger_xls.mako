@@ -179,7 +179,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    col_count = 9
+    col_count = 10
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = 'Company'
     else:
@@ -190,8 +190,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="50" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="55" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1" />
+<Column ss:AutoFitWidth="1" ss:Width="55" />
 <Column ss:Width="90" />
 <Column ss:Width="90" />
 <Column ss:Width="90" />
@@ -200,7 +200,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Display</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data)!='No Filter' and get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
 <Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Proprietary Instances</Data></Cell>
@@ -217,7 +217,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_journals_str(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
     <Data ss:Type="String">${get_display_info(data)|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
@@ -244,11 +244,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Third Party')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 % if not get_show_move_lines():
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
-<Cell ss:StyleID="ssH" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="3"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
@@ -273,7 +274,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder${ac_style_suffix}" ss:MergeAcross="2">
+<Cell ss:StyleID="ssBorder${ac_style_suffix}" ss:MergeAcross="3">
     <Data ss:Type="String">${(o.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">
@@ -301,7 +302,7 @@ ccy_sub_total_style_right_suffix = 'Right'
     <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
         <Data ss:Type="String">${(o.code or '')|x}</Data>
     </Cell>
-    <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
+    <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
         <Data ss:Type="String">Sub Total</Data>
     </Cell>
     <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
@@ -328,7 +329,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
@@ -362,6 +363,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${line['third_party'] or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['currency_name'] or '')|x}</Data>

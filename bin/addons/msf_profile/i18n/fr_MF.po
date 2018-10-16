@@ -7802,7 +7802,7 @@ msgstr "Selected Origin must not be in Cancelled state for Incoming Shipments."
 msgid "Africa/Mbabane"
 msgstr "Africa/Mbabane"
 
-#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client
+#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client, msf_audittrail
 #: field:account.bank.statement.line,sequence:0
 #: field:account.bank.statement.line.deleted,sequence:0
 #: field:account.invoice.tax,sequence:0
@@ -7814,6 +7814,7 @@ msgstr "Africa/Mbabane"
 #: field:account.sequence.fiscalyear,sequence_id:0
 #: field:account.tax,sequence:0
 #: field:account.tax.template,sequence:0
+#: field:audittrail.log.line,other_column:0
 #: view:audittrail.log.line:0
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
@@ -15487,7 +15488,6 @@ msgstr "Niveaux obligatoires"
 
 #. modules: account, msf_audittrail, hr
 #: view:account.analytic.line:0
-#: field:audittrail.log.line,other_column:0
 #: model:process.node,note:hr.process_node_employeecontact0
 msgid "Other information"
 msgstr "Autre information"
@@ -34868,12 +34868,6 @@ msgstr "Required by date"
 msgid "Only draft picking tickets can be deleted."
 msgstr "Seuls les brouillons de bons de picking peuvent être supprimés"
 
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:886
-#, python-format
-msgid "Document date should be in posting date FY"
-msgstr "Document date should be in posting date FY"
-
 #. module: account
 #: field:account.account.type,name:0
 msgid "Acc. Type Name"
@@ -39563,12 +39557,6 @@ msgstr "Vous ne pouvez pas dupliquer un document %s !"
 #: selection:res.users,context_tz:0
 msgid "Africa/Kinshasa"
 msgstr "Africa/Kinshasa"
-
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:883
-#, python-format
-msgid "Document date (%s) should be in posting date FY"
-msgstr "Document date (%s) should be in posting date FY"
 
 #. modules: account_override, order_line_number, register_accounting
 #: field:account.invoice,sequence_id:0
@@ -45265,12 +45253,8 @@ msgstr "Sélectionnez une devise à appliquer à la facture"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/down_payment.py:98
 #, python-format
-msgid "Maximum amount should be: %s. Register' +\n"
-"                                   ' line amount is higher than (PO confirmed amount - ' +\n"
-"                                   'unexpended DPs - open/paid INV)."
-msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre' +\n"
-"                                   ' est plus élevé que (montant confirmé du BC - ' +\n"
-"                                   'acomptes non utilisés - factures ouvertes / payées)."
+msgid "Maximum amount should be: %s. Register line amount is higher than (PO confirmed amount - unexpended DPs - open/paid INV)."
+msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre est plus élevé que (montant confirmé du BC - acomptes non utilisés - factures ouvertes / payées)."
 
 #. modules: account_override, account, register_accounting, msf_instance, finance
 #: selection:account.analytic.journal,type:0
@@ -75024,6 +75008,7 @@ msgstr "Ligne %s :: Le mouvement n'est pas  'Disponible'. Vérifier le statut du
 #: field:wizard.import.cheque.lines,line_id:0
 #: field:wizard.invoice.date,invoice_id:0
 #: field:wizard.invoice.line,invoice_id:0
+#: field:account.analytic.line,invoice_id:0
 #: report:allocation.invoices.report:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -78910,7 +78895,7 @@ msgstr "Nov"
 msgid "HQ Entries import failed."
 msgstr "Importation échouée Ecritures HQ"
 
-#. modules: register_accounting, msf_accrual, account_mcdb, account_hq_entries, financing_contract
+#. modules: register_accounting, msf_accrual, account_mcdb, account_hq_entries, financing_contract, account
 #: field:hq.entries,partner_txt:0
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
@@ -78930,6 +78915,9 @@ msgstr "Importation échouée Ecritures HQ"
 #: field:account.mcdb,partner_txt:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/financing_contract/report/project_expenses_xls.mako:485
+#: report:account.general.ledger_landscape:0
+#: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_xls.mako:247
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -83963,7 +83951,7 @@ msgstr "Récap Dépenses prévues"
 msgid "L2"
 msgstr "L2"
 
-#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools
+#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account
 #: field:analytic.distribution.wizard,purchase_id:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -84017,6 +84005,8 @@ msgstr "L2"
 #: model:process.node,name:tender_flow.process_node_tender_po
 #: model:ir.model,name:transport_mgmt.model_purchase_order
 #: field:automated.import.files.available,po_id:0
+#: field:account.move.line,purchase_order_id:0
+#: field:account.analytic.line,purchase_order_id:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -101832,286 +101822,88 @@ msgstr " veuillez vous référer aux procédures adéquates."
 msgid "You cannot delete product"
 msgstr "Vous ne pouvez pas suprimer le produit"
 
+#. module: account_override
+#: code:addons/account_override/account.py:517
+#, python-format
+msgid "An account set as \"Included in revaluation\" must be set as \"Reconcile\"."
+msgstr "Un compte marqué comme inclus dans la Réévaluation doit être défini comme Lettrable."
+
 #. module: sale
-#: code:addons/sale/wizard/delete_sale_order_line.py:63
-#: code:addons/sale/wizard/delete_sale_order_line.py:92
+#: code:addons/sale/wizard/delete_sale_order_line.py:43
+#, python-format
+msgid "OK, cancel line"
+msgstr "OK, annuler la ligne"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:42
 #, python-format
 msgid "Return to previous screen"
-msgstr "Retour à l'écran précédent"
+msgstr "Retourner à l'écran précédent"
 
 #. module: sale
-#: code:addons/sale/wizard/delete_sale_order_line.py:85
+#: code:addons/sale/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid " and %s"
+msgstr " et %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:106
+#, python-format
+msgid "You are about to cancel the product %s, are you sure you wish to proceed ?"
+msgstr "Vous êtes sur le point d'annuler le produit %s, voulez-vous vraiment continuer ?"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:76
+#: code:addons/sale/wizard/delete_sale_order_line.py:101
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:63
+#, python-format
+msgid "You cannot delete product: %s"
+msgstr "Vous ne pouvez pas supprimer les produits: %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:89
 #, python-format
 msgid "You are about to cancel the products %s, are you sure you wish to proceed ?"
-msgstr "Vous êtes sur le point de supprimer les produits %s, êtes vous sûr de vouloir continuer ?"
+msgstr "Vous êtes sur le point d'annuler les produits %s, voulez-vous vraiment continuer ?"
 
 #. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:44
 #: view:delete.sale.order.line.wizard:0
 #: code:addons/sale/wizard/delete_sale_order_line.py:110
 #, python-format
 msgid "OK, cancel lines"
-msgstr "OK, supprimer les lignes"
+msgstr "OK, annuler les lignes"
 
-#. module: sale
-#: code:addons/sale/wizard/delete_sale_order_line.py:85
+#. module: account
+#: field:account.account,reconciliation_debit_account_id:0
+msgid "Default Debit Account for Reconciliation"
+msgstr "Compte de Débit par Défaut pour le Lettrage"
+
+#. module: account
+#: field:account.account,reconciliation_credit_account_id:0
+msgid "Default Credit Account for Reconciliation"
+msgstr "Compte de Crédit par Défaut pour le Lettrage"
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:139
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:149
 #, python-format
-msgid "You are about to cancel the product %s, are you sure you wish to proceed ?"
-msgstr "Vous êtes sur le point de supprimer le produit %s, êtes vous sûr de vouloir continuer ?"
+msgid "The account %s - %s has no Default Destination. FX adjustment entry can't be created."
+msgstr "Le compte %s - %s n'a pas de Destination par défaut. L'écriture de différence de change ne peut pas être créée."
 
-#. module: sale
-#: view:delete.sale.order.line.wizard:0
-#: code:addons/sale/wizard/delete_sale_order_line.py:110
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:355
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:365
 #, python-format
-msgid "OK, cancel line"
-msgstr "OK, supprimer la ligne"
+msgid "The account %s - %s used for the FX adjustment entry has no Default Destination."
+msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a pas de Destination par défaut."
 
-#. modules: specific_rules, stock_override
-#: view:export.report.stock.inventory:0
-#: view:export.report.stock.move:0
-msgid "Your file is now ready. You can download it on the right side bar (Attachments)."
-msgstr "Votre fichier est prêt maintenant. Vous pouvez le télécharger à partir de la barre de menu à droite (Pièces jointes)"
-
-#. module: procurement_request
-#: view:sale.order:0
-msgid "WARNING: This document has already been validated, are you sure you wish to modify after validation?"
-msgstr "ATTENTION: Ce document a déjà été validé, êtes vous sûr de vouloir le modifer ?"
-
-#. module: product_attributes
-#: report:addons/product_attributes/report/standard_price_track_changes.mako:104
-msgid "Manually changed (at reception)"
-msgstr "Modifié manuellemnt (à la réception)"
-
-#. module: msf_audittrail
-#: report:msf.log.line:0
-msgid "on"
-msgstr "de"
-
-#. module: msf_order_date
-#: code:addons/msf_order_date/wizard/update_lines.py:114
-#, python-format
-msgid "Delivery %s date"
-msgstr "Date de livraison %s"
-
-#. module: msf_order_date
-#: code:addons/msf_order_date/wizard/update_lines.py:114
-#, python-format
-msgid "confirmed"
-msgstr "confirmée"
-
-#. module: msf_order_date
-#: code:addons/msf_order_date/wizard/update_lines.py:114
-#, python-format
-msgid "requested"
-msgstr "souhaitée"
-
-#. module: msf_order_date
-#: code:addons/msf_order_date/wizard/update_lines.py:92
-#: code:addons/msf_order_date/wizard/update_lines.py:106
-#, python-format
-msgid "Value to be used-"
-msgstr "Valeur à utiliser-"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/packing_list_xls.mako:425
-msgid "Containing:"
-msgstr "Contenant"
-
-#. module: mission_stock
-#: sql_constraint:stock.mission.report.line.location:0
-msgid "(Location, Product) must be unique"
-msgstr "(zone, produit) doit être unique"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:56
-#: code:addons/mission_stock/mission_stock.py:71
-#: code:addons/mission_stock/mission_stock.py:84
-#: code:addons/mission_stock/mission_stock.py:100
-#: code:addons/mission_stock/mission_stock.py:521
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:66
-#, python-format
-msgid "Cross-Docking Qty."
-msgstr "Transbordement - Qté."
-
-#. module: mission_stock
-#: field:mission.stock.wizard,display_only_in_stock:0
-msgid "Display only products in stock"
-msgstr "N'afficher que les produits en stock"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,full_view:0
-msgid "Full View"
-msgstr "Vue complète"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:357
-#: code:addons/mission_stock/mission_stock.py:495
-#, python-format
-msgid "Generating instance"
-msgstr "Instance génératrice"
-
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:71
-#: code:addons/mission_stock/mission_stock.py:61
-#: code:addons/mission_stock/mission_stock.py:76
-#: code:addons/mission_stock/mission_stock.py:89
-#: code:addons/mission_stock/mission_stock.py:105
-#: code:addons/mission_stock/mission_stock.py:526
-#, python-format
-msgid "In Pipe Qty"
-msgstr "Qté en cours"
-
-#. modules: mission_stock, msf_field_access_rights
-#: field:mission.stock.wizard,instance_level:0
-#: field:msf_field_access_rights.field_access_rule,instance_level:0
-msgid "Instance Level"
-msgstr "Niveau de l'instance"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:360
-#: code:addons/mission_stock/mission_stock.py:499
-#, python-format
-msgid "Instance selection"
-msgstr "Sélection Instance"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:54
-#: code:addons/mission_stock/mission_stock.py:68
-#: code:addons/mission_stock/mission_stock.py:81
-#: code:addons/mission_stock/mission_stock.py:96
-#: code:addons/mission_stock/mission_stock.py:517
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
-#, python-format
-msgid "Instance stock"
-msgstr "Stock de l'Instance"
-
-#. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:69
-#: code:addons/mission_stock/mission_stock.py:97
-#: code:addons/mission_stock/mission_stock.py:518
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:58
-#, python-format
-msgid "Instance stock val."
-msgstr "Intance - Valeur du Stock"
-
-#. module: mission_stock
-#: field:stock.mission.report.line,international_status:0
-msgid "International status"
-msgstr "Statut International"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,local_report:0
-msgid "Local Report"
-msgstr "Rapport Local"
-
-#. module: mission_stock
-#: model:ir.module.module,shortdesc:mission_stock.module_meta_information
-msgid "Mission Stock"
-msgstr "Stock de Mission"
-
-#. module: mission_stock
-#: view:mission.stock.wizard:0
-msgid "Mission stock report CSV file"
-msgstr "Fichier CSV Stock de Mission fichier"
-
-#. module: mission_stock
-#: field:msr_in_progress,done_ok:0
-msgid "Processing done"
-msgstr "Traitement terminé"
-
-#. module: mission_stock
-#: view:mission.stock.wizard:0
-msgid "Product in stock"
-msgstr "Produit en stock"
-
-#. module: mission_stock
-#: model:ir.model,name:mission_stock.model_stock_mission_report_line_location
-msgid "Stock level by product/location"
-msgstr "Niveau de Stock par produit/zone"
-
-#. module: mission_stock
-#: field:mission.stock.wizard,export_ok:0
-msgid "XML Export ready"
-msgstr "Export XML prêt"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/expiry_report.mako:107
-msgid "Expiry report"
-msgstr "Rapport expiration"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:103
-msgid "Consumption calculation method"
-msgstr "Méthode de calcul de la consommation"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
-msgid "Number of"
-msgstr "Nombre de"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
-msgid "from now"
-msgstr "depuis aujourd'hui"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
-msgid "months"
-msgstr "mois"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:98
-msgid "weeks"
-msgstr "semaines"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/weekly_forecast_report.py:509
-#, python-format
-msgid "Current Stock Qty"
-msgstr "Qté actuelle en Stock"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/weekly_forecast_report.py:510
-#, python-format
-msgid "Pipeline Qty"
-msgstr "Qté en attente"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/weekly_forecast_report.py:507
-#, python-format
-msgid "Stock value"
-msgstr "Valeur du Stock"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/weekly_forecast_report.py:414
-#, python-format
-msgid "Week"
-msgstr "Semaine"
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:1670
-#, python-format
-msgid "The Request for Quotation %s for supplier %s has been created."
-msgstr "La Demande de Devis %s pour le fournisseur %s a été créée."
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:1728
-#, python-format
-msgid "The Tender %s has been created."
-msgstr "L'Appel d'Offres %s a été créé."
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:1565
-#: code:addons/sourcing/sale_order_line.py:1597
-#, python-format
-msgid "The Purchase Order %s for supplier %s has been created."
-msgstr "Le Bon de Commande %s pour le fournisseur %s a été créé."
-
-#. module: stock_override
-#: view:stock.picking.cancel.wizard:0
-msgid "If you click on 'Cancel & Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced."
-msgstr "Si vous cliquez sur 'Annuler & Réallouer', toutes les lignes du Bon de Livraison attachées à une CdT ou à une Demande Interne seront re-sourcées. Les quantités et les lignes déjà traitées ne seront pas impactées."
-
-#. module: stock_override
-#: view:stock.move.cancel.wizard:0
-msgid "Would you re-source the need sourced by this stock move ?"
-msgstr "Voulez-vous re-sourcer les besoins de ce mouvement de stock ?"
+#. module: analytic_distribution
+#: field:account.commitment.line,commit_number:0
+msgid "Commitment Voucher Number"
+msgstr "Numéro du Bon d'Engagement"

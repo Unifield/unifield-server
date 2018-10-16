@@ -247,10 +247,16 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
+    def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
+        """
+        Note that the param "column_deletion" is needed (see def archive in finance_export) but NOT used here.
+        """
+        return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
-# request used for OCB, OCP, and OCG VI and for Liquidity Balances report
+
+# request & postprocess method used for OCB, OCP, and OCG VI and for Liquidity Balances report
 liquidity_sql = """
-            SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+            SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
             (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
@@ -296,6 +302,41 @@ liquidity_sql = """
             AND j.currency = c.id
             AND j.instance_id IN %s;
             """
+
+
+def postprocess_liquidity_balances(self, cr, uid, data, context=None):
+    """
+    Returns data after having replaced the Journal ID by the Journal Name in the current language
+    (the language code should be stored in context['lang']).
+    """
+    # number and name of the column containing the journal id
+    col_nbr = 2
+    col_name = 'id'
+    col_new_name = 'name'
+    if context is None or 'lang' not in context:
+        context = {'lang': 'en_MF'}  # English by default
+    pool = pooler.get_pool(cr.dbname)
+    journal_obj = pool.get('account.journal')
+    new_data = []
+    for line in data:
+        tmp_l = line
+        # list
+        if isinstance(tmp_l, list):
+            if tmp_l[col_nbr]:
+                tmp_l[col_nbr] = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+        # tuple
+        elif isinstance(tmp_l, tuple):
+            tmp_l = list(tmp_l)
+            if tmp_l[col_nbr]:
+                tmp_l[col_nbr] = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+            tmp_l = tuple(tmp_l)  # restore back the initial format
+        # dictionary
+        elif isinstance(tmp_l, dict):
+            if tmp_l[col_name]:
+                tmp_l[col_new_name] = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
+                del tmp_l[col_name]
+        new_data.append(tmp_l)
+    return new_data
 
 
 class hq_report_ocb(report_sxw.report_sxw):
@@ -641,6 +682,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
                 'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id, reg_types, last_day_of_period, tuple(instance_ids)),
+                'function': 'postprocess_liquidity_balances',
+                'fnct_params': context,
             },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
