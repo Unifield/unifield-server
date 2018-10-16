@@ -1010,8 +1010,13 @@ class stock_picking(osv.osv):
                 average_values = {}
                 move_sptc_values = []
 
+                line = False
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
+                    if context.get('do_not_process_incoming') and line.pack_info_id:
+                        # we are processing auto import IN, we must register pack_info data
+                        values['pack_info_id'] = line.pack_info_id.id
+
                     if not values.get('product_qty', 0.00):
                         continue
                     # Check if we must re-compute the price of the product
@@ -1197,7 +1202,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line.product_id.id))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
                     if not sync_in:
                         # decrement qty of linked INTernal move:
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)

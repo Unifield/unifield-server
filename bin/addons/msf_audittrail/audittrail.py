@@ -1015,7 +1015,7 @@ class audittrail_log_line(osv.osv):
         'new_value': fields.text("New Value"),
         'field_description': fields.char('Field Description', size=64),
         'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
-        'other_column': fields.char(size=64, string='Other information'),
+        'other_column': fields.char(size=64, string='Sequence', select=1),
         'sub_obj_name': fields.char(size=64, string='Order line'),
         # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
         'rule_id': fields.many2one('audittrail.rule', string='Rule'),
