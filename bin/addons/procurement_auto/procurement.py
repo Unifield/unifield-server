@@ -101,7 +101,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
-        'product_qty': fields.float(digits=(16,2), string='Qty'),
+        'product_qty': fields.float(digits=(16,2), string='Qty', related_uom='product_uom_id'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
                                        domain="[('is_replenishment', '=', warehouse_id)]",
@@ -351,7 +351,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
+        'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True, related_uom='product_uom_id'),
         'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade', required=True)
     }
 

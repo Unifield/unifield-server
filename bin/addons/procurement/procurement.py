@@ -557,10 +557,10 @@ class stock_warehouse_orderpoint(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade"),
         'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade', domain=[('type','=','product')]),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-        'product_min_qty': fields.float('Min Quantity', required=True,
+        'product_min_qty': fields.float('Min Quantity', required=True, related_uom='product_uom',
                                         help="When the virtual stock goes belong the Min Quantity, OpenERP generates "\
                                         "a procurement to bring the virtual stock to the Max Quantity."),
-        'product_max_qty': fields.float('Max Quantity', required=True,
+        'product_max_qty': fields.float('Max Quantity', required=True, related_uom='product_uom',
                                         help="When the virtual stock goes belong the Max Quantity, OpenERP generates "\
                                         "a procurement to bring the virtual stock to the Max Quantity."),
         'qty_multiple': fields.integer('Qty Multiple', required=True,
@@ -626,8 +626,8 @@ class stock_warehouse_orderpoint_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type','=','product'), ]),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_min_qty': fields.float('Min Quantity', required=True),
-        'product_max_qty': fields.float('Max Quantity', required=True),
+        'product_min_qty': fields.float('Min Quantity', required=True, related_uom='product_uom_id'),
+        'product_max_qty': fields.float('Max Quantity', required=True, related_uom='product_uom_id'),
         'qty_multiple': fields.integer('Qty Multiple', required=True),
         'procurement_id': fields.many2one('procurement.order', 'Procurement', ondelete="set null"),
         'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
