@@ -72,6 +72,7 @@
                         <field name="document_date_from" string="Document date"/>
                         <field name="posting_date_from" string="Posting date"/>
                         <field name="document_code"/>
+                        <field name="include_related_entries" attrs="{'invisible': [('model', '=', 'combined.line')]}"/>
                     </group>
                     <group colspan="2" col="2">
                         <field name="document_date_to" string="to"/>

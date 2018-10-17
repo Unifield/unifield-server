@@ -101945,3 +101945,26 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1494
+#, python-format
+msgid "Sequence numbers"
+msgstr "Numéros de séquence"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1495
+#, python-format
+msgid "You can set several sequences separated by a comma."
+msgstr "Vous pouvez indiquer plusieurs séquences séparées par une virgule."
+
+#. module: account_mcdb
+#: help:account.mcdb,include_related_entries:0
+msgid "Entries related to the Sequence numbers set"
+msgstr "Ecritures associées aux Numéros de séquence indiqués"
+
+#. module: account_mcdb
+#: field:account.mcdb,include_related_entries:0
+#: code:addons/account_mcdb/account_mcdb.py:1276
+msgid "Related entries"
+msgstr "Ecritures associées"
