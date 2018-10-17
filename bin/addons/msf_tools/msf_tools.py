@@ -663,6 +663,28 @@ class ir_translation(osv.osv):
                 return prod[0]['product_tmpl_id'][0]
         return res_id
 
+    def _audit_product_name(self, cr, uid, ids, vals, context=None):
+        if context.get('sync_update_execution') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            templ_obj = self.pool.get('product.template')
+            audit_rule_ids = templ_obj.check_audit(cr, uid, 'write')
+            if audit_rule_ids:
+                new_ctx = context.copy()
+                new_ctx['lang'] = vals['lang']
+                template_id = vals.get('res_id')
+                if not template_id and ids:
+                    template_id = self.browse(cr, uid, ids[0], fields_to_fetch=['res_id'], context=new_ctx).res_id
+                if template_id:
+                    previous = templ_obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
+                    audit_obj = self.pool.get('audittrail.rule')
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, templ_obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
+
+
+
+    def write(self, cr, uid, ids, vals, clear=False, context=None):
+        self._audit_product_name(cr, uid, ids, vals, context=context)
+        return super(ir_translation, self).write(cr, uid, ids, vals, clear=clear, context=context)
+
+
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, clear=True, context=None):
         if context is None:
@@ -702,10 +724,13 @@ class ir_translation(osv.osv):
                     self.unlink(cr, uid, del_ids, context=context)
                 else:
                     ids = existing_ids
-                res = self.write(cr, uid, ids, vals, context=context)
+                self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
-        res = super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
-        return res
+
+        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            self._audit_product_name(cr, uid, False, vals, context=context)
+
+        return super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
 
     # US_394: add xml_id for each lines
     def add_xml_ids(self, cr, uid, context=None):
