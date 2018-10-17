@@ -264,6 +264,101 @@ class account_invoice(osv.osv):
         'is_merged_by_account': lambda *a: False,
     }
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None,
+                        display_all_errors=False, has_header=False):
+        """
+        Overrides the standard import_data_web method for account.invoice model:
+        - based on the 3 values for "cost_center_id / destination_id / funding_pool_id", creates a new distribution
+          for each invoice line and add it to "datas"
+        - removes these 3 values that won't be used in the SI line
+        - adapts the "fields" list accordingly
+        """
+        new_data = datas
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        analytic_distrib_obj = self.pool.get('analytic.distribution')
+        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
+        curr_obj = self.pool.get('res.currency')
+        nb_ad_fields = 0
+        if 'invoice_line/cost_center_id' in fields:
+            nb_ad_fields += 1
+        if 'invoice_line/destination_id' in fields:
+            nb_ad_fields += 1
+        if 'invoice_line/funding_pool_id' in fields:
+            nb_ad_fields += 1
+        if nb_ad_fields:
+            if nb_ad_fields != 3:
+                raise osv.except_osv(_('Error'),
+                                     _('Either the Cost Center, the Destination or the Funding Pool is missing.'))
+            cc_index = fields.index('invoice_line/cost_center_id')
+            dest_index = fields.index('invoice_line/destination_id')
+            fp_index = fields.index('invoice_line/funding_pool_id')
+            si_journal_index = fields.index('journal_id')
+            curr_index = fields.index('currency_id')
+            new_data = []
+            curr = False
+            for data in datas:
+                cc_ids = []
+                dest_ids = []
+                fp_ids = []
+                cc = cc_index and len(data) > cc_index and data[cc_index].strip()
+                if cc:
+                    cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=', cc), ('name', '=', cc)]
+                    cc_ids = analytic_acc_obj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                dest = len(data) > dest_index and data[dest_index].strip()
+                if dest:
+                    dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), '|', ('code', '=', dest), ('name', '=', dest)]
+                    dest_ids = analytic_acc_obj.search(cr, uid, dest_dom, order='id', limit=1, context=context)
+                fp = len(data) > fp_index and data[fp_index].strip()
+                if fp:
+                    fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=', fp), ('name', '=', fp)]
+                    fp_ids = analytic_acc_obj.search(cr, uid, fp_dom, order='id', limit=1, context=context)
+                if not cc_ids or not dest_ids or not fp_ids:
+                    raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination or the Funding Pool '
+                                                       'was not found on the line %s.' % data))
+                else:
+                    # create the Analytic Distribution
+                    distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
+                    # get the next currency to use IF NEED BE (cf for an SI with several lines the curr. is indicated on the first one only)
+                    si_journal = si_journal_index and len(data) > si_journal_index and data[si_journal_index]
+                    if si_journal:  # first line of the SI
+                        curr = curr_index and len(data) > curr_index and data[curr_index].strip()
+                    curr_ids = []
+                    if curr:
+                        curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
+                    if not curr_ids:
+                        raise osv.except_osv(_('Error'),
+                                             _('The currency was not found for the line %s.' % data))
+                    vals = {
+                        'analytic_id': fp_ids[0],
+                        'percentage': 100.0,
+                        'distribution_id': distrib_id,
+                        'currency_id': curr_ids[0],
+                        'destination_id': dest_ids[0],
+                        'cost_center_id': cc_ids[0],
+                    }
+                    fp_distrib_line_obj.create(cr, uid, vals, context=context)
+                    # create a new list with the new distrib id and without the old AD fields
+                    i = 0
+                    new_sub_list = []
+                    for d in data:
+                        if i not in [cc_index, dest_index, fp_index]:
+                            new_sub_list.append(d)
+                        i += 1
+                    # add new field value
+                    new_sub_list.append(distrib_id)
+                    new_data.append(new_sub_list)
+
+            # remove old field names from fields
+            fields.remove('invoice_line/cost_center_id')
+            fields.remove('invoice_line/destination_id')
+            fields.remove('invoice_line/funding_pool_id')
+            # add new field
+            fields.append('invoice_line/analytic_distribution_id/.id')  # .id = id in the database
+
+        return super(account_invoice, self).import_data_web(cr, uid, fields, new_data, mode=mode, current_module=current_module,
+                                                            noupdate=noupdate, context=context, filename=filename,
+                                                            display_all_errors=display_all_errors, has_header=has_header)
+
     def onchange_company_id(self, cr, uid, ids, company_id, part_id, ctype, invoice_line, currency_id):
         """
         This is a method to redefine the journal_id domain with the current_instance taken into account
@@ -1529,6 +1624,15 @@ class account_invoice_line(osv.osv):
 
         return res
 
+    def _get_fake_m2o(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns False for all ids
+        """
+        res = {}
+        for i in ids:
+            res[i] = False
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
@@ -1543,6 +1647,18 @@ class account_invoice_line(osv.osv):
         'reversed_invoice_line_id': fields.many2one('account.invoice.line', string='Reversed Invoice Line',
                                                     help='Invoice line that has been reversed by this one through a '
                                                          '"refund cancel" or "refund modify"'),
+        'cost_center_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
+                                          states={'draft': [('readonly', False)]},
+                                          relation="account.analytic.account", string='Cost Center',
+                                          help="Field used for import only"),
+        'destination_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
+                                          relation="account.analytic.account", string='Destination',
+                                          states={'draft': [('readonly', False)]},
+                                          help="Field used for import only"),
+        'funding_pool_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
+                                           relation="account.analytic.account", string='Funding Pool',
+                                           states={'draft': [('readonly', False)]},
+                                           help="Field used for import only"),
     }
 
     _defaults = {

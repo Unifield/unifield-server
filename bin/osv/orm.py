@@ -1122,6 +1122,16 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None,
+                        filename=None, display_all_errors=False, has_header=False):
+        """
+        Import data method called at import from web ONLY (contrary to the import_data method also used for sync msgs).
+        Call import_data by default but can be overridden if needed.
+        """
+        return super(orm, self).import_data(cr, uid, fields, datas, mode=mode, current_module=current_module,
+                                            noupdate=noupdate, context=context, filename=filename,
+                                            display_all_errors=display_all_errors, has_header=has_header)
+
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
         Read records with given ids with the given fields
