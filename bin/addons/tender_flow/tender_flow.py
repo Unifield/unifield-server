@@ -1157,14 +1157,19 @@ class tender_line(osv.osv):
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id
+            location_id = tender.location_id.id
+            cross_docking_ok = True if tender_line.sale_order_line_id else False
+            if tender.sale_order_id and tender.sale_order_id.procurement_request:
+                location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
+                cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
                 'customer_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.partner_id.id or False,
-                'location_id': tender.location_id.id,
+                'location_id': location_id,
                 'company_id': tender.company_id.id,
-                'cross_docking_ok': True if tender_line.sale_order_line_id else False,
+                'cross_docking_ok': cross_docking_ok,
                 'pricelist_id': pricelist,
                 'fiscal_position': tender_line.supplier_id.property_account_position and tender_line.supplier_id.property_account_position.id or False,
                 'warehouse_id': tender.warehouse_id.id,
