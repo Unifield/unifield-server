@@ -347,12 +347,12 @@
                                 <field name="prev_reg_id" invisible="1"/>
                                 <group col="4" colspan="4">
                                     <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
-                                        <tree string = "Opening Balance" editable="bottom">
+                                        <tree string="Starting Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal" sum="Total"/>
                                         </tree>
-                                        <form string = "Opening Balance">
+                                        <form string="Starting Balance">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal"/>
@@ -390,8 +390,8 @@
                                 <field name="closing_date" select="1" readonly="1"/>
                             </group>
                             <group col="2" colspan="2">
-                                <separator string="Opening Balance" colspan="4"/>
-                                <field name="balance_start" string="Opening Balance" readonly="True"/>
+                                <separator string="Starting Balance" colspan="4"/>
+                                <field name="balance_start" readonly="True"/>
                                 <field name="total_entry_encoding"/>
                                 <field name="msf_calculated_balance"/>
                                 <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
@@ -806,6 +806,7 @@
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="currency" readonly="1"/>
+                        <field name="balance_end" string="Calculated Balance" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                         <field name="prev_reg_id" invisible="1"/>
