@@ -27,6 +27,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from lxml import etree
+from datetime import datetime
 import re
 import netsvc
 
@@ -272,6 +273,7 @@ class account_invoice(osv.osv):
           for each invoice line and add it to "datas"
         - removes these 3 values that won't be used in the SI line
         - adapts the "fields" list accordingly
+        - converts the dates from the format '%d/%m/%Y' to the standard one '%Y-%m-%d' so the checks on dates are correctly made
         """
         if context is None:
             context = {}
@@ -291,12 +293,15 @@ class account_invoice(osv.osv):
             if nb_ad_fields != 3:
                 raise osv.except_osv(_('Error'),
                                      _('Either the Cost Center, the Destination, or the Funding Pool is missing.'))
+            # note: CC, dest and FP indexes always exist at this step
             cc_index = fields.index('invoice_line/cost_center_id')
             dest_index = fields.index('invoice_line/destination_id')
             fp_index = fields.index('invoice_line/funding_pool_id')
-            si_line_name_index = fields.index('invoice_line/name')
-            si_journal_index = fields.index('journal_id')
-            curr_index = fields.index('currency_id')
+            si_line_name_index = 'invoice_line/name' in fields and fields.index('invoice_line/name')
+            si_journal_index = 'journal_id' in fields and fields.index('journal_id')
+            curr_index = 'currency_id' in fields and fields.index('currency_id')
+            doc_date_index = 'document_date' in fields and fields.index('document_date')
+            date_inv_index = 'date_invoice' in fields and fields.index('date_invoice')
             new_data = []
             curr = False
             for data in datas:
@@ -304,11 +309,11 @@ class account_invoice(osv.osv):
                 dest_ids = []
                 fp_ids = []
                 distrib_id = ''
-                cc = cc_index and len(data) > cc_index and data[cc_index].strip()
+                cc = len(data) > cc_index and data[cc_index].strip()
                 dest = len(data) > dest_index and data[dest_index].strip()
                 fp = len(data) > fp_index and data[fp_index].strip()
                 # check if details for SI line are filled in (based on the required field "name")
-                has_si_line = si_line_name_index and len(data) > si_line_name_index and data[si_line_name_index]
+                has_si_line = si_line_name_index is not False and len(data) > si_line_name_index and data[si_line_name_index]
                 # process AD only for SI lines where at least one AD field has been filled in
                 # (otherwise no AD should be added to the line AND no error should be displayed)
                 if has_si_line and (cc or dest or fp):  # at least one AD field has been filled in
@@ -328,9 +333,9 @@ class account_invoice(osv.osv):
                         # create the Analytic Distribution
                         distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
                         # get the next currency to use IF NEED BE (cf for an SI with several lines the curr. is indicated on the first one only)
-                        si_journal = si_journal_index and len(data) > si_journal_index and data[si_journal_index]
+                        si_journal = si_journal_index is not False and len(data) > si_journal_index and data[si_journal_index]
                         if si_journal:  # first line of the SI
-                            curr = curr_index and len(data) > curr_index and data[curr_index].strip()
+                            curr = curr_index is not False and len(data) > curr_index and data[curr_index].strip()
                         curr_ids = []
                         if curr:
                             curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
@@ -352,7 +357,16 @@ class account_invoice(osv.osv):
                 new_sub_list = []
                 for d in data:
                     if i not in [cc_index, dest_index, fp_index]:
-                        new_sub_list.append(d)
+                        if doc_date_index is not False and date_inv_index is not False and i in [doc_date_index, date_inv_index]:
+                            # format the date from '%d/%m/%Y' to '%Y-%m-%d' so the checks on dates are correctly made
+                            raw_date = len(data) > i and data[i].strip()
+                            try:
+                                new_date = raw_date and datetime.strptime(raw_date, '%d/%m/%Y').strftime('%Y-%m-%d') or ''
+                            except ValueError:
+                                new_date = raw_date
+                            new_sub_list.append(new_date)
+                        else:
+                            new_sub_list.append(d)
                     i += 1
                 # add new field value
                 new_sub_list.append(distrib_id)
