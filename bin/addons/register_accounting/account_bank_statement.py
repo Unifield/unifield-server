@@ -465,6 +465,21 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
+    def button_cancel_closing_balance_confirmation(self, cr, uid, ids, context=None):
+        """
+        Resets the confirmation of the register month-end balance, which makes it re-editable. Note that the starting
+        balance of the reg. N+1 is not updated (this will be done at next closing balance confirmation of the reg. N).
+        """
+        if context is None:
+            context = {}
+        for reg in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+            # action performed only if the register is still open
+            if reg.state == 'open':
+                self.write(cr, uid, [reg.id], {'closing_balance_frozen': False,
+                                               'closing_balance_frozen_date': False,
+                                               }, context=context)
+        return True
+
     def button_confirm_closing_bank_balance(self, cr, uid, ids, context=None):
         """
         Verify bank statement balance before closing it.
