@@ -280,6 +280,7 @@ class account_invoice(osv.osv):
         new_data = datas
         analytic_acc_obj = self.pool.get('account.analytic.account')
         analytic_distrib_obj = self.pool.get('analytic.distribution')
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         curr_obj = self.pool.get('res.currency')
         nb_ad_fields = 0
@@ -318,13 +319,13 @@ class account_invoice(osv.osv):
                 # (otherwise no AD should be added to the line AND no error should be displayed)
                 if has_si_line and (cc or dest or fp):  # at least one AD field has been filled in
                     if cc:
-                        cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=', cc), ('name', '=', cc)]
+                        cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=ilike', cc), ('name', '=ilike', cc)]
                         cc_ids = analytic_acc_obj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
                     if dest:
-                        dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), '|', ('code', '=', dest), ('name', '=', dest)]
+                        dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), '|', ('code', '=ilike', dest), ('name', '=ilike', dest)]
                         dest_ids = analytic_acc_obj.search(cr, uid, dest_dom, order='id', limit=1, context=context)
                     if fp:
-                        fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=', fp), ('name', '=', fp)]
+                        fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=ilike', fp), ('name', '=ilike', fp)]
                         fp_ids = analytic_acc_obj.search(cr, uid, fp_dom, order='id', limit=1, context=context)
                     if not cc_ids or not dest_ids or not fp_ids:
                         raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination, or the Funding Pool '
@@ -343,13 +344,17 @@ class account_invoice(osv.osv):
                             raise osv.except_osv(_('Error'),
                                                  _('The currency was not found for the line %s.') % data)
                         vals = {
-                            'analytic_id': fp_ids[0],
+                            'analytic_id': cc_ids[0],  # analytic_id = Cost Center for the CC distrib line
                             'percentage': 100.0,
                             'distribution_id': distrib_id,
                             'currency_id': curr_ids[0],
                             'destination_id': dest_ids[0],
-                            'cost_center_id': cc_ids[0],
                         }
+                        cc_distrib_line_obj.create(cr, uid, vals, context=context)
+                        vals.update({
+                            'analytic_id': fp_ids[0],  # analytic_id = Funding Pool for the FP distrib line
+                            'cost_center_id': cc_ids[0],
+                            })
                         fp_distrib_line_obj.create(cr, uid, vals, context=context)
                 # create a new list with the new distrib id and without the old AD fields
                 # to be done also if no AD to ensure the size of each data list is always the same
