@@ -160,15 +160,16 @@ newprods = [
     }
 ]
 for prod in newprods:
-    hq1 = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1' % DB_PREFIX)
-    hq1.get('product.product').create(prod)
-    hq1.get('sync.client.entity').sync()
-    l.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1' % DB_PREFIX)
+    create_product(oerp, prod)
+    oerp.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
+    oerp.get('sync.client.entity').sync()
 
-loc_ids = l.get('stock.location').search([('name', '=', 'LOG')])
-prod_o = l.get('product.product')
+loc_ids = oerp.get('stock.location').search([('name', '=', 'LOG')])
+prod_o = oerp.get('product.product')
 p_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
-inv_o = l.get('stock.inventory')
+inv_o = oerp.get('stock.inventory')
 inv_id = inv_o.create({
     'name': 'inv %s' % time.time(),
     'inventory_line_id': [(0, 0, {'location_id': loc_ids[0], 'product_id': p_ids[0], 'product_uom': 1, 'product_qty': 10000, 'reason_type_id': 12})],
