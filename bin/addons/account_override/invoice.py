@@ -273,6 +273,8 @@ class account_invoice(osv.osv):
         - removes these 3 values that won't be used in the SI line
         - adapts the "fields" list accordingly
         """
+        if context is None:
+            context = {}
         new_data = datas
         analytic_acc_obj = self.pool.get('account.analytic.account')
         analytic_distrib_obj = self.pool.get('analytic.distribution')
@@ -300,53 +302,58 @@ class account_invoice(osv.osv):
                 cc_ids = []
                 dest_ids = []
                 fp_ids = []
+                distrib_id = ''
                 cc = cc_index and len(data) > cc_index and data[cc_index].strip()
-                if cc:
-                    cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=', cc), ('name', '=', cc)]
-                    cc_ids = analytic_acc_obj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
                 dest = len(data) > dest_index and data[dest_index].strip()
-                if dest:
-                    dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), '|', ('code', '=', dest), ('name', '=', dest)]
-                    dest_ids = analytic_acc_obj.search(cr, uid, dest_dom, order='id', limit=1, context=context)
                 fp = len(data) > fp_index and data[fp_index].strip()
-                if fp:
-                    fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=', fp), ('name', '=', fp)]
-                    fp_ids = analytic_acc_obj.search(cr, uid, fp_dom, order='id', limit=1, context=context)
-                if not cc_ids or not dest_ids or not fp_ids:
-                    raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination or the Funding Pool '
-                                                       'was not found on the line %s.' % data))
-                else:
-                    # create the Analytic Distribution
-                    distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
-                    # get the next currency to use IF NEED BE (cf for an SI with several lines the curr. is indicated on the first one only)
-                    si_journal = si_journal_index and len(data) > si_journal_index and data[si_journal_index]
-                    if si_journal:  # first line of the SI
-                        curr = curr_index and len(data) > curr_index and data[curr_index].strip()
-                    curr_ids = []
-                    if curr:
-                        curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
-                    if not curr_ids:
-                        raise osv.except_osv(_('Error'),
-                                             _('The currency was not found for the line %s.' % data))
-                    vals = {
-                        'analytic_id': fp_ids[0],
-                        'percentage': 100.0,
-                        'distribution_id': distrib_id,
-                        'currency_id': curr_ids[0],
-                        'destination_id': dest_ids[0],
-                        'cost_center_id': cc_ids[0],
-                    }
-                    fp_distrib_line_obj.create(cr, uid, vals, context=context)
-                    # create a new list with the new distrib id and without the old AD fields
-                    i = 0
-                    new_sub_list = []
-                    for d in data:
-                        if i not in [cc_index, dest_index, fp_index]:
-                            new_sub_list.append(d)
-                        i += 1
-                    # add new field value
-                    new_sub_list.append(distrib_id)
-                    new_data.append(new_sub_list)
+                # process AD only if at least one AD field has been filled in
+                # (otherwise no AD should be added to the line AND no error should be displayed)
+                if cc or dest or fp:  # at least one AD field has been filled in
+                    if cc:
+                        cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=', cc), ('name', '=', cc)]
+                        cc_ids = analytic_acc_obj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                    if dest:
+                        dest_dom = [('category', '=', 'DEST'), ('type', '=', 'normal'), '|', ('code', '=', dest), ('name', '=', dest)]
+                        dest_ids = analytic_acc_obj.search(cr, uid, dest_dom, order='id', limit=1, context=context)
+                    if fp:
+                        fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=', fp), ('name', '=', fp)]
+                        fp_ids = analytic_acc_obj.search(cr, uid, fp_dom, order='id', limit=1, context=context)
+                    if not cc_ids or not dest_ids or not fp_ids:
+                        raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination or the Funding Pool '
+                                                           'was not found on the line %s.' % data))
+                    else:
+                        # create the Analytic Distribution
+                        distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
+                        # get the next currency to use IF NEED BE (cf for an SI with several lines the curr. is indicated on the first one only)
+                        si_journal = si_journal_index and len(data) > si_journal_index and data[si_journal_index]
+                        if si_journal:  # first line of the SI
+                            curr = curr_index and len(data) > curr_index and data[curr_index].strip()
+                        curr_ids = []
+                        if curr:
+                            curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
+                        if not curr_ids:
+                            raise osv.except_osv(_('Error'),
+                                                 _('The currency was not found for the line %s.' % data))
+                        vals = {
+                            'analytic_id': fp_ids[0],
+                            'percentage': 100.0,
+                            'distribution_id': distrib_id,
+                            'currency_id': curr_ids[0],
+                            'destination_id': dest_ids[0],
+                            'cost_center_id': cc_ids[0],
+                        }
+                        fp_distrib_line_obj.create(cr, uid, vals, context=context)
+                # create a new list with the new distrib id and without the old AD fields
+                # to be done also if no AD to ensure the size of each data list is always the same
+                i = 0
+                new_sub_list = []
+                for d in data:
+                    if i not in [cc_index, dest_index, fp_index]:
+                        new_sub_list.append(d)
+                    i += 1
+                # add new field value
+                new_sub_list.append(distrib_id)
+                new_data.append(new_sub_list)
 
             # remove old field names from fields
             fields.remove('invoice_line/cost_center_id')
