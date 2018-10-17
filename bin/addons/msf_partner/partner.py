@@ -511,7 +511,7 @@ class res_partner(osv.osv):
                                            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
                                            context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('rfq_state', 'not in', ['done', 'cancel'])],
                                       context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
                                    [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
