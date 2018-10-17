@@ -290,7 +290,7 @@ class account_invoice(osv.osv):
         if nb_ad_fields:
             if nb_ad_fields != 3:
                 raise osv.except_osv(_('Error'),
-                                     _('Either the Cost Center, the Destination or the Funding Pool is missing.'))
+                                     _('Either the Cost Center, the Destination, or the Funding Pool is missing.'))
             cc_index = fields.index('invoice_line/cost_center_id')
             dest_index = fields.index('invoice_line/destination_id')
             fp_index = fields.index('invoice_line/funding_pool_id')
@@ -322,8 +322,8 @@ class account_invoice(osv.osv):
                         fp_dom = [('category', '=', 'FUNDING'), ('type', '=', 'normal'), '|', ('code', '=', fp), ('name', '=', fp)]
                         fp_ids = analytic_acc_obj.search(cr, uid, fp_dom, order='id', limit=1, context=context)
                     if not cc_ids or not dest_ids or not fp_ids:
-                        raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination or the Funding Pool '
-                                                           'was not found on the line %s.' % data))
+                        raise osv.except_osv(_('Error'), _('Either the Cost Center, the Destination, or the Funding Pool '
+                                                           'was not found on the line %s.') % data)
                     else:
                         # create the Analytic Distribution
                         distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
@@ -336,7 +336,7 @@ class account_invoice(osv.osv):
                             curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
                         if not curr_ids:
                             raise osv.except_osv(_('Error'),
-                                                 _('The currency was not found for the line %s.' % data))
+                                                 _('The currency was not found for the line %s.') % data)
                         vals = {
                             'analytic_id': fp_ids[0],
                             'percentage': 100.0,
