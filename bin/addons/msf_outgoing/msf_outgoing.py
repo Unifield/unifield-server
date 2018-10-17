@@ -3170,7 +3170,11 @@ class stock_picking(osv.osv):
                         vals = {'state': move.state}
                 vals.update({'backmove_id': False})
                 # If the move comes from a DPO, don't change the destination location
-                if not move.dpo_id:
+                if move.dpo_id:
+                    pass
+                elif move.old_out_location_dest_id:
+                    vals.update({'location_dest_id': move.old_out_location_dest_id.id})
+                else:
                     vals.update({'location_dest_id': obj.warehouse_id.lot_output_id.id})
 
                 if obj.sale_id:
@@ -3349,7 +3353,11 @@ class stock_picking(osv.osv):
 
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         if move_to_update:
-            move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
+            for move in move_obj.browse(cr, uid, move_to_update, context=context):
+                move_obj.write(cr, uid, [move.id], {
+                    'location_dest_id': pack_loc_id,
+                    'old_out_location_dest_id': move.location_dest_id.id,
+                }, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
         if not context.get('sync_message_execution', False):
@@ -5109,6 +5117,8 @@ class stock_move(osv.osv):
         'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
         'pt_created': fields.boolean(string='PT created'),
         'not_shipped': fields.boolean(string='Not shipped'),
+
+        'old_out_location_dest_id': fields.many2one('stock.location', string='Old OUT dest location', help='Usefull in case of OUT converted to PICK and converted back to OUT'),
     }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
