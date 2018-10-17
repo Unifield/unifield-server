@@ -294,6 +294,7 @@ class account_invoice(osv.osv):
             cc_index = fields.index('invoice_line/cost_center_id')
             dest_index = fields.index('invoice_line/destination_id')
             fp_index = fields.index('invoice_line/funding_pool_id')
+            si_line_name_index = fields.index('invoice_line/name')
             si_journal_index = fields.index('journal_id')
             curr_index = fields.index('currency_id')
             new_data = []
@@ -306,9 +307,11 @@ class account_invoice(osv.osv):
                 cc = cc_index and len(data) > cc_index and data[cc_index].strip()
                 dest = len(data) > dest_index and data[dest_index].strip()
                 fp = len(data) > fp_index and data[fp_index].strip()
-                # process AD only if at least one AD field has been filled in
+                # check if details for SI line are filled in (based on the required field "name")
+                has_si_line = si_line_name_index and len(data) > si_line_name_index and data[si_line_name_index]
+                # process AD only for SI lines where at least one AD field has been filled in
                 # (otherwise no AD should be added to the line AND no error should be displayed)
-                if cc or dest or fp:  # at least one AD field has been filled in
+                if has_si_line and (cc or dest or fp):  # at least one AD field has been filled in
                     if cc:
                         cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), '|', ('code', '=', cc), ('name', '=', cc)]
                         cc_ids = analytic_acc_obj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
