@@ -37,5 +37,6 @@ import stock_change_product_qty
 import physical_inventory_select_products
 import physical_inventory_generate_counting_sheet
 import physical_inventory_import
+import manage_expired_stock
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

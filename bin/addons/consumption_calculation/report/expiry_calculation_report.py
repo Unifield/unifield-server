@@ -21,15 +21,15 @@
 
 import time
 import calendar
+from tools.translate import _
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 CONSUMPTION_TYPE = [
-    ('fmc', 'FMC -- Forecasted Monthly Consumption'),
-    ('amc', 'AMC -- Average Monthly Consumption'),
-    ('rac', 'RAC -- Real Average Consumption'),
+    ('fmc', _('FMC -- Forecasted Monthly Consumption')),
+    ('amc', _('AMC -- Average Monthly Consumption')),
+    ('rac', _('RAC -- Real Average Consumption')),
 ]
 class product_likely_expire_report_parser(report_sxw.rml_parse):
     """UTP-770/UTP-411"""
@@ -49,7 +49,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getRmlTables': self._get_rml_tables,
             'getRmlNextMonth': self._get_rml_next_month,
             'getRmlLineItemNextMonth': self._get_rml_line_item_next_month,
-            #'getTotal': self._get_total,
+            'getExpiredQtyColData': self._get_expired_qty_col_data,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
             'toDate': self.str_to_time,
@@ -69,8 +69,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         res = ""
         for val, label in CONSUMPTION_TYPE:
             if val == report.consumption_type:
-                res = label
-                break
+                return _(label)
         return res
 
     def _get_report_dates(self, report):
@@ -111,17 +110,16 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
     def _get_line_items(self, line):
         """get line items 'product.likely.expire.report.item'
         for each line 'product.likely.expire.report.line'
-        ordered by date
+        ordered by id
         """
         item_obj = self.pool.get('product.likely.expire.report.item')
         domain = [('line_id', '=', line.id)]
-        items_ids = item_obj.search(self.cr, self.uid, domain,
-                                    order='period_start')  # items ordered by date
+        items_ids = item_obj.search(self.cr, self.uid, domain)
         if not items_ids:
             return False
         return item_obj.browse(self.cr, self.uid, items_ids)
 
-    def _get_month_item_lines_ids(self, report, month_date):
+    def _get_month_item_lines_ids(self, report, month_date, report_type=''):
         """get month items('product.likely.expire.report.item')
         """
         lines_obj = self.pool.get('product.likely.expire.report.line')
@@ -132,13 +130,22 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         domain = [('report_id', '=', report.id)]
         lines_ids = lines_obj.search(self.cr, self.uid, domain)
 
-        dt_from = '%d-%d-01' % (month_date.year, month_date.month, )
-        dt_to = '%d-%d-%s' % (month_date.year, month_date.month, calendar.monthrange(month_date.year, month_date.month)[1])
-        domain = [
-            ('line_id', 'in', lines_ids),
-            ('period_start', '>=', dt_from),
-            ('period_start', '<=', dt_to)
-        ]
+        if month_date == 'expired_qty_col':
+            domain = [
+                ('line_id', 'in', lines_ids),
+                ('name', '=', 'expired_qty_col'),
+            ]
+        else:
+            dt_from = '%d-%d-01' % (month_date.year, month_date.month, )
+            dt_to = '%d-%d-%s' % (month_date.year, month_date.month, calendar.monthrange(month_date.year, month_date.month)[1])
+            domain = [
+                ('line_id', 'in', lines_ids),
+                ('period_start', '>=', dt_from),
+                ('period_start', '<=', dt_to)
+            ]
+            if report_type == 'xls':
+                domain.append(('name', '!=', 'expired_qty_col'))
+
         items_ids = item_obj.search(self.cr, self.uid, domain)
 
         # 'line item' lines
@@ -147,11 +154,11 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
                                               order='expired_date')
         return item_lines_ids
 
-    def _get_month_item_lines(self, report, month_date):
+    def _get_month_item_lines(self, report, month_date, report_type=''):
         """get month items('product.likely.expire.report.item')
         """
         item_line_obj = self.pool.get('product.likely.expire.report.item.line')
-        return item_line_obj.browse(self.cr, self.uid, self._get_month_item_lines_ids(report, month_date))
+        return item_line_obj.browse(self.cr, self.uid, self._get_month_item_lines_ids(report, month_date, report_type=report_type))
 
     def _get_rml_tables(self, report, month_cols_count):
         """
@@ -174,7 +181,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             res = 1
         res_list = []
         for i in xrange(res):
-           res_list.append(i) 
+            res_list.append(i)
         return res_list
 
     def _get_rml_next_month(self, report):
@@ -214,16 +221,30 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if isinstance(items_ids, (int, long)):
             items_ids = [items_ids]
         res = ''
-        if items_ids:
-            item = item_obj.browse(self.cr, self.uid, items_ids)[0]
-            aqty = item.available_qty
-            if not aqty:
-                aqty = 0.
-            if item.expired_qty:
-                res = "%s (%s)" % (self.formatLang(aqty), self.formatLang(item.expired_qty), )
-            else:
-                res = self.formatLang(aqty)
+        if line.in_stock != line.total_expired:
+            if items_ids:
+                item = item_obj.browse(self.cr, self.uid, items_ids)[0]
+                aqty = item.available_qty
+                if not aqty:
+                    aqty = 0.
+                if item.expired_qty:
+                    res = "%s (%s)" % (self.formatLang(aqty), self.formatLang(item.expired_qty), )
+                else:
+                    res = self.formatLang(aqty)
+        else:
+            res = '0.00'
         return res
+
+    def _get_expired_qty_col_data(self, line_id):
+        item_obj = self.pool.get('product.likely.expire.report.item')
+
+        item_ids = item_obj.search(self.cr, self.uid, [('line_id', '=', line_id), ('name', '=', 'expired_qty_col')])
+        if item_ids:
+            expired_qty = item_obj.browse(self.cr, self.uid, item_ids[0]).expired_qty or '0'
+        else:
+            expired_qty = ''
+
+        return expired_qty
 
     def _get_instance_addr(self):
         instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id

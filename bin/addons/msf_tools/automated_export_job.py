@@ -162,7 +162,7 @@ class automated_export_job(osv.osv):
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
                     state = 'error'
                     for resjected_line in rejected:
-                        line_message = _('Line %s: ' % resjected_line[0])
+                        line_message = _('Line %s: ') % resjected_line[0]
                         line_message += resjected_line[2]
                         error_message.append(line_message)
 

@@ -25,6 +25,9 @@ class Client(object):
         self.session_offset = -1
         self.session_nb_error = 0
 
+        self.username = username
+        self.password = password
+
         if not port:
             port = 443 if protocol == 'https' else 80
         self.path = path or ''
@@ -35,11 +38,16 @@ class Client(object):
         # in our config site is /personal/unifield_xxx_yyy/
         # path is /Documents/Unifield/
         self.baseurl = '{0}://{1}:{2}/{3}/'.format(protocol, host, port, '/'.join(self.path.split('/')[0:3]) )
-        ctx_auth = AuthenticationContext(self.baseurl)
 
         if len(self.path.split('/')) < 5:
             self.path = '%sDocuments/' % self.path
-        if ctx_auth.acquire_token_for_user(username, cgi.escape(password)):
+
+        self.login()
+
+    def login(self):
+        ctx_auth = AuthenticationContext(self.baseurl)
+
+        if ctx_auth.acquire_token_for_user(self.username, cgi.escape(self.password)):
             self.request = ClientRequest(ctx_auth)
             self.request.context = ClientContext(self.baseurl, ctx_auth)
 

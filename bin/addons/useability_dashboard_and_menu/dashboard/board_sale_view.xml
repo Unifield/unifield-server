@@ -13,6 +13,7 @@
                     <field name="client_order_ref" />
                     <field name="partner_id"/>
                     <field name="user_id" />
+                    <field name="line_count"/>
                     <field name="picked_rate" widget="progressbar"/>
                     <!-- Remove invoiced rate because it's always N/A 
                     <field name="invoiced_rate" widget="progressbar"/>-->

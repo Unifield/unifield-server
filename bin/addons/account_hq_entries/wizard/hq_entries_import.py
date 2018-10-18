@@ -108,6 +108,10 @@ class hq_entries_import_wizard(osv.osv_memory):
             account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)] + ACCOUNT_RESTRICTED_AREA['hq_lines'])
             if not account_ids:
                 raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist or is not allowed in HQ Entries!') % (account_code,))
+
+            if not acc_obj.read(cr, uid, account_ids[0], ['filter_active'], context={'date': line_date})['filter_active']:
+                raise osv.except_osv(_('Error'), _('Account code %s is inactive for this date %s') % (account_code, date))
+
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
         else:
             raise osv.except_osv(_('Error'), _('No account code found!'))
@@ -201,35 +205,6 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch 3rd party
         if third_party:
             vals.update({'partner_txt': third_party})
-        # Search if 3RD party exists as employee
-        emp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', third_party)])
-        # If yes, get its analytic distribution
-        employee = False
-        if len(emp_ids) and len(emp_ids) == 1:
-            employee = self.pool.get('hr.employee').browse(cr, uid, emp_ids)[0]
-            if employee.destination_id and employee.destination_id.id:
-                vals.update({
-                    'destination_id_first_value': employee.destination_id.id,
-                    'destination_id': employee.destination_id.id
-                })
-            if employee.cost_center_id:
-                vals.update({
-                    'cost_center_id_first_value': employee.cost_center_id.id,
-                    'cost_center_id': employee.cost_center_id.id,
-                })
-            if employee.funding_pool_id:
-                vals.update({
-                    'analytic_id_first_value': employee.funding_pool_id.id,
-                    'analytic_id': employee.funding_pool_id.id,
-                })
-            if employee.free1_id:
-                vals.update({
-                    'free_1_id': employee.free1_id.id,
-                })
-            if employee.free2_id:
-                vals.update({
-                    'free_2_id': employee.free2_id.id,
-                })
         # Fetch currency
         if booking_currency:
             currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
@@ -259,7 +234,6 @@ class hq_entries_import_wizard(osv.osv_memory):
         if hq_obj.search(cr, uid, unicity_domain, limit=1, context=context):
             # raise unicity check failure
             # (fields listed like in csv order for user info)
-            emp_cc_id = employee and employee.cost_center_id
 
             pattern = _("Entry already imported: %s / %s / %s (doc) /" \
                         " %s (posting) / %s (account) / %s (amount) / %s (3rd party) /" \
@@ -268,8 +242,8 @@ class hq_entries_import_wizard(osv.osv_memory):
                 ustr(description), ustr(reference), document_date, date,
                 ustr(account_description), booking_amount,
                 ustr(third_party),
-                emp_cc_id and ustr(emp_cc_id.name) or ustr(cost_center),
-                emp_cc_id and 'Emp default CC' or 'CC'
+                ustr(cost_center),
+                'CC'
             ))
 
         # Line creation

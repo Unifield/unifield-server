@@ -584,6 +584,9 @@ class procurement_request_line(osv.osv):
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
 
+        if vals.get('price_unit') and not vals.get('original_price'):
+            vals.update({'original_price': vals['price_unit'] or 0.00})
+
         # Compute the rounding of the product qty
         if vals.get('product_uom') and vals.get('product_uom_qty'):
             vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, vals.get('product_uom'), vals.get('product_uom_qty'), context=context)
