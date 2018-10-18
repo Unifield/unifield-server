@@ -408,14 +408,16 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for analytic_account in self.read(cr, uid, ids, ['category', 'name'], context=context):
-            dom = [('category', '=', analytic_account.get('category', '')),
-                   ('name', '=ilike', analytic_account.get('name', '')),
-                   ('id', '!=', analytic_account.get('id'))]
-            if self.search_exist(cr, uid, dom, context=context):
-                raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
+        # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
+        if not context.get('sync_update_execution', False):
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            for analytic_account in self.read(cr, uid, ids, ['category', 'name'], context=context):
+                dom = [('category', '=', analytic_account.get('category', '')),
+                       ('name', '=ilike', analytic_account.get('name', '')),
+                       ('id', '!=', analytic_account.get('id'))]
+                if self.search_exist(cr, uid, dom, context=context):
+                    raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
 
     def create(self, cr, uid, vals, context=None):
