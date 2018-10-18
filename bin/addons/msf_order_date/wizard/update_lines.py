@@ -109,13 +109,19 @@ class update_lines(osv.osv_memory):
 
             _moves_arch_lst += """</form>"""
         else:
+            if field_name == 'confirmed':
+                field_string = _('Delivery Confirmed Date')
+            elif field_name == 'requested':
+                field_string = _('Delivery Requested Date')
+            else:
+                field_string = _('Delivery Date')
             _moves_arch_lst = """
                             <form>
                             <separator colspan="4" string="%s: %s"/>
-                            <field name="delivery_%s_date" />
+                            <field name="delivery_%s_date" string="%s" />
                             <button name="update_delivery_%s_date" string="%s" type="object" icon="gtk-apply" />
                             <button special="cancel" string="%s" icon="gtk-cancel"/>
-                            """ % (obj_name, value_to_be_used, field_name, field_name, yes, no)
+                            """ % (obj_name, value_to_be_used, field_name, field_string, field_name, yes, no)
             _moves_fields = result['fields']
             # add field related to picking type only
             _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : _('Delivery %s date')% _(field_name), 'readonly': True,},

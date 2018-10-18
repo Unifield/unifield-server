@@ -43,7 +43,7 @@ class log_line(report_sxw.rml_parse):
 
     def _get_order_name(self, line_id):
         line = self.pool.get('audittrail.log.line').browse(self.cr, self.uid, line_id)
-        order = self.pool.get(line.object_id.model).browse(self.cr, self.uid, line.res_id)
+        order = self.pool.get(line.object_id.model).browse(self.cr, self.uid, line.res_id, context=self.localcontext)
         name = order.name or self.pool.get(line.object_id.model)._description or ''
         return name
 

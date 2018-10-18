@@ -30277,7 +30277,7 @@ msgstr "Générer le rapport"
 #. module: msf_outgoing
 #: model:ir.actions.report.xml,name:msf_outgoing.report_packing_list_xls
 msgid "Packing List (xls)"
-msgstr "Packing List (xls)"
+msgstr "Liste de Colisage (xls)"
 
 #. module: purchase
 #: help:purchase.order,invoice_method:0
@@ -68053,7 +68053,7 @@ msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec
 #: view:purchase.order.line.cancel.wizard:0
 #: view:purchase.order.cancel.wizard:0
 msgid "If you click on 'Cancel & Resource' button, all linked FO/IR lines will be re-sourced."
-msgstr "If you click on 'Cancel & Resource' button, all linked FO/IR lines will be re-sourced."
+msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes des BCT/DI seront ressourcées."
 
 #. module: base
 #: view:base.language.import:0
@@ -101907,3 +101907,73 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
+
+#. module: product_attributes
+#: report:addons/product_attributes/report/standard_price_track_changes.mako:104
+msgid "Manually changed (at reception)"
+msgstr "Changé manuellement (à la réception)"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:92
+#, python-format
+msgid "Value to be used-"
+msgstr "Valeur à utiliser-"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:67
+#, python-format
+msgid "state"
+msgstr "Statut"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:425
+msgid "Containing:"
+msgstr "Contenant:"
+
+#. modules: specific_rules, stock_override
+#: view:export.report.stock.inventory:0
+#: view:export.report.stock.move:0
+msgid "Your file is now ready. You can download it on the right side bar (Attachments)."
+msgstr "Votre fichier est prêt maintenant. Vous pouvez le télécharger à partir de la barre de menu à droite (Pièces jointes)."
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:54
+#: code:addons/mission_stock/mission_stock.py:68
+#: code:addons/mission_stock/mission_stock.py:81
+#: code:addons/mission_stock/mission_stock.py:96
+#: code:addons/mission_stock/mission_stock.py:517
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
+#, python-format
+msgid "Instance stock"
+msgstr "Stock d'Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:69
+#: code:addons/mission_stock/mission_stock.py:97
+#: code:addons/mission_stock/mission_stock.py:518
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:58
+#, python-format
+msgid "Instance stock val."
+msgstr "Val. Stock d'Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:56
+#: code:addons/mission_stock/mission_stock.py:71
+#: code:addons/mission_stock/mission_stock.py:84
+#: code:addons/mission_stock/mission_stock.py:100
+#: code:addons/mission_stock/mission_stock.py:521
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:66
+#, python-format
+msgid "Cross-Docking Qty."
+msgstr "Transbordement - Qté."
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:61
+#: code:addons/mission_stock/mission_stock.py:76
+#: code:addons/mission_stock/mission_stock.py:89
+#: code:addons/mission_stock/mission_stock.py:105
+#: code:addons/mission_stock/mission_stock.py:526
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:71
+#, python-format
+msgid "In Pipe Qty"
+msgstr "Qté en Cours"
