@@ -63812,10 +63812,14 @@ msgstr "Semaine de l'année : %(woy)s"
 #: constraint:account.analytic.account:0
 #: constraint:account.analytic.account:0
 #: constraint:account.analytic.account:0
-#: code:addons/analytic_override/analytic_account.py:467
+msgid "You cannot have the same code between analytic accounts in the same category!"
+msgstr "Vous ne pouvez pas avoir le même code entre des comptes analytiques de même catégorie !"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:417
 #, python-format
-msgid "You cannot have the same code or name between analytic accounts in the same category!"
-msgstr "Vous ne pouvez pas avoir le même code ou nom entre des comptes analytiques de même catégorie!"
+msgid "You cannot have the same name between analytic accounts in the same category!"
+msgstr "Vous ne pouvez pas avoir le même nom entre des comptes analytiques de même catégorie !"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:200
