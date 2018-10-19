@@ -388,7 +388,15 @@ class analytic_account(osv.osv):
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
+    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+        """
+        Don't copy translations when duplicating an analytic account, i.e. we will have "name (copy)" in all languages
+        """
+        return True
+
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
+        if context is None:
+            context = {}
         account = self.browse(cr, uid, a_id, context=context)
         if not default:
             default = {}
