@@ -149,8 +149,15 @@ log = sys.stderr
 def warn(*args):
     """Define way to forward logs"""
     global log
-    log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+    try:
+        log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+    except:
+        try:
+            log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x.decode('utf-8', errors='ignore')), args))+os.linesep)
+        except:
+            log.write("[%s] UPDATER: unknown error" % now())
     log.flush()
+
 
 def Try(command):
     """Try...Resume..."""
@@ -957,7 +964,7 @@ def do_pg_update():
     except Exception as e:
         failed = True
         s = str(e) or type(e)
-        warn('Failed to update Postgres: %s', s)
+        warn(u'Failed to update Postgres', s)
     finally:
         try:
             if pg_new_db is not None and os.path.exists(pg_new_db):
