@@ -865,6 +865,15 @@ class Entity(osv.osv):
             offset_recovery = 0
             max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
+        trigger_analyze = self.pool.get('ir.config_parameter').get_param(cr, 1, 'ANALYZE_NB_UPDATES')
+        nb = 2000
+        if trigger_analyze:
+            nb = int(trigger_analyze)
+        if updates_count >= nb:
+            self._logger.info('Begin analyze sync_client_update_received')
+            cr.execute('analyze sync_client_update_received')
+            self._logger.info('End of analyze')
+
         return updates_count
 
     @sync_subprocess('data_pull_execute')
@@ -1350,6 +1359,12 @@ class Entity(osv.osv):
         sent_date IS NOT NULL AND sent='t'""", (nb_month_to_clean,))
         deleted_update_to_send = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
+
+        self._logger.info('Begin analyze sync_client_update_to_send')
+        cr.execute('analyze sync_client_update_to_send')
+        self._logger.info('End analyze, begin analyze sync_client_update_received')
+        cr.execute('analyze sync_client_update_received')
+        self._logger.info('End analyze')
 
 
 Entity()
