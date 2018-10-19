@@ -279,6 +279,7 @@ class account_invoice(osv.osv):
             context = {}
         new_data = datas
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        account_obj = self.pool.get('account.account')
         analytic_distrib_obj = self.pool.get('analytic.distribution')
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
@@ -301,6 +302,7 @@ class account_invoice(osv.osv):
             si_line_name_index = 'invoice_line/name' in fields and fields.index('invoice_line/name')
             si_journal_index = 'journal_id' in fields and fields.index('journal_id')
             curr_index = 'currency_id' in fields and fields.index('currency_id')
+            account_index = 'invoice_line/account_id' in fields and fields.index('invoice_line/account_id')
             doc_date_index = 'document_date' in fields and fields.index('document_date')
             date_inv_index = 'date_invoice' in fields and fields.index('date_invoice')
             new_data = []
@@ -356,6 +358,16 @@ class account_invoice(osv.osv):
                             'cost_center_id': cc_ids[0],
                             })
                         fp_distrib_line_obj.create(cr, uid, vals, context=context)
+                        account_code = account_index is not False and len(data) > account_index and data[account_index].strip()
+                        if account_code:
+                            account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], context=context, limit=1)
+                            if not account_ids:
+                                raise osv.except_osv(_('Error'), _('The account %s was not found on the line %s.') % (account_code, data))
+                            parent_id = False  # no distrib. at header level
+                            distrib_state = analytic_distrib_obj._get_distribution_state(cr, uid, distrib_id, parent_id,
+                                                                                         account_ids[0], context=context)
+                            if distrib_state == 'invalid':
+                                raise osv.except_osv(_('Error'), _('The analytic distribution is invalid on the line %s.') % data)
                 # create a new list with the new distrib id and without the old AD fields
                 # to be done also if no AD to ensure the size of each data list is always the same
                 i = 0

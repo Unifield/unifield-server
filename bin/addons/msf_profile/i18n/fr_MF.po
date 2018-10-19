@@ -101958,6 +101958,18 @@ msgid "Either the Cost Center, the Destination, or the Funding Pool was not foun
 msgstr "Le Centre de Coût, la Destination, ou le Funding Pool n'a pas été trouvé sur la ligne %s."
 
 #. module: account_override
+#: code:addons/account_override/invoice.py:365
+#, python-format
+msgid "The account %s was not found on the line %s."
+msgstr "Le compte %s n'a pas été trouvé sur la ligne %s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:370
+#, python-format
+msgid "The analytic distribution is invalid on the line %s."
+msgstr "La distribution analytique est invalide sur la ligne %s."
+
+#. module: account_override
 #: help:account.invoice.line,cost_center_id:0
 #: help:account.invoice.line,destination_id:0
 #: help:account.invoice.line,funding_pool_id:0
