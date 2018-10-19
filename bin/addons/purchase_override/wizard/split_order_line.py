@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from product._common import rounding
+import netsvc
 
 from tools.translate import _
 
@@ -72,6 +73,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        wf_service = netsvc.LocalService('workflow')
+
         context.update({'split_line': True})
         context.update({'keepDateAndDistrib': True})
 
@@ -112,6 +115,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
             # copy original line
             new_line_id = self.pool.get('purchase.order.line').copy(cr, uid, split.purchase_line_id.id, po_copy_data, context=context)
+
+            if split.purchase_line_id.state == 'validated':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_line_id, 'validated', cr)
 
             if split.purchase_line_id.state in ['draft', 'validated', 'validated_n'] and split.purchase_line_id.linked_sol_id:
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, split.purchase_line_id.id, context=context)
