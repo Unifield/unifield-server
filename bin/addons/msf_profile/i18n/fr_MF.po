@@ -7800,7 +7800,7 @@ msgstr "Selected Origin must not be in Cancelled state for Incoming Shipments."
 msgid "Africa/Mbabane"
 msgstr "Africa/Mbabane"
 
-#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client
+#. modules: msf_budget, purchase, account, product_nomenclature, account_mcdb, supplier_catalogue, product, sale, account_override, base, board, object_query, register_accounting, sync_client, msf_audittrail
 #: field:account.bank.statement.line,sequence:0
 #: field:account.bank.statement.line.deleted,sequence:0
 #: field:account.invoice.tax,sequence:0
@@ -7812,6 +7812,7 @@ msgstr "Africa/Mbabane"
 #: field:account.sequence.fiscalyear,sequence_id:0
 #: field:account.tax,sequence:0
 #: field:account.tax.template,sequence:0
+#: field:audittrail.log.line,other_column:0
 #: view:audittrail.log.line:0
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
@@ -15494,7 +15495,6 @@ msgstr "Niveaux obligatoires"
 
 #. modules: account, msf_audittrail, hr
 #: view:account.analytic.line:0
-#: field:audittrail.log.line,other_column:0
 #: model:process.node,note:hr.process_node_employeecontact0
 msgid "Other information"
 msgstr "Autre information"
@@ -34874,12 +34874,6 @@ msgstr "Required by date"
 msgid "Only draft picking tickets can be deleted."
 msgstr "Seuls les brouillons de bons de picking peuvent être supprimés"
 
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:886
-#, python-format
-msgid "Document date should be in posting date FY"
-msgstr "Document date should be in posting date FY"
-
 #. module: account
 #: field:account.account.type,name:0
 msgid "Acc. Type Name"
@@ -39565,12 +39559,6 @@ msgstr "Vous ne pouvez pas dupliquer un document %s !"
 #: selection:res.users,context_tz:0
 msgid "Africa/Kinshasa"
 msgstr "Africa/Kinshasa"
-
-#. module: msf_tools
-#: code:addons/msf_tools/msf_tools.py:883
-#, python-format
-msgid "Document date (%s) should be in posting date FY"
-msgstr "Document date (%s) should be in posting date FY"
 
 #. modules: account_override, order_line_number, register_accounting
 #: field:account.invoice,sequence_id:0
@@ -45268,12 +45256,8 @@ msgstr "Sélectionnez une devise à appliquer à la facture"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/down_payment.py:98
 #, python-format
-msgid "Maximum amount should be: %s. Register' +\n"
-"                                   ' line amount is higher than (PO confirmed amount - ' +\n"
-"                                   'unexpended DPs - open/paid INV)."
-msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre' +\n"
-"                                   ' est plus élevé que (montant confirmé du BC - ' +\n"
-"                                   'acomptes non utilisés - factures ouvertes / payées)."
+msgid "Maximum amount should be: %s. Register line amount is higher than (PO confirmed amount - unexpended DPs - open/paid INV)."
+msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre est plus élevé que (montant confirmé du BC - acomptes non utilisés - factures ouvertes / payées)."
 
 #. modules: account_override, account, register_accounting, msf_instance, finance
 #: selection:account.analytic.journal,type:0
@@ -75022,6 +75006,7 @@ msgstr "Ligne %s :: Le mouvement n'est pas  'Disponible'. Vérifier le statut du
 #: field:wizard.import.cheque.lines,line_id:0
 #: field:wizard.invoice.date,invoice_id:0
 #: field:wizard.invoice.line,invoice_id:0
+#: field:account.analytic.line,invoice_id:0
 #: report:allocation.invoices.report:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -78908,7 +78893,7 @@ msgstr "Nov"
 msgid "HQ Entries import failed."
 msgstr "Importation échouée Ecritures HQ"
 
-#. modules: register_accounting, msf_accrual, account_mcdb, account_hq_entries, financing_contract
+#. modules: register_accounting, msf_accrual, account_mcdb, account_hq_entries, financing_contract, account
 #: field:hq.entries,partner_txt:0
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
@@ -78928,6 +78913,9 @@ msgstr "Importation échouée Ecritures HQ"
 #: field:account.mcdb,partner_txt:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/financing_contract/report/project_expenses_xls.mako:485
+#: report:account.general.ledger_landscape:0
+#: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_xls.mako:247
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -83984,7 +83972,7 @@ msgstr "Récap Dépenses prévues"
 msgid "L2"
 msgstr "L2"
 
-#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools
+#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account
 #: field:analytic.distribution.wizard,purchase_id:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -84038,6 +84026,8 @@ msgstr "L2"
 #: model:process.node,name:tender_flow.process_node_tender_po
 #: model:ir.model,name:transport_mgmt.model_purchase_order
 #: field:automated.import.files.available,po_id:0
+#: field:account.move.line,purchase_order_id:0
+#: field:account.analytic.line,purchase_order_id:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -101905,3 +101895,88 @@ msgstr "Des documents sont ouverts pour cette location ou il y a des mouvements 
 #: view:stock.location.confirm.deactivation:0
 msgid "Deactivate location"
 msgstr "Désactiver la location"
+
+#. module: account_override
+#: code:addons/account_override/account.py:517
+#, python-format
+msgid "An account set as \"Included in revaluation\" must be set as \"Reconcile\"."
+msgstr "Un compte marqué comme inclus dans la Réévaluation doit être défini comme Lettrable."
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:43
+#, python-format
+msgid "OK, cancel line"
+msgstr "OK, annuler la ligne"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:42
+#, python-format
+msgid "Return to previous screen"
+msgstr "Retourner à l'écran précédent"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid " and %s"
+msgstr " et %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:106
+#, python-format
+msgid "You are about to cancel the product %s, are you sure you wish to proceed ?"
+msgstr "Vous êtes sur le point d'annuler le produit %s, voulez-vous vraiment continuer ?"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:76
+#: code:addons/sale/wizard/delete_sale_order_line.py:101
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:63
+#, python-format
+msgid "You cannot delete product: %s"
+msgstr "Vous ne pouvez pas supprimer les produits: %s"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:89
+#, python-format
+msgid "You are about to cancel the products %s, are you sure you wish to proceed ?"
+msgstr "Vous êtes sur le point d'annuler les produits %s, voulez-vous vraiment continuer ?"
+
+#. module: sale
+#: code:addons/sale/wizard/delete_sale_order_line.py:44
+#: view:delete.sale.order.line.wizard:0
+#, python-format
+msgid "OK, cancel lines"
+msgstr "OK, annuler les lignes"
+
+#. module: account
+#: field:account.account,reconciliation_debit_account_id:0
+msgid "Default Debit Account for Reconciliation"
+msgstr "Compte de Débit par Défaut pour le Lettrage"
+
+#. module: account
+#: field:account.account,reconciliation_credit_account_id:0
+msgid "Default Credit Account for Reconciliation"
+msgstr "Compte de Crédit par Défaut pour le Lettrage"
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:139
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:149
+#, python-format
+msgid "The account %s - %s has no Default Destination. FX adjustment entry can't be created."
+msgstr "Le compte %s - %s n'a pas de Destination par défaut. L'écriture de différence de change ne peut pas être créée."
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:355
+#: code:addons/res_currency_functional/account_move_line_compute_currency.py:365
+#, python-format
+msgid "The account %s - %s used for the FX adjustment entry has no Default Destination."
+msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a pas de Destination par défaut."
+
+#. module: analytic_distribution
+#: field:account.commitment.line,commit_number:0
+msgid "Commitment Voucher Number"
+msgstr "Numéro du Bon d'Engagement"

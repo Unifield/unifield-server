@@ -865,6 +865,7 @@
                                 />
                             <field name="address_id"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
+                                domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
                             <field name="backorder_id" readonly="1"/>

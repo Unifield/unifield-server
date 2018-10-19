@@ -841,12 +841,7 @@ class finance_tools(osv.osv):
     def check_document_date(self, cr, uid, document_date, posting_date,
                             show_date=False, custom_msg=False, context=None):
         """
-        US-192 document date check rules
-        http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
-
-        Document date should be included within the fiscal year of
-            the posting date it is tied with.
-        01/01/FY <= document date <= 31/12/FY
+        Checks that posting date >= document date
 
         :type document_date: orm date
         :type posting_date: orm date
@@ -859,8 +854,6 @@ class finance_tools(osv.osv):
         if custom_msg:
             show_date = False
 
-        # initial check that not (posting_date < document_date)
-        # like was until 1.0-5
         if posting_date < document_date:
             if custom_msg:
                 msg = custom_msg  # optional custom message
@@ -871,19 +864,6 @@ class finance_tools(osv.osv):
                 else:
                     msg = _(
                         'Posting date should be later than Document Date.')
-            raise osv.except_osv(_('Error'), msg)
-
-        # US-192 check
-        # 01/01/FY <= document date <= 31/12/FY
-        posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
-        check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
-        check_range_end = posting_date
-        if not (check_range_start <= document_date <= check_range_end):
-            if show_date:
-                msg = _('Document date (%s) should be in posting date FY') % (
-                    document_date, )
-            else:
-                msg = _('Document date should be in posting date FY')
             raise osv.except_osv(_('Error'), msg)
 
     def truncate_amount(self, amount, digits):
