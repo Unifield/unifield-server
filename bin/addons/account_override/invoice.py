@@ -269,8 +269,8 @@ class account_invoice(osv.osv):
                         display_all_errors=False, has_header=False):
         """
         Overrides the standard import_data_web method for account.invoice model:
-        - based on the 3 values for "cost_center_id / destination_id / funding_pool_id", creates a new distribution
-          for each invoice line and add it to "datas"
+        - based on the 3 values for "cost_center_id / destination_id / funding_pool_id", creates a new AD at 100% for
+          each invoice line and add it to "datas"
         - removes these 3 values that won't be used in the SI line
         - adapts the "fields" list accordingly
         - converts the dates from the format '%d/%m/%Y' to the standard one '%Y-%m-%d' so the checks on dates are correctly made
@@ -316,7 +316,7 @@ class account_invoice(osv.osv):
                 dest = len(data) > dest_index and data[dest_index].strip()
                 fp = len(data) > fp_index and data[fp_index].strip()
                 # check if details for SI line are filled in (based on the required field "name")
-                has_si_line = si_line_name_index is not False and len(data) > si_line_name_index and data[si_line_name_index]
+                has_si_line = si_line_name_index is not False and len(data) > si_line_name_index and data[si_line_name_index].strip()
                 # process AD only for SI lines where at least one AD field has been filled in
                 # (otherwise no AD should be added to the line AND no error should be displayed)
                 if has_si_line and (cc or dest or fp):  # at least one AD field has been filled in
@@ -336,11 +336,11 @@ class account_invoice(osv.osv):
                         # create the Analytic Distribution
                         distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
                         # get the next currency to use IF NEED BE (cf for an SI with several lines the curr. is indicated on the first one only)
-                        si_journal = si_journal_index is not False and len(data) > si_journal_index and data[si_journal_index]
+                        si_journal = si_journal_index is not False and len(data) > si_journal_index and data[si_journal_index].strip()
                         if si_journal:  # first line of the SI
                             curr = curr_index is not False and len(data) > curr_index and data[curr_index].strip()
                         curr_ids = []
-                        if curr:
+                        if curr:  # must exist at least on the first imported line
                             curr_ids = curr_obj.search(cr, uid, [('name', '=ilike', curr)], limit=1, context=context)
                         if not curr_ids:
                             raise osv.except_osv(_('Error'),
@@ -372,7 +372,7 @@ class account_invoice(osv.osv):
                 # to be done also if no AD to ensure the size of each data list is always the same
                 i = 0
                 new_sub_list = []
-                for d in data:
+                for d in data:  # loop on each value of the file line
                     if i not in [cc_index, dest_index, fp_index]:
                         if doc_date_index is not False and date_inv_index is not False and i in [doc_date_index, date_inv_index]:
                             # format the date from '%d/%m/%Y' to '%Y-%m-%d' so the checks on dates are correctly made
@@ -1689,7 +1689,7 @@ class account_invoice_line(osv.osv):
                                                     help='Invoice line that has been reversed by this one through a '
                                                          '"refund cancel" or "refund modify"'),
         'cost_center_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
-                                          states={'draft': [('readonly', False)]},
+                                          states={'draft': [('readonly', False)]},  # see def detect_data in unifield-web/addons/openerp/controllers/impex.py
                                           relation="account.analytic.account", string='Cost Center',
                                           help="Field used for import only"),
         'destination_id': fields.function(_get_fake_m2o, method=True, type='many2one', store=False,
