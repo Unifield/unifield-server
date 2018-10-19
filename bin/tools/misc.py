@@ -55,6 +55,7 @@ except ImportError:
 import netsvc
 from config import config
 from lru import LRU
+from xml.sax.saxutils import escape
 
 _logger = logging.getLogger('tools')
 
@@ -1780,3 +1781,5 @@ def use_prod_sync(cr):
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
+def escape_html(string):
+    return escape(string, {'"': '&quot;', "'": '&apos;'})
