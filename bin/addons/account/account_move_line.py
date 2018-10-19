@@ -445,6 +445,19 @@ class account_move_line(osv.osv):
             res[line_id] = (invoice_id, invoice_names[invoice_id])
         return res
 
+    def _get_purchase_order_id(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the JI, and value = id of the related PO,
+        in case the JI is linked to an invoice which is linked to a PO
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for aml in self.browse(cr, uid, ids, fields_to_fetch=['invoice'], context=context):
+            po = aml.invoice and aml.invoice.purchase_ids and aml.invoice.purchase_ids[0]  # only one PO can be linked to an SI
+            res[aml.id] = po and po.id or False
+        return res
+
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
@@ -563,6 +576,8 @@ class account_move_line(osv.osv):
                                    "this field will contain the basic amount(without tax)."),
         'invoice': fields.function(_invoice, method=True, string='Invoice',
                                    type='many2one', relation='account.invoice', fnct_search=_invoice_search),
+        'purchase_order_id': fields.function(_get_purchase_order_id, method=True, string='Purchase Order',
+                                             type='many2one', relation='purchase.order', readonly=True, store=False),
         'account_tax_id':fields.many2one('account.tax', 'Tax'),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         #TODO: remove this
