@@ -108379,3 +108379,8 @@ msgstr "Les Montants réels de ce rapport comprennent les BdC confirmés (engage
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
 msgid "Budget missing"
 msgstr "Budget manquant"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:146
+msgid "Stock Move Date"
+msgstr "Date de Mouvement de Stock"
