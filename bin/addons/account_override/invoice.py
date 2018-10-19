@@ -652,7 +652,7 @@ class account_invoice(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
-    def log(self, cr, uid, inv_id, message, secondary=False, context=None):
+    def log(self, cr, uid, inv_id, message, secondary=False, action_xmlid=False, context=None):
         """
         Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note.
         Change it to "In-kind donation" if this invoice is an In-kind donation.
@@ -671,7 +671,7 @@ class account_invoice(osv.osv):
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
             supplier_direct_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'direct_supplier_invoice_form')
         except ValueError:
-            return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
+            return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
         # Search donation view and return it
@@ -712,7 +712,7 @@ class account_invoice(osv.osv):
                 supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
                 local_ctx = {'journal_type': 'purchase',
                              'view_id': supplier_view_id}
-        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, local_ctx)
+        return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
 
     def invoice_open(self, cr, uid, ids, context=None):
         """

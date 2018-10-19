@@ -15,7 +15,11 @@
                         <group col="6" colspan="4">
                             <field name="activation_date"/>
                             <field name="inactivation_date"/>
-                            <field name="reconcile"/>
+                            <group col="2" colspan="2">
+                                <field name="reconcile"/>
+                                <field name="reconciliation_debit_account_id"/>
+                                <field name="reconciliation_credit_account_id"/>
+                            </group>
                         </group>
                     </page>
                 </page>

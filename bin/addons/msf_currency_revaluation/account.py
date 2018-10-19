@@ -63,16 +63,16 @@ class account_account(osv.osv):
     _defaults = {'currency_revaluation': False}
 
     _sql_mapping = {
-        'balance': "COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance",
-            'debit': "COALESCE(SUM(l.debit), 0) as debit",
-            'credit': "COALESCE(SUM(l.credit), 0) as credit",
-            # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepedencies
-            'foreign_balance': "COALESCE(SUM(l.debit_currency),0) - COALESCE(SUM(l.credit_currency), 0) as foreign_balance"
-            #'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"
+        'balance': "COALESCE(l.debit, 0) - COALESCE(l.credit, 0) as balance",
+        'debit': "COALESCE(l.debit, 0) as debit",
+        'credit': "COALESCE(l.credit, 0) as credit",
+        # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepancies
+        'foreign_balance': "COALESCE(l.debit_currency, 0) - COALESCE(l.credit_currency, 0) as foreign_balance"
     }
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
-        query = ("SELECT l.account_id as id, l.currency_id, l.reconcile_id, " +
+        query = ("SELECT l.account_id as id, l.currency_id, l.reconcile_id, "
+                 " l.id AS aml_id, " +
                  ', '.join(self._sql_mapping.values()) +
                  " FROM account_move_line l"
                  " inner join account_period p on p.id = l.period_id"
@@ -80,8 +80,7 @@ class account_account(osv.osv):
                  " l.date <= %(revaluation_date)s AND"
                  " l.currency_id IS NOT NULL AND"
                  " l.state <> 'draft' AND"
-                 " p.number != 0"  # US-1251 exclude IB entries period 0 for monthly and yearly
-                 " GROUP BY l.account_id, l.currency_id, l.reconcile_id")
+                 " p.number != 0;")  # US-1251 exclude IB entries period 0 for monthly and yearly
         params = {'revaluation_date': revaluation_date,
                   'account_ids': tuple(ids)}
         return query, params
@@ -92,6 +91,8 @@ class account_account(osv.osv):
         if context is None:
             context = {}
         accounts = {}
+        entries_included = {}
+        reconciliations = {}
         aml_obj = self.pool.get('account.move.line')
 
         # Compute for each account the balance/debit/credit from the move lines
@@ -115,12 +116,23 @@ class account_account(osv.osv):
             if len(period_ids) == 1 or not l['reconcile_id']:
                 line_to_keep = True
             elif l['reconcile_id']:
-                # get the JIs with the same reconcile_id
-                aml_list = aml_obj.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
-                # check that at least one of them has a posting date later than the FY
-                if aml_obj.search_exist(cr, uid, [('id', 'in', aml_list), ('date', '>', revaluation_date)], context=context):
-                    line_to_keep = True
+                if l['reconcile_id'] in reconciliations:
+                    line_to_keep = reconciliations[l['reconcile_id']]
+                else:
+                    # get the JIs with the same reconcile_id
+                    aml_list = aml_obj.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
+                    # check that at least one of them has a posting date later than the FY
+                    if aml_obj.search_exist(cr, uid, [('id', 'in', aml_list), ('date', '>', revaluation_date)], context=context):
+                        line_to_keep = True
+                    # store the result for this rec. to avoid re-doing the same computation several times
+                    reconciliations.update({l['reconcile_id']: line_to_keep})
             if line_to_keep:
+                # store by account and currency all the entries included in the reval
+                if l['id'] not in entries_included:  # l['id'] is the id of the account
+                    entries_included[l['id']] = {}
+                if l['currency_id'] not in entries_included[l['id']]:
+                    entries_included[l['id']][l['currency_id']] = []
+                entries_included[l['id']][l['currency_id']].append(l['aml_id'])
                 # generate a tree
                 # - account_id
                 # -- currency_id
@@ -139,7 +151,7 @@ class account_account(osv.osv):
                 accounts[l['id']][l['currency_id']]['debit'] += l['debit']
                 accounts[l['id']][l['currency_id']]['balance'] += l['balance']
 
-        return accounts
+        return accounts, entries_included
 
 account_account()
 

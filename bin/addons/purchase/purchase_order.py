@@ -115,6 +115,14 @@ class purchase_order(osv.osv):
                     purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
+                # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
+                # (event if some SI amounts have been lowered)
+                po_states = ['done']
+                if purchase.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                    po_states = ['confirmed', 'confirmed_p', 'done']
+                if purchase.state in po_states and all(x.state != 'draft' for x in purchase.invoice_ids):
+                    res[purchase.id] = 100.0
+                    continue
                 tot = 0.0
                 # UTP-808: Deleted invoices amount should be taken in this process. So what we do:
                 # 1/ Take all closed stock picking linked to the purchase
@@ -167,13 +175,8 @@ class purchase_order(osv.osv):
                 for move in line.move_ids:
                     if move.state == 'done':
                         move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        if move.type == 'out':
-                            amount_received -= move_qty
-                        elif move.type == 'in':
+                        if move.type == 'in':
                             amount_received += move_qty
-                        elif move.type == 'internal':
-                            # not taken into account
-                            pass
 
             if amount_total:
                 res[order.id] = (amount_received/amount_total)*100
@@ -391,7 +394,7 @@ class purchase_order(osv.osv):
         res = {}.fromkeys(ids, 0)
         line_number_by_order = {}
 
-        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids),  ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
         for l in pol_obj.read(cr, uid, lines, ['order_id', 'line_number'], context=context):
             line_number_by_order.setdefault(l['order_id'][0], set())
             line_number_by_order[l['order_id'][0]].add(l['line_number'])
@@ -593,6 +596,25 @@ class purchase_order(osv.osv):
             po_ids.add(pol.order_id.id)
         return [('id', operator, list(po_ids))]
 
+
+    def _search_has_confirmed_or_further_line(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain corresponding to POs having at least one line being in Confirmed state or more
+        """
+        if context is None:
+            context = {}
+        pol_obj = self.pool.get('purchase.order.line')
+        if not args:
+            return []
+        if args[0][1] != '=' or len(args[0]) < 3:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+        operator = args[0][2] is True and 'in' or 'not in'
+        po_ids = set()
+        pol_ids = pol_obj.search(cr, uid, [('state', 'in', ['confirmed', 'done'])], context=context)
+        for pol in pol_obj.browse(cr, uid, pol_ids, fields_to_fetch=['order_id'], context=context):
+            po_ids.add(pol.order_id.id)
+        return [('id', operator, list(po_ids))]
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -741,8 +763,13 @@ class purchase_order(osv.osv):
                                               fnct_search=_search_has_confirmed_line,
                                               string='Has a confirmed line',
                                               help='Only used to SEARCH for POs with at least one line in Confirmed state'),
+        'has_confirmed_or_further_line': fields.function(_get_fake, type='boolean', method=True, store=False,
+                                                         fnct_search=_search_has_confirmed_or_further_line,
+                                                         string='Has a confirmed (or further) line',
+                                                         help='Only used to SEARCH for POs with at least one line in Confirmed or Closed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
+        'from_address': fields.many2one('res.partner.address', string='From Address'),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -754,6 +781,7 @@ class purchase_order(osv.osv):
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
+        'from_address': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['default'])['default'],
         'no_line': lambda *a: True,
         'active': True,
         'name': lambda *a: False,
@@ -777,15 +805,6 @@ class purchase_order(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
     ]
-
-    def _check_po_from_fo(self, cr, uid, ids, context=None):
-        if not context:
-            context = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_id.partner_type == 'internal' and po.po_from_fo and po.customer_id.partner_type != 'external'\
-                    and not po.is_a_counterpart:
-                return False
-        return True
 
     def _check_order_type(self, cr, uid, ids, context=None):
         '''
@@ -818,7 +837,6 @@ class purchase_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
         (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
     ]
 

@@ -94,6 +94,29 @@ class purchase_order_line(osv.osv):
                                 self.pool.get('stock.move').write(cr, uid, out_move_to_cancel, {'sale_line_id': pol.linked_sol_id.id}, context=context)
                             self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
 
+            elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
+                    pol.original_line_id.linked_sol_id.order_id.procurement_request:
+                # split the sol:
+                split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                    'sale_line_id': pol.original_line_id.linked_sol_id.id,
+                    'original_qty': pol.original_line_id.linked_sol_id.product_uom_qty + pol.product_qty,
+                    'old_line_qty': pol.original_line_id.linked_sol_id.product_uom_qty,
+                    'new_line_qty': pol.product_qty,
+                }, context=context)
+                context.update({'return_new_line_id': True})
+                new_sol_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+                context.update({'return_new_sol_id': True})
+                self.write(cr, uid, pol.id, {'linked_sol_id': new_sol_id}, context=context)
+
+                linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('sale_line_id', '=', pol.original_line_id.linked_sol_id.id),
+                    ('type', '=', 'out')],
+                    context=context)
+                if len(linked_out_moves) > 1:
+                    for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                        if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == pol.product_qty:
+                            self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol_id}, context=context)
+
         return True
 
 
@@ -452,6 +475,7 @@ class purchase_order_line(osv.osv):
                 open_wizard = True
             if pol.state == 'validated_n':
                 # if line is 'validated_n', pass through 'validated' state to ensure no checks has been missed
+                #self.check_origin_is_set(self, cr, uid, pol, context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'validated', cr)
 
         if open_wizard:
@@ -525,6 +549,22 @@ class purchase_order_line(osv.osv):
             if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
                 raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
+    def check_origin_for_validation(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        to_complete_ids = self.search(cr, uid, [('id', '=', ids), ('from_fo', '=', True), ('origin', '=', False), ('sync_linked_sol', '=', False)])
+        if to_complete_ids:
+            error = []
+            for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
+                error.append(_('#%d  %s') % (line['line_number'], line['default_code']))
+            if len(error) == 1:
+                raise osv.except_osv(_('Error'), _("This cannot be validated as line source document information is missing: %s") % error[0])
+            else:
+                raise osv.except_osv(_('Error'), _("These lines cannot be validated as line source document information is missing: \n - %s") % "\n -".join(error))
+
+        return True
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -535,7 +575,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
+
         # checks before validating the line:
+        self.check_origin_for_validation(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)

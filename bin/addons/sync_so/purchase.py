@@ -214,7 +214,7 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
         elif sol_dict['state'] == 'confirmed':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
-        elif sol_dict['state'] == 'cancel':
+        elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)

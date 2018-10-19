@@ -398,28 +398,35 @@ class automated_import_job(osv.osv):
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
                     state = 'error'
                     for resjected_line in rejected:
-                        line_message = _('Line %s: ' % resjected_line[0])
+                        line_message = _('Line %s: ') % resjected_line[0]
                         line_message += resjected_line[2]
                         error_message.append(line_message)
-                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), len(rejected)))
+
+                if context.get('rejected_confirmation'):
+                    nb_rejected += context.get('rejected_confirmation')
+                    state = 'error'
+
+                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (job.import_id.name, len(processed), nb_rejected))
 
                 if job.import_id.function_id.model_id.model == 'purchase.order':
                     po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
                     if po_id and (nb_processed or nb_rejected):
                         po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
+                        nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
                         msg = _('%s: ') % po_name
                         if nb_processed:
-                            msg += _('%s lines have been updated') % nb_processed
+                            msg += _('%s out of %s lines have been updated') % (nb_processed, nb_total_pol)
                             if nb_rejected:
                                 msg += _(' and ')
                         if nb_rejected:
-                            msg += _('%s lines have been rejected') % nb_rejected
+                            msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
+                        if nb_processed or nb_rejected:
+                            self.pool.get('purchase.order').log(cr, uid, po_id, msg)
 
-                        self.log(cr, uid, job.id, msg)
                 if context.get('job_comment'):
-                    error_message += context['job_comment']
-                    for mess in error_message:
-                        self.log(cr, uid, job.id, mess)
+                    for msg_dict in context['job_comment']:
+                        self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
+                        error_message.append(msg_dict['msg'])
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
@@ -451,6 +458,10 @@ class automated_import_job(osv.osv):
                 }, context=context)
                 move_to_process_path(job.import_id, ftp_connec, sftp, filename, success=False)
                 self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
+
+        if 'row' in context:
+            # causing LmF when running job manually
+            context.pop('row')
 
         return {
             'type': 'ir.actions.act_window',

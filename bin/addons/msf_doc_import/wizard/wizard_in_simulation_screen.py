@@ -198,18 +198,9 @@ class wizard_import_in_simulation_screen(osv.osv):
             ids = [ids]
 
         picking_id = self.browse(cr, uid, ids[0], context=context).picking_id.id
-        context['pick_type'] = 'incoming'
-
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'res_id': picking_id,
-                'view_type': 'form',
-                'view_mode': 'form,tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'context': context}
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree4', ['form', 'tree'], context=context)
+        res['res_id'] = picking_id
+        return res
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
@@ -268,10 +259,34 @@ class wizard_import_in_simulation_screen(osv.osv):
     def launch_import_pack(self, cr, uid, ids, context=None):
         return self.launch_import(cr, uid, ids, context)
 
+    def populate(self, cr, uid, import_id, picking_id, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        for move in pick_obj.browse(cr, uid, picking_id, context=context).move_lines:
+            if move.state not in ('draft', 'cancel', 'done'):
+                line_obj.create(cr, uid, {
+                    'move_id': move.id,
+                    'simu_id': import_id,
+                    'move_product_id': move.product_id and move.product_id.id or False,
+                    'move_product_qty': move.product_qty or 0.00,
+                    'move_uom_id': move.product_uom and move.product_uom.id or False,
+                    'move_price_unit': move.price_unit or move.product_id.standard_price,
+                    'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
+                    'line_number': move.line_number,
+                    'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                }, context=context)
+
+        return True
+
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
         Launch the simulation routine in background
         '''
+        global SIMU_LINES, LN_BY_EXT_REF
         if context is None:
             context = {}
 
@@ -298,7 +313,16 @@ class wizard_import_in_simulation_screen(osv.osv):
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
-            self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
+            self.pool.get('wizard.import.in.line.simulation.screen').unlink(cr, uid, [line.id for line in wiz.line_ids],
+                                                                            context=context)
+            self.write(cr, uid, ids, {'state': 'simu_progress', 'error_filename': False, 'error_file': False,
+                                      'percent_completed': 0, 'import_error_ok': False}, context=context)
+            if wiz.id in SIMU_LINES:
+                del SIMU_LINES[wiz.id]
+            if wiz.id in LN_BY_EXT_REF:
+                del LN_BY_EXT_REF[wiz.id]
+
+            self.populate(cr, uid, wiz.id, wiz.picking_id.id, context=context)
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 self.simulate(cr.dbname, uid, ids, context=context)
@@ -625,7 +649,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin != wiz.origin:
+                if wiz.purchase_id.name not in origin:
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -633,7 +657,7 @@ Nothing has been imported because of %s. See below:
                     cr.commit()
                     cr.close(True)
                     return res
-                header_values['imp_origin'] = origin
+                header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
                 transport_mode = values.get(5, ['', ''])[1]
@@ -1567,7 +1591,14 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 error_msg += warn
 
             write_vals['error_msg'] = error_msg
-            context['job_comment'] = ['Line %s: %s' % (line.line_number, s) for s in warnings]
+            job_comment = context.get('job_comment', [])
+            for msg in warnings:
+                job_comment.append({
+                    'res_model': 'stock.picking',
+                    'res_id': line.simu_id.picking_id.id,
+                    'msg': _('%s Line %s: %s') % (line.simu_id.picking_id.name, line.line_number, msg)
+                })
+            context['job_comment'] = job_comment
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
@@ -1713,6 +1744,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'expiry_date': line.imp_exp_date,
                     'line_number': line.line_number,
                     'move_id': move.id,
+                    'split_move_ok': line.type_change == 'split',
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,
@@ -1727,5 +1759,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 move_ids.append(move.id)
 
         return mem_move_ids, move_ids
+
 
 wizard_import_in_line_simulation_screen()

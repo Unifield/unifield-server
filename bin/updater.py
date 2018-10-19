@@ -125,8 +125,8 @@ def rmtree(files, path=None, verbose=False):
             try:
                 os.unlink(target)
             except:
-                warn('Except on target %s, %s' % (target, target.endswith('OpenERPServerService.exe')))
-                if target.endswith('OpenERPServerService.exe'):
+                warn('Except on target %s' % (target,))
+                if target.endswith('.exe'):
                     if not os.path.isdir(backup_trash):
                         os.makedirs(backup_trash)
                     index = 0
@@ -345,7 +345,11 @@ def do_update():
                         if file.endswith('.pyc'):
                             file = os.path.join(root, file)
                             warn('Purge pyc: %s' % file)
-                            os.unlink(file)
+                            try:
+                                os.unlink(file)
+                            except:
+                                # in some cases pyc is locked by another process (virus scan?)
+                                pass
 
             shutil.copy(server_version_file, 'backup')
             files.append(server_version_file)
@@ -366,12 +370,16 @@ def do_update():
 
         except BaseException, e:
             warn("Update failure!")
-            warn(unicode(e))
+            try:
+                warn(unicode(e))
+            except:
+                warn("Unknown error")
             ## Restore backup and purge .update
             if files or deleted_files:
                 warn("Restoring... ")
                 for f in reversed(files + deleted_files):
-                    if is_webfile(f):
+                    webfile = is_webfile(f)
+                    if webfile:
                         f = os.path.join(webpath, webfile.group(1))
                         target = os.path.join(webbackup, webfile.group(1))
                     else:
