@@ -22,15 +22,6 @@
                     <field name="contains_kc" invisible="1" />
                     <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
-                    <group colspan="4" attrs="{'invisible': [('location_dest_active_ok', '!=', False)]}">
-                        <html>
-                            <p style="text-align: center; v-align: middle;">
-                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                        <span><translate>Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually.</translate></span>
-                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                            </p>
-                        </html>
-                    </group>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
                         <html>
                             <p style="text-align: center; v-align: middle;">
@@ -94,7 +85,9 @@
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
+                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', True)]}" />
+                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', False)]}"
+                            confirm="Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually. Continue ?" />
                         <button name="process_to_ship" attrs="{'invisible': [('display_process_to_ship_button', '!=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
