@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 
+#
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
@@ -17,7 +17,7 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# 
+#
 
 import tools
 import time
@@ -29,6 +29,7 @@ from decimal_precision import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 from service.web_services import report_spool
+from datetime import datetime
 
 
 class report_stock_move(osv.osv):
@@ -42,19 +43,19 @@ class report_stock_move(osv.osv):
         Returns information about the order linked to the stock move
         '''
         res = {}
-        
+
         for report in self.browse(cr, uid, ids, context=context):
             move = report.move
             res[report.id] = {'order_priority': False,
                               'order_category': False,
                               'order_type': False}
             order = False
-            
+
             if move.purchase_line_id and move.purchase_line_id.id:
                 order = move.purchase_line_id.order_id
             elif move.sale_line_id and move.sale_line_id.id:
                 order = move.sale_line_id.order_id
-                
+
             if order:
                 res[report.id] = {}
                 if 'order_priority' in fields_name:
@@ -63,7 +64,7 @@ class report_stock_move(osv.osv):
                     res[report.id]['order_category'] = order.categ
                 if 'order_type' in fields_name:
                     res[report.id]['order_type'] = order.order_type
-        
+
         return res
 
     _columns = {
@@ -71,8 +72,8 @@ class report_stock_move(osv.osv):
         'year': fields.char('Year', size=4, readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
         'month': fields.selection([('01', 'January'), ('02', 'February'), ('03', 'March'), ('04', 'April'),
-                                  ('05', 'May'), ('06', 'June'), ('07', 'July'), ('08', 'August'), ('09', 'September'),
-                                  ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
+                                   ('05', 'May'), ('06', 'June'), ('07', 'July'), ('08', 'August'), ('09', 'September'),
+                                   ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
         'partner_id': fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id': fields.many2one('product.product', 'Product', readonly=True),
         'product_uom': fields.many2one('product.uom', 'UoM', readonly=True),
@@ -336,8 +337,8 @@ from/to this location will be shown.""",
     _defaults = {
         'state': 'draft',
         'company_id': lambda s, cr, uid, c: s.pool.get('res.company').\
-                _company_default_get(
-                    cr, uid, 'export.report.stock.move', context=c)
+        _company_default_get(
+            cr, uid, 'export.report.stock.move', context=c)
     }
 
     def update(self, cr, uid, ids, context=None):
@@ -530,6 +531,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLines': self.getLines,
+            'dateFormatdmY': self.date_format_dmY,
         })
 
     def getLines(self):
@@ -560,7 +562,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'source': get_src_dest(move, 'location_id'),
                 'destination': get_src_dest(move, 'location_dest_id'),
                 'reason_code': move.reason_type_id and move.reason_type_id.name or '',
-                'doc_ref': move.picking_id and move.picking_id.name or '',
+                'doc_ref': move.picking_id and move.picking_id.name or move.name or '',
+                'date_done': move.picking_id and move.picking_id.date_done or move.date or False,
             }
             if move.type in ('in', 'out') and (
                 move.location_id.usage in ['customer', 'supplier'] or
@@ -584,6 +587,9 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 res.append(move_vals_in)
                 res.append(move_vals_out)
         return res
+
+    def date_format_dmY(self, date):
+        return datetime.strftime(datetime.strptime(date[:10], '%Y-%m-%d'), '%d-%m-%Y')
 
 
 class report_stock_move_xls(SpreadsheetReport):
