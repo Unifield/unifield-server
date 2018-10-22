@@ -550,7 +550,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -576,7 +576,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -608,7 +608,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -640,7 +640,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
