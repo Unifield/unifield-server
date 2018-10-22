@@ -163,11 +163,7 @@
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['reason_code'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['doc_ref'])|x}</Data></Cell>
-        % if isDateTime(line['date_done']):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line['date_done'][:10]|n}T${line['date_done'][-8:]|n}.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-        % endif
+        <Cell ss:StyleID="line"><Data ss:Type="String">${isDateTime(line['date_done']) and dateFormatdmY(line['date_done']) or ''|x}</Data></Cell>
     </Row>
     % endfor
  % endfor

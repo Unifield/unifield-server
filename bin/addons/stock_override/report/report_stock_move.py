@@ -29,6 +29,7 @@ from decimal_precision import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 from service.web_services import report_spool
+from datetime import datetime
 
 
 class report_stock_move(osv.osv):
@@ -530,6 +531,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLines': self.getLines,
+            'dateFormatdmY': self.date_format_dmY,
         })
 
     def getLines(self):
@@ -585,6 +587,9 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 res.append(move_vals_in)
                 res.append(move_vals_out)
         return res
+
+    def date_format_dmY(self, date):
+        return datetime.strftime(datetime.strptime(date[:10], '%Y-%m-%d'), '%d-%m-%Y')
 
 
 class report_stock_move_xls(SpreadsheetReport):
