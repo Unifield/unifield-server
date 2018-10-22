@@ -99,13 +99,7 @@ location will be shown.""",
         """
         return self.generate_report(cr, uid, ids, context=context, all_locations=True)
 
-    def generate_report_product_list(self, cr, uid, ids, context=None):
-        """
-        Launch the generation of a report with the inventory of each products in a list
-        """
-        return self.generate_report(cr, uid, ids, context=context, product_list=True)
-
-    def generate_report(self, cr, uid, ids, context=None, all_locations=False, product_list=False):
+    def generate_report(self, cr, uid, ids, context=None, all_locations=False):
         """
         Select the good lines on the report.stock.inventory table
         """
@@ -122,7 +116,7 @@ location will be shown.""",
                 ('product_id.type', '=', 'product'),
                 ('state', '=', 'done'),
             ]
-            if product_list:
+            if report.product_list_id:
                 product_codes = [line.ref for line in report.product_list_id.product_ids]
                 domain.append(('product_id', 'in', self.pool.get('product.product').
                                search(cr, uid, [('default_code', 'in', product_codes)])))
@@ -131,6 +125,7 @@ location will be shown.""",
                 if report.location_id:
                     domain.append(('location_id', '=', report.location_id.id))
                 else:
+                    domain.append(('location_id.usage', '=', 'internal'))
                     all_locations = True
             else:
                 domain.append(('product_qty', '!=', 0.00))
@@ -149,7 +144,6 @@ location will be shown.""",
             context.update({
                 'domain': domain,
                 'all_locations': all_locations,
-                'product_list': product_list,
             })
 
             rsi_ids = rsi_obj.search(cr, uid, domain, context=context)

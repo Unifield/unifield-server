@@ -49,13 +49,10 @@
                     <group colspan="4" col="2">
                         <button name="generate_report" type="object"
                                 string="Generate report" icon="gtk-execute" states="draft"
-                                attrs="{'readonly': ['|', ('location_id', '=', False), ('product_list_id', '!=', False)]}" />
+                                attrs="{'readonly': [('location_id', '=', False), ('product_list_id', '=', False)]}" />
                         <button name="generate_report_all_locations" type="object"
                                 string="Generate report (all locations)" icon="gtk-execute" states="draft"
                                 attrs="{'readonly': ['|', ('location_id', '!=', False), ('product_list_id', '!=', False)]}" />
-                        <button name="generate_report_product_list" type="object"
-                                string="Generate report (product list)" icon="gtk-execute" states="draft"
-                                attrs="{'readonly': [('product_list_id', '=', False)]}" />
                     </group>
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
