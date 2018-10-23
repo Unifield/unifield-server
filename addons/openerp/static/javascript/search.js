@@ -626,6 +626,7 @@ function change_filter() {
     }
 }
 
+var unique_id ='';
 function search_filter(src, id) {
 	jQuery('div#no-record-warning').hide();
     var all_domains = parse_filters(src, id);
@@ -633,12 +634,29 @@ function search_filter(src, id) {
 	if (group_by == 'False') {
 		group_by = [];
 	}
-    
+    unique_id = new Date().getTime();
     if(jQuery('#filter_table').is(':visible') || jQuery('#_terp_filter_domain').val() != '[]') {
-        display_Customfilters(all_domains, group_by);
+        return display_Customfilters(all_domains, group_by);
     } else {
         var custom_domain = jQuery('#_terp_filter_domain').val() || '[]';
-        final_search_domain(custom_domain, all_domains, group_by);
+        return final_search_domain(custom_domain, all_domains, group_by);
+    }
+}
+
+function kill_search_filter() {
+    current_search.abort();
+    jQuery(idSelector('_terp_list') + ' .loading-list').hide();
+    jQuery('#kill_search').hide();
+    $.event.trigger("ajaxStop");
+    if (unique_id) {
+        jQuery.ajax({
+            url:'/openerp/search/kill_search_filter',
+            data: {
+                model: jQuery('#_terp_model').val(),
+                unique_id: unique_id,
+            },
+            type: 'POST',
+        });
     }
 }
 
