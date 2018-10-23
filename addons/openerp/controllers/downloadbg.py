@@ -51,6 +51,7 @@ class DownLoadBg(SecuredController):
                     report_type = report['format']
                     cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
                     cherrypy.response.headers['Content-Disposition'] = 'filename="' + data_bg['report_name'] + '.' + report_type + '"'
+                    report['filename'] = data_bg['report_name'] + '.' + report_type
                     return actions._print_data(report)
 
         return dict(finish=finish, percent=data_bg['percent'], total=finished,

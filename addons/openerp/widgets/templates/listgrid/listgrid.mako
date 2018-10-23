@@ -20,6 +20,7 @@ if (auto_field && auto_field.val()){
        }
     }, 1000*auto_field.val(), model);
 }
+
 </script>
 <%def name="make_editors(data=None)">
     % if editable and editors:
@@ -34,17 +35,28 @@ if (auto_field && auto_field.val()){
                 % endfor
                 <!-- end of hidden fields -->
             </td>
+            <% cnt = 1 %>
             % for i, (field, field_attrs) in enumerate(headers):
                 % if field == 'button':
                     <td class="grid-cell"></td>
-                % else:
+                % elif field_attrs.get('displayon') != 'noteditable':
+                    % if field_attrs.get('displayon') == 'editable':
+                       <% cnt -= 1 %>
+                    % endif
                     <td class="grid-cell ${field_attrs.get('type', 'char')}"
                         % if field_attrs.get('attrs'):
                             ${py.attrs(id=field_attrs.get('prefix'),attrs=field_attrs.get('attrs'),widget=field_attrs.get('prefix')+'/'+field_attrs.get('name',''))}
                         % endif
+
+                        % if cnt > 1:
+                            colspan="${cnt}"
+                        % endif
                     >
                         ${editors[field].display()}
                     </td>
+                    <% cnt = 1 %>
+                % else:
+                   <% cnt += 1 %>
                 % endif
             % endfor
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
@@ -112,9 +124,21 @@ if (auto_field && auto_field.val()){
                     else:
                         edit_image = '/openerp/static/images/iconset-b-edit.gif'
                 %>
-                <img alt="edit record" src="${edit_image}"
-                    class="listImage" border="0" title="${_('Edit')}"
-                    onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
+                % if bothedit:
+                    <img alt="edit record" src="${edit_image}"
+                        class="listImage" border="0" title="${_('Inline Edit')}"
+                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
+                    % if not edit_inline or edit_inline == 'null':
+                    <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
+                        class="listImage" border="0" title="${_('Edit')}"
+                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']}, false)" />
+                    % endif
+
+                % else:
+                    <img alt="edit record" src="${edit_image}"
+                        class="listImage" border="0" title="${_('Edit')}"
+                        onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
+                % endif
             % endif
         </td>
     % endif
@@ -125,7 +149,7 @@ if (auto_field && auto_field.val()){
             </td>
         % elif field == 'separator':
             <td class="grid-cell"><b>|</b></td>
-        % else:
+        % elif field_attrs.get('displayon') != 'editable':
             <td class="grid-cell ${field_attrs.get('type', 'char')}"
                 style="${(data[field].color or None) and 'color: ' + data[field].color};"
                 sortable_value="${data[field].get_sortable_text()}">
@@ -280,10 +304,12 @@ if (auto_field && auto_field.val()){
                                         % else:
                                             <th class="grid-cell"><div style="width: 0;"></div></th>
                                         % endif
-                                    % elif (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) or field_attrs.get('not_sortable'):
+                                    % elif field_attrs.get('displayon') != 'editable':
+                                    % if (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) or field_attrs.get('not_sortable'):
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']}</th>
                                     % else:
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}" style="cursor: pointer;" onclick="new ListView('${name}').sort_by_order('${field}', this)">${field_attrs['string']}</th>
+                                    % endif
                                     % endif
                                 % endfor
                                 % if editable:
@@ -409,6 +435,13 @@ if (auto_field && auto_field.val()){
                                    }
                                });
                                }
+                               % if bothedit:
+                                else {
+                                    jQuery(row).click(function(event) {
+                                        new One2Many('${name}', false).edit(parseInt(jQuery(row).attr('record'), 10),  true);
+                                    });
+                                }
+                               % endif
                            });
                         </script>
                     % else:

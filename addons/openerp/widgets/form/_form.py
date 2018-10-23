@@ -196,6 +196,8 @@ class Frame(TinyWidget):
             attrs['attrs'] = str(widget.attributes)
             attrs['widget'] = widget.name
 
+        if widget.__class__.__name__ == 'O2M' and widget.view_type == 'form':
+            attrs['id'] = widget.name
         if not isinstance(widget, (Char, Frame, Float, DateTime, Integer, Selection, Notebook, Separator, NewLine, Label)):
             from openerp.widgets.search import Filter
             if self.is_search \
@@ -390,9 +392,10 @@ register_widget(Email, ["email"])
 
 class Text(TinyInputWidget):
     template = "/openerp/widgets/form/templates/text.mako"
-    params = ['ro_by_trans']
+    params = ['ro_by_trans', 'rows']
 
     def __init__(self, **attrs):
+        self.rows = attrs.get('rowspan', 6)
         super(Text, self).__init__(**attrs)
         self.validator = validators.String()
 
