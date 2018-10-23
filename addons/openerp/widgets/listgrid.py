@@ -226,7 +226,7 @@ class List(TinyWidget):
             ctx.update(context)
 
             try:    
-                data = proxy.read(ids, fields.keys() + ['__last_update'], ctx)
+                data = proxy.read_web(ids, fields.keys() + ['__last_update'], ctx)
             except:
                 pass
 
