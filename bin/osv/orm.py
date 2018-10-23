@@ -1122,6 +1122,9 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
+    def read_web(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        return self.read(cr, user, ids, fields, context=context, load=load)
+
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
         Read records with given ids with the given fields

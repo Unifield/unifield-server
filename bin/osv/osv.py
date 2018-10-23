@@ -37,7 +37,7 @@ import random
 module_list = []
 module_class_list = {}
 class_pool = {}
-
+_recorded_psql_pid = {}
 PG_CONCURRENCY_ERRORS_TO_RETRY = (errorcodes.LOCK_NOT_AVAILABLE, errorcodes.SERIALIZATION_FAILURE, errorcodes.DEADLOCK_DETECTED)
 MAX_TRIES_ON_CONCURRENCY_FAILURE = 7
 
@@ -62,6 +62,7 @@ class except_osv(Exception):
 
 
 class object_proxy(netsvc.Service):
+    _recorded_psql_pid = {}
     def __init__(self):
         self.logger = logging.getLogger('web-services')
         netsvc.Service.__init__(self, 'object_proxy', audience='')
@@ -200,10 +201,24 @@ class object_proxy(netsvc.Service):
     def execute(self, db, uid, obj, method, *args, **kw):
         before = time.time()
         cr = pooler.get_db(db).cursor()
+        uuid = False
         try:
             try:
                 if method.startswith('_'):
                     raise except_osv('Access Denied', 'Private methods (such as %s) cannot be called remotely.' % (method,))
+                if method == 'kill_search_filter' and len(args) > 0:
+                    uuid = (uid, obj, int(args[0]))
+                    pg_id = _recorded_psql_pid.get(uuid)
+                    if pg_id:
+                        cr.execute('select pg_terminate_backend(%s)', (_recorded_psql_pid.get(uuid),))
+                        self.logger.info('Sql query on %s killed by %s' % (obj, uid))
+                    return True
+                if method == 'read_web' and len(args) > 2 and args[2].get('unique_id'):
+                    uuid = (uid, obj, args[2]['unique_id'])
+                    _recorded_psql_pid[uuid] = cr._cnx.get_backend_pid()
+                if method == 'search_web' and args[4].get('unique_id'):
+                    uuid = (uid, obj, args[4].get('unique_id'))
+                    _recorded_psql_pid[uuid] = cr._cnx.get_backend_pid()
                 res = self.execute_cr(cr, uid, obj, method, *args, **kw)
                 if res is None:
                     self.logger.warning('The method %s of the object %s can not return `None` !', method, obj)
@@ -212,6 +227,11 @@ class object_proxy(netsvc.Service):
                 cr.rollback()
                 raise
         finally:
+            if uuid:
+                try:
+                    del _recorded_psql_pid[uuid]
+                except:
+                    pass
             cr.close()
             after = time.time()
             ops_count(db, 'exec', '.'.join([obj, method]), after-before)
