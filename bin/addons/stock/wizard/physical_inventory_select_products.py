@@ -7,8 +7,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # This will be a tuple ((1,"1 months" ), (2, "2 months"), ...)
-MOVED_IN_LAST_X_MONTHS_FULL_INV = tuple([("%s" % i, "%s months" % str(i)) for i in range(0, 13)])
-MOVED_IN_LAST_X_MONTHS = tuple([(i, "%s months" % str(i)) for i in range(1, 13)])
+MOVED_IN_LAST_X_MONTHS_FULL_INV = tuple([("%s" % i, _("%s months") % str(i)) for i in range(0, 13)])
+MOVED_IN_LAST_X_MONTHS = tuple([(i, _("%s months") % str(i)) for i in range(1, 13)])
 
 
 class physical_inventory_select_products(osv.osv_memory):

@@ -101860,3 +101860,10 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:10
+#: code:addons/stock/wizard/physical_inventory_select_products.py:11
+#, python-format
+msgid "%s months"
+msgstr "%s mois"
