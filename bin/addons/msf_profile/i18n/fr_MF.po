@@ -90912,7 +90912,7 @@ msgstr "Traiter Evénement"
 msgid "Destination %s is not active at this date: %s"
 msgstr "La Destination %s n'est pas active à cette date: %s"
 
-#. modules: purchase, tender_flow, purchase_allocation_report, sale, procurement, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, stock
+#. modules: purchase, tender_flow, purchase_allocation_report, sale, procurement, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, stock, consumption_calculation
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po:0
 #: view:wizard.import.po.simulation.screen:0
@@ -90928,6 +90928,7 @@ msgstr "La Destination %s n'est pas active à cette date: %s"
 #: field:physical.inventory.import.wizard,line_ids:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:549
 #: field:tender,details:0
+#: field:real.average.consumption,details:0
 msgid "Details"
 msgstr "Détails"
 
