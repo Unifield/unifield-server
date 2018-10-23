@@ -203,67 +203,28 @@ class stock_picking_processor(osv.osv):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
+            wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
             for move in wizard.picking_id.move_lines:
-                if move.state in ('draft', 'done', 'cancel', 'confirmed') or  move.product_qty == 0.00 :
+                if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
+                        or move.id in wiz_lines_moves_ids:
+                    if move.id in wiz_lines_moves_ids and move.state == 'cancel':
+                        line_ids = line_obj.search(cr, uid, [('move_id', '=', move.id)], context=context)
+                        line_obj.unlink(cr, uid, line_ids, context=context)
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
-
-                if line_obj._name == 'stock.move.in.processor':
-                    # search for simulation done for this move, and if has pack info attached
-                    sm_in_proc = line_obj.search(cr, uid, [('move_id', '=', move.id)], order='id desc', context=context)
-
-                    link_data = {}
-                    if not sm_in_proc:
-                        # search stock.incoming.processor for the move.picking_id
-                        if move.purchase_line_id.id:
-                            stock_move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', move.purchase_line_id.id)], context=context)
-                            picking_ids = [data['picking_id'][0] for data in self.pool.get('stock.move').read(cr, uid, stock_move_ids, ['picking_id']) if data['picking_id']]
-                            picking_ids = list(set(picking_ids))
-
-                            for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
-                                # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
-                                sm_in_proc = line_obj.search(cr, uid, [
-                                    ('wizard_id', '=', in_proc_id),
-                                    ('line_number', '=', move.line_number),
-                                    ('split_move_ok', '=', False),
-                                    ('pack_info_id', '!=', False),
-                                ], order='id asc', context=context)
-                                if sm_in_proc and context.get('picking_type') == 'incoming_shipment':
-                                    link_data = {'move_id': move.id}
-                                    break
-
-                        if not sm_in_proc and context.get('picking_type') == 'incoming_shipment' and move.picking_id and move.picking_id.origin:
-                            # search backorder
-                            picking_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', move.picking_id.origin), ('id', '!=', move.picking_id.id)])
-
-                            for in_proc_id in self.pool.get('stock.incoming.processor').search(cr, uid, [('picking_id', 'in', picking_ids)], order='id desc', context=context):
-                                # search for stock.move.in.processor with same wizard_id and line_number and with split_move_ok flag on
-                                sm_in_proc = line_obj.search(cr, uid, [
-                                    ('wizard_id', '=', in_proc_id),
-                                    ('line_number', '=', move.line_number),
-                                    ('split_move_ok', '=', False),
-                                    ('pack_info_id', '!=', False),
-                                ], order='id asc', context=context)
-                                if sm_in_proc and context.get('picking_type') == 'incoming_shipment':
-                                    link_data = {'move_id': move.id}
-                                    break
-
-                    for sm_in_proc in line_obj.browse(cr, uid, sm_in_proc, context=context):
-                        if sm_in_proc.pack_info_id:
-                            line_data.update({
-                                'from_pack': sm_in_proc.pack_info_id.parcel_from,
-                                'to_pack': sm_in_proc.pack_info_id.parcel_to,
-                                'weight': sm_in_proc.pack_info_id.total_weight,
-                                'volume': sm_in_proc.pack_info_id.total_volume,
-                                'height': sm_in_proc.pack_info_id.total_height,
-                                'length': sm_in_proc.pack_info_id.total_length,
-                                'width': sm_in_proc.pack_info_id.total_width,
-                                'cost': sm_in_proc.cost,
-                            })
-                            if link_data:
-                                line_obj.write(cr, uid, [sm_in_proc.id], link_data, context=context)
-                            break
+                if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
+                    line_data.update({
+                        'from_pack': move.pack_info_id.parcel_from,
+                        'to_pack': move.pack_info_id.parcel_to,
+                        'weight': move.pack_info_id.total_weight,
+                        'volume': move.pack_info_id.total_volume,
+                        'height': move.pack_info_id.total_height,
+                        'length': move.pack_info_id.total_length,
+                        'width': move.pack_info_id.total_width,
+                        'cost': move.price_unit,
+                        'currency': move.currency_id.id,
+                    })
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True
@@ -844,7 +805,6 @@ class stock_move_processor(osv.osv):
             'currency': move.price_currency_id.id,
             'location_id': move.location_id and move.location_id.id,
         }
-
         return line_data
 
     def split(self, cr, uid, ids, new_qty=0.00, uom_id=False, context=None):

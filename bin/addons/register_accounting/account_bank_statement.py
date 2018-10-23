@@ -465,6 +465,21 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
+    def button_cancel_closing_balance_confirmation(self, cr, uid, ids, context=None):
+        """
+        Resets the confirmation of the register month-end balance, which makes it re-editable. Note that the starting
+        balance of the reg. N+1 is not updated (this will be done at next closing balance confirmation of the reg. N).
+        """
+        if context is None:
+            context = {}
+        for reg in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+            # action performed only if the register is still open
+            if reg.state == 'open':
+                self.write(cr, uid, [reg.id], {'closing_balance_frozen': False,
+                                               'closing_balance_frozen_date': False,
+                                               }, context=context)
+        return True
+
     def button_confirm_closing_bank_balance(self, cr, uid, ids, context=None):
         """
         Verify bank statement balance before closing it.
@@ -1910,7 +1925,7 @@ class account_bank_statement_line(osv.osv):
         process_invoice_move_line_ids = []
         total_payment = True
         diff = st_line.first_move_line_id.amount_currency - total_amount
-        if abs(diff) > 0.001:
+        if len(st_line.imported_invoice_line_ids) > 1 and abs(diff) > 0.001:
             # multi unpartial payment
             total_payment = False
             # Delete them

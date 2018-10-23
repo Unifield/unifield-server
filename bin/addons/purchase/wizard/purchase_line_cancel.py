@@ -42,6 +42,7 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
+        po_obj = self.pool.get('purchase.order')
         wf_service = netsvc.LocalService("workflow")
 
         # cancel line:
@@ -56,6 +57,10 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
             if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart\
                     and p_order.partner_type == 'external' and p_order.state == 'confirmed':
                 pol_obj.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
+
+            # check if the related CV should be set to Done
+            if p_order:
+                po_obj.check_close_cv(cr, uid, p_order.id, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

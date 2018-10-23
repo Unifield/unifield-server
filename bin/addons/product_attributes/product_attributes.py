@@ -1915,6 +1915,15 @@ class product_deactivation_error_line(osv.osv_memory):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
+            if line.internal_type == 'stock.picking':
+                pick_obj = self.pool.get('stock.picking')
+                xmlid = pick_obj._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=pick_obj.browse(cr, uid, line.doc_id))
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
+                res['res_id'] = line.doc_id
+                res['target'] = 'current'
+                res['nodestroy'] = True
+                return res
+
             view_id, context = self._get_view(cr, uid, line, context=context)
             return {'type': 'ir.actions.act_window',
                     'name': line.type,

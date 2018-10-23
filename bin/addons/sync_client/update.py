@@ -50,6 +50,8 @@ OBJ_TO_RECREATE = [
     'msf_button_access_rights.button_access_rule',
     'ir.rule',
     'hr.payment.method',
+    'account.analytic.journal',
+    'account.journal',
 ]
 
 
@@ -159,7 +161,7 @@ class update_to_send(osv.osv,fv_formatter):
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
-        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True, select=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'fieldsvalues': fields.function(fv_formatter.fmt, method=True, type='char'),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),

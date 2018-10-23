@@ -352,6 +352,7 @@ class res_partner(osv.osv):
         Check if the deleted partner is not a system one
         """
         data_obj = self.pool.get('ir.model.data')
+        property_obj = self.pool.get('ir.property')
 
         partner_data_id = [
             'supplier_tbd',
@@ -379,6 +380,18 @@ class res_partner(osv.osv):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         address_obj.unlink(cr, uid, address_ids, context)
+
+        # delete the related fields.properties
+        property_fields = ['property_account_receivable', 'property_account_payable', 'property_product_pricelist',
+                           'property_product_pricelist_purchase', 'property_stock_supplier',
+                           'property_stock_customer', 'property_account_position', 'property_payment_term']
+        res_ids = []
+        for partner_id in ids:
+            res_id = 'res.partner,%s' % partner_id
+            res_ids.append(res_id)
+        property_domain = [('name', 'in', property_fields), ('res_id', 'in', res_ids)]
+        property_ids = property_obj.search(cr, uid, property_domain, order='NO_ORDER', context=context)
+        property_obj.unlink(cr, uid, property_ids, context=context)
 
         mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
         ir_model_data_obj.unlink(cr, uid, mdids, context)
@@ -498,7 +511,7 @@ class res_partner(osv.osv):
                                            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
                                            context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('rfq_state', 'not in', ['done', 'cancel'])],
                                       context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
                                    [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],

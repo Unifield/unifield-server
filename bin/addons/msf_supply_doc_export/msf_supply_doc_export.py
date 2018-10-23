@@ -150,11 +150,11 @@ def getInstanceAddressG(self):
     for addr in company_partner.address:
         if addr.active:
             if addr.type == 'default':
-                return addr.name or ''
+                return addr.office_name or ''
             elif addr.type == 'delivery':
-                deliv_addr = addr.name
+                deliv_addr = addr.office_name
             else:
-                part_addr.append(addr.name)
+                part_addr.append(addr.office_name)
 
     return deliv_addr or (part_addr and part_addr[0]) or ''
 
@@ -204,7 +204,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def getContactName(self, addr_id):
         res = ''
         if addr_id:
-            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['office_name']
         return res
 
 
@@ -253,7 +253,7 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
     def getContactName(self, addr_id):
         res = ''
         if addr_id:
-            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['name']
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)['office_name']
         return res
 
     def getInstanceAddress(self):

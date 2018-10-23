@@ -134,5 +134,16 @@
                 auto="False"
                 menu="False"/>
 
+        <!-- Analytic Allocation with Free - Report -->
+        <report id="free_allocation_report_xls"
+                string="Analytic Allocation with Free - Report"
+                model="account.analytic.line"
+                name="free.allocation.report.xls"
+                file="account/report/free_allocation_report.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="False"/>
+
     </data>
 </openerp>

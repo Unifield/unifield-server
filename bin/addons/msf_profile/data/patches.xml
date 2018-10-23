@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+
+        <!-- UF1A.0 -->
+        <record id="us_4996_bck_beforepatch" model="patch.scripts">
+            <field name="method">us_4996_bck_beforepatch</field>
+        </record>
+        <!-- UF10.0 -->
+        <record id="us_3427_update_third_parties_in_gl_selector" model="patch.scripts">
+            <field name="method">us_3427_update_third_parties_in_gl_selector</field>
+        </record>
+
+        <record id="us_4879_fo_from_shipping_except_to_close" model="patch.scripts">
+            <field name="method">us_4879_fo_from_shipping_except_to_close</field>
+        </record>
+        <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
+            <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
+        </record>
+
+        <record id="us_3873_update_display_partner_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_update_display_partner_in_partner_balance_templates</field>
+        </record>
+
+        <record id="us_3873_remove_initial_balance_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_remove_initial_balance_in_partner_balance_templates</field>
+        </record>
+
         <!-- UF 9.1 -->
         <record id="change_xml_payment_method" model="patch.scripts">
             <field name="method">change_xml_payment_method</field>

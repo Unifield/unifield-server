@@ -48,7 +48,7 @@ class account_account(osv.osv):
         cmp_date = datetime.date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
-        for a in self.browse(cr, uid, ids):
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['activation_date', 'inactivation_date']):
             res[a.id] = True
             if a.activation_date > cmp_date:
                 res[a.id] = False
@@ -494,37 +494,34 @@ class account_account(osv.osv):
                 'has_partner_type_section' in vals and not vals['has_partner_type_section']:
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
-    def _check_reconcile_status(self, cr, uid, vals, account_id=None, context=None):
+    def _check_reconcile_status(self, cr, uid, account_id, context=None):
         """
-        Prevent an account from being set as reconcilable if it is included in the yearly move to 0.
+        Prevents an account:
+        - from being set as reconcilable if it is included in the yearly move to 0
+        - from NOT being set as reconcilable if it is included in revaluation (except for liquidity accounts)
         """
         if context is None:
             context = {}
-        reconcile = False
-        include_in_yearly_move = False
-        account = False
-        # if one of the fields to check isn't in vals, use its current value if it exists
-        if 'reconcile' in vals:
-            reconcile = vals['reconcile']
-        elif account_id is not None:
-            account = self.browse(cr, uid, account_id,
-                                  fields_to_fetch=['reconcile', 'include_in_yearly_move'], context=context)
+        if account_id:
+            account_fields = ['reconcile', 'include_in_yearly_move', 'currency_revaluation', 'type']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
             reconcile = account.reconcile
-        if 'include_in_yearly_move' in vals:
-            include_in_yearly_move = vals['include_in_yearly_move']
-        elif account_id is not None:
-            account = account or self.browse(cr, uid, account_id,
-                                             fields_to_fetch=['include_in_yearly_move'], context=context)
             include_in_yearly_move = account.include_in_yearly_move
-        if reconcile and include_in_yearly_move:
-            raise osv.except_osv(_('Warning !'),
-                                 _("An account can't be both reconcilable and included in the yearly move to 0."))
+            currency_revaluation = account.currency_revaluation
+            is_liquidity = account.type == 'liquidity'
+            if reconcile and include_in_yearly_move:
+                raise osv.except_osv(_('Warning !'),
+                                     _("An account can't be both reconcilable and included in the yearly move to 0."))
+            elif not reconcile and currency_revaluation and not is_liquidity:
+                raise osv.except_osv(_('Warning !'),
+                                     _('An account set as "Included in revaluation" must be set as "Reconcile".'))
 
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
-        self._check_reconcile_status(cr, uid, vals, context=context)
-        return super(account_account, self).create(cr, uid, vals, context=context)
+        account_id = super(account_account, self).create(cr, uid, vals, context=context)
+        self._check_reconcile_status(cr, uid, account_id, context=context)
+        return account_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -535,9 +532,10 @@ class account_account(osv.osv):
             context = {}
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        res = super(account_account, self).write(cr, uid, ids, vals, context=context)
         for account_id in ids:
-            self._check_reconcile_status(cr, uid, vals, account_id=account_id, context=context)
-        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+            self._check_reconcile_status(cr, uid, account_id, context=context)
+        return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -798,7 +796,7 @@ class account_move(osv.osv):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
@@ -808,7 +806,7 @@ class account_move(osv.osv):
                                      domain="[('state', '=', 'draft')]", hide_default_menu=True),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
-                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]",
+                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra']), ('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
@@ -1133,6 +1131,10 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    # Only Donation accounts are allowed with an ODX journal
+                    if m.journal_id.type == 'extra' and ml.account_id.type_for_register != 'donation':
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
+                                                             'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue
