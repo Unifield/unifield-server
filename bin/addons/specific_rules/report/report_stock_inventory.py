@@ -116,10 +116,11 @@ location will be shown.""",
                 ('product_id.type', '=', 'product'),
                 ('state', '=', 'done'),
             ]
+            list_product_ids = False
             if report.product_list_id:
                 product_codes = [line.ref for line in report.product_list_id.product_ids]
-                domain.append(('product_id', 'in', self.pool.get('product.product').
-                               search(cr, uid, [('default_code', 'in', product_codes)])))
+                list_product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', 'in', product_codes)])
+                domain.append(('product_id', 'in', list_product_ids))
                 if report.expiry_date:
                     domain.append(('expired_date', '=', report.expiry_date))
                 if report.location_id:
@@ -158,6 +159,7 @@ location will be shown.""",
             datas = {
                 'ids': [report.id],
                 'lines': rsi_ids,
+                'list_product_ids': list_product_ids,
             }
 
             cr.commit()
@@ -315,6 +317,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = {}
+        with_product_list = self.datas.get('list_product_ids') and True or False
         for line in self.pool.get('report.stock.inventory').browse(
             self.cr,
             self.uid,
@@ -329,6 +332,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'uom': line.product_id.uom_id.name,
                     'sum_qty': 0.00,
                     'sum_value': 0.00,
+                    'with_product_list': with_product_list,
                     'lines': {},
                 }
 
@@ -356,6 +360,37 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             res[key]['lines'][batch_id]['value'] += line.value
             res[key]['lines'][batch_id]['location_ids'].setdefault(line.location_id.id, 0.00)
             res[key]['lines'][batch_id]['location_ids'][line.location_id.id] += line.product_qty
+
+        # No move or qty = 0
+        if self.datas['list_product_ids']:
+            for prod in self.pool.get('product.product').browse(self.cr, self.uid, self.datas['list_product_ids'], context=self.localcontext):
+                key = prod.default_code
+                if key not in res:
+                    res[key] = {
+                        'product_code': prod.default_code,
+                        'product_name': prod.name,
+                        'uom': prod.uom_id.name,
+                        'sum_qty': 0.00,
+                        'sum_value': 0.00,
+                        'with_product_list': with_product_list,
+                        'lines': {},
+                    }
+                batch_id = 'no_batch'
+                batch_name = ''
+                expiry_date = False
+
+                if batch_id not in res[key]['lines']:
+                    res[key]['lines'][batch_id] = {
+                        'batch': batch_name,
+                        'expiry_date': expiry_date,
+                        'qty': 0.00,
+                        'value': 0.00,
+                        'location_ids': {},
+                    }
+
+                res[key]['lines'][batch_id]['qty'] = 0.00
+                res[key]['lines'][batch_id]['value'] = 0.00
+                res[key]['lines'][batch_id]['location_ids'][0] = 0.00
 
         fres = []
         for k in sorted(res.keys()):
