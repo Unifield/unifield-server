@@ -148,7 +148,7 @@ location will be shown.""",
             })
 
             rsi_ids = rsi_obj.search(cr, uid, domain, context=context)
-            if not rsi_ids:
+            if not rsi_ids and not report.product_list_id:
                 continue
 
             self.write(cr, uid, [report.id], {
