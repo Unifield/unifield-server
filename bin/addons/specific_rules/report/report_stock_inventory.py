@@ -127,7 +127,6 @@ location will be shown.""",
                     domain.append(('location_id', '=', report.location_id.id))
                 else:
                     domain.append(('location_id.usage', '=', 'internal'))
-                    all_locations = True
             else:
                 domain.append(('product_qty', '!=', 0.00))
                 if report.prodlot_id:
@@ -375,22 +374,22 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                         'with_product_list': with_product_list,
                         'lines': {},
                     }
-                batch_id = 'no_batch'
-                batch_name = ''
-                expiry_date = False
+                    batch_id = 'no_batch'
+                    batch_name = ''
+                    expiry_date = False
 
-                if batch_id not in res[key]['lines']:
-                    res[key]['lines'][batch_id] = {
-                        'batch': batch_name,
-                        'expiry_date': expiry_date,
-                        'qty': 0.00,
-                        'value': 0.00,
-                        'location_ids': {},
-                    }
+                    if batch_id not in res[key]['lines']:
+                        res[key]['lines'][batch_id] = {
+                            'batch': batch_name,
+                            'expiry_date': expiry_date,
+                            'qty': 0.00,
+                            'value': 0.00,
+                            'location_ids': {},
+                        }
 
-                res[key]['lines'][batch_id]['qty'] = 0.00
-                res[key]['lines'][batch_id]['value'] = 0.00
-                res[key]['lines'][batch_id]['location_ids'][0] = 0.00
+                    res[key]['lines'][batch_id]['qty'] = 0.00
+                    res[key]['lines'][batch_id]['value'] = 0.00
+                    res[key]['lines'][batch_id]['location_ids'][0] = 0.00
 
         fres = []
         for k in sorted(res.keys()):
