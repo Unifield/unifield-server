@@ -626,7 +626,6 @@ function change_filter() {
     }
 }
 
-var unique_id ='';
 function search_filter(src, id) {
 	jQuery('div#no-record-warning').hide();
     var all_domains = parse_filters(src, id);
