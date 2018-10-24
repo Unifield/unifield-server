@@ -23,6 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 assert _ # pyflakes
 import time
+from time import strptime
+
 
 class wizard_hq_report_oca(osv.osv_memory):
     _name = "wizard.hq.report.oca"
@@ -60,14 +62,23 @@ class wizard_hq_report_oca(osv.osv_memory):
         data = {}
         # add parameters
         data['form'] = {}
+        mission_code = ''
+        period_yyyymm = ''
+        period_number = ''
         if wizard.instance_id:
+            mission_code = "%s0" % wizard.instance_id.code[:2]
             # Get projects below instance
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         if wizard.period_id:
+            tm = strptime(wizard.period_id.date_start, '%Y-%m-%d')
+            year = str(tm.tm_year)
+            month = '%02d' % tm.tm_mon
+            period_yyyymm = "{0}{1}".format(year, month)
+            period_number = wizard.period_id.number or ''
             data['form'].update({'period_id': wizard.period_id.id})
         # UFTP-375: Permit user to select all lines or only previous ones
         data['form'].update({'selection': wizard.selection})
-        data['target_filename'] = '%s_%s_%s' % (_('Export to HQ System'), wizard.instance_id and wizard.instance_id.code or '', time.strftime('%Y%m%d'))
+        data['target_filename'] = '%s_%sP%s_formatted data D365 import' % (mission_code, period_yyyymm, period_number)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],

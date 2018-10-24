@@ -28,11 +28,9 @@ from tempfile import NamedTemporaryFile
 import os
 from osv import osv
 from tools.translate import _
+from time import strptime
 
 from report import report_sxw
-
-
-ZERO_CELL_CONTENT = "0.0"
 
 
 class hq_report_oca(report_sxw.report_sxw):
@@ -45,7 +43,28 @@ class hq_report_oca(report_sxw.report_sxw):
             return st.encode('utf8')
         return st
 
-    def translate_country(self, cr, uid, pool, browse_instance, context={}):
+    def translate_account(self, cr, uid, pool, browse_account, context=None):
+        """
+        Returns the "HQ System Account Code" of the account in parameter if it exists, else returns the standard account code
+        """
+        if context is None:
+            context = {}
+        mapping_obj = pool.get('account.export.mapping')
+        if browse_account:
+            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', browse_account.id)], context=context)
+            if len(mapping_ids) > 0:
+                mapping = mapping_obj.browse(cr, uid, mapping_ids[0], fields_to_fetch=['mapping_value'], context=context)
+                return mapping.mapping_value
+            else:
+                return browse_account.code
+        return ""
+
+    def translate_country(self, cr, uid, pool, browse_instance, context=None):
+        """
+        Returns the "HQ System Country Code" of the instance in parameter if it exists, else returns 0
+        """
+        if context is None:
+            context = {}
         mapping_obj = pool.get('country.export.mapping')
         if browse_instance:
             mapping_ids = mapping_obj.search(cr, uid, [('instance_id', '=', browse_instance.id)], context=context)
@@ -54,69 +73,61 @@ class hq_report_oca(report_sxw.report_sxw):
                 return mapping.mapping_value
         return "0"
 
-    def create_counterpart(self, cr, uid, line):
-        """ third report: up balances """
-        # method to create counterpart line
-        return line[:2] + \
-            ["20750",
-             "0",  # before US-274/7 was expat EMP identification line[3]
-                "0",
-                line[5],  # expat employee name or "0"
-                line[6],
-                line[7],
-                line[9],
-                line[8]] + line[10:]
-
-    def create_subtotal(self, cr, uid, line_key,
-                        line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
-                        counterpart_date, country_code, sequence_number):
-        """ third report: up balances """
+    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info, context=None):
+        if context is None:
+            context = {}
+        pool = pooler.get_pool(cr.dbname)
+        curr_obj = pool.get('res.currency')
         # method to create subtotal + counterpart line
-        if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
-            # US-118: func debit with no FXA currency adjustement entries
-            # compute subtotal line inverted rate with no FXA entry:
-            # no booking amount but funct one then cause a wrong balance
-            # for ccy inverted rate computation
-            rate = round(1 / (line_debit / line_functional_debit_no_ccy_adj), 8)
-            return [["01",
-                     country_code,
-                     line_key[0],
-                     "0",
-                     "0",
-                     counterpart_date,
-                     line_key[1],
-                     rate,
-                     line_debit > 0 and round(line_debit, 2) or "",
-                     line_debit < 0 and round(-line_debit, 2) or "",
-                     sequence_number,
-                     "Subtotal - " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
+        if len(line_key) > 1 and line_debit != 0.0:
+            currency = curr_obj.browse(cr, uid, line_key[1], context=context)
+            # Description for the line
+            if line_key[0] == "1000 0000":
+                description = "Mvts_BANK_" + period_name + "_" + currency.name
+            elif line_key[0] == "1000 0001":
+                description = "Mvts_CASH_" + period_name + "_" + currency.name
+            else:
+                mapping_obj = pool.get('account.export.mapping')
+                account_values = ""
+                mapping_ids = mapping_obj.search(cr, uid, [('mapping_value', '=', line_key[0])], context=context)
+                for mapping in mapping_obj.browse(cr, uid, mapping_ids, fields_to_fetch=['account_id'], context=context):
+                    if account_values != "":
+                        account_values += "-"
+                    account_values += mapping.account_id.code
+                description = "Mvts_" + account_values + period_name + "_" + currency.name
+
+            return [["",
                      "",
-                     "0",
+                     "",
+                     description,
+                     "",
                      counterpart_date,
-                     "0"]
-                    ,["01",
-                      country_code,
-                      "20750",
-                      "0",
-                      "0",
-                      counterpart_date,
-                      line_key[1],
-                      rate,
-                      line_debit < 0 and round(-line_debit, 2) or "",
-                      line_debit > 0 and round(line_debit, 2) or "",
-                      sequence_number,
-                      "Automatic counterpart for " + line_key[0] + " - " + line_key[1] + " - " + line_key[2],
-                      "",
-                      "0",
-                      counterpart_date,
-                      "0"]]
+                     counterpart_date,
+                     period_name,
+                     line_key[0],
+                     "",
+                     department_info,
+                     "",
+                     "",
+                     "",
+                     "",
+                     line_debit > 0 and round(line_debit, 2) or "0.00",
+                     line_debit > 0 and "0.00" or round(-line_debit, 2),
+                     currency.name]]
 
     def create(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        # US-2303 Data should always be in English whatever the language settings
+        # data should always be in English whatever the language settings
         context.update({'lang': 'en_MF'})
         pool = pooler.get_pool(cr.dbname)
+        rate_obj = pool.get('res.currency.rate')
+        period_obj = pool.get('account.period')
+        inst_obj = pool.get('msf.instance')
+        aml_obj = pool.get('account.move.line')
+        aal_obj = pool.get('account.analytic.line')
+        journal_obj = pool.get('account.journal')
+        rates = {}  # store the rates already computed
 
         first_header = ['Proprietary Instance',
                         'Journal Code',
@@ -127,6 +138,7 @@ class hq_report_oca(report_sxw.report_sxw):
                         'Posting Date',
                         'Period',
                         'G/L Account',
+                        'Unifield Account',
                         'Destination',
                         'Cost Centre',
                         'Funding Pool',
@@ -136,38 +148,47 @@ class hq_report_oca(report_sxw.report_sxw):
                         'Booking Currency',
                         'Functional Debit',
                         'Functional Credit',
-                        'Functional Currency',
-                        'Exchange Rate']
+                        'Functional Currency']
+
+        second_header = ['Proprietary Instance',
+                         'Journal Code',
+                         'Entry Sequence',
+                         'Description',
+                         'Reference',
+                         'Document Date',
+                         'Posting Date',
+                         'Period',
+                         'G/L Account',
+                         'Destination',
+                         'Department',
+                         'Cost Centre',
+                         'Third Parties',
+                         'Employee Id',
+                         'Exchange rate',
+                         'Booking Debit',
+                         'Booking Credit',
+                         'Booking Currency',
+                         'Field Activity']
+
+        period = period_obj.browse(cr, uid, data['form']['period_id'], context=context)
+        tm = strptime(period.date_start, '%Y-%m-%d')
+        year = str(tm.tm_year)
+        month = '%02d' % tm.tm_mon
+        period_yyyymm = "{0}{1}".format(year, month)
 
         # Initialize lists: one for the first report...
         first_result_lines = []
-        # ...one for the second report...
+        # ...and subdivisions for the second report.
         second_result_lines = []
-        # ...and subdivisions for the third report.
-        third_report = []
-        account_lines = []
+        main_lines = {}
         account_lines_debit = {}
-        account_lines_functional_debit = {}
-        rate_req = "SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1"
-        # US-118: func debit with no FXA currency adjustement entries
-        account_lines_functional_debit_no_ccy_adj = {}
-        journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
-                                                                          uid, [('type', 'in', ('cur_adj', 'revaluation'))], context=context)
-        # General variables
-        period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
-        period_name = period and period.code or "0"
-        counterpart_date = period and period.date_stop and \
-            datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
-        integration_ref = "0"
-        country_code = "0"
-        move_prefix = "0"
+        # Get department code filled in through the country code mapping
+        department_info = ""
+        parent_instance = False
         if len(data['form']['instance_ids']) > 0:
-            parent_instance = pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
+            parent_instance = inst_obj.browse(cr, uid, data['form']['instance_ids'][0], context=context)
             if parent_instance:
-                country_code = self.translate_country(cr, uid, pool, parent_instance)
-                if period and period.date_start:
-                    integration_ref = parent_instance.code[:2] + period.date_start[5:7]
-                    move_prefix = parent_instance.move_prefix[:2]
+                department_info = self.translate_country(cr, uid, pool, parent_instance, context=context)
 
         # UFTP-375: Add export all/previous functionality
         selection = data['form'].get('selection', False)
@@ -181,66 +202,30 @@ class hq_report_oca(report_sxw.report_sxw):
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
-        last_processed_journal = False
-        move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
-                                                                       ('instance_id', 'in', data['form']['instance_ids']),
-                                                                       ('account_id.is_analytic_addicted', '=', False),
-                                                                       ('journal_id.type', 'not in', ['hq', 'migration']),
-                                                                       ('exported', 'in', to_export)], context=context)
-        # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
-        # in Upbalances and Upexpenses files
-        exclude_jn_type_for_balance_and_expense_report = (
-            'inkind',
-            'extra',
-        )
+        move_line_ids = aml_obj.search(cr, uid, [('period_id', '=', data['form']['period_id']),
+                                                 ('instance_id', 'in', data['form']['instance_ids']),
+                                                 ('account_id.is_analytic_addicted', '=', False),
+                                                 ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind', 'extra']),
+                                                 ('exported', 'in', to_export)],
+                                       context=context)
 
         nb_move_line = len(move_line_ids)
         move_line_count = 0
-
         if 'background_id' in context:
             bg_id = context['background_id']
         else:
             bg_id = None
 
-        # assume that this for loop is about 40% of the total treatment
-        move_share = 0.4
+        move_share = 0.4  # 40% of the total process
 
-        for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
+        for move_line in aml_obj.browse(cr, uid, move_line_ids, context=context):
+            if move_line.move_id.state != 'posted':  # only posted move lines are kept
+                move_line_count += 1
+                continue
             journal = move_line.journal_id
-            if journal:
-                last_processed_journal = journal
             account = move_line.account_id
             currency = move_line.currency_id
-            func_currency = move_line.functional_currency_id
-            rate = ZERO_CELL_CONTENT
-
-            is_cur_adj_entry = move_line.journal_id \
-                and move_line.journal_id.type == 'cur_adj' or False
-            is_rev_entry = move_line.journal_id \
-                and move_line.journal_id.type == 'revaluation' or False
-
-            if currency and func_currency:
-                # US-274/9: accrual account (always refer to previous period)
-                # base on doc date instead posting in this case
-                # - 1st period accruals: doc date and posting same period
-                # - next accruals: doc date previous period (accrual of)
-                move_line_date = move_line.journal_id \
-                    and move_line.journal_id.type == 'accrual' \
-                    and move_line.document_date or move_line.date
-
-                if move_line.journal_id.type == 'correction' and move_line.source_date:
-                    # US-1525 For the Correction entries display the rate of the entry period corrected
-                    move_line_date = move_line.source_date
-                cr.execute(rate_req, (move_line.functional_currency_id.id, move_line_date))
-                if cr.rowcount:
-                    func_rate = cr.fetchall()[0][0]
-                cr.execute(rate_req, (currency.id, move_line_date))
-                if cr.rowcount:
-                    curr_rate = cr.fetchall()[0][0]
-                if func_rate != 0.00:
-                    rate = round(1 / (curr_rate / func_rate), 8)
-
-            # For first report: as it
+            # For the first report:
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
@@ -249,6 +234,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               move_line.period_id and move_line.period_id.code or "",
+                              self.translate_account(cr, uid, pool, account, context=context),
                               account and account.code + " " + account.name,
                               "",
                               "",
@@ -259,79 +245,71 @@ class hq_report_oca(report_sxw.report_sxw):
                               currency and currency.name or "",
                               round(move_line.debit, 2),
                               round(move_line.credit, 2),
-                              func_currency and func_currency.name or "",
-                              rate]
+                              move_line.functional_currency_id and move_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
-            if is_cur_adj_entry or is_rev_entry:
-                # US-788/1 and US-478/3: FXA/REV raw data override
-                # without impacting formatted_data for other files
-                # US-788/1: always display booking as func
-                # US-478/3 always rate of 1
-                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
-                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
-                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
-                first_result_lines[-1][-1] = 1.  # US-478/3
 
-            # For third report: add to corresponding sub
-            if journal and journal.type not in (
-                    exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-                if not account.shrink_entries_for_hq or is_rev_entry or is_cur_adj_entry:
-                    # US-478/1: or is_rev_entry, no shrink for rev journal entries
-                    expat_identification = "0"
-                    expat_employee = "0"
-                    # Expat employees are the only third party in this report
-                    if move_line.partner_txt and move_line.employee_id and move_line.employee_id.employee_type == 'ex':
-                        if account.code == '15640':  # US-274/7
-                            expat_identification = move_line.employee_id.identification_id
-                        expat_employee = move_line.partner_txt
+            # For the second report:
+            if not account.shrink_entries_for_hq:
+                # data for the "Employee Id" column
+                employee_id = ''
+                if move_line.employee_id and move_line.employee_id.employee_type == 'ex':  # expat staff
+                    employee_id = move_line.employee_id.name or ''  # it also contains the identification number, e.g. "Smith, Paul 11453"
+                # data for the columns: Exchange rate, Booking Debit, Booking Credit
+                booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
+                exchange_rate = 0
+                # Curr. Adjustments, Accruals or REVAL lines
+                if move_line.journal_id.code in ['FXA', 'ACC', 'REV']:
+                    # use 1 as exchange rate and display the functional values in the "booking" columns
+                    exchange_rate = 1
+                    booking_amounts = [round(move_line.debit, 2), round(move_line.credit, 2)]
+                # automatic corrections
+                elif move_line.journal_id.code == 'OD' and (move_line.corrected_line_id or move_line.reversal_line_id):
+                    # If there are several levels of correction use the last one
+                    corr_aml = move_line.corrected_line_id or move_line.reversal_line_id  # JI corrected or reversed
+                    initial_id = -1
+                    final_id = -2
+                    while initial_id != final_id:
+                        initial_id = corr_aml.id
+                        # check if the corrected line corrects another line
+                        corr_aml = corr_aml.corrected_line_id or corr_aml
+                        final_id = corr_aml.id
+                    # rate of the original corrected entry
+                    if currency.id not in rates:
+                        rates[currency.id] = {}
+                    if corr_aml.date not in rates[currency.id]:
+                        rate = 0
+                        rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', corr_aml.date)],
+                                                   order='name DESC', limit=1, context=context)
+                        if rate_ids:
+                            rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
+                        rates[currency.id][corr_aml.date] = rate
+                    exchange_rate = rates[currency.id][corr_aml.date]
+                # other lines
+                elif currency:
+                    # rate of the period selected
+                    if currency.id not in rates:
+                        rates[currency.id] = {}
+                    if period.date_start not in rates[currency.id]:
+                        rate = 0
+                        rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', period.date_start)],
+                                                   order='name DESC', limit=1, context=context)
+                        if rate_ids:
+                            rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
+                        rates[currency.id][period.date_start] = rate
+                    exchange_rate = rates[currency.id][period.date_start]
 
-                    # US-274/1: for FXA/REV entries output fonctional amount in balance
-                    # report
-                    if is_cur_adj_entry or is_rev_entry:
-                        output_debit = move_line.debit
-                        output_credit = move_line.credit
-                        output_rate = 1.
-                        output_curr = func_currency and func_currency.name or "0"
-                    else:
-                        output_debit = move_line.debit_currency
-                        output_credit = move_line.credit_currency
-                        output_rate = rate
-                        output_curr = currency and currency.name or "0"
-
-                    other_formatted_data = ["01",
-                                            country_code,
-                                            account and account.code or "0",
-                                            expat_identification,
-                                            "0",
-                                            move_line.date and datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                            output_curr,
-                                            output_rate,
-                                            output_debit != 0.0 and round(output_debit, 2) or "",
-                                            output_credit != 0.0 and round(output_credit, 2) or "",
-                                            move_line.move_id and move_line.move_id.name or "0",
-                                            move_line.name or "0",
-                                            move_line.ref or "",
-                                            expat_employee,
-                                            move_line.document_date and datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                            move_line.ref or "0"]
-                    account_lines.append(other_formatted_data)
-                else:
-                    if (account.code, currency.name, period_name) not in account_lines_debit:
-                        account_lines_debit[(account.code, currency.name, period_name)] = 0.0
-                        account_lines_functional_debit[(account.code, currency.name, period_name)] = 0.0
-                        account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] = 0.0
-
-                    account_lines_debit[(account.code, currency.name, period_name)] += (move_line.debit_currency - move_line.credit_currency)
-                    funct_balance = (move_line.debit - move_line.credit)
-                    account_lines_functional_debit[(account.code, currency.name, period_name)] += funct_balance
-
-                    # US-118: func debit with no FXA currency adjustement entries
-                    # compute subtotal line inverted rate with no FXA entry:
-                    # no booking amount but funct one then cause a wrong balance
-                    # for ccy inverted rate computation
-                    if not journal_exclude_subtotal_ids or \
-                            move_line.journal_id.id not in journal_exclude_subtotal_ids:
-                        account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
+                if (journal.code, journal.id, currency.id) not in main_lines:
+                    main_lines[(journal.code, journal.id, currency.id)] = []
+                main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] +
+                                                                           [department_info] + [formatted_data[11]] +
+                                                                           [formatted_data[13]] + [employee_id] +
+                                                                           [exchange_rate] + booking_amounts +
+                                                                           formatted_data[16:17])
+            else:
+                translated_account_code = self.translate_account(cr, uid, pool, account, context=context)
+                if (translated_account_code, currency.id) not in account_lines_debit:
+                    account_lines_debit[(translated_account_code, currency.id)] = 0.0
+                account_lines_debit[(translated_account_code, currency.id)] += (move_line.debit_currency - move_line.credit_currency)
 
             move_line_count += 1
             if move_line_count % 30 == 0:
@@ -343,124 +321,121 @@ class hq_report_oca(report_sxw.report_sxw):
         self.shared_update_percent(cr, uid, pool, [bg_id],
                                    share=move_share, finished=True)
 
-        # UFTP-375: Do not include FREE1 and FREE2 analytic lines
-        # US-817: search period from JI (VI from HQ so AJI always with its JI)
-        # (AJI period_id is a field function always deduced from date since UTP-943)
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
-                                                                               ('instance_id', 'in', data['form']['instance_ids']),
-                                                                               ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
-                                                                               ('account_id.category', 'not in', ['FREE1', 'FREE2']),
-                                                                               ('exported', 'in', to_export)], context=context)
+        cur_adj_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'cur_adj')], context=context)
+        ana_cur_journal_ids = []
+        for journal in journal_obj.browse(cr, uid, cur_adj_journal_ids, context=context):
+            if journal.analytic_journal_id and journal.analytic_journal_id.id not in ana_cur_journal_ids:
+                ana_cur_journal_ids.append(journal.analytic_journal_id.id)
 
+        analytic_line_ids = aal_obj.search(cr, uid, [('period_id', '=', data['form']['period_id']),
+                                                     ('instance_id', 'in', data['form']['instance_ids']),
+                                                     ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind', 'extra']),
+                                                     ('journal_id', 'not in', ana_cur_journal_ids),
+                                                     ('exported', 'in', to_export)], context=context)
         nb_analytic_line = len(analytic_line_ids)
         analytic_line_count = 0
 
-        # assume that this for loop is about 50% of the total treatment
-        analytic_share = 0.5
+        analytic_share = 0.5  # 50% of the total process
 
-        for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
-            journal = analytic_line.move_id and analytic_line.move_id.journal_id or False
-            if journal:
-                last_processed_journal = journal
+        for analytic_line in aal_obj.browse(cr, uid, analytic_line_ids, context=context):
+            # restrict to analytic lines coming from posted move lines
+            if analytic_line.move_state != 'posted':
+                analytic_line_count += 1
+                continue
+            journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
-            func_currency = analytic_line.move_id.functional_currency_id
-            rate = ""
-
-            # US-478 - US-274/9 accrual account always refer to previous period
-            # base on doc date instead posting in this case
-            # - 1st period accruals: doc date and posting same period
-            # - next accruals: doc date previous period (accrual of)
-            ldate = analytic_line.date
-            if analytic_line.move_id:
-                if analytic_line.move_id.journal_id.type == 'accrual':
-                    ldate = analytic_line.document_date or analytic_line.date
-            elif analytic_line.journal_id \
-                    and analytic_line.journal_id.code == 'ACC':
-                # sync border case no JI for the AJI
-                ldate = analytic_line.document_date or analytic_line.date
-
-            if func_currency:
-                if analytic_line.journal_id.type == 'correction' and analytic_line.source_date:
-                    # US-1525 For the Correction entries display the rate of the entry period corrected
-                    ldate = analytic_line.source_date
-                cr.execute(rate_req, (currency.id, ldate))
-                if cr.rowcount:
-                    rate = round(1 / cr.fetchall()[0][0], 8)
-
-            is_analytic_cur_adj_entry = analytic_line.journal_id \
-                and analytic_line.journal_id.type == 'cur_adj' or False
-            is_analytic_rev_entry = analytic_line.journal_id \
-                and analytic_line.journal_id.type == 'revaluation' or False
-
-            # US-1375: cancel US-817
+            cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
             aji_period_id = analytic_line and analytic_line.period_id or False
 
-            # For first report: as is
+            # For the first report:
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
-                              analytic_line.entry_sequence or "",
+                              analytic_line.entry_sequence or analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
                               analytic_line.name or "",
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               aji_period_id and aji_period_id.code or "",
+                              self.translate_account(cr, uid, pool, account, context=context),
                               account and account.code + " " + account.name or "",
                               analytic_line.destination_id and analytic_line.destination_id.code or "",
-                              analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
+                              cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
-                              analytic_line.amount_currency > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount_currency, 2),
-                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
+                              analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
+                              analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00",
                               currency and currency.name or "",
-                              analytic_line.amount > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount, 2),
-                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or ZERO_CELL_CONTENT,
-                              func_currency and func_currency.name or "",
-                              rate]
+                              analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
+                              analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00",
+                              analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
-            if is_analytic_cur_adj_entry or is_analytic_rev_entry:
-                # US-788/1 and US-478/3: FXA/REV raw data override
-                # without impacting formatted_data for other files
-                # US-788/1: always display booking as func
-                # US-478/3 always rate of 1
-                first_result_lines[-1][13] = first_result_lines[-1][16]  # US-788/1
-                first_result_lines[-1][14] = first_result_lines[-1][17]  # US-788/1
-                first_result_lines[-1][15] = first_result_lines[-1][18]  # US-788/1
-                first_result_lines[-1][-1] = 1.  # US-478/3
-            if analytic_line.journal_id \
-                and analytic_line.journal_id.type not in (
-                    exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-                # Add to second report (expenses only)
-                up_exp_ccy = currency
-                up_exp_rate = rate
-                up_exp_amount = analytic_line.amount_currency
 
-                if is_analytic_rev_entry:
-                    # US-1008 for up_expenses (file 2), match REV AJIs to JIs:
-                    # display AJIs booked on REV journal in func ccy and rate 1
-                    # as already done here for JIs of up_balances (file 3)
-                    up_exp_ccy = func_currency
-                    up_exp_rate = 1.
-                    up_exp_amount = analytic_line.amount
+            cost_center = formatted_data[11][:5] or " "
+            field_activity = formatted_data[11][6:] or " "
+            # cc-intermission should appear as MI998 + SUPZZZ
+            if cost_center_code == 'cc-intermission':
+                cost_center = 'MI998'
+                field_activity = 'SUPZZZ'
 
-                other_formatted_data = [integration_ref ,
-                                        analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                        "0",
-                                        "0",
-                                        analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
-                                        "1",
-                                        account and account.code + " " + account.name or "0",
-                                        up_exp_ccy and up_exp_ccy.name or "0",
-                                        up_exp_amount and round(-up_exp_amount, 2) or ZERO_CELL_CONTENT,
-                                        "0",
-                                        up_exp_rate,
-                                        analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
-                                        analytic_line.entry_sequence or "0",
-                                        "0",
-                                        analytic_line.name or "0",
-                                        analytic_line.ref or "0",
-                                        analytic_line.destination_id and analytic_line.destination_id.code or "0"]
-                second_result_lines.append(other_formatted_data)
+            # data for the "Employee Id" column
+            employee_id = ''
+            if analytic_line.move_id and analytic_line.move_id.employee_id and analytic_line.move_id.employee_id.employee_type == 'ex':  # expat staff
+                employee_id = analytic_line.move_id.employee_id.name or ''  # it also contains the identification number, e.g. "Smith, Paul 11453"
+
+            # data for the columns: Exchange rate, Booking Debit, Booking Credit
+            booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
+                               analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00"]
+            exchange_rate = 0
+            # Curr. Adjustments, Accruals or REVAL lines
+            if analytic_line.move_id and analytic_line.move_id.journal_id.code in ['FXA', 'ACC', 'REV']:
+                # use 1 as exchange rate and display the functional values in the "booking" columns
+                exchange_rate = 1
+                booking_amounts = [analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
+                                   analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00"]
+            # automatic corrections
+            elif analytic_line.journal_id.code == 'OD' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
+                # If there are several levels of correction use the last one
+                corr_aal = analytic_line.last_corrected_id or analytic_line.reversal_origin  # AJI corrected or reversed
+                initial_id = -1
+                final_id = -2
+                while initial_id != final_id:
+                    initial_id = corr_aal.id
+                    # check if the corrected line corrects another line
+                    corr_aal = corr_aal.last_corrected_id or corr_aal
+                    final_id = corr_aal.id
+                # rate of the original corrected entry
+                if currency.id not in rates:
+                    rates[currency.id] = {}
+                if corr_aal.date not in rates[currency.id]:
+                    rate = 0
+                    rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', corr_aal.date)],
+                                               order='name DESC', limit=1, context=context)
+                    if rate_ids:
+                        rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
+                    rates[currency.id][corr_aal.date] = rate
+                exchange_rate = rates[currency.id][corr_aal.date]
+            # other lines
+            elif currency:
+                # rate of the period selected
+                if currency.id not in rates:
+                    rates[currency.id] = {}
+                if period.date_start not in rates[currency.id]:
+                    rate = 0
+                    rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', period.date_start)],
+                                               order='name DESC', limit=1, context=context)
+                    if rate_ids:
+                        rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
+                    rates[currency.id][period.date_start] = rate
+                exchange_rate = rates[currency.id][period.date_start]
+
+            if (journal.code, journal.id, currency.id) not in main_lines:
+                main_lines[(journal.code, journal.id, currency.id)] = []
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] +
+                                                                       [department_info] + [cost_center] +
+                                                                       [formatted_data[13]] + [employee_id] +
+                                                                       [exchange_rate] + booking_amounts +
+                                                                       formatted_data[16:17] + [field_activity])
 
             analytic_line_count += 1
             if analytic_line_count % 30 == 0:
@@ -474,69 +449,58 @@ class hq_report_oca(report_sxw.report_sxw):
                                    share=analytic_share, finished=True, already_done=move_share)
 
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
-        if not move_line_ids and not analytic_line_ids:
-            first_report = []
-        else:
-            first_report = [first_header] + first_result_lines
+        first_report = [first_header] + first_result_lines
 
-        second_report = sorted(second_result_lines, key=lambda line: line[12])
+        # regroup second report lines
+        counterpart_date = period and period.date_stop and \
+            datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
+        period_name = period and period.code or ""
 
-        for line in sorted(account_lines, key=lambda line: line[10]):
-            third_report.append(line)
-            third_report.append(self.create_counterpart(cr, uid, line))
+        for key in sorted(main_lines.iterkeys(), key=lambda tuple: tuple[0]):
+            second_result_lines += sorted(main_lines[key], key=lambda line: line[2])
 
-        if last_processed_journal and last_processed_journal.type not in (
-                exclude_jn_type_for_balance_and_expense_report):  # US-274/2
-            for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
-                # create the sequence number for those lines
-                sequence_number = move_prefix + "-" + \
-                    period.date_start[5:7] + "-" + \
-                    period.date_start[:4] + "-" + \
-                    key[0] + "-" + \
-                    key[1]
-
-                subtotal_lines = self.create_subtotal(cr, uid, key,
-                                                      account_lines_debit[key],
-                                                      account_lines_functional_debit[key],
-                                                      account_lines_functional_debit_no_ccy_adj[key],
-                                                      counterpart_date,
-                                                      country_code,
-                                                      sequence_number)
-                if subtotal_lines:
-                    third_report += subtotal_lines
+        for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
+            # for entries "shrunk for HQ export"
+            subtotal_lines = self.create_subtotal(cr, uid, key,
+                                                  account_lines_debit[key],
+                                                  counterpart_date,
+                                                  period_name,
+                                                  department_info, context=context)
+            if subtotal_lines:
+                second_result_lines += subtotal_lines
 
         self.shared_update_percent(cr, uid, pool, [bg_id],
                                    share=0.05, finished=True,
                                    already_done=move_share+analytic_share)
 
-        # Write result to the final content
+        second_report = [second_header] + second_result_lines
+
+        # set prefix for file names
+        mission_code = ''
+        if parent_instance:
+            mission_code = "%s0" % parent_instance.code[:2]
+        period_number = period and period.number or ''
+        prefix = '%s_%sP%s_' % (mission_code, period_yyyymm, period_number)
+
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
-        third_fileobj = NamedTemporaryFile('w+b', delete=False)
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL)
         for line in first_report:
-            writer.writerow(map(self._enc,line))
+            writer.writerow(map(self._enc, line))
         first_fileobj.close()
         writer = csv.writer(second_fileobj, quoting=csv.QUOTE_ALL)
         for line in second_report:
-            writer.writerow(map(self._enc,line))
+            writer.writerow(map(self._enc, line))
         second_fileobj.close()
-        writer = csv.writer(third_fileobj, quoting=csv.QUOTE_ALL)
-        for line in third_report:
-            line.pop()
-            line.pop()
-            writer.writerow(map(self._enc,line))
-        third_fileobj.close()
+
         out_zipfile = zipfile.ZipFile(zip_buffer, "w")
-        out_zipfile.write(first_fileobj.name, "%sRaw_Data.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
-        out_zipfile.write(second_fileobj.name, "%sUp_Expenses.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
-        out_zipfile.write(third_fileobj.name, "%sUp_Balances.csv" % (integration_ref and integration_ref+'_' or ''), zipfile.ZIP_DEFLATED)
+        out_zipfile.write(first_fileobj.name, prefix + "Raw data UF export.csv", zipfile.ZIP_DEFLATED)
+        out_zipfile.write(second_fileobj.name, prefix + "formatted data D365 import.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.close()
         out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
-        os.unlink(third_fileobj.name)
 
         # Mark lines as exported
         if move_line_ids:
