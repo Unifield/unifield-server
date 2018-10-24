@@ -386,6 +386,9 @@ class stock_incoming_processor(osv.osv):
                     _("You have to enter the quantities you want to process before processing the move")
                 )
 
+            if proc.direct_incoming and not proc.location_dest_active_ok:
+                self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
+
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
 
