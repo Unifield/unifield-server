@@ -626,10 +626,17 @@ def _find_pg_patch():
     Returns the filename of the patch, the oldVer and the newVer.
     """
     import glob
+
+    if os.path.isfile('pgsql-8.4.17-9.6.3-patch'):
+        # ouch : this file should not be here
+        warn('Deleting zombie pgsql-8.4.17-9.6.3-patch')
+        os.remove('pgsql-8.4.17-9.6.3-patch')
+
     pfiles = glob.glob('pgsql-*-*-patch')
     pfiles.sort()
     if len(pfiles) == 0:
         return None, None, None
+
     if len(pfiles) == 2:
         (oldVer1, newVer1) = pfiles[0].split('-')[1:3]
         (oldVer2, newVer2) = pfiles[1].split('-')[1:3]
@@ -719,8 +726,12 @@ def do_pg_update():
 
     # If there is no patch file available, then there's no
     # update to do.
-    pf, oldVer, newVer = _find_pg_patch()
-    if pf is None:
+    try:
+        pf, oldVer, newVer = _find_pg_patch()
+        if pf is None:
+            return
+    except Exception as e:
+        warn("Error %s" % (e,))
         return
 
     try:
