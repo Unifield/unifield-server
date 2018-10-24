@@ -40922,6 +40922,12 @@ msgstr "De confirmé à attribué."
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:73
 #: field:pricelist.partnerinfo,uom_id:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:574
+#: field:product.likely.expire.report.item,uom_id:0
+#: field:product.likely.expire.report.item.line,uom_id:0
+#: field:product.likely.expire.report.line,uom_id:0
+#: field:report.stock.inventory,uom_id:0
+#: field:stock.production.lot,uom_id:0
+#: field:stock.card.wizard.line,uom_id:0
 #, python-format
 msgid "UoM"
 msgstr "UdM"

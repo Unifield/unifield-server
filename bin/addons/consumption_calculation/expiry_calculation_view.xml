@@ -192,6 +192,7 @@
                             <field name="consumption" />
                             <field name="in_stock" />
                             <field name="total_expired" />
+                            <field name="uom_id" invisible="1" />
                             <field name="total_value" sum="Total Expired Value" />
                         </tree>
                     </field>
@@ -226,6 +227,7 @@
                 <field name="period_start" readonly="1" />
                     <field name="available_qty" readonly="1" />
                     <field name="expired_qty" readonly="1" />
+                    <field name="uom_id" invisible="1" />
                     <separator string="Batchs" colspan="4" />
                     <field name="line_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
                         <tree string="Batch">
@@ -234,6 +236,7 @@
                             <field name="location_id" />
                             <field name="available_qty" />
                             <field name="expired_qty" />
+                            <field name="uom_id" invisible="1" />
                         </tree>
                     </field>
                 </form>
