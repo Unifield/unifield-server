@@ -165,6 +165,7 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
