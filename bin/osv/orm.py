@@ -2747,9 +2747,13 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        for f in fields_pre:
+        rounding_uom = [self._columns[f].related_uom for f in fields_pre if f in self._columns and getattr(self._columns[f], 'related_uom')]
+        for f in fields_pre + rounding_uom:
             if f not in ['id', 'sequence']:
-                group_operator = fget[f].get('group_operator', 'sum')
+                if f in rounding_uom:
+                    group_operator = fget[f].get('group_operator', 'max')
+                else:
+                    group_operator = fget[f].get('group_operator', 'sum')
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
