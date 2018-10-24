@@ -293,6 +293,7 @@ Scenario: SSL US4517 PO split from IR
     I click on "Apply to all lines" and open the window
 	I click on "Yes" and close the window
 
+    I open tab "Purchase Order"
     I click "Inline Edit" on line:
         |LINE |  PRODUCT CODE | QTY       | 
         |  1  | DINJPENB1V-   | 15,000.00 |
