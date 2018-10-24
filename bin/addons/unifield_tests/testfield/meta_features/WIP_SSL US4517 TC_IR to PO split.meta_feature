@@ -271,7 +271,8 @@ Scenario: SSL US4517 PO split from IR
 
    I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE     |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |  20,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |   5,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |  15,000.00    |
         |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v |  30,000.00    |
         |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v |  50,000.00    |	
 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v |   7,000.00    |
