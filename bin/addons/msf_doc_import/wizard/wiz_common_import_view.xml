@@ -16,6 +16,7 @@
                         <tree string="Products" editable="top">
                             <field name="default_code" readonly="True" />
                             <field name="name" readonly="True" />
+                            <field name="uom_id" invisible="0" />
                             <field name="import_product_qty" on_change="on_change_import_product_qty(import_product_qty, context)" readonly="False" />
                         </tree>
                     </field>
