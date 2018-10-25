@@ -78849,9 +78849,10 @@ msgstr "Product code doesn't exist in the DB."
 msgid "Confirmed (waiting)"
 msgstr "Confirmé (attente)"
 
-#. modules: product_list, msf_doc_import
+#. modules: product_list, msf_doc_import, specific_rules
 #: view:product.list:0
 #: code:addons/msf_doc_import/msf_import_export.py:448
+#: field:export.report.stock.inventory,product_list_id:0
 #, python-format
 msgid "Product list"
 msgstr "Liste Produits"
@@ -101854,6 +101855,11 @@ msgstr " dangeureuses"
 #, python-format
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "Generate report (product list)"
+msgstr "Générer le rapport (liste de produits)"
 
 #. module: account_override
 #: code:addons/account_override/account.py:517
