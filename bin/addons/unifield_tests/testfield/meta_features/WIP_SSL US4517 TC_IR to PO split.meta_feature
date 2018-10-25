@@ -531,11 +531,11 @@ Scenario: SSL US4517 PO split from IR
 		| {{PO_REF_COO_1}} |
 
 	I should see in the main table the following data:
-        |  PRODUCT                                                                  | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018     |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  20,000.000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018     |	
+        |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018 00:00     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  20,000.000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
 	
 	I should see "Available" in "State"
 
@@ -549,11 +549,11 @@ Scenario: SSL US4517 PO split from IR
     I click on "Cancel and Resource" and close the window		
 
 	I should see in the main table the following data:
-        |  PRODUCT                                                                  | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018     |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018     |	
+        |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018 00:00     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
 
     I open tab menu "PURCHASES"	   
     I click on menu "Purchase Orders"
@@ -649,10 +649,10 @@ Scenario: SSL US4517 PO split from IR
 		
 		
 	I should see in the main table the following data:
-        |  PRODUCT                                                                  | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000.000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018     |	
+        |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000.000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
 	
 	I should see "Available" in "State"		
 			
@@ -702,10 +702,10 @@ Scenario: SSL US4517 PO split from IR
 
 		
 	I should see in the main table the following data:
-        |  PRODUCT                                                                  | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018     |	
+        |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
 
 
     I open tab menu "PURCHASES"	   
@@ -756,10 +756,10 @@ Scenario: SSL US4517 PO split from IR
 
 		
 	I should see in the main table the following data:
-        |  PRODUCT                                                                  | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000.000 |     05/Oct/2018     |	
+        |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000.000 |     05/Oct/2018 00:00     |	
 
 #TBC    I should see "Cancelled" in "State"		
 
