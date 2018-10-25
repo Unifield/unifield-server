@@ -123,7 +123,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, split.purchase_line_id.id, context=context)
 
                 new_sol = self.pool.get('purchase.order.line').browse(cr, uid, new_line_id, fields_to_fetch=['linked_sol_id'], context=context).linked_sol_id.id
-                wf_service.trg_validate(uid, 'sale.order.line', new_sol, 'sourced_v', cr)
+                if new_sol:
+                    wf_service.trg_validate(uid, 'sale.order.line', new_sol, 'sourced_v', cr)
 
             if context.get('from_simu_screen') or context.get('return_new_line_id'):
                 return new_line_id
