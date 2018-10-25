@@ -947,10 +947,10 @@ Nothing has been imported because of %s. See below:
                         # Commit modifications
                         cr.commit()
 
-                    if err_msg:
-                        for err in err_msg:
-                            err = 'Line %s of the Excel file: %s' % (file_line[0], err)
-                            values_line_errors.append(err)
+                        if err_msg:
+                            for err in err_msg:
+                                err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                                values_line_errors.append(err)
 
 
                 # Create new lines
