@@ -57,6 +57,15 @@ class patch_scripts(osv.osv):
             cr.execute("update backup_config set beforepatching='t'")
         return True
 
+    def testfield_missing_updates_on_sync(self, cr, uid, *a, **b):
+        if cr.dbname.endswith('HQ1') and self.pool.get('sync.client.entity'):
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if entity.identifier == 'a1d9db61-024f-11e6-856f-480fcf273a8d' and entity.update_last == 304:
+                cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'', ''id'']' where
+                    name in (
+                        select sdref from sync_client_update_to_send where session_id='7ff7242e-7f6f-11e6-b415-0cc47a3516aa' and model in ('hr.payment.method', 'ir.translation', 'product.nomenclature', 'product.product', 'sync.trigger.something')
+                    )''')
+        return True
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
