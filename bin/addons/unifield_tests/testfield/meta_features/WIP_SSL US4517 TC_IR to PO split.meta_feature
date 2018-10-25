@@ -880,13 +880,13 @@ Scenario: SSL US4517 PO split from IR
 	
     I click "Edit" on line:
         | PRODUCT                                                           | QTY     |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3000.00 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000.00 |
 
 	I fill "Local Market" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
         | PRODUCT                                                           | QTY     |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3000.00 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000.00 |
 
     		
     I tick all the lines
