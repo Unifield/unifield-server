@@ -176,6 +176,10 @@ class hq_report_oca(report_sxw.report_sxw):
         month = '%02d' % tm.tm_mon
         period_yyyymm = "{0}{1}".format(year, month)
 
+        # list the journal types for which the rate used will always be 1
+        no_rate_journal_types = ['revaluation', 'cur_adj', 'accrual']
+        no_rate_analytic_journal_types = ['revaluation', 'cur_adj', 'general']  # Analytic Accrual Journals have the type General
+
         # Initialize lists: one for the first report...
         first_result_lines = []
         # ...and subdivisions for the second report.
@@ -253,12 +257,12 @@ class hq_report_oca(report_sxw.report_sxw):
                 # data for the "Employee Id" column
                 employee_id = ''
                 if move_line.employee_id and move_line.employee_id.employee_type == 'ex':  # expat staff
-                    employee_id = move_line.employee_id.name or ''  # it also contains the identification number, e.g. "Smith, Paul 11453"
+                    employee_id = move_line.employee_id.identification_id or ''
                 # data for the columns: Exchange rate, Booking Debit, Booking Credit
                 booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
                 exchange_rate = 0
                 # Curr. Adjustments, Accruals or REVAL lines
-                if move_line.journal_id.code in ['FXA', 'ACC', 'REV']:
+                if move_line.journal_id.type in no_rate_journal_types:
                     # use 1 as exchange rate and display the functional values in the "booking" columns
                     exchange_rate = 1
                     booking_amounts = [round(move_line.debit, 2), round(move_line.credit, 2)]
@@ -373,22 +377,18 @@ class hq_report_oca(report_sxw.report_sxw):
 
             cost_center = formatted_data[11][:5] or " "
             field_activity = formatted_data[11][6:] or " "
-            # cc-intermission should appear as MI998 + SUPZZZ
-            if cost_center_code == 'cc-intermission':
-                cost_center = 'MI998'
-                field_activity = 'SUPZZZ'
 
             # data for the "Employee Id" column
             employee_id = ''
             if analytic_line.move_id and analytic_line.move_id.employee_id and analytic_line.move_id.employee_id.employee_type == 'ex':  # expat staff
-                employee_id = analytic_line.move_id.employee_id.name or ''  # it also contains the identification number, e.g. "Smith, Paul 11453"
+                employee_id = analytic_line.move_id.employee_id.identification_id or ''
 
             # data for the columns: Exchange rate, Booking Debit, Booking Credit
             booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
                                analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00"]
             exchange_rate = 0
             # Curr. Adjustments, Accruals or REVAL lines
-            if analytic_line.move_id and analytic_line.move_id.journal_id.code in ['FXA', 'ACC', 'REV']:
+            if analytic_line.move_id and analytic_line.move_id.journal_id.type in no_rate_analytic_journal_types:
                 # use 1 as exchange rate and display the functional values in the "booking" columns
                 exchange_rate = 1
                 booking_amounts = [analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
