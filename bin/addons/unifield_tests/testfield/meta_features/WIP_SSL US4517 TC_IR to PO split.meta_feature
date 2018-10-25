@@ -543,8 +543,8 @@ Scenario: SSL US4517 PO split from IR
 #LINE 17
 
     I click "Cancel" on line and open the window:
-        |  PRODUCT                                 | STATE       | QUANTITY    | ACTUAL RECEIPT DATE | 
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000.000 |     28/May/2018     |	
+        |  PRODUCT                                 | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE   | 
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000.000 |     28/May/2018 00:00    |	
 
     I click on "Cancel and Resource" and close the window		
 
