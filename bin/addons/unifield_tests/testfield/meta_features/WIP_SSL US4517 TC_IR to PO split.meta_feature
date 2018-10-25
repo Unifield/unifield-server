@@ -640,7 +640,13 @@ Scenario: SSL US4517 PO split from IR
     I click on "New"
     I fill "Expiry Date" with "20/May/2020"
     I click on "Save" and close the window
-	I fill "8000" within column "QUANTITY TO PROCESS"
+    I fill "8000" within column "QUANTITY TO PROCESS"
+    I validate the line
+
+    I click "Edit" on line:
+        | PRODUCT                                |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical |
+    I fill "0" within column "QUANTITY TO PROCESS"
     I validate the line
 
     I click on "Process" and close the window if necessary
