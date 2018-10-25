@@ -86807,6 +86807,8 @@ msgstr "Statistiques Ecritures Analytiques"
 #: report:addons/account_override/report/open_invoices_xls.mako:335
 #: report:allocation.invoices.report:0
 #: view:account.voucher:0
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:282
+#: view:sale.order.line.followup:0
 #: field:account.commitment,partner_id:0
 #: field:res.partner,supplier:0
 #: view:res.partner.address:0
