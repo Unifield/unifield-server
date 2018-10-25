@@ -335,7 +335,7 @@ Scenario: SSL US4517 PO split from IR
         |  1  | DINJPENB1V-   | Cancelled-r |  5,000.00 |       28/May/2018       |
         |  1  | DINJPENB1V-   | Validated   | 15,000.00 |       05/Oct/2018       |
 
-    I should see "Validated-p" in "Order State"			
+    I should see "Validated" in "Order State"
 
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
