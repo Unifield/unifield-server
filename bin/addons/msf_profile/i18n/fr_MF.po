@@ -102005,3 +102005,9 @@ msgstr "Total Solde d'Ouverture"
 #, python-format
 msgid "You cannot manually select a file to import if given source path is set on FTP server"
 msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si le chemin source est situé sur le serveur FTP"
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:879
+#, python-format
+msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
+msgstr "Ligne #%s: La date de livraison confirmée est un champ obligatoire."
