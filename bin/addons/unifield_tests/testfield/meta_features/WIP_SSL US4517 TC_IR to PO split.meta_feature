@@ -612,8 +612,8 @@ Scenario: SSL US4517 PO split from IR
 	I click on "Copy all"
 	
 	I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY   |
-	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 10,000.000 |
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     10,000.000      |
 
 	I fill "batchA{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -622,8 +622,8 @@ Scenario: SSL US4517 PO split from IR
     I validate the line
 		
 	I click "Edit" on line:
-        | PRODUCT                                                           |  QUANTITY  |
-	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  5,000.000 |
+        | PRODUCT                                                           |  QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |       5,000.000      |
 
 	I fill "batchB{{ID}}" within column "Batch Number" and open the window
     I click on "New"
