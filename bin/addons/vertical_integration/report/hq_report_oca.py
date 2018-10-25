@@ -177,6 +177,7 @@ class hq_report_oca(report_sxw.report_sxw):
         period_yyyymm = "{0}{1}".format(year, month)
 
         # list the journal types for which the rate used will always be 1
+        # i.e. REVAL, Curr. Adjustments, or Accrual lines
         no_rate_journal_types = ['revaluation', 'cur_adj', 'accrual']
         no_rate_analytic_journal_types = ['revaluation', 'cur_adj', 'general']  # Analytic Accrual Journals have the type General
 
@@ -261,13 +262,12 @@ class hq_report_oca(report_sxw.report_sxw):
                 # data for the columns: Exchange rate, Booking Debit, Booking Credit
                 booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
                 exchange_rate = 0
-                # Curr. Adjustments, Accruals or REVAL lines
                 if move_line.journal_id.type in no_rate_journal_types:
                     # use 1 as exchange rate and display the functional values in the "booking" columns
                     exchange_rate = 1
                     booking_amounts = [round(move_line.debit, 2), round(move_line.credit, 2)]
                 # automatic corrections
-                elif move_line.journal_id.code == 'OD' and (move_line.corrected_line_id or move_line.reversal_line_id):
+                elif move_line.journal_id.type == 'correction' and (move_line.corrected_line_id or move_line.reversal_line_id):
                     # If there are several levels of correction use the last one
                     corr_aml = move_line.corrected_line_id or move_line.reversal_line_id  # JI corrected or reversed
                     initial_id = -1
@@ -387,14 +387,13 @@ class hq_report_oca(report_sxw.report_sxw):
             booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
                                analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00"]
             exchange_rate = 0
-            # Curr. Adjustments, Accruals or REVAL lines
-            if analytic_line.move_id and analytic_line.move_id.journal_id.type in no_rate_analytic_journal_types:
+            if analytic_line.journal_id.type in no_rate_analytic_journal_types:
                 # use 1 as exchange rate and display the functional values in the "booking" columns
                 exchange_rate = 1
                 booking_amounts = [analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
                                    analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00"]
             # automatic corrections
-            elif analytic_line.journal_id.code == 'OD' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
+            elif analytic_line.journal_id.type == 'correction' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
                 # If there are several levels of correction use the last one
                 corr_aal = analytic_line.last_corrected_id or analytic_line.reversal_origin  # AJI corrected or reversed
                 initial_id = -1
