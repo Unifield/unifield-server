@@ -259,15 +259,17 @@ class shipment(osv.osv):
             context = {}
 
         cr.execute('''
-        select t.id, sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) as sumpack from (
-            select p.shipment_id as id, min(to_pack) as tp, min(from_pack) as fp from stock_picking p
-            left join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
-            where p.shipment_id is not null
-            group by p.shipment_id, to_pack, from_pack
-        ) t
-        group by t.id
-        having sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) %s %s
-''' % (args[0][1], args[0][2]))  # not_a_user_entry
+            select t.id, sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) as sumpack from (
+                select p.shipment_id as id, min(to_pack) as tp, min(from_pack) as fp 
+                from stock_picking p
+                left join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0 and not_shipped != 't'
+                where p.shipment_id is not null
+                group by p.shipment_id, to_pack, from_pack
+            ) t
+            group by t.id
+            having sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) %s %s
+        ''' % (args[0][1], args[0][2]))  # not_a_user_entry
+
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
