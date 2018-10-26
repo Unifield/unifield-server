@@ -602,12 +602,12 @@ Scenario: SSL US4517 PO split from IR
 		| {{PO_REF_COO_1}} |
 
     I click on "Process" and open the window
-	I click "Split" on line and open the window:
+	I click "Split" on line:
         | PRODUCT                                                           |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
 		
 	I fill "Quantity" with "5000.00"
-    I click on "Ok" and close the window	
+    I click on "Ok"
 
 	I click on "Copy all"
 	
