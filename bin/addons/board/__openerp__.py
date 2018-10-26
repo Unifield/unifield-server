@@ -30,6 +30,7 @@
         'security/board_security.xml',
         'security/ir.model.access.csv',
         'wizard/board_menu_create_view.xml',
+        'wizard/integrity_finance_wizard_view.xml',
         'board_report.xml',
         'board_view.xml',
         'board_administration_view.xml',

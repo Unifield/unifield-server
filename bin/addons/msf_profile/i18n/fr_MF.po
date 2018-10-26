@@ -20061,9 +20061,11 @@ msgstr "You cannot remove lines on a RfQ created by a tender. Leave the lines wi
 msgid "FREIGHT MANIFEST"
 msgstr "MANIFESTE DE FRET"
 
-#. modules: account_override, board
-#: model:ir.ui.menu,name:account_override.menu_integrity_finance
+#. module: board
+#: model:ir.actions.act_window,name:board.action_integrity_finance_report
+#: model:ir.ui.menu,name:board.menu_integrity_finance_report
 #: code:addons/board/report/integrity_finance.py:20
+#: code:addons/board/wizard/integrity_finance_wizard.py:57
 #, python-format
 msgid "Entries Data Integrity"
 msgstr "Intégrité des entrées comptables"
