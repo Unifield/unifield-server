@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="internal_request_import_overview_export"
+            string="Export Import Overview"
+            model="sale.order"
+            name="internal_request_import_overview_export"
+            file="msf_supply_doc_export/report/internal_request_import_overview_export_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+    </data>
+</openerp>

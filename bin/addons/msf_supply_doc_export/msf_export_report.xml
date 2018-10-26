@@ -76,7 +76,7 @@
 
         <report
             id="internal_request_export"
-            string="Internal Request Export"
+            string="Export to IR Excel template"
             model="sale.order"
             name="internal_request_export"
             file="msf_supply_doc_export/report/internal_request_export_xls.mako"

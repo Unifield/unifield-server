@@ -6,7 +6,7 @@
             <field name="model">internal.request.import</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="IR Import - Simulation Screen">
+                <form string="Import from IR Excel template">
                     <separator colspan="4" string="Internal Request Information" />
                     <field name="order_id" />
                     <group colspan="4" name="file" string="Import data">
@@ -21,77 +21,59 @@
                         <field name="nb_treated_lines" attrs="{'invisible': [('state', '=', 'draft')]}" />
                         <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
                     </group>
+                    <separator colspan="4" string="Information" />
+                    <field name="has_header_error" invisible="1" />
+                    <field name="has_red_error" invisible="1" />
+                    <field name="message" nolabel="1" colspan="4" readonly="1" />
+                    <field name="error_line_ids" colspan="4" nolabel="1" readonly="1">
+                        <tree string="Errors" noteditable="1" colors="red:red==True">
+                            <field name="header_line" invisible="1" />
+                            <field name="red" invisible="1" />
+                            <field name="line_number" />
+                            <field name="line_message" />
+                            <field name="data_summary" />
+                        </tree>
+                    </field>
                     <group name="buttons" colspan="4" col="6">
-                        <button name="reset_import" string="Reset the import" icon="gtk-refresh" type="object" />
-                        <button name="go_to_ir" string="Return to IR" icon="gtk-jump-to" type="object"
-                                attrs="{'invisible': [('order_id', '=', False)]}" />
-                        <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
-                        <button name="launch_import" string="Import" icon="gtk-execute" type="object" states="simu_done" />
+                        <button name="go_to_ir" string="Cancel Import" icon="gtk-cancel" type="object" />
+                        <button name="launch_simulate" string="Import File" icon="gtk-go-forward" type="object" states="draft" />
+                        <button name="export_ir_import_overview" string="Export Import Overview" icon="gtk-execute" type="object" states="error,simu_done" />
+                        <button name="launch_import" string="Validate Import" icon="terp-check" type="object" states="simu_done" />
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object"
                                 states="simu_progress,import_progress" />
                     </group>
-                    <notebook colspan="4">
-                        <page string="Errors" attrs="{'invisible': [('import_error_ok', '=', False), ('state', '!=', 'error')]}">
-                            <field name="message" nolabel="1" colspan="4" readonly="1" widget="full_text" />
-                        </page>
-                        <page string="Internal Request">
-                            <label> </label>
-                            <separator colspan="1" string="Original values" />
-                            <separator colspan="1" string="Imported values" />
-                            <label> </label>
-                            <field name="in_categ" />
-                            <field name="imp_categ" nolabel="1" />
-                            <label> </label>
-                            <field name="in_priority" />
-                            <field name="imp_priority" nolabel="1" />
-                            <label> </label>
-                            <field name="in_requested_date" />
-                            <field name="imp_requested_date" nolabel="1" />
-                            <label> </label>
-                            <field name="in_requestor" />
-                            <field name="imp_requestor" nolabel="1" />
-                            <label> </label>
-                            <field name="in_loc_requestor" />
-                            <field name="imp_loc_requestor" nolabel="1" />
-                            <label> </label>
-                            <field name="in_origin" />
-                            <field name="imp_origin" nolabel="1" />
-                        </page>
-                        <page string="Details">
-                            <field name="imp_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="blue: line_type == 'new' ;orange: line_type == 'changed' ;red: error_msg not in ['', False]" >
-                                    <field name="line_type" invisible="1" />
-                                    <field name="in_line_number" />
-                                    <field name="in_product_id" />
-                                    <field name="in_qty" />
-                                    <field name="in_cost_price" />
-                                    <field name="in_uom" />
-                                    <field name="in_comment" />
-                                    <field name="error_msg" invisible="1" />
-                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', '')]}" />
-                                    <field name="imp_line_number" />
-                                    <field name="imp_product_id" />
-                                    <field name="imp_qty" />
-                                    <field name="imp_cost_price" />
-                                    <field name="imp_uom_id" />
-                                    <field name="imp_comment" />
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
                 </form>
             </field>
         </record>
 
-        <record id="menu_ir_import_action" model="ir.actions.act_window">
-            <field name="name">Internal Request Import</field>
-            <field name="res_model">internal.request.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="target">current</field>
+        <record id="menu_ir_import_action_create" model="ir.actions.server">
+            <field name="name">Import from IR Excel template to create</field>
+            <field name="model_id" ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.ir_import_by_order_to_create(context=context)</field>
         </record>
 
-        <menuitem id="menu_order_import" name="Order Import" parent="base.menu_base_partner" sequence="13"/>
-        <menuitem action="menu_ir_import_action" id="menu_ir_import" parent="menu_order_import" sequence="1" />
+        <record id="ir_open_internal_request_import_to_create" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Import from IR Excel template to create</field>
+            <field eval="'ir.actions.server,%d'%menu_ir_import_action_create" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="menu_ir_import_action_update" model="ir.actions.server">
+            <field name="name">Import from IR Excel template to update</field>
+            <field name="model_id" ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.ir_import_by_order_to_update(context=context)</field>
+        </record>
+
+        <record id="ir_open_internal_request_import_to_update" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Import from IR Excel template to update</field>
+            <field eval="'ir.actions.server,%d'%menu_ir_import_action_update" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
     </data>
 </openerp>

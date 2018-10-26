@@ -802,6 +802,7 @@ class ir_values(osv.osv):
             for v in values:
                 if context.get('procurement_request', False):
                     if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
+                            or v[2].get('report_name', False) in ('internal_request_export', 'procurement.request.report') \
                             or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 else:
@@ -865,6 +866,16 @@ class ir_values(osv.osv):
                         v[2]['name'] = _('Kit Composition')
                     new_act.append(v)
             values = new_act
+        # TODO: Improve and move elsewhere ?
+        # elif key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models] \
+        #         and context.get('procurement_request'):
+        #     new_act = []
+        #     for v in values:
+        #         if v[1] == 'Import from IR Excel template':
+        #             new_act.append(v)
+        #
+        #         values = new_act
+        # TODO: Improve and move elsewhere ?
 
         return values
 

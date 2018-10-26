@@ -55,6 +55,34 @@ class internal_request_import(osv.osv):
     _name = 'internal.request.import'
     _rec_name = 'order_id'
 
+    def _check_header_error_lines(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+
+        for imp in self.browse(cr, uid, ids, fields_to_fetch=['error_line_ids'], context=context):
+            for line in imp.error_line_ids:
+                if line.header_line:
+                    res[imp.id] = True
+
+        return res
+
+    def _check_error_lines(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+
+        for imp in self.browse(cr, uid, ids, fields_to_fetch=['error_line_ids'], context=context):
+            for line in imp.error_line_ids:
+                if line.red:
+                    res[imp.id] = True
+
+        return res
+
     _columns = {
         'state': fields.selection([('draft', 'Draft'),
                                    ('simu_progress', 'Simulation in progress'),
@@ -74,6 +102,9 @@ class internal_request_import(osv.osv):
         'import_error_ok': fields.boolean(string='Error at import'),
         'no_prod_as_comment': fields.boolean(string='Change Product to a Comment if Product is not found'),
         'date_done': fields.datetime(string='Date of finished import', readonly=True),
+        'error_line_ids': fields.one2many('internal.request.import.error.line', 'ir_import_id', string='Error lines', readonly=True),
+        'has_header_error': fields.function(_check_header_error_lines, method=True, store=False, string="Has a header error", type="boolean", readonly=True),
+        'has_red_error': fields.function(_check_error_lines, method=True, store=False, string="Has a line error", type="boolean", readonly=True),
         # IR Header Info
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
@@ -99,8 +130,11 @@ class internal_request_import(osv.osv):
     _defaults = {
         'state': lambda *args: 'draft',
         'nb_treated_lines': 0,
+        'has_header_error': False,
+        'has_red_error': False,
     }
 
+    # Unused yet
     def reset_import(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -115,22 +149,38 @@ class internal_request_import(osv.osv):
         }
 
     def go_to_ir(self, cr, uid, ids, context=None):
+        '''
+        Send back to IR form view if there's an IR. To the tree view if there's not
+        '''
         if context is None:
             context = {}
 
         ctx = context.copy()
         ctx.update({'procurement_request': True})
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
-            order_id = wiz['order_id'][0]
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'sale.order',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': order_id,
-                'context': ctx,
-            }
+            if wiz['order_id']:
+                order_id = wiz['order_id'][0]
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'sale.order',
+                    'view_type': 'form',
+                    'view_mode': 'form, tree',
+                    'target': 'crush',
+                    'res_id': order_id,
+                    'context': ctx,
+                }
+            else:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_tree_view')
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'sale.order',
+                    'view_type': 'form',
+                    'view_mode': 'tree, form',
+                    'view_id': view_id and [view_id[1]] or False,
+                    'target': 'crush',
+                    'domain': "[('procurement_request', '=', True)]",
+                    'context': ctx,
+                }
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
@@ -204,6 +254,7 @@ class internal_request_import(osv.osv):
         cr = pooler.get_db(dbname).cursor()
         try:
             ir_imp_l_obj = self.pool.get('internal.request.import.line')
+            err_line_obj = self.pool.get('internal.request.import.error.line')
             so_obj = self.pool.get('sale.order')
             prod_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
@@ -216,7 +267,12 @@ class internal_request_import(osv.osv):
                 ids = [ids]
 
             for ir_imp in self.browse(cr, uid, ids, context=context):
+                # Delete old error lines
+                err_line_ids = err_line_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id)], context=context)
+                err_line_obj.unlink(cr, uid, err_line_ids, context=context)
+
                 nb_treated_lines = 0
+                nb_treated_lines_by_nomen = 0
                 # No file => Return to the simulation screen
                 if not ir_imp.file_to_import:
                     self.write(cr, uid, [ir_imp.id], {'message': _('No file to import'),
@@ -290,35 +346,44 @@ class internal_request_import(osv.osv):
                 Now, we know that the file has the good format, you can import data for header.
                 '''
                 # Line 2: Order Reference
-                if ir_order:
-                    if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
-                        blocked = True
-                        values_header_errors.append(_('Line 2 of the file: IR Order Reference \'%s\' is not correct.') %
-                                                    (values.get(2, [])[1],))
-                elif not ir_order and values.get(2, [])[1]:  # Search for existing IR
-                    ir_ids = so_obj.search(cr, uid, [('procurement_request', '=', True),
-                                                     ('name', '=', values.get(2, [])[1])], limit=1, context=context)
-                    if ir_ids:
-                        ir_order = so_obj.browse(cr, uid, ir_ids[0], context=context)
-                        for ir_line in ir_order.order_line:
-                            imp_line_data = {
-                                'ir_import_id': ir_imp.id,
-                                'ir_line_id': ir_line.id,
-                                'in_line_number': ir_line.line_number
-                            }
-                            ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
-                    else:
-                        blocked = True
-                        values_header_errors.append(_('Line 2 of the file: You can not import this file with a non-existing IR Order Reference.'))
+                if context.get('to_update_ir', False):
+                    if ir_order:
+                        if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
+                            blocked = True
+                            msg_val = _('Order Reference: IR Order Reference \'%s\' is not correct.') % \
+                                      (values.get(2, [])[1],)
+                            values_header_errors.append(msg_val)
+                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                                context=context)
+                    elif not ir_order and values.get(2, [])[1]:  # Search for existing IR
+                        ir_ids = so_obj.search(cr, uid, [('procurement_request', '=', True),
+                                                         ('name', '=', values.get(2, [])[1])], limit=1, context=context)
+                        if ir_ids:
+                            ir_order = so_obj.browse(cr, uid, ir_ids[0], context=context)
+                            for ir_line in ir_order.order_line:
+                                imp_line_data = {
+                                    'ir_import_id': ir_imp.id,
+                                    'ir_line_id': ir_line.id,
+                                    'in_line_number': ir_line.line_number
+                                }
+                                ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
+                        else:
+                            blocked = True
+                            msg_val = _('Order Reference: You can not import this file with a non-existing IR Order Reference.')
+                            values_header_errors.append(msg_val)
+                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                                context=context)
 
                 # Line 4: Order Category
                 categ = values.get(4, [])[1]
                 if categ in ORDER_CATEGORY_BY_VALUE:
                     header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
                 elif not ir_order:
-                    values_header_errors.append(
-                        _('Line 4 of the file: Order Category \'%s\' not defined, default value will be \'Other\'')
-                        % (categ or False,))
+                    msg_val = _('Order Category: Order Category \'%s\' not defined, default value will be \'Other\'') \
+                              % (categ or False,)
+                    values_header_errors.append(msg_val)
+                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                        context=context)
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
@@ -326,9 +391,11 @@ class internal_request_import(osv.osv):
                 if priority in ORDER_PRIORITY_BY_VALUE:
                     header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
                 elif not ir_order:
-                    values_header_errors.append(
-                        _('Line 5 of the file: Order Priority \'%s\' not defined, default value will be \'Normal\'')
-                        % (priority or False,))
+                    msg_val = _('Order Priority: Order Priority \'%s\' not defined, default value will be \'Normal\'')\
+                              % (priority or False,)
+                    values_header_errors.append(msg_val)
+                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                        context=context)
                     header_values['imp_priority'] = 'normal'
 
                 # Line 7: Requested date
@@ -343,19 +410,27 @@ class internal_request_import(osv.osv):
                             header_values['imp_requested_date'] = req_date
                         except:
                             blocked = True
-                            values_header_errors.append(_('Line 7 of the file: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')
-                                                        % req_date)
+                            msg_val = _('Requested Date: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')\
+                                      % req_date
+                            values_header_errors.append(msg_val)
+                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                                context=context)
                 elif not ir_order:
                     blocked = True
-                    values_header_errors.append(
-                        _('Line 7 of the file: The Requested Date is mandatory in the first import.'))
+                    msg_val = _('Requested Date: The Requested Date is mandatory in the first import.')
+                    values_header_errors.append(msg_val)
+                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                        context=context)
 
                 # Line 8: Requestor
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
                 elif not ir_order:
                     blocked = True
-                    values_header_errors.append(_('Line 8 of the file: The Requestor is mandatory in the first import.'))
+                    msg_val = _('Requestor: The Requestor is mandatory in the first import.')
+                    values_header_errors.append(msg_val)
+                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                        context=context)
 
                 # Line 9: Location Requestor
                 loc_req = values.get(9, [])[1]
@@ -370,11 +445,17 @@ class internal_request_import(osv.osv):
                         header_values['imp_loc_requestor'] = loc_ids[0]
                     else:
                         blocked = True
-                        values_header_errors.append(_('Line 9 of the file: The Location Requestor \'%s\' does not match possible options.')
-                                                    % (loc_req,))
+                        msg_val = _('Location Requestor: The Location Requestor \'%s\' does not match possible options.')\
+                                  % (loc_req,)
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                            context=context)
                 elif not ir_order:
                     blocked = True
-                    values_header_errors.append(_('Line 9 of the file: The Location Requestor is mandatory.'))
+                    msg_val = _('Location Requestor: The Location Requestor is mandatory.')
+                    values_header_errors.append(msg_val)
+                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                        context=context)
 
                 # Line 10: Origin
                 if not ir_order:
@@ -382,7 +463,10 @@ class internal_request_import(osv.osv):
                         header_values['imp_origin'] = values.get(10, [])[1]
                     else:
                         blocked = True
-                        values_header_errors.append(_('Line 10 of the file: The Origin is mandatory in the first import.'))
+                        msg_val = _('Origin: The Origin is mandatory in the first import.')
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
+                                            context=context)
 
                 '''
                 The header values have been imported, start the importation of
@@ -395,6 +479,7 @@ class internal_request_import(osv.osv):
 
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
+                    red = False
                     line_errors = ''
                     # Check mandatory fields
                     for manda_field in LINES_COLUMNS:
@@ -408,6 +493,7 @@ class internal_request_import(osv.osv):
                                 else:
                                     required_field = ir_imp[col] == val
                             if required_field:
+                                red = True
                                 line_errors += _('The column \'%s\' mustn\'t be empty%s. ') \
                                                % (manda_field[1], manda_field[0] == 0 or '')
 
@@ -418,6 +504,9 @@ class internal_request_import(osv.osv):
                     product = False
 
                     vals = values.get(x, [])
+                    line_recap = ''
+                    for val in vals:
+                        line_recap += str(val or '') + '/'
                     # Line number
                     if in_line_numbers:
                         if vals[0]:
@@ -425,13 +514,16 @@ class internal_request_import(osv.osv):
                                 line_n = int(vals[0])
                                 line_data.update({'imp_line_number': line_n})
                                 if line_n in imp_line_numbers:
+                                    red = True
                                     line_errors += _('Line Number \'%s\' has already been treated. ') % (line_n,)
                                     duplicate_line = True
                                 else:
                                     imp_line_numbers.append(line_n)
                             except:
+                                red = True
                                 line_errors += _('Line Number must be an integer. ')
                         else:
+                            red = True
                             line_errors += _('Line Number is mandatory to update a line. ')
 
                     # Product and Comment
@@ -449,16 +541,20 @@ class internal_request_import(osv.osv):
                             })
                         else:
                             if ir_imp.no_prod_as_comment:
+                                nb_treated_lines_by_nomen += 1
                                 if comment:
                                     line_data.update({'imp_comment': product_code + '\n' + comment})
                                 else:
                                     line_data.update({'imp_comment': product_code})
+                                line_errors += _('Product \'%s\' not recognized, line by nomenclature created. ') % vals[1]
                             else:
+                                red = True
                                 line_data.update({'imp_comment': comment or ''})
                                 line_errors += _('Product \'%s\' does not exist in this database. ') % vals[1]
                     else:
                         line_data.update({'imp_comment': comment or ''})
                         if not comment:
+                            red = True
                             line_errors += _('Product Code is mandatory. ')
 
                     # Quantity
@@ -467,29 +563,48 @@ class internal_request_import(osv.osv):
                         qty = float(qty)
                         line_data.update({'imp_qty': qty})
                     except:
+                        red = True
                         line_errors += _('Quantity must be a number. ')
 
                     # Cost Price and UoM
                     uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], limit=1, context=context)
                     if product_id and product:
-                        line_data.update({'imp_cost_price': product['standard_price']})
+                        cost_price = vals[4]
+                        try:
+                            cost_price = float(cost_price)
+                            line_data.update({'imp_cost_price': cost_price})
+                        except:
+                            line_data.update({'imp_cost_price': product['standard_price']})
+                            line_errors += _('Price \'%s\' is not a correct value, default cost price has been used. ') \
+                                           % (cost_price,)
                         if uom_ids and uom_ids[0] in [product['uom_id'][0], product['uom_po_id'][0]]:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
+                            red = True
                             line_errors += _('UoM \'%s\' is not consistent with the Product \'%s\'. ') \
-                                           % (vals[1], vals[5])
+                                           % (vals[5], vals[1])
                     else:
                         cost_price = vals[4] or 0.00
                         try:
                             cost_price = float(cost_price)
                             line_data.update({'imp_cost_price': cost_price})
                         except:
+                            red = True
                             line_errors += _('Cost Price must be a number. ')
                         if uom_ids:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
-                            line_errors += _('UoM \'%s\' does not exist in this database. ') \
-                                           % (vals[1],)
+                            red = True
+                            line_errors += _('UoM \'%s\' does not exist in this database. ') % (vals[5],)
+
+                    # Date of Stock Take
+                    if vals[8]:
+                        try:
+                            time.strptime(vals[8], '%d-%m-%Y')
+                            line_data.update({'imp_stock_take_date': vals[8]})
+                        except:
+                            line_errors += _('Date of Stock Take \'%s\' must be in the format \'DD-MM-YYYY\', line has been imported without Date of Stock Take. ')\
+                                           % vals[8]
 
                     line_data.update({
                         'error_msg': line_errors,
@@ -497,7 +612,12 @@ class internal_request_import(osv.osv):
                     })
 
                     if len(line_errors):
-                        values_line_errors.append(_('Line %s of the file: %sLine not imported.') % (x, line_errors))
+                        if red:
+                            line_errors = _('%sLine not imported.') % (line_errors)
+                        values_line_errors.append(line_errors)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'red': red, 'line_message': line_errors,
+                                                      'line_number': x - first_line_index, 'data_summary': line_recap},
+                                            context=context)
 
                     if not duplicate_line and in_line_numbers and line_data.get('imp_line_number') \
                             and line_data['imp_line_number'] in in_line_numbers:
@@ -517,24 +637,17 @@ class internal_request_import(osv.osv):
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
                     nb_treated_lines += 1
 
-                '''
-                We generate the message which will be displayed on the simulation
-                screen. This message is a merge between all errors.
-                '''
-                # Generate the message
                 import_error_ok = False
-                if len(values_header_errors):
+                if len(values_header_errors) or len(values_line_errors):
                     import_error_ok = True
-                    message += _('\n## Errors on header values ##\n\n')
-                    for err in values_header_errors:
-                        message += '%s\n' % err
 
-                if len(values_line_errors):
-                    import_error_ok = True
-                    message += _('\n## Errors on line values ##\n\n')
-                    for err in values_line_errors:
-                        message += '%s\n' % err
-
+                message = _('''
+Importation completed in X second(s)!
+# of lines in the file : %s
+# of lines imported : %s
+# of lines not imported : %s
+# of lines imported as line by nomenclature : %s
+                ''') % (nb_treated_lines, nb_treated_lines, 0, nb_treated_lines_by_nomen)
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
@@ -727,6 +840,7 @@ class internal_request_import_line(osv.osv):
                                   relation='product.uom', string='UoM', readonly=True, store=True),
         'in_comment': fields.function(_get_line_info, method=True, multi='line', type='char',
                                       size=256, string='Comment', readonly=True, store=True),
+        'in_stock_take_date': fields.date(string='Date of Stock Take', readonly=True),
         # # Imported IR line info
         'imp_line_number': fields.integer(string='Line Number'),
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
@@ -734,6 +848,7 @@ class internal_request_import_line(osv.osv):
         'imp_cost_price': fields.float(digits=(16, 2), string='Cost Price', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_comment': fields.char(size=256, string='Comment', readonly=True),
+        'imp_stock_take_date': fields.date(string='Date of Stock Take', readonly=True),
         'error_msg': fields.text(string='Error message', readonly=True),
     }
 
@@ -757,3 +872,26 @@ class internal_request_import_line(osv.osv):
 
 
 internal_request_import_line()
+
+
+class internal_request_import_error_line(osv.osv):
+    _name = 'internal.request.import.error.line'
+    _rec_name = 'line_number'
+
+    _columns = {
+        'ir_import_id': fields.many2one('internal.request.import', string='IR Import reference', readonly=True),
+        'line_number': fields.integer(string='Line number', readonly=True),
+        'line_message': fields.char(string='Error message', size=1024, required=True, readonly=True),
+        'data_summary': fields.char(string='Line\'s data summary', size=256, readonly=True),
+        'header_line': fields.boolean(string='Is line header', readonly=True),
+        'red': fields.boolean(string='Line has to be red', readonly=True),
+    }
+
+    defaults = {
+        'line_number': False,
+        'header_line': False,
+        'red': False,
+    }
+
+
+internal_request_import_error_line()

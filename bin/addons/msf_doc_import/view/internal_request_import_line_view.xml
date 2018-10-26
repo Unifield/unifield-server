@@ -142,8 +142,6 @@
                     <newline />
                     <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" context="{'noraise': True}" />
                 </group>
-                <button name="ir_import_by_order" string="Import IR" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" />
-                <button name="export_excel_ir" string="Export IR" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('name', '=', False)]}"/>
                 </xpath>
                 <xpath expr="/form//field[@name='order_line']" position="attributes" >
                     <attribute name="context">{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}</attribute>

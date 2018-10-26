@@ -559,7 +559,7 @@ class procurement_request(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
-    def ir_import_by_order(self, cr, uid, ids, context=None):
+    def ir_import_by_order_to_create(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
         '''
@@ -568,8 +568,31 @@ class procurement_request(osv.osv):
         if context is None:
             context = {}
 
-        context.update({'active_id': ids[0]})
-        ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line'], context=context)
+        context.update({'active_id': []})
+        import_id = import_obj.create(cr, uid, {}, context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_import_by_order_to_update(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        context.update({'active_id': ids[0], 'to_update_ir': True})
+        ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line', 'state'], context=context)
+        if ir.state not in ['draft', 'draft_p']:
+            raise osv.except_osv(_('Warning'), _('Importing from IR Excel template is only allowed on an IR which is in Draft state'))
         import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
         import_obj.unlink(cr, uid, import_ids, context=context)
         new_import_vals = {
@@ -625,6 +648,28 @@ class procurement_request(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'internal_request_export',
+            'datas': data,
+            'context': context,
+        }
+
+    def export_ir_import_overview(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of IR Import Overview
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data = {'ids': ids}
+        file_name = self.ir_export_get_file_name(cr, uid, ids, prefix='IR_Overview', context=context)
+        if file_name:
+            data['target_filename'] = file_name
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'internal_request_import_overview_export',
             'datas': data,
             'context': context,
         }
