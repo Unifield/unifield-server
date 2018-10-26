@@ -1876,6 +1876,16 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
+        def get_linked_pol(sol_id):
+            '''
+            @return PO line (browse_record) linked to the given SO line or None
+            '''
+            linked_pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+            linked_pol = None
+            if linked_pol_id:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol_id[0], fields_to_fetch=['state'], context=context)
+            return linked_pol
+
         res = {}
         for sol in self.browse(cr, uid, ids, context=context):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
@@ -1883,7 +1893,8 @@ class sale_order_line(osv.osv):
                 if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
-                    if sol.state in ('sourced_v', 'sourced_n'):
+                    linked_pol = get_linked_pol(sol.id)
+                    if sol.state == 'sourced_v' or (sol.state == 'sourced_n' and linked_pol and linked_pol.state != 'draft'):
                         res[sol.id] = 'Resourced-pv'
                     elif sol.state == 'sourced_sy':
                         res[sol.id] = 'Resourced-sy'
