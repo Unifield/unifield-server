@@ -286,8 +286,12 @@ class purchase_order_line(osv.osv):
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
+                # don't change this values if exists on sol:
+                if pol.linked_sol_id.is_line_split:
+                    sol_values.pop('is_line_split')
+                if pol.linked_sol_id.original_line_id:
+                    sol_values.pop('original_line_id')
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
-
 
         return True
 
