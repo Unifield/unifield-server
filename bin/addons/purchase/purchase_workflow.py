@@ -875,7 +875,7 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             pol_ids_to_confirm = []
             for pol in po.order_line:
-                if not pol.confirmed_delivery_date:
+                if pol.state not in ('cancel', 'cancel_r') and not pol.confirmed_delivery_date:
                     raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)
                 pol_ids_to_confirm.append(pol.id)
 
