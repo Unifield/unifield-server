@@ -29,6 +29,10 @@ class integrity_finance(report_sxw.rml_parse):
             if instance_ids:
                 self.sql_additional += " AND l.instance_id IN %s "
                 self.sql_params.append(tuple(instance_ids,))
+            fiscalyear_id = data['form'].get('fiscalyear_id', False)
+            if fiscalyear_id:
+                self.sql_additional += " AND l.period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
+                self.sql_params.append(fiscalyear_id)
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):

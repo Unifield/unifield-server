@@ -90,12 +90,12 @@ class integrity_finance_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         user_obj = self.pool.get('res.users')
-        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
+        wiz = self.browse(cr, uid, ids[0], context=context)
         data = {
             'form': {},
             'context': context,
         }
-        # get the selected fiscal year
+        # get the selected criteria
         data['form'].update({
             'fiscalyear_id': wiz.fiscalyear_id and wiz.fiscalyear_id.id or False,
             'filter': wiz.filter,
