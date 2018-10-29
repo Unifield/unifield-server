@@ -102060,3 +102060,15 @@ msgstr "La distribution analytique est invalide sur la ligne %s."
 #: help:account.invoice.line,funding_pool_id:0
 msgid "Field used for import only"
 msgstr "Champ utilisé pour l'import uniquement"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:944
+#, python-format
+msgid "Cost Center \"%s\" not found."
+msgstr "Centre de Coût \"%s\" non trouvé."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:963
+#, python-format
+msgid "Account/Destination \"%s\" not found."
+msgstr "Association Compte/Destination \"%s\" non trouvée."
