@@ -9,12 +9,27 @@ from tools.translate import _
 class integrity_finance(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(integrity_finance, self).__init__(cr, uid, name, context=context)
+        self.sql_additional = ""  # to add the criteria from the wizard filters
+        self.sql_params = []
         self.localcontext.update({
             'get_title': self.get_title,
             'list_checks': self.list_checks,
             'get_results': self.get_results,
             '_t': self._t,
         })
+
+    def set_context(self, objects, data, ids, report_type=None):
+        """
+        Fills in:
+        - self.sql_additional with the part of SQL request corresponding to the criteria selected in the wizard (string)
+        - self.sql_params with the related parameters (list)
+        """
+        if data.get('form', False):
+            instance_ids = data['form'].get('instance_ids', False)
+            if instance_ids:
+                self.sql_additional += " AND l.instance_id IN %s "
+                self.sql_params.append(tuple(instance_ids,))
+        return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):
         return _('Entries Data Integrity')
@@ -25,7 +40,11 @@ class integrity_finance(report_sxw.rml_parse):
     def get_results(self, sql):
         if not sql:
             return []
-        self.cr.execute(sql)
+        sql = sql % self.sql_additional
+        if self.sql_params:
+            self.cr.execute(sql, tuple(self.sql_params))
+        else:
+            self.cr.execute(sql)
         return self.cr.fetchall()
 
     def _t(self, source):

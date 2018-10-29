@@ -98,6 +98,12 @@ class integrity_finance_wizard(osv.osv_memory):
         # get the selected fiscal year
         data['form'].update({
             'fiscalyear_id': wiz.fiscalyear_id and wiz.fiscalyear_id.id or False,
+            'filter': wiz.filter,
+            'period_from': wiz.period_from and wiz.period_from.id or False,
+            'period_to': wiz.period_to and wiz.period_to.id or False,
+            'date_from': wiz.date_from or False,
+            'date_to': wiz.date_to or False,
+            'instance_ids': wiz.instance_ids and [inst.id for inst in wiz.instance_ids],
         })
         company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
         current_instance = company.instance_id and company.instance_id.code or ''
