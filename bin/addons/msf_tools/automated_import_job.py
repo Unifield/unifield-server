@@ -29,6 +29,7 @@ import tools
 import tempfile
 import logging
 import posixpath
+import traceback
 
 from osv import osv
 from osv import fields
@@ -334,7 +335,7 @@ class automated_import_job(osv.osv):
                 except ValueError:
                     no_file = True
                 except Exception as e:
-                    error = str(e)
+                    error = traceback.format_exc()
 
                 if not error:
                     if no_file:
@@ -457,14 +458,15 @@ class automated_import_job(osv.osv):
                 self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (job.import_id.name, filename))
             except Exception as e:
                 cr.rollback()
-                self.infolog(cr, uid, '%s :: %s' % (job.import_id.name, str(e)))
+                trace_b = traceback.format_exc()
+                self.infolog(cr, uid, '%s :: %s' % (job.import_id.name, trace_b))
                 self.write(cr, uid, [job.id], {
                     'filename': False,
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
-                    'comment': str(e),
+                    'comment': trace_b,
                     'file_sum': md5,
                     'file_to_import': data64,
                     'state': 'error',
