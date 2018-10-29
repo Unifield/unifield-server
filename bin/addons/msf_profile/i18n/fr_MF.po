@@ -38394,6 +38394,7 @@ msgstr "Assistant Confirmation Bancaire"
 #: field:hr.analytic.reallocation,funding_pool_id:0
 #: field:hr.employee,funding_pool_id:0
 #: field:hr.payroll.msf,funding_pool_id:0
+#: field:account.invoice.line,funding_pool_id:0
 #: report:addons/account/report/free_allocation_report.mako:208
 #, python-format
 msgid "Funding Pool"
@@ -81938,6 +81939,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: report:addons/sale/report/fo_allocation_report.mako:231
 #: report:sale.order.allocation.report:0
 #: field:purchase.report,cost_center_id:0
+#: field:account.invoice.line,cost_center_id:0
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
 #, python-format
@@ -96134,6 +96136,7 @@ msgstr "Facture venant de"
 #: field:purchase.order.line.allocation.report,destination_id:0
 #: code:addons/register_accounting/wizard/wizard_register_import.py:558
 #: field:wizard.register.import.lines,destination_id:0
+#: field:account.invoice.line,destination_id:0
 #: report:addons/sale/report/fo_allocation_report.mako:228
 #: report:sale.order.allocation.report:0
 #: field:sale.order.line.cancel,partner_id:0
@@ -102019,3 +102022,40 @@ msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si l
 #, python-format
 msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
 msgstr "Ligne #%s: La date de livraison confirmée est un champ obligatoire."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:339
+#, python-format
+msgid "The currency was not found for the line %s."
+msgstr "La devise n'a pas été trouvée pour la ligne %s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:293
+#, python-format
+msgid "Either the Cost Center, the Destination, or the Funding Pool is missing."
+msgstr "Il manque le Centre de Coût, la Destination, ou le Funding Pool."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:325
+#, python-format
+msgid "Either the Cost Center, the Destination, or the Funding Pool was not found on the line %s."
+msgstr "Le Centre de Coût, la Destination, ou le Funding Pool n'a pas été trouvé sur la ligne %s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:365
+#, python-format
+msgid "The account %s was not found on the line %s."
+msgstr "Le compte %s n'a pas été trouvé sur la ligne %s."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:370
+#, python-format
+msgid "The analytic distribution is invalid on the line %s."
+msgstr "La distribution analytique est invalide sur la ligne %s."
+
+#. module: account_override
+#: help:account.invoice.line,cost_center_id:0
+#: help:account.invoice.line,destination_id:0
+#: help:account.invoice.line,funding_pool_id:0
+msgid "Field used for import only"
+msgstr "Champ utilisé pour l'import uniquement"
