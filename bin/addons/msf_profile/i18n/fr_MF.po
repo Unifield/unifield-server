@@ -102072,3 +102072,10 @@ msgstr "Centre de Coût \"%s\" non trouvé."
 #, python-format
 msgid "Account/Destination \"%s\" not found."
 msgstr "Association Compte/Destination \"%s\" non trouvée."
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:10
+#: code:addons/stock/wizard/physical_inventory_select_products.py:11
+#, python-format
+msgid "%s months"
+msgstr "%s mois"
