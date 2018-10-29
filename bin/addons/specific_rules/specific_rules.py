@@ -1273,8 +1273,22 @@ class stock_production_lot(osv.osv):
 
         return res
 
+    def _get_has_stock_move(self, cr, uid, ids, field_name, arg, context=None):
+        if isinstance(ids,(long, int)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', _id)], limit=1, context=context) and True or False
+
+        return res
+
+
     _columns = {
         'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
+        'has_stock_move': fields.function(_get_has_stock_move, string='Has stock move', type="boolean", readonly=True, method=True),
         # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
         'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
         #'expiry_date': fields.date('Expiry Date'),
