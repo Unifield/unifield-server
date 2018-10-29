@@ -97,22 +97,22 @@ order by account_period.date_start, account_move.name"""
     },
     {
         'title': _('Unbalanced reconciliations in functional currency'),
-        'headers': [_('Reconcile number'), _('Difference')],
-        'query': """SELECT rec.name, sum(l.credit-l.debit)
+        'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
+        'query': """SELECT rec.name, l.reconcile_date, sum(l.credit-l.debit)
 from account_move_line l, account_move_reconcile rec
 where l.reconcile_id=rec.id
-group by rec.id, rec.name
+group by rec.id, rec.name, l.reconcile_date
 having(abs(sum(l.credit-l.debit)) > 0.0001)
 order by rec.name
 """
     },
     {
         'title': _('Unbalanced reconciliations in booking currency'),
-        'headers': [_('Reconcile number'), _('Difference')],
-        'query': """SELECT rec.name, sum(l.credit_currency-l.debit_currency)
+        'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
+        'query': """SELECT rec.name, l.reconcile_date, sum(l.credit_currency-l.debit_currency)
 from account_move_line l, account_move_reconcile rec
 where l.reconcile_id=rec.id
-group by rec.id, rec.name
+group by rec.id, rec.name, l.reconcile_date
 having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(l.currency_id))=1)
 order by rec.name
 """

@@ -27287,11 +27287,12 @@ msgstr "De Mis à jour à Fait"
 msgid "The number of packages by layer"
 msgstr "Le nombre de colis par couche"
 
-#. modules: account_reconciliation, account
+#. modules: account_reconciliation, account, board
 #: selection:account.journal.column,field:0
 #: field:account.move.line,reconcile_date:0
+#: code:addons/board/queries_finance.py:100
 msgid "Reconcile date"
-msgstr "Reconcile date"
+msgstr "Date de lettrage"
 
 #. module: account
 #: report:account.vat.declaration:0
