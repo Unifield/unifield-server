@@ -31,7 +31,55 @@ class integrity_finance_wizard(osv.osv_memory):
 
     _columns = {
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year'),
+        'filter': fields.selection([
+            ('filter_no', 'No Filters'),
+            ('filter_date_doc', 'Document Date'),
+            ('filter_date', 'Date'),
+            ('filter_period', 'Period')
+        ], "Filter by", required=True),
+        'period_from': fields.many2one('account.period', 'Start period'),
+        'period_to': fields.many2one('account.period', 'End period'),
+        'date_from': fields.date("Start date"),
+        'date_to': fields.date("End date"),
+        'instance_ids': fields.many2many('msf.instance', 'integrity_finance_wizard_instance_rel',
+                                         'wizard_id', 'instance_id',
+                                         string='Proprietary Instances'),
     }
+
+    _defaults = {
+        'filter': 'filter_no',
+    }
+
+    def onchange_filter(self, cr, uid, ids, filter,  context=None):
+        """
+        Adapts the date/period filter according to the selection made in "Filter by"
+        """
+        res = {}
+        if filter == 'filter_no':
+            res['value'] = {'period_from': False, 'period_to': False, 'date_from': False, 'date_to': False}
+        elif filter in ('filter_date', 'filter_date_doc', ):
+            res['value'] = {'period_from': False, 'period_to': False}
+        elif filter == 'filter_period':
+            res['value'] = {'date_from': False, 'date_to': False}
+        return res
+
+    def onchange_fiscalyear_id(self, cr, uid, ids, fiscalyear_id,  context=None):
+        """
+        (Only) if a period is selected: resets the periods selected and restricts their domain to within the FY
+        """
+        res = {}
+        if fiscalyear_id:
+            res = {
+                'value': {
+                    'period_from': False,
+                    'period_to': False,
+                    },
+                'domain': {
+                    'period_from': [('fiscalyear_id', '=', fiscalyear_id)],
+                    'period_to': [('fiscalyear_id', '=', fiscalyear_id)],
+                    }
+                }
+        return res
 
     def print_integrity_finance_report(self, cr, uid, ids, context=None):
         """

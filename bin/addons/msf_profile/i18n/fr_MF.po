@@ -10257,7 +10257,7 @@ msgstr "Une période est une période comptable dans laquelle sont enregistrées
 msgid "Back Order of :"
 msgstr "Back Order of :"
 
-#. modules: purchase, account, msf_outgoing, financing_contract, register_accounting, sale, product_expiry, stock
+#. modules: purchase, account, msf_outgoing, financing_contract, register_accounting, sale, product_expiry, stock, board
 #: view:account.bank.statement:0
 #: view:account.common.report:0
 #: view:account.move:0
@@ -10273,6 +10273,7 @@ msgstr "Back Order of :"
 #: view:stock.move:0
 #: view:stock.picking:0
 #: view:free.allocation.wizard:0
+#: view:integrity.finance.wizard:0
 msgid "Dates"
 msgstr "Dates"
 
@@ -17717,7 +17718,7 @@ msgstr "Only added lines"
 msgid "Create Access"
 msgstr "Créer l'Accès "
 
-#. modules: account, base, procurement_request
+#. modules: account, base, procurement_request, board
 #: view:account.common.report:0
 #: view:ir.actions.act_window:0
 #: model:ir.actions.act_window,name:base.actions_ir_filters_view
@@ -17725,6 +17726,7 @@ msgstr "Créer l'Accès "
 #: model:ir.model,name:base.model_ir_filters
 #: model:ir.ui.menu,name:base.menu_ir_filters
 #: view:sale.order:0
+#: view:integrity.finance.wizard:0
 msgid "Filters"
 msgstr "Filtres"
 
@@ -24257,7 +24259,7 @@ msgstr "Factures Fournisseur"
 msgid "Create Composition List"
 msgstr "Créer une Liste de Composition"
 
-#. modules: account, res_currency_tables, finance
+#. modules: account, res_currency_tables, finance, board
 #: field:account.common.partner.report,period_from:0
 #: field:account.partner.balance,period_from:0
 #: field:account.partner.ledger,period_from:0
@@ -24276,6 +24278,7 @@ msgstr "Créer une Liste de Composition"
 #: field:account.vat.declaration,period_from:0
 #: field:wizard.report.currency.table,start_period_id:0
 #: field:wizard.report.rates.table,start_period_id:0
+#: field:integrity.finance.wizard,period_from:0
 msgid "Start period"
 msgstr "Période de début"
 
@@ -25355,6 +25358,7 @@ msgstr "Contrepartie pour les balances de Bilan au crédit "
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:86
 #: report:addons/account/report/free_allocation_report.mako:171
 #: field:free.allocation.wizard,period_id:0
+#: selection:integrity.finance.wizard,filter:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -28370,7 +28374,7 @@ msgstr "2. Les règles de groupe sont coordonnées par un ET logique"
 msgid "XML Identifier"
 msgstr "Identifiant XML"
 
-#. modules: msf_budget, account, stock_move_tracking, product, sale, stock_forecast, purchase_allocation_report, order_types
+#. modules: msf_budget, account, stock_move_tracking, product, sale, stock_forecast, purchase_allocation_report, order_types, board
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
 #: view:account.analytic.balance:0
@@ -28387,6 +28391,7 @@ msgstr "Identifiant XML"
 #: view:wizard.fo.allocation.report:0
 #: view:stock.forecast:0
 #: view:stock.move.tracking:0
+#: view:integrity.finance.wizard:0
 msgid "Print"
 msgstr "Imprimer"
 
@@ -29747,10 +29752,11 @@ msgstr "Choisir des jours"
 msgid "Fiscal Position Template"
 msgstr "Modèle de Position Fiscale"
 
-#. modules: account, finance
+#. modules: account, finance, board
 #: field:account.partner.balance,period_to:0
 #: field:account.partner.ledger,period_to:0
 #: field:wizard.account.partner.balance.tree,period_to:0
+#: field:integrity.finance.wizard,period_to:0
 msgid "End period"
 msgstr "Période de fin"
 
@@ -35003,7 +35009,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup
+#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, board
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -35016,6 +35022,7 @@ msgstr "Shipment Date:"
 #: field:po.track.changes.wizard,start_date:0
 #: field:sale.loan.stock.moves,start_date:0
 #: field:ir.track.changes.wizard,start_date:0
+#: field:integrity.finance.wizard,date_from:0
 msgid "Start date"
 msgstr "Date de début"
 
@@ -37766,6 +37773,7 @@ msgstr "Sur Plusieurs Documents"
 #: code:addons/finance/report/account_partner_balance_tree.py:137
 #: code:addons/finance/report/account_partner_balance_tree.py:198
 #: selection:wizard.account.partner.balance.tree,filter:0
+#: selection:integrity.finance.wizard,filter:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:464
 #: field:modify.expiry.date,date:0
 #: field:msf.accrual.line,date:0
@@ -41028,7 +41036,7 @@ msgstr "Sourcing Tool"
 msgid "Name of the batch will be ignored because the batch is 'Internal' so name is created by the system"
 msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom sera créé par le système"
 
-#. modules: account, msf_instance, finance, account_mcdb
+#. modules: account, msf_instance, finance, account_mcdb, board
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
 #: report:account.partner.balance:0
@@ -41053,6 +41061,7 @@ msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom ser
 #: model:ir.actions.act_window,name:msf_instance.action_msf_instance_tree
 #: model:ir.ui.menu,name:msf_instance.menu_action_msf_instance_tree
 #: view:msf.instance:0
+#: field:integrity.finance.wizard,instance_ids:0
 msgid "Proprietary Instances"
 msgstr "Instances Propriétaires"
 
@@ -44418,13 +44427,14 @@ msgstr "Réinitialiser l'exécution"
 msgid "Reordering Mode"
 msgstr "Mode de Réapprovisionnement"
 
-#. modules: msf_doc_import, sale, sales_followup
+#. modules: msf_doc_import, sale, sales_followup, board
 #: field:abstract.wizard.import,end_date:0
 #: field:wizard.import.batch,end_date:0
 #: field:sale.donation.stock.moves,end_date:0
 #: field:sale.order.sourcing.progress,end_date:0
 #: field:ir.followup.location.wizard,end_date:0
 #: field:sale.followup.multi.wizard,end_date:0
+#: field:integrity.finance.wizard,date_to:0
 msgid "End date"
 msgstr "Date de fin"
 
@@ -51612,7 +51622,7 @@ msgstr "Devise ESC"
 msgid "Donation Line"
 msgstr "Donation Line"
 
-#. module: account
+#. modules: account, board
 #: selection:account.aged.trial.balance,filter:0
 #: selection:account.balance.report,filter:0
 #: selection:account.bs.report,filter:0
@@ -51628,6 +51638,7 @@ msgstr "Donation Line"
 #: selection:account.print.journal,filter:0
 #: selection:account.report.general.ledger,filter:0
 #: selection:account.vat.declaration,filter:0
+#: selection:integrity.finance.wizard,filter:0
 msgid "No Filters"
 msgstr "Aucun Filtre"
 
@@ -54840,7 +54851,7 @@ msgstr "Il n'y a pas de journal de défini dans la catégorie de produit: \"%s\"
 msgid "Africa/Timbuktu"
 msgstr "Africa/Timbuktu"
 
-#. modules: account, finance, account_mcdb, analytic_distribution
+#. modules: account, finance, account_mcdb, analytic_distribution, board
 #: selection:account.aged.trial.balance,filter:0
 #: selection:account.balance.report,filter:0
 #: selection:account.bs.report,filter:0
@@ -54877,6 +54888,7 @@ msgstr "Africa/Timbuktu"
 #: selection:wizard.account.partner.balance.tree,filter:0
 #: view:account.period.state:0
 #: view:account.analytic.chart:0
+#: view:integrity.finance.wizard:0
 #, python-format
 msgid "Periods"
 msgstr "Périodes"
@@ -97014,7 +97026,7 @@ msgstr "Prix changeant"
 msgid "wizard.export.po.validated"
 msgstr "wizard.export.po.validated"
 
-#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration
+#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration, board
 #: report:combined.journals.report.pdf:0
 #: field:hq.entries,document_date:0
 #: report:account.analytic.line:0
@@ -97047,6 +97059,7 @@ msgstr "wizard.export.po.validated"
 #: selection:account.balance.report,filter:0
 #: selection:account.journal.column,field:0
 #: selection:account.report.general.ledger,filter:0
+#: selection:integrity.finance.wizard,filter:0
 #: code:addons/account/report/common_report_header.py:166
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/account_override/report/open_invoices_xls.mako:330
@@ -97763,6 +97776,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.import.mapping:0
 #: view:automated.export.job:0
 #: view:free.allocation.wizard:0
+#: view:integrity.finance.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"

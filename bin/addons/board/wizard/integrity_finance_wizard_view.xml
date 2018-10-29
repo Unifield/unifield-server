@@ -9,7 +9,28 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <field name="fiscalyear_id"/>
+                    <field name="instance_ids" domain="[('instance_to_display_ids', '=', True)]">
+                        <tree noteditable="1">
+                            <field name="code"/>
+                            <field name="name"/>
+                        </tree>
+                    </field>
+                    <field name="fiscalyear_id" on_change="onchange_fiscalyear_id(fiscalyear_id)"/>
+                    <notebook tabpos="up" colspan="4">
+                        <page string="Filters" name="filters">
+                            <field name="filter" on_change="onchange_filter(filter)" colspan="4"/>
+                            <separator string="Dates" colspan="4"/>
+                            <field name="date_from" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))],
+                                                            'required':[('filter', 'in', ('filter_date', 'filter_date_doc'))]}" colspan="4"/>
+                            <field name="date_to" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))],
+                                                          'required':[('filter', 'in', ('filter_date', 'filter_date_doc'))]}"  colspan="4"/>
+                            <separator string="Periods"  colspan="4"/>
+                            <field name="period_from"
+                                   attrs="{'readonly': [('filter', '!=', 'filter_period')], 'required':[('filter', '=', 'filter_period')]}" colspan="4"/>
+                            <field name="period_to"
+                                   attrs="{'readonly': [('filter', '!=', 'filter_period')], 'required':[('filter', '=', 'filter_period')]}" colspan="4"/>
+                        </page>
+                    </notebook>
                     <group colspan="6" col="4">
                         <button icon="gtk-cancel" string="Cancel" special="cancel" colspan="2"/>
                         <button icon="gtk-print" string="Print" name="print_integrity_finance_report" type="object"
