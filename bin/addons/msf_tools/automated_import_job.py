@@ -102,7 +102,7 @@ def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
         ftp_connec.retrlines('RETR %s' % file, add_line)
         return ch.getvalue()
     elif sftp:
-        tmp_file_path = tempfile.gettempdir() + '/' + os.path.basename(file)
+        tmp_file_path = posixpath.join(tempfile.gettempdir(), os.path.basename(file))
         sftp.get(file, tmp_file_path)
         with open(tmp_file_path, 'r') as fich:
             return fich.read()
