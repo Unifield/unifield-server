@@ -27,6 +27,8 @@ import base64
 import hashlib
 import tools
 import tempfile
+import logging
+import posixpath
 
 from osv import osv
 from osv import fields
@@ -53,6 +55,7 @@ def get_oldest_filename(job, ftp_connec=None, sftp=None):
     '''
     Get the oldest file in local or on FTP server
     '''
+    logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % job.import_id.src_path)
     if not job.import_id.ftp_source_ok:
         return min(all_files_under(job.import_id.src_path, job.import_id.function_id.startswith), key=os.path.getmtime)
     elif job.import_id.ftp_protocol == 'ftp':
@@ -64,7 +67,7 @@ def get_oldest_filename(job, ftp_connec=None, sftp=None):
                 continue
             if job.import_id.function_id.startswith and not file.split(' ')[-1].startswith(job.import_id.function_id.startswith):
                 continue
-            file_names.append( os.path.join(job.import_id.src_path, file.split(' ')[-1]) )
+            file_names.append( posixpath.join(job.import_id.src_path, file.split(' ')[-1]) )
         res = []
         for file in file_names:
             dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
@@ -81,7 +84,7 @@ def get_oldest_filename(job, ftp_connec=None, sftp=None):
                         continue
                     latest = fileattr.st_mtime
                     latestfile = fileattr.filename
-        return os.path.join(job.import_id.src_path, latestfile) if latestfile else False
+        return posixpath.join(job.import_id.src_path, latestfile) if latestfile else False
 
 
 def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
@@ -91,6 +94,7 @@ def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
     '''
     def add_line(line):
         ch.write('%s\n' % line)
+    logging.getLogger('automated.import').info(_('Reading %s content') % file)
     if not from_ftp:
         return open(file).read()
     elif ftp_connec:
@@ -98,7 +102,7 @@ def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
         ftp_connec.retrlines('RETR %s' % file, add_line)
         return ch.getvalue()
     elif sftp:
-        tmp_file_path = os.path.join(tempfile.gettempdir(), os.path.basename(file))
+        tmp_file_path = tempfile.gettempdir() + '/' + os.path.basename(file)
         sftp.get(file, tmp_file_path)
         with open(tmp_file_path, 'r') as fich:
             return fich.read()
@@ -110,10 +114,19 @@ def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
     Move the file `file` from `src_path` to `dest_path`
     :return: return True
     """
-    srcname = os.path.join(import_brw.src_path, file)
-    destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+    if not import_brw.ftp_source_ok:
+        srcname = os.path.join(import_brw.src_path, file)
+    else:
+        srcname = posixpath.join(import_brw.src_path, file)
 
     dest_on_ftp = import_brw.ftp_dest_ok if success else import_brw.ftp_dest_fail_ok
+    if dest_on_ftp:
+        destname = posixpath.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+    else:
+        destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+
+    logging.getLogger('automated.import').info(_('Moving %s to %s') % (srcname, destname))
+
 
     ############################################## FTP #########################################################
     if import_brw.ftp_source_ok and dest_on_ftp and import_brw.ftp_protocol == 'ftp':
@@ -493,12 +506,17 @@ class automated_import_job(osv.osv):
             job_brw.import_id.function_id.model_id.model,
             rejected and 'rejected' or 'processed'
         )
-        pth_filename = os.path.join(job_brw.import_id.report_path, filename)
         delimiter = ','
         quotechar = '"'
         on_ftp = job_brw.import_id.ftp_report_ok
         assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp), _('FTP connection issue')
 
+        if on_ftp:
+            pth_filename = posixpath.join(job_brw.import_id.report_path, filename)
+        else:
+            pth_filename = os.path.join(job_brw.import_id.report_path, filename)
+
+        self.infolog(cr, uid, _('Writing file report at %s') % pth_filename)
         csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
         if on_ftp:
             temp_path = csvfile.name
