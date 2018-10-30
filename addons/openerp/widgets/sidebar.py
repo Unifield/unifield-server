@@ -31,7 +31,7 @@ class Sidebar(TinyWidget):
 
     def add_remote_action_values(self, action_type, current_actions):
         actions = rpc.RPCProxy('ir.values').get(
-            'action', action_type, [(self.model, False)], False, self.context)
+            'action', action_type, [(self.model, False)], False, self.context, False, True, True, self.view_id)
         for action in [a[-1] for a in actions]:
             if action['id'] not in [a['id'] for a in current_actions]:
                 action['context'] = self.context
@@ -52,7 +52,7 @@ class Sidebar(TinyWidget):
         self.max_attachment_size = utils.get_max_attachment_size()
         self.attachments = []
         self.sub_menu = None
-
+        self.view_id = kw.get('view_id', False)
 
         # add context to relate action to get the lang
         if self.context:
