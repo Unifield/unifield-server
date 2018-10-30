@@ -102567,3 +102567,225 @@ msgstr "Ecritures associées aux Numéros de séquence indiqués"
 #: code:addons/account_mcdb/account_mcdb.py:1276
 msgid "Related entries"
 msgstr "Ecritures associées"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:205
+msgid "Origin"
+msgstr "Origine"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:219
+#: field:internal.request.import,in_currency:0
+msgid "Currency"
+msgstr "Devise"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:177
+msgid "Order Category"
+msgstr "Catégorie de Commande"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:522
+#, python-format
+msgid "Location Requestor: The Location Requestor is mandatory."
+msgstr "Zone de Demande: La Zone de Demande est obligatoire."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:199
+#, python-format
+msgid "Warning !"
+msgstr "Attention !"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:115
+#: code:addons/sale/wizard/internal_request_import.py:186
+#, python-format
+msgid "Line messages:"
+msgstr "Messages des lignes:"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:189
+msgid "Requested Date"
+msgstr "Date Demandée"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:104
+#: code:addons/sale/wizard/internal_request_import.py:180
+#, python-format
+msgid "Header messages:"
+msgstr "Messages de l'en-tête:"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:201
+msgid "Location Requestor"
+msgstr "Zone de Demande"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:420
+#, python-format
+msgid "Order Reference: IR Order Reference '%s' is not correct."
+msgstr "Référence de la Commande: La Référence de la DI '%s' est incorrecte."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:533
+#, python-format
+msgid "Origin: The Origin is mandatory in the first import."
+msgstr "Origine: L'Origine est obligatoire lors du premier import."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:879
+#, python-format
+msgid "IR_Import_Overview"
+msgstr "Vue_Ensemble_Import_DI"
+
+#. modules: sale, procurement_request
+#: model:ir.actions.report.xml,name:procurement_request.internal_request_import_overview_export
+#: view:internal.request.import:0
+msgid "Export Import Overview"
+msgstr "Export de la Vue d'Ensemble de l'Import"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:218
+msgid "UoM"
+msgstr "UdM"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:166
+msgid "INTERNAL REQUEST"
+msgstr "DEMANDE INTERNE"
+
+#. module: sale
+#: model:ir.model,name:sale.model_internal_request_import_error_line
+msgid "internal.request.import.error.line"
+msgstr "internal.request.import.error.line"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:217
+msgid "Cost Price"
+msgstr "Prix Coûtant"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:487
+#, python-format
+msgid "Requested Date: The Requested Date is mandatory in the first import."
+msgstr "Date Demandée: La Date Demandée est obligatoire lors du premier import."
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:216
+msgid "Quantity"
+msgstr "Quantité"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:98
+msgid "IMPORT INFORMATIONS"
+msgstr "INFORMATIONS SUR L'IMPORT"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:120
+msgid "Data Summary"
+msgstr "Résumé des Données"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:169
+#: field:internal.request.import,in_ref:0
+msgid "Order Reference"
+msgstr "Référence de la Commande"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:144
+msgid "IR Import Overview"
+msgstr "Vue d'Ensemble de l'Import de la DI"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:497
+#, python-format
+msgid "Requestor: The Requestor is mandatory in the first import."
+msgstr "Demandeur: Le Demandeur est obligatoire lors du premier import."
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:220
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:439
+#, python-format
+msgid "Order Reference: You can not import this file with a non-existing IR Order Reference."
+msgstr "Référence de la Commande: Vous ne pouvez pas importer ce fichier avec une Référence de DI non-existante."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:160
+#: code:addons/sale/wizard/internal_request_import.py:169
+#, python-format
+msgid "Line %s"
+msgstr "Ligne %s"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:221
+#: field:internal.request.import.line,imp_stock_take_date:0
+#: field:internal.request.import.line,in_stock_take_date:0
+msgid "Date of Stock Take"
+msgstr "Date de Prise de Stock"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:692
+#, python-format
+msgid "%sLine not imported."
+msgstr "%sLigne non importée."
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:197
+msgid "Requestor"
+msgstr "Demandeur"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:876
+#, python-format
+msgid "Import_Overview"
+msgstr "Vue_Ensemble_Import"
+
+#. module: sale
+#: model:ir.model,name:sale.model_internal_request_import_line
+msgid "internal.request.import.line"
+msgstr "internal.request.import.line"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:714
+#, python-format
+msgid "\n"
+"<p>Importation completed in %s second(s)!</p>\n"
+"<p># of lines in the file : %s</p>\n"
+"<p># of lines imported : %s</p>\n"
+"<p># of lines not imported : %s</p>\n"
+"<p># of lines imported as line by nomenclature : %s</p>\n"
+"                "
+msgstr "\n"
+"<p>Import terminé en %s seconde(s)!</p>\n"
+"<p># de lignes du fichier : %s</p>\n"
+"<p># de lignes importées : %s</p>\n"
+"<p># de lignes non importées : %s</p>\n"
+"<p># de lignes importées avec un produit par nomenclature : %s</p>\n"
+"                "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:199
+#, python-format
+msgid "Element %s not found."
+msgstr "Élément %s non trouvé."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:480
+#, python-format
+msgid "Requested Date: The Requested Date '%s' must be formatted like 'DD-MM-YYYY'"
+msgstr "Date Demandée: La Date Demandée '%s' doit avoir le format 'JJ-MM-AAAA'"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:173
+msgid "State"
+msgstr "État"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:654
+#, python-format
+msgid "Price '%s' is not a correct value, default cost price has been used. "
+msgstr "Prix '%s' n'a pas une bonne valeur, le prix coutant par défaut sera utilisé. "
