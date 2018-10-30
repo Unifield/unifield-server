@@ -28,7 +28,7 @@ import simplejson
 import cherrypy
 
 import actions
-
+import math
 from openobject.i18n.format import format_datetime
 from openobject.i18n.format import format_decimal
 from openobject.tools import url, expose
@@ -42,10 +42,12 @@ def decimal_formatter(value, info):
     if isinstance(digits, basestring):
         digits = eval(digits)
     integer, digit = digits
-    
+
     # custom fields - decimal_precision computation
     computation = info.get('computation', False)
-    
+    if info.get('rounding'):
+        return format.format_decimal(value or 0.0, int(abs(math.log10(info['rounding']))))
+
     return format_decimal(value, digit, computation=computation)
 
 FORMATTERS = {

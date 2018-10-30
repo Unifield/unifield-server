@@ -20,7 +20,7 @@
 ###############################################################################
 import random
 from operator import itemgetter
-
+import math
 import cherrypy
 
 from openerp.utils import rpc
@@ -64,7 +64,7 @@ def parse(group_by, hiddens, headers, group_level, groups):
 
     return group_by, hiddens, headers
 
-def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, context, data, total_fields, fields):
+def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, context, data, total_fields, fields, rounding_values=None):
     proxy = rpc.RPCProxy(model)
     grouped = []
     grp_ids = []
@@ -81,7 +81,7 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
     digits = (16,2)
     # custom fields - decimal_precision computation
     computation = False
-    
+
     if fields:
         for key, val in fields.items():
             if val.get('digits'):
@@ -90,25 +90,35 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
             if val.get('computation'):
                 computation = val['computation']
     if isinstance(digits, basestring):
-            digits = eval(digits)
+        digits = eval(digits)
     integer, digit = digits
-    
+
     if isinstance(computation, basestring):
-            computation = eval(computation)
+        computation = eval(computation)
 
     if grp_records and total_fields and group_by:
         for sum_key, sum_val in total_fields.items():
             if grp_records[0].has_key(sum_key):
+                uom_id = set()
+                if rounding_values and fields.get(sum_key, {}).get('related_uom'):
+                    uom_id = set([x.get(fields[sum_key]['related_uom']) for x in grp_records])
                 value = sum(map(lambda x: x[sum_key], grp_records))
                 if isinstance(value, float):
-                    total_fields[sum_key][1] = format.format_decimal(value or 0.0, digit, computation=computation)
+                    rounding_digit = digit
+                    if len(uom_id) == 1 and list(uom_id)[0] in rounding_values:
+                        rounding_digit = int(abs(math.log10(rounding_values[list(uom_id)[0]])))
+
+                    total_fields[sum_key][1] = format.format_decimal(value or 0.0, rounding_digit, computation=computation)
                 else:
                     total_fields[sum_key][1] = value
     if grp_records:
         for rec in grp_records:
             for key, val in rec.items():
                 if isinstance(val, float):
-                    rec[key] = format.format_decimal(val or 0.0, digit, computation=computation)
+                    rounding_digit = digit
+                    if rounding_values and fields.get(key, {}).get('related_uom') and rec.get(fields.get(key, {}).get('related_uom')) in rounding_values:
+                        rounding_digit = int(abs(math.log10(rounding_values[rec[fields[key]['related_uom']]])))
+                    rec[key] = format.format_decimal(val or 0.0, rounding_digit, computation=computation)
 
             for grp_by in group_by:
                 if not rec.get(grp_by):
@@ -148,6 +158,7 @@ class ListGroup(List):
         self.count = kw.get('count', 0)
         self.link = kw.get('nolinks')
 
+        self.rounding_values = view.get('uom_rounding', {})
         proxy = rpc.RPCProxy(model)
 
         # adding the piece of code to set limit as 0 to get rid of pager's negative offset error.
@@ -222,7 +233,7 @@ class ListGroup(List):
             if not grp_rec.get('__context'):
                 grp_rec['__context'] = {'group_by': self.group_by_ctx}
 
-        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model, terp_offset, terp_limit, self.context, self.data, self.field_total, fields)
+        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model, terp_offset, terp_limit, self.context, self.data, self.field_total, fields, self.rounding_values)
 
         if self.pageable:
             self.count = len(self.grouped)
@@ -258,6 +269,7 @@ class MultipleGroup(List):
         sort_key = kw.get('sort_key') or ''
         sort_order = kw.get('sort_order') or ''
         proxy = rpc.RPCProxy(model)
+        self.rounding_values = view.get('uom_rounding', {})
         if ids is None:
             if self.limit > 0:
                 ids = proxy.search(self.domain, self.offset, self.limit, 0, rpc.session.context.copy())
@@ -317,4 +329,4 @@ class MultipleGroup(List):
             else:
                 rev = False
             self.grp_records = sorted(self.grp_records, key=itemgetter(sort_key), reverse=rev)
-        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model,  self.offset, self.limit, rpc.session.context.copy(), self.data, self.field_total, fields)
+        self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model,  self.offset, self.limit, rpc.session.context.copy(), self.data, self.field_total, fields, self.rounding_values)
