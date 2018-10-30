@@ -790,10 +790,10 @@ class ir_values(osv.osv):
     _inherit = 'ir.values'
 
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         trans_obj = self.pool.get('ir.translation')
 
         if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
