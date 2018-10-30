@@ -1319,7 +1319,7 @@ class orm_template(object):
 
     # returns the definition of each field in the object
     # the optional fields parameter can limit the result to some fields
-    def fields_get(self, cr, user, allfields=None, context=None, write_access=True):
+    def fields_get(self, cr, user, allfields=None, context=None, write_access=True, with_uom_rounding=False):
         if context is None:
             context = {}
         res = {}
@@ -1327,6 +1327,7 @@ class orm_template(object):
         for parent in self._inherits:
             res.update(self.pool.get(parent).fields_get(cr, user, allfields, context))
 
+        uom_rounding = False
         if self._columns.keys():
             for f in self._columns.keys():
                 field_col = self._columns[f]
@@ -1358,9 +1359,14 @@ class orm_template(object):
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
                     res[f]['no_write_access'] = True
-                for arg in ('digits', 'invisible', 'filters', 'computation'):
+                for arg in ('digits', 'invisible', 'filters', 'computation', 'related_uom'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
+
+                if with_uom_rounding and res[f].get('related_uom'):
+                    if not uom_rounding:
+                        uom_rounding = self.pool.get('product.uom').get_rounding(cr, 1)
+                    res[f]['uom_rounding'] = uom_rounding
 
                 context_lang = context and context.get('lang', False) or 'en_US'
                 if field_col.string and context_lang != 'en_US':
@@ -1932,6 +1938,8 @@ class orm_template(object):
         result['arch'] = xarch
         result['fields'] = xfields
 
+
+        result['uom_rounding'] = self.pool.get('product.uom').get_rounding(cr, user)
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
@@ -2749,9 +2757,13 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        for f in fields_pre:
+        rounding_uom = [self._columns[f].related_uom for f in fields_pre if f in self._columns and getattr(self._columns[f], 'related_uom')]
+        for f in fields_pre + rounding_uom:
             if f not in ['id', 'sequence']:
-                group_operator = fget[f].get('group_operator', 'sum')
+                if f in rounding_uom:
+                    group_operator = fget[f].get('group_operator', 'max')
+                else:
+                    group_operator = fget[f].get('group_operator', 'sum')
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
@@ -3550,7 +3562,7 @@ class orm(orm_template):
     #    return _proxy
 
 
-    def fields_get(self, cr, user, fields=None, context=None):
+    def fields_get(self, cr, user, fields=None, context=None, with_uom_rounding=False):
         """
         Get the description of list of fields
 
@@ -3565,7 +3577,7 @@ class orm(orm_template):
         ira = self.pool.get('ir.model.access')
         write_access = ira.check(cr, user, self._name, 'write', raise_exception=False, context=context) or \
             ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
-        return super(orm, self).fields_get(cr, user, fields, context, write_access)
+        return super(orm, self).fields_get(cr, user, fields, context, write_access, with_uom_rounding=with_uom_rounding)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         if not ids:

@@ -1298,10 +1298,10 @@ class stock_production_lot(osv.osv):
         'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
                                          help="Current available quantity of products with this Batch Numbre Number in company warehouses",
                                          digits_compute=dp.get_precision('Product UoM'), readonly=True,
-                                         fnct_search=_stock_search_virtual,),
+                                         fnct_search=_stock_search_virtual, related_uom='uom_id'),
         'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
                                            help="Current real quantity of products with this Batch Number in company warehouses",
-                                           digits_compute=dp.get_precision('Product UoM')),
+                                           digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
         'kc_check': fields.function(
             _get_checks_all,
@@ -2257,7 +2257,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -2286,7 +2287,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)

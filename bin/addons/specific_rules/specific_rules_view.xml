@@ -514,6 +514,7 @@
 
                     <field name="prodlot_id" position="after">
                         <field name="expired_date" invisible="1" string="Expiry Month"/>
+                        <field name="uom_id" invisible="1" />
                     </field>
 
                 </data>

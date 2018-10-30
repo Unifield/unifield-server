@@ -20,24 +20,21 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
-import time
-
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
-    
+
     def _validate_item_out(self, cr, uid, id, context=None):
         '''
         validate the from stock objects for lot and expiry date
-        
+
         - lot AND expiry date are mandatory for batch management products
         - expiry date is mandatory for perishable products
-        
+
         return corresponding key error for selection
-        
+
         out, picking, ppl,.. need different validation function, validate_item function can be overriden in inherited classes
         '''
         # objects
@@ -89,18 +86,18 @@ class stock_partial_move_memory_out(osv.osv_memory):
             # for internal or simple out, cannot process more than specified in stock move
             if picking_real_type in ['out', 'internal']:
                 proc_qty = uom_obj._compute_qty(cr, uid, item.product_uom.id, item.quantity, item.uom_ordered.id)
-                if proc_qty > item.ordered_quantity:
+                if abs(proc_qty - item.ordered_quantity) > 0.0001:
                     result = 'greater_than_available'
-                
+
         # we return the found result
         return result
-    
+
     def validate_item(self, cr, uid, id, context=None):
         '''
         validation interface to allow modifying behavior in inherited classes
         '''
         return self._validate_item_out(cr, uid, id, context=context)
-    
+
     def _vals_get_stock_override(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -110,7 +107,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -118,18 +115,18 @@ class stock_partial_move_memory_out(osv.osv_memory):
             result[obj.id].update({'integrity_status_func_stock_memory_move': self.validate_item(cr, uid, obj.id, context=context)})
 
         return result
-    
+
     _columns = {'integrity_status_func_stock_memory_move': fields.function(_vals_get_stock_override, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_stock_override', store=False, readonly=True),
                 }
-    
+
 stock_partial_move_memory_out()
-    
+
 class stock_partial_move_memory_in(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     _name = "stock.move.memory.in"
-    
+
 stock_partial_move_memory_in()
-    
+
 class stock_partial_move(osv.osv_memory):
     _inherit = "stock.partial.move"
     _description = "Partial Move with hook"
@@ -139,18 +136,18 @@ class stock_partial_move(osv.osv_memory):
         res = super(stock_partial_move, self)._hook_move_state()
         res.append('confirmed')
         return res
-    
+
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
         add hook to do_partial
         '''
         partial_datas = kwargs.get('partial_datas')
         assert partial_datas, 'partial_datas missing'
-        
+
         return partial_datas
-        
-    
-    
+
+
+
     # @@@override stock>wizard>stock_partial_move.py
     def do_partial(self, cr, uid, ids, context=None):
         """ Makes partial moves and pickings done.
@@ -161,24 +158,24 @@ class stock_partial_move(osv.osv_memory):
         @param context: A standard dictionary
         @return: A dictionary which of fields with values.
         """
-    
+
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        
+
         move_ids = context.get('active_ids', False)
         partial = self.browse(cr, uid, ids[0], context=context)
         partial_datas = {
             'delivery_date' : partial.date
         }
-        
+
         p_moves = {}
         picking_type = self.__get_picking_type(cr, uid, move_ids)
-        
+
         moves_list = picking_type == 'product_moves_in' and partial.product_moves_in  or partial.product_moves_out
         for product_move in moves_list:
             p_moves[product_move.move_id.id] = product_move
-            
+
         moves_ids_final = []
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             if move.state in ('done', 'cancel'):
@@ -191,18 +188,18 @@ class stock_partial_move(osv.osv_memory):
                 'product_uom' :p_moves[move.id].product_uom.id,
                 'prodlot_id' : p_moves[move.id].prodlot_id.id,
             }
-            
+
             moves_ids_final.append(move.id)
             if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                 partial_datas['move%s' % (move.id)].update({
                     'product_price' : p_moves[move.id].cost,
                     'product_currency': p_moves[move.id].currency.id,
                 })
-                
+
             # override : add hook call
             partial_datas = self.do_partial_hook(cr, uid, context, move=move, p_moves=p_moves, partial_datas=partial_datas)
-                
-            
+
+
         move_obj.do_partial(cr, uid, moves_ids_final, partial_datas, context=context)
         return {'type': 'ir.actions.act_window_close'}
     #@@@override end

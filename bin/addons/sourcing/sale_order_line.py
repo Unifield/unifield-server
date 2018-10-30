@@ -589,6 +589,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
             multi='stock_qty',
+            related_uom='product_uom',
         ),
         'virtual_stock': fields.function(
             _getVirtualStock, method=True,
@@ -596,6 +597,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='Virtual Stock',
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
+            related_uom='product_uom',
             multi='stock_qty',
         ),
         'available_stock': fields.function(
@@ -604,6 +606,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             type='float',
             string='Available Stock',
             digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
         ),
         # Fields used for export
