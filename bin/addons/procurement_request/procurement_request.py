@@ -585,6 +585,7 @@ class procurement_request(osv.osv):
         Launches the wizard to import lines from a file
         '''
         import_obj = self.pool.get('internal.request.import')
+        import_l_obj = self.pool.get('internal.request.import.line')
 
         if context is None:
             context = {}
@@ -599,7 +600,7 @@ class procurement_request(osv.osv):
             'order_id': ids[0],
             'imp_line_ids': [(0, 0, {
                 'ir_line_id': l.id,
-                'in_line_number': l.line_number,
+                'ir_line_number': l.line_number,
             }) for l in ir.order_line],
         }
         import_id = import_obj.create(cr, uid, new_import_vals, context)

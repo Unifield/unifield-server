@@ -31,20 +31,10 @@
                     </group>
                     <separator colspan="4" string="Information" />
                     <field name="has_header_error" invisible="1" />
-                    <field name="has_red_error" invisible="1" />
+                    <field name="has_line_error" invisible="1" />
                     <group colspan="4" col="2">
 
                     </group>
-                    <!--<field name="message" nolabel="1" colspan="4" readonly="1" />-->
-                    <!--<field name="error_line_ids" colspan="4" nolabel="1" readonly="1">-->
-                        <!--<tree string="Errors" noteditable="1" colors="red:red==True">-->
-                            <!--<field name="header_line" invisible="1" />-->
-                            <!--<field name="red" invisible="1" />-->
-                            <!--<field name="line_number" />-->
-                            <!--<field name="line_message" />-->
-                            <!--<field name="data_summary" />-->
-                        <!--</tree>-->
-                    <!--</field>-->
                 </form>
             </field>
         </record>

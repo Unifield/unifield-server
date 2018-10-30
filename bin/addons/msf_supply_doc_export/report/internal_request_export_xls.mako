@@ -142,7 +142,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.default_code or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.name or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.product_uom_qty or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.cost_price or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.cost_price or (line.product_id and line.product_id.standard_price) or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_uom.name or ''| x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.functional_currency_id.name or ''| x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''| x}</Data></Cell>

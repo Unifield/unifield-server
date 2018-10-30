@@ -109,7 +109,7 @@
         </Row>
         % endfor
         %endif
-        % if o.has_red_error:
+        % if o.has_line_error:
         <Row></Row>
         <Row ss:Height="14">
             <Cell ss:StyleID="line_bold" ss:MergeAcross="2"><Data ss:Type="String">${_('Line messages:')}</Data></Cell>
@@ -187,7 +187,11 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Date')}</Data></Cell>
+        % if isDate(o.in_requested_date):
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.in_requested_date | n}T00:00:00.000</Data></Cell>
+        % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_requested_date or ''|x}</Data></Cell>
+        %endif
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requestor')}</Data></Cell>
@@ -203,7 +207,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_currency or ''| x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
@@ -220,13 +224,17 @@
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_line_number or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_product or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_product_desc or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_qty or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_cost_price or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_uom or ''| x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_currency or ''| x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_comment or ''| x}</Data></Cell>
+        % if isDate(line.in_stock_take_date):
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.in_stock_take_date | n}T00:00:00.000</Data></Cell>
+        % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_stock_take_date or ''|x}</Data></Cell>
+        %endif
     </Row>
     % endfor
 </Table>

@@ -78,9 +78,12 @@ class internal_request_import(osv.osv):
         res = {}
 
         for imp in self.browse(cr, uid, ids, fields_to_fetch=['error_line_ids'], context=context):
+            nb_header = 0
             for line in imp.error_line_ids:
-                if line.red:
-                    res[imp.id] = True
+                if line.header_line:
+                    nb_header += 1
+            if len(imp.error_line_ids) > nb_header:
+                res[imp.id] = True
 
         return res
 
@@ -94,7 +97,7 @@ class internal_request_import(osv.osv):
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
-        'message': fields.text(string='Import message', readonly=True),
+        'message': fields.text(string='Import general message for html display', readonly=True),
         'error_file': fields.binary(string='File with errors'),
         'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines', readonly=True),
@@ -105,7 +108,7 @@ class internal_request_import(osv.osv):
         'date_done': fields.datetime(string='Date of finished import', readonly=True),
         'error_line_ids': fields.one2many('internal.request.import.error.line', 'ir_import_id', string='Error lines', readonly=True),
         'has_header_error': fields.function(_check_header_error_lines, method=True, store=False, string="Has a header error", type="boolean", readonly=True),
-        'has_red_error': fields.function(_check_error_lines, method=True, store=False, string="Has a line error", type="boolean", readonly=True),
+        'has_line_error': fields.function(_check_error_lines, method=True, store=False, string="Has a line error", type="boolean", readonly=True),
         # IR Header Info
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
@@ -116,6 +119,7 @@ class internal_request_import(osv.osv):
         'in_requestor': fields.char(string='Requestor', size=64, readonly=True),
         'in_loc_requestor': fields.char(string='Location Requestor', size=64, readonly=True),
         'in_origin': fields.char(string='Origin', size=64, readonly=True),
+        'in_currency': fields.char(string='Currency', size=64, readonly=True),
         # # Imported IR info
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
@@ -130,7 +134,7 @@ class internal_request_import(osv.osv):
         'state': lambda *args: 'draft',
         'nb_treated_lines': 0,
         'has_header_error': False,
-        'has_red_error': False,
+        'has_line_error': False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -148,37 +152,40 @@ class internal_request_import(osv.osv):
     <p>%s</p>
                 ''' % (ir_import.message,)
                 if ir_import.error_line_ids:
-                    if ir_import.has_header_error:
-                        header_err_data = ''
-                        line_err_data = ''
-                        for line in ir_import.error_line_ids:
-                            if line.header_line:
-                                header_err_data += '<p>%s</p>' % (line.line_message,)
-                            else:
-                                if line.red:
-                                    line_n = _('Line %s') % (line.line_number,)
-                                    line_err_data += '''
+                    header_err_data = ''
+                    line_err_data = ''
+                    for line in ir_import.error_line_ids:
+                        if line.header_line:
+                            header_err_data += '<p>%s</p>' % (line.line_message,)
+                        else:
+                            if line.red:
+                                line_n = _('Line %s') % (line.line_number,)
+                                line_err_data += '''
     <span style="color: red">
     <p><u>%s</u></p>
     <p>%s</p>
     <p>%s</p>
     </span>
-                                    ''' % (line_n, line.line_message, line.data_summary)
-                                else:
-                                    line_n = _('Line %s') % (line.line_number,)
-                                    line_err_data += '''
+                                ''' % (line_n, line.line_message, line.data_summary)
+                            else:
+                                line_n = _('Line %s') % (line.line_number,)
+                                line_err_data += '''
     <p><u>%s</u></p>
     <p>%s</p>
     <p>%s</p>
-                                    ''' % (line_n, line.line_message, line.data_summary)
+                                ''' % (line_n, line.line_message, line.data_summary)
+                    if header_err_data:
                         info_msg += '''
     <br/>
     <p><b>%s</b></p>
     %s
+                        ''' % (_('Header messages:'), header_err_data)
+                    if line_err_data:
+                        info_msg += '''
     <br/>
     <p><b>%s</b></p>
     %s
-                        ''' % (_('Header messages:'), header_err_data, _('Line messages:'), line_err_data)
+                        ''' % (_('Line messages:'), line_err_data)
                 info_msg += '''
 </html>'''
 
@@ -195,7 +202,7 @@ class internal_request_import(osv.osv):
                     for field in fields:
                         group_field = field
                 new_field = etree.fromstring(info_msg)
-                fields.insert(0, new_field)
+                group_field.insert(0, new_field)
                 res['arch'] = etree.tostring(root)
 
         return res
@@ -222,8 +229,8 @@ class internal_request_import(osv.osv):
             context = {}
 
         ctx = context.copy()
-        ctx.update({'procurement_request': True})
-        for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
+        ctx.update({'procurement_request': True, 'ir_import_id': False})
+        for wiz in self.read(cr, uid, ids, ['order_id', 'message', 'error_line_ids'], context=context):
             if wiz['order_id']:
                 order_id = wiz['order_id'][0]
                 return {
@@ -422,6 +429,7 @@ class internal_request_import(osv.osv):
                     'in_requestor': values.get(8, [])[1],
                     'in_loc_requestor': values.get(9, [])[1],
                     'in_origin': values.get(10, [])[1],
+                    'in_currency': values.get(11, [])[1],
                 })
                 # Line 2: Order Reference
                 if context.get('to_update_ir', False):
@@ -580,6 +588,7 @@ class internal_request_import(osv.osv):
                     line_data = {
                         'in_line_number': vals[0],
                         'in_product': vals[1],
+                        'in_product_desc': vals[2],
                         'in_qty': vals[3],
                         'in_cost_price': vals[4],
                         'in_uom': vals[5],
@@ -700,6 +709,7 @@ class internal_request_import(osv.osv):
                     if len(line_errors):
                         if red:
                             line_errors = _('%sLine not imported.') % (line_errors)
+                            line_data.update({'red': red})
                             nb_error_lines += 1
                         values_line_errors.append(line_errors)
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'red': red, 'line_message': line_errors,
@@ -721,11 +731,11 @@ class internal_request_import(osv.osv):
                     import_error_ok = True
 
                 message = _('''
-Importation completed in %s second(s)!
-# of lines in the file : %s
-# of lines imported : %s
-# of lines not imported : %s
-# of lines imported as line by nomenclature : %s
+<p>Importation completed in %s second(s)!</p>
+<p># of lines in the file : %s</p>
+<p># of lines imported : %s</p>
+<p># of lines not imported : %s</p>
+<p># of lines imported as line by nomenclature : %s</p>
                 ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_treated_lines - nb_error_lines,
                         nb_error_lines, nb_treated_lines_by_nomen)
                 header_values.update({
@@ -810,7 +820,7 @@ Importation completed in %s second(s)!
                         ir_vals.update({'priority': wiz.imp_priority})
                     so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
                     for line in wiz.imp_line_ids:
-                        if not line.error_msg:
+                        if not line.red:
                             line_vals = {
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,
@@ -843,7 +853,7 @@ Importation completed in %s second(s)!
                             'price_unit': x.imp_cost_price or 0.00,
                             'product_uom': x.imp_uom_id and x.imp_uom_id.id or False,
                             'comment': x.imp_comment or '',
-                        }) for x in (y for y in wiz.imp_line_ids if not y.error_msg)],
+                        }) for x in (y for y in wiz.imp_line_ids if not y.red)],
                     }
                     new_ir_id = so_obj.create(cr, uid, ir_vals, context=context)
                     self.write(cr, uid, [wiz.id], {'order_id': new_ir_id}, context=context)
@@ -907,9 +917,11 @@ class internal_request_import_line(osv.osv):
         'ir_line_id': fields.many2one('sale.order.line', string='Line', readonly=True),
         'ir_import_id': fields.many2one('internal.request.import', string='Simulation screen', readonly=True, ondelete='cascade'),
         'ir_line_number': fields.integer(string='Line Number'),
+        'red': fields.boolean(string='Is the line error blocking ?'),
         # # File IR line info
         'in_line_number': fields.char(string='Line Number', size=32, readonly=True),
         'in_product': fields.char(string='Product', size=64, readonly=True),
+        'in_product_desc': fields.char(string='Product Description', size=128, readonly=True),
         'in_qty': fields.char(string='Quantity', size=64, readonly=True),
         'in_cost_price': fields.char(string='Cost Price', size=64, readonly=True),
         'in_uom': fields.char(string='UoM', size=64, readonly=True),
