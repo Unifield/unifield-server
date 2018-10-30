@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,15 +15,13 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
-import pickle
-import osv
 import pooler
 
-def ir_set(cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None):
+def ir_set(cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, view_ids=False):
     obj = pooler.get_pool(cr.dbname).get('ir.values')
     return obj.set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
 

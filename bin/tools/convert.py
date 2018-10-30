@@ -520,7 +520,11 @@ form: module.record_id""" % (xml_id,)
             keyword = rec.get('key2','').encode('utf-8') or 'client_action_relate'
             value = 'ir.actions.act_window,'+str(id)
             replace = rec.get('replace','') or True
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id)
+            linked_views = []
+            if rec.get('view_ids'):
+                for x in rec.get('view_ids').split(','):
+                    linked_views.append(self.id_get(cr,x))
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
         # TODO add remove ir.model.data
 
     def _tag_ir_set(self, cr, rec, data_node=None):

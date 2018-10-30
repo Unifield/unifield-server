@@ -131,6 +131,7 @@
             <field name="key2">client_action_multi</field>
             <field name="model">hr.payroll.msf</field>
             <field name="name">action_move_to_payroll_bs_lines</field>
+            <field name="view_ids" ref="view_hr_payroll_msf_tree" />
             <field eval="'ir.actions.server,%d'%action_move_to_payroll_bs_lines" name="value"/>
             <field eval="True" name="object"/>
             <field name="sequence" eval="105"/>

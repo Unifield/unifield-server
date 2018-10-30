@@ -233,6 +233,7 @@
             view_mode="form"
             view_type="form"
             target="new"
+            view_ids="view_hr_payroll_msf_tree"
             view_id="analytic_reallocation_wizard"/>
 
         <!-- Mass reallocation wizard for Employee -->
@@ -255,6 +256,7 @@
             view_mode="form"
             view_type="form"
             target="new"
+            view_ids="msf_homere_interface.view_payroll_bs_lines_tree"
             view_id="payroll_validation_wizard"/>
 
         <!-- Payroll entries deletion wizard -->
