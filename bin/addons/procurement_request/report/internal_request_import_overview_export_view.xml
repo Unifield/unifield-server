@@ -4,13 +4,13 @@
         <report
             id="internal_request_import_overview_export"
             string="Export Import Overview"
-            model="sale.order"
+            model="internal.request.import"
             name="internal_request_import_overview_export"
-            file="msf_supply_doc_export/report/internal_request_import_overview_export_xls.mako"
+            file="procurement_request/report/internal_request_import_overview_export_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"
-            menu="True"
+            menu="False"
          />
     </data>
 </openerp>

@@ -20,6 +20,7 @@
 
 from osv import osv
 from osv import fields
+from lxml import etree
 import threading
 import pooler
 import base64
@@ -108,15 +109,13 @@ class internal_request_import(osv.osv):
         # IR Header Info
         # # Original IR info
         'order_id': fields.many2one('sale.order', string='Internal Request', readonly=True),
-        'in_categ': fields.related('order_id', 'categ', type='selection', selection=ORDER_CATEGORY,
-                                   string='Order Category', readonly=True),
-        'in_priority': fields.related('order_id', 'priority', type='selection', selection=ORDER_PRIORITY,
-                                      string='Priority', readonly=True),
-        'in_requested_date': fields.related('order_id', 'delivery_requested_date', type='date', string='Requested date', readonly=True),
-        'in_requestor': fields.related('order_id', 'requestor', type='char', string='Requestor', readonly=True),
-        'in_loc_requestor': fields.related('order_id', 'location_requestor_id', type='many2one', relation='stock.location',
-                                           string='Location Requestor', readonly=True),
-        'in_origin': fields.related('order_id', 'origin', type='char', string='Origin', readonly=True),
+        'in_ref': fields.char(string='Order Reference', size=64, readonly=True),
+        'in_categ': fields.char(string='Order Category', size=64, readonly=True),
+        'in_priority': fields.char(string='Priority', size=64, readonly=True),
+        'in_requested_date': fields.char(string='Requested date', size=64, readonly=True),
+        'in_requestor': fields.char(string='Requestor', size=64, readonly=True),
+        'in_loc_requestor': fields.char(string='Location Requestor', size=64, readonly=True),
+        'in_origin': fields.char(string='Origin', size=64, readonly=True),
         # # Imported IR info
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
@@ -133,6 +132,73 @@ class internal_request_import(osv.osv):
         'has_header_error': False,
         'has_red_error': False,
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Returns views to display errors
+        """
+        res = super(internal_request_import, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+        if context.get('ir_import_id'):
+            fields = ['state', 'message', 'error_line_ids', 'has_header_error']
+            ir_import = self.browse(cr, uid, context['ir_import_id'], fields_to_fetch=fields, context=context)
+            if ir_import.state in ['error', 'simu_done']:
+                info_msg = '''
+<html>
+    <p>%s</p>
+                ''' % (ir_import.message,)
+                if ir_import.error_line_ids:
+                    if ir_import.has_header_error:
+                        header_err_data = ''
+                        line_err_data = ''
+                        for line in ir_import.error_line_ids:
+                            if line.header_line:
+                                header_err_data += '<p>%s</p>' % (line.line_message,)
+                            else:
+                                if line.red:
+                                    line_n = _('Line %s') % (line.line_number,)
+                                    line_err_data += '''
+    <span style="color: red">
+    <p><u>%s</u></p>
+    <p>%s</p>
+    <p>%s</p>
+    </span>
+                                    ''' % (line_n, line.line_message, line.data_summary)
+                                else:
+                                    line_n = _('Line %s') % (line.line_number,)
+                                    line_err_data += '''
+    <p><u>%s</u></p>
+    <p>%s</p>
+    <p>%s</p>
+                                    ''' % (line_n, line.line_message, line.data_summary)
+                        info_msg += '''
+    <br/>
+    <p><b>%s</b></p>
+    %s
+    <br/>
+    <p><b>%s</b></p>
+    %s
+                        ''' % (_('Header messages:'), header_err_data, _('Line messages:'), line_err_data)
+                info_msg += '''
+</html>'''
+
+                # modify the group size
+                # load the xml tree
+                root = etree.fromstring(res['arch'])
+                # xpath of fields to be modified
+                list_xpath = ['//group[@colspan="4" and @col="2"]']
+                group_field = False
+                for xpath in list_xpath:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.') % xpath)
+                    for field in fields:
+                        group_field = field
+                new_field = etree.fromstring(info_msg)
+                fields.insert(0, new_field)
+                res['arch'] = etree.tostring(root)
+
+        return res
 
     # Unused yet
     def reset_import(self, cr, uid, ids, context=None):
@@ -266,6 +332,7 @@ class internal_request_import(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
 
+            start_time = time.time()
             for ir_imp in self.browse(cr, uid, ids, context=context):
                 # Delete old error lines
                 err_line_ids = err_line_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id)], context=context)
@@ -273,6 +340,7 @@ class internal_request_import(osv.osv):
 
                 nb_treated_lines = 0
                 nb_treated_lines_by_nomen = 0
+                nb_error_lines = 0
                 # No file => Return to the simulation screen
                 if not ir_imp.file_to_import:
                     self.write(cr, uid, [ir_imp.id], {'message': _('No file to import'),
@@ -345,6 +413,16 @@ class internal_request_import(osv.osv):
                 '''
                 Now, we know that the file has the good format, you can import data for header.
                 '''
+                # Retreived data for overview export
+                header_values.update({
+                    'in_ref': values.get(2, [])[1],
+                    'in_categ': values.get(4, [])[1],
+                    'in_priority': values.get(5, [])[1],
+                    'in_requested_date': values.get(7, [])[1],
+                    'in_requestor': values.get(8, [])[1],
+                    'in_loc_requestor': values.get(9, [])[1],
+                    'in_origin': values.get(10, [])[1],
+                })
                 # Line 2: Order Reference
                 if context.get('to_update_ir', False):
                     if ir_order:
@@ -364,7 +442,7 @@ class internal_request_import(osv.osv):
                                 imp_line_data = {
                                     'ir_import_id': ir_imp.id,
                                     'ir_line_id': ir_line.id,
-                                    'in_line_number': ir_line.line_number
+                                    'ir_line_number': ir_line.line_number
                                 }
                                 ir_imp_l_obj.create(cr, uid, imp_line_data, context=context)
                         else:
@@ -472,10 +550,10 @@ class internal_request_import(osv.osv):
                 The header values have been imported, start the importation of
                 lines
                 '''
-                in_line_numbers = []  # existing line numbers
+                ir_line_numbers = []  # existing line numbers
                 imp_line_numbers = []  # imported line numbers
                 if ir_order:  # get the lines numbers
-                    in_line_numbers = [line.line_number for line in ir_order.order_line]
+                    ir_line_numbers = [line.line_number for line in ir_order.order_line]
 
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
@@ -498,17 +576,25 @@ class internal_request_import(osv.osv):
                                                % (manda_field[1], manda_field[0] == 0 or '')
 
                     # Get values
-                    line_data = {}
+                    vals = values.get(x, [])
+                    line_data = {
+                        'in_line_number': vals[0],
+                        'in_product': vals[1],
+                        'in_qty': vals[3],
+                        'in_cost_price': vals[4],
+                        'in_uom': vals[5],
+                        'in_comment': vals[7],
+                        'in_stock_take_date': vals[8],
+                    }
+
                     duplicate_line = False
                     product_id = False
                     product = False
-
-                    vals = values.get(x, [])
                     line_recap = ''
                     for val in vals:
                         line_recap += str(val or '') + '/'
                     # Line number
-                    if in_line_numbers:
+                    if ir_line_numbers:
                         if vals[0]:
                             try:
                                 line_n = int(vals[0])
@@ -614,26 +700,19 @@ class internal_request_import(osv.osv):
                     if len(line_errors):
                         if red:
                             line_errors = _('%sLine not imported.') % (line_errors)
+                            nb_error_lines += 1
                         values_line_errors.append(line_errors)
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'red': red, 'line_message': line_errors,
                                                       'line_number': x - first_line_index, 'data_summary': line_recap},
                                             context=context)
 
-                    if not duplicate_line and in_line_numbers and line_data.get('imp_line_number') \
-                            and line_data['imp_line_number'] in in_line_numbers:
+                    if not duplicate_line and ir_line_numbers and line_data.get('imp_line_number') \
+                            and line_data['imp_line_number'] in ir_line_numbers:
                         l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
-                                                              ('in_line_number', '=', line_data['imp_line_number'])],
+                                                              ('ir_line_number', '=', line_data['imp_line_number'])],
                                                     context=context)
-                        if l_ids:
-                            ir_imp_l = ir_imp_l_obj.browse(cr, uid, l_ids[0], context=context)
-                            if (line_data.get('imp_product_id') and ir_imp_l.in_product_id.id != line_data['imp_product_id']) \
-                                    or (line_data.get('imp_qty') and ir_imp_l.in_qty != line_data['imp_qty']) \
-                                    or (line_data.get('imp_uom_id') and ir_imp_l.in_uom.id != line_data['imp_uom_id']) \
-                                    or (line_data.get('imp_comment') and ir_imp_l.in_comment != line_data['imp_comment']):
-                                line_data.update({'line_type': 'changed'})
                         ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
                     else:
-                        line_data.update({'line_type': 'new'})
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
                     nb_treated_lines += 1
 
@@ -642,12 +721,13 @@ class internal_request_import(osv.osv):
                     import_error_ok = True
 
                 message = _('''
-Importation completed in X second(s)!
+Importation completed in %s second(s)!
 # of lines in the file : %s
 # of lines imported : %s
 # of lines not imported : %s
 # of lines imported as line by nomenclature : %s
-                ''') % (nb_treated_lines, nb_treated_lines, 0, nb_treated_lines_by_nomen)
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_treated_lines - nb_error_lines,
+                        nb_error_lines, nb_treated_lines_by_nomen)
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
@@ -786,61 +866,55 @@ Importation completed in X second(s)!
 
         return res
 
+    def export_ir_import_overview(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of IR Import Overview
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data = {'ids': ids}
+        dt_now = datetime.datetime.now()
+        ir_imp_order = False
+        if ids:
+            ir_imp_order = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
+        if ir_imp_order:
+            filename = "%s_%s_%d_%02d_%02d" % (ir_imp_order.name.replace('/', '_'), _('Import_Overview'),
+                                               dt_now.year, dt_now.month, dt_now.day)
+        else:
+            filename = "%s_%d_%02d_%02d" % (_('IR_Import_Overview'), dt_now.year, dt_now.month, dt_now.day)
+        data['target_filename'] = filename
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'internal_request_import_overview_export',
+            'datas': data,
+            'context': context,
+        }
+
 
 internal_request_import()
 
 
 class internal_request_import_line(osv.osv):
     _name = 'internal.request.import.line'
-    _rec_name = 'in_line_number'
-
-    def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
-        if context is None:
-            context = {}
-
-        res = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {
-                'ir_line_id': False,
-                'in_line_number': False,
-                'in_product_id': False,
-                'in_qty': 0.00,
-                'in_cost_price': 0.00,
-                'in_uom': False,
-                'in_comment': False,
-            }
-            if line.ir_line_id:
-                l = line.ir_line_id
-                res[line.id].update({
-                    'ir_line_id': l.id,
-                    'in_line_number': l.line_number or False,
-                    'in_product_id': l.product_id and l.product_id.id or False,
-                    'in_qty': l.product_uom_qty,
-                    'in_cost_price': l.price_unit,
-                    'in_uom': l.product_uom and l.product_uom.id,
-                    'in_comment': l.comment,
-                })
-
-        return res
+    _rec_name = 'ir_line_number'
 
     _columns = {
         'ir_line_id': fields.many2one('sale.order.line', string='Line', readonly=True),
         'ir_import_id': fields.many2one('internal.request.import', string='Simulation screen', readonly=True, ondelete='cascade'),
-        'line_type': fields.char(size=64, string='Type of Line', readonly=True),
-        # # Original IR line info
-        'in_line_number': fields.function(_get_line_info, method=True, multi='line', type='integer',
-                                          string='Line Number', readonly=True, store=True),
-        'in_product_id': fields.function(_get_line_info, method=True, multi='line', type='many2one',
-                                         relation='product.product', string='Product', readonly=True, store=True),
-        'in_qty': fields.function(_get_line_info, method=True, multi='line', type='float',
-                                  string='Quantity', readonly=True, store=True),
-        'in_cost_price': fields.function(_get_line_info, method=True, multi='line', type='float',
-                                         string='Cost Price', readonly=True, store=True),
-        'in_uom': fields.function(_get_line_info, method=True, multi='line', type='many2one',
-                                  relation='product.uom', string='UoM', readonly=True, store=True),
-        'in_comment': fields.function(_get_line_info, method=True, multi='line', type='char',
-                                      size=256, string='Comment', readonly=True, store=True),
-        'in_stock_take_date': fields.date(string='Date of Stock Take', readonly=True),
+        'ir_line_number': fields.integer(string='Line Number'),
+        # # File IR line info
+        'in_line_number': fields.char(string='Line Number', size=32, readonly=True),
+        'in_product': fields.char(string='Product', size=64, readonly=True),
+        'in_qty': fields.char(string='Quantity', size=64, readonly=True),
+        'in_cost_price': fields.char(string='Cost Price', size=64, readonly=True),
+        'in_uom': fields.char(string='UoM', size=64, readonly=True),
+        'in_comment': fields.char(string='Comment', size=256, readonly=True),
+        'in_stock_take_date': fields.char(string='Date of Stock Take', size=64, readonly=True),
         # # Imported IR line info
         'imp_line_number': fields.integer(string='Line Number'),
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
@@ -853,8 +927,7 @@ class internal_request_import_line(osv.osv):
     }
 
     defaults = {
-        'line_type': False,
-        'imp_line_number': 0,
+        'ir_line_number': 0,
     }
 
     def get_error_msg(self, cr, uid, ids, context=None):

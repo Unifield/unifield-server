@@ -568,8 +568,8 @@ class procurement_request(osv.osv):
         if context is None:
             context = {}
 
-        context.update({'active_id': []})
         import_id = import_obj.create(cr, uid, {}, context)
+        context.update({'active_id': [], 'ir_import_id': import_id})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'internal.request.import',
@@ -603,6 +603,7 @@ class procurement_request(osv.osv):
             }) for l in ir.order_line],
         }
         import_id = import_obj.create(cr, uid, new_import_vals, context)
+        context.update({'ir_import_id': import_id})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'internal.request.import',
@@ -648,28 +649,6 @@ class procurement_request(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'internal_request_export',
-            'datas': data,
-            'context': context,
-        }
-
-    def export_ir_import_overview(self, cr, uid, ids, context=None):
-        '''
-        Call the Excel report of IR Import Overview
-        '''
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        data = {'ids': ids}
-        file_name = self.ir_export_get_file_name(cr, uid, ids, prefix='IR_Overview', context=context)
-        if file_name:
-            data['target_filename'] = file_name
-
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'internal_request_import_overview_export',
             'datas': data,
             'context': context,
         }

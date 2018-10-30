@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#loan
+#
 ##############################################################################
 
 
@@ -34,7 +34,23 @@ class internal_request_import_overview_export(report_sxw.rml_parse):
         self.uid = uid
         self.localcontext.update({
             'time': time,
+            'getHeaderErrors': self._get_header_errors,
+            'getErrors': self._get_errors,
         })
+
+    def _get_header_errors(self, import_id):
+        imp_err_lines_obj = self.pool.get('internal.request.import.error.line')
+        err_lines_ids = imp_err_lines_obj.search(self.cr, self.uid, [('ir_import_id', '=', import_id),
+                                                                     ('header_line', '=', True)], context=self.localcontext)
+
+        return imp_err_lines_obj.browse(self.cr, self.uid, err_lines_ids, fields_to_fetch=['line_message'], context=self.localcontext)
+
+    def _get_errors(self, import_id):
+        imp_err_lines_obj = self.pool.get('internal.request.import.error.line')
+        err_lines_ids = imp_err_lines_obj.search(self.cr, self.uid, [('ir_import_id', '=', import_id),
+                                                                     ('header_line', '=', False)], context=self.localcontext)
+
+        return imp_err_lines_obj.browse(self.cr, self.uid, err_lines_ids, fields_to_fetch=['line_number', 'line_message', 'data_summary', 'red'], context=self.localcontext)
 
 
 class internal_request_import_overview_export_xls(SpreadsheetReport):
@@ -49,8 +65,8 @@ class internal_request_import_overview_export_xls(SpreadsheetReport):
 
 
 internal_request_import_overview_export_xls(
-    'report.internal.request.import.overview.export.report_xls',
+    'report.internal_request_import_overview_export',
     'internal.request.import',
-    'addons/sale/report/internal_request_import_overview_export_xls.mako',
+    'addons/procurement_request/report/internal_request_import_overview_export_xls.mako',
     parser=internal_request_import_overview_export,
     header=False)

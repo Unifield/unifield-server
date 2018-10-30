@@ -44,6 +44,35 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="line_left">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
+    <Style ss:ID="line_bold">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Font ss:Bold="1" />
+    </Style>
+    <Style ss:ID="line_red">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Font ss:Color="#ff0000"/>
+    </Style>
     <Style ss:ID="short_date">
      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
      <Borders>
@@ -57,7 +86,62 @@
 </Styles>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${_('Internal Request Export')|x}">
+<ss:Worksheet ss:Name="${_('IR Import Informations')|x}">
+<Table x:FullColumns="1" x:FullRows="1">
+    ## Line Number
+    <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+    ## Error Message
+    <Column ss:AutoFitWidth="1" ss:Width="450.25" />
+    ## Data Summary
+    <Column ss:AutoFitWidth="1" ss:Width="600.75" />
+    <Row ss:Height="18">
+        <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('IMPORT INFORMATIONS')}</Data></Cell>
+    </Row>
+    % if o.error_line_ids:
+        % if o.has_header_error:
+        <Row></Row>
+        <Row ss:Height="14">
+            <Cell ss:StyleID="line_bold" ss:MergeAcross="1"><Data ss:Type="String">${_('Header messages:')}</Data></Cell>
+        </Row>
+        % for line in getHeaderErrors(o.id):
+        <Row>
+            <Cell ss:StyleID="line_left" ss:MergeAcross="1" ><Data ss:Type="String">${line.line_message or '' | x}</Data></Cell>
+        </Row>
+        % endfor
+        %endif
+        % if o.has_red_error:
+        <Row></Row>
+        <Row ss:Height="14">
+            <Cell ss:StyleID="line_bold" ss:MergeAcross="2"><Data ss:Type="String">${_('Line messages:')}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Error Message')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Data Summary')}</Data></Cell>
+        </Row>
+        % for line in getErrors(o.id):
+        % if line.red:
+        <Row>
+            <Cell ss:StyleID="line_red" ><Data ss:Type="String">${line.line_number or '' | x}</Data></Cell>
+            <Cell ss:StyleID="line_red" ><Data ss:Type="String">${line.line_message or '' | x}</Data></Cell>
+            <Cell ss:StyleID="line_red" ><Data ss:Type="String">${line.data_summary or '' | x}</Data></Cell>
+        </Row>
+        % else:
+        <Row>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${line.line_number or '' | x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${line.line_message or '' | x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${line.data_summary or '' | x}</Data></Cell>
+        </Row>
+        %endif
+        % endfor
+        %endif
+    %endif
+</Table>
+</ss:Worksheet>
+% endfor
+
+% for o in objects:
+<ss:Worksheet ss:Name="${_('IR Import Overview')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
     ## Line Number
     <Column ss:AutoFitWidth="1" ss:Width="120.75" />
@@ -83,47 +167,43 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_ref or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'state') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Category')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'categ') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_categ or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Priority')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'priority') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_priority or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_order | n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Date')}</Data></Cell>
-        % if isDate(o.delivery_requested_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date | n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        %endif
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_requested_date or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requestor')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.requestor or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_requestor or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Location Requestor')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.location_requestor_id.name or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_loc_requestor or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_origin or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.functional_currency_id.name or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
@@ -136,37 +216,20 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date of Stock Take')}</Data></Cell>
     </Row>
-    % for line in o.order_line:
+    % for line in o.imp_line_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.line_number or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.default_code or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.name or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.product_uom_qty or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.cost_price or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_uom.name or ''| x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.functional_currency_id.name or ''| x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''| x}</Data></Cell>
-        % if isDate(line.stock_take_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date | n}T00:00:00.000</Data></Cell>
-        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_line_number or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_product or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        %endif
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_qty or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_cost_price or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_uom or ''| x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_comment or ''| x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.in_stock_take_date or ''|x}</Data></Cell>
     </Row>
     % endfor
 </Table>
-<x:WorksheetOptions/>
-<DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R4C2:R4C2</Range>
-    <Type>List</Type>
-    <CellRangeList/>
-    <Value>&quot;Medical,Log,Service,Transport,Other&quot;</Value>
-</DataValidation>
-<DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R5C2:R5C2</Range>
-    <Type>List</Type>
-    <CellRangeList/>
-    <Value>&quot;Normal,Emergency,Priority&quot;</Value>
-</DataValidation>
 </ss:Worksheet>
 % endfor
 </Workbook>
