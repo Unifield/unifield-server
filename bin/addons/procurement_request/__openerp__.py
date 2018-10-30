@@ -48,6 +48,7 @@
         'procurement_request_line_wizard.xml',
         'wizard/wizard_import_list_view.xml',
         'report/internal_request_import_overview_export_view.xml'
+        'wizard/internal_request_import.xml',
     ],
     'demo_xml': [
     ],

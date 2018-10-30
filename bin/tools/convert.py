@@ -828,6 +828,11 @@ form: module.record_id""" % (xml_id,)
                             and model._columns[f_name]._type == 'reference':
                         val = self.model_id_get(cr, f_ref)
                         f_val = val[0] + ',' + str(val[1])
+                    elif f_name in model._columns and model._columns[f_name]._type == 'many2many':
+                        to_link = []
+                        for link_id in f_ref.split(','):
+                            to_link.append(self.model_id_get(cr, link_id)[1])
+                        f_val = [(6, 0, to_link)]
                     else:
                         f_val = self.id_get(cr, f_ref)
             else:
@@ -836,7 +841,6 @@ form: module.record_id""" % (xml_id,)
                     if isinstance(model._columns[f_name], osv.fields.integer):
                         f_val = int(f_val)
             res[f_name] = f_val
-
         id = self.pool.get('ir.model.data')._update(cr, self.uid, rec_model, self.module, res, rec_id or False, not self.isnoupdate(data_node), noupdate=self.isnoupdate(data_node), mode=self.mode, context=rec_context )
         if rec_id:
             self.idref[rec_id] = int(id)

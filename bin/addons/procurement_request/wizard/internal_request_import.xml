@@ -50,6 +50,7 @@
             <field name="key2">client_action_multi</field>
             <field name="model">sale.order</field>
             <field name="name">Import from IR Excel template to create</field>
+            <field name="view_ids" ref="procurement_request.procurement_request_tree_view" />
             <field eval="'ir.actions.server,%d'%menu_ir_import_action_create" name="value"/>
             <field eval="True" name="object"/>
         </record>
@@ -65,6 +66,7 @@
             <field name="key2">client_action_multi</field>
             <field name="model">sale.order</field>
             <field name="name">Import from IR Excel template to update</field>
+            <field name="view_ids" ref="procurement_request.procurement_request_form_view" />
             <field eval="'ir.actions.server,%d'%menu_ir_import_action_update" name="value"/>
             <field eval="True" name="object"/>
         </record>
