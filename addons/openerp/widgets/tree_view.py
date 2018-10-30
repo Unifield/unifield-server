@@ -113,7 +113,7 @@ class ViewTree(Form):
         for item, value in view.get('toolbar', {}).items():
             if value: toolbar[item] = value
         if toolbar:
-            self.sidebar = Sidebar(self.model, None, toolbar, context=self.context)
+            self.sidebar = Sidebar(self.model, None, toolbar, context=self.context, view_id=self.view_id)
 
         # get the correct view title
         self.string = self.context.get('_terp_view_name', self.string) or self.string
