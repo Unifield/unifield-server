@@ -866,16 +866,6 @@ class ir_values(osv.osv):
                         v[2]['name'] = _('Kit Composition')
                     new_act.append(v)
             values = new_act
-        # TODO: Improve and move elsewhere ?
-        # elif key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models] \
-        #         and context.get('procurement_request'):
-        #     new_act = []
-        #     for v in values:
-        #         if v[1] == 'Import from IR Excel template':
-        #             new_act.append(v)
-        #
-        #         values = new_act
-        # TODO: Improve and move elsewhere ?
 
         return values
 
