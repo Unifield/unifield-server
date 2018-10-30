@@ -25,8 +25,6 @@ import threading
 import pooler
 import base64
 import time
-import os
-import tools
 import datetime
 import logging
 
@@ -232,28 +230,11 @@ class internal_request_import(osv.osv):
         ctx.update({'procurement_request': True, 'ir_import_id': False})
         for wiz in self.read(cr, uid, ids, ['order_id', 'message', 'error_line_ids'], context=context):
             if wiz['order_id']:
-                order_id = wiz['order_id'][0]
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'sale.order',
-                    'view_type': 'form',
-                    'view_mode': 'form, tree',
-                    'target': 'crush',
-                    'res_id': order_id,
-                    'context': ctx,
-                }
-            else:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_tree_view')
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'sale.order',
-                    'view_type': 'form',
-                    'view_mode': 'tree, form',
-                    'view_id': view_id and [view_id[1]] or False,
-                    'target': 'crush',
-                    'domain': "[('procurement_request', '=', True)]",
-                    'context': ctx,
-                }
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['form', 'tree'], context=ctx)
+                res['res_id'] = wiz['order_id'][0]
+                return res
+
+            return self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['tree', 'form'], context=ctx)
 
     def go_to_simulation(self, cr, uid, ids, context=None):
         '''
