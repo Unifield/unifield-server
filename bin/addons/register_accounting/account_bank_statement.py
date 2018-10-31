@@ -3105,19 +3105,6 @@ class ir_values(osv.osv):
                 if v[1] != 'act_wizard_temp_posting' and context['type_posting'] == 'hard' or v[1] != 'act_wizard_hard_posting' and context['type_posting'] == 'temp':
                     new_act.append(v)
             values = new_act
-        elif context.get('journal_type') and key == 'action' and key2 == 'client_print_multi' and 'account.bank.statement' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[1] == 'Bank Reconciliation' and context['journal_type'] == 'bank' \
-                    or v[1] == 'Cash Reconciliation' and context['journal_type'] == 'cash' \
-                    or v[1] == 'Open Advances' and context['journal_type'] in ['bank', 'cash'] \
-                    or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
-                    or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
-                    or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
-                    or v[1] == 'action_report_liquidity_position' and context['journal_type'] != 'cheque' \
-                        or v[1] == 'Full Report' and context['journal_type'] in ['bank', 'cash', 'cheque']:
-                    new_act.append(v)
-            values = new_act
         return values
 
 ir_values()
