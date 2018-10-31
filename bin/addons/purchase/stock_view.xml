@@ -26,15 +26,16 @@
             </field>
         </record>
 
+<!--
         <act_window
             domain="[('purchase_id', '=', active_id)]"
             id="act_purchase_order_2_stock_picking"
             name="Receptions"
             res_model="stock.picking"
-	    groups="base.group_extended"
+            groups="base.group_extended"
             src_model="purchase.order"
             context="{'contact_display': 'partner'}" />
-       
+-->
        <record id="action_picking_in_tree_view" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
             <field name="view_mode">tree</field>

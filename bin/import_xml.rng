@@ -116,6 +116,7 @@
             <rng:optional> <rng:attribute name="attachment_use" /> </rng:optional>
             <rng:optional> <rng:attribute name="groups"/> </rng:optional>
             <rng:optional> <rng:attribute name="run_in_background"/></rng:optional>
+            <rng:optional> <rng:attribute name="view_ids"/></rng:optional>
             <rng:empty />
         </rng:element>
     </rng:define>
