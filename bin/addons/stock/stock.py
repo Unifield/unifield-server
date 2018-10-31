@@ -580,32 +580,6 @@ class stock_location(osv.osv):
         return False
 
 
-    def deactivate_location(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-
-        self.check_if_has_product_in_stock(cr, uid, ids, context=context)
-        self.check_if_has_open_stock_move_out(cr, uid, ids, context=context)
-        res = self.check_if_has_open_stock_move_in(cr, uid, ids, context=context)
-        if res:
-            return res
-
-        self.write(cr, uid, ids, {'active': False}, context=context)
-
-        return True
-
-    def reactivate_location(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-        self.write(cr, uid, ids, {'active': True}, context=context)
-
-        return True
-
-
 stock_location()
 
 
