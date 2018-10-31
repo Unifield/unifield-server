@@ -118,11 +118,11 @@
 % for o in objects:
 
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">DB/instance name</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('DB/instance name')|x}</Data></Cell>
         <Cell ss:MergeAcross="2" ss:StyleID="poheader"><Data ss:Type="String">${o.company_id.name or ''|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Generated on</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('Generated on')|x}</Data></Cell>
         % if o.name and isDateTime(o.name):
             <Cell ss:MergeAcross="2" ss:StyleID="poheader_short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
         % else:
@@ -132,17 +132,17 @@
     <Row></Row>
     <Row></Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="header"><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Exp Date</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">IN</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">OUT</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Source</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Destination</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Reason Code</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Document Ref.</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Exp Date')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('IN')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('OUT')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Source')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Destination')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reason Code')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Document Ref.')|x}</Data></Cell>
     </Row>
 
     % for line in getLines():
