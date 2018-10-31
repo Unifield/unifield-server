@@ -345,6 +345,7 @@ class internal_request_import(osv.osv):
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
+                l_date_format = ['%d-%m-%Y', '%d.%m.%Y']
                 blocked = False
                 message = ''
                 ir_order = ir_imp.order_id
@@ -473,16 +474,20 @@ class internal_request_import(osv.osv):
                         req_date = req_date.strftime('%d-%m-%Y')
                         header_values['imp_requested_date'] = req_date
                     else:
-                        try:
-                            time.strptime(req_date, '%d-%m-%Y')
-                            header_values['imp_requested_date'] = req_date
-                        except:
+                        for format in l_date_format:
+                            try:
+                                time.strptime(req_date, format)
+                                header_values['imp_requested_date'] = req_date
+                                break
+                            except:
+                                continue
+                        if not header_values.get('imp_requested_date'):
                             blocked = True
-                            msg_val = _('Requested Date: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')\
+                            msg_val = _('Requested Date: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\' or \'DD.MM.YYYY\'')\
                                       % req_date
                             values_header_errors.append(msg_val)
-                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                                context=context)
+                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
+                                                          'line_message': msg_val}, context=context)
                 elif not ir_order:
                     blocked = True
                     msg_val = _('Requested Date: The Requested Date is mandatory in the first import.')
@@ -493,12 +498,6 @@ class internal_request_import(osv.osv):
                 # Line 8: Requestor
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Requestor: The Requestor is mandatory in the first import.')
-                    values_header_errors.append(msg_val)
-                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                        context=context)
 
                 # Line 9: Location Requestor
                 loc_req = values.get(9, [])[1]
@@ -526,15 +525,8 @@ class internal_request_import(osv.osv):
                                         context=context)
 
                 # Line 10: Origin
-                if not ir_order:
-                    if values.get(10, [])[1]:
-                        header_values['imp_origin'] = values.get(10, [])[1]
-                    else:
-                        blocked = True
-                        msg_val = _('Origin: The Origin is mandatory in the first import.')
-                        values_header_errors.append(msg_val)
-                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                            context=context)
+                if values.get(10, [])[1]:
+                    header_values['imp_origin'] = values.get(10, [])[1]
 
                 '''
                 The header values have been imported, start the importation of
@@ -712,14 +704,20 @@ class internal_request_import(osv.osv):
                 if len(values_header_errors) or len(values_line_errors):
                     import_error_ok = True
 
+                nb_imp_lines = nb_treated_lines - nb_error_lines
+                if blocked:
+                    nb_imp_lines = 0
+                    nb_error_lines = nb_treated_lines
+                    nb_treated_lines_by_nomen = 0
+
                 message = _('''
 <p>Importation completed in %s second(s)!</p>
 <p># of lines in the file : %s</p>
 <p># of lines imported : %s</p>
 <p># of lines not imported : %s</p>
 <p># of lines imported as line by nomenclature : %s</p>
-                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_treated_lines - nb_error_lines,
-                        nb_error_lines, nb_treated_lines_by_nomen)
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines, nb_error_lines,
+                        nb_treated_lines_by_nomen)
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,

@@ -101354,12 +101354,6 @@ msgstr "Prix Coûtant"
 msgid "Status"
 msgstr "État"
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:348
-#, python-format
-msgid "Line 7 of the file: The Requested Date is mandatory in the first import."
-msgstr "Ligne 7 du fichier: La Date Demandée est obligatoire lors du premier import."
-
 #. modules: msf_supply_doc_export, sale
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:132
 #: code:addons/sale/wizard/internal_request_import.py:45
@@ -101374,12 +101368,6 @@ msgstr "Quantité"
 #, python-format
 msgid "Line 2 of the file: IR Order Reference '%s' is not correct."
 msgstr "Ligne 2 du fichier: La Référence de la Demande Interne '%s' est incorrecte."
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:344
-#, python-format
-msgid "Line 7 of the file: The Requested Date '%s' must be formatted like 'DD-MM-YYYY'"
-msgstr "Ligne 7 du fichier: La Date Demandée '%s' doit être au format 'JJ-MM-AAAA'"
 
 #. module: account_override
 #: code:addons/account_override/account.py:1138
@@ -101583,22 +101571,10 @@ msgstr "Le Numéro de Ligne est obligatoire pour mettre à jour une ligne. "
 msgid "internal.request.import"
 msgstr "internal.request.import"
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:354
-#, python-format
-msgid "Line 8 of the file: The Requestor is mandatory in the first import."
-msgstr "Ligne 8 du fichier: Le Demandeur est obligatoire lors du premier import."
-
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:125
 msgid "Functional Currency"
 msgstr "Devise Fonctionnelle"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:378
-#, python-format
-msgid "Line 10 of the file: The Origin is mandatory in the first import."
-msgstr "Ligne 10 du fichier: L'Origine est obligatoire lors du premier import."
 
 #. module: sale
 #: field:internal.request.import,nb_file_lines:0
@@ -102627,12 +102603,6 @@ msgid "Order Reference: IR Order Reference '%s' is not correct."
 msgstr "Référence de la Commande: La Référence de la DI '%s' est incorrecte."
 
 #. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:533
-#, python-format
-msgid "Origin: The Origin is mandatory in the first import."
-msgstr "Origine: L'Origine est obligatoire lors du premier import."
-
-#. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:879
 #, python-format
 msgid "IR_Import_Overview"
@@ -102695,12 +102665,6 @@ msgstr "Référence de la Commande"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:144
 msgid "IR Import Overview"
 msgstr "Vue d'Ensemble de l'Import de la DI"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:497
-#, python-format
-msgid "Requestor: The Requestor is mandatory in the first import."
-msgstr "Demandeur: Le Demandeur est obligatoire lors du premier import."
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:220
@@ -102776,8 +102740,8 @@ msgstr "Élément %s non trouvé."
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:480
 #, python-format
-msgid "Requested Date: The Requested Date '%s' must be formatted like 'DD-MM-YYYY'"
-msgstr "Date Demandée: La Date Demandée '%s' doit avoir le format 'JJ-MM-AAAA'"
+msgid "Requested Date: The Requested Date '%s' must be formatted like 'DD-MM-YYYY' or 'DD.MM.YYYY'"
+msgstr "Date Demandée: La Date Demandée '%s' doit avoir le format 'JJ-MM-AAAA' ou 'JJ.MM.AAAA'"
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:173
