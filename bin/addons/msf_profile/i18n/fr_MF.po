@@ -102789,3 +102789,98 @@ msgstr "État"
 #, python-format
 msgid "Price '%s' is not a correct value, default cost price has been used. "
 msgstr "Prix '%s' n'a pas une bonne valeur, le prix coutant par défaut sera utilisé. "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:682
+#, python-format
+msgid "Date of Stock Take '%s' must be in the format 'DD-MM-YYYY', line has been imported without Date of Stock Take. "
+msgstr "La Date de Prise de Stock '%s' doit être au format 'JJ-MM-AAAA', la ligne sera importée sans la Date de Prise de Stock. "
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:181
+msgid "Priority"
+msgstr "Priorité"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:89
+msgid "IR Import Informations"
+msgstr "Informations sur l'Import de la DI"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:185
+msgid "Creation Date"
+msgstr "Date de Création"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
+msgid "Product Code"
+msgstr "Code Produit"
+
+#. module: sale
+#: model:ir.model,name:sale.model_internal_request_import
+msgid "internal.request.import"
+msgstr "internal.request.import"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:119
+msgid "Error Message"
+msgstr "Message d'Erreur"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:461
+#, python-format
+msgid "Order Priority: Order Priority '%s' not defined, default value will be 'Normal'"
+msgstr "Priorité de Commande: La Priorité de Commande '%s' n'est pas définie, la valeur par défaut est 'Normale'"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
+#: field:internal.request.import.line,in_product_desc:0
+msgid "Product Description"
+msgstr "Description du Produit"
+
+#. modules: sale, procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:118
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:213
+#: field:internal.request.import.line,ir_line_number:0
+msgid "Line Number"
+msgstr "Numéro de Ligne"
+
+#. module: procurement_request
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:209
+msgid "Functional Currency"
+msgstr "Devise Fonctionnelle"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:449
+#, python-format
+msgid "Order Category: Order Category '%s' not defined, default value will be 'Other'"
+msgstr "Catégorie de Commande: La Catégorie de Commande '%s' n'est pas définie, la valeur par défaut est 'Autre'"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:515
+#, python-format
+msgid "Location Requestor: The Location Requestor '%s' does not match possible options."
+msgstr "Zone de Demande: La Zone de Demande '%s' ne correspond à aucune option possible."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:625
+#, python-format
+msgid "Product '%s' not recognized, line by nomenclature created. "
+msgstr "Le Produit '%s' n'a pas été reconnu, une ligne par nomenclature sera créée. "
+
+#. module: procurement_request
+#: view:internal.request.import:0
+#: model:ir.actions.server,name:procurement_request.menu_ir_import_action_create
+#: model:ir.actions.server,name:procurement_request.menu_ir_import_action_update
+msgid "Import from IR Excel template"
+msgstr "Import avec le modèle Excel d'une DI"
+
+#. module: procurement_request
+#: view:internal.request.import:0
+msgid "Cancel Import"
+msgstr "Annuler l'import"
+
+#. module: procurement_request
+#: view:internal.request.import:0
+msgid "Import File"
+msgstr "Importer le fichier"

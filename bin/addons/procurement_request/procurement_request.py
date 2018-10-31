@@ -585,7 +585,6 @@ class procurement_request(osv.osv):
         Launches the wizard to import lines from a file
         '''
         import_obj = self.pool.get('internal.request.import')
-        import_l_obj = self.pool.get('internal.request.import.line')
 
         if context is None:
             context = {}
