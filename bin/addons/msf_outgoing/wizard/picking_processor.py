@@ -420,7 +420,7 @@ class stock_move_processor(osv.osv):
                 # For internal or simple out, cannot process more than specified in stock move
                 if line.wizard_id.picking_id.type in ['out', 'internal']:
                     proc_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.ordered_uom_id.id)
-                    if abs(proc_qty - line.ordered_quantity) > 0.0001:
+                    if proc_qty - line.ordered_quantity > 0.0001:
                         res_value = 'greater_than_available'
             elif line.quantity < 0.00:
                 # Quantity cannot be negative
