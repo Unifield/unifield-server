@@ -188,6 +188,7 @@
         <report
            id="report_internal_move_xls"
            string="Internal Move Excel Export"
+           view_ids="stock.vpicktree,stock.view_picking_form"
            model="stock.picking"
            name="internal.move.xls"
            file="msf_supply_doc_export/report/report_internal_move_xls.mako"

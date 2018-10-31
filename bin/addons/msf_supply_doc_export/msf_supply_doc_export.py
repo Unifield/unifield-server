@@ -23,10 +23,8 @@
 # so in that case, only name="sale.order_xls" in the xml
 
 from report import report_sxw
-from osv import osv
 from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-from tools.translate import _
 from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 import pooler
@@ -778,105 +776,3 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
-
-
-
-
-class ir_values(osv.osv):
-    """
-    we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
-    """
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-
-    def get_(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        trans_obj = self.pool.get('ir.translation')
-
-        if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
-            new_act = []
-            #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
-            for v in values:
-                if context.get('procurement_request', False):
-                    if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
-                            or v[2].get('report_name', False) in ('internal_request_export', 'procurement.request.report') \
-                            or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-                        new_act.append(v)
-                else:
-                    if v[2].get('report_name', False) == 'msf.sale.order' \
-                        or v[2].get('report_name', False) == 'sale.order_xls' \
-                        or v[2].get('report_name', False) == 'sale.order.allocation.report' \
-                        or v[1] == 'allocation.report' \
-                            or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-                        new_act.append(v)
-                values = new_act
-
-        elif (context.get('_terp_view_name') or context.get('picking_type')) and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
-            new_act = []
-            Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
-            Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
-            Pre_Packing_Lists = trans_obj.tr_view(cr, 'Pre-Packing Lists', context)
-            Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
-            Delivery_Orders = trans_obj.tr_view(cr, 'Delivery Orders', context)
-            Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
-            Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
-            for v in values:
-                if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
-                    or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                    or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
-                    or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
-                    or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
-                        or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
-                    new_act.append(v)
-                values = new_act
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
-            new_act = []
-            Packing_Lists = trans_obj.tr_view(cr, 'Packing Lists', context)
-            Packing_List = trans_obj.tr_view(cr, 'Packing List', context)
-            Shipment_Lists = trans_obj.tr_view(cr, 'Shipment Lists', context)
-            Shipment_List = trans_obj.tr_view(cr, 'Shipment List', context)
-            Shipments = trans_obj.tr_view(cr, 'Shipments', context)
-            Shipment = trans_obj.tr_view(cr, 'Shipment', context)
-            for v in values:
-                if v[2].get('report_name', False) == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :
-                    new_act.append(v)
-                elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
-                    new_act.append(v)
-                values = new_act
-        elif key == 'action' and key2 == 'client_print_multi' and context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
-            new_act = []
-            for v in values:
-                if v[2].get('report_name', False) :
-                    if v[2].get('report_name', False) in ('picking.ticket', 'labels'):
-                        new_act.append(v)
-                values = new_act
-
-        elif key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if context.get('composition_type')=='theoretical' and v[2].get('report_name', False) in ('composition.kit.xls', 'kit.report'):
-                    if v[2].get('report_name', False) == 'kit.report':
-                        v[2]['name'] = _('Theoretical Kit')
-                    new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report'):
-                    if v[2].get('report_name', False) == 'kit.report':
-                        v[2]['name'] = _('Kit Composition')
-                    new_act.append(v)
-            values = new_act
-        # TODO: Improve and move elsewhere ?
-        # elif key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models] \
-        #         and context.get('procurement_request'):
-        #     new_act = []
-        #     for v in values:
-        #         if v[1] == 'Import from IR Excel template':
-        #             new_act.append(v)
-        #
-        #         values = new_act
-        # TODO: Improve and move elsewhere ?
-
-        return values
-
-ir_values()

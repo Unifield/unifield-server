@@ -29,6 +29,8 @@
             view_mode="form"
             view_type="form"
             target="new"
-            id="action_stock_invoice_onshipping"/>
+            id="action_stock_invoice_onshipping"
+            view_ids="stock.view_picking_in_tree,stock.view_picking_in_form"
+            />
     </data>
 </openerp>
