@@ -27,6 +27,7 @@ import base64
 import time
 import datetime
 import logging
+import tools
 
 from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -582,7 +583,7 @@ class internal_request_import(osv.osv):
                     product = False
                     line_recap = ''
                     for val in vals:
-                        line_recap += str(val or '') + '/'
+                        line_recap += tools.ustr(val or '') + '/'
                     # Line number
                     if ir_line_numbers:
                         if vals[0]:
