@@ -102884,3 +102884,8 @@ msgstr "Annuler l'import"
 #: view:internal.request.import:0
 msgid "Import File"
 msgstr "Importer le fichier"
+
+#. module: procurement_request
+#: view:internal.request.import:0
+msgid "Validate Import"
+msgstr "Valider l'import"
