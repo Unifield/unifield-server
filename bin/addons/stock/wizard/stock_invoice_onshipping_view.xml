@@ -20,6 +20,11 @@
             </field>
         </record>
 
+        <!-- circular ref, juste create 2 empty views -->
+        <record id="stock.view_picking_in_tree" model="ir.ui.view" />
+        <record id="stock.view_picking_in_form" model="ir.ui.view">
+            <field name="priority" eval="50"/>
+        </record>
 
         <act_window name="Create invoice"
             res_model="stock.invoice.onshipping"

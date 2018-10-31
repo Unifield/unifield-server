@@ -23,7 +23,7 @@ import pooler
 
 def ir_set(cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, view_ids=False):
     obj = pooler.get_pool(cr.dbname).get('ir.values')
-    return obj.set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
+    return obj.set(cr, uid, key, key2, name, models, value, replace, isobject, meta, view_ids=view_ids)
 
 def ir_del(cr, uid, id):
     obj = pooler.get_pool(cr.dbname).get('ir.values')

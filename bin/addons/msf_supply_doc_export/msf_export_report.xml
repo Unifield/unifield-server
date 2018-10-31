@@ -39,18 +39,6 @@
             menu="False"
             />
 
-        <report
-            id="report_request_for_quotation_xls"
-            string="Request For Quotation Excel Export"
-            model="purchase.order"
-            name="request.for.quotation_xls"
-            file="msf_supply_doc_export/report/report_request_for_quotation_xls.mako"
-            report_type="webkit"
-            view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"
-            header="False"
-            auto="False"
-            menu="True"
-         />
     <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
         <report
             id="report_sale_order_xls"

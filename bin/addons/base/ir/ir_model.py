@@ -846,10 +846,10 @@ class ir_model_data(osv.osv):
             res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta, view_ids)
         elif xml_id:
             cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name)) # not_a_user_entry
-            if key == 'action' and view_ids is not False:
-                cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
-                for x in view_ids:
-                    cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
+        if key == 'action' and view_ids is not False:
+            cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
+            for x in view_ids:
+                cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
         return True
 
     def _process_end(self, cr, uid, modules):
