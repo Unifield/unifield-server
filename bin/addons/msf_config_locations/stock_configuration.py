@@ -623,7 +623,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         if location_id:
             location = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
             # Check if no moves to this location aren't done
-            move_from_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_id', '=', location.id)])
+            move_from_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
             if move_from_to:
                 error = True
                 res['move_from_to'] = True
@@ -701,10 +701,6 @@ Please click on the 'Children locations' button to see all children locations.''
 
             location = wizard.location_id
 
-        res = self.pool.get('stock.location').check_if_has_open_stock_move_in(cr, uid, [location.id], context=context)
-        if res:
-            return res
-
         # De-activate the location
         location_obj.write(cr, uid, [location.id], {'active': False}, context=context)
 
@@ -748,7 +744,7 @@ Please click on the 'Children locations' button to see all children locations.''
         for wizard in self.browse(cr, uid, ids, context=context):
             location = wizard.location_id
 
-        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_id', '=', location.id)])
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
         for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
             if move.picking_id and move.picking_id.id not in picking_ids:
                 picking_ids.append(move.picking_id.id)
