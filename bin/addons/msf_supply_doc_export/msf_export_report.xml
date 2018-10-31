@@ -55,6 +55,7 @@
         <report
             id="report_sale_order_xls"
             string="Field Order Excel Export"
+            view_ids="sale.view_order_form,sale.view_order_tree"
             model="sale.order"
             name="sale.order_xls"
             file="msf_supply_doc_export/report/report_sale_order_xls.mako"
@@ -67,6 +68,7 @@
         <report
             id="report_internal_request_xls"
             string="Internal Request Excel Export"
+            view_ids="procurement_request.procurement_request_tree_view,procurement_request.procurement_request_form_view"
             model="sale.order"
             name="internal.request_xls"
             file="msf_supply_doc_export/report/report_internal_request_xls.mako"
@@ -79,6 +81,7 @@
         <report
             id="internal_request_export"
             string="Export to IR Excel template"
+            view_ids="procurement_request.procurement_request_tree_view,procurement_request.procurement_request_form_view"
             model="sale.order"
             name="internal_request_export"
             file="msf_supply_doc_export/report/internal_request_export_xls.mako"

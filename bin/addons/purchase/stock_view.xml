@@ -35,7 +35,6 @@
             groups="base.group_extended"
             src_model="purchase.order"
             context="{'contact_display': 'partner'}" />
--->
        <record id="action_picking_in_tree_view" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
             <field name="view_mode">tree</field>
@@ -48,6 +47,7 @@
             <field name="view_id" ref="stock.view_picking_in_form"/>
             <field name="act_window_id" ref="act_purchase_order_2_stock_picking"/>
         </record>
+-->
         
         <record id="stock_picking_in_inherit_purchase" model="ir.ui.view">
             <field name="name">Incoming Picking Inherited</field>

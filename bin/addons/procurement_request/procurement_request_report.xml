@@ -8,6 +8,7 @@
             model="sale.order"
             name="procurement.request.report"
             rml="addons/procurement_request/report/procurement_request_report.rml"
+            view_ids="procurement_request.procurement_request_tree_view,procurement_request.procurement_request_form_view"
             string="Internal Request" />
 
     </data>
