@@ -971,35 +971,6 @@ class wizard_add_users_synchronized(osv.osv_memory):
 
 wizard_add_users_synchronized()
 
-class ir_values(osv.osv):
-    """
-    we override ir.values because we need to filter where the button add users to the white list is displayed
-    """
-
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        new_values = values
-        if context.get('user_white_list', False):
-            # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context
-            return new_values
-
-        if key == 'action' and key2 == 'client_action_multi' and 'res.users' in [x[0] for x in models]:
-            action_list = [x[1] for x in values if x]
-            if 'action_open_wizard_add_users_to_white_list' in action_list:
-                new_values = []
-                for v in values:
-                    if v[1] != 'action_open_wizard_add_users_to_white_list':
-                        new_values.append(v)
-        return new_values
-
-ir_values()
-
-
 class config_users(osv.osv_memory):
     _name = 'res.config.users'
     _inherit = ['res.users', 'res.config']
