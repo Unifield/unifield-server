@@ -1064,8 +1064,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 # Lines to delete
                 for po_line in SIMU_LINES[wiz.id]['line_ids']:
-                    if wl_obj.read(cr, uid, [po_line], ['type_change'], context=context)[0]['type_change'] != 'del':
-                        wl_obj.write(cr, uid, po_line, {'type_change': 'ignore'}, context=context)
+                    line_data = wl_obj.read(cr, uid, [po_line], ['type_change', 'in_uom'], context=context)[0]
+                    if line_data['type_change'] != 'del':
+                        wl_obj.write(cr, uid, po_line, {'type_change': 'ignore', 'imp_uom': line_data['in_uom']}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
