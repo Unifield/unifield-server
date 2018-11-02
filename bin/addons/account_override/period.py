@@ -22,6 +22,8 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
+
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
@@ -100,6 +102,40 @@ def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         period_id = period_id and get_next_period_id(self, cr, uid, period_id, context=context)
     return period_id or False
 
+
+def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
+    """
+    Returns the ids of all the periods included between 2 other periods.
+    Special periods 13 to 16 are included, period 0 is excluded.
+    """
+    if context is None:
+        context = {}
+    field_list = ['number', 'fiscalyear_id']
+    initial_period = self.browse(cr, uid, period_from_id, fields_to_fetch=field_list, context=context)
+    final_period = self.browse(cr, uid, period_to_id, fields_to_fetch=field_list, context=context)
+    initial_fy_id = initial_period.fiscalyear_id.id
+    initial_number = initial_period.number
+    final_fy_id = final_period.fiscalyear_id.id
+    final_number = final_period.number
+    if initial_fy_id == final_fy_id:  # all the periods are within the same Fiscal Year
+        period_dom = [
+            ('number', '!=', 0),
+            ('number', '>=', initial_number),
+            ('number', '<=', final_number),
+            ('fiscalyear_id', '=', initial_fy_id)]
+    else:
+        # ex: from Nov. 2018 to Jan. 2019 => Nov 2018 / Dec 2018 / Periods 13->16 2018 / Jan 2019
+        if final_period.date_start < initial_period.date_start:
+            raise osv.except_osv(_('Error'), _("The End period can't precede the Start period."))
+        period_dom = [
+            ('number', '!=', 0),
+            '|',
+            '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
+            '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
+    period_ids = self.search(cr, uid, period_dom, order='id', context=context)
+    return period_ids
+
+
 class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
@@ -115,6 +151,10 @@ class account_period(osv.osv):
 
     def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         return get_next_period_id_at_index(self, cr, uid, period_id, index, context)
+
+    def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
+        return get_period_range(self, cr, uid, period_from_id, period_to_id, context=context)
+
 
 account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

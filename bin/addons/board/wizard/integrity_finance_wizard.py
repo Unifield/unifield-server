@@ -95,7 +95,7 @@ class integrity_finance_wizard(osv.osv_memory):
             'form': {},
             'context': context,
         }
-        # get the selected criteria
+        # store the selected criteria
         data['form'].update({
             'fiscalyear_id': wiz.fiscalyear_id and wiz.fiscalyear_id.id or False,
             'filter': wiz.filter,

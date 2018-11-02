@@ -101992,3 +101992,15 @@ msgstr "Ecritures associées aux Numéros de séquence indiqués"
 #: code:addons/account_mcdb/account_mcdb.py:1276
 msgid "Related entries"
 msgstr "Ecritures associées"
+
+#. module: board
+#: code:addons/board/report/integrity_finance.py:46
+#, python-format
+msgid "Either the Start period or the End period is missing."
+msgstr "Il manque soit la Période de début soit la Période de fin."
+
+#. module: account_override
+#: code:addons/account_override/period.py:129
+#, python-format
+msgid "The End period can't precede the Start period."
+msgstr "La Période de fin ne peut pas précéder la Période de début."

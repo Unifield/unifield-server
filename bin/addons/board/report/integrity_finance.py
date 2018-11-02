@@ -3,6 +3,7 @@
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from board import queries_finance
+from osv import osv
 from tools.translate import _
 
 
@@ -24,15 +25,30 @@ class integrity_finance(report_sxw.rml_parse):
         - self.sql_additional with the part of SQL request corresponding to the criteria selected in the wizard (string)
         - self.sql_params with the related parameters (list)
         """
+        period_obj = self.pool.get('account.period')
         if data.get('form', False):
+            # instances
             instance_ids = data['form'].get('instance_ids', False)
             if instance_ids:
                 self.sql_additional += " AND l.instance_id IN %s "
                 self.sql_params.append(tuple(instance_ids,))
+            # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
             if fiscalyear_id:
                 self.sql_additional += " AND l.period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
                 self.sql_params.append(fiscalyear_id)
+            wiz_filter = data['form'].get('filter', '')
+            # periods
+            if wiz_filter == 'filter_period':
+                period_from = data['form'].get('period_from', False)
+                period_to = data['form'].get('period_to', False)
+                if not period_from or not period_to:
+                    raise osv.except_osv(_('Error'), _('Either the Start period or the End period is missing.'))
+                else:
+                    period_ids = period_obj.get_period_range(self.cr, self.uid, period_from, period_to, context=data.get('context', {}))
+                    if period_ids:
+                        self.sql_additional += " AND l.period_id IN %s "
+                        self.sql_params.append(tuple(period_ids,))
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):
