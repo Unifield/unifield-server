@@ -407,9 +407,14 @@ class product_product(osv.osv):
             if not location_id:
                 wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
                 location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+            if isinstance(location_id, basestring):
+                location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
 
-            child_location_ids = stock_location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])], order='NO_ORDER')
-            location_ids = child_location_ids or [location_id]
+            if not isinstance(location_id, list):
+                location_id = [location_id]
+
+            child_location_ids = stock_location_obj.search(cr, uid, [('location_id', 'child_of', location_id)], order='NO_ORDER')
+            location_ids = child_location_ids or location_id
             ret.tables.append('"stock_mission_report_line_location"')
             ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
             ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
