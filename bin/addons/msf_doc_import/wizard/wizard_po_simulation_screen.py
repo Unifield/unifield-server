@@ -1305,6 +1305,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
             else:
                 res[line.id]['imp_discrepancy'] = line.imp_qty*line.imp_price
+                if line.imp_uom:
+                    res[line.id]['in_uom'] = line.imp_uom.id
 
             if line.type_change in ('warning', 'del', 'ignore'):
                 res[line.id]['chg_text'] = dict(self._columns['type_change'].selection).get(line.type_change) or ''
