@@ -102004,3 +102004,9 @@ msgstr "Il manque soit la Période de début soit la Période de fin."
 #, python-format
 msgid "The End period can't precede the Start period."
 msgstr "La Période de fin ne peut pas précéder la Période de début."
+
+#. module: board
+#: code:addons/board/report/integrity_finance.py:57
+#, python-format
+msgid "Either the Start date or the End date is missing."
+msgstr "Il manque soit la Date de début soit la Date de fin."

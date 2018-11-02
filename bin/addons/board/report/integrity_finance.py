@@ -49,6 +49,21 @@ class integrity_finance(report_sxw.rml_parse):
                     if period_ids:
                         self.sql_additional += " AND l.period_id IN %s "
                         self.sql_params.append(tuple(period_ids,))
+            # dates
+            if wiz_filter in ('filter_date_doc', 'filter_date'):
+                date_from = data['form'].get('date_from', False)
+                date_to = data['form'].get('date_to', False)
+                if not date_from or not date_to:
+                    raise osv.except_osv(_('Error'), _('Either the Start date or the End date is missing.'))
+                else:
+                    if wiz_filter == 'filter_date_doc':
+                        # doc dates
+                        self.sql_additional += " AND l.document_date >= %s AND l.document_date <= %s "
+                    else:
+                        # posting dates
+                        self.sql_additional += " AND l.date >= %s AND l.date <= %s "
+                    self.sql_params.append(date_from)
+                    self.sql_params.append(date_to)
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):
