@@ -1925,7 +1925,13 @@ class account_bank_statement_line(osv.osv):
         process_invoice_move_line_ids = []
         total_payment = True
         diff = st_line.first_move_line_id.amount_currency - total_amount
-        if len(st_line.imported_invoice_line_ids) > 1 and abs(diff) > 0.001:
+        nb_imported_inv = len(st_line.imported_invoice_line_ids)
+        if nb_imported_inv == 1 and abs(diff) > 0.001:  # 1 single invoice partially imported
+            inv_ml = st_line.imported_invoice_line_ids[0]
+            if inv_ml:
+                ji_description = inv_ml.invoice.number or st_line.first_move_line_id.name or ''
+                move_line_obj.write(cr, uid, move_lines, {'name': ji_description}, context=context)
+        elif nb_imported_inv > 1 and abs(diff) > 0.001:
             # multi unpartial payment
             total_payment = False
             # Delete them
