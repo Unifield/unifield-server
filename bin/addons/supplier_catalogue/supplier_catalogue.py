@@ -1120,7 +1120,7 @@ class supplier_catalogue_line(osv.osv):
                                        help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='SoQ rounding',
-                                 help='The ordered quantity must be a multiple of this rounding value.'),
+                                 help='The ordered quantity must be a multiple of this rounding value.', related_uom='line_uom_id'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty', related_uom='line_uom_id'),
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),

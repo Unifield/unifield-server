@@ -232,7 +232,7 @@ class pricelist_partnerinfo(osv.osv):
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='SoQ Rounding',
-                                 help='The ordered quantity must be a multiple of this rounding value.'),
+                                 help='The ordered quantity must be a multiple of this rounding value.', related_uom='uom_id'),
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty', related_uom='uom_id'),
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
