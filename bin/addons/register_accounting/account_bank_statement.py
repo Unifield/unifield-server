@@ -1930,7 +1930,7 @@ class account_bank_statement_line(osv.osv):
             inv_ml = st_line.imported_invoice_line_ids[0]
             if inv_ml:
                 ji_description = inv_ml.invoice.number or st_line.first_move_line_id.name or ''
-                move_line_obj.write(cr, uid, move_lines, {'name': ji_description}, context=context)
+                move_line_obj.write(cr, uid, move_lines, {'name': ji_description}, check=False, update_check=False, context=context)
         elif nb_imported_inv > 1 and abs(diff) > 0.001:
             # multi unpartial payment
             total_payment = False
