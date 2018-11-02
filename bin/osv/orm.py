@@ -4810,13 +4810,19 @@ class orm(orm_template):
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
-                                   from_clause, where_str, limit_str, offset_str))
-            cr.execute(count_query, where_clause_params)
-            res = cr.fetchall()
-            return res[0][0]
+            if not query.having:
+                count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
+                                       from_clause, where_str, limit_str, offset_str))
+                cr.execute(count_query, where_clause_params)
+                res = cr.fetchall()
+                return res[0][0]
+            else:
+                count_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+                                       from_clause, where_str, query.having, limit_str, offset_str))
+                cr.execute(count_query, where_clause_params)
+                return cr.rowcount
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                                from_clause, where_str, order_by,limit_str, offset_str))
+                                from_clause, where_str, query.having, order_by,limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
