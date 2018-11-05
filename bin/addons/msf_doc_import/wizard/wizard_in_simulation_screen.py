@@ -35,18 +35,18 @@ LN_BY_EXT_REF = {}
 
 
 LINES_COLUMNS = [
-    (_('Line number*'), 'line_number', ''),
-    (_('Ext. Reference'), 'external_ref', ''),
-    (_('Product Code*'), 'product_code', 'mandatory'),
-    (_('Product Description'), 'product_name', ''),
-    (_('Product Qty*'), 'product_qty', 'mandatory'),
-    (_('Product UoM'), 'product_uom', 'mandatory'),
-    (_('Price Unit'), 'price_unit', 'mandatory'),
-    (_('Currency'), 'price_currency_id', 'mandatory'),
-    (_('Batch'), 'prodlot_id', ''),
-    (_('Expiry Date'), 'expired_date', ''),
-    (_('ESC message 1'), 'message_esc1', ''),
-    (_('ESC message 2'), 'message_esc2', ''),
+    (_('Line number*'), 'line_number', '', 'int'),
+    (_('Ext. Reference'), 'external_ref', '', 'string'),
+    (_('Product Code*'), 'product_code', 'mandatory', 'string'),
+    (_('Product Description'), 'product_name', '', 'string'),
+    (_('Product Qty*'), 'product_qty', 'mandatory', 'float'),
+    (_('Product UoM'), 'product_uom', 'mandatory', 'string'),
+    (_('Price Unit'), 'price_unit', 'mandatory', 'float'),
+    (_('Currency'), 'price_currency_id', 'mandatory', 'string'),
+    (_('Batch'), 'prodlot_id', '', 'string'),
+    (_('Expiry Date'), 'expired_date', '', 'date'),
+    (_('ESC message 1'), 'message_esc1', '', 'string'),
+    (_('ESC message 2'), 'message_esc2', '', 'string'),
 ]
 
 
@@ -503,6 +503,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                     cell_data = row.cells and row.cells[cell_nb] and \
                         row.cells[cell_nb].data
                     if is_line:
+                        if cell_data and LINES_COLUMNS[cell_nb][3] == 'string':
+                            cell_data = '%s' % cell_data
                         values[index][LINES_COLUMNS[cell_nb][1]] = cell_data
                     elif process_pack_line:
                         values[index][PACK_HEADER[cell_nb][1]] = cell_data
@@ -818,7 +820,7 @@ Nothing has been imported because of %s. See below:
                             num_of_pack = pack_d[1] -  pack_d[0] + 1
                             if num_of_pack:
                                 for line in data_per_pack.get(pack_d[2], []):
-                                    if line[3]:
+                                    if line[3] and line[2] in uom_data:
                                         ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3], pack_info_obj)
 
                         pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)
