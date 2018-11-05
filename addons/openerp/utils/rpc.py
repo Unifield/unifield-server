@@ -502,10 +502,10 @@ class RPCProxy(object):
         return self._session.execute('object', 'execute',
                                      self._resource, *args)
 
-    def fields_get(self, fields, context=None):
+    def fields_get(self, fields, context=None, with_uom_rounding=False):
         if context is None:
             context = self._session.context
-        return self('fields_get', fields, context)
+        return self('fields_get', fields, context, with_uom_rounding)
     def fields_view_get(self, view_id, view_type, context=None,
                         hastoolbar=False, hassubmenu=False):
         if context is None:

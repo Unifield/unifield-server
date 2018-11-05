@@ -108,6 +108,8 @@ class List(TinyWidget):
         self.force_readonly = kw.get('force_readonly', False)
         self.filter_selector = kw.get('filter_selector', None)
 
+        self.rounding_values = view.get('uom_rounding', {})
+
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
             if terp_params.get('_terp_model'):
@@ -373,6 +375,7 @@ class List(TinyWidget):
         ctx = dict(rpc.session.context,
                    **self.context)
 
+        headers_info = dict(self.headers)
         fields = [name for name, _ in chain(self.headers, self.hiddens)]
 
         proxy = rpc.RPCProxy(self.model)
@@ -393,6 +396,10 @@ class List(TinyWidget):
 
         for f in fields:
             if f in values:
+                if headers_info.get(f, {}).get('related_uom') and self.rounding_values and headers_info[f]['related_uom'] in values:
+                    headers_info[f]['uom_rounding'] = self.rounding_values
+                    headers_info[f]['rounding_value'] = values[headers_info[f]['related_uom']]
+                    self.editors[f] = get_widget('float')(**headers_info[f])
                 self.editors[f].set_value(values[f])
 
         return super(List, self).display(value, **params)
@@ -488,7 +495,14 @@ class List(TinyWidget):
                             cell = Hidden(**fields[name])
                             cell.set_value(row_value.get(name, False))
                         else:
-                            cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
+                            if kind == 'float' and fields[name].get('related_uom') and self.rounding_values and row_value.get(fields[name]['related_uom']):
+                                if isinstance(row_value.get(fields[name]['related_uom']), (list, tuple)):
+                                    rounding = row_value.get(fields[name]['related_uom'])[0]
+                                else:
+                                    rounding = row_value.get(fields[name]['related_uom'])
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), rounding=self.rounding_values.get(rounding), **fields[name])
+                            else:
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
 
                         for color, expr in self.colors.items():
                             try:
@@ -619,6 +633,9 @@ class Float(Char):
         computation = self.attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
+
+        if self.attrs.get('rounding'):
+            return format.format_decimal(self.value or 0.0, int(abs(math.log10(self.attrs['rounding']))))
 
         integer, digit = digits
         return format.format_decimal(self.value or 0.0, digit, computation=computation)

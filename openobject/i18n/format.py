@@ -214,7 +214,6 @@ def convert_date_format_in_domain(domain, fields, context):
 
 def _convert_date_format_in_domain(domain, fields, context):
     from view_calendar.widgets.utils import DT_FORMAT_INFO
-    from openerp.utils import rpc
 
     date_fields = dict([(field_name, field_def['type'])
                             for field_name, field_def
@@ -303,7 +302,6 @@ def format_decimal(value, digits=2, **kwargs):
         val = "-0"
     else:
         val = numbers.format_number(int(num), locale=locale)
-
     # process the decimals length
     # if we are treating a computation field, we apply the formatting algorithm - do not interfer with number formatting according to locale
     if kwargs.get('computation', False):
@@ -316,7 +314,6 @@ def format_decimal(value, digits=2, **kwargs):
             decimals = decimals + '0'*(min_digits - len(decimals))
 
     result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
-        
     return result
 
 def parse_decimal(value):

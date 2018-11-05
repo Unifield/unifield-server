@@ -71,6 +71,7 @@ class M2M(TinyInputWidget):
         self.context = attrs.get('context', {}) or {}        
 
         view = attrs.get('views', {})
+        view['uom_rounding'] = attrs.get('uom_rounding', {})
         mode = str(attrs.get('mode', 'tree,form')).split(',')
 
         self.view = view
