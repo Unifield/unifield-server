@@ -159,27 +159,27 @@
 % for o in objects:
   % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
-      <Cell ss:StyleID="${line['raw_state'] in ['cancel', 'cancel_r'] and 'lgrey' or 'line'|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
   % endfor
 % endfor   

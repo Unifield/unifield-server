@@ -519,6 +519,9 @@ class po_follow_up_mixin(object):
 
         raise StopIteration
 
+    def getLineStyle(self, line):
+        return 'lgrey' if line.get('raw_state', '') in ['cancel', 'cancel_r'] else 'line'
+
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         po_obj = self.pool.get('purchase.order')
@@ -763,6 +766,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getPOLines': self.getPOLines,
             'getPOLineHeaders': self.getPOLineHeaders,
             'getRunParms': self.getRunParms,
+            'getLineStyle': self.getLineStyle,
         })
 
 
