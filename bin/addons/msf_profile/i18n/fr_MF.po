@@ -22626,7 +22626,7 @@ msgstr "Définit la limite haute du nombre d'heures."
 msgid "Populate fields order"
 msgstr "Remplir les champs commande"
 
-#. modules: account, finance
+#. modules: account, finance, board
 #: field:account.aged.trial.balance,filter:0
 #: field:account.balance.report,filter:0
 #: field:account.bs.report,filter:0
@@ -22643,6 +22643,7 @@ msgstr "Remplir les champs commande"
 #: field:account.report.general.ledger,filter:0
 #: field:account.vat.declaration,filter:0
 #: field:wizard.account.partner.balance.tree,filter:0
+#: field:integrity.finance.wizard,filter:0
 msgid "Filter by"
 msgstr "Filtrer par"
 
@@ -75657,7 +75658,7 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
-#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution
+#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, board
 #: field:account.aged.trial.balance,fiscalyear_id:0
 #: field:account.balance.report,fiscalyear_id:0
 #: field:account.bs.report,fiscalyear_id:0
@@ -75688,6 +75689,7 @@ msgstr "Surveillance des Mises à jour Envoyées"
 #: field:ocp.matching.export.wizard,fiscalyear_id:0
 #: field:wizard.hq.report.oca,fiscalyear_id:0
 #: field:wizard.hq.report.ocg,fiscalyear_id:0
+#: field:integrity.finance.wizard,fiscalyear_id:0
 #, python-format
 msgid "Fiscal year"
 msgstr "Exercice Comptable"
@@ -101998,6 +102000,12 @@ msgstr "Ecritures associées"
 #, python-format
 msgid "Either the Start period or the End period is missing."
 msgstr "Il manque soit la Période de début soit la Période de fin."
+
+#. module: board
+#: code:addons/board/report/integrity_finance.py:62
+#, python-format
+msgid "No period matches the selected criteria."
+msgstr "Aucune période ne correspond aux critères sélectionnés."
 
 #. module: account_override
 #: code:addons/account_override/period.py:129

@@ -28,7 +28,7 @@ class integrity_finance(report_sxw.rml_parse):
         - self.sql_params and self.sql_rec_params with the related parameters (list)
 
         For reconciliation queries the reconciliation dates must be within the FY/periods/dates selected.
-        For other queries the JI dates is used.
+        For other queries the JI dates are used.
         """
         period_obj = self.pool.get('account.period')
         fy_obj = self.pool.get('account.fiscalyear')
@@ -58,9 +58,10 @@ class integrity_finance(report_sxw.rml_parse):
                     raise osv.except_osv(_('Error'), _('Either the Start period or the End period is missing.'))
                 else:
                     period_ids = period_obj.get_period_range(self.cr, self.uid, period_from, period_to, context=data.get('context', {}))
-                    if period_ids:
-                        self.sql_additional += " AND l.period_id IN %s "
-                        self.sql_params.append(tuple(period_ids,))
+                    if not period_ids:
+                        raise osv.except_osv(_('Error'), _('No period matches the selected criteria.'))
+                    self.sql_additional += " AND l.period_id IN %s "
+                    self.sql_params.append(tuple(period_ids,))
                     per_from = period_obj.browse(self.cr, self.uid, period_from, fields_to_fetch=['date_start'], context=data.get('context', {}))
                     per_to = period_obj.browse(self.cr, self.uid, period_to, fields_to_fetch=['date_stop'], context=data.get('context', {}))
                     self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
