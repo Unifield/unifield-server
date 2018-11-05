@@ -10257,7 +10257,7 @@ msgstr "Une période est une période comptable dans laquelle sont enregistrées
 msgid "Back Order of :"
 msgstr "Back Order of :"
 
-#. modules: purchase, account, msf_outgoing, financing_contract, register_accounting, sale, product_expiry, stock, board
+#. modules: purchase, account, msf_outgoing, financing_contract, register_accounting, sale, product_expiry, stock, account_override
 #: view:account.bank.statement:0
 #: view:account.common.report:0
 #: view:account.move:0
@@ -17718,7 +17718,7 @@ msgstr "Only added lines"
 msgid "Create Access"
 msgstr "Créer l'Accès "
 
-#. modules: account, base, procurement_request, board
+#. modules: account, base, procurement_request, account_override
 #: view:account.common.report:0
 #: view:ir.actions.act_window:0
 #: model:ir.actions.act_window,name:base.actions_ir_filters_view
@@ -20063,11 +20063,11 @@ msgstr "You cannot remove lines on a RfQ created by a tender. Leave the lines wi
 msgid "FREIGHT MANIFEST"
 msgstr "MANIFESTE DE FRET"
 
-#. module: board
-#: model:ir.actions.act_window,name:board.action_integrity_finance_report
-#: model:ir.ui.menu,name:board.menu_integrity_finance_report
+#. modules: account_override, board
+#: model:ir.actions.act_window,name:account_override.action_integrity_finance_report
+#: model:ir.ui.menu,name:account_override.menu_integrity_finance_report
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:111
 #: code:addons/board/report/integrity_finance.py:20
-#: code:addons/board/wizard/integrity_finance_wizard.py:57
 #, python-format
 msgid "Entries Data Integrity"
 msgstr "Intégrité des entrées comptables"
@@ -22626,7 +22626,7 @@ msgstr "Définit la limite haute du nombre d'heures."
 msgid "Populate fields order"
 msgstr "Remplir les champs commande"
 
-#. modules: account, finance, board
+#. modules: account, finance
 #: field:account.aged.trial.balance,filter:0
 #: field:account.balance.report,filter:0
 #: field:account.bs.report,filter:0
@@ -24260,7 +24260,7 @@ msgstr "Factures Fournisseur"
 msgid "Create Composition List"
 msgstr "Créer une Liste de Composition"
 
-#. modules: account, res_currency_tables, finance, board
+#. modules: account, res_currency_tables, finance
 #: field:account.common.partner.report,period_from:0
 #: field:account.partner.balance,period_from:0
 #: field:account.partner.ledger,period_from:0
@@ -28376,7 +28376,7 @@ msgstr "2. Les règles de groupe sont coordonnées par un ET logique"
 msgid "XML Identifier"
 msgstr "Identifiant XML"
 
-#. modules: msf_budget, account, stock_move_tracking, product, sale, stock_forecast, purchase_allocation_report, order_types, board
+#. modules: msf_budget, account, stock_move_tracking, product, sale, stock_forecast, purchase_allocation_report, order_types, account_override
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
 #: view:account.analytic.balance:0
@@ -29754,7 +29754,7 @@ msgstr "Choisir des jours"
 msgid "Fiscal Position Template"
 msgstr "Modèle de Position Fiscale"
 
-#. modules: account, finance, board
+#. modules: account, finance
 #: field:account.partner.balance,period_to:0
 #: field:account.partner.ledger,period_to:0
 #: field:wizard.account.partner.balance.tree,period_to:0
@@ -35011,7 +35011,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, board
+#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -41038,7 +41038,7 @@ msgstr "Sourcing Tool"
 msgid "Name of the batch will be ignored because the batch is 'Internal' so name is created by the system"
 msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom sera créé par le système"
 
-#. modules: account, msf_instance, finance, account_mcdb, board
+#. modules: account, msf_instance, finance, account_mcdb
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
 #: report:account.partner.balance:0
@@ -44429,7 +44429,7 @@ msgstr "Réinitialiser l'exécution"
 msgid "Reordering Mode"
 msgstr "Mode de Réapprovisionnement"
 
-#. modules: msf_doc_import, sale, sales_followup, board
+#. modules: msf_doc_import, sale, sales_followups
 #: field:abstract.wizard.import,end_date:0
 #: field:wizard.import.batch,end_date:0
 #: field:sale.donation.stock.moves,end_date:0
@@ -51624,7 +51624,7 @@ msgstr "Devise ESC"
 msgid "Donation Line"
 msgstr "Donation Line"
 
-#. modules: account, board
+#. module: account
 #: selection:account.aged.trial.balance,filter:0
 #: selection:account.balance.report,filter:0
 #: selection:account.bs.report,filter:0
@@ -54853,7 +54853,7 @@ msgstr "Il n'y a pas de journal de défini dans la catégorie de produit: \"%s\"
 msgid "Africa/Timbuktu"
 msgstr "Africa/Timbuktu"
 
-#. modules: account, finance, account_mcdb, analytic_distribution, board
+#. modules: account, finance, account_mcdb, analytic_distribution, account_override
 #: selection:account.aged.trial.balance,filter:0
 #: selection:account.balance.report,filter:0
 #: selection:account.bs.report,filter:0
@@ -75658,7 +75658,7 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
-#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, board
+#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution
 #: field:account.aged.trial.balance,fiscalyear_id:0
 #: field:account.balance.report,fiscalyear_id:0
 #: field:account.bs.report,fiscalyear_id:0
@@ -97029,7 +97029,7 @@ msgstr "Prix changeant"
 msgid "wizard.export.po.validated"
 msgstr "wizard.export.po.validated"
 
-#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration, board
+#. modules: account, account_mcdb, msf_homere_interface, register_accounting, account_hq_entries, account_override, msf_accrual, analytic_override, analytic_distribution, vertical_integration
 #: report:combined.journals.report.pdf:0
 #: field:hq.entries,document_date:0
 #: report:account.analytic.line:0
