@@ -20,7 +20,6 @@
 ##############################################################################
 
 import board_menu_create
-import integrity_finance_wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
