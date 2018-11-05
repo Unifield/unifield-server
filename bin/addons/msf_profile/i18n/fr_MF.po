@@ -72964,8 +72964,8 @@ msgstr "Information Menu"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:3030
 #, python-format
-msgid "The ppl has been added to the existing Draft Shipment %s."
-msgstr "Le ppl a été ajouté aux %s existants d'expédition en mode brouillon."
+msgid "The PPL has been added to the existing Draft Shipment %s."
+msgstr "Le PPL a été ajouté aux %s existants d'expédition en mode brouillon."
 
 #. module: msf_tools
 #: view:automated.export.job:0

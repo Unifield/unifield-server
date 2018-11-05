@@ -3050,7 +3050,7 @@ class stock_picking(osv.osv):
                         if rts_obj < shipment_expected:
                             shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts, }, context=context)
                     shipment_name = shipment.name
-                    shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.') % (shipment_name,))
+                    shipment_obj.log(cr, uid, shipment_id, _('The PPL has been added to the existing Draft Shipment %s.') % (shipment_name,))
 
             # update the new pick with shipment_id
             self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
@@ -5319,7 +5319,7 @@ class pack_family_memory(osv.osv):
     dynamic memory object for pack families
     '''
     _name = 'pack.family.memory'
-    _order = 'sale_order_id, from_pack, id'
+    _order = 'sale_order_id, ppl_id, from_pack, id'
 
     _auto = False
     def init(self, cr):
