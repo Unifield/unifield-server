@@ -119,7 +119,7 @@ def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
     final_number = final_period.number
     same_fy = initial_fy_id == final_fy_id
     if (final_period.date_start < initial_period.date_start) or \
-            (same_fy and final_period.number < initial_period.number):  # e.g. Period 13 2018 can't precede Period 14 2018
+            (same_fy and final_period.number < initial_period.number):  # e.g. Period 13 2018 precedes Period 14 2018
         raise osv.except_osv(_('Error'), _("The End period can't precede the Start period."))
     if same_fy:  # all the periods are within the same Fiscal Year
         period_dom = [
