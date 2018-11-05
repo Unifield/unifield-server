@@ -722,7 +722,30 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Order Ref', 'Item', 'Code', 'Description', 'Qty ordered', 'UoM', 'Qty received', 'IN', 'Qty backorder', 'Unit Price', 'IN unit price', 'Created', 'Confirmed Delivery', 'Doc. Status', 'Line Status', 'Destination', 'Cost Center', 'Customer', 'Customer Reference', 'Source Document', 'Supplier Reference']
+        return [
+            'Order Reference',
+            'Supplier',
+            'Order Type',
+            'Line',
+            'Product Code',
+            'Product Description',
+            'Qty ordered',
+            'UoM',
+            'Qty received',
+            'IN Reference',
+            'Qty backorder',
+            'Unit Price',
+            'IN unit price',
+            'Currency',
+            'Total Currency',
+            'Total Functional Currency',
+            'Created',
+            'Delivery Requested Date',
+            'Delivery Confirmed Date',
+            'PO Line Status',
+            'PO Document Status',
+        ]
+
 
 
 

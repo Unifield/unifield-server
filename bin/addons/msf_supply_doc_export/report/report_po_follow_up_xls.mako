@@ -23,8 +23,8 @@
 <Styles>
   <Style ss:ID="mainheader">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
-        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000"/>
-        <Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000" ss:Bold="1"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -46,7 +46,7 @@
     
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#d3d3d3" ss:Pattern="Solid"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -90,15 +90,19 @@
 
 <ss:Worksheet ss:Name="PO Follow Up">
 ## definition of the columns' size
-<% nb_of_columns = 12 %>
+<% nb_of_columns = 21 %>
 <Table x:FullColumns="1" x:FullRows="1">
-    # Order name
+    # Order ref
     <Column ss:AutoFitWidth="1" ss:Width="65" />
-    # Item
+    # Supplier
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Order Type
+    <Column ss:AutoFitWidth="1" ss:Width="90" />
+    # Line
     <Column ss:AutoFitWidth="1" ss:Width="40" />
-    # Code
+    # Product Code
     <Column ss:AutoFitWidth="1" ss:Width="81" />
-    # Description
+    # Product Description
     <Column ss:AutoFitWidth="1" ss:Width="161" />
     # Qty ordered
     <Column ss:AutoFitWidth="1" ss:Width="57" />
@@ -114,36 +118,36 @@
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # IN Unit Price
     <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Currency
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    # Total Currency
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Total Functional Currency
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Created (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Delivery Confirmed (order)
+    # Delivery Requested Date
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Status (order)
+    # Delivery Confirmed Date
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Status (line)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Destination
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # Cost Center
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # Customer
-    <Columns ss:AutoFitWidth="1" ss:Width="120" />
-    # Customer ref
-    <Columns ss:AutoFitWidth="1" ss:Width="160" />
-    # Source document
-    <Columns ss:AutoFitWidth="1" ss:Width="160" />
-    # Supplier ref
-    <Columns ss:AutoFitWidth="1" ss:Width="160" />
-
+    # Status (order)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
 <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Report run date</Data></Cell>
+   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['run_date'] or '' |x}</Data></Cell>
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date from</Data></Cell>
+   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_from'] or ''|x}</Data></Cell>
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date to</Data></Cell>
+   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_thru'] or '' |x}</Data></Cell>
 </Row>
 
     <Row ss:AutoFitHeight="1" > 
