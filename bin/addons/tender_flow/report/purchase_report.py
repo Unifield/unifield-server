@@ -40,17 +40,17 @@ class purchase_report(osv.osv):
         return res
 
     STATE_SELECTION = [
-                       ('draft', 'Draft'),
-                       ('wait', 'Wait'),
-                       ('confirmed', 'Validated'),
-                       ('approved', 'Confirmed'),
-                       ('except_picking', 'Receipt Exception'),
-                       ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Closed'),
-                       ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'Sent'),
-                       ('rfq_updated', 'Updated'),
-                       ('rfq_done', 'Closed'),]
+        ('draft', 'Draft'),
+        ('wait', 'Wait'),
+        ('confirmed', 'Validated'),
+        ('approved', 'Confirmed'),
+        ('except_picking', 'Receipt Exception'),
+        ('except_invoice', 'Invoice Exception'),
+        ('done', 'Closed'),
+        ('cancel', 'Cancelled'),
+        ('rfq_sent', 'Sent'),
+        ('rfq_updated', 'Updated'),
+        ('rfq_done', 'Closed'),]
 
     _columns = {
         'date': fields.date('Order Date', readonly=True, help="Date on which this document has been created"),
@@ -74,24 +74,24 @@ class purchase_report(osv.osv):
         'user_id':fields.many2one('res.users', 'Responsible', readonly=True),
         'delay':fields.float('Days to Validate', digits=(16,2), readonly=True),
         'delay_pass':fields.float('Days to Deliver', digits=(16,2), readonly=True),
-        'quantity': fields.float('Quantity', readonly=True),
+        'quantity': fields.float('Quantity', readonly=True, related_uom='product_uom'),
         'price_total': fields.float('Subtotal', readonly=True),
         'price_average': fields.float('Average Price', readonly=True, group_operator="avg"),
         'negociation': fields.float('Purchase-Standard Price', readonly=True, group_operator="avg"),
         'price_standard': fields.float('Products Value', readonly=True, group_operator="sum"),
         'nbr': fields.integer('# of Lines', readonly=True),
         'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'), ('05','May'), ('06','June'),
-                          ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
+                                  ('07','July'), ('08','August'), ('09','September'), ('10','October'), ('11','November'), ('12','December')],'Month',readonly=True),
         'category_id': fields.many2one('product.nomenclature', 'Family', readonly=True),
         'order_name': fields.char('Order Reference', size=64, required=True,
-            readonly=True, states={'draft': [('readonly', False)]}, select=True),
+                                  readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
-             type='boolean', help="It indicates that an invoice has been paid."),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+                                    type='boolean', help="It indicates that an invoice has been paid."),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                         ('direct', 'Direct Purchase Order')],
-                                        string='Order Type', required=True, readonly=True),
+                                       string='Order Type', required=True, readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'currency_id': fields.many2one('res.currency', string='Currency'),
@@ -224,7 +224,7 @@ class purchase_report(osv.osv):
             (['product_name', 'Product Name'], 20),
         ],
     }
-        
+
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''
         Add functional currency on all lines
@@ -253,8 +253,8 @@ class purchase_report(osv.osv):
 
                 if not product_id and 'quantity' in data:
                     data.update({'quantity': ''})
-                
+
         return res
-        
+
 purchase_report()
 

@@ -1791,7 +1791,7 @@ class shipment_additionalitems(osv.osv):
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
                 'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
                 'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
-                'quantity': fields.float(digits=(16, 2), string='Quantity', required=True),
+                'quantity': fields.float(digits=(16, 2), string='Quantity', required=True, related_uom='uom'),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
                 'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
@@ -5090,7 +5090,7 @@ class stock_move(osv.osv):
                 # relation to the corresponding move from draft **packing** ticket object
                 'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
                 # functions
-                'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
+                'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
                 'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),

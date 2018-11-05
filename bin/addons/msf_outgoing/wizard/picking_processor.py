@@ -420,7 +420,7 @@ class stock_move_processor(osv.osv):
                 # For internal or simple out, cannot process more than specified in stock move
                 if line.wizard_id.picking_id.type in ['out', 'internal']:
                     proc_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.ordered_uom_id.id)
-                    if proc_qty > line.ordered_quantity:
+                    if proc_qty - line.ordered_quantity > 0.0001:
                         res_value = 'greater_than_available'
             elif line.quantity < 0.00:
                 # Quantity cannot be negative
@@ -486,6 +486,7 @@ class stock_move_processor(osv.osv):
             string='Quantity',
             digits_compute=dp.get_precision('Product UoM'),
             required=True,
+            related_uom='uom_id',
         ),
         'ordered_quantity': fields.float(
             string='Ordered quantity',
@@ -493,6 +494,7 @@ class stock_move_processor(osv.osv):
             required=True,
             readonly=True,
             help="Expected quantity to receive",
+            related_uom='ordered_uom_id',
         ),
         'uom_id': fields.many2one(
             'product.uom',

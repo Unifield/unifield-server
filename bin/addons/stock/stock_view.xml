@@ -362,6 +362,7 @@
                     <field name="product_id"/>
                     <field name="stock_available"/>
                     <field name="date"/>
+                    <field name="uom_id" invisible="1" />
                 </tree>
             </field>
         </record>

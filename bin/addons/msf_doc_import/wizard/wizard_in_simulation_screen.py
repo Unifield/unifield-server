@@ -955,7 +955,8 @@ Nothing has been imported because of %s. See below:
 
                 # Lines to delete
                 for in_line in SIMU_LINES[wiz.id]['line_ids']:
-                    wl_obj.write(cr, uid, in_line, {'type_change': 'del'}, context=context)
+                    l_d = wl_obj.read(cr, uid, in_line, ['move_uom_id'], context=context)
+                    wl_obj.write(cr, uid, in_line, {'type_change': 'del', 'imp_uom_id': l_d['move_uom_id'] and l_d['move_uom_id'][0]}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1221,7 +1222,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
-        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True),
+        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True, related_uom='move_uom_id'),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
         'move_price_unit': fields.function(_get_values, method=True, type='float', string='Price Unit',
                                            digits=(16, 2), store=True, readonly=True, multi='computed'),
@@ -1246,7 +1247,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
-        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True),
+        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True, related_uom='imp_uom_id'),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price_unit': fields.float(digits=(16, 2), string='Price Unit', readonly=True),
         'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',
@@ -1417,6 +1418,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 uom_c_id = uom_obj.browse(cr, uid, write_vals['imp_uom_id']).category_id.id
                 if prod_uom_c_id != uom_c_id:
                     errors.append(_("Given UoM is not compatible with the product UoM"))
+
+            if write_vals.get('imp_uom_id') and not line.move_uom_id:
+                write_vals['move_uom_id'] = write_vals['imp_uom_id']
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')

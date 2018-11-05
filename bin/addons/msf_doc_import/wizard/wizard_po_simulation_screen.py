@@ -1064,8 +1064,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 # Lines to delete
                 for po_line in SIMU_LINES[wiz.id]['line_ids']:
-                    if wl_obj.read(cr, uid, [po_line], ['type_change'], context=context)[0]['type_change'] != 'del':
-                        wl_obj.write(cr, uid, po_line, {'type_change': 'ignore'}, context=context)
+                    line_data = wl_obj.read(cr, uid, [po_line], ['type_change', 'in_uom'], context=context)[0]
+                    if line_data['type_change'] != 'del':
+                        wl_obj.write(cr, uid, po_line, {'type_change': 'ignore', 'imp_uom': line_data['in_uom']}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1304,6 +1305,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
             else:
                 res[line.id]['imp_discrepancy'] = line.imp_qty*line.imp_price
+                if line.imp_uom:
+                    res[line.id]['in_uom'] = line.imp_uom.id
 
             if line.type_change in ('warning', 'del', 'ignore'):
                 res[line.id]['chg_text'] = dict(self._columns['type_change'].selection).get(line.type_change) or ''
@@ -1347,7 +1350,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                       readonly=True, store=True),
         'in_qty': fields.function(_get_line_info, method=True, multi='line',
                                   type='float', string='Qty',
-                                  readonly=True, store=True),
+                                  readonly=True, store=True, related_uom='in_uom'),
         'in_uom': fields.function(_get_line_info, method=True, multi='line',
                                   type='many2one', relation='product.uom', string='UoM',
                                   readonly=True, store=True),
@@ -1377,7 +1380,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                         string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
-        'imp_qty': fields.float(digits=(16,2), string='Qty', readonly=True),
+        'imp_qty': fields.float(digits=(16,2), string='Qty', readonly=True, related_uom='imp_uom'),
         'imp_uom': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price': fields.float(digits=(16,2), string='Price Unit', readonly=True),
         'imp_discrepancy': fields.function(_get_line_info, method=True, multi='line',
