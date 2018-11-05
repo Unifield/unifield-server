@@ -70,18 +70,18 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
-                 (14, _('Comment'), 'optionnal'),
-                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['validated'])),
-                 (16, _('Project Ref.'), 'optionnal'),
-                 (17, _('Message ESC 1'), 'optionnal'),
-                 (18, _('Message ESC 2'), 'optionnal'),
+                 (11, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['validated'])),
+                 (15, _('Comment'), 'optionnal'),
+                 (17, _('Project Ref.'), 'optionnal'),
+                 (18, _('Message ESC 1'), 'optionnal'),
+                 (19, _('Message ESC 2'), 'optionnal'),
                  ]
 
 HEADER_COLUMNS = [(1, _('Order Reference'), 'mandatory'),
                   (5, _('Supplier Reference'), 'optionnal'),
-                  (9, _('Ready To Ship Date'), 'optionnal'),
-                  (14, _('Shipment Date'), 'optionnal'),
-                  (18, _('Message ESC'), 'optionnal')
+                  (10, _('Ready To Ship Date'), 'optionnal'),
+                  (15, _('Shipment Date'), 'optionnal'),
+                  (19, _('Message ESC'), 'optionnal')
                   ]
 
 
