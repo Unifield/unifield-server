@@ -50,7 +50,7 @@ class integrity_finance_wizard(osv.osv_memory):
         'filter': 'filter_no',
     }
 
-    def onchange_filter(self, cr, uid, ids, filter,  context=None):
+    def onchange_filter(self, cr, uid, ids, filter, context=None):
         """
         Adapts the date/period filter according to the selection made in "Filter by"
         """
@@ -63,9 +63,9 @@ class integrity_finance_wizard(osv.osv_memory):
             res['value'] = {'date_from': False, 'date_to': False}
         return res
 
-    def onchange_fiscalyear_id(self, cr, uid, ids, fiscalyear_id,  context=None):
+    def onchange_fiscalyear_id(self, cr, uid, ids, fiscalyear_id, context=None):
         """
-        (Only) if a period is selected: resets the periods selected and restricts their domain to within the FY
+        (Only) if a FY is selected: resets the periods selected and restricts their domain to within the FY
         """
         res = {}
         if fiscalyear_id:

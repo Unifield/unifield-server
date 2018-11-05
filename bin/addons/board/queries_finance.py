@@ -7,6 +7,7 @@ def _(a):
 
 queries = [
     {
+        'ref': 'ji_unbalanced_booking',
         'title': _('Journal Items that are not balanced in booking currency'),
         'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
         'query': """select p.name period, m.name, sum(l.credit_currency-l.debit_currency) difference
@@ -27,6 +28,7 @@ order by p.date_start, m.name
 """
     },
     {
+        'ref': 'ji_unbalanced_fctal',
         'title': _('Journal Items that are not balanced in functional currency'),
         'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
         'query': """select p.name period, m.name, sum(l.credit-l.debit) difference
@@ -46,6 +48,7 @@ having abs(sum(l.credit-l.debit)) > 0.00001
 order by p.date_start, m.name"""
     },
     {
+        'ref': 'mismatch_ji_aji_booking',
         'title': _('P&L Journal Items vs Analytic Journal Items mismatch in booking currency (except FXA and REV)'),
         'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
         'query': """SELECT
@@ -73,6 +76,7 @@ HAVING abs(abs(avg(l.debit_currency - l.credit_currency)) - abs(sum(COALESCE(acc
 ORDER BY account_period.date_start, account_move.name"""
     },
     {
+        'ref': 'mismatch_ji_aji_fctal',
         'title': _('P&L Journal Items vs Analytic Journal Items mismatch in functional currency (FXA and REV only)'),
         'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Func. Amount'), _('AJI Func. Amount'), _('Difference')],
         'query': """SELECT
@@ -100,6 +104,7 @@ HAVING abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 
 order by account_period.date_start, account_move.name"""
     },
     {
+        'ref': 'unbalanced_rec_fctal',
         'title': _('Unbalanced reconciliations in functional currency'),
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, l.reconcile_date, sum(l.credit-l.debit)
@@ -112,6 +117,7 @@ order by rec.name
 """
     },
     {
+        'ref': 'unbalanced_rec_booking',
         'title': _('Unbalanced reconciliations in booking currency'),
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, l.reconcile_date, sum(l.credit_currency-l.debit_currency)

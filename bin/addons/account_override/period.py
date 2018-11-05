@@ -110,7 +110,7 @@ def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
     """
     if context is None:
         context = {}
-    field_list = ['number', 'fiscalyear_id']
+    field_list = ['number', 'fiscalyear_id', 'date_start']
     initial_period = self.browse(cr, uid, period_from_id, fields_to_fetch=field_list, context=context)
     final_period = self.browse(cr, uid, period_to_id, fields_to_fetch=field_list, context=context)
     initial_fy_id = initial_period.fiscalyear_id.id

@@ -93,7 +93,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_t(header)|x}</Data></Cell>
 % endfor
 </Row>
-% for result in get_results(check.get('query')):
+% for result in get_results(check.get('query'), check.get('ref')):
 <Row>
   % for cell in result:
   <Cell ss:StyleID="ssBorder">
