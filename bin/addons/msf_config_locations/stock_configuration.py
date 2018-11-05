@@ -606,6 +606,7 @@ class stock_remove_location_wizard(osv.osv_memory):
         'move_from_to': fields.boolean(string='Has a move from/to the location'),
         'not_empty': fields.boolean(string='Location not empty'),
         'has_child': fields.boolean(string='Location has children locations'),
+        'related_ir': fields.boolean(string='Location has related IR open'),
     }
 
     def location_id_on_change(self, cr, uid, ids, location_id, context=None):
@@ -616,7 +617,8 @@ class stock_remove_location_wizard(osv.osv_memory):
         res = {'error_message': '',
                'move_from_to': False,
                'not_empty': False,
-               'has_child': False}
+               'has_child': False,
+               'related_ir': False}
         warning = {}
         error = False
 
@@ -646,6 +648,16 @@ Please click on the 'Products in location' button to see which products are stil
 Please remove all children locations before remove it. 
 Please click on the 'Children locations' button to see all children locations.''' %location.name
                 res['error_message'] += '\n' + '\n'
+
+            related_ir = self.pool.get('sale.order').search(cr, uid, [
+                ('procurement_request', '=', True),
+                ('state', 'in', ('draft','validated')),
+                ('location_requestor_id', '=', location_id),
+            ], context=context)
+            if related_ir:
+                error = True
+                res['related_ir'] = True
+                res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
 
         if error:
             warning.update({'title': 'Be careful !',
@@ -696,7 +708,7 @@ Please click on the 'Children locations' button to see all children locations.''
         internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            if wizard.error or wizard.has_child or wizard.not_empty or wizard.move_from_to:
+            if (wizard.error and not wizard.related_ir) or wizard.has_child or wizard.not_empty or wizard.move_from_to:
                 raise osv.except_osv(_('Error'), _('You cannot remove this location because some errors are still here !'))
 
             location = wizard.location_id
@@ -761,6 +773,37 @@ Please click on the 'Children locations' button to see all children locations.''
                 'view_mode': 'tree,form',
                 'target': 'current',
                 }
+
+
+    def related_ir(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        location = wizard.location_id
+        context.update({'procurement_request': True})
+
+        related_ir = self.pool.get('sale.order').search(cr, uid, [
+            ('procurement_request', '=', True),
+            ('state', 'in', ('draft','validated')),
+            ('location_requestor_id', '=', location.id),
+        ], context=context)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_tree_view')[1]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'domain': [('id', 'in', related_ir)],
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'target': 'current',
+            'context': context,
+        }
+
 
     def products_in_location(self, cr, uid, ids, context=None):
         '''
