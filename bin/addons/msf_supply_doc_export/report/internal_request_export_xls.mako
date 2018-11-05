@@ -159,13 +159,13 @@
     <Range>R4C2:R4C2</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;Medical,Log,Service,Transport,Other&quot;</Value>
+    <Value>&quot;${_('Medical,Log,Service,Transport,Other')|x}&quot;</Value>
 </DataValidation>
 <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
     <Range>R5C2:R5C2</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;Normal,Emergency,Priority&quot;</Value>
+    <Value>&quot;${_('Normal,Emergency,Priority')|x}&quot;</Value>
 </DataValidation>
 </ss:Worksheet>
 % endfor

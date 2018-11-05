@@ -444,7 +444,7 @@ class internal_request_import(osv.osv):
                                                 context=context)
 
                 # Line 4: Order Category
-                categ = values.get(4, [])[1]
+                categ = values.get(4, [])[1] or ' '
                 if categ in ORDER_CATEGORY_BY_VALUE:
                     header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
                 elif not ir_order:
@@ -456,7 +456,7 @@ class internal_request_import(osv.osv):
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
-                priority = values.get(5, [])[1]
+                priority = values.get(5, [])[1] or ' '
                 if priority in ORDER_PRIORITY_BY_VALUE:
                     header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
                 elif not ir_order:
@@ -611,10 +611,11 @@ class internal_request_import(osv.osv):
                         else:
                             if ir_imp.no_prod_as_comment:
                                 nb_treated_lines_by_nomen += 1
+                                desc = vals[2] and '/' + vals[2] or ''
                                 if comment:
-                                    line_data.update({'imp_comment': product_code + '\n' + comment})
+                                    line_data.update({'imp_comment': product_code + desc + '/' + comment})
                                 else:
-                                    line_data.update({'imp_comment': product_code})
+                                    line_data.update({'imp_comment': product_code + desc})
                                 line_errors += _('Product \'%s\' not recognized, line by nomenclature created. ') % vals[1]
                             else:
                                 red = True
@@ -630,7 +631,11 @@ class internal_request_import(osv.osv):
                     qty = vals[3] or 0.00
                     try:
                         qty = float(qty)
-                        line_data.update({'imp_qty': qty})
+                        if qty > 0:
+                            line_data.update({'imp_qty': qty})
+                        else:
+                            red = True
+                            line_errors += _('Quantity \'%s\' must be above 0. ') % (qty,)
                     except:
                         red = True
                         line_errors += _('Quantity must be a number. ')
@@ -641,7 +646,11 @@ class internal_request_import(osv.osv):
                         cost_price = vals[4]
                         try:
                             cost_price = float(cost_price)
-                            line_data.update({'imp_cost_price': cost_price})
+                            if cost_price > 0:
+                                line_data.update({'imp_cost_price': cost_price})
+                            else:
+                                line_errors += _('Price \'%s\' must be above 0, default cost price has been used. ') \
+                                               % (cost_price,)
                         except:
                             line_data.update({'imp_cost_price': product['standard_price']})
                             line_errors += _('Price \'%s\' is not a correct value, default cost price has been used. ') \
@@ -656,7 +665,11 @@ class internal_request_import(osv.osv):
                         cost_price = vals[4] or 0.00
                         try:
                             cost_price = float(cost_price)
-                            line_data.update({'imp_cost_price': cost_price})
+                            if cost_price > 0:
+                                line_data.update({'imp_cost_price': cost_price})
+                            else:
+                                red = True
+                                line_errors += _('Price \'%s\' must be above 0. ') % (cost_price,)
                         except:
                             red = True
                             line_errors += _('Cost Price must be a number. ')
@@ -668,12 +681,21 @@ class internal_request_import(osv.osv):
 
                     # Date of Stock Take
                     if vals[8]:
-                        try:
-                            time.strptime(vals[8], '%d-%m-%Y')
-                            line_data.update({'imp_stock_take_date': vals[8]})
-                        except:
-                            line_errors += _('Date of Stock Take \'%s\' must be in the format \'DD-MM-YYYY\', line has been imported without Date of Stock Take. ')\
-                                           % vals[8]
+                        dost = vals[8]
+                        if type(dost) == type(DateTime.now()):
+                            dost = dost.strftime('%d-%m-%Y')
+                            line_data.update({'imp_stock_take_date': dost})
+                        else:
+                            for format in l_date_format:
+                                try:
+                                    time.strptime(dost, format)
+                                    line_data.update({'imp_stock_take_date': dost})
+                                    break
+                                except:
+                                    continue
+                            if not line_data.get('imp_stock_take_date'):
+                                line_errors += _('Date of Stock Take \'%s\' must be in the format \'DD-MM-YYYY\' or \'DD.MM.YYYY\', line has been imported without Date of Stock Take. ') \
+                                               % vals[8]
 
                     line_data.update({
                         'error_msg': line_errors,
@@ -800,7 +822,7 @@ class internal_request_import(osv.osv):
                         ir_vals.update({'priority': wiz.imp_priority})
                     so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
                     for line in wiz.imp_line_ids:
-                        if not line.red:
+                        if not line.red and line.imp_line_number:
                             line_vals = {
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,

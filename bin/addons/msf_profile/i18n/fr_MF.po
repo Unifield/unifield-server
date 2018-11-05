@@ -101346,7 +101346,7 @@ msgstr "Le fichier n'est pas un fichier Excel 2003 Spreadsheet valide !"
 #: field:internal.request.import.line,in_cost_price:0
 #, python-format
 msgid "Cost Price"
-msgstr "Prix Coûtant"
+msgstr "Prix Unitaire"
 
 #. modules: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
@@ -101524,7 +101524,7 @@ msgstr "Pas de fichier à importer"
 #: code:addons/sale/wizard/internal_request_import.py:329
 #, python-format
 msgid "Line 5 of the file: Order Priority '%s' not defined, default value will be 'Normal'"
-msgstr "Ligne 5 du fichier: La Priorité de la Commande '%s' n'est pas définie, la valeur par défaut sera 'Normale'"
+msgstr "Ligne 5 du fichier: La Priorité de la Commande '%s' n'est pas définie, la valeur par défaut sera 'Normal'"
 
 #. modules: msf_supply_doc_export, sale
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:89
@@ -101838,7 +101838,7 @@ msgstr "La Quantité doit être un nombre. "
 #: code:addons/sale/wizard/internal_request_import.py:487
 #, python-format
 msgid "Cost Price must be a number. "
-msgstr "Le Prix Coûtant doit être un nombre. "
+msgstr "Le Prix Unitaire doit être un nombre. "
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:491
@@ -102632,7 +102632,7 @@ msgstr "internal.request.import.error.line"
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:217
 msgid "Cost Price"
-msgstr "Prix Coûtant"
+msgstr "Prix Unitaire"
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:487
@@ -102752,13 +102752,13 @@ msgstr "État"
 #: code:addons/sale/wizard/internal_request_import.py:654
 #, python-format
 msgid "Price '%s' is not a correct value, default cost price has been used. "
-msgstr "Prix '%s' n'a pas une bonne valeur, le prix coutant par défaut sera utilisé. "
+msgstr "Prix '%s' n'a pas une bonne valeur, le prix unitaire par défaut sera utilisé. "
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:682
 #, python-format
-msgid "Date of Stock Take '%s' must be in the format 'DD-MM-YYYY', line has been imported without Date of Stock Take. "
-msgstr "La Date de Prise de Stock '%s' doit être au format 'JJ-MM-AAAA', la ligne sera importée sans la Date de Prise de Stock. "
+msgid "Date of Stock Take '%s' must be in the format 'DD-MM-YYYY' or 'DD.MM.YYYY', line has been imported without Date of Stock Take. "
+msgstr "La Date de Prise de Stock '%s' doit être au format 'JJ-MM-AAAA' ou 'JJ.MM.AAAA', la ligne sera importée sans la Date de Prise de Stock. "
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:181
@@ -102853,3 +102853,31 @@ msgstr "Importer le fichier"
 #: view:internal.request.import:0
 msgid "Validate Import"
 msgstr "Valider l'import"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:672
+#, python-format
+msgid "Price '%s' must be above 0. "
+msgstr "Le Prix '%s' doit être au dessus de 0. "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:652
+#, python-format
+msgid "Price '%s' must be above 0, default cost price has been used. "
+msgstr "Le Prix '%s' doit être au dessus de 0, le prix unitaire par défaut sera utilisé. "
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:638
+#, python-format
+msgid "Quantity '%s' must be above 0. "
+msgstr "La Quantité '%s' doit être au dessus 0. "
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:162
+msgid "Medical,Log,Service,Transport,Other"
+msgstr "Médical,Log,Service,Transport,Autre"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:168
+msgid "Normal,Emergency,Priority"
+msgstr "Normal,Urgence,Priorité"
