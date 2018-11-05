@@ -599,6 +599,7 @@ class internal_request_import(osv.osv):
                     product_code = vals[1]
                     comment = vals[7]
                     if product_code:
+                        product_code = tools.ustr(product_code)
                         prod_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
@@ -611,9 +612,9 @@ class internal_request_import(osv.osv):
                         else:
                             if ir_imp.no_prod_as_comment:
                                 nb_treated_lines_by_nomen += 1
-                                desc = vals[2] and '/' + vals[2] or ''
+                                desc = vals[2] and '/' + tools.ustr(vals[2]) or ''
                                 if comment:
-                                    line_data.update({'imp_comment': product_code + desc + '/' + comment})
+                                    line_data.update({'imp_comment': product_code + desc + '/' + tools.ustr(comment)})
                                 else:
                                     line_data.update({'imp_comment': product_code + desc})
                                 line_errors += _('Product \'%s\' not recognized, line by nomenclature created. ') % vals[1]
