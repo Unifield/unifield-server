@@ -603,7 +603,9 @@ class stock_remove_location_wizard(osv.osv_memory):
                                               string='Location type'),
         'error_message': fields.text(string='Information Message', readonly=True),
         'error': fields.boolean(string='Error'),
-        'move_from_to': fields.boolean(string='Has a move from/to the location'),
+        'can_force': fields.boolean(string='Can force'),
+        'move_from': fields.boolean(string='Has a move from the location'),
+        'move_to': fields.boolean(string='Has a move to the location'),
         'not_empty': fields.boolean(string='Location not empty'),
         'has_child': fields.boolean(string='Location has children locations'),
         'related_ir': fields.boolean(string='Location has related IR open'),
@@ -615,23 +617,36 @@ class stock_remove_location_wizard(osv.osv_memory):
         Check if there is no stock in this location
         '''
         res = {'error_message': '',
-               'move_from_to': False,
+               'move_from': False,
+               'move_to': False,
                'not_empty': False,
                'has_child': False,
                'related_ir': False}
         warning = {}
         error = False
+        can_force = False
 
         if location_id:
             location = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
+
             # Check if no moves to this location aren't done
-            move_from_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
-            if move_from_to:
+            move_from = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_id', '=', location.id)])
+            if move_from:
                 error = True
-                res['move_from_to'] = True
-                res['error_message'] += '''* You have at least one move from or to the location '%s' which is not 'Done'.
-Please click on the 'See moves' button to see which moves are still in progress from/to this location.''' %location.name
+                res['move_from'] = True
+                res['error_message'] += '''* You have at least one move from the location '%s' which is not 'Done'.
+Please click on the 'See moves' button to see which moves are still in progress from this location.''' %location.name
                 res['error_message'] += '\n' + '\n'
+
+            move_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_dest_id', '=', location.id)])
+            if move_to:
+                error = True
+                can_force = True
+                res['move_to'] = True
+                res['error_message'] += '''* You have at least one move to the location '%s' which is not 'Done'.
+Please click on the 'See moves' button to see which moves are still in progress to this location.''' %location.name
+                res['error_message'] += '\n' + '\n'
+
             # Check if no stock in the location
             if location.stock_real and location.usage == 'internal':
                 error = True
@@ -656,6 +671,7 @@ Please click on the 'Children locations' button to see all children locations.''
             ], context=context)
             if related_ir:
                 error = True
+                can_force = True
                 res['related_ir'] = True
                 res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
 
@@ -664,6 +680,7 @@ Please click on the 'Children locations' button to see all children locations.''
                             'message': 'You have a problem with this location − Please see the message in the form for more information.'})
 
         res['error'] = error
+        res['can_force'] = error and not (res['not_empty'] or res['has_child'] or res['move_from']) and can_force or False
 
         return {'value': res,
                 'warning': warning}
@@ -708,9 +725,8 @@ Please click on the 'Children locations' button to see all children locations.''
         internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            if (wizard.error and not wizard.related_ir) or wizard.has_child or wizard.not_empty or wizard.move_from_to:
+            if (wizard.error and not wizard.can_force) or wizard.has_child or wizard.not_empty or wizard.move_from:
                 raise osv.except_osv(_('Error'), _('You cannot remove this location because some errors are still here !'))
-
             location = wizard.location_id
 
         # De-activate the location

@@ -50,10 +50,12 @@
 			<field name="arch" type="xml">
 				<form string="Remove an optional location">
 					<field name="error" invisible="1" />
-					<field name="move_from_to" invisible="1" />
+					<field name="move_from" invisible="1" />
+					<field name="move_to" invisible="1" />
 					<field name="not_empty" invisible="1" />
 					<field name="has_child" invisible="1" />
 					<field name="related_ir" invisible="1" />
+					<field name="can_force" invisible="1" />
 					<separator string="Parameters" colspan="4" />
 					<!--<field name="location_usage" string="Which is the usage of the location to remove ?" colspan="4" 
 						   on_change="location_usage_change(location_usage)" />
@@ -66,7 +68,7 @@
 					<group colspan="4" col="3" attrs="{'invisible': [('error', '=', False)]}">
 						<separator string="Message" colspan="4" />
 						<field name="error_message" nolabel="1" colspan="4" />
-						<button type="object" name="see_moves" string="See moves" attrs="{'invisible': [('move_from_to', '=', False)]}" />
+						<button type="object" name="see_moves" string="See moves" attrs="{'invisible': [('move_from', '=', False),('move_to', '=', False)]}" />
 						<button type="object" name="products_in_location" string="Products in location" attrs="{'invisible': [('not_empty', '=', False)]}" />
 						<button type="object" name="children_location" string="Children locations" attrs="{'invisible': [('has_child', '=', False)]}" />
 						<button type="object" name="related_ir" string="See documents" attrs="{'invisible': [('related_ir', '=', False)]}" />
@@ -75,7 +77,7 @@
 					<button special="cancel" icon="gtk-cancel" string="Cancel" />
 					<group colspan="3" col="2">
 						<button type="object" name="deactivate_location" icon="terp-camera_test" string="Inactivate the location" 
-							attrs="{'invisible': [('error', '=', True), ('related_ir', '=', False)]}" colspan="2" />
+							attrs="{'invisible': [('error', '=', True), ('can_force', '=', False)]}" colspan="2" />
 						<button type="object" name="check_error" icon="gtk-execute" string="Check errors" 
 							attrs="{'invisible': [('error', '=', False)]}" colspan="2" />
 					</group>
