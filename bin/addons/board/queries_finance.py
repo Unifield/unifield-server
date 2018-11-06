@@ -53,17 +53,17 @@ order by p.date_start, m.name;"""
         'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
-account_move.name,
+m.name,
 account_account.code,
 avg(l.credit_currency - l.debit_currency) JI,
 sum(COALESCE(account_analytic_line.amount_currency, 0)) AJI,
 abs(abs(avg(l.debit_currency - l.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) difference
 FROM
 account_move_line l
-JOIN account_move ON account_move.id = l.move_id
+JOIN account_move m ON m.id = l.move_id
 JOIN account_account ON account_account.id = l.account_id
-JOIN account_journal ON account_journal.id = account_move.journal_id
-JOIN account_period ON account_move.period_id = account_period.id
+JOIN account_journal ON account_journal.id = m.journal_id
+JOIN account_period ON m.period_id = account_period.id
 LEFT JOIN account_analytic_line on account_analytic_line.move_id = l.id
 LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account_analytic_account.id
 WHERE
@@ -71,9 +71,9 @@ account_journal.type not in ('system', 'revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
 account_analytic_account.category not in ('FREE1', 'FREE2')
 %s
-GROUP BY account_period.name, account_move.name, l.id, account_period.date_start, account_account.code
+GROUP BY account_period.name, m.name, l.id, account_period.date_start, account_account.code
 HAVING abs(abs(avg(l.debit_currency - l.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) > 0.00001
-ORDER BY account_period.date_start, account_move.name;"""
+ORDER BY account_period.date_start, m.name;"""
     },
     {
         'ref': 'mismatch_ji_aji_fctal',
@@ -81,17 +81,17 @@ ORDER BY account_period.date_start, account_move.name;"""
         'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Func. Amount'), _('AJI Func. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
-account_move.name,
+m.name,
 account_account.code,
 avg(l.credit - l.debit) JI,
 sum(COALESCE(account_analytic_line.amount, 0)) AJI,
 abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 0))) difference
 FROM
 account_move_line l
-JOIN account_move ON account_move.id = l.move_id
+JOIN account_move m ON m.id = l.move_id
 JOIN account_account ON account_account.id = l.account_id
-JOIN account_journal ON account_move.journal_id = account_journal.id
-JOIN account_period ON account_period.id = account_move.period_id
+JOIN account_journal ON m.journal_id = account_journal.id
+JOIN account_period ON account_period.id = m.period_id
 LEFT JOIN account_analytic_line ON account_analytic_line.move_id = l.id
 LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account_analytic_account.id
 WHERE
@@ -99,9 +99,9 @@ account_journal.type in ('revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
 account_analytic_account.category not in ('FREE1', 'FREE2')
 %s
-GROUP BY account_period.name, account_move.name, l.id, account_period.date_start, account_account.code
+GROUP BY account_period.name, m.name, l.id, account_period.date_start, account_account.code
 HAVING abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 0))) > 0.00001
-order by account_period.date_start, account_move.name;"""
+order by account_period.date_start, m.name;"""
     },
     {
         'ref': 'unbalanced_rec_fctal',

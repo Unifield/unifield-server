@@ -34,17 +34,26 @@ class integrity_finance(report_sxw.rml_parse):
         period_obj = self.pool.get('account.period')
         fy_obj = self.pool.get('account.fiscalyear')
         if data.get('form', False):
+            sql_rec_additional_subreq = """
+                AND l.reconcile_id IN 
+                (
+                    SELECT DISTINCT (reconcile_id)
+                    FROM account_move_line
+                    WHERE reconcile_id IS NOT NULL
+                    %s
+                )
+            """
             # instances
             instance_ids = data['form'].get('instance_ids', False)
             if instance_ids:
-                self.sql_additional += " AND instance_id IN %s "
+                self.sql_additional += " AND m.instance_id IN %s "
                 self.sql_params.append(tuple(instance_ids,))
                 self.sql_rec_additional += " AND instance_id IN %s "
                 self.sql_rec_params.append(tuple(instance_ids,))
             # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
             if fiscalyear_id:
-                self.sql_additional += " AND period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
+                self.sql_additional += " AND m.period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
                 self.sql_params.append(fiscalyear_id)
                 fiscalyear = fy_obj.browse(self.cr, self.uid, fiscalyear_id, fields_to_fetch=['date_start', 'date_stop'], context=data.get('context', {}))
                 self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
@@ -61,7 +70,7 @@ class integrity_finance(report_sxw.rml_parse):
                     period_ids = period_obj.get_period_range(self.cr, self.uid, period_from, period_to, context=data.get('context', {}))
                     if not period_ids:
                         raise osv.except_osv(_('Error'), _('No period matches the selected criteria.'))
-                    self.sql_additional += " AND period_id IN %s "
+                    self.sql_additional += " AND m.period_id IN %s "
                     self.sql_params.append(tuple(period_ids,))
                     per_from = period_obj.browse(self.cr, self.uid, period_from, fields_to_fetch=['date_start'], context=data.get('context', {}))
                     per_to = period_obj.browse(self.cr, self.uid, period_to, fields_to_fetch=['date_stop'], context=data.get('context', {}))
@@ -77,38 +86,19 @@ class integrity_finance(report_sxw.rml_parse):
                 else:
                     if wiz_filter == 'filter_date_doc':
                         # JI doc dates
-                        self.sql_additional += " AND document_date >= %s AND document_date <= %s "
+                        self.sql_additional += " AND m.document_date >= %s AND m.document_date <= %s "
                     else:
                         # JI posting dates
-                        self.sql_additional += " AND date >= %s AND date <= %s "
+                        self.sql_additional += " AND m.date >= %s AND m.date <= %s "
                     self.sql_params.append(date_from)
                     self.sql_params.append(date_to)
                     # reconciliation dates
                     self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
                     self.sql_rec_params.append(date_from)
                     self.sql_rec_params.append(date_to)
-            # LAST STEP: if the request additional part isn't empty: add the related subrequest
-            if self.sql_additional:
-                self.sql_additional = """
-                  AND l.id IN
-                    (
-                      SELECT DISTINCT (id)
-                      FROM account_move_line
-                      WHERE instance_id IS NOT NULL
-                      %s
-                    )
-                  """ % self.sql_additional
-            # if the reconciliation request additional part isn't empty: add the related subrequest
+            # LAST STEP: if the reconciliation request additional part isn't empty: add the related subrequest
             if self.sql_rec_additional:
-                self.sql_rec_additional = """
-                  AND l.reconcile_id IN 
-                    (
-                      SELECT DISTINCT (reconcile_id)
-                      FROM account_move_line
-                      WHERE reconcile_id IS NOT NULL
-                      %s
-                    )
-                """ % self.sql_rec_additional
+                self.sql_rec_additional = sql_rec_additional_subreq % self.sql_rec_additional
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):
