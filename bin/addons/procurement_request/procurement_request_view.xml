@@ -17,23 +17,28 @@
                             </p>
                         </html>
                     </group>
-                    <group col="6" colspan="4" name="header">
-                        <field name="name" />
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="functional_currency_id" />
-                        <field name="categ" on_change="onchange_categ(categ)" /> <!-- RO state!=draft set on _column, same on IR -->
-                        <group colspan="2" col="3">
-                            <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
-                                attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                    <group col="6" colspan="6" name="header">
+                        <group col="4" colspan="4">
+                            <field name="name" />
+                            <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            <field name="functional_currency_id" />
+                            <group colspan="2" col="3">
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
+                                    attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            </group>
+                            <field name="fo_to_resource" invisible="1" />
+                            <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                         </group>
-                        <field name="fo_to_resource" invisible="1" />
-                        <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
+                        <group col="2" colspan="2">
+                            <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                            <field name="categ" on_change="onchange_categ(categ)" /> <!-- RO state!=draft set on _column, same on IR -->
+                            <field name="priority" />
+                        </group>
                     </group>
 
                     <notebook colspan="5">

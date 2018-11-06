@@ -36,8 +36,6 @@ from tools.translate import _
 
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
-ORDER_PRIORITY_BY_VALUE = dict((_(y), x) for x, y in ORDER_PRIORITY)
-ORDER_CATEGORY_BY_VALUE = dict((_(y), x) for x, y in ORDER_CATEGORY)
 LINES_COLUMNS = [
     (0, _('Line number'), 'mandatory', ('order_id', '!=', False)),
     (1, _('Product Code'), 'optionnal'),
@@ -307,6 +305,10 @@ class internal_request_import(osv.osv):
         Import the file and fill the data in simulation screen
         '''
         cr = pooler.get_db(dbname).cursor()
+        ir_obj = self.pool.get('sale.order').fields_get(cr, uid, ['priority', 'categ'], context=context)
+        ORDER_PRIORITY_BY_VALUE = dict([(y, x) for x, y in ir_obj.get('priority', {}).get('selection', [])])
+        ORDER_CATEGORY_BY_VALUE = dict([(y, x) for x, y in ir_obj.get('categ', {}).get('selection', [])])
+
         try:
             ir_imp_l_obj = self.pool.get('internal.request.import.line')
             err_line_obj = self.pool.get('internal.request.import.error.line')

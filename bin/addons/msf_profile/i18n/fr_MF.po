@@ -102875,7 +102875,7 @@ msgstr "La Quantité '%s' doit être au dessus 0. "
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:162
 msgid "Medical,Log,Service,Transport,Other"
-msgstr "Médical,Log,Service,Transport,Autre"
+msgstr "Médical,Logistique,Service,Transport,Autre"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:168
