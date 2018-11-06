@@ -638,8 +638,7 @@ class stock_remove_location_wizard(osv.osv_memory):
                 error = True
                 can_force = True
                 res['move_to'] = True
-                res['error_message'] += '''* You have at least one move to the location '%s' which is not 'Done'.
-Please click on the 'See moves' button to see which moves are still in progress to this location.''' %location.name
+                res['error_message'] += _("* You have at least one move to the location '%s' which is not 'Done'.\nPlease click on the 'See moves' button to see which moves are still in progress to this location.") % location.name
                 res['error_message'] += '\n' + '\n'
 
             move_from = self.pool.get('stock.move').search(cr, uid, [
@@ -650,8 +649,7 @@ Please click on the 'See moves' button to see which moves are still in progress 
             if move_from:
                 error = True
                 res['move_from'] = True
-                res['error_message'] += '''* You have at least one move from or to the location '%s' which is not 'Done'.
-Please click on the 'See moves' button to see which moves are still in progress from/to this location.''' %location.name
+                res['error_message'] += _("* You have at least one move from or to the location '%s' which is not 'Done'.\nPlease click on the 'See moves' button to see which moves are still in progress from/to this location.") % location.name
                 res['error_message'] += '\n' + '\n'
 
 
@@ -659,17 +657,14 @@ Please click on the 'See moves' button to see which moves are still in progress 
             if location.stock_real and location.usage == 'internal':
                 error = True
                 res['not_empty'] = True
-                res['error_message'] += '''* The location '%s' is not empty of products. 
-Please click on the 'Products in location' button to see which products are still in the location.''' %location.name
+                res['error_message'] += _("* The location '%s' is not empty of products.\nPlease click on the 'Products in location' button to see which products are still in the location.") % location.name
                 res['error_message'] += '\n' + '\n'
 
             # Check if the location has children locations
             if location.child_ids:
                 error = True
                 res['has_child'] = True
-                res['error_message'] += '''* The location '%s' has children locations.
-Please remove all children locations before remove it. 
-Please click on the 'Children locations' button to see all children locations.''' %location.name
+                res['error_message'] += _("* The location '%s' has children locations.\nPlease remove all children locations before remove it.\nPlease click on the 'Children locations' button to see all children locations.") % location.name
                 res['error_message'] += '\n' + '\n'
 
             related_ir = self.pool.get('sale.order').search(cr, uid, [
@@ -684,8 +679,8 @@ Please click on the 'Children locations' button to see all children locations.''
                 res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
 
         if error:
-            warning.update({'title': 'Be careful !',
-                            'message': 'You have a problem with this location − Please see the message in the form for more information.'})
+            warning.update({'title': _('Be careful !'),
+                            'message': _('You have a problem with this location − Please see the message in the form for more information.')})
 
         res['error'] = error
         res['can_force'] = error and not (res['not_empty'] or res['has_child'] or res['move_from']) and can_force or False

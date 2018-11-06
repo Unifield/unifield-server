@@ -101980,3 +101980,91 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:641
+#, python-format
+msgid "* You have at least one move to the location '%s' which is not 'Done'.\n"
+"Please click on the 'See moves' button to see which moves are still in progress to this location."
+msgstr "* Il y a au moins un mouvement de stock dans l'emplacement '%s' qui n'est pas clos.\n"
+"Merci de cliquer sur le bouton 'Voir les mouvements' pour voir les mouvements non clos."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:652
+#, python-format
+msgid "* You have at least one move from or to the location '%s' which is not 'Done'.\n"
+"Please click on the 'See moves' button to see which moves are still in progress from/to this location."
+msgstr "* Il y a au moins un mouvement de stock dans l'emplacement '%s' qui n'est pas clos.\n"
+"Merci de cliquer sur le bouton 'Voir les mouvements' pour voir les mouvements non clos."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:660
+#, python-format
+msgid "* The location '%s' is not empty of products.\n"
+"Please click on the 'Products in location' button to see which products are still in the location."
+msgstr "* L'emplacement '%s' n'est pas vide.\n"
+"Merci de cliquer sur le bouton 'Produits dans l'emplacement' pour voir les produits contenus dans cet emplacement."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:667
+#, python-format
+msgid "* The location '%s' has children locations.\n"
+"Please remove all children locations before remove it.\n"
+"Please click on the 'Children locations' button to see all children locations."
+msgstr "* L'emplacement '%s' a des emplacements enfants\n"
+"Merci de d'abord supprimer ces emplacements enfants.\n"
+"Merci de cliquer sur le bouton 'Emplacements enfants' pour voir les emplacements enfants."
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:679
+#, python-format
+msgid "* Warning there are open IR with location '%s'.\n"
+" Please click on the 'See documents' button to see all children locations.\n"
+"\n"
+""
+msgstr "* Attention, il y a des demandes internes en cours pour l'emplacement '%s'.\n"
+"Merci de cliquer sur le bouton  'Voir les doucements' pour voir les emplacements enfants.\n"
+"\n"
+""
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:683
+#, python-format
+msgid "You have a problem with this location − Please see the message in the form for more information."
+msgstr "Il y a un problème avec cet emplacement de stock - Merci de lire le message dans le formulaire pour plus d'informations"
+
+#. module: msf_config_locations
+#: code:addons/msf_config_locations/stock_configuration.py:682
+#, python-format
+msgid "Be careful !"
+msgstr "Attention !"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "See moves"
+msgstr "Voir les mouvements"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "Products in location"
+msgstr "Produits dans l'emplacement"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "Children locations"
+msgstr "Emplacements enfants"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "See documents"
+msgstr "Voir les documents"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "Inactivate the location"
+msgstr "Desactiver l'emplacement"
+
+#. module: msf_config_locations
+#: view:stock.remove.location.wizard:0
+msgid "Check errors"
+msgstr "Tester les erreurs"
