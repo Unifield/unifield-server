@@ -36,17 +36,17 @@ class integrity_finance(report_sxw.rml_parse):
             # instances
             instance_ids = data['form'].get('instance_ids', False)
             if instance_ids:
-                self.sql_additional += " AND l.instance_id IN %s "
+                self.sql_additional += " AND instance_id IN %s "
                 self.sql_params.append(tuple(instance_ids,))
-                self.sql_rec_additional += " AND l.instance_id IN %s "
+                self.sql_rec_additional += " AND instance_id IN %s "
                 self.sql_rec_params.append(tuple(instance_ids,))
             # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
             if fiscalyear_id:
-                self.sql_additional += " AND l.period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
+                self.sql_additional += " AND period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
                 self.sql_params.append(fiscalyear_id)
                 fiscalyear = fy_obj.browse(self.cr, self.uid, fiscalyear_id, fields_to_fetch=['date_start', 'date_stop'], context=data.get('context', {}))
-                self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
+                self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
                 self.sql_rec_params.append(fiscalyear.date_start)
                 self.sql_rec_params.append(fiscalyear.date_stop)
             wiz_filter = data['form'].get('filter', '')
@@ -60,11 +60,11 @@ class integrity_finance(report_sxw.rml_parse):
                     period_ids = period_obj.get_period_range(self.cr, self.uid, period_from, period_to, context=data.get('context', {}))
                     if not period_ids:
                         raise osv.except_osv(_('Error'), _('No period matches the selected criteria.'))
-                    self.sql_additional += " AND l.period_id IN %s "
+                    self.sql_additional += " AND period_id IN %s "
                     self.sql_params.append(tuple(period_ids,))
                     per_from = period_obj.browse(self.cr, self.uid, period_from, fields_to_fetch=['date_start'], context=data.get('context', {}))
                     per_to = period_obj.browse(self.cr, self.uid, period_to, fields_to_fetch=['date_stop'], context=data.get('context', {}))
-                    self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
+                    self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
                     self.sql_rec_params.append(per_from.date_start)
                     self.sql_rec_params.append(per_to.date_stop)
             # dates
@@ -76,14 +76,14 @@ class integrity_finance(report_sxw.rml_parse):
                 else:
                     if wiz_filter == 'filter_date_doc':
                         # JI doc dates
-                        self.sql_additional += " AND l.document_date >= %s AND l.document_date <= %s "
+                        self.sql_additional += " AND document_date >= %s AND document_date <= %s "
                     else:
                         # JI posting dates
-                        self.sql_additional += " AND l.date >= %s AND l.date <= %s "
+                        self.sql_additional += " AND date >= %s AND date <= %s "
                     self.sql_params.append(date_from)
                     self.sql_params.append(date_to)
                     # reconciliation dates
-                    self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
+                    self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
                     self.sql_rec_params.append(date_from)
                     self.sql_rec_params.append(date_to)
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)

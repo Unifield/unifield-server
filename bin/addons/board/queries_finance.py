@@ -21,7 +21,13 @@ l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
 j.type != 'system'
-%s
+AND l.id IN
+  (
+    SELECT DISTINCT id
+    FROM account_move_line
+    WHERE instance_id IS NOT NULL
+    %s
+  )
 group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit_currency-l.debit_currency)) > 0.00001
 order by p.date_start, m.name
@@ -42,7 +48,13 @@ l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
 j.type != 'system'
-%s
+AND l.id IN
+  (
+    SELECT DISTINCT id
+    FROM account_move_line
+    WHERE instance_id IS NOT NULL
+    %s
+  )
 group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit-l.debit)) > 0.00001
 order by p.date_start, m.name"""
@@ -70,7 +82,13 @@ WHERE
 account_journal.type not in ('system', 'revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
 account_analytic_account.category not in ('FREE1', 'FREE2')
-%s
+AND l.id IN
+  (
+    SELECT DISTINCT id
+    FROM account_move_line
+    WHERE instance_id IS NOT NULL
+    %s
+  )
 GROUP BY account_period.name, account_move.name, l.id, account_period.date_start, account_account.code
 HAVING abs(abs(avg(l.debit_currency - l.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) > 0.00001
 ORDER BY account_period.date_start, account_move.name"""
@@ -98,7 +116,13 @@ WHERE
 account_journal.type in ('revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
 account_analytic_account.category not in ('FREE1', 'FREE2')
-%s
+AND l.id IN
+  (
+    SELECT DISTINCT id
+    FROM account_move_line
+    WHERE instance_id IS NOT NULL
+    %s
+  )
 GROUP BY account_period.name, account_move.name, l.id, account_period.date_start, account_account.code
 HAVING abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 0))) > 0.00001
 order by account_period.date_start, account_move.name"""
@@ -110,7 +134,13 @@ order by account_period.date_start, account_move.name"""
         'query': """SELECT rec.name, l.reconcile_date, sum(l.credit-l.debit)
 from account_move_line l, account_move_reconcile rec
 where l.reconcile_id=rec.id
-%s
+AND l.reconcile_id IN 
+  (
+    SELECT DISTINCT (reconcile_id)
+    FROM account_move_line
+    WHERE reconcile_id IS NOT NULL
+    %s
+  )
 group by rec.id, rec.name, l.reconcile_date
 having(abs(sum(l.credit-l.debit)) > 0.0001)
 order by rec.name
@@ -123,7 +153,13 @@ order by rec.name
         'query': """SELECT rec.name, l.reconcile_date, sum(l.credit_currency-l.debit_currency)
 from account_move_line l, account_move_reconcile rec
 where l.reconcile_id=rec.id
-%s
+AND l.reconcile_id IN 
+  (
+    SELECT DISTINCT (reconcile_id)
+    FROM account_move_line
+    WHERE reconcile_id IS NOT NULL
+    %s
+  )
 group by rec.id, rec.name, l.reconcile_date
 having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(l.currency_id))=1)
 order by rec.name
