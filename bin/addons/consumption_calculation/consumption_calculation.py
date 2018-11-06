@@ -193,11 +193,12 @@ class real_average_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: 'empty',
     }
 
     _sql_constraints = [
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
+        ('rc_categ_not_null_check', '''check(categ != 'empty')''', 'Order category should not be empty !'),
     ]
 
     _constraints = [
