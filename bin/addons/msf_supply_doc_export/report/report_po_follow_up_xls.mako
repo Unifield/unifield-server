@@ -93,33 +93,33 @@
 <% nb_of_columns = 21 %>
 <Table x:FullColumns="1" x:FullRows="1">
     # Order ref
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Supplier
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Order Type
-    <Column ss:AutoFitWidth="1" ss:Width="90" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # Line
     <Column ss:AutoFitWidth="1" ss:Width="40" />
     # Product Code
-    <Column ss:AutoFitWidth="1" ss:Width="81" />
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Product Description
-    <Column ss:AutoFitWidth="1" ss:Width="161" />
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
     # Qty ordered
     <Column ss:AutoFitWidth="1" ss:Width="57" />
     # UoM
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
     # Qty received
-    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # IN
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     # Qty backorder
     <Column ss:AutoFitWidth="1" ss:Width="58" />
     # Unit Price
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # IN Unit Price
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # Currency
-    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # Total Currency
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Total Functional Currency
@@ -160,6 +160,8 @@
   % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_type'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
@@ -170,16 +172,14 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['currency'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_currency'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_func_currency'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['delivery_requested_date'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
     </Row>
   % endfor
 % endfor   
