@@ -669,7 +669,7 @@ class stock_remove_location_wizard(osv.osv_memory):
 
             related_ir = self.pool.get('sale.order').search(cr, uid, [
                 ('procurement_request', '=', True),
-                ('state', 'in', ('draft','validated')),
+                ('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p')),
                 ('location_requestor_id', '=', location_id),
             ], context=context)
             if related_ir:
@@ -806,7 +806,7 @@ class stock_remove_location_wizard(osv.osv_memory):
 
         related_ir = self.pool.get('sale.order').search(cr, uid, [
             ('procurement_request', '=', True),
-            ('state', 'in', ('draft','validated')),
+            ('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p')),
             ('location_requestor_id', '=', location.id),
         ], context=context)
 
