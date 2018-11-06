@@ -830,6 +830,7 @@ class internal_request_import(osv.osv):
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,
                                 'comment': line.imp_comment or '',
+                                'stock_take_date': line.imp_stock_take_date or False,
                             }
                             if line.imp_uom_id:
                                 line_vals.update({'product_uom': line.imp_uom_id.id})
@@ -858,6 +859,7 @@ class internal_request_import(osv.osv):
                             'price_unit': x.imp_cost_price or 0.00,
                             'product_uom': x.imp_uom_id and x.imp_uom_id.id or False,
                             'comment': x.imp_comment or '',
+                            'stock_take_date': x.imp_stock_take_date or False,
                         }) for x in (y for y in wiz.imp_line_ids if not y.red)],
                     }
                     new_ir_id = so_obj.create(cr, uid, ir_vals, context=context)
