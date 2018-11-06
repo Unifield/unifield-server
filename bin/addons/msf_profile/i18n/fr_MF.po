@@ -10323,7 +10323,7 @@ msgstr "Ligne de Consommation Moyenne Réelle "
 #: code:addons/board/queries_finance.py:47
 #, python-format
 msgid "P&L Journal Items vs Analytic Journal Items mismatch in booking currency (except FXA and REV)"
-msgstr "Différence en devise d'enregistrement entre entrées comptables et analytiques (exceptés FAX et REV)"
+msgstr "Différence en devise d'enregistrement entre entrées comptables et analytiques (exceptés FXA et REV)"
 
 #. modules: sale, msf_supply_doc_export
 #: report:po.follow.up_rml:0
