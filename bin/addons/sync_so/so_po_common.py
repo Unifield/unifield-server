@@ -432,10 +432,12 @@ class so_po_common(osv.osv_memory):
         if src_values.get('product_uom_qty'): # come from the SO
             res['product_qty'] = order_line.product_uom_qty
             res['product_uom_qty'] = order_line.product_uom_qty
+            res['original_qty'] = order_line.product_uom_qty
 
         if src_values.get('product_qty'): # come from the PO
             res['product_uom_qty'] = order_line.product_qty
             res['product_qty'] = order_line.product_qty
+            res['original_qty'] = order_line.product_qty
 
         if src_values.get('date_planned'):
             res['date_planned'] = order_line.date_planned
@@ -465,6 +467,7 @@ class so_po_common(osv.osv_memory):
             rec_id = self.get_product_id(cr, uid, order_line.product_id, default_code, context=context)
             if rec_id:
                 res['product_id'] = rec_id
+                res['original_product'] = rec_id
                 res['name'] = order_line.product_id.name
 
                 product_obj = self.pool.get('product.product')

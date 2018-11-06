@@ -13692,7 +13692,7 @@ msgstr "La prévision ne contient aucun mouvements."
 #: field:purchase.order.merged.line,original_price:0
 #: field:procurement.request.line.wizard,original_price:0
 msgid "Original Price"
-msgstr "Pix d'Origine"
+msgstr "Prix d'Origine"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:98
