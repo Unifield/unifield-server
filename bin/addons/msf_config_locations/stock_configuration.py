@@ -629,16 +629,11 @@ class stock_remove_location_wizard(osv.osv_memory):
         if location_id:
             location = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
 
-            # Check if no moves to this location aren't done
-            move_from = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_id', '=', location.id)])
-            if move_from:
-                error = True
-                res['move_from'] = True
-                res['error_message'] += '''* You have at least one move from the location '%s' which is not 'Done'.
-Please click on the 'See moves' button to see which moves are still in progress from this location.''' %location.name
-                res['error_message'] += '\n' + '\n'
-
-            move_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), ('location_dest_id', '=', location.id)])
+            move_to = self.pool.get('stock.move').search(cr, uid, [
+                ('state', 'not in', ('done', 'cancel')), 
+                ('location_dest_id', '=', location.id),
+                ('type', 'in', ['in', 'internal']),
+            ])
             if move_to:
                 error = True
                 can_force = True
@@ -646,6 +641,19 @@ Please click on the 'See moves' button to see which moves are still in progress 
                 res['error_message'] += '''* You have at least one move to the location '%s' which is not 'Done'.
 Please click on the 'See moves' button to see which moves are still in progress to this location.''' %location.name
                 res['error_message'] += '\n' + '\n'
+
+            move_from = self.pool.get('stock.move').search(cr, uid, [
+                ('state', 'not in', ('done', 'cancel')),
+                ('id', 'not in', move_to),
+                '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id),
+            ])
+            if move_from:
+                error = True
+                res['move_from'] = True
+                res['error_message'] += '''* You have at least one move from or to the location '%s' which is not 'Done'.
+Please click on the 'See moves' button to see which moves are still in progress from/to this location.''' %location.name
+                res['error_message'] += '\n' + '\n'
+
 
             # Check if no stock in the location
             if location.stock_real and location.usage == 'internal':
