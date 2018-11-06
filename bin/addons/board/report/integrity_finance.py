@@ -87,6 +87,28 @@ class integrity_finance(report_sxw.rml_parse):
                     self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
                     self.sql_rec_params.append(date_from)
                     self.sql_rec_params.append(date_to)
+            # LAST STEP: if the request additional part isn't empty: add the related subrequest
+            if self.sql_additional:
+                self.sql_additional = """
+                  AND l.id IN
+                    (
+                      SELECT DISTINCT (id)
+                      FROM account_move_line
+                      WHERE instance_id IS NOT NULL
+                      %s
+                    )
+                  """ % self.sql_additional
+            # if the reconciliation request additional part isn't empty: add the related subrequest
+            if self.sql_rec_additional:
+                self.sql_rec_additional = """
+                  AND l.reconcile_id IN 
+                    (
+                      SELECT DISTINCT (reconcile_id)
+                      FROM account_move_line
+                      WHERE reconcile_id IS NOT NULL
+                      %s
+                    )
+                """ % self.sql_rec_additional
         return super(integrity_finance, self).set_context(objects, data, ids, report_type=report_type)
 
     def get_title(self):
