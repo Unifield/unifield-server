@@ -18,6 +18,7 @@ class integrity_finance(report_sxw.rml_parse):
             'get_title': self.get_title,
             'list_checks': self.list_checks,
             'get_results': self.get_results,
+            'get_reconcile_date': self.get_reconcile_date,
             '_t': self._t,
         })
 
@@ -112,6 +113,27 @@ class integrity_finance(report_sxw.rml_parse):
             else:
                 self.cr.execute(sql)
         return self.cr.fetchall()
+
+    def get_reconcile_date(self, reconcile_ref):
+        """
+        Returns the reconcile_date of the reconciliation in parameter (or None if the reconciled entries have no reconcile_date).
+        Note that this date isn't retrieved directly in the original requests as there are old entries for which within a same reconciliation
+        some lines have a reconcile_date and some others haven't any, so to be consistent the results can't be "grouped by" reconcile date.
+        """
+        reconcile_date = None
+        if reconcile_ref:
+            rec_date_sql = """
+            SELECT reconcile_date
+            FROM account_move_line
+            WHERE reconcile_date IS NOT NULL
+            AND reconcile_id = (SELECT id FROM account_move_reconcile WHERE name = %s LIMIT 1)
+            LIMIT 1;
+            """
+            self.cr.execute(rec_date_sql, (reconcile_ref,))
+            rec_date_res = self.cr.fetchone()
+            if rec_date_res:
+                reconcile_date = rec_date_res[0]
+        return reconcile_date
 
     def _t(self, source):
         return _(source)
