@@ -28,7 +28,6 @@ import threading
 from osv import fields, osv
 from tools.translate import _
 from osv.orm import browse_record
-from workflow.wkf_expr import _eval_expr
 import decimal_precision as dp
 import netsvc
 import pooler
@@ -1618,13 +1617,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         if all_doc:
-            # Detach the PO from his workflow and set the state to done
-            for order_id in ids:
-                wf_service.trg_delete(uid, 'sale.order', order_id, cr)
-                # Search the method called when the workflow enter in last activity
-                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
-                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
+            for order_id in self.browse(cr, uid, ids, context=context):
+                for sol in order_id.order_line:
+                    if sol.state not in ('done', 'cancel', 'cancel_r'):
+                        if not wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'cancel', cr):
+                            # sol are in 'exception' state, this is causing issue when UF is trying to compute the SO state ...
+                            cr.execute("update sale_order_line set state = 'cancel' where id = %s", (sol.id,))
+                self.write(cr, uid, [order_id.id], {'state': 'cancel'}, context=context)
+                if self.read(cr, uid, order_id.id, ['state'])['state'] != 'cancel':
+                    # idk why but sometimes the write statement doesn't update the SO state
+                    cr.execute("update sale_order set state = 'cancel' where id = %s", (order_id.id, ))
 
         return True
 
@@ -1947,9 +1949,9 @@ class sale_order_line(osv.osv):
         'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'property_ids': fields.many2many('mrp.property', 'sale_order_line_property_rel', 'order_id', 'property_id', 'Properties', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
-        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uos'),
         'product_uos': fields.many2one('product.uom', 'Product UoS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging'),
         'move_ids': fields.one2many('stock.move', 'sale_line_id', 'Inventory Moves', readonly=True),
@@ -2215,6 +2217,7 @@ class sale_order_line(osv.osv):
             uom2 = product_uom_obj.browse(cr, uid, uom)
             if product_obj.uom_id.category_id.id != uom2.category_id.id:
                 uom = False
+            result['product_uom'] = uom
         if uos:
             if product_obj.uos_id:
                 uos2 = product_uom_obj.browse(cr, uid, uos)

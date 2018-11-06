@@ -32,6 +32,7 @@ from service.web_services import report_spool
 
 class export_report_stock_inventory(osv.osv):
     _name = 'export.report.stock.inventory'
+    _order = 'id desc'
 
     _columns = {
         'company_id': fields.many2one(
@@ -52,6 +53,10 @@ will be shown.""",
         'prodlot_id': fields.many2one(
             'stock.production.lot',
             string='Specific batch',
+        ),
+        'product_list_id': fields.many2one(
+            'product.list',
+            string='Product list',
         ),
         'expiry_date': fields.date(
             string='Specific expiry date',
@@ -77,8 +82,8 @@ location will be shown.""",
     _defaults = {
         'state': lambda *a: 'draft',
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company').\
-                _company_default_get(
-                    cr, uid, 'export.report.stock.inventory', context=c),
+        _company_default_get(
+            cr, uid, 'export.report.stock.inventory', context=c),
     }
 
     def update(self, cr, uid, ids, context=None):
@@ -100,7 +105,6 @@ location will be shown.""",
         Select the good lines on the report.stock.inventory table
         """
         rsi_obj = self.pool.get('report.stock.inventory')
-        lot_obj = self.pool.get('stock.production.lot')
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
@@ -110,28 +114,34 @@ location will be shown.""",
             domain = [
                 ('location_id.usage', '=', 'internal'),
                 ('product_id.type', '=', 'product'),
-                ('product_qty', '!=', 0.00),
                 ('state', '=', 'done'),
             ]
-            if report.prodlot_id:
-                domain.append(('prodlot_id', '=', report.prodlot_id.id))
-            else:
-                if report.product_id:
-                    domain.append(('product_id', '=', report.product_id.id))
+            list_product_ids = False
+            if report.product_list_id:
+                list_product_ids = self.pool.get('product.product').search(cr, uid, [('list_ids', '=', report.product_list_id.id)], context=context)
+                domain.append(('product_id', 'in', list_product_ids))
                 if report.expiry_date:
                     domain.append(('expired_date', '=', report.expiry_date))
-            if not all_locations and report.location_id:
-                domain.append(('location_id', '=', report.location_id.id))
-            elif all_locations:
-                domain.append(('location_id.usage', '=', 'internal'))
-
-            context.update({
-                'domain': domain,
-                'all_locations': all_locations,
-            })
+                if report.location_id:
+                    domain.append(('location_id', '=', report.location_id.id))
+                else:
+                    domain.append(('location_id.usage', '=', 'internal'))
+            else:
+                domain.append(('product_qty', '!=', 0.00))
+                if report.prodlot_id:
+                    domain.append(('prodlot_id', '=', report.prodlot_id.id))
+                else:
+                    if report.product_id:
+                        domain.append(('product_id', '=', report.product_id.id))
+                    if report.expiry_date:
+                        domain.append(('expired_date', '=', report.expiry_date))
+                if not all_locations and report.location_id:
+                    domain.append(('location_id', '=', report.location_id.id))
+                elif all_locations:
+                    domain.append(('location_id.usage', '=', 'internal'))
 
             rsi_ids = rsi_obj.search(cr, uid, domain, context=context)
-            if not rsi_ids:
+            if not rsi_ids and not report.product_list_id:
                 continue
 
             self.write(cr, uid, [report.id], {
@@ -142,6 +152,7 @@ location will be shown.""",
             datas = {
                 'ids': [report.id],
                 'lines': rsi_ids,
+                'list_product_ids': list_product_ids,
             }
 
             cr.commit()
@@ -299,6 +310,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = {}
+        with_product_list = self.datas.get('list_product_ids') and True or False
         for line in self.pool.get('report.stock.inventory').browse(
             self.cr,
             self.uid,
@@ -313,6 +325,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'uom': line.product_id.uom_id.name,
                     'sum_qty': 0.00,
                     'sum_value': 0.00,
+                    'with_product_list': with_product_list,
                     'lines': {},
                 }
 
@@ -340,6 +353,37 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             res[key]['lines'][batch_id]['value'] += line.value
             res[key]['lines'][batch_id]['location_ids'].setdefault(line.location_id.id, 0.00)
             res[key]['lines'][batch_id]['location_ids'][line.location_id.id] += line.product_qty
+
+        # No move or qty = 0
+        if self.datas['list_product_ids']:
+            for prod in self.pool.get('product.product').browse(self.cr, self.uid, self.datas['list_product_ids'], context=self.localcontext):
+                key = prod.default_code
+                if key not in res:
+                    res[key] = {
+                        'product_code': prod.default_code,
+                        'product_name': prod.name,
+                        'uom': prod.uom_id.name,
+                        'sum_qty': 0.00,
+                        'sum_value': 0.00,
+                        'with_product_list': with_product_list,
+                        'lines': {},
+                    }
+                    batch_id = 'no_batch'
+                    batch_name = ''
+                    expiry_date = False
+
+                    if batch_id not in res[key]['lines']:
+                        res[key]['lines'][batch_id] = {
+                            'batch': batch_name,
+                            'expiry_date': expiry_date,
+                            'qty': 0.00,
+                            'value': 0.00,
+                            'location_ids': {},
+                        }
+
+                    res[key]['lines'][batch_id]['qty'] = 0.00
+                    res[key]['lines'][batch_id]['value'] = 0.00
+                    res[key]['lines'][batch_id]['location_ids'][0] = 0.00
 
         fres = []
         for k in sorted(res.keys()):

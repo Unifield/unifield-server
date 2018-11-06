@@ -184,6 +184,8 @@ class real_average_consumption(osv.osv):
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}),
+        'details': fields.char(size=86, string='Details', states={'done':[('readonly',True)]}),
+        'notes': fields.text('Notes', states={'done':[('readonly',True)]}),
     }
 
     _defaults = {
@@ -829,8 +831,8 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
-        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
+        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
+        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
         'asset_check': fields.function(_get_checks_all, method=True, string='Asset Check', type='boolean', readonly=True, multi="m"),

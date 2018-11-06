@@ -862,7 +862,7 @@ class tender_line(osv.osv):
         return res
 
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True),
+                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
                 'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),

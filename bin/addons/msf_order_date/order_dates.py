@@ -800,8 +800,6 @@ class sale_order_line(osv.osv):
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:
                 default['confirmed_delivery_date'] = False
-            if 'date_planned' not in default:
-                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         return super(sale_order_line, self).copy_data(cr, uid, id, default=default, context=context)
 
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):

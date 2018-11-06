@@ -1386,6 +1386,22 @@ class stock_move(osv.osv):
                         'target': 'new',
                         'res_id': wiz_id,
                         'context': context}
+            if move.type == 'in' and move.purchase_line_id:
+                vals = {'move_id': ids[0]}
+
+                if not move.purchase_line_id.linked_sol_id:
+                    vals['cancel_only'] = True
+
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
+
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.move.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context}
+
 
         return self.unlink(cr, uid, ids, context=context)
 
