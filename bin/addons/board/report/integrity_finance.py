@@ -34,6 +34,7 @@ class integrity_finance(report_sxw.rml_parse):
         period_obj = self.pool.get('account.period')
         fy_obj = self.pool.get('account.fiscalyear')
         if data.get('form', False):
+            # note: the JE id is used and not the JI one to make sure whole entries are retrieved (cf. JI doc dates can differ within a JE)
             sql_additional_subreq = """
                 AND m.id IN 
                 (
