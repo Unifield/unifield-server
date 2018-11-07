@@ -949,6 +949,9 @@ Scenario: SSL US4517 PO split from IR
         | PRODUCT CODE |STATE  | QTY       |
         | DINJPENB1V-  | Draft |  3,000.00 |
 
+    I should see "Draft" in "Order State"       
+    I store "Order Reference" in "PO_REF_COO_3" 
+
 #LINE 24
 
 	I click on "Analytical Distribution" and open the window
