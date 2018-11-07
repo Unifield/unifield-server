@@ -681,6 +681,7 @@ class stock_picking(osv.osv):
         'claim_name': fields.char(string='Claim name', size=512),
         'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
+        'packing_list': fields.char('Supplier Packing List', size=30),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',

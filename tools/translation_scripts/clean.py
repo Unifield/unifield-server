@@ -5,8 +5,8 @@ import mypolib as polib
 
 ###############################################################################
 
-keep_keywords = [ "register_accounting" ]
-
+keep_keywords = [ '' ]
+new_term = True
 ###############################################################################
 
 def main():
@@ -22,6 +22,9 @@ def main():
     # Filter entries in the PO
     keep = []
     for entry in po:
+        if new_term and not entry.msgstr:
+            keep.append(entry)
+            continue
         all_occurences = ' '.join([ o[0] for o in entry.occurrences ])
         # Keep this entry if one of the keyword is present in the occurences
         for keyword in keep_keywords:

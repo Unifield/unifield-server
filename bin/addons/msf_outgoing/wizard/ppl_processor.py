@@ -121,7 +121,7 @@ class ppl_processor(osv.osv):
 
         return res
 
-    def check_sequences(self, cr, uid, sequences, ppl_move_obj, context=None):
+    def check_sequences(self, cr, uid, sequences, ppl_move_obj, field='integrity_status', context=None):
         """
         check pack sequences integrity
         sequences is a list of tuples: [(from, to, internal_id), ...]
@@ -158,46 +158,48 @@ class ppl_processor(osv.osv):
                 to_smaller_ids.append(seq[2])
         ok = True
         if missing_ids:
-            ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
+            ppl_move_obj.write(cr, uid, missing_ids, {field: 'missing_1'}, context=context)
             ok = False
 
         if to_smaller_ids:
-            ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
+            ppl_move_obj.write(cr, uid, to_smaller_ids, {field: 'to_smaller_than_from'}, context=context)
             ok = False
 
         if overlap_ids:
-            ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
+            ppl_move_obj.write(cr, uid, overlap_ids, {field: 'overlap'}, context=context)
             ok = False
 
         if gap_ids:
-            ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
+            ppl_move_obj.write(cr, uid, gap_ids, {field: 'gap'}, context=context)
             ok = False
 
         return ok
 
-    def check_qty_pp(self, cr, uid, lines, context=False):
+    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status',  context=False):
+        ok = True
+        if uom_obj.rounding == 1:
+            if quantity % int(num_of_packs) != 0:
+                ok = False
+                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_int'}, context=context)
+        else:
+            qty_per_pack = quantity/num_of_packs
+            rounded_qty_pp = uom_obj._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack, context=context)
+            if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
+                    and abs(qty_per_pack - rounded_qty_pp) != 0:
+                ok = False
+                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_rounded'}, context=context)
+        return ok
+
+    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=False):
         '''
         Check quantities per pack integrity with UoM
         '''
         if context is None:
             context = {}
 
-        uom_obj = self.pool.get('product.uom')
-        ppl_move_obj = self.pool.get('ppl.move.processor')
-
         ok = True
         for line in lines:
-            if line.uom_id.rounding == 1:
-                if line.quantity % int(line.num_of_packs) != 0:
-                    ok = False
-                    ppl_move_obj.write(cr, uid, line.id, {'integrity_status': 'bad_qty_int'}, context=context)
-            else:
-                rounded_qty_pp = uom_obj._compute_round_up_qty(cr, uid, line.uom_id.id, line.qty_per_pack, context=context)
-                if abs(line.qty_per_pack - rounded_qty_pp) < line.uom_id.rounding \
-                        and abs(line.qty_per_pack - rounded_qty_pp) != 0:
-                    ok = False
-                    ppl_move_obj.write(cr, uid, line.id, {'integrity_status': 'bad_qty_rounded'}, context=context)
-
+            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, context=context)
         return ok
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
@@ -236,7 +238,7 @@ class ppl_processor(osv.osv):
                 return False
 
             ok = ok and self.check_sequences(cr, uid, sequences, ppl_move_obj) \
-                and self.check_qty_pp(cr, uid, wizard.move_ids)
+                and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj)
 
         if ok and just_check:
             ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
