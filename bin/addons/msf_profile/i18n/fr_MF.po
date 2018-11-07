@@ -101447,12 +101447,6 @@ msgstr "Ligne %s du fichier importé: Les informations de la ligne doivent être
 msgid "Line 4 of the file: Order Category '%s' not defined, default value will be 'Other'"
 msgstr "Ligne 4 du fichier: La Catégorie de Commande '%s' n'existe pas, la valeur par défaut sera 'Autre'"
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:368
-#, python-format
-msgid "Line 9 of the file: The Location Requestor '%s' does not match possible options."
-msgstr "Ligne 9 du fichier: La Zone de Demande '%s' ne correspond pas à un choix possible."
-
 #. modules: msf_supply_doc_export, sale
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:137
 #: code:addons/sale/wizard/internal_request_import.py:50
@@ -101466,12 +101460,6 @@ msgstr "Date de Prise de Stock"
 #: field:internal.request.import,in_requestor:0
 msgid "Requestor"
 msgstr "Demandeur"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:371
-#, python-format
-msgid "Line 9 of the file: The Location Requestor is mandatory."
-msgstr "Ligne 9 du fichier: La Zone de Demande est obligatoire."
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:42
@@ -101551,7 +101539,7 @@ msgstr "Numéro de Ligne"
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:101
 msgid "Creation Date"
-msgstr "Date de Création"
+msgstr "Date de Commande"
 
 #. modules: msf_supply_doc_export, sale
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:130
@@ -102561,12 +102549,6 @@ msgid "Order Category"
 msgstr "Catégorie de Commande"
 
 #. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:522
-#, python-format
-msgid "Location Requestor: The Location Requestor is mandatory."
-msgstr "Zone de Demande: La Zone de Demande est obligatoire."
-
-#. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:199
 #, python-format
 msgid "Warning !"
@@ -102737,12 +102719,6 @@ msgstr "\n"
 msgid "Element %s not found."
 msgstr "Élément %s non trouvé."
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:480
-#, python-format
-msgid "Requested Date: The Requested Date '%s' must be formatted like 'DD-MM-YYYY' or 'DD.MM.YYYY'"
-msgstr "Date Demandée: La Date Demandée '%s' doit avoir le format 'JJ-MM-AAAA' ou 'JJ.MM.AAAA'"
-
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:173
 msgid "State"
@@ -102753,12 +102729,6 @@ msgstr "État"
 #, python-format
 msgid "Price '%s' is not a correct value, default cost price has been used. "
 msgstr "Prix '%s' n'a pas une bonne valeur, le prix unitaire par défaut sera utilisé. "
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:682
-#, python-format
-msgid "Date of Stock Take '%s' must be in the format 'DD-MM-YYYY' or 'DD.MM.YYYY', line has been imported without Date of Stock Take. "
-msgstr "La Date de Prise de Stock '%s' doit être au format 'JJ-MM-AAAA' ou 'JJ.MM.AAAA', la ligne sera importée sans la Date de Prise de Stock. "
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:181
@@ -102773,7 +102743,7 @@ msgstr "Informations sur l'Import de la DI"
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:185
 msgid "Creation Date"
-msgstr "Date de Création"
+msgstr "Date de Commande"
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
@@ -102819,12 +102789,6 @@ msgstr "Devise Fonctionnelle"
 #, python-format
 msgid "Order Category: Order Category '%s' not defined, default value will be 'Other'"
 msgstr "Catégorie de Commande: La Catégorie de Commande '%s' n'est pas définie, la valeur par défaut est 'Autre'"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:515
-#, python-format
-msgid "Location Requestor: The Location Requestor '%s' does not match possible options."
-msgstr "Zone de Demande: La Zone de Demande '%s' ne correspond à aucune option possible."
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:625
@@ -102881,3 +102845,27 @@ msgstr "Médical,Logistique,Service,Transport,Autre"
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:168
 msgid "Normal,Emergency,Priority"
 msgstr "Normal,Urgence,Priorité"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:489
+#, python-format
+msgid "Creation Date: The Creation Date '%s' is empty or incorrect, current date will be used."
+msgstr "Date de Commande: La Date de Commande '%s' est vide ou incorrecte, la date du jour sera utilisée."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:510
+#, python-format
+msgid "Requested Date: The Requested Date '%s' is incorrect, you will need to correct this manually."
+msgstr "Date Demandée: La Date Demandée '%s' incorrecte, vous devrez la corriger manuellement."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:531
+#, python-format
+msgid "Location Requestor: The Location Requestor '%s' does not match possible options, you will need to correct this manually."
+msgstr "Zone de Demande: La Zone de Demande '%s' ne correspond à aucune option possible, vous devrez la corriger manuellement."
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:708
+#, python-format
+msgid "Date of Stock Take '%s' is not a correct value, line has been imported without Date of Stock Take. "
+msgstr "La Date de Prise de Stock '%s' n'est pas une valeur correcte, la ligne sera importée sans Date de Prise de Stock. "

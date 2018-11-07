@@ -329,7 +329,7 @@ class procurement_request(osv.osv):
             pl = pricelist_obj.search(cr, uid, [('type', '=', 'sale'),
                                                 ('currency_id', '=', company.currency_id.id)], limit=1)[0]
             vals['pricelist_id'] = pl
-            if 'delivery_requested_date' in vals:
+            if vals.get('delivery_requested_date'):
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
         elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})

@@ -183,7 +183,11 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % if isDate(o.in_creation_date):
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.in_creation_date | n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.in_creation_date or ''|x}</Data></Cell>
+        %endif
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Date')}</Data></Cell>

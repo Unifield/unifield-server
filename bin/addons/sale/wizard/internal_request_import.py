@@ -112,6 +112,7 @@ class internal_request_import(osv.osv):
         'in_ref': fields.char(string='Order Reference', size=64, readonly=True),
         'in_categ': fields.char(string='Order Category', size=64, readonly=True),
         'in_priority': fields.char(string='Priority', size=64, readonly=True),
+        'in_creation_date': fields.char(string='Creation date', size=64, readonly=True),
         'in_requested_date': fields.char(string='Requested date', size=64, readonly=True),
         'in_requestor': fields.char(string='Requestor', size=64, readonly=True),
         'in_loc_requestor': fields.char(string='Location Requestor', size=64, readonly=True),
@@ -120,6 +121,7 @@ class internal_request_import(osv.osv):
         # # Imported IR info
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
+        'imp_creation_date': fields.date(string='Creation Date', readonly=True),
         'imp_requested_date': fields.date(string='Requested Date', readonly=True),
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
         'imp_loc_requestor': fields.many2one('stock.location', string='Location Requestor', readonly=True),
@@ -410,6 +412,7 @@ class internal_request_import(osv.osv):
                     'in_ref': values.get(2, [])[1],
                     'in_categ': values.get(4, [])[1],
                     'in_priority': values.get(5, [])[1],
+                    'in_creation_date': values.get(6, [])[1],
                     'in_requested_date': values.get(7, [])[1],
                     'in_requestor': values.get(8, [])[1],
                     'in_loc_requestor': values.get(9, [])[1],
@@ -469,33 +472,46 @@ class internal_request_import(osv.osv):
                                         context=context)
                     header_values['imp_priority'] = 'normal'
 
+                # Line 6: Creation date
+                create_date = values.get(6, [])[1]
+                if type(create_date) == type(DateTime.now()):
+                    req_date = create_date.strftime('%d-%m-%Y')
+                    header_values['imp_creation_date'] = req_date
+                else:
+                    for format in l_date_format:
+                        try:
+                            time.strptime(create_date, format)
+                            header_values['imp_creation_date'] = create_date
+                            break
+                        except:
+                            continue
+                    if not header_values.get('imp_creation_date'):
+                        msg_val = _('Creation Date: The Creation Date \'%s\' is empty or incorrect, current date will be used.') \
+                                  % (create_date,)
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
+                                                      'line_message': msg_val}, context=context)
+                        header_values['imp_creation_date'] = DateTime.now()
+
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]
-                if req_date:
-                    if type(req_date) == type(DateTime.now()):
-                        req_date = req_date.strftime('%d-%m-%Y')
-                        header_values['imp_requested_date'] = req_date
-                    else:
-                        for format in l_date_format:
-                            try:
-                                time.strptime(req_date, format)
-                                header_values['imp_requested_date'] = req_date
-                                break
-                            except:
-                                continue
-                        if not header_values.get('imp_requested_date'):
-                            blocked = True
-                            msg_val = _('Requested Date: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\' or \'DD.MM.YYYY\'')\
-                                      % req_date
-                            values_header_errors.append(msg_val)
-                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
-                                                          'line_message': msg_val}, context=context)
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Requested Date: The Requested Date is mandatory in the first import.')
-                    values_header_errors.append(msg_val)
-                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                        context=context)
+                if type(req_date) == type(DateTime.now()):
+                    req_date = req_date.strftime('%d-%m-%Y')
+                    header_values['imp_requested_date'] = req_date
+                else:
+                    for format in l_date_format:
+                        try:
+                            time.strptime(req_date, format)
+                            header_values['imp_requested_date'] = req_date
+                            break
+                        except:
+                            continue
+                    if not header_values.get('imp_requested_date'):
+                        msg_val = _('Requested Date: The Requested Date \'%s\' is incorrect, you will need to correct this manually.') \
+                                  % req_date
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
+                                                      'line_message': msg_val}, context=context)
 
                 # Line 8: Requestor
                 if values.get(8, [])[1]:
@@ -503,25 +519,17 @@ class internal_request_import(osv.osv):
 
                 # Line 9: Location Requestor
                 loc_req = values.get(9, [])[1]
-                if loc_req:
-                    ir_loc_req_domain = [
-                        ('name', '=ilike', loc_req), '&',
-                        ('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&',
-                        ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')
-                    ]
-                    loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, limit=1, context=context)
-                    if loc_ids:
-                        header_values['imp_loc_requestor'] = loc_ids[0]
-                    else:
-                        blocked = True
-                        msg_val = _('Location Requestor: The Location Requestor \'%s\' does not match possible options.')\
-                                  % (loc_req,)
-                        values_header_errors.append(msg_val)
-                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                            context=context)
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Location Requestor: The Location Requestor is mandatory.')
+                ir_loc_req_domain = [
+                    ('name', '=ilike', loc_req), '&',
+                    ('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&',
+                    ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')
+                ]
+                loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, limit=1, context=context)
+                if loc_ids:
+                    header_values['imp_loc_requestor'] = loc_ids[0]
+                else:
+                    msg_val = _('Location Requestor: The Location Requestor \'%s\' does not match possible options, you will need to correct this manually.')\
+                              % (loc_req,)
                     values_header_errors.append(msg_val)
                     err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
                                         context=context)
@@ -697,7 +705,7 @@ class internal_request_import(osv.osv):
                                 except:
                                     continue
                             if not line_data.get('imp_stock_take_date'):
-                                line_errors += _('Date of Stock Take \'%s\' must be in the format \'DD-MM-YYYY\' or \'DD.MM.YYYY\', line has been imported without Date of Stock Take. ') \
+                                line_errors += _('Date of Stock Take \'%s\' is not a correct value, line has been imported without Date of Stock Take. ') \
                                                % vals[8]
 
                     line_data.update({
@@ -815,10 +823,14 @@ class internal_request_import(osv.osv):
                 self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
                 if wiz.order_id:  # update IR
                     ir_vals = {
-                        'delivery_requested_date': wiz.imp_requested_date,
-                        'requestor': wiz.imp_requestor,
-                        'location_requestor_id': wiz.imp_loc_requestor.id,
+                        'requestor': wiz.imp_requestor
                     }
+                    if wiz.imp_creation_date:
+                        ir_vals.update({'date_order': wiz.imp_creation_date})
+                    if wiz.imp_requested_date:
+                        ir_vals.update({'delivery_requested_date': wiz.imp_requested_date})
+                    if wiz.imp_loc_requestor:
+                        ir_vals.update({'location_requestor_id': wiz.imp_loc_requestor.id})
                     if wiz.imp_categ:
                         ir_vals.update({'categ': wiz.imp_categ})
                     if wiz.imp_priority:
@@ -848,9 +860,10 @@ class internal_request_import(osv.osv):
                         'procurement_request': True,
                         'categ': wiz.imp_categ,
                         'priority': wiz.imp_priority,
-                        'delivery_requested_date': wiz.imp_requested_date,
+                        'date_order': wiz.imp_creation_date,
+                        'delivery_requested_date': wiz.imp_requested_date or False,
                         'requestor': wiz.imp_requestor,
-                        'location_requestor_id': wiz.imp_loc_requestor.id,
+                        'location_requestor_id': wiz.imp_loc_requestor and wiz.imp_loc_requestor.id or False,
                         'origin': wiz.imp_origin,
                         'order_line': [(0, 0, {
                             'product_id': x.imp_product_id and x.imp_product_id.id or False,
