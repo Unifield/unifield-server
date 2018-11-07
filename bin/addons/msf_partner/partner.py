@@ -642,7 +642,7 @@ class res_partner(osv.osv):
 
 
         for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name'], context=context):
-            if x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
+            if x.property_product_pricelist_purchase and x.property_product_pricelist and x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
                 raise osv.except_osv(_('Warning'),
                                      _('Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same') % (x.name, x.property_product_pricelist_purchase.currency_id.name, x.property_product_pricelist.currency_id.name)
                                      )
