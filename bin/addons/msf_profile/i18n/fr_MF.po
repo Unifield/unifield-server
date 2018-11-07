@@ -37775,7 +37775,6 @@ msgstr "Sur Plusieurs Documents"
 #: code:addons/finance/report/account_partner_balance_tree.py:137
 #: code:addons/finance/report/account_partner_balance_tree.py:198
 #: selection:wizard.account.partner.balance.tree,filter:0
-#: selection:integrity.finance.wizard,filter:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:464
 #: field:modify.expiry.date,date:0
 #: field:msf.accrual.line,date:0
@@ -65801,7 +65800,7 @@ msgstr "Created by PO"
 msgid "PO line to confirm"
 msgstr "PO line to confirm"
 
-#. modules: account, finance, account_mcdb, register_accounting, account_hq_entries, account_override, analytic, msf_accrual, vertical_integration
+#. modules: account, finance, account_mcdb, register_accounting, account_hq_entries, account_override, analytic, msf_accrual, vertical_integration, board
 #: field:account.bank.statement.line,date:0
 #: field:account.invoice,date_invoice:0
 #: report:combined.journals.report.pdf:0
@@ -65842,6 +65841,7 @@ msgstr "PO line to confirm"
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:218
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:291
 #: field:hq.entries.split,date:0
+#: selection:integrity.finance.wizard,filter:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"

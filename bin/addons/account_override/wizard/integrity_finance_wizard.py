@@ -34,7 +34,7 @@ class integrity_finance_wizard(osv.osv_memory):
         'filter': fields.selection([
             ('filter_no', 'No Filters'),
             ('filter_date_doc', 'Document Date'),
-            ('filter_date', 'Date'),
+            ('filter_date', 'Posting Date'),
             ('filter_period', 'Period')
         ], "Filter by", required=True),
         'period_from': fields.many2one('account.period', 'Start period'),
