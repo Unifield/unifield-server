@@ -102574,3 +102574,8 @@ msgstr "Info système pour gérer la sync"
 msgid "Template id"
 msgstr "Id. Modèle"
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:647
+#, python-format
+msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
+msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
