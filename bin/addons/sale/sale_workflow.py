@@ -562,10 +562,14 @@ class sale_order_line(osv.osv):
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'
                 to_write['po_cft'] = False
-            to_write['original_product'] = sol.product_id.id
-            to_write['original_qty'] = sol.product_uom_qty
-            to_write['original_price'] = sol.price_unit
-            to_write['original_uom'] = sol.product_uom.id
+            if not sol.original_product:
+                to_write['original_product'] = sol.product_id.id
+            if not sol.original_qty:
+                to_write['original_qty'] = sol.product_uom_qty
+            if not sol.original_price:
+                to_write['original_price'] = sol.price_unit
+            if not sol.original_uom:
+                to_write['original_uom'] = sol.product_uom.id
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:

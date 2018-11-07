@@ -63,6 +63,10 @@ class sale_order_line_sync(osv.osv):
         sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
         sol_values['order_id'] = sale_order_ids[0]
         sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+        if sol_values.get('product_id'):
+            sol_values['original_product'] = sol_values['product_id']
+        if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
+            sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
         new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
         message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
