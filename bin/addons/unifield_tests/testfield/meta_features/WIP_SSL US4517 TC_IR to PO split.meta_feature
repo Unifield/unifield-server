@@ -1063,7 +1063,7 @@ Scenario: SSL US4517 PO split from IR
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
         |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-pv |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed    |   3,000.00    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000.00    |
         |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-pv |   7,000.00    |
         |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000.00    |
 		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000.00    |
@@ -1102,14 +1102,14 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed    |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed    |   3,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed    |   7,000.00    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   2,000.00    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000.00    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   7,000.00    |
         |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000.00    |
 		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed    |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed    |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed    |  30,000.00    |	
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  20,000.00    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   2,000.00    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  30,000.00    |	
         |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000.00    |
 		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v  |   7,000.00    |
    
