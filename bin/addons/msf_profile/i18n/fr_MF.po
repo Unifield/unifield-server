@@ -7655,12 +7655,6 @@ msgid "Replacement Tax"
 msgstr "Taxe de Remplacement"
 
 #. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:1807
-#, python-format
-msgid "No purchase journal found!"
-msgstr "No purchase journal found!"
-
-#. module: register_accounting
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Register closing date:"
@@ -14694,7 +14688,7 @@ msgstr "Attributs Produit"
 #: view:cash.request:0
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Functional"
-msgstr "Solde Total du Relevé Bancaire en Devise Fonc."
+msgstr "Solde Total Registre de Banque en Devise Fonc."
 
 #. module: sync_client
 #: field:sync.client.rule,owner_field:0
@@ -15952,12 +15946,6 @@ msgstr "Total Selection"
 #: view:sale.order.change.currency:0
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
-
-#. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:422
-#, python-format
-msgid "No partner changed! Verify that the Journal Entries attached to this line was not modify previously."
-msgstr "No partner changed! Verify that the Journal Entries attached to this line was not modify previously."
 
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:812
@@ -26937,7 +26925,7 @@ msgstr "Avertissement sur la confirmation"
 #. module: finance
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Booking"
-msgstr "Solde Total du Relevé Bancaire en Devise d'Enreg."
+msgstr "Solde Total Registre de Banque en Devise d'Enreg."
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -31148,12 +31136,6 @@ msgstr "Délai Fournisseur "
 msgid "Allocatable"
 msgstr "Attribuable"
 
-#. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:426
-#, python-format
-msgid "You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"
-msgstr "Vous ne pouvez changer qu'UN champ parmi:  Compte, Tiers, Allocation Analytique"
-
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:493
 msgid "Total Project - %used"
@@ -31876,10 +31858,10 @@ msgid "Field Order Line %s of %s has already been sourced from order. Impossible
 msgstr "Field Order Line %s of %s has already been sourced from order. Impossible to forward the claim."
 
 #. module: account_corrections
-#: code:addons/account_corrections/wizard/journal_items_corrections.py:415
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:551
 #, python-format
-msgid "No account changed!"
-msgstr "Pas de compte changé!"
+msgid "No change made!"
+msgstr "Aucun changement effectué !"
 
 #. modules: stock_override, stock
 #: help:stock.move,prodlot_id:0
@@ -37227,12 +37209,6 @@ msgstr "Africa/Maseru"
 #: field:stock.location,chained_location_type:0
 msgid "Chained Location Type"
 msgstr "Type de Zone Liée"
-
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:863
-#, python-format
-msgid "No account found for this partner!"
-msgstr "Pas de compte trouvé pour ce partenaire!"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -43559,11 +43535,12 @@ msgstr "Les dossier %s des pièces jointes n'existe pas. Veuillez vérifier la c
 msgid "done - (sale.order.line)"
 msgstr "done - (sale.order.line)"
 
-#. modules: register_accounting, analytic_distribution
+#. modules: register_accounting, analytic_distribution, account_override
 #: field:analytic.distribution.wizard,register_line_id:0
 #: view:account.bank.statement.line:0
 #: field:wizard.transfer.with.change,absl_id:0
 #: field:account.direct.invoice.wizard,register_line_id:0
+#: field:account.move.line,partner_register_line_id:0
 msgid "Register Line"
 msgstr "Ligne de Registre"
 
@@ -45391,12 +45368,6 @@ msgstr "cost.center.distribution.line"
 #: field:res.partner.address,partner_id:0
 msgid "Partner Name"
 msgstr "Nom du Partenaire"
-
-#. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:821
-#, python-format
-msgid "No new partner_id given!"
-msgstr "Pas de nouveau partner_id fournie!"
 
 #. module: product_attributes
 #: view:product.where.used:0
@@ -63901,10 +63872,10 @@ msgid "Executive 4   7.5 x 10 inches, 190.5 x 254 mm"
 msgstr "Format exécutif 4 7,5 x 10 pouces, 190,5 x 254 mm"
 
 #. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:1827
+#: code:addons/register_accounting/account_bank_statement.py:1821
 #, python-format
-msgid "The supplier seems not have an incorrect account.                         Please contact an accountant administrator to resolve this problem."
-msgstr "The supplier seems not have an incorrect account.                         Please contact an accountant administrator to resolve this problem."
+msgid "The supplier seems to have an incorrect account. Please contact an Accounting Administrator to solve this problem."
+msgstr "Le fournisseur semble avoir un compte incorrect. Veuillez contacter un Administrateur Finance pour résoudre ce problème."
 
 #. module: account_override
 #: field:account.move.line,reconcile_txt:0
@@ -66365,10 +66336,10 @@ msgid "Destruction Report"
 msgstr "Rapport Destruction"
 
 #. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:714
+#: code:addons/account_corrections/account_move_line.py:721
 #, python-format
-msgid "You cannot change the G/L account since it is used in a closed financing contract."
-msgstr "Vous ne pouvez pas modifier le compte du Grand livre parce qu'il est utilisé dans un contrat de financement clôturé."
+msgid "You cannot change this entry since one of its accounts is used in a closed financing contract."
+msgstr "Vous ne pouvez pas modifier cette écriture car l'un de ses comptes est utilisé dans un contrat de financement clôturé."
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -69795,11 +69766,12 @@ msgstr "America/Argentina/Catamarca"
 msgid "Taxes Report"
 msgstr "Rapport des Taxes"
 
-#. modules: account, register_accounting
+#. modules: account, register_accounting, account_corrections
 #: field:account.bank.statement.line,partner_type_mandatory:0
 #: field:account.move.line,partner_type_mandatory:0
 #: selection:account.journal.column,field:0
 #: field:wizard.register.import.lines,partner_type_mandatory:0
+#: field:wizard.journal.items.corrections.lines,partner_type_mandatory:0
 msgid "Third Party Mandatory"
 msgstr "Tiers Obligatoire"
 
@@ -89483,9 +89455,10 @@ msgstr "Créditeurs"
 msgid "From assigned to backorder."
 msgstr "De attribué à reliquat de commande."
 
-#. module: register_accounting
+#. modules: register_accounting, account_corrections
 #: help:account.bank.statement.line,third_parties:0
 #: help:account.move.line,third_parties:0
+#: help:wizard.journal.items.corrections.lines,third_parties:0
 msgid "To use for python code when registering"
 msgstr "A utiliser pour le code python lors de l'enregistrement"
 
@@ -93093,10 +93066,10 @@ msgid "Enter a Start date !"
 msgstr "Inscrire une date de début !"
 
 #. module: account_corrections
-#: code:addons/account_corrections/account_move_line.py:683
+#: code:addons/account_corrections/account_move_line.py:706
 #, python-format
-msgid "The line '%s' with new account '%s - %s' need an analytic distribution (you may have changed account from one with no AD required to a new one with AD required)."
-msgstr "The line '%s' with new account '%s - %s' need an analytic distribution (you may have changed account from one with no AD required to a new one with AD required)."
+msgid "The line '%s' with the new account '%s - %s' needs an analytic distribution (you may have changed the account from one with no AD required to a new one with AD required)."
+msgstr "La ligne '%s' avec le nouveau compte '%s - %s' a besoin d'une distribution analytique (il se peut que vous ayez passé la ligne d'un compte sans Distribution Analytique requise à un compte qui en requiert une)."
 
 #. module: product_attributes
 #: field:product.international.status,no_storage:0
@@ -94628,7 +94601,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail
+#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:226
 #: field:hr.payroll.msf,partner_type:0
@@ -94638,6 +94611,8 @@ msgstr "Information Complémentaire"
 #: field:account.move.line,partner_txt:0
 #: field:account.move.line,partner_type:0
 #: field:account.move.line,third_parties:0
+#: field:wizard.journal.items.corrections.lines,partner_type:0
+#: field:wizard.journal.items.corrections.lines,third_parties:0
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:169
 #: report:addons/register_accounting/report/open_advances_xls.mako:151
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:225
@@ -98104,8 +98079,8 @@ msgstr "You can only duplicate manual journal entries."
 
 #. module: account_corrections
 #: field:analytic.distribution.wizard,old_account_id:0
-msgid "New account given by correction wizard"
-msgstr "Nouveau compte donné par l'assistant de correction "
+msgid "Original account of the line to be corrected"
+msgstr "Compte d'origine de la ligne à corriger"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:139
@@ -101936,6 +101911,68 @@ msgstr "Attention la location de stock finale pour ces biens n'est plus active, 
 #, python-format
 msgid "Warning, destination location is no longer active, please select an active location"
 msgstr "Attention, la location de stock finale n'est plus active, merci de selectionner une location active"
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:157
+#, python-format
+msgid "The account %s - %s requires a Journal Third Party."
+msgstr "Le compte %s - %s requiert un Tiers de type Journal."
+
+#. module: account_corrections
+#: field:wizard.journal.items.corrections.lines,partner_txt_only:0
+msgid "Has a \"partner_txt\" without any related partner/employee/transfer journal"
+msgstr "A un \"partner_txt\" sans partenaire/employé/journal de transfert associé"
+
+#. module: account_corrections
+#: help:wizard.journal.items.corrections.lines,partner_txt_only:0
+msgid "The Third Party of the line to be corrected hasn't been synched to this instance"
+msgstr "Le Tiers de la ligne à corriger n'a pas été synchronisé vers cette instance"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,old_partner_id:0
+msgid "Original partner of the line to be corrected"
+msgstr "Partenaire d'origine de la ligne à corriger"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,old_employee_id:0
+msgid "Original employee of the line to be corrected"
+msgstr "Employé d'origine de la ligne à corriger"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,new_partner_id:0
+msgid "New partner selected in the correction wizard"
+msgstr "Nouveau partenaire sélectionné dans l'assistant de correction"
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,new_employee_id:0
+msgid "New employee selected in the correction wizard"
+msgstr "Nouvel employé sélectionné dans l'assistant de correction"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:1824
+#, python-format
+msgid "Journal Entry linked to the register line %s not found."
+msgstr "Ecriture comptable liée à la ligne de registre %s non trouvée."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:1043
+msgid "Automated Entry"
+msgstr "Écriture Automatique"
+
+#. module: account_override
+#: field:account.bank.statement.line,partner_move_line_ids:0
+msgid "Automated Entries"
+msgstr "Écritures Automatiques"
+
+#. module: account_override
+#: help:account.bank.statement.line,partner_move_line_ids:0
+msgid "Automated entries generated for expense/income register lines linked to a partner"
+msgstr "Écritures Automatiques générées pour les lignes de registre de dépenses/produits liées à un partenaire"
+
+#. module: account_override
+#: help:account.move.line,partner_register_line_id:0
+msgid "Register line to which this partner automated entry is linked"
+msgstr "Ligne de registre à laquelle cette écriture automatique liée à un partenaire est rattachée"
 
 #. module: account_override
 #: code:addons/account_override/account.py:517
