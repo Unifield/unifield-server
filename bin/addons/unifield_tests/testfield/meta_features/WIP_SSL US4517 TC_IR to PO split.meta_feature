@@ -1129,8 +1129,8 @@ Scenario: SSL US4517 PO split from IR
     I click on "Copy all"
     
     I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY   |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  2,000.000 |
+        | PRODUCT                                                           | ORDERED QUANTITY |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     2,000.000    |
 
     I fill "LotA{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -1139,8 +1139,8 @@ Scenario: SSL US4517 PO split from IR
     I validate the line
         
     I click "Edit" on line:
-        | PRODUCT                                                                   |  QUANTITY  |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  7,000.000 |
+        | PRODUCT                                                                   | ORDERED QUANTITY |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     7,000.000    |
 
     I fill "LotB{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -1150,8 +1150,8 @@ Scenario: SSL US4517 PO split from IR
     
     
     I click "Edit" on line:
-        | PRODUCT                                                                   |  QUANTITY  |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  2,000.000 |
+        | PRODUCT                                                                   | ORDERED QUANTITY |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     2,000.000    |
 
     I fill "LotC{{ID}}" within column "Batch Number" and open the window
     I click on "New"
