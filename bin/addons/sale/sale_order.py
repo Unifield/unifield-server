@@ -603,7 +603,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, required=True, change_default=True, select=True),
+        'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
                                        string='Order Type', required=True, readonly=True),
@@ -849,17 +849,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        if 'partner_id' in vals and vals.get('yml_module_name') != 'sale':
+        if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
             if vals.get('order_type', 'regular') != 'regular' or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
-        elif vals.get('yml_module_name') == 'vals':
-            if not vals.get('order_policy'):
-                vals['order_policy'] = 'picking'
-            if not vals.get('invoice_quantity'):
-                vals['invoice_quantity'] = 'order'
 
         if vals.get('order_policy', False):
             if vals['order_policy'] == 'prepaid':
