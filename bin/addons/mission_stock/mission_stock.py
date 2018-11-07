@@ -188,6 +188,7 @@ msr_in_progress()
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
+    _order = 'full_view desc, name'
 
     logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
