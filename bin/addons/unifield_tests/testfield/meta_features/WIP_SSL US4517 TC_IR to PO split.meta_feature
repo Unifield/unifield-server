@@ -1118,28 +1118,61 @@ Scenario: SSL US4517 PO split from IR
 
    
     I open tab menu "WAREHOUSE"
-	I open accordion menu "Warehouse Management"
-	I click on menu "Incoming Shipments"
+    I open accordion menu "Warehouse Management"
+    I click on menu "Incoming Shipments"
 
-	I click "Edit" on line:
-		| PURCHASE ORDER   |
-		| {{PO_REF_COO_2}} |
+    I click "Edit" on line:
+        | PURCHASE ORDER   |
+        | {{PO_REF_COO_2}} |
 
     I click on "Process" and open the window
-	I click on "Copy all"
+    I click on "Copy all"
+    
+    I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY   |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  2,000.000 |
+
+    I fill "LotA{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2022"
+    I click on "Save" and close the window
+    I validate the line
+        
+    I click "Edit" on line:
+        | PRODUCT                                                                   |  QUANTITY  |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  7,000.000 |
+
+    I fill "LotB{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Dec/2025"
+    I click on "Save" and close the window
+    I validate the line 
+    
+    
+    I click "Edit" on line:
+        | PRODUCT                                                                   |  QUANTITY  |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  2,000.000 |
+
+    I fill "LotC{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "30/Jun/2024"
+    I click on "Save" and close the window
+    I validate the line     
+    
+    
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open
-	
-	I should see "Closed" in "State"
-		
-	I should see in the main table the following data:
+    
+    I should see "Closed" in "State"
+        
+    I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY    | 
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000.000 |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000.000 |
-	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000.000 |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000.000 |    
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   2,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000.000 |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000.000 |    
    
 
 #LINE 30
