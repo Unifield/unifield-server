@@ -108,7 +108,7 @@ class tender(osv.osv):
                 'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True),
+                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
@@ -122,7 +122,7 @@ class tender(osv.osv):
                 'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
 
-    _defaults = {'categ': 'empty',
+    _defaults = {'categ': False,
                  'state': 'draft',
                  'internal_state': 'draft',
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
@@ -134,7 +134,6 @@ class tender(osv.osv):
                  }
 
     _sql_constraints = [
-        ('tender_categ_not_null_check', '''check(categ != 'empty')''', 'Tender category should not be empty !'),
     ]
 
     _order = 'name desc'

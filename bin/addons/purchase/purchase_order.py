@@ -618,7 +618,7 @@ class purchase_order(osv.osv):
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, add_empty=True),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
@@ -775,7 +775,7 @@ class purchase_order(osv.osv):
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'empty',
+        'categ': lambda *a: False,
         'loan_duration': 2,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
@@ -803,7 +803,6 @@ class purchase_order(osv.osv):
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
-        ('order_categ_not_null_check', '''check(categ != 'empty')''', 'Order category should not be empty !'),
     ]
 
     def _check_order_type(self, cr, uid, ids, context=None):

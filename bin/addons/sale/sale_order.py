@@ -609,7 +609,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                        string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}, add_empty=True),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details', readonly=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
@@ -671,7 +671,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'order_type': lambda *a: 'regular',
         'invoice_quantity': lambda *a: 'procurement',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'empty',
+        'categ': lambda *a: False,
         'loan_duration': lambda *a: 2,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
@@ -683,7 +683,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
-        ('sale_categ_not_null_check', '''check(categ != 'empty')''', 'Order category should not be empty !'),
     ]
 
     _constraints = [

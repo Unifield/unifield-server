@@ -1398,6 +1398,8 @@ class orm_template(object):
                                                                    context_lang, val)
                             sel2_append((key, val2 or val))
                     sel = sel2 or sel
+                    if getattr(field_col, 'add_empty', None):
+                        res[f]['add_empty'] = getattr(field_col, 'add_empty')
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
