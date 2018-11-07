@@ -358,13 +358,14 @@ msgstr "Available Updated"
 msgid "Debug to server log"
 msgstr "Déboguer dans le journal du serveur"
 
-#. modules: account, finance
+#. modules: account, finance, account_mcdb
 #: report:account.partner.balance:0
 #: view:account.partner.balance:0
 #: code:addons/finance/wizard/account_report_partner_balance_tree.py:490
 #: model:ir.actions.act_window,name:account.action_account_partner_balance
 #: model:ir.actions.report.xml,name:account.account_3rdparty_account_balance
 #: model:ir.actions.report.xml,name:finance.account_partner_balance_tree_xls
+#: selection:finance.sync.query,model:0
 msgid "Partner Balance"
 msgstr "Balance Partenaire"
 
@@ -4031,11 +4032,17 @@ msgstr "L'Export XML est seulement diponible pour les Livraisons Entrantes Ferm�
 msgid "Book. Amount"
 msgstr "Enreg.Montant"
 
-#. module: msf_tools
+#. module: msf_tools, account_mcdb
 #: view:automated.export:0
 #: view:automated.import:0
+#: selection:finance.sync.query.activation_wizard,state:0
 msgid "Activate"
 msgstr "Activer"
+
+#. module: account_mcdb
+#: field:finance.sync.query.activation_wizard,nb:0
+msgid "Number of selected queries"
+msgstr "Nombre de requêtes sélectionnées"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:313
@@ -15700,6 +15707,7 @@ msgstr "Fonctions d'export automatisé"
 #: field:stock.move,type:0
 #: view:purchase.order:0
 #: field:sync.client.logs,type:0
+#: field:finance.sync.query,model:0
 msgid "Type"
 msgstr "Type"
 
@@ -16159,15 +16167,16 @@ msgstr "Numéro unique du bon de commande, calculé automatiquement à la créat
 msgid "Is given path is located on FTP server ?"
 msgstr "Est-ce que le chemin donné est situé sur le serveur FTP ?"
 
-#. modules: account, analytic_distribution
+#. modules: account, analytic_distribution, account_mcdb
 #: model:ir.actions.act_window,name:account.action_account_analytic_account_tree2
 #: model:ir.actions.act_window,name:account.action_account_analytic_chart
 #: model:ir.ui.menu,name:account.menu_action_analytic_account_tree2
 #: code:addons/analytic_distribution/wizard/account_analytic_chart.py:147
 #: model:ir.actions.report.xml,name:analytic_distribution.account_analytic_chart_export
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "Balance by analytic account"
-msgstr "Balance by analytic account"
+msgstr "Balance par compte analytique"
 
 #. modules: sync_client, update_client
 #: field:backup.download,path:0
@@ -18471,6 +18480,8 @@ msgstr "Listes des Avances Ouvertes"
 #: selection:account.analytic.account,state:0
 #: field:stock.partial.picking,filename_template:0
 #: field:supplier.catalogue,filename_template:0
+#: code:addons/account_mcdb/sync_query.py:139
+#: code:addons/account_mcdb/sync_query.py:158
 msgid "Template"
 msgstr "Modèle"
 
@@ -21537,6 +21548,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
+#: field:finance.sync.query,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -25400,6 +25412,8 @@ msgstr "The article may imply medical risks if misused by persons with insuffici
 #: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_form
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line
 #: code:addons/account_period_closing_level/account_period.py:704
+#: code:addons/account_mcdb/sync_query.py:129
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "G/L Selector"
 msgstr "Sélecteur G/L"
@@ -25906,7 +25920,7 @@ msgstr "A file with same checksum has been already imported !"
 msgid "Not recognized patch file!"
 msgstr "Not recognized patch file!"
 
-#. modules: account_override, account
+#. modules: account_override, account, account_mcdb
 #: view:account.bs.report:0
 #: model:ir.actions.act_window,name:account.action_account_bs_report
 #: model:ir.ui.menu,name:account.menu_account_bs_report
@@ -25917,6 +25931,7 @@ msgstr "Not recognized patch file!"
 #: model:ir.actions.report.xml,name:account.account_profit_loss_xls
 #: selection:account.chart,account_type:0
 #: report:addons/account_override/report/account_chart_export.mako:107
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "Balance Sheet"
 msgstr "Bilan Comptable"
@@ -31077,7 +31092,7 @@ msgstr "You have to select a pricelist or a supplier in the purchase form !\n"
 msgid "Receipt"
 msgstr "Reçu"
 
-#. modules: account, finance
+#. modules: account, finance, account_mcdb
 #: report:account.general.ledger:0
 #: view:account.report.general.ledger:0
 #: model:ir.actions.act_window,name:account.action_account_general_ledger_menu
@@ -31087,6 +31102,7 @@ msgstr "Reçu"
 #: model:ir.ui.menu,name:account.menu_general_ledger
 #: code:addons/account/report/account_general_ledger.py:102
 #: code:addons/finance/report/account_report_name.py:19
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "General Ledger"
 msgstr "Grand Livre Général"
@@ -41705,7 +41721,7 @@ msgstr "Choisir un modèle si cette règle n'est applicable que sur un modèle d
 msgid "Close FY"
 msgstr "Close FY"
 
-#. modules: account, finance
+#. modules: account, finance, account_mcdb
 #: report:account.account.balance:0
 #: view:account.balance.report:0
 #: model:ir.actions.act_window,name:account.action_account_balance_menu
@@ -41714,6 +41730,7 @@ msgstr "Close FY"
 #: model:ir.ui.menu,name:account.menu_general_Balance_report
 #: code:addons/account/report/account_general_ledger.py:107
 #: code:addons/finance/report/account_report_name.py:30
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "Trial Balance"
 msgstr "Balance des Comptes"
@@ -45804,6 +45821,7 @@ msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Enga
 #: field:resource.resource,user_id:0
 #: field:standard.price.track.changes,user_id:0
 #: field:wizard.template,user_id:0
+#: field:finance.sync.query,user_id:0
 msgid "User"
 msgstr "Utilisateur"
 
@@ -51468,14 +51486,15 @@ msgstr "Vanuatu"
 msgid "Europe/Brussels"
 msgstr "Europe/Brussels"
 
-#. modules: account_override, account
+#. modules: account_override, account, account_mcdb
 #: model:ir.actions.act_window,name:account.action_account_chart
 #: model:ir.actions.act_window,name:account.action_account_tree
 #: model:ir.ui.menu,name:account.menu_action_account_tree2
 #: report:addons/account_override/report/account_chart_export.mako:67
 #: model:ir.actions.report.xml,name:account_override.account_chart_export
+#: selection:finance.sync.query,model:0
 msgid "Balance by account"
-msgstr "Balance by account"
+msgstr "Balance par compte"
 
 #. module: purchase_override
 #: report:msf.purchase.quotation:0
@@ -57656,9 +57675,10 @@ msgstr "Origine"
 msgid "Parent shipment"
 msgstr "Expédition Parent "
 
-#. modules: sourcing, analytic_distribution
+#. modules: sourcing, analytic_distribution, account_mcdb
 #: view:analytic.distribution.wizard:0
 #: view:multiple.sourcing.wizard:0
+#: view:account.mcdb:0
 msgid "Save"
 msgstr "Sauver"
 
@@ -60235,6 +60255,8 @@ msgstr "MAURITANIAN OUGUIYA"
 #. module: account_mcdb
 #: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic_form
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line
+#: code:addons/account_mcdb/sync_query.py:130
+#: selection:finance.sync.query,model:0
 msgid "Analytic Selector"
 msgstr "Sélecteur Analytique"
 
@@ -67375,6 +67397,8 @@ msgstr "--------------------------------- \n"
 #: report:addons/account_mcdb/report/combined_journals_report.mako:126
 #: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_combined_form
 #: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_combined_line
+#: code:addons/account_mcdb/sync_query.py:131
+#: selection:finance.sync.query,model:0
 msgid "Combined Journals Report"
 msgstr "Rapport des Journaux Agrégés"
 
@@ -76423,8 +76447,9 @@ msgstr "Configuration Approvisionnement"
 msgid "Wrong Product UOM !"
 msgstr "UdM Produit incorrecte !"
 
-#. module: msf_instance
+#. module: msf_instance, account_mcdb
 #: view:msf.instance:0
+#: selection:finance.sync.query.activation_wizard,state:0
 msgid "Deactivate"
 msgstr "Désactiver"
 
@@ -82208,7 +82233,7 @@ msgstr "Toutes les Ecritures"
 msgid "Model of the parent"
 msgstr "Nodèle du parent"
 
-#. modules: account, finance
+#. modules: account, finance, account_mcdb
 #: view:account.partner.ledger:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
@@ -82217,6 +82242,7 @@ msgstr "Nodèle du parent"
 #: model:ir.actions.report.xml,name:account.account_3rdparty_ledger_other
 #: model:ir.ui.menu,name:account.menu_account_partner_ledger
 #: code:addons/finance/report/account_report_name.py:50
+#: selection:finance.sync.query,model:0
 #, python-format
 msgid "Partner Ledger"
 msgstr "Grand Livre Partenaire"
@@ -82748,6 +82774,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 #: field:automated.export.job,state:0
 #: field:sale.order,draft_cancelled:0
+#: field:finance.sync.query.activation_wizard,state:0
 #, python-format
 msgid "State"
 msgstr "État"
@@ -91044,8 +91071,9 @@ msgstr "The product [%s] %s gets the %s '%s' and consequently can't %s"
 msgid "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales."
 msgstr "Si vous avez plus d'un magasin revendant les produits de votre société, vous pouvez créer et gérer cela à partir ici. Dès que vous enregistrerez un nouveau devis ou une nouvelle commande terrain, ils seront liés à ce magasin. Le magasin définit également l'entrepôt à partir duquel les produits seront livrés pour chacune des ventes particulières."
 
-#. module: sync_client
+#. module: sync_client, resource
 #: field:ir.model.data,last_modification:0
+#: field:wizard.template,last_modification:0
 msgid "Last Modification Date"
 msgstr "Date Dernière Modification"
 
@@ -97752,6 +97780,8 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.import.mapping:0
 #: view:automated.export.job:0
 #: view:free.allocation.wizard:0
+#: view:account.mcdb:0
+#: view:finance.sync.query.activation_wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -102458,3 +102488,89 @@ msgstr "V/ Réf. de Commande:"
 #, python-format
 msgid "Packing List %s, max characters length is 30, found %s"
 msgstr "Packing List %s, taille max 30 caractères, présents %s"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+#: view:finance.sync.query.activation_wizard:0
+#: model:ir.actions.act_window,name:account_mcdb.finance_sync_query_wiz_activate
+msgid "Activate Sync"
+msgstr "Activer Sync"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+#: view:finance.sync.query.activation_wizard:0
+#: model:ir.actions.act_window,name:account_mcdb.finance_sync_query_wiz_deactivate
+msgid "Deactivate Sync"
+msgstr "Désactiver Sync"
+
+#. module: account_mcdb
+#: view:finance.sync.query.activation_wizard:0
+msgid "Do you want to Activate sync on the selected queries ?"
+msgstr "Voulez-vous Activer la sync sur les enregistrements sélectionnés ?"
+
+#. module: account_mcdb
+#: view:finance.sync.query.activation_wizard:0
+msgid "Do you want to Deactivate sync on the selected queries ?"
+msgstr "Voulez-vous Désactiver la sync sur les enregistrements sélectionnés ?"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+msgid "Finance HQ Query"
+msgstr "Requête Finance Siège"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+#: model:ir.actions.act_window,name:account_mcdb.finance_sync_query_action
+#: model:ir.ui.menu,name:account_mcdb.finance_sync_query_menu
+msgid "Finance Synced Queries"
+msgstr "Requêtes Finance Synchronisées"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+msgid "Group by Model"
+msgstr "Grouper par Modèle"
+
+#. module: account_mcdb
+#: model:ir.model,name:account_mcdb.model_finance_sync_query
+msgid "HQ Finance Synced Queries"
+msgstr "Requêtes Finance Siège Synchronisées"
+
+#. modules: resource, account_mcdb
+#: field:account.mcdb,hq_template:0
+#: field:finance.query.method,hq_template:0
+#: field:wizard.template,hq_template:0
+msgid "HQ Template"
+msgstr "Modèle Siège"
+
+#. module: account_mcdb
+#: field:finance.sync.query,last_modification:0
+msgid "Last Modification"
+msgstr "Dernière Modification"
+
+#. module: account_mcdb
+#: view:finance.sync.query:0
+msgid "Open Template"
+msgstr "Ouvrir le Modèle"
+
+#. module: account_mcdb
+#: view:finance.sync.query.activation_wizard:0
+msgid "Queries Sync"
+msgstr "Requêtes Sync"
+
+#. module: account_mcdb
+#: field:finance.sync.query,synced:0
+msgid "Synced query"
+msgstr "Requête synchronisée"
+
+#. modules: resource, account_mcdb
+#: field:account.mcdb,synced:0
+#: field:finance.query.method,synced:0
+#: field:wizard.template,synced:0
+msgid "System flag used to set this query as synced"
+msgstr "Info système pour gérer la sync"
+
+#. module: account_mcdb
+#: field:finance.sync.query,template_id:0
+msgid "Template id"
+msgstr "Id. Modèle"
+
