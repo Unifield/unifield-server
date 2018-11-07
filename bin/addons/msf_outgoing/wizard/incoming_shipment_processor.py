@@ -138,6 +138,32 @@ class stock_incoming_processor(osv.osv):
         return res
 
 
+    def _get_location_dest_active_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if there is draft moves on Picking Ticket
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = True
+            if not wiz.picking_id:
+                break
+            sys_int_moves = self.pool.get('stock.move').search(cr, uid, [
+                ('linked_incoming_move', 'in', [x.id for x in wiz.picking_id.move_lines]),
+                ('type', '=', 'internal'),
+            ], context=context)
+            for sys_move in self.pool.get('stock.move').browse(cr, uid, sys_int_moves, context=context):
+                if not sys_move.location_dest_id.active:
+                    res[wiz.id] = False
+                    break
+
+        return res
+
+
     _columns = {
         'move_ids': fields.one2many(
             'stock.move.in.processor',
@@ -198,6 +224,7 @@ class stock_incoming_processor(osv.osv):
             string='Claim Description',
         ),
         'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
+        'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
     }
 
     _defaults = {
@@ -358,6 +385,9 @@ class stock_incoming_processor(osv.osv):
                     _('Processing Error'),
                     _("You have to enter the quantities you want to process before processing the move")
                 )
+
+            if proc.direct_incoming and not proc.location_dest_active_ok:
+                self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
 
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
