@@ -101965,7 +101965,10 @@ msgstr "Le compte %s - %s n'a pas de Destination par défaut. L'écriture de dif
 msgid "The account %s - %s used for the FX adjustment entry has no Default Destination."
 msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a pas de Destination par défaut."
 
+=======
+>>>>>>> MERGE-SOURCE
 #. module: analytic_distribution
+<<<<<<< TREE
 #: field:account.commitment.line,commit_number:0
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
@@ -102184,3 +102187,8 @@ msgstr "Desactiver l'emplacement"
 #: view:stock.remove.location.wizard:0
 msgid "Check errors"
 msgstr "Tester les erreurs"
+
+#: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:361
+#, python-format
+msgid "At HQ level you can only mass reallocate FP !"
+msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !""
