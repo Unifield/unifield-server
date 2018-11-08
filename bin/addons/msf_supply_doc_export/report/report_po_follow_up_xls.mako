@@ -188,10 +188,10 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
-      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
-      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
-      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
   % endfor
 % endfor   
