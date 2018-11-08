@@ -643,7 +643,7 @@ class po_follow_up_mixin(object):
                     'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
-                    'currency': line.functional_currency_id.name or '',
+                    'currency': line.order_id.pricelist_id.currency_id.name or '',
                     'total_currency': '', 
                     'total_func_currency': '',
                 }
@@ -680,7 +680,7 @@ class po_follow_up_mixin(object):
                     'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
-                    'currency': line.functional_currency_id.name or '',
+                    'currency': line.order_id.pricelist_id.currency_id.name or '',
                     'total_currency': self.get_total_currency(spsul.get('price_unit'), spsul.get('state') == 'done' and spsul.get('product_qty', '') or 0.0), 
                     'total_func_currency': self.get_total_func_currency(
                         line.id,
@@ -727,7 +727,7 @@ class po_follow_up_mixin(object):
                     'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
-                    'currency': line.functional_currency_id.name or '',
+                    'currency': line.order_id.pricelist_id.currency_id.name or '',
                     'total_currency': self.get_total_currency(spl.get('price_unit'), spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(
                         line.id,
@@ -774,7 +774,7 @@ class po_follow_up_mixin(object):
                     'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
-                    'currency': line.functional_currency_id.name or '',
+                    'currency': line.order_id.pricelist_id.currency_id.name or '',
                     'total_currency': self.get_total_currency(ol.get('price_unit'), ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(
                         line.id,
