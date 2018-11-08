@@ -639,7 +639,8 @@ class po_follow_up_mixin(object):
                     'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
                     'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
                     'source_doc': line.origin or '',
-                    'supplier_ref': line.order_id.partner_id.name or '',
+                    'supplier': line.order_id.partner_id.name or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
                     'currency': line.functional_currency_id.name or '',
@@ -675,7 +676,8 @@ class po_follow_up_mixin(object):
                     'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
                     'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
                     'source_doc': line.origin or '',
-                    'supplier_ref': line.order_id.partner_id.name or '',
+                    'supplier': line.order_id.partner_id.name or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
                     'currency': line.functional_currency_id.name or '',
@@ -721,7 +723,8 @@ class po_follow_up_mixin(object):
                     'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
                     'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
                     'source_doc': line.origin or '',
-                    'supplier_ref': line.order_id.partner_id.name or '',
+                    'supplier': line.order_id.partner_id.name or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
                     'currency': line.functional_currency_id.name or '',
@@ -767,7 +770,8 @@ class po_follow_up_mixin(object):
                     'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
                     'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
                     'source_doc': line.origin or '',
-                    'supplier_ref': line.order_id.partner_id.name or '',
+                    'supplier': line.order_id.partner_id.name or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', line.order_id.order_type, {}) or '',
                     'currency': line.functional_currency_id.name or '',
@@ -848,6 +852,10 @@ class po_follow_up_mixin(object):
             'Delivery Confirmed Date',
             'PO Line Status',
             'PO Document Status',
+            'Customer',
+            'Customer Reference',
+            'Source Document',
+            'Supplier Reference',
         ]
 
 

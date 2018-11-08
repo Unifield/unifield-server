@@ -125,15 +125,23 @@
     # Total Functional Currency
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Created (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Delivery Requested Date
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Delivery Confirmed Date
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (line)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Customer
+    <Column ss:AutoFitWidth="1" ss:Width="120" />
+    # Customer ref
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Source document
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Supplier ref
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Row>
     <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
@@ -160,7 +168,7 @@
   % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_type'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
@@ -180,6 +188,10 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+      <Cell ss:StyleID="line"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
   % endfor
 % endfor   
