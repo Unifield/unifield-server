@@ -15,7 +15,7 @@
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="3" groups="base.group_extended">
                         <filter string="Location" name="location" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'location_id'}"/>
-                        <filter string="Product" name="product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_id'}"/>
+                        <filter string="Product" name="product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_code'}"/>
                         <filter string="Batch" name="batch" icon="terp-go-month" domain="[]" context="{'group_by':'prodlot_id'}"/>
                     </group>
                 </search>
@@ -30,11 +30,12 @@
             <field name="arch" type="xml">
                 <tree string="Moves" noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="location_id" />
-                    <field name="product_id" />
+                    <field name="product_id" invisible="1" />
+                    <field name="product_code" />
                     <field name="prodlot_id" />
                     <field name="expired_date" />
                     <field name="product_qty" string="Reserved Qty" />
-                    <field name="picking_id" string="Document" />
+                    <field name="documents" />
                 </tree>
             </field>
         </record>

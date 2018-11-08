@@ -101,9 +101,9 @@
         <Column ss:AutoFitWidth="1" ss:Width="260.25" />
         ## UoM
         <Column ss:AutoFitWidth="1" ss:Width="58.75" />
-        ## Batch Number
+        ## Batch
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
-        ## Expiration Date
+        ## Exp Date
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
         ## Reserved Qty
         <Column ss:AutoFitWidth="1" ss:Width="80.25" />
@@ -113,7 +113,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="135.25" />
         ## Origin
         <Column ss:AutoFitWidth="1" ss:Width="135.25" />
-        ## Total Reserved Qty
+        ## Total
         <Column ss:AutoFitWidth="1" ss:Width="85.0" />
 
         ## WORKSHEET HEADER
@@ -155,13 +155,13 @@
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch Number')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Expiration Date')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Exp Date')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Reserved Qty')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Document')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Documents')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Origin')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Reserved Qty')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total')|x}</Data></Cell>
         </Row>
 
         % for line in getLines():
@@ -190,7 +190,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
                     % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['prod_qty'] or 0.00|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pick_name'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['documents'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['partner_name'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['origin'] or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>

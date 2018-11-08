@@ -46,6 +46,7 @@ class reserved_products_wizard(osv.osv):
         uom_obj = self.pool.get('product.uom')
         lot_obj = self.pool.get('stock.production.lot')
         pick_obj = self.pool.get('stock.picking')
+        ship_obj = self.pool.get('shipment')
         partner_obj = self.pool.get('res.partner')
 
         wizard = self.browse(cr, uid, ids[0], context=context)
@@ -56,35 +57,35 @@ class reserved_products_wizard(osv.osv):
 
         if loc_id and prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
                     AND location_id = %s AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
                 ORDER BY location_id, product_id
             ''', (loc_id, prod_id))
         elif loc_id and not prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
                 ORDER BY location_id, product_id
             ''', (loc_id,))
         elif not loc_id and prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
                 ORDER BY location_id, product_id
             ''', (prod_id,))
         else:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                GROUP BY location_id, product_id, prodlot_id, picking_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
                 ORDER BY location_id, product_id
             ''')
 
@@ -101,7 +102,11 @@ class reserved_products_wizard(osv.osv):
             prodlot = line[4] and lot_obj.browse(cr, uid, line[4], fields_to_fetch=['name', 'life_date'],
                                                  context=context) or False
             pick_name = pick_obj.browse(cr, uid, line[5], fields_to_fetch=['name'], context=context).name
-            partner_name = partner_obj.browse(cr, uid, line[6], fields_to_fetch=['name'], context=context).name
+            ship = ship_obj.browse(cr, uid, line[6], fields_to_fetch=['name'], context=context)
+            partner_name = partner_obj.browse(cr, uid, line[7], fields_to_fetch=['name'], context=context).name
+            docs_name = pick_name or ''
+            if ship:
+                docs_name += pick_name and '/' + ship.name or ship.name
             lines_data.append({
                 'sum_line': False,
                 'loc_name': loc_name,
@@ -111,9 +116,9 @@ class reserved_products_wizard(osv.osv):
                 'batch': prodlot and prodlot.name or '',
                 'exp_date': prodlot and prodlot.life_date or '',
                 'prod_qty': line[3],
-                'pick_name': pick_name,
+                'documents': docs_name,
                 'partner_name': partner_name,
-                'origin': line[7],
+                'origin': line[8],
                 'sum_qty': 0.00,
             })
             current_tuple = (loc_name, product and product.id or False, prodlot and prodlot.name or False)
@@ -133,7 +138,7 @@ class reserved_products_wizard(osv.osv):
                     'batch': prodlot and prodlot.name or '',
                     'exp_date': prodlot and prodlot.life_date or '',
                     'prod_qty': 0.00,
-                    'pick_name': '',
+                    'documents': '',
                     'partner_name': '',
                     'origin': '',
                     'sum_qty': line[3],

@@ -101868,8 +101868,8 @@ msgstr "Origine"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:164
-msgid "Total Reserved Qty"
-msgstr "Qté Réservée Totale"
+msgid "Total"
+msgstr "Total"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:143
@@ -101946,8 +101946,8 @@ msgstr "Rapport sur la reservation des produits - export excel"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:158
-msgid "Batch Number"
-msgstr "Numéro de Lot"
+msgid "Batch"
+msgstr "Lot"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:162
@@ -101969,8 +101969,8 @@ msgstr "Produits Réservés"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
-msgid "Expiration Date"
-msgstr "Date d'Expiration"
+msgid "Exp Date"
+msgstr "Date Exp"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:147

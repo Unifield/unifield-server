@@ -8,8 +8,8 @@
             <field name="arch" type="xml">
                 <form string="Reserved Products Export">
                     <separator colspan="4" string="Filters" />
-                    <field name="location_id" attrs="{'required': [('product_id', '=', False)]}" colspan="2" />
-                    <field name="product_id" attrs="{'required': [('location_id', '=', False)]}" colspan="2" />
+                    <field name="location_id" colspan="2" />
+                    <field name="product_id" colspan="2" />
                     <separator colspan="4" string="Actions" />
                     <button name="export_reserved_products_report_xls" string="Export Reserved Products XML Report" icon="gtk-execute" colspan="2" type="object" />
                 </form>

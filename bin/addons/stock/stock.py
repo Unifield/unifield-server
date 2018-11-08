@@ -1965,6 +1965,22 @@ class stock_move(osv.osv):
                 return False
         return True
 
+    def _get_docs_name(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Concatenate de name of the Pick and the Shipment linked to the Move, or set to only one of them
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'pick_shipment_id'], context=context):
+            docs_name = move.picking_id and move.picking_id.name or ''
+            if move.pick_shipment_id:
+                docs_name += move.picking_id and '/' + move.pick_shipment_id.name or move.pick_shipment_id.name
+            res[move.id] = docs_name
+
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -1978,6 +1994,7 @@ class stock_move(osv.osv):
         'product_uos_qty': fields.float('Quantity (UOS)', digits_compute=dp.get_precision('Product UoM')),
         'product_uos': fields.many2one('product.uom', 'Product UOS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging', help="It specifies attributes of packaging like type, quantity of packaging,etc."),
+        'product_code': fields.related('product_id', 'default_code', type="char", size=128, string="Product", store=True),
 
         'location_id': fields.many2one('stock.location', 'Source Location', required=True, select=True,states={'done': [('readonly', True)]}, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Destination Location', required=True,states={'done': [('readonly', True)]}, select=True, help="Location where the system will stock the finished products."),
@@ -2002,6 +2019,7 @@ class stock_move(osv.osv):
         'partner_id': fields.related('picking_id','address_id','partner_id',type='many2one', relation="res.partner", string="Partner", store=True, select=True),
         'backorder_id': fields.related('picking_id','backorder_id',type='many2one', relation="stock.picking", string="Back Order", select=True),
         'origin': fields.related('picking_id','origin',type='char', size=512, relation="stock.picking", string="Origin", store=True),
+        'documents': fields.function(_get_docs_name, method=True, type='char', size=128, string='Documents', store=False),
 
         # used for colors in tree views:
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
