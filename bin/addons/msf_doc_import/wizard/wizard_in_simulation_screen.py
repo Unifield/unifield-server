@@ -13,6 +13,7 @@ from osv import osv
 import pooler
 from tools.translate import _
 import tools
+import traceback
 
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -513,6 +514,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                 except DateTime.mxDateTime.RangeError as e:
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
+                except IndexError, e:
+                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s" % (index+1, len(row), tools.ustr(traceback.format_exc()))))
 
         return values, nb_line, error
 

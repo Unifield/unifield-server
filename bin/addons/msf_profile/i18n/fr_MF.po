@@ -26621,6 +26621,12 @@ msgstr "Mode de Jointure"
 msgid "Line %s of the imported file, the date has a wrong format: %s"
 msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct : %s"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:518
+#, python-format
+msgid "Line %s of the imported file, extra column found (%s cols found)\n-- %s"
+msgstr "Ligne %s du fichier importé, colonne supplémentaire trouvée (%s col. trouvés)\n-- %s"
+
 #. module: base
 #: code:addons/base/module/module.py:220
 #, python-format
