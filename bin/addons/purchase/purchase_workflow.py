@@ -607,7 +607,7 @@ class purchase_order_line(osv.osv):
             self.write(cr, uid, pol.id, line_update, context=context)
 
 
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated', 'validation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
         return True
 
@@ -748,7 +748,7 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
-            self.write(cr, uid, [pol.id], {'state': 'confirmed'}, context=context)
+            self.write(cr, uid, [pol.id], {'state': 'confirmed', 'confirmation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
@@ -787,7 +787,7 @@ class purchase_order_line(osv.osv):
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
         return True
 

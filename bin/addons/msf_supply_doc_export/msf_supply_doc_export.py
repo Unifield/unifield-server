@@ -28,6 +28,7 @@ from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 from purchase import PURCHASE_ORDER_STATE_SELECTION
+from datetime import datetime
 
 import pooler
 import time
@@ -534,7 +535,24 @@ class po_follow_up_mixin(object):
 
     def get_exchange_rate(self, pol_id):
         pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
-        return 1.0 # TODO
+        context = {}
+        exchange_rate = 0.0
+        if pol.closed_date:
+            context.update({'date': pol.closed_date})
+        elif pol.confirmation_date:
+            context.update({'date': pol.confirmation_date})
+        elif pol.validation_date:
+            context.update({'date': pol.validation_date})
+        elif pol.create_date: # could be null, because not mandatory in DB
+            context.update({'date': pol.create_date})
+        else:
+            context.update({'date': datetime.now().strftime('%Y-%m-%d')})
+
+        currency_from = pol.order_id.pricelist_id.currency_id
+        currency_to = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, context=context).company_id.currency_id
+        exchange_rate = self.pool.get('res.currency')._get_conversion_rate(self.cr, self.uid, currency_from, currency_to, context=context)
+
+        return exchange_rate
 
     def get_total_func_currency(self, pol_id, in_unit_price, qty_received):
         ex_rate = self.get_exchange_rate(pol_id)
