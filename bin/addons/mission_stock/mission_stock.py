@@ -188,6 +188,7 @@ msr_in_progress()
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
+    _order = 'full_view desc, name'
 
     logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
@@ -911,12 +912,15 @@ class stock_mission_report(osv.osv):
                                                   ('central_location_ok', '=', False)], context=context)
         cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
         secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+        secondary_location_ids = []
         if secondary_location_id:
             secondary_location_id = secondary_location_id[1]
-        secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
+            secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
-        cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
-        central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
+        if cu_loc:
+            cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
+        if central_loc:
+            central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
 
         # Check if the instance is a coordination or a project
         coordo_id = False
@@ -1576,14 +1580,6 @@ class stock_mission_report_line(osv.osv):
                           msf_instance i
                        ON m.instance_id = i.id
                      WHERE m.full_view = False
-                       AND (l.internal_qty != 0.00
-                       OR l.stock_qty != 0.00
-                       OR l.central_qty != 0.00
-                       OR l.cross_qty != 0.00
-                       OR l.secondary_qty != 0.00
-                       OR l.cu_qty != 0.00
-                       OR l.in_pipe_qty != 0.00
-                       OR l.in_pipe_coor_qty != 0.00)
                        AND i.state != 'inactive'
                      GROUP BY l.product_id, t.standard_price'''
 

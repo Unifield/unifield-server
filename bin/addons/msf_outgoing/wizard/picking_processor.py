@@ -222,6 +222,7 @@ class stock_picking_processor(osv.osv):
                         'height': move.pack_info_id.total_height,
                         'length': move.pack_info_id.total_length,
                         'width': move.pack_info_id.total_width,
+                        'packing_list': move.pack_info_id.packing_list,
                         'cost': move.price_unit,
                         'currency': move.currency_id.id,
                     })

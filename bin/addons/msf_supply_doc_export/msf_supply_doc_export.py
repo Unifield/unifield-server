@@ -859,8 +859,6 @@ class po_follow_up_mixin(object):
         ]
 
 
-
-
 class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):

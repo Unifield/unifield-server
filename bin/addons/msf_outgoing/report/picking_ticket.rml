@@ -43,9 +43,16 @@
         <blockTableStyle id="HeaderInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
-            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="2,0" />
-            <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="5,0" />
-            <lineStyle kind="OUTLINE" colorName="black" start="7,0" stop="7,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="4,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,0" />
+        </blockTableStyle>
+        <blockTableStyle id="HeaderInfos2">
+            <blockAlignment value="LEFT" />
+			<blockValign value="MIDDLE" />
+			<blockLeading length="0" />
+			<blockBottomPadding length="0" />
+			<blockTopPadding length="0" />
         </blockTableStyle>
 
         <blockTableStyle id="WarningTable">
@@ -126,25 +133,63 @@
 
         <!-- Picking Ticket header values -->
 
-        <blockTable colWidths="20.0,70.0,225.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
+        <blockTable colWidths="20.0,295.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle"></para>
-                </td>
-                <td>
-                    <para style="HeaderInfosTitle">FO ref.:</para>
-                    <para style="HeaderInfosTitle">Origin ref.:</para>
-                    <para style="HeaderInfosTitle">Incoming ref:</para>
-                    <para style="HeaderInfosTitle">Category:</para>
-                    <para style="HeaderInfosTitle">Total items:</para>
-                </td>
-                <td>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
-                </td>
+				</td>
+				<td>
+					<blockTable colWidths="100.0,195.0" style="HeaderInfos2">
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">FO ref.:</para>
+							</td>
+							<td>
+                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</parawrap>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Origin ref.:</para>
+							</td>
+							<td>
+                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</parawrap>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Incoming ref:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Supplier Packing List:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.packing_list or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Category:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Total items:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
+							</td>
+						</tr>
+					</blockTable>
+				</td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
                 </td>

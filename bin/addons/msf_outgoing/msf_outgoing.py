@@ -155,6 +155,7 @@ class shipment(osv.osv):
                 'total_volume': 0.0,
                 'state': 'draft',
                 'backshipment_id': False,
+                'packing_list': False,
             }
             result[shipment['id']] = default_values
             current_result = result[shipment['id']]
@@ -251,6 +252,10 @@ class shipment(osv.osv):
                 result.append(packing['shipment_id'][0])
         return result
 
+    def _search_packing_list(self, cr, uid, obj, name, args, context=None):
+        ret_ids = self.pool.get('pack.family.memory').search(cr, uid, args, context=context)
+        return [('pack_family_memory_ids', 'in', ret_ids)]
+
     def _packs_search(self, cr, uid, obj, name, args, context=None):
         """
         Searches Ids of shipment
@@ -299,86 +304,88 @@ class shipment(osv.osv):
 
         return res
 
-    _columns = {'name': fields.char(string='Reference', size=1024),
-                'date': fields.datetime(string='Creation Date'),
-                'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
-                'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
-                'transport_type': fields.selection(TRANSPORT_TYPE,
-                                                   string="Transport Type", readonly=False),
-                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
-                'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
-                # cargo manifest things
-                'cargo_manifest_reference': fields.char(string='Cargo Manifest Reference', size=1024,),
-                'date_of_departure': fields.date(string='Date of Departure'),
-                'planned_date_of_arrival': fields.date(string='Planned Date of Arrival'),
-                'transit_via': fields.char(string='Transit via', size=1024),
-                'registration': fields.char(string='Registration', size=1024),
-                'driver_name': fields.char(string='Driver Name', size=1024),
-                # -- shipper
-                'shipper_name': fields.char(string='Name', size=1024),
-                'shipper_contact': fields.char(string='Contact', size=1024),
-                'shipper_address': fields.char(string='Address', size=1024),
-                'shipper_phone': fields.char(string='Phone', size=1024),
-                'shipper_email': fields.char(string='Email', size=1024),
-                'shipper_other': fields.char(string='Other', size=1024),
-                'shipper_date': fields.date(string='Date'),
-                'shipper_signature': fields.char(string='Signature', size=1024),
-                # -- carrier
-                'carrier_id': fields.many2one('res.partner', string='Carrier', domain=[('transporter', '=', True)]),
-                'carrier_name': fields.char(string='Name', size=1024),
-                'carrier_address': fields.char(string='Address', size=1024),
-                'carrier_phone': fields.char(string='Phone', size=1024),
-                'carrier_email': fields.char(string='Email', size=1024),
-                'carrier_other': fields.char(string='Other', size=1024),
-                'carrier_date': fields.date(string='Date'),
-                'carrier_signature': fields.char(string='Signature', size=1024),
-                # -- consignee
-                'consignee_name': fields.char(string='Name', size=1024),
-                'consignee_contact': fields.char(string='Contact', size=1024),
-                'consignee_address': fields.char(string='Address', size=1024),
-                'consignee_phone': fields.char(string='Phone', size=1024),
-                'consignee_email': fields.char(string='Email', size=1024),
-                'consignee_other': fields.char(string='Other', size=1024),
-                'consignee_date': fields.date(string='Date'),
-                'consignee_signature': fields.char(string='Signature', size=1024),
-                # functions
-                'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
-                'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
-                'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # interger fields.function need their own multi not to be considered as string
-                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-                'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
-                'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
-                                                                                              ('packed', 'Packed'),
-                                                                                              ('shipped', 'Shipped'),
-                                                                                              ('done', 'Closed'),
-                                                                                              ('delivered', 'Delivered'),
-                                                                                              ('cancel', 'Cancelled')], string='State', multi='get_vals',
-                                         store={
-                                             'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
-                }),
-                'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
-                # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
-                'parent_id': fields.many2one('shipment', string='Parent shipment'),
-                'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
-                'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
-                'picking_ids': fields.one2many(
-                    'stock.picking',
-                    'shipment_id',
-                    string='Associated Packing List',
-    ),
+    _columns = {
+        'name': fields.char(string='Reference', size=1024),
+        'date': fields.datetime(string='Creation Date'),
+        'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
+        'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
+        'transport_type': fields.selection(TRANSPORT_TYPE,
+                                           string="Transport Type", readonly=False),
+        'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
+        'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
+        # cargo manifest things
+        'cargo_manifest_reference': fields.char(string='Cargo Manifest Reference', size=1024,),
+        'date_of_departure': fields.date(string='Date of Departure'),
+        'planned_date_of_arrival': fields.date(string='Planned Date of Arrival'),
+        'transit_via': fields.char(string='Transit via', size=1024),
+        'registration': fields.char(string='Registration', size=1024),
+        'driver_name': fields.char(string='Driver Name', size=1024),
+        # -- shipper
+        'shipper_name': fields.char(string='Name', size=1024),
+        'shipper_contact': fields.char(string='Contact', size=1024),
+        'shipper_address': fields.char(string='Address', size=1024),
+        'shipper_phone': fields.char(string='Phone', size=1024),
+        'shipper_email': fields.char(string='Email', size=1024),
+        'shipper_other': fields.char(string='Other', size=1024),
+        'shipper_date': fields.date(string='Date'),
+        'shipper_signature': fields.char(string='Signature', size=1024),
+        # -- carrier
+        'carrier_id': fields.many2one('res.partner', string='Carrier', domain=[('transporter', '=', True)]),
+        'carrier_name': fields.char(string='Name', size=1024),
+        'carrier_address': fields.char(string='Address', size=1024),
+        'carrier_phone': fields.char(string='Phone', size=1024),
+        'carrier_email': fields.char(string='Email', size=1024),
+        'carrier_other': fields.char(string='Other', size=1024),
+        'carrier_date': fields.date(string='Date'),
+        'carrier_signature': fields.char(string='Signature', size=1024),
+        # -- consignee
+        'consignee_name': fields.char(string='Name', size=1024),
+        'consignee_contact': fields.char(string='Contact', size=1024),
+        'consignee_address': fields.char(string='Address', size=1024),
+        'consignee_phone': fields.char(string='Phone', size=1024),
+        'consignee_email': fields.char(string='Email', size=1024),
+        'consignee_other': fields.char(string='Other', size=1024),
+        'consignee_date': fields.date(string='Date'),
+        'consignee_signature': fields.char(string='Signature', size=1024),
+        # functions
+        'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+        'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
+        'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
+        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
+        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+        'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # interger fields.function need their own multi not to be considered as string
+        'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
+        'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
+                                                                                      ('packed', 'Packed'),
+                                                                                      ('shipped', 'Shipped'),
+                                                                                      ('done', 'Closed'),
+                                                                                      ('delivered', 'Delivered'),
+                                                                                      ('cancel', 'Cancelled')], string='State', multi='get_vals',
+                                 store={
+                                     'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
+        }),
+        'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
+        # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
+        'parent_id': fields.many2one('shipment', string='Parent shipment'),
+        'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
+        'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
+        'picking_ids': fields.one2many(
+            'stock.picking',
+            'shipment_id',
+            string='Associated Packing List',
+        ),
+        'packing_list': fields.function(_vals_get, method=True, type='char', multi='get_vals', string='Supplier Packing List', fnct_search=_search_packing_list),
         'in_ref': fields.char(string='IN Reference', size=1024),
         'is_company': fields.function(
-                    _get_is_company,
-                    method=True,
-                    type='boolean',
-                    string='Is Company ?',
-                    store={
-                        'shipment': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
-                    }
-    ),
+            _get_is_company,
+            method=True,
+            type='boolean',
+            string='Is Company ?',
+            store={
+                'shipment': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
+            }
+        ),
     }
 
     def _get_sequence(self, cr, uid, context=None):
@@ -1917,6 +1924,7 @@ class ppl_customize_label(osv.osv):
                 # 'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
                 'specific_information': fields.boolean(string='Specific Information'),
                 'logo': fields.boolean(string='Company Logo'),
+                'packing_list': fields.boolean(string='Supplier Packing List'),
                 }
 
     _defaults = {'name': 'My Customization',
@@ -1932,6 +1940,7 @@ class ppl_customize_label(osv.osv):
                  # 'expedition_parcel_number': True,
                  'specific_information': True,
                  'logo': True,
+                 'packing_list': False,
                  }
 
 ppl_customize_label()
@@ -2762,6 +2771,19 @@ class stock_picking(osv.osv):
                 return res['last_value']
         return False
 
+    def get_packing_list_label(self, cr, uid, context=None):
+        try:
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'default_label_packing_list')[1]
+        except:
+            return False
+
+    def change_packing_list(self, cr, uid, ids, pl, context=None):
+        if pl:
+            label = self.get_packing_list_label(cr, uid, context=context)
+            if label:
+                return {'value': {'ppl_customize_label': label}}
+        return {}
+
     def create(self, cr, uid, vals, context=None):
         '''
         creation of a stock.picking of subtype 'packing' triggers
@@ -2785,6 +2807,11 @@ class stock_picking(osv.osv):
 
         if context is None:
             context = {}
+
+        if vals.get('packing_list'):
+            label = self.get_packing_list_label(cr, uid, context=context)
+            if label:
+                vals['ppl_customize_label'] = label
 
         if context.get('sync_update_execution', False) or context.get('sync_message_execution', False):
             # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert.
@@ -3025,7 +3052,7 @@ class stock_picking(osv.osv):
                         if rts_obj < shipment_expected:
                             shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts, }, context=context)
                     shipment_name = shipment.name
-                    shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.') % (shipment_name,))
+                    shipment_obj.log(cr, uid, shipment_id, _('The PPL has been added to the existing Draft Shipment %s.') % (shipment_name,))
 
             # update the new pick with shipment_id
             self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
@@ -5304,7 +5331,7 @@ class pack_family_memory(osv.osv):
     dynamic memory object for pack families
     '''
     _name = 'pack.family.memory'
-    _order = 'sale_order_id, from_pack, id'
+    _order = 'sale_order_id, ppl_id, from_pack, id'
 
     _auto = False
     def init(self, cr):
@@ -5316,6 +5343,7 @@ class pack_family_memory(osv.osv):
                 to_pack as to_pack,
                 array_agg(m.id) as move_lines,
                 min(from_pack) as from_pack,
+                min(packing_list) as packing_list,
                 case when to_pack=0 then 0 else to_pack-min(from_pack)+1 end as num_of_packs,
                 p.sale_id as sale_order_id,
                 case when p.subtype = 'ppl' then p.id else p.previous_step_id end as ppl_id,
@@ -5417,6 +5445,7 @@ class pack_family_memory(osv.osv):
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
         # functions
         'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'fake_state': fields.function(_vals_get, method=True, type='char', String='Fake state', multi='get_vals'),
         'state': fields.selection(selection=[
             ('draft', 'Draft'),

@@ -66,6 +66,30 @@ class patch_scripts(osv.osv):
                         select sdref from sync_client_update_to_send where session_id='7ff7242e-7f6f-11e6-b415-0cc47a3516aa' and model in ('hr.payment.method', 'ir.translation', 'product.nomenclature', 'product.product', 'sync.trigger.something')
                     )''')
         return True
+
+    def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
+        """
+        rest cu_qty and central_qty
+        """
+        trigger_up = self.pool.get('sync.trigger.something.up')
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+
+        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
+        if not central_loc:
+            cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
+
+        cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
+        if not cu_loc:
+            cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_cu', 'args': instance_id.code})
+        return True
+
+
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
@@ -2926,3 +2950,31 @@ class sync_tigger_something(osv.osv):
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
 sync_tigger_something()
+
+class sync_tigger_something_up(osv.osv):
+    _name = 'sync.trigger.something.up'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+        'args': fields.text('Args'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            _logger = logging.getLogger('tigger')
+            if vals.get('name') == 'clean_mission_stock_central':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+            elif vals.get('name') == 'clean_mission_stock_cu':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+
+        return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
+
+sync_tigger_something_up()

@@ -1162,8 +1162,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     correction = True
             # AD changed at header level: all JIs should recreate AJI
             # if an AD is set on a new line, this JI and all JIs in the same move can be valide
-            # if we change the G/L account, new JE will be created => no need to validate original JE
-            if not context.get('ji_correction_account_changed'):
+            # if we change the G/L account or Third Party, new JE will be created => no need to validate original JE
+            if not context.get('ji_correction_account_or_tp_changed'):
                 self.pool.get('account.move').validate(cr, uid, [move_id])
 
             # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.

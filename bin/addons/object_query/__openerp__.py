@@ -39,7 +39,7 @@
     ],
     "update_xml": [
         'query_view.xml',
-        'security/ir.model.access.csv'
+        'security/ir.model.access.csv',
     ],
     "demo_xml": [],
     "test": [],

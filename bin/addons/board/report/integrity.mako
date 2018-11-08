@@ -93,16 +93,24 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_t(header)|x}</Data></Cell>
 % endfor
 </Row>
-% for result in get_results(check.get('query')):
+% for result in get_results(check.get('query'), check.get('ref')):
 <Row>
   % for cell in result:
-  <Cell ss:StyleID="ssBorder">
-    % if isinstance(cell, (int, float, long)):
-    <Data ss:Type="Number">${cell}</Data>
+    % if cell == 'rec_date':
+      <%
+      reconcile_ref = result[0]
+      reconcile_date = get_reconcile_date(reconcile_ref)
+      %>
+      % if reconcile_date:
+        <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${reconcile_date|n}T00:00:00.000</Data></Cell>
+      % else:
+        <Cell ss:StyleID="ssBorder"></Cell>
+      % endif
+    % elif isinstance(cell, (int, float, long)):
+      <Cell ss:StyleID="ssBorder"><Data ss:Type="Number">${cell}</Data></Cell>
     % else:
-    <Data ss:Type="String">${cell|x}</Data>
+      <Cell ss:StyleID="ssBorder"><Data ss:Type="String">${cell|x}</Data></Cell>
     % endif
-  </Cell>
   %endfor
 </Row>
 % endfor

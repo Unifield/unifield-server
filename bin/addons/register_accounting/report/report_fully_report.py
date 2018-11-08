@@ -237,10 +237,10 @@ class report_fully_report(report_sxw.rml_parse):
         db = pooler.get_pool(self.cr.dbname)
         aji_obj = db.get('account.analytic.line')
         aji_ids = aji_obj.search(self.cr, self.uid, [('move_id', '=', aml.id), ('free_account', '=', free)])
-        ajis = aji_obj.browse(self.cr, self.uid, aji_ids, context={'lang': self.localcontext.get('lang')})
-        return [aji for aji in ajis]
+        # add the correction lines if any
+        return self.getAnalyticLines(aji_ids)
 
-    def getManualFreeLines(self, aml, free=False):
+    def getManualFreeLines(self, aml):
         """
         Returns of list of Free1/Free2 Lines linked to the manual JI in parameter
         """
