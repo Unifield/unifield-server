@@ -846,8 +846,7 @@ Scenario: SSL US4517 PO split from IR
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled  |   2,000.000 |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed     |   8,000.000 |
         | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  20,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  10,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  20,000.000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  30,000.000 |
 		| [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed     |   3,000.000 |
 
 	I should see "Closed" in "State"
