@@ -143,6 +143,7 @@ WHITE_LIST_MODEL = [
     'sync.monitor',
     'sync.sale.order.line.split',
     'sync.trigger.something',
+    'sync.trigger.something.up',
     'sync.version.instance.monitor',
     'tender',
     'tender.line',
