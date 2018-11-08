@@ -525,9 +525,10 @@ register_widget(ProgressBar, ["progressbar"])
 class Selection(TinyInputWidget):
     template = "/openerp/widgets/form/templates/selection.mako"
 
-    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state']
+    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state', 'add_empty']
     options = []
     search_context = {}
+    add_empty = False
 
     def __init__(self, **attrs):
         super(Selection, self).__init__(**attrs)
@@ -536,6 +537,7 @@ class Selection(TinyInputWidget):
         self.type2 = attrs.get('type2')
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
+        self.add_empty = attrs.get('add_empty', False)
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
         if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection' and not attrs.get('get_selection'):
             proxy = rpc.RPCProxy(attrs['relation'])
