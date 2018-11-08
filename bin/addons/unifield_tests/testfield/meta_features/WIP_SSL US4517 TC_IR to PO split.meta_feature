@@ -1187,6 +1187,16 @@ Scenario: SSL US4517 PO split from IR
 
     I click on "Process" and open the window
 	I click on "Copy all"
+
+    I click "Edit" on line:
+        | PRODUCT                                                           | ORDERED QUANTITY |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     3,000.000    |
+    I fill "LotD{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "13/May/2023"
+    I click on "Save" and close the window
+    I validate the line
+
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open
