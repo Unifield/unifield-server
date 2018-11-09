@@ -547,6 +547,10 @@ class purchase_order_line(osv.osv):
         'cold_chain': fields.function(_get_product_info, type='char', string='Cold Chain', multi='product_info', method=True),
         'controlled_substance': fields.function(_get_product_info, type='char', string='Controlled Substance', multi='product_info', method=True),
         'justification_code_id': fields.function(_get_product_info, type='char', string='Justification Code', multi='product_info', method=True),
+        'create_date': fields.date('Creation date', readonly=True),
+        'validation_date': fields.date('Validation Date', readonly=True),
+        'confirmation_date': fields.date('Confirmation Date', readonly=True),
+        'closed_date': fields.date('Closed Date', readonly=True),
     }
 
     _defaults = {
