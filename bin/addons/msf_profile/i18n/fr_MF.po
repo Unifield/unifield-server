@@ -26624,8 +26624,10 @@ msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct :
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:518
 #, python-format
-msgid "Line %s of the imported file, extra column found (%s cols found)\n-- %s"
-msgstr "Ligne %s du fichier importé, colonne supplémentaire trouvée (%s col. trouvés)\n-- %s"
+msgid "Line %s of the imported file, extra column found (%s cols found)\n"
+"-- %s"
+msgstr "Ligne %s du fichier importé, colonne supplémentaire trouvée (%s col. trouvés)\n"
+"-- %s"
 
 #. module: base
 #: code:addons/base/module/module.py:220
@@ -26739,13 +26741,14 @@ msgstr "Chile/EasterIsland"
 msgid "Related Picking"
 msgstr "Picking Connexe"
 
-#. modules: sales_followup, sale, purchase_followup
+#. modules: sales_followup, sale, purchase_followup, stock
 #: code:addons/sale/wizard/sale_donation_stock_moves.py:116
 #: code:addons/sales_followup/wizard/ir_followup_location_wizard.py:172
 #: code:addons/purchase_followup/wizard/po_track_changes_wizard.py:94
 #: code:addons/sales_followup/wizard/ir_track_changes_wizard.py:94
 #: code:addons/sale/wizard/sale_loan_stock_moves.py:123
 #: code:addons/sales_followup/wizard/sale_followup_multi_wizard.py:178
+#: code:addons/stock/wizard/reserved_products_wizard.py:178
 #, python-format
 msgid "No data found with these parameters"
 msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
@@ -27472,6 +27475,7 @@ msgstr "Volume Total [dm³]"
 #: field:wizard.compare.rfq.line,quantity:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
 #: view:purchase.order:0
+#: field:stock.reserved.products,product_qty:0
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -31345,11 +31349,12 @@ msgstr "Références des Règles"
 msgid "Ana. Distri."
 msgstr "Alloc.Analyt."
 
-#. modules: consumption_calculation, specific_rules, stock_override
+#. modules: consumption_calculation, specific_rules, stock_override, stock
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:70
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
 #: field:export.report.stock.inventory,name:0
 #: field:export.report.stock.move,name:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:132
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -40939,6 +40944,8 @@ msgstr "De confirmé à attribué."
 #: field:report.stock.inventory,uom_id:0
 #: field:stock.production.lot,uom_id:0
 #: field:stock.card.wizard.line,uom_id:0
+#: field:stock.reserved.products,uom_id:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:157
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44015,6 +44022,8 @@ msgstr "Contient des Produits Dangereux"
 #: field:purchase.report,product_code:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:112
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:189
+#: report:addons/stock/report/reserved_products_report_xls.mako:147
+#: report:addons/stock/report/reserved_products_report_xls.mako:155
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -46315,6 +46324,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:delivery.order:0
 #: report:internal.move:0
 #: field:report.stock.move,prodlot_id:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:158
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -50131,6 +50141,7 @@ msgstr "Montant total"
 #: field:sale.loan.stock.moves,partner_id:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:126
 #: field:sale.donation.stock.moves,partner_id:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:162
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -61967,12 +61978,13 @@ msgstr "Facturation"
 msgid "Structured"
 msgstr "Structuré"
 
-#. modules: account, documents_done, sync_client, stock
+#. modules: account, documents_done, sync_client, stock, msf_outgoing
 #: code:addons/account/report/account_general_ledger.py:442
 #: field:documents.done.problem,doc_name:0
 #: code:addons/stock/stock.py:1719
 #: code:addons/stock/stock.py:1722
 #: field:sync.client.log_sale_purchase,document:0
+#: field:stock.reserved.products,picking_id:0
 #, python-format
 msgid "Document"
 msgstr "Document"
@@ -65166,8 +65178,9 @@ msgstr "Création Registre"
 msgid "Populate Statement:"
 msgstr "Remplir le Relevé :"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: field:stock.warehouse,lot_stock_id:0
+#: field:stock.reserved.products,location_id:0
 msgid "Location Stock"
 msgstr "Zone - Stock"
 
@@ -65264,6 +65277,9 @@ msgstr "Zone - Stock"
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:85
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:193
 #: field:manage.expired.stock,location_id:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:143
+#: report:addons/stock/report/reserved_products_report_xls.mako:154
+#: field:reserved.products.wizard,location_id:0
 msgid "Location"
 msgstr "Zone"
 
@@ -70036,8 +70052,9 @@ msgstr "% RECEIVED"
 msgid "MOZAMBICAN METICAL"
 msgstr "MOZAMBICAN METICAL"
 
-#. module: specific_rules
+#. modules: specific_rules, stock
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
+#: report:addons/stock/report/reserved_products_report_xls.mako:159
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -74452,6 +74469,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/vertical_integration/wizard/wizard_import_mapping.py:74
 #: code:addons/msf_outgoing/report/packing_list.py:90
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:156
+#: code:addons/stock/wizard/reserved_products_wizard.py:42
+#: code:addons/stock/wizard/reserved_products_wizard.py:178
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -75786,6 +75805,7 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 #: field:purchase.order.merged.line,origin:0
 #: field:sale.loan.stock.moves,origin:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:279
+#: report:addons/stock/report/reserved_products_report_xls.mako:163
 #, python-format
 msgid "Origin"
 msgstr "Origine"
@@ -76622,6 +76642,7 @@ msgstr "Sorte de Node"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:572
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:113
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:190
+#: report:addons/stock/report/reserved_products_report_xls.mako:128
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -83731,6 +83752,10 @@ msgstr "SFTP connection succeeded"
 #: field:threshold.value.line,product_id:0
 #: model:ir.model,name:transport_mgmt.model_product_product
 #: model:ir.model,name:unifield_setup.model_product_product
+#: field:stock.reserved.products,hidden_product_code:0
+#: field:stock.reserved.products,product_code:0
+#: field:stock.reserved.products,product_id:0
+#: field:reserved.products.wizard,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -90415,10 +90440,11 @@ msgstr "Montant du Budget Total "
 msgid "Error ! You cannot create recursive Categories."
 msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 
-#. modules: consumption_calculation, specific_rules, stock_override
+#. modules: consumption_calculation, specific_rules, stock_override, stock
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:66
 #: field:export.report.stock.inventory,company_id:0
 #: field:export.report.stock.move,company_id:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:128
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
 
@@ -100336,6 +100362,7 @@ msgstr "Picking – fermé"
 #: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
+#: field:stock.reserved.products,prodlot_id:0
 msgid "Production Lot"
 msgstr "Lot de Production"
 
@@ -102357,7 +102384,7 @@ msgstr "Tester les erreurs"
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:361
 #, python-format
 msgid "At HQ level you can only mass reallocate FP !"
-msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !""
+msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
@@ -102386,13 +102413,13 @@ msgstr "%s: %s sur %s lignes ont été confirmées"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1784
 #, python-format
 msgid "%s: Line #%s has been split."
-msgstr "%s: Ligne #%s a été scindée.""
+msgstr "%s: Ligne #%s a été scindée."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1816
 #, python-format
 msgid "%s: New line #%s created."
-msgstr "%s: Nouvelle ligne #%s créée.""
+msgstr "%s: Nouvelle ligne #%s créée."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1688
@@ -102653,3 +102680,70 @@ msgstr "Demandeur :"
 #: field:stock.picking,requestor:0
 msgid "Requestor"
 msgstr "Demandeur"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:180
+#, python-format
+msgid "%s-Product reservation report - excel export"
+msgstr "%s-Rapport des produits reserves - export excel"
+
+#. module: stock
+#: model:ir.model,name:stock.model_reserved_products_report
+msgid "Reserved Products Report"
+msgstr "Rapport des Produits Réservés"
+
+#. module: stock
+#: model:ir.model,name:stock.model_reserved_products_wizard
+#: view:reserved.products.wizard:0
+msgid "Reserved Products Export"
+msgstr "Export des Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:139
+msgid "FILTERS"
+msgstr "FILTRES"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:94
+msgid "Reserved Products Excel Export"
+msgstr "Export Excel des Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:160
+#: view:stock.move:0
+msgid "Reserved Qty"
+msgstr "Qté Réservée"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.wizard_reserved_products_export
+msgid "Export Reserved Products Report"
+msgstr "Export du Rapport des Produits Réservés"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.report_reserved_products_xls
+msgid "Product reservation report - excel export"
+msgstr "Rapport sur la reservation des produits - export excel"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:42
+#, python-format
+msgid "An error has occured with the wizard, please reload the page"
+msgstr "Une erreur s'est produire lors de l'utilisation de la page, veuillez la recharger"
+
+#. module: stock, msf_outgoing
+#: model:ir.actions.act_window,name:stock.reserved_products_action
+#: model:ir.ui.menu,name:stock.reserved_products_menu
+#: view:stock.move:0
+#: model:ir.model,name:msf_outgoing.model_stock_reserved_products
+msgid "Reserved Products"
+msgstr "Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:124
+msgid "PRODUCT RESERVATION REPORT"
+msgstr "RAPPORT SUR LA RESERVATION DES PRODUITS"
+
+#. module: stock
+#: view:reserved.products.wizard:0
+msgid "Export Reserved Products XML Report"
+msgstr "Exporter le Rapport XML des Produits Réservés"

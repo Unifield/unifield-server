@@ -2771,6 +2771,8 @@ class orm(orm_template):
                     group_operator = fget[f].get('group_operator', 'max')
                 else:
                     group_operator = fget[f].get('group_operator', 'sum')
+                if group_operator == 'no_group':
+                    continue
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
