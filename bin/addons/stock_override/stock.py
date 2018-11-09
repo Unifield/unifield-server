@@ -3070,11 +3070,6 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
                 move_obj.create(cr, uid, m_data, context=context)
                 moves_ids_to_cancel.append(m.id)
 
-            # Change INT to available
-            pick_obj.draft_force_assign(cr, uid, [int_id], context=context)
-            pick_obj.action_assign(cr, uid, [int_id], context=context)
-            self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been updated.') % (int_id, int_name))
-
             # Cancel Moves
             move_obj.action_cancel(cr, uid, moves_ids_to_cancel, context=context)
             if all(l.state == 'cancel' for l in wiz.picking_id.move_lines):
@@ -3084,6 +3079,11 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
                     wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
                     wiz.picking_id.id, wiz.picking_id.name,
                 ))
+
+            # Change INT to available
+            pick_obj.draft_force_assign(cr, uid, [int_id], context=context)
+            pick_obj.action_assign(cr, uid, [int_id], context=context)
+            self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been updated.') % (int_id, int_name))
 
         return {'type': 'ir.actions.act_window_close'}
 
