@@ -102628,3 +102628,17 @@ msgstr "Id. Modèle"
 #, python-format
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,created_by_sync:0
+#: field:purchase.order.merged.line,created_by_sync:0
+#: field:sale.order.line,created_by_sync:0
+msgid "Created by Synchronisation"
+msgstr "Créé par Synchronisation"
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,cancelled_by_sync:0
+#: field:purchase.order.merged.line,cancelled_by_sync:0
+#: field:sale.order.line,cancelled_by_sync:0
+msgid "Cancelled by Synchronisation"
+msgstr "Annulé par Synchronisation"

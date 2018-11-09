@@ -86,6 +86,8 @@
                                     <field name="fake_state" invisible="1"/>
                                     <field name="original_qty" invisible="1"/>
                                     <field name="modification_comment" invisible="1"/>
+                                    <field name="created_by_sync" invisible="1"/>
+                                    <field name="cancelled_by_sync" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
