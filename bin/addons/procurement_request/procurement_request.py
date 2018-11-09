@@ -348,7 +348,7 @@ class procurement_request(osv.osv):
 
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
-            if req.procurement_request and 'delivery_requested_date' in vals:
+            if req.procurement_request and vals.get('delivery_requested_date'):
                 rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
                 vals['ready_to_ship_date'] = rts
                 for line in req.order_line:

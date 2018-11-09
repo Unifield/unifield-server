@@ -829,6 +829,8 @@ class internal_request_import(osv.osv):
                         ir_vals.update({'date_order': wiz.imp_creation_date})
                     if wiz.imp_requested_date:
                         ir_vals.update({'delivery_requested_date': wiz.imp_requested_date})
+                    else:
+                        ir_vals.update({'delivery_requested_date': False})
                     if wiz.imp_loc_requestor:
                         ir_vals.update({'location_requestor_id': wiz.imp_loc_requestor.id})
                     if wiz.imp_categ:

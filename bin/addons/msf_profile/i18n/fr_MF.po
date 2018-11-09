@@ -101269,7 +101269,7 @@ msgstr "Catégorie de Commande"
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:105
 #: field:internal.request.import,imp_requested_date:0
 msgid "Requested Date"
-msgstr "Date Demandée"
+msgstr "Date Souhaitée"
 
 #. modules: msf_supply_doc_export, sale
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:131
@@ -102564,7 +102564,7 @@ msgstr "Messages des lignes:"
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:189
 msgid "Requested Date"
-msgstr "Date Demandée"
+msgstr "Date Souhaitée"
 
 #. modules: sale, procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:104
@@ -102615,12 +102615,6 @@ msgstr "internal.request.import.error.line"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:217
 msgid "Cost Price"
 msgstr "Prix Unitaire"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:487
-#, python-format
-msgid "Requested Date: The Requested Date is mandatory in the first import."
-msgstr "Date Demandée: La Date Demandée est obligatoire lors du premier import."
 
 #. module: procurement_request
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:216
@@ -102856,7 +102850,7 @@ msgstr "Date de Commande: La Date de Commande '%s' est vide ou incorrecte, la da
 #: code:addons/sale/wizard/internal_request_import.py:510
 #, python-format
 msgid "Requested Date: The Requested Date '%s' is incorrect, you will need to correct this manually."
-msgstr "Date Demandée: La Date Demandée '%s' incorrecte, vous devrez la corriger manuellement."
+msgstr "Date Souhaitée: La Date Souhaitée '%s' incorrecte, vous devrez la corriger manuellement."
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:531
