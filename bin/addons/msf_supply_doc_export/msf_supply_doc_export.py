@@ -597,6 +597,16 @@ class po_follow_up_mixin(object):
 
         return qty_ordered - qty_received
 
+
+    def format_date(self, date):
+        if not date:
+            return ''
+        time_tuple = time.strptime(date, '%Y-%m-%d')
+        new_date = time.strftime('%d.%m.%Y', time_tuple)
+
+        return new_date
+
+
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         po_obj = self.pool.get('purchase.order')
@@ -627,9 +637,9 @@ class po_follow_up_mixin(object):
             if not same_product_same_uom:
                 report_line = {
                     'order_ref': order.name or '',
-                    'order_created': order.date_order or '',
-                    'order_confirmed_date': line.confirmed_delivery_date or '',
-                    'delivery_requested_date': line.date_planned or '',
+                    'order_created': self.format_date(order.date_order),
+                    'order_confirmed_date': self.format_date(line.confirmed_delivery_date),
+                    'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -664,9 +674,9 @@ class po_follow_up_mixin(object):
             for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
-                    'order_created': order.date_order or '',
-                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
-                    'delivery_requested_date': line.date_planned or '',
+                    'order_created': self.format_date(order.date_order),
+                    'order_confirmed_date': self.format_date(line.confirmed_delivery_date or order.delivery_confirmed_date),
+                    'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -711,9 +721,9 @@ class po_follow_up_mixin(object):
             for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
-                    'order_created': order.date_order or '',
-                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
-                    'delivery_requested_date': line.date_planned or '',
+                    'order_created': self.format_date(order.date_order),
+                    'order_confirmed_date': self.format_date(line.confirmed_delivery_date or order.delivery_confirmed_date),
+                    'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -758,9 +768,9 @@ class po_follow_up_mixin(object):
                 prod_brw = prod_obj.browse(self.cr, self.uid, ol.get('product_id'))
                 report_line = {
                     'order_ref': order.name or '',
-                    'order_created': order.date_order or '',
-                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
-                    'delivery_requested_date': line.date_planned or '',
+                    'order_created': self.format_date(order.date_order),
+                    'order_confirmed_date': self.format_date(line.confirmed_delivery_date or order.delivery_confirmed_date),
+                    'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
