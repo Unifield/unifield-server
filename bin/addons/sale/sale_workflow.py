@@ -546,6 +546,12 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
+            if not sol.order_id.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate the line without a Location Requestor.'))
+            if not sol.order_id.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate the line without a Requested date.'))
             if not sol.product_uom \
                     or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                 raise osv.except_osv(_('Error'),
@@ -688,6 +694,12 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for so in self.browse(cr, uid, ids, context=context):
+            if not so.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate \'%s\' without a Location Requestor.') % (so.name))
+            if not so.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate \'%s\' without a Requested date.') % (so.name))
             for sol_id in [sol.id for sol in so.order_line]:
                 wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
 

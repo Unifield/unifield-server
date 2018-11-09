@@ -102863,3 +102863,27 @@ msgstr "Zone de Demande: La Zone de Demande '%s' ne correspond à aucune option 
 #, python-format
 msgid "Date of Stock Take '%s' is not a correct value, line has been imported without Date of Stock Take. "
 msgstr "La Date de Prise de Stock '%s' n'est pas une valeur correcte, la ligne sera importée sans Date de Prise de Stock. "
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:699
+#, python-format
+msgid "You can not validate '%s' without a Location Requestor."
+msgstr "Vous ne pouvez pas valider '%s' sans la Zone de Demande."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:702
+#, python-format
+msgid "You can not validate '%s' without a Requested date."
+msgstr "Vous ne pouvez pas valider '%s' sans la Date Souhaitée."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:554
+#, python-format
+msgid "You can not validate the line without a Requested date."
+msgstr "Vous ne pouvez pas valider la ligne sans la Date Souhaitée."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:551
+#, python-format
+msgid "You can not validate the line without a Location Requestor."
+msgstr "Vous ne pouvez pas valider la ligne sans la Zone de Demande."

@@ -491,7 +491,7 @@ class internal_request_import(osv.osv):
                         values_header_errors.append(msg_val)
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
                                                       'line_message': msg_val}, context=context)
-                        header_values['imp_creation_date'] = DateTime.now()
+                        header_values['imp_creation_date'] = time.strftime('%Y-%m-%d')
 
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]

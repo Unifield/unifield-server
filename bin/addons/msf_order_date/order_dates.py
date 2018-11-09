@@ -458,12 +458,15 @@ def common_create(self, cr, uid, data, type, context=None):
             data.update({'est_transport_lead_time': partner.transport_0_lt, })
         # by default delivery requested date is equal to today + supplier lead time - filled for compatibility because requested date is now mandatory
         if not data.get('delivery_requested_date', False):
-            # PO - supplier lead time / SO - customer lead time
-            if type == 'so':
-                requested_date = (datetime.today() + relativedelta(days=partner.customer_lt)).strftime('%Y-%m-%d')
-            if type == 'po':
-                requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
-            data['delivery_requested_date'] = requested_date
+            if not context.get('ir_import_id'):
+                # PO - supplier lead time / SO - customer lead time
+                if type == 'so':
+                    requested_date = (datetime.today() + relativedelta(days=partner.customer_lt)).strftime('%Y-%m-%d')
+                if type == 'po':
+                    requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
+                data['delivery_requested_date'] = requested_date
+            else:
+                data['ready_to_ship_date'] = time.strftime('%Y-%m-%d')
 
     return data
 
