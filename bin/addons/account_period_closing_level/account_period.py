@@ -25,6 +25,7 @@ import logging
 from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 from register_accounting import register_tools
+from datetime import datetime
 
 
 class account_period(osv.osv):
@@ -68,7 +69,8 @@ class account_period(osv.osv):
 
         # Prepare some elements
         reg_obj = self.pool.get('account.bank.statement')
-        sub_obj = self.pool.get('account.subscription.line')
+        sub_obj = self.pool.get('account.subscription')
+        sub_line_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
 
@@ -218,10 +220,22 @@ class account_period(osv.osv):
                                                    "to close and have a balance which isn't equal to 0:\n"
                                                    "%s") % ", ".join([r.name for r in reg_ko]))
 
-                # check if subscriptions lines were not created for this period
-                sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
-                if len(sub_ids) > 0:
-                    raise osv.except_osv(_('Warning'), _("Recurring entries were not created for period '%s'. Please create them before closing period") % (period.name,))
+                # check if subscriptions lines haven't been generated yet for this period
+                draft_sub_ids = sub_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+                for draft_sub_id in draft_sub_ids:
+                    dates_to_create = sub_obj.get_dates_to_create(cr, uid, draft_sub_id, context=None)
+                    date_start_dt = datetime.strptime(period.date_start, "%Y-%m-%d")
+                    date_stop_dt = datetime.strptime(period.date_stop, "%Y-%m-%d")
+                    for date_to_create in dates_to_create:
+                        date_to_create_dt = datetime.strptime(date_to_create, "%Y-%m-%d")
+                        if date_start_dt <= date_to_create_dt <= date_stop_dt:
+                            raise osv.except_osv(_('Warning'), _("Subscription Lines haven't been generated for the period \"%s\". "
+                                                                 "Please generate them and create the related recurring entries "
+                                                                 "before closing the period.") % (period.name,))
+                # for subscription lines generated check if some related recurring entries haven't been created yet
+                if sub_line_obj.search_exist(cr, uid, [('date', '<=', period.date_stop), ('move_id', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning'), _("Recurring entries haven't been created for the period \"%s\". "
+                                                         "Please create them before closing the period.") % (period.name,))
                 # then verify that all currencies have a fx rate in this period
                 # retrieve currencies for this period (in account_move_lines)
                 sql = """SELECT DISTINCT currency_id
