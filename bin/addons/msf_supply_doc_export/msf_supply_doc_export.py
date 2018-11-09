@@ -591,8 +591,11 @@ class po_follow_up_mixin(object):
         ])
         if first_line and in_move_done:
             total_done = 0.0
-            for move in self.pool.get('stock.move').browse(self.cr, self.uid, in_move_done, fields_to_fetch=['product_qty']):
-                total_done += move.product_qty 
+            for move in self.pool.get('stock.move').browse(self.cr, self.uid, in_move_done, fields_to_fetch=['product_qty','product_uom']):
+                if pol.product_uom.id != move.product_uom.id:
+                    total_done += self.pool.get('product.uom')._compute_qty(self.cr, self.uid, move.product_uom.id, move.product_qty, pol.product_uom.id)
+                else:
+                    total_done += move.product_qty
             return qty_ordered - total_done
 
         return qty_ordered - qty_received
