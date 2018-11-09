@@ -1229,6 +1229,8 @@ Scenario: SSL US4517 PO split from IR
 
 
 #LINE 31		
+    I open tab menu "WAREHOUSE"
+    I open accordion menu "Warehouse Management"    
 	I click on menu "Deliveries|Delivery Orders"
 
 	I click "Edit" on line:
