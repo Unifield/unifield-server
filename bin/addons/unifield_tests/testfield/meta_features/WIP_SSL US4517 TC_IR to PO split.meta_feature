@@ -1243,7 +1243,8 @@ Scenario: SSL US4517 PO split from IR
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  3,000.000 | 
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  7,000.000 |
 	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 20,000.000 |	
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  2,000.000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000.000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000.000 |
         | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 30,000.000 |	
    
     I click on "Process" and open the window
