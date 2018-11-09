@@ -26624,8 +26624,10 @@ msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct :
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:518
 #, python-format
-msgid "Line %s of the imported file, extra column found (%s cols found)\n-- %s"
-msgstr "Ligne %s du fichier importé, colonne supplémentaire trouvée (%s col. trouvés)\n-- %s"
+msgid "Line %s of the imported file, extra column found (%s cols found)\n"
+"-- %s"
+msgstr "Ligne %s du fichier importé, colonne supplémentaire trouvée (%s col. trouvés)\n"
+"-- %s"
 
 #. module: base
 #: code:addons/base/module/module.py:220
@@ -27472,6 +27474,7 @@ msgstr "Volume Total [dm³]"
 #: field:wizard.compare.rfq.line,quantity:0
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
 #: view:purchase.order:0
+#: field:stock.reserved.products,product_qty:0
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -40939,6 +40942,7 @@ msgstr "De confirmé à attribué."
 #: field:report.stock.inventory,uom_id:0
 #: field:stock.production.lot,uom_id:0
 #: field:stock.card.wizard.line,uom_id:0
+#: field:stock.reserved.products,uom_id:0
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -61967,12 +61971,13 @@ msgstr "Facturation"
 msgid "Structured"
 msgstr "Structuré"
 
-#. modules: account, documents_done, sync_client, stock
+#. modules: account, documents_done, sync_client, stock, msf_outgoing
 #: code:addons/account/report/account_general_ledger.py:442
 #: field:documents.done.problem,doc_name:0
 #: code:addons/stock/stock.py:1719
 #: code:addons/stock/stock.py:1722
 #: field:sync.client.log_sale_purchase,document:0
+#: field:stock.reserved.products,picking_id:0
 #, python-format
 msgid "Document"
 msgstr "Document"
@@ -65166,8 +65171,9 @@ msgstr "Création Registre"
 msgid "Populate Statement:"
 msgstr "Remplir le Relevé :"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: field:stock.warehouse,lot_stock_id:0
+#: field:stock.reserved.products,location_id:0
 msgid "Location Stock"
 msgstr "Zone - Stock"
 
@@ -83731,6 +83737,9 @@ msgstr "SFTP connection succeeded"
 #: field:threshold.value.line,product_id:0
 #: model:ir.model,name:transport_mgmt.model_product_product
 #: model:ir.model,name:unifield_setup.model_product_product
+#: field:stock.reserved.products,hidden_product_code:0
+#: field:stock.reserved.products,product_code:0
+#: field:stock.reserved.products,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -100336,6 +100345,7 @@ msgstr "Picking – fermé"
 #: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
+#: field:stock.reserved.products,prodlot_id:0
 msgid "Production Lot"
 msgstr "Lot de Production"
 
@@ -102357,7 +102367,7 @@ msgstr "Tester les erreurs"
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:361
 #, python-format
 msgid "At HQ level you can only mass reallocate FP !"
-msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !""
+msgstr "Au niveau HQ vous ne pouvez que réallouer des FP !"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
@@ -102386,13 +102396,13 @@ msgstr "%s: %s sur %s lignes ont été confirmées"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1784
 #, python-format
 msgid "%s: Line #%s has been split."
-msgstr "%s: Ligne #%s a été scindée.""
+msgstr "%s: Ligne #%s a été scindée."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1816
 #, python-format
 msgid "%s: New line #%s created."
-msgstr "%s: Nouvelle ligne #%s créée.""
+msgstr "%s: Nouvelle ligne #%s créée."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1688
@@ -102728,10 +102738,11 @@ msgstr "Partenaire"
 msgid "An error has occured with the wizard, please reload the page"
 msgstr "Une erreur s'est produire lors de l'utilisation de la page, veuillez la recharger"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: model:ir.actions.act_window,name:stock.reserved_products_action
 #: model:ir.ui.menu,name:stock.reserved_products_menu
 #: view:stock.move:0
+#: model:ir.model,name:msf_outgoing.model_stock_reserved_products
 msgid "Reserved Products"
 msgstr "Produits Réservés"
 
