@@ -56,7 +56,7 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <NumberFormat ss:Format="#,##0.00"/>
+        <NumberFormat ss:Format="#0"/>
     </Style>
     <Style ss:ID="line_center_gray">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
@@ -67,7 +67,7 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
-        <NumberFormat ss:Format="#,##0.00"/>
+        <NumberFormat ss:Format="#0"/>
     </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
@@ -91,14 +91,14 @@
         <Column ss:AutoFitWidth="1" ss:Width="260.25" />
         ## UoM
         <Column ss:AutoFitWidth="1" ss:Width="58.75" />
-        ## Batch Number
+        ## Batch
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
-        ## Expiration Date
+        ## Exp Date
         <Column ss:AutoFitWidth="1" ss:Width="75.25" />
         ## Unreserved Qty
         <Column ss:AutoFitWidth="1" ss:Width="80.25" />
-        ## Total Unreserved
-        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        ## Total Unreserved Qty
+        <Column ss:AutoFitWidth="1" ss:Width="88.0" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('UNRESERVED STOCK REPORT')|x}</Data></Cell>
@@ -107,7 +107,7 @@
         ## WORKSHEET HEADER
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('DB/Instance name')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
+            <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Generated on')|x}</Data></Cell>
@@ -121,10 +121,10 @@
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch Number')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Expiration Date')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Exp Date')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Unreserved Qty')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Unreserved')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Unreserved Qty')|x}</Data></Cell>
         </Row>
 
         % for line in getUnreservedMovesData():
@@ -137,7 +137,7 @@
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_gray"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center_gray"><Data ss:Type="Number">${line['sum_qty'] or 0.00|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_gray"><Data ss:Type="Number">${line['sum_qty'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['loc_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['prod_name'] or ''|x}</Data></Cell>
@@ -149,7 +149,7 @@
                     % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
                     % endif
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['prod_qty'] or 0.00|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['prod_qty'] or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
                 % endif
             </Row>

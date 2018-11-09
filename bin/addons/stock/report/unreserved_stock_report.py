@@ -10,13 +10,13 @@ class unreserved_stock_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
         super(unreserved_stock_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
-            'getInstanceName': self.get_instance_name,
+            'getInstance': self.get_instance,
             'getDate': self.get_date,
             'getUnreservedMovesData': self.get_unreserved_moves_data,
         })
 
-    def get_instance_name(self):
-        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+    def get_instance(self):
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
 
     def get_date(self):
         return datetime.date.today()

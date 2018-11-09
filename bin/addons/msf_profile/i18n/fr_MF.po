@@ -101948,13 +101948,13 @@ msgstr "Généré le"
 
 #. module: stock
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:124
-msgid "Batch Number"
-msgstr "Numéro de Lot"
+msgid "Batch"
+msgstr "Lot"
 
 #. module: stock
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:125
-msgid "Expiration Date"
-msgstr "Date d'Expiration"
+msgid "Exp Date"
+msgstr "Date Exp"
 
 #. module: stock
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:121
@@ -101974,8 +101974,8 @@ msgstr "Description du Produit"
 
 #. module: stock
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:127
-msgid "Total Unreserved"
-msgstr "Total Non Alloué"
+msgid "Total Unreserved Qty"
+msgstr "Qté Totale Non Allouée"
 
 #. module: stock
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:109
@@ -101990,7 +101990,7 @@ msgstr "RAPPORT DU STOCK NON ALLOUÉ"
 #. module: stock_override
 #: view:stock.picking.cancel.more.wizard:0
 msgid "\n"
-"                                Cancelling these moves might results in unreserved stock.<br/>\n"
+"                                Cancelling these moves might result in unreserved stock.<br/>\n"
 "                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
 "                            "
 msgstr "\n"
@@ -102001,7 +102001,7 @@ msgstr "\n"
 #. module: stock_override
 #: view:stock.move.cancel.more.wizard:0
 msgid "\n"
-"                                Cancelling this move might results in unreserved stock.<br/>\n"
+"                                Cancelling this move might result in unreserved stock.<br/>\n"
 "                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
 "                            "
 msgstr "\n"

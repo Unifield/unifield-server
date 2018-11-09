@@ -1230,7 +1230,7 @@
                     <group colspan="4" col="1">
                         <html>
                             <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling these moves might results in unreserved stock.<br/>
+                                Cancelling these moves might result in unreserved stock.<br/>
                                 Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
                             </translate></h4>
                         </html>
@@ -1276,7 +1276,7 @@
                     <group colspan="4" col="1">
                         <html>
                             <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling this move might results in unreserved stock.<br/>
+                                Cancelling this move might result in unreserved stock.<br/>
                                 Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
                             </translate></h4>
                         </html>
