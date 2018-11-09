@@ -102628,3 +102628,145 @@ msgstr "Id. Modèle"
 #, python-format
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:163
+msgid "Origin"
+msgstr "Origine"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:164
+msgid "Total"
+msgstr "Total"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:143
+#: report:addons/stock/report/reserved_products_report_xls.mako:154
+#: field:reserved.products.wizard,location_id:0
+msgid "Location"
+msgstr "Zone"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:180
+#, python-format
+msgid "%s-Product reservation report - excel export"
+msgstr "%s-Rapport des produits reserves - export excel"
+
+#. module: stock
+#: model:ir.model,name:stock.model_reserved_products_report
+msgid "Reserved Products Report"
+msgstr "Rapport des Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:157
+msgid "UoM"
+msgstr "UdM"
+
+#. module: stock
+#: model:ir.model,name:stock.model_reserved_products_wizard
+#: view:reserved.products.wizard:0
+msgid "Reserved Products Export"
+msgstr "Export des Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:132
+msgid "Generated on"
+msgstr "Généré le"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:139
+msgid "FILTERS"
+msgstr "FILTRES"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:94
+msgid "Reserved Products Excel Export"
+msgstr "Export Excel des Produits Réservés"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:178
+#, python-format
+msgid "No data found with these parameters"
+msgstr "Auncune donnée n'a été trouvée avec ces paramètres"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:160
+#: view:stock.move:0
+msgid "Reserved Qty"
+msgstr "Qté Réservée"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.wizard_reserved_products_export
+msgid "Export Reserved Products Report"
+msgstr "Export du Rapport des Produits Réservés"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:42
+#: code:addons/stock/wizard/reserved_products_wizard.py:178
+#, python-format
+msgid "Error"
+msgstr "Erreur"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.report_reserved_products_xls
+msgid "Product reservation report - excel export"
+msgstr "Rapport sur la reservation des produits - export excel"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:158
+msgid "Batch"
+msgstr "Lot"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:162
+msgid "Partner"
+msgstr "Partenaire"
+
+#. module: stock
+#: code:addons/stock/wizard/reserved_products_wizard.py:42
+#, python-format
+msgid "An error has occured with the wizard, please reload the page"
+msgstr "Une erreur s'est produire lors de l'utilisation de la page, veuillez la recharger"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.reserved_products_action
+#: model:ir.ui.menu,name:stock.reserved_products_menu
+#: view:stock.move:0
+msgid "Reserved Products"
+msgstr "Produits Réservés"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:159
+msgid "Exp Date"
+msgstr "Date Exp"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:147
+#: report:addons/stock/report/reserved_products_report_xls.mako:155
+msgid "Product Code"
+msgstr "Code Produit"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:124
+msgid "PRODUCT RESERVATION REPORT"
+msgstr "RAPPORT SUR LA RESERVATION DES PRODUITS"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:156
+msgid "Product Description"
+msgstr "Description du Produit"
+
+#. module: stock
+#: report:addons/stock/report/reserved_products_report_xls.mako:128
+msgid "DB/Instance name"
+msgstr "Nom BDD/Instance"
+
+#. module: stock
+#: field:reserved.products.wizard,product_id:0
+msgid "Product"
+msgstr "Produit"
+
+#. module: stock
+#: view:reserved.products.wizard:0
+msgid "Export Reserved Products XML Report"
+msgstr "Exporter le Rapport XML des Produits Réservés"

@@ -32,6 +32,7 @@ import tools
 import decimal_precision as dp
 import logging
 from osv.orm import browse_record
+from tools.sql import drop_view_if_exists
 
 #----------------------------------------------------------
 # Incoterms
@@ -3145,7 +3146,9 @@ class stock_move(osv.osv):
 
         return [move.id for move in complete]
 
+
 stock_move()
+
 
 class stock_inventory(osv.osv):
     _name = "stock.inventory"
@@ -3382,4 +3385,53 @@ class stock_warehouse(osv.osv):
 
 stock_warehouse()
 
+class stock_reserved_products(osv.osv):
+    _auto = False
+    _name ='stock.reserved.products'
+    _description = "Reserved Products"
+    _order = 'location_id, hidden_product_code, picking_id desc'
+    _columns = {
+        'location_id': fields.many2one('stock.location', 'Location Stock'),
+        'product_id': fields.many2one('product.product', 'Product'),
+        'uom_id': fields.many2one('product.uom', 'UoM'),
+        'product_code': fields.char('Product', size=256),
+        'hidden_product_code': fields.char('Product', size=256),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Production Lot', context={'with_expiry': True}),
+        'picking_id': fields.char('Document', size=256),
+        'product_qty': fields.float('Qty', related_uom='uom_id', group_operator='no_group'),
+    }
+
+    def init(self, cr):
+        drop_view_if_exists(cr, 'stock_reserved_products')
+        cr.execute("""
+        create or replace view stock_reserved_products as (
+            select
+                ('x'||md5(''||COALESCE(m.location_id,0)||COALESCE(m.product_id,0)||COALESCE(m.prodlot_id,0)||COALESCE(m.picking_id,0)))::bit(32)::int as id,
+                m.location_id,
+                m.product_id,
+                m.prodlot_id,
+                t.uom_id as uom_id,
+                CASE WHEN ship.name IS NOT NULL THEN ship.name||' - '||pick.name ELSE pick.name END as picking_id,
+                p.default_code as hidden_product_code,
+                CASE WHEN GROUPING(m.location_id, m.product_id, p.default_code, m.picking_id, m.prodlot_id)=0 THEN  '' ELSE p.default_code END as product_code,
+                sum(product_qty/m_uom.factor*p_uom.factor) as product_qty
+            from
+                stock_move m
+                inner join product_product p on p.id = m.product_id
+                inner join product_template t on t.id = p.product_tmpl_id
+                inner join stock_picking pick on pick.id = m.picking_id
+                left join shipment ship on ship.id = m.pick_shipment_id
+                inner join product_uom m_uom on m_uom.id = m.product_uom
+                inner join product_uom p_uom on p_uom.id = t.uom_id
+            where
+                m.state = 'assigned' and
+                m.product_qty > 0 and
+                m.type in ('internal', 'out')
+            group by
+                GROUPING SETS (m.location_id, (m.location_id, m.product_id, t.uom_id, p.default_code), (m.location_id, m.product_id, t.uom_id, p.default_code, m.picking_id, ship.name, pick.name, m.prodlot_id))
+            having(GROUPING(m.location_id, m.product_id, p.default_code) = 0)
+        )
+        """)
+
+stock_reserved_products()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
