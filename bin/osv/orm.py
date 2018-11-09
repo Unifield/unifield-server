@@ -1137,6 +1137,9 @@ class orm_template(object):
                                             noupdate=noupdate, context=context, filename=filename,
                                             display_all_errors=display_all_errors, has_header=has_header)
 
+    def read_web(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        return self.read(cr, user, ids, fields, context=context, load=load)
+
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
         Read records with given ids with the given fields
