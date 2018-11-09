@@ -508,6 +508,16 @@ class po_follow_up_mixin(object):
             report_line['qty_backordered'] = ''
             report_line['unit_price'] = ''
             report_line['in_unit_price'] = ''
+            report_line['delivery_requested_date'] = ''
+            report_line['customer'] = ''
+            report_line['customer_ref'] = ''
+            report_line['source_doc'] = ''
+            report_line['supplier'] = ''
+            report_line['supplier_ref'] = ''
+            report_line['order_type'] = ''
+            report_line['currency'] = ''
+            report_line['total_currency'] = ''
+            report_line['total_func_currency'] = ''
             report_line['destination'] = analytic_line.get('destination')
             report_line['cost_centre'] = analytic_line.get('cost_center')
             res.append(report_line)
