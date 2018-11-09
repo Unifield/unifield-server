@@ -85,7 +85,7 @@ class Screen(TinyInputWidget):
         self.count         = params.count
         self.approximation = params.approximation
         self.target_action_id = params.target_action_id or False
-
+        self.unique_id = params.unique_id or False
         if (self.ids or self.id) and self.count == 0:
             if self.ids and len(self.ids) < self.limit:
                 self.count = len(self.ids)

@@ -1608,6 +1608,10 @@ msgstr "Filtrer les enregistrements."
 msgid "Clear all."
 msgstr "Tout effacer."
 
+#: widgets/templates/viewform.mako:33
+msgid "Cancel query"
+msgstr "Annuler la recherche"
+
 #: widgets/templates/viewform.mako:35
 msgid "Clear"
 msgstr "Effacer"

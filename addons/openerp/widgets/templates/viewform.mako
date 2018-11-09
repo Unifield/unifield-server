@@ -31,6 +31,7 @@
                                 else:
                                     clear_filters = "reload_graph(true);"
                             %>
+                             <button title="${_('Cancel query')}" onclick="kill_search_filter(''); return false;" class="oe_form_button_search" style="display: none;" id="kill_search">${_('Cancel query')}</button>
                              <button title="${_('Clear all.')}" id="clear_all_filters"
                              class="oe_form_button_clear"
                              onclick="${clear_filters} return false;"

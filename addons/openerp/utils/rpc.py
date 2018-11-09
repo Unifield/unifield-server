@@ -396,6 +396,7 @@ class RPCSession(object):
     def logout(self):
         try:
             self.storage.clear()
+            cherrypy.session.delete()
         except Exception:
             pass
 

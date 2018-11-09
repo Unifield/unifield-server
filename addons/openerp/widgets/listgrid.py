@@ -186,7 +186,11 @@ class List(TinyWidget):
         search_text = terp_params.get('_terp_search_text', False)
         if not self.source:
             self.source = terp_params.get('_terp_source', None)
+
+
         if not default_data and not self.o2m and not self.m2m:
+            if 'unique_id' in kw:
+                context['unique_id'] = kw['unique_id']
             if self.limit > 0:
                 if self.sort_key:
                     ids = proxy.search(search_param, self.offset, self.limit, self.sort_key + ' ' +self.sort_order + ',id', context)
@@ -224,7 +228,7 @@ class List(TinyWidget):
             ctx.update(context)
 
             try:    
-                data = proxy.read(ids, fields.keys() + ['__last_update'], ctx)
+                data = proxy.read_web(ids, fields.keys() + ['__last_update'], ctx)
             except:
                 pass
 

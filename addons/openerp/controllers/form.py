@@ -181,8 +181,6 @@ class Form(SecuredController):
         if tg_errors:
             return cherrypy.request.terp_form
 
-        cherrypy.session['params'] = params
-
         params.offset = params.offset or 0
         params.count = params.count or 0
         params.approximation = params.approximation or False

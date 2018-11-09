@@ -692,6 +692,7 @@ MochiKit.Base.update(ListView.prototype, {
     }
 });
 
+var current_search;
 // standard actions
 MochiKit.Base.update(ListView.prototype, {
 
@@ -925,6 +926,10 @@ MochiKit.Base.update(ListView.prototype, {
 
         var prefix = this.name == '_terp_list' ? '' : this.name + '/';
         args[prefix+'_terp_force_limit'] = 1;
+
+        if (this.name == '_terp_list') {
+            jQuery('#kill_search').show();
+        }
         if (this.name == '_terp_list') {
             jQuery.extend(args, {
                 _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
@@ -949,18 +954,24 @@ MochiKit.Base.update(ListView.prototype, {
             args['_terp_clear'] = true;
         }
 
+        if (unique_id) {
+            args['_terp_unique_id'] = unique_id;
+        }
         if (ids_to_show) {
             args['_terp_ids_to_show'] = '['+ids_to_show.join(',')+']';
             args['_terp_offset'] = 0;
         }
         jQuery(idSelector(self.name) + ' .loading-list').show();
-        jQuery.ajax({
+        current_search = jQuery.ajax({
             url: '/openerp/listgrid/get',
             data: args,
             dataType: 'jsonp',
             type: 'POST',
             error: loadingError(),
             success: function(obj) {
+                if (self.name == '_terp_list') {
+                    jQuery('#kill_search').hide();
+                }
                 var _terp_id = openobject.dom.get(self.name + '/_terp_id') || openobject.dom.get('_terp_id');
                 var _terp_ids = openobject.dom.get(self.name + '/_terp_ids') || openobject.dom.get('_terp_ids');
                 var _terp_count = openobject.dom.get(self.name + '/_terp_count') || openobject.dom.get('_terp_count');
