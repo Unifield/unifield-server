@@ -102642,3 +102642,14 @@ msgstr "Créé par Synchronisation"
 #: field:sale.order.line,cancelled_by_sync:0
 msgid "Cancelled by Synchronisation"
 msgstr "Annulé par Synchronisation"
+
+#. modules: stock_override, procurement_request
+#: report:procurement.request.report:0
+#: report:delivery.order:0
+msgid "Requestor :"
+msgstr "Demandeur :"
+
+#. module: msf_outgoing
+#: field:stock.picking,requestor:0
+msgid "Requestor"
+msgstr "Demandeur"

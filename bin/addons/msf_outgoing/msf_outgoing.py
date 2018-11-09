@@ -2467,6 +2467,7 @@ class stock_picking(osv.osv):
                 'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 'in_ref': fields.char(string='IN Reference', size=1024),
                 'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
+                'requestor': fields.char(size=128, string='Requestor'),
                 }
 
     _defaults = {
@@ -3161,12 +3162,13 @@ class stock_picking(osv.osv):
 
             keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, None)
 
-            # change subtype and name
+            # change subtype and name and add requestor
             default_vals = {'name': new_name,
                             'move_lines': [],
                             'subtype': 'standard',
                             'converted_to_standard': True,
                             'backorder_id': False,
+                            'requestor': obj.address_id and obj.address_id.name or False,
                             }
             new_pick_id = False
             new_lines = []

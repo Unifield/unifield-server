@@ -863,18 +863,19 @@
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 />
+                            <field name="requestor" readonly="1" />
+                            <field name="backorder_id" readonly="1"/>
                             <field name="address_id"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
                                 domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
-                            <field name="backorder_id" readonly="1"/>
+                            <field name="order_category"/>
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True)]"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                 />
-                            <field name="order_category"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
