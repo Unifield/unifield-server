@@ -1267,17 +1267,17 @@ Scenario: SSL US4517 PO split from IR
 		
 #Will be "Cancel" instead of "Delete" after UF 11 (US-4767)
 		
-	I click "Delete" on line:
+	I click "Cancel" on line:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
         |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000.00    |
    
-	I click on "OK"
+	I click on "OK, cancel line"
 	
-	I click "Delete" on line:
+	I click "Cancel" on line:
         |LINE |  PRODUCT                                                 | STATE        |QUANTITY (UOM) | 
 		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | Resourced-v  |   7,000.00    |
 
-	I click on "OK"		
+	I click on "OK, cancel line"		
 
     I set "Show all" on lines filter	
     I should see in the main table the following data:
