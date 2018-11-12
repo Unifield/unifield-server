@@ -16289,7 +16289,7 @@ msgstr "Production"
 #: code:addons/purchase/purchase_workflow.py:677
 #, python-format
 msgid "Line %s: Please choose a product before confirming the line"
-msgstr "Line %s: Please choose a product before confirming the line"
+msgstr "Ligne %s: Veuillez choisir un produit avant de confirmer la ligne"
 
 #. module: base_setup
 #: view:base.setup.installer:0
@@ -21341,7 +21341,7 @@ msgstr "Sélectionner si vous voulez suivre les ouvertures/fermetures de tout en
 #: code:addons/sale/sale_workflow.py:130
 #, python-format
 msgid "Line %s: Please define the nomenclature levels."
-msgstr "Line %s: Please define the nomenclature levels."
+msgstr "Ligne %s: Veuillez définir les niveaux de nomenclature."
 
 #. module: product_nomenclature
 #: code:addons/product_nomenclature/product_nomenclature.py:146
@@ -42060,7 +42060,7 @@ msgstr "Annuler la Mise à Jour/Amélioration"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:386
 #, python-format
 msgid "Line %s: Neither Amount IN or Amount OUT are present."
-msgstr "Line %s: Neither Amount IN or Amount OUT are present."
+msgstr "Ligne %s: Ni le Montant ENTRANT ou le Montant SORTANT ne sont présents."
 
 #. module: specific_locations
 #: model:ir.module.module,description:specific_locations.module_meta_information
@@ -53657,7 +53657,7 @@ msgstr "Date de suppression"
 #: code:addons/msf_doc_import/msf_import_export.py:458
 #, python-format
 msgid "Line %s: Expected header column %s got %s"
-msgstr "Line %s: Expected header column %s got %s"
+msgstr "Ligne %s: La colonne d'en-tête %s était attendue et non %s"
 
 #. module: msf_tools
 #: field:automated.export,dest_path:0
@@ -59962,7 +59962,7 @@ msgstr "Africa/Ceuta"
 #. module: kit
 #: view:kit.mass.import:0
 msgid "Get template"
-msgstr "Get template"
+msgstr "Récupérer le modèle"
 
 #. module: product
 #: field:product.template,rental:0
@@ -71235,7 +71235,7 @@ msgstr "Chemin complet (Absolu) de l'exécutable wkhtmltopdf"
 #: code:addons/kit/wizard/kit_mass_import.py:295
 #, python-format
 msgid "The line must have at least 8 columns"
-msgstr "The line must have at least 8 columns"
+msgstr "La ligne doit avoir au moins 8 colonnes"
 
 #. module: procurement
 #: model:ir.actions.act_window,help:procurement.procurement_action
@@ -84210,7 +84210,7 @@ msgstr "Le système n'a pas trouvé d'\"id_staff\" pour le travailleur %s !"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:819
 #, python-format
 msgid "The line must have either the line number or the external ref. set"
-msgstr "The line must have either the line number or the external ref. set"
+msgstr "La ligne doit au mins avoir le numéro de ligne ou la ref. externe"
 
 #. modules: stock, mission_stock
 #: field:stock.mission.report.line.location,location_name:0
