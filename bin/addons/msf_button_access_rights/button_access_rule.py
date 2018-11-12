@@ -31,6 +31,8 @@ class button_access_rule(osv.osv):
     """
 
     _name = "msf_button_access_rights.button_access_rule"
+    _inherit = 'common.import.ur'
+    _auto = True
 
     def _get_group_names(self, cr, uid, ids, field_name, arg, context):
         res = dict.fromkeys(ids, '')

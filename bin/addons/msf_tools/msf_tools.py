@@ -949,8 +949,11 @@ class user_rights_tools(osv.osv_memory):
                     dom += [('from_system', '=', False)]
                 to_del_ids = obj_to_import.search(cr, uid, dom, context=context)
                 if to_del_ids:
+                    if model == 'msf_button_access_rights.button_access_rule':
+                        obj_to_import.write(cr, uid, to_del_ids, {'group_ids': [(6, 0, [])]}, context=context)
+                    else:
+                        obj_to_import.unlink(cr, uid, to_del_ids, context=context)
                     self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
-                    obj_to_import.unlink(cr, uid, to_del_ids, context=context)
         return True
 
     def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):

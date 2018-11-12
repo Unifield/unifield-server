@@ -7,7 +7,7 @@
             <field name="model">sync_server.version</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Update Version">
+                <tree string="Update Version" hide_new_button="1" hide_duplicate_button="1">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
