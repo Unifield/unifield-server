@@ -550,7 +550,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'state': line.state_to_display or '',
@@ -567,6 +567,10 @@ class po_follow_up_mixin(object):
                     'cost_centre': analytic_lines[0].get('cost_center'),
                     'unit_price': line.price_unit or '',
                     'in_unit_price': '',
+                    'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
+                    'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
+                    'source_doc': line.origin or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                 }
                 report_lines.append(report_line)
                 report_lines.extend(self.printAnalyticLines(analytic_lines))
@@ -576,7 +580,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -593,6 +597,10 @@ class po_follow_up_mixin(object):
                     'cost_centre': analytic_lines[0].get('cost_center'),
                     'unit_price': line.price_unit or '',
                     'in_unit_price': spsul.get('price_unit'),
+                    'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
+                    'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
+                    'source_doc': line.origin or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                 }
 
                 report_lines.append(report_line)
@@ -608,7 +616,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -625,6 +633,10 @@ class po_follow_up_mixin(object):
                     'cost_centre': analytic_lines[0].get('cost_center'),
                     'unit_price': line.price_unit or '',
                     'in_unit_price': spl.get('price_unit'),
+                    'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
+                    'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
+                    'source_doc': line.origin or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                 }
                 report_lines.append(report_line)
 
@@ -640,7 +652,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
-                    'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'order_confirmed_date': line.confirmed_delivery_date or order.delivery_confirmed_date or '',
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
@@ -657,6 +669,10 @@ class po_follow_up_mixin(object):
                     'cost_centre': analytic_lines[0].get('cost_center'),
                     'unit_price': line.price_unit or '',
                     'in_unit_price': ol.get('price_unit'),
+                    'customer': line.linked_sol_id and line.linked_sol_id.order_id.partner_id.name or '',
+                    'customer_ref': line.linked_sol_id and line.linked_sol_id.order_id.client_order_ref and '.' in line.linked_sol_id.order_id.client_order_ref and line.linked_sol_id.order_id.client_order_ref.split('.')[1] or '',
+                    'source_doc': line.origin or '',
+                    'supplier_ref': line.order_id.partner_ref and '.' in line.order_id.partner_ref and line.order_id.partner_ref.split('.')[1] or '',
                 }
                 report_lines.append(report_line)
 
@@ -706,7 +722,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Order Ref', 'Item', 'Code', 'Description', 'Qty ordered', 'UoM', 'Qty received', 'IN', 'Qty backorder', 'Unit Price', 'IN unit price', 'Created', 'Confirmed Delivery', 'Doc. Status', 'Line Status', 'Destination', 'Cost Center']
+        return ['Order Ref', 'Item', 'Code', 'Description', 'Qty ordered', 'UoM', 'Qty received', 'IN', 'Qty backorder', 'Unit Price', 'IN unit price', 'Created', 'Confirmed Delivery', 'Doc. Status', 'Line Status', 'Destination', 'Cost Center', 'Customer', 'Customer Reference', 'Source Document', 'Supplier Reference']
 
 
 

@@ -108,7 +108,7 @@ class tender(osv.osv):
                 'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True),
+                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
@@ -122,7 +122,7 @@ class tender(osv.osv):
                 'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
 
-    _defaults = {'categ': 'other',
+    _defaults = {'categ': False,
                  'state': 'draft',
                  'internal_state': 'draft',
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
@@ -132,6 +132,9 @@ class tender(osv.osv):
                  'priority': 'normal',
                  'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
                  }
+
+    _sql_constraints = [
+    ]
 
     _order = 'name desc'
 
@@ -862,7 +865,7 @@ class tender_line(osv.osv):
         return res
 
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True),
+                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
                 'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
@@ -1157,14 +1160,19 @@ class tender_line(osv.osv):
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id
+            location_id = tender.location_id.id
+            cross_docking_ok = True if tender_line.sale_order_line_id else False
+            if tender.sale_order_id and tender.sale_order_id.procurement_request:
+                location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
+                cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
                 'customer_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.partner_id.id or False,
-                'location_id': tender.location_id.id,
+                'location_id': location_id,
                 'company_id': tender.company_id.id,
-                'cross_docking_ok': True if tender_line.sale_order_line_id else False,
+                'cross_docking_ok': cross_docking_ok,
                 'pricelist_id': pricelist,
                 'fiscal_position': tender_line.supplier_id.property_account_position and tender_line.supplier_id.property_account_position.id or False,
                 'warehouse_id': tender.warehouse_id.id,

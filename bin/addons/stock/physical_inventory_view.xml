@@ -68,7 +68,7 @@
                                     <field name="product_uom_id" domain="[('uom_by_stock_product', '=', product_id)]"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>
@@ -81,7 +81,7 @@
                                     <field name="product_uom_id"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>

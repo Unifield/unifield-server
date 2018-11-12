@@ -455,6 +455,8 @@ class stock_location(osv.osv):
 
         return False
 
+
+
 stock_location()
 
 
@@ -612,6 +614,27 @@ class stock_picking(osv.osv):
         new_id = super(stock_picking, self).create(cr, user, vals, context)
         return new_id
 
+
+    def _get_location_dest_active_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if there is draft moves on Picking Ticket
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+            res[pick.id] = True
+            for int_move in self.pool.get('stock.move').browse(cr, uid, [x.id for x in pick.move_lines], fields_to_fetch=['location_dest_id'], context=context):
+                if not int_move.location_dest_id.active:
+                    res[pick.id] = False
+                    break
+
+        return res
+
+
     _columns = {
         'name': fields.char('Reference', size=64, select=True),
         'origin': fields.char('Origin', size=512, help="Reference of the document that produced this picking.", select=True),
@@ -657,6 +680,8 @@ class stock_picking(osv.osv):
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
         'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
+        'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
+        'packing_list': fields.char('Supplier Packing List', size=30),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -1846,10 +1871,11 @@ class stock_production_lot(osv.osv):
         'ref': fields.char('Internal Reference', size=256, help="Internal reference number in case it differs from the manufacturer's serial number"),
         'prefix': fields.char('Prefix', size=64, help="Optional prefix to prepend when displaying this serial number: PREFIX/SERIAL [INT_REF]"),
         'product_id': fields.many2one('product.product', 'Product', required=True, domain=[('type', '<>', 'service')]),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', readonly=1, write_relate=False, string='UoM'),
         'date': fields.datetime('Creation Date', required=True),
         'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Available", select=True,
                                            help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                           digits_compute=dp.get_precision('Product UoM')),
+                                           digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'revisions': fields.one2many('stock.production.lot.revision', 'lot_id', 'Revisions'),
         'company_id': fields.many2one('res.company', 'Company', select=True),
         'move_ids': fields.one2many('stock.move', 'prodlot_id', 'Moves for this production lot', readonly=True),
@@ -1973,9 +1999,9 @@ class stock_move(osv.osv):
         'date_expected': fields.datetime('Scheduled Date', states={'done': [('readonly', True)]},required=True, select=True, help="Scheduled date for the processing of this move"),
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True, domain=[('type','<>','service')],states={'done': [('readonly', True)]}),
 
-        'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM'), required=True,states={'done': [('readonly', True)]}),
+        'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM'), required=True,states={'done': [('readonly', True)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure', required=True,states={'done': [('readonly', True)]}),
-        'product_uos_qty': fields.float('Quantity (UOS)', digits_compute=dp.get_precision('Product UoM')),
+        'product_uos_qty': fields.float('Quantity (UOS)', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uos_qty'),
         'product_uos': fields.many2one('product.uom', 'Product UOS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging', help="It specifies attributes of packaging like type, quantity of packaging,etc."),
 
@@ -3313,7 +3339,7 @@ class stock_inventory_line(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', required=True),
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-        'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
         'company_id': fields.related('inventory_id','company_id',type='many2one',relation='res.company',string='Company',store=True, select=True, readonly=True),
         'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', domain="[('product_id','=',product_id)]"),
         'state': fields.related('inventory_id','state',type='char',string='State',readonly=True),

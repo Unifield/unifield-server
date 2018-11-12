@@ -107,9 +107,16 @@ class sale_order_line(osv.osv):
 
         # for each line get a new copy:
         for sol in self.browse(cr, uid, ids, context=context):
+            for ad in [sol.analytic_distribution_id, sol.order_id.analytic_distribution_id]:
+                if ad and ad.partner_type != sol.partner_id.partner_type:
+                    self.pool.get('analytic.distribution').write(cr, uid, ad.id, {'partner_type': sol.partner_id.partner_type}, context=context)
+                    cc_ids = [x.id for x in ad.cost_center_lines]
+                    if cc_ids:
+                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_ids, {'partner_type': sol.partner_id.partner_type}, context=context)
+
             if not sol.analytic_distribution_id and sol.order_id.analytic_distribution_id:
                 self.write(cr, uid, sol.id, {
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {}, context=context),
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {'partner_type': sol.partner_id.partner_type}, context=context),
                 })
 
         return True
@@ -164,13 +171,14 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
-                new_sol_id = self.copy(cr, uid, sol.id, {
+                sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol,
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-                }, context=context)
+                }
+                new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
@@ -623,15 +631,17 @@ class sale_order_line(osv.osv):
 
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
 
+        initial_fo_states = dict((x.id, x.order_id.state) for x in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context))
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         context.pop('no_check_line')
 
         # generate sync message:
         return_info = {}
-        for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
-                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not (initial_fo_states[sol.id] == 'draft' and not sol.order_id.fo_created_by_po_sync): # draft push FO
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

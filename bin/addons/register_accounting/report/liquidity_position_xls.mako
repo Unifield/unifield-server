@@ -327,7 +327,7 @@
           <Data ss:Type="String">${_('Period')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Opening Balance in register currency')|x}</Data>
+          <Data ss:Type="String">${_('Starting Balance in register currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Calculated Balance in register currency')|x}</Data>

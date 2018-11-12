@@ -663,6 +663,28 @@ class ir_translation(osv.osv):
                 return prod[0]['product_tmpl_id'][0]
         return res_id
 
+    def _audit_product_name(self, cr, uid, ids, vals, context=None):
+        if context.get('sync_update_execution') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            templ_obj = self.pool.get('product.template')
+            audit_rule_ids = templ_obj.check_audit(cr, uid, 'write')
+            if audit_rule_ids:
+                new_ctx = context.copy()
+                new_ctx['lang'] = vals['lang']
+                template_id = vals.get('res_id')
+                if not template_id and ids:
+                    template_id = self.browse(cr, uid, ids[0], fields_to_fetch=['res_id'], context=new_ctx).res_id
+                if template_id:
+                    previous = templ_obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
+                    audit_obj = self.pool.get('audittrail.rule')
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, templ_obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
+
+
+
+    def write(self, cr, uid, ids, vals, clear=False, context=None):
+        self._audit_product_name(cr, uid, ids, vals, context=context)
+        return super(ir_translation, self).write(cr, uid, ids, vals, clear=clear, context=context)
+
+
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, clear=True, context=None):
         if context is None:
@@ -702,10 +724,13 @@ class ir_translation(osv.osv):
                     self.unlink(cr, uid, del_ids, context=context)
                 else:
                     ids = existing_ids
-                res = self.write(cr, uid, ids, vals, context=context)
+                self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
-        res = super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
-        return res
+
+        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            self._audit_product_name(cr, uid, False, vals, context=context)
+
+        return super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
 
     # US_394: add xml_id for each lines
     def add_xml_ids(self, cr, uid, context=None):
@@ -841,12 +866,7 @@ class finance_tools(osv.osv):
     def check_document_date(self, cr, uid, document_date, posting_date,
                             show_date=False, custom_msg=False, context=None):
         """
-        US-192 document date check rules
-        http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
-
-        Document date should be included within the fiscal year of
-            the posting date it is tied with.
-        01/01/FY <= document date <= 31/12/FY
+        Checks that posting date >= document date
 
         :type document_date: orm date
         :type posting_date: orm date
@@ -859,8 +879,6 @@ class finance_tools(osv.osv):
         if custom_msg:
             show_date = False
 
-        # initial check that not (posting_date < document_date)
-        # like was until 1.0-5
         if posting_date < document_date:
             if custom_msg:
                 msg = custom_msg  # optional custom message
@@ -871,19 +889,6 @@ class finance_tools(osv.osv):
                 else:
                     msg = _(
                         'Posting date should be later than Document Date.')
-            raise osv.except_osv(_('Error'), msg)
-
-        # US-192 check
-        # 01/01/FY <= document date <= 31/12/FY
-        posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
-        check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
-        check_range_end = posting_date
-        if not (check_range_start <= document_date <= check_range_end):
-            if show_date:
-                msg = _('Document date (%s) should be in posting date FY') % (
-                    document_date, )
-            else:
-                msg = _('Document date should be in posting date FY')
             raise osv.except_osv(_('Error'), msg)
 
     def truncate_amount(self, amount, digits):

@@ -52,6 +52,8 @@ OBJ_TO_RECREATE = [
     'hr.payment.method',
     'account.analytic.journal',
     'account.journal',
+    'account.mcdb',
+    'wizard.template',
 ]
 
 
