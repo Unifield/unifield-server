@@ -7,7 +7,7 @@
             <field name="model">sync_server.version</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Update Version" hide_new_button="1">
+                <tree string="Update Version">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
@@ -34,7 +34,7 @@
             <field name="model">sync_server.user_rights</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="User Rights" colors="blue:state=='confirmed';gray:state=='deprecated';red:state=='draft'" editable="top">
+                <tree string="User Rights" colors="blue:state=='confirmed';gray:state=='deprecated';red:state=='draft'" editable="top" hide_new_button="1">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
@@ -49,7 +49,7 @@
             <field name="model">sync_server.user_rights</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="User Rights">
+                <form string="User Rights" hide_new_button="1" hide_duplicate_button="1">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
