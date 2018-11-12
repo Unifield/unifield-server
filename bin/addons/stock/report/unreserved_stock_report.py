@@ -54,11 +54,11 @@ class unreserved_stock_report(report_sxw.rml_parse):
         line_sum = {}
         sum_qty = 0.00
         index = 0
-        product = False
-        prodlot = False
         loc_name = loc_obj.browse(self.cr, self.uid, cross_docking_id, fields_to_fetch=['name'],
                                   context=self.localcontext).name
         for i, line in enumerate(lines):
+            product = False
+            prodlot = False
             if line[0]:
                 product = prod_obj.browse(self.cr, self.uid, line[0], fields_to_fetch=['default_code', 'name', 'uom_id'],
                                           context=self.localcontext)
