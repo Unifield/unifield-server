@@ -182,8 +182,17 @@ def secured(fn):
 
         if rpc.session.is_logged() and kw.get('login_action') != 'login':
             # User is logged in and don't need to change his password; allow access
-            clear_login_fields(kw)
-            return fn(*args, **kw)
+            if fn.__name__ in ('get', 'kill_search_filter'):
+                # do not lock session on search view
+                clear_login_fields(kw)
+                return fn(*args, **kw)
+
+            cherrypy.session.acquire_lock()
+            try:
+                clear_login_fields(kw)
+                return fn(*args, **kw)
+            finally:
+                cherrypy.session.release_lock()
         else:
             action = kw.get('login_action', '')
             # get some settings from cookies
