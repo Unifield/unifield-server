@@ -223,12 +223,11 @@ class account_period(osv.osv):
                 # check if subscriptions lines haven't been generated yet for this period
                 draft_sub_ids = sub_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
                 for draft_sub_id in draft_sub_ids:
-                    dates_to_create = sub_obj.get_dates_to_create(cr, uid, draft_sub_id, context=None)
-                    date_start_dt = datetime.strptime(period.date_start, "%Y-%m-%d")
+                    dates_to_create = sub_obj.get_dates_to_create(cr, uid, draft_sub_id, context=context)
                     date_stop_dt = datetime.strptime(period.date_stop, "%Y-%m-%d")
                     for date_to_create in dates_to_create:
                         date_to_create_dt = datetime.strptime(date_to_create, "%Y-%m-%d")
-                        if date_start_dt <= date_to_create_dt <= date_stop_dt:
+                        if date_to_create_dt <= date_stop_dt:
                             raise osv.except_osv(_('Warning'), _("Subscription Lines haven't been generated for the period \"%s\". "
                                                                  "Please generate them and create the related recurring entries "
                                                                  "before closing the period.") % (period.name,))
