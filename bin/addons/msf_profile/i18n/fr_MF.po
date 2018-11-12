@@ -75065,16 +75065,16 @@ msgid "Complete"
 msgstr "Complete"
 
 #. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:224
+#: code:addons/account_period_closing_level/account_period.py:236
 #, python-format
-msgid "Recurring entries haven't been created for the period \"%s\". Please create them before closing the period."
-msgstr "Des Ecritures périodiques n'ont pas été créées pour la période \"%s\". Veuillez les créer avant de clôturer la période."
+msgid "Recurring entries included in the Period \"%s\" or before haven't been created. Please create them before closing the period."
+msgstr "Des Ecritures périodiques incluses dans la Période \"%s\" ou avant n'ont pas été créées. Veuillez les créer avant de clôturer la période."
 
 #. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:234
+#: code:addons/account_period_closing_level/account_period.py:231
 #, python-format
-msgid "Subscription Lines haven't been generated for the period \"%s\". Please generate them and create the related recurring entries before closing the period."
-msgstr "Des Lignes d'Abonnement n'ont pas été générées pour la période \"%s\". Veuillez les générer et créer les écritures périodiques associées avant de clôturer la période."
+msgid "Subscription Lines included in the Period \"%s\" or before haven't been generated. Please generate them and create the related recurring entries before closing the period."
+msgstr "Des Lignes d'Abonnement incluses dans la Période \"%s\" ou avant n'ont pas été générées. Veuillez les générer et créer les écritures périodiques associées avant de clôturer la période."
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule:0
