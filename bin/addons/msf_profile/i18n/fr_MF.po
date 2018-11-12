@@ -4992,6 +4992,9 @@ msgstr "Un écart existe dans la séquence"
 
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel Only"
 msgstr "Annuler Seulement"
 
@@ -9834,6 +9837,7 @@ msgstr "Le système gère-t-il l'importation de la paie à partir d'Homere ?"
 
 #. module: stock_override
 #: view:stock.picking.cancel.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel Picking"
 msgstr "Annuler Picking"
 
@@ -10953,7 +10957,7 @@ msgstr "Date de Réception"
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
 msgid "Cancel and Resource"
-msgstr "Cancel and Resource"
+msgstr "Annuler et Ressourcer"
 
 #. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration
 #: report:account.invoice2:0
@@ -31355,6 +31359,7 @@ msgstr "Alloc.Analyt."
 #: field:export.report.stock.inventory,name:0
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:113
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -40946,6 +40951,7 @@ msgstr "De confirmé à attribué."
 #: field:stock.card.wizard.line,uom_id:0
 #: field:stock.reserved.products,uom_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:157
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:123
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44024,6 +44030,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:189
 #: report:addons/stock/report/reserved_products_report_xls.mako:147
 #: report:addons/stock/report/reserved_products_report_xls.mako:155
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:121
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -46325,6 +46332,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:internal.move:0
 #: field:report.stock.move,prodlot_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:158
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:124
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -65280,6 +65288,7 @@ msgstr "Zone - Stock"
 #: report:addons/stock/report/reserved_products_report_xls.mako:143
 #: report:addons/stock/report/reserved_products_report_xls.mako:154
 #: field:reserved.products.wizard,location_id:0
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:120
 msgid "Location"
 msgstr "Zone"
 
@@ -70055,6 +70064,7 @@ msgstr "MOZAMBICAN METICAL"
 #. modules: specific_rules, stock
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:125
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -76643,6 +76653,7 @@ msgstr "Sorte de Node"
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:113
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:190
 #: report:addons/stock/report/reserved_products_report_xls.mako:128
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:122
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -80353,6 +80364,7 @@ msgstr "GEORGIAN LARI"
 
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
 msgid "Cancel move"
 msgstr "Annuler le mouvement"
 
@@ -90445,6 +90457,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: field:export.report.stock.inventory,company_id:0
 #: field:export.report.stock.move,company_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:128
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:109
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
 
@@ -97833,6 +97846,8 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:account.mcdb:0
 #: view:finance.sync.query.activation_wizard:0
 #: view:integrity.finance.wizard:0
+#: view:stock.move.cancel.wizard:0
+#: view:stock.picking.cancel.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -102747,3 +102762,109 @@ msgstr "RAPPORT SUR LA RESERVATION DES PRODUITS"
 #: view:reserved.products.wizard:0
 msgid "Export Reserved Products XML Report"
 msgstr "Exporter le Rapport XML des Produits Réservés"
+
+#. module: stock_override
+#: help:stock.picking,from_pick_cancel_id:0
+msgid "Picking or Out that created this Internal Move after cancellation"
+msgstr "Picking ou Out qui a créé le Mouvement Interne après annulation"
+
+#. module: stock_override
+#: field:stock.picking,from_pick_cancel_id:0
+msgid "Linked Picking/Out"
+msgstr "Picking/Out lié"
+
+#. module: stock_override
+#: field:stock.move.cancel.wizard,is_move_from_cross_docking:0
+msgid "Is the move from the Cross docking Location ?"
+msgstr "Est-ce que le mouvement vient de la Zone de Transbordement ?"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2748
+#: code:addons/stock_override/stock.py:2942
+#, python-format
+msgid "The Internal Move id:%s (%s) has been updated."
+msgstr "Le Mouvement Interne id:%s (%s) a été mis à jour."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2723
+#: code:addons/stock_override/stock.py:2917
+#, python-format
+msgid "The Internal Move id:%s (%s) has been created."
+msgstr "Le Mouvement Interne id:%s (%s) a été créé."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2751
+#, python-format
+msgid "The stock.move id:%s of the picking id:%s (%s) has been cancelled"
+msgstr "Le stock.move id:%s du picking id:%s (%s) a été annulé."
+
+#. module: stock_override
+#: field:stock.picking.cancel.wizard,has_moves_from_cross_docking:0
+msgid "Is one of the moves from the Cross docking Location ?"
+msgstr "Est-ce qu'un des mouvements vient de la Zone de Transbordement ?"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:2751945
+#, python-format
+msgid "The %s id:%s (%s) has been cancelled."
+msgstr "Le %s id:%s (%s) a été annulé."
+
+#. module: stock_override
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
+msgid "Do not cancel"
+msgstr "Ne pas annuler"
+
+#. module: stock_override
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
+msgid "Cancel & create Internal Move"
+msgstr "Annuler & créer un Mouvement Interne"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:126
+msgid "Unreserved Qty"
+msgstr "Qté Non Allouée"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.unreserved_stock_report
+#: model:ir.ui.menu,name:stock.menu_unreserved_stock_report
+msgid "Unreserved Stock Report"
+msgstr "Rapport du Stock Non Alloué"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:127
+msgid "Total Unreserved Qty"
+msgstr "Qté Totale Non Allouée"
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:104
+msgid "UNRESERVED STOCK REPORT"
+msgstr "RAPPORT DU STOCK NON ALLOUÉ"
+
+#. module: stock_override
+#: view:stock.picking.cancel.more.wizard:0
+msgid "\n"
+"                                Cancelling these moves might result in unreserved stock.<br/>\n"
+"                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
+"                            "
+msgstr "\n"
+"                                Annuler ces mouvements peut générer du stock non alloué.<br/>\n"
+"                                Voulez-vous créer un Mouvement Interne ou mettre à jour l'existant pour réattribuer les quantités ?\n"
+"                            "
+
+#. module: stock_override
+#: view:stock.move.cancel.more.wizard:0
+msgid "\n"
+"                                Cancelling this move might result in unreserved stock.<br/>\n"
+"                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?\n"
+"                            "
+msgstr "\n"
+"                                Annuler ce mouvement peut générer du stock non alloué.<br/>\n"
+"                                Voulez-vous créer un Mouvement Interne ou mettre à jour l'existant pour réattribuer les quantités ?\n"
+"                            "
+
+#. module: stock
+#: report:addons/stock/report/unreserved_stock_report_xls.mako:84
+msgid "Unreserved Stock Excel Export"
+msgstr "Export Excel Stock Non Alloué"
