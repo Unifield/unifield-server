@@ -2122,6 +2122,7 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
             'from_cancel_out': False,
+            'is_line_split': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
