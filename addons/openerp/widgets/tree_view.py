@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -45,7 +45,7 @@ class ViewTree(Form):
         self.domain2 = domain or []
         self.context = context or {}
         self.domain = []
-        
+
         fields_info = dict(fields)
 
         self.field_parent = view.get("field_parent") or None
@@ -60,7 +60,7 @@ class ViewTree(Form):
 
         ctx = dict(self.context,
                    **rpc.session.context)
-                
+
         dom = xml.dom.minidom.parseString(view['arch'].encode('utf-8'))
 
         root = dom.childNodes[0]
@@ -72,13 +72,13 @@ class ViewTree(Form):
         nolink = attrs.get('nolink', '0')
         ids = []
         id = res_id
-        
+
         colors = {}
         for color_spec in attrs.get('colors', '').split(';'):
             if color_spec:
                 colour, test = color_spec.split(':')
                 colors[colour] = test
-                
+
         if self.toolbar:
             ids = proxy.search(self.domain2, 0, 0, 0, ctx)
             self.toolbar = proxy.read(ids, ['name', 'icon'], ctx)
@@ -113,7 +113,7 @@ class ViewTree(Form):
         for item, value in view.get('toolbar', {}).items():
             if value: toolbar[item] = value
         if toolbar:
-            self.sidebar = Sidebar(self.model, None, toolbar, context=self.context)
+            self.sidebar = Sidebar(self.model, None, toolbar, context=self.context, view_id=self.view_id)
 
         # get the correct view title
         self.string = self.context.get('_terp_view_name', self.string) or self.string
