@@ -83,7 +83,9 @@ class sale_order_report_xls(WebKitParser):
         a = super(sale_order_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+
 sale_order_report_xls('report.sale.order_xls','sale.order','addons/msf_supply_doc_export/report/report_sale_order_xls.mako')
+
 
 class internal_request_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -100,7 +102,28 @@ class internal_request_report_xls(WebKitParser):
         a = super(internal_request_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+
 internal_request_report_xls('report.internal.request_xls','sale.order','addons/msf_supply_doc_export/report/report_internal_request_xls.mako')
+
+
+class internal_request_export(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(internal_request_export, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(internal_request_export, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+
+internal_request_export('report.internal_request_export','sale.order','addons/msf_supply_doc_export/internal_request_export_xls.mako')
+
 
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object
 class purchase_order_report_xls(WebKitParser):
@@ -940,10 +963,10 @@ class ir_values(osv.osv):
     _inherit = 'ir.values'
 
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         trans_obj = self.pool.get('ir.translation')
 
         if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
@@ -952,6 +975,7 @@ class ir_values(osv.osv):
             for v in values:
                 if context.get('procurement_request', False):
                     if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
+                            or v[2].get('report_name', False) in ('internal_request_export', 'procurement.request.report') \
                             or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 else:
