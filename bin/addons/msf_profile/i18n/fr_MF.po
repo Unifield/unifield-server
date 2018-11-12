@@ -2034,6 +2034,7 @@ msgstr "Diviser en"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:369
+#: code:addons/sync_client/sync_client.py:372
 #, python-format
 msgid "OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again."
 msgstr "OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again."
@@ -2407,6 +2408,7 @@ msgstr "Écran non trouvé."
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:916
+#: code:addons/sync_client/sync_client.py:970
 #, python-format
 msgid "Update(s) processed: %d import updates + %d delete updates = %d total updates"
 msgstr "Update(s) processed: %d import updates + %d delete updates = %d total updates"
@@ -3617,6 +3619,7 @@ msgstr "Document name"
 
 #. module: msf_tools
 #: help:automated.export,ftp_ok:0
+#: help:automated.import,ftp_ok:0
 msgid "Enable FTP server if you want to read or write from a remote FTP server"
 msgstr "Activez le serveur FTP pour pouvoir lire ou écrire depuis un server FTP distant"
 
@@ -7264,6 +7267,7 @@ msgstr "Longueur/Distance"
 
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:869
+#: code:addons/msf_tools/msf_tools.py:866
 #, python-format
 msgid "Posting date (%s) should be later than Document Date (%s)."
 msgstr "Posting date (%s) should be later than Document Date (%s)."
@@ -8084,6 +8088,7 @@ msgstr "Paiements en attente"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:843
+#: code:addons/sync_client/sync_client.py:897
 #, python-format
 msgid "Update(s) received: %d"
 msgstr "Update(s) received: %d"
@@ -10432,6 +10437,7 @@ msgstr "Supplier Invoices And Refunds"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:803
+#: code:addons/sync_client/sync_client.py:857
 #, python-format
 msgid "method get_max_sequence"
 msgstr "method get_max_sequence"
@@ -11591,6 +11597,7 @@ msgstr "Changera la facon de traiter les approvisionnements."
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1095
+#: code:addons/sync_client/sync_client.py:1149
 #, python-format
 msgid "Message(s) processed: %d/%d"
 msgstr "Message(s) processed: %d/%d"
@@ -19279,6 +19286,7 @@ msgstr "Could not cancel this sales order !"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:281
+#: code:addons/sync_client/sync_client.py:284
 #, python-format
 msgid "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 msgstr "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
@@ -20911,6 +20919,7 @@ msgstr "Facturer sur"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1052
+#: code:addons/sync_client/sync_client.py:1106
 #, python-format
 msgid "method get_message"
 msgstr "method get_message"
@@ -20939,6 +20948,7 @@ msgstr "commitment.import.setup"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:762
+#: code:addons/sync_client/sync_client.py:765
 #, python-format
 msgid "method set_rules"
 msgstr "method set_rules"
@@ -29727,6 +29737,7 @@ msgstr "Field %s: type %s not supported"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:729
+#: code:addons/sync_client/sync_client.py:732
 #, python-format
 msgid "Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)"
 msgstr "Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)"
@@ -30390,6 +30401,7 @@ msgstr "Vous ne pouvez pas effacer de lignes d'Ecritures HQ validées!"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:836
+#: code:addons/sync_client/sync_client.py:890
 #, python-format
 msgid "method get_update"
 msgstr "method get_update"
@@ -30911,6 +30923,7 @@ msgstr " (copier)"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:369
+#: code:addons/sync_client/sync_client.py:372
 #, python-format
 msgid "Already Syncing..."
 msgstr "Already Syncing..."
@@ -36144,6 +36157,7 @@ msgstr "1.  %c ==> Ven Déc  5 18:25:20 2008"
 
 #. module: update_client
 #: code:addons/update_client/version.py:206
+#: code:addons/update_client/version.py:213
 #, python-format
 msgid "Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server."
 msgstr "Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again and restart OpenERP Server."
@@ -37444,6 +37458,7 @@ msgstr "Vous devez définir un Produit pour tout ce que vous achetez ou vendez. 
 
 #. module: sync_client
 #: code:addons/sync_client/update.py:318
+#: code:addons/sync_client/update.py:321
 #, python-format
 msgid "Push finished: %d updates"
 msgstr "Push finished: %d updates"
@@ -43707,6 +43722,7 @@ msgstr "Total:"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:410
+#: code:addons/msf_tools/automated_import_job.py:416
 #, python-format
 msgid "%s: "
 msgstr "%s: "
@@ -46404,6 +46420,7 @@ msgstr "Type de vue"
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export_job.py:242
 #: code:addons/msf_tools/automated_import_job.py:514
+#: code:addons/msf_tools/automated_import_job.py:521
 #, python-format
 msgid "Unable to write report on FTP server"
 msgstr "Unable to write report on FTP server"
@@ -49194,6 +49211,7 @@ msgstr "Wizard to split processor lines"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1013
+#: code:addons/sync_client/sync_client.py:1067
 #, python-format
 msgid "method get_message_rule"
 msgstr "method get_message_rule"
@@ -51446,6 +51464,7 @@ msgstr "De cette vue, ayez une analyse des différents comptes financiers. Le do
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
 #: selection:sync.monitor,status:0
+#: selection:sync.monitor,user_rights:0
 msgid "/"
 msgstr "/"
 
@@ -55819,6 +55838,7 @@ msgstr "Un Partenaire Par Page"
 
 #. module: msf_tools
 #: view:automated.import:0
+#: view:automated.export:0
 msgid "General configuration"
 msgstr "Configuration Générale"
 
@@ -57812,6 +57832,7 @@ msgstr "Vous ne pouvez pas créer une ligne de bon d'engagement sous une 'vue' t
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:642
+#: code:addons/sync_client/sync_client.py:645
 #, python-format
 msgid "Push data :: New server's sequence number: %d"
 msgstr "Push data :: New server's sequence number: %d"
@@ -58042,6 +58063,7 @@ msgstr "Stock - Rapport mission"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:219
+#: code:addons/sync_client/sync_client.py:222
 #, python-format
 msgid "Update session: %s"
 msgstr "Update session: %s"
@@ -60471,6 +60493,7 @@ msgstr "Facture d'Avoir"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:272
+#: code:addons/sync_client/sync_client.py:275
 #, python-format
 msgid "Cannot check for updates: %s"
 msgstr "Cannot check for updates: %s"
@@ -60635,7 +60658,7 @@ msgstr "CAYMAN ISLANDS DOLLAR"
 msgid "Progress"
 msgstr "Avancement"
 
-#. modules: delivery_mechanism, tender_flow, consumption_calculation, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, stock, msf_cross_docking, product, stock_override, account_reconciliation, msf_instance, kit, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, purchase, account, msf_outgoing, finance, stock_override, sale, account_override, msf_doc_import, msf_accrual, analytic_override, msf_profile
+#. modules: delivery_mechanism, tender_flow, consumption_calculation, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, stock, msf_cross_docking, product, stock_override, account_reconciliation, msf_instance, kit, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, purchase, account, msf_outgoing, finance, stock_override, sale, account_override, msf_doc_import, msf_accrual, analytic_override, msf_profile, msf_field_access_rights,msf_tools
 #: code:addons/account/account.py:452
 #: code:addons/account/account.py:465
 #: code:addons/account/account.py:468
@@ -60919,6 +60942,11 @@ msgstr "Avancement"
 #: code:addons/stock_override/stock.py:708
 #: code:addons/stock/wizard/manage_expired_stock.py:85
 #: code:addons/sale/wizard/internal_request_import.py:199
+#: code:addons/msf_field_access_rights/field_access_rule_line.py:69
+#: code:addons/msf_tools/msf_tools.py:932
+#: code:addons/msf_tools/msf_tools.py:941
+#: code:addons/msf_tools/msf_tools.py:986
+#: code:addons/msf_tools/msf_tools.py:990
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -61178,6 +61206,7 @@ msgstr "Tableau des devises"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:991
+#: code:addons/sync_client/sync_client.py:1045
 #, python-format
 msgid "Message(s) sent: %d/%d"
 msgstr "Message(s) sent: %d/%d"
@@ -61673,6 +61702,7 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Journal 
 #: selection:sync.monitor,msg_pull_receive:0
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
+#: selection:sync.monitor,user_rights:0
 msgid "In Progress..."
 msgstr "En Cours..."
 
@@ -62630,6 +62660,7 @@ msgstr "Ce module est adapté à la méthode comptable Anglo-Saxonne en adaptant
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:904
+#: code:addons/sync_client/sync_client.py:958
 #, python-format
 msgid "Update(s) processed: %d import updates + %d delete updates on %d updates"
 msgstr "Update(s) processed: %d import updates + %d delete updates on %d updates"
@@ -65083,6 +65114,7 @@ msgstr "Les comptes suivants ne sont pas compatibles avec le partenaire:"
 #: selection:sync.monitor,msg_pull_receive:0
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
+#: selection:sync.monitor,user_rights:0
 msgid "Failed"
 msgstr "Echoué"
 
@@ -66962,6 +66994,7 @@ msgstr "Is initial balance filter available ?"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:995
+#: code:addons/sync_client/sync_client.py:1049
 #, python-format
 msgid "Message(s) sent: %d"
 msgstr "Message(s) sent: %d"
@@ -69900,6 +69933,7 @@ msgstr "Tiers Obligatoire"
 #: selection:ir.module.module,state:0
 #: selection:ir.module.module.dependency,state:0
 #: selection:sync_client.version,state:0
+#: selection:sync.client.entity,user_rights_state:0
 msgid "Installed"
 msgstr "Installé"
 
@@ -72849,6 +72883,8 @@ msgstr "Financing Contract Warning"
 #: code:addons/msf_tools/automated_import_job.py:332
 #: code:addons/msf_tools/automated_import_job.py:437
 #: code:addons/msf_tools/automated_import_job.py:453
+#: code:addons/msf_tools/automated_import_job.py:444
+#: code:addons/msf_tools/automated_import_job.py:460
 #, python-format
 msgid "%s :: Import file (%s) moved to destination path"
 msgstr "%s :: Import file (%s) moved to destination path"
@@ -75180,6 +75216,7 @@ msgstr "Compte Parent"
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
 #: selection:sync.monitor,status:0
+#: selection:sync.monitor,user_rights:0
 msgid "Aborted"
 msgstr "Aborted"
 
@@ -77509,6 +77546,7 @@ msgstr "Ecritures analytiques par ligne"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1104
+#: code:addons/sync_client/sync_client.py:1158
 #, python-format
 msgid "Message(s) not run left: %d"
 msgstr "Message(s) not run left: %d"
@@ -81968,6 +82006,7 @@ msgstr "Séquences Exercice Comptable"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:311
+#: code:addons/sync_client/sync_client.py:314
 #, python-format
 msgid "ok, skipped."
 msgstr "ok, skipped."
@@ -82447,6 +82486,7 @@ msgstr "Ceci va supprimer toutes les écritures de Paie. Etes-vous certain?"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:921
+#: code:addons/sync_client/sync_client.py:975
 #, python-format
 msgid "Update(s) not run left: %d"
 msgstr "Update(s) not run left: %d"
@@ -87521,6 +87561,7 @@ msgstr "Documents to Done"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:280
+#: code:addons/sync_client/sync_client.py:283
 #, python-format
 msgid "Sync aborted"
 msgstr "Sync aborted"
@@ -95176,6 +95217,7 @@ msgstr "N° de passeport"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:734
+#: code:addons/sync_client/sync_client.py:737
 #, python-format
 msgid "Update(s) sent: %d import update(s) and %d delete update(s) = %d total update(s)"
 msgstr "Update(s) sent: %d import update(s) and %d delete update(s) = %d total update(s)"
@@ -96247,6 +96289,7 @@ msgstr "Total des transactions en espèce"
 
 #. module: update_client
 #: code:addons/update_client/version.py:194
+#: code:addons/update_client/version.py:201
 #, python-format
 msgid "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
 msgstr "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
@@ -99194,6 +99237,7 @@ msgstr "A"
 #: selection:sync.monitor,msg_push_create:0
 #: selection:sync.monitor,msg_push_send:0
 #: selection:sync.monitor,status:0
+#: selection:sync.monitor,user_rights:0
 msgid "Ok"
 msgstr "Ok"
 
@@ -101210,6 +101254,7 @@ msgstr "Compte/destination %s/%s est repris 2 fois dans ce fichier!"
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export_job.py:251
 #: code:addons/msf_tools/automated_import_job.py:523
+#: code:addons/msf_tools/automated_import_job.py:530
 #, python-format
 msgid "Unable to write report on SFTP server"
 msgstr "Unable to write report on SFTP server"
@@ -103482,3 +103527,125 @@ msgstr "Vous ne pouvez pas valider la ligne sans la Date Souhaitée."
 #, python-format
 msgid "You can not validate the line without a Location Requestor."
 msgstr "Vous ne pouvez pas valider la ligne sans la Zone de Demande."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:409
+#, python-format
+msgid "%s :: Import job done with %s records processed and %s rejected"
+msgstr "%s :: processus d'import terminé avec %s enregistrements traités et %s rejetés"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:990
+#, python-format
+msgid "%s files found, %s expected."
+msgstr "%s fichiers trouvés, %s attendus"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:422
+#, python-format
+msgid "%s out of %s lines have been rejected"
+msgstr "%s sur %s lignes ont été rejetées"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:418
+#, python-format
+msgid "%s out of %s lines have been updated"
+msgstr "%s sur %s lignes ont été mises à jour"
+
+#. module: base
+#: sql_constraint:ir.model.access:0
+msgid "(name, model) must be unique"
+msgstr "(nom, model) doit être unique"
+
+#. module: base
+#: field:ir.model.access,from_system:0
+msgid "ACL created by dev"
+msgstr "Droit créé par dev"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:800
+#, python-format
+msgid "Download new User Rights: %s"
+msgstr "Téléchargement des nouveaux droits: %s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:986
+#, python-format
+msgid "Extra file \"%s\" found in zip !"
+msgstr "Fichier supplémentaire \"%s\" trouvé dans le Zip!"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:941
+#, python-format
+msgid "FARL %s the following rules are on deprecated rows:\n"
+" - %s"
+msgstr "Droits des champs %s, les règles suivantes portent sur des champs obsolètes:\n"
+" - %s"
+
+#. module: msf_field_access_rights
+#: code:addons/msf_field_access_rights/field_access_rule_line.py:69
+#, python-format
+msgid "Field %s is deprecated"
+msgstr "Champ %s obsolète"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:932
+#, python-format
+msgid "Import %s failed\n"
+" Data: %s\n"
+"%s"
+msgstr "Import %s en échec\n"
+" Données: %s\n"
+"%s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export_job.py:165
+#: code:addons/msf_tools/automated_import_job.py:401
+#, python-format
+msgid "Line %s: "
+msgstr "Ligne %s: "
+
+#. modules: msf_field_access_rights, base
+#: field:common.import.ur,imported_flag:0
+#: field:ir.model.access,imported_flag:0
+#: field:ir.rule,imported_flag:0
+#: field:msf_field_access_rights.field_access_rule,imported_flag:0
+#: field:msf_field_access_rights.field_access_rule_line,imported_flag:0
+msgid "Record imported"
+msgstr "Enregistrement importé"
+
+#. module: base
+#: field:ir.actions.report.xml,run_in_background:0
+msgid "Run report in bg"
+msgstr "Lancer le rapport en arrière plan"
+
+#. module: update_client
+#: selection:sync.client.entity,user_rights_state:0
+msgid "To install"
+msgstr "À installer"
+
+#. module: update_client
+#: field:sync.client.entity,user_rights_state:0
+msgid "UR State"
+msgstr "Statut DU"
+
+#. module: update_client
+#: field:sync.client.entity,user_rights_sum:0
+msgid "UR Sum"
+msgstr "Somme DU"
+
+#. module: update_client
+#: field:sync.client.entity,user_rights_name:0
+msgid "UR Version"
+msgstr "Version DU"
+
+#. module: update_client
+#: field:sync.client.entity,user_rights_data:0
+msgid "UR Zip file"
+msgstr "Fichier Zip des DU"
+
+#. module: sync_client
+#: field:sync.monitor,user_rights:0
+msgid "User Rights"
+msgstr "Droits Utilisateurs"
+

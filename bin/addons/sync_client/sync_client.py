@@ -50,6 +50,9 @@ from sync_common import WHITE_LIST_MODEL
 from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
+from base64 import decodestring
+
+from msf_field_access_rights.osv_override import _get_instance_level
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -762,6 +765,57 @@ class Entity(osv.osv):
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
+    def install_user_rights(self, cr, uid, context=None):
+        if not context:
+            context = {}
+
+        logger = context.get('logger')
+        entity = self.get_entity(cr, uid, context)
+        encoded_zip = entity.user_rights_data
+        plain_zip = decodestring(encoded_zip)
+
+        self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=False, logger=logger, context=context)
+        return True
+
+    @sync_process('user_rights')
+    def check_user_rights(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_US'
+        logger = context.get('logger')
+
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
+        entity = self.get_entity(cr, uid, context)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
+        if not res.get('sum'):
+            return True
+
+        first_sync = not entity.user_rights_sum
+        to_install = False
+        if res.get('sum') != entity.user_rights_sum:
+            if logger:
+                logger.append(_("Download new User Rights: %s") % res.get('name'))
+                logger.write()
+            ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
+            ur_data = decodestring(ur_data_encoded)
+            computed_hash = hashlib.md5(ur_data).hexdigest()
+            if computed_hash != res.get('sum'):
+                raise Exception, 'User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum'))
+            entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
+            to_install = True
+
+        if to_install or entity.user_rights_state == 'to_install':
+            if first_sync:
+                self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ir_model_access'})
+                # to generate all sync updates
+                self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid)
+            self.install_user_rights(cr, uid, context=context)
+            entity.write({'user_rights_state': 'installed'})
+        return True
+
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
         """
@@ -1209,6 +1263,7 @@ class Entity(osv.osv):
             logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
             # do not block sync
             pass
+        self.check_user_rights(cr, uid, context=context)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
