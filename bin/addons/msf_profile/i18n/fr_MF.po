@@ -102628,3 +102628,15 @@ msgstr "Id. Modèle"
 #, python-format
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
+
+#. modules: account_override, account
+#: field:account.move.line,db_id:0
+#: field:account.analytic.line,db_id:0
+msgid "DB ID"
+msgstr "ID BD"
+
+#. modules: account_override, register_accounting
+#: help:account.move.line,db_id:0
+#: help:account.analytic.line,db_id:0
+msgid "DB ID used for Vertical Integration"
+msgstr "ID BD utilisé pour l'Intégration Verticale"
