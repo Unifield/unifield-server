@@ -101633,12 +101633,6 @@ msgid "Creation Date"
 msgstr "Date de Commande"
 
 #. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:437
-#, python-format
-msgid "Line Number is mandatory to update a line. "
-msgstr "Le Numéro de Ligne est obligatoire pour mettre à jour une ligne. "
-
-#. module: sale
 #: model:ir.model,name:sale.model_internal_request_import
 msgid "internal.request.import"
 msgstr "internal.request.import"
@@ -103649,3 +103643,8 @@ msgstr "Fichier Zip des DU"
 msgid "User Rights"
 msgstr "Droits Utilisateurs"
 
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:606
+#, python-format
+msgid "Line Number must be empty to add a new line to an existing IR. "
+msgstr "Le Numéro de Ligne doit être vide pour ajouter une nouvelle ligne à la DI. "

@@ -37,7 +37,7 @@ from tools.translate import _
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
 LINES_COLUMNS = [
-    (0, _('Line number'), 'mandatory', ('order_id', '!=', False)),
+    (0, _('Line number'), 'optionnal'),
     (1, _('Product Code'), 'optionnal'),
     (2, _('Product Description'), 'optionnal'),
     (3, _('Quantity'), 'mandatory'),
@@ -587,8 +587,8 @@ class internal_request_import(osv.osv):
                     for val in vals:
                         line_recap += tools.ustr(val or '') + '/'
                     # Line number
-                    if ir_line_numbers:
-                        if vals[0]:
+                    if ir_order and vals[0]:
+                        if vals[0] in ir_line_numbers:
                             try:
                                 line_n = int(vals[0])
                                 line_data.update({'imp_line_number': line_n})
@@ -603,7 +603,7 @@ class internal_request_import(osv.osv):
                                 line_errors += _('Line Number must be an integer. ')
                         else:
                             red = True
-                            line_errors += _('Line Number is mandatory to update a line. ')
+                            line_errors += _('Line Number must be empty to add a new line to an existing IR. ')
 
                     # Product and Comment
                     product_code = vals[1]
@@ -839,7 +839,7 @@ class internal_request_import(osv.osv):
                         ir_vals.update({'priority': wiz.imp_priority})
                     so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
                     for line in wiz.imp_line_ids:
-                        if not line.red and line.imp_line_number:
+                        if not line.red and line.imp_qty > 0:
                             line_vals = {
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,
