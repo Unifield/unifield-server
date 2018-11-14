@@ -2766,8 +2766,8 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        rounding_uom = [self._columns[f].related_uom for f in fields_pre if f in self._columns and getattr(self._columns[f], 'related_uom')]
-        for f in fields_pre + rounding_uom:
+        rounding_uom = set(self._columns[f].related_uom for f in fields_pre if f in self._columns and hasattr(self._columns[f], 'related_uom') and self._columns[f].related_uom)
+        for f in fields_pre + list(rounding_uom):
             if f not in ['id', 'sequence']:
                 if f in rounding_uom:
                     group_operator = fget[f].get('group_operator', 'max')
