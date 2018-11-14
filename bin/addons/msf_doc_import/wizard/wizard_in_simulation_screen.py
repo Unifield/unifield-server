@@ -1568,7 +1568,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
                     warnings.append(_('The \'Expired date\' is not defined in file - The expired date of the Batch was put instead.'))
 
-
             if exp_check and not lot_check and batch_value:
                 write_vals.update({
                     'imp_batch_id': False,
@@ -1592,10 +1591,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_exp_date': exp_date,
                     })
 
-                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name') and not context.get('simulation_bypass_missing_lot', False):
+                if not write_vals.get('imp_batch_id') and (not write_vals.get('imp_batch_name') or not write_vals.get('imp_exp_date'))  and not context.get('simulation_bypass_missing_lot', False):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
 
+            if exp_check and not lot_check and not write_vals.get('imp_exp_date') and not context.get('simulation_bypass_missing_lot', False):
+                errors.append(_('No expiry date set on ED product.'))
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')

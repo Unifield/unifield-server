@@ -100462,6 +100462,12 @@ msgstr "%s (in %s)"
 msgid "No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation."
 msgstr "Aucun lot trouvé dans la base. Vous devez indiquer un nom et une date d'expiration."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1541
+#, python-format
+msgid "No expiry date set on ED product."
+msgstr "Aucune date d'expiration sur un produit date exp. obligatoire."
+
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:506
 #: model:ir.actions.report.xml,name:register_accounting.open_advances_2
