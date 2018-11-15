@@ -1452,6 +1452,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'subtype': 'standard',
                         'already_replicated': False,
                         'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
                 else:
@@ -1927,6 +1928,26 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if (line.order_id.procurement_request or line.order_id.fo_created_by_po_sync or line.state != 'draft')\
+                    and (line.modification_comment or line.created_by_sync or line.cancelled_by_sync
+                         or (line.original_qty and line.product_uom_qty != line.original_qty)
+                         or (line.original_product and line.product_id and line.product_id.id != line.original_product.id)):
+                changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -1998,10 +2019,17 @@ class sale_order_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
+        'original_product': fields.many2one('product.product', 'Original Product'),
+        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
+        'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Sale Price Computation')),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),
+        'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2021,6 +2049,8 @@ class sale_order_line(osv.osv):
         'soq_updated': False,
         'set_as_sourced_n': False,
         'stock_take_date': _get_stock_take_date,
+        'created_by_sync': False,
+        'cancelled_by_sync': False,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):
@@ -2119,6 +2149,8 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
             'from_cancel_out': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2153,6 +2185,8 @@ class sale_order_line(osv.osv):
             'invoiced': False,
             'invoice_lines': [],
             'set_as_sourced_n': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
@@ -2808,11 +2842,15 @@ class sale_order_line(osv.osv):
         pricelist = False
         order_id = vals.get('order_id', False)
         if order_id:
-            order_data = self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request', 'pricelist_id'], context)
+            order_data = self.pool.get('sale.order').\
+                read(cr, uid, order_id, ['procurement_request', 'pricelist_id', 'fo_created_by_po_sync'], context)
             if order_data['procurement_request']:
                 vals.update({'cost_price': vals.get('cost_price', False)})
             if order_data['pricelist_id']:
                 pricelist = order_data['pricelist_id'][0]
+            # New line created out of synchro on a FO/IR created by synchro
+            if order_data['fo_created_by_po_sync'] and not context.get('sync_message_execution'):
+                vals.update({'created_by_sync': True})
 
         # force the line creation with the good state, otherwise track changes for order state will
         # go back to draft (US-3671):

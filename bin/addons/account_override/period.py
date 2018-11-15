@@ -23,6 +23,7 @@
 
 from osv import osv
 from tools.translate import _
+from time import strptime
 
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
@@ -102,6 +103,30 @@ def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         period_id = period_id and get_next_period_id(self, cr, uid, period_id, context=context)
     return period_id or False
 
+def _get_middle_years(self, cr, uid, fy1, fy2, context=None):
+    """
+    Returns the list of the FY ids included between both Fiscal Years in parameter.
+    (e.g.: FY2015, FY2018 ==> FY2016, FY2017)
+    """
+    if context is None:
+        context = {}
+    middle_years = []
+    fy_obj = self.pool.get('account.fiscalyear')
+    y1 = strptime(fy1.date_start, '%Y-%m-%d').tm_year
+    y2 = strptime(fy2.date_start, '%Y-%m-%d').tm_year
+    if y2 > y1+1:  # non-successive years
+        year_numbers = []
+        year = y1+1
+        while year < y2:
+            year_numbers.append(year)
+            year += 1
+        for year_number in year_numbers:
+            date_start = '%s-01-01' % year_number
+            fy_ids = fy_obj.search(cr, uid, [('date_start', '=', date_start)], context=context, limit=1)
+            if fy_ids:
+                middle_years.append(fy_ids[0])
+    return middle_years
+
 
 def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
     """
@@ -128,12 +153,22 @@ def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
             ('number', '<=', final_number),
             ('fiscalyear_id', '=', initial_fy_id)]
     else:
-        # ex: from Nov. 2018 to Jan. 2019 => Nov 2018 / Dec 2018 / Periods 13->16 2018 / Jan 2019
-        period_dom = [
-            ('number', '!=', 0),
-            '|',
-            '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
-            '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
+        # check if there are "middle" years to include completely (e.g. Nov. 2018 to Jan. 2020 => all FY2019 periods should be included)
+        middle_years = _get_middle_years(self, cr, uid, initial_period.fiscalyear_id, final_period.fiscalyear_id, context=context)
+        if middle_years:
+            period_dom = [
+                ('number', '!=', 0),
+                '|', '|',
+                '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
+                ('fiscalyear_id', 'in', middle_years),
+                '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
+        else:
+            # e.g.: from Nov. 2018 to Jan. 2019 => Nov 2018 / Dec 2018 / Periods 13->16 2018 / Jan 2019
+            period_dom = [
+                ('number', '!=', 0),
+                '|',
+                '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
+                '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
     period_ids = self.search(cr, uid, period_dom, order='id', context=context)
     return period_ids
 

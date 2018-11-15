@@ -76,7 +76,7 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
    <Interior ss:Color="#FABF8F" ss:Pattern="Solid"/>
    <NumberFormat/>
-   <Protection/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s64">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>

@@ -3145,7 +3145,9 @@ class stock_move(osv.osv):
 
         return [move.id for move in complete]
 
+
 stock_move()
+
 
 class stock_inventory(osv.osv):
     _name = "stock.inventory"
