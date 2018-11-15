@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,11 +15,26 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import product_price
-import product_cluster_update
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from osv import osv, fields
+from tools.translate import _
 
+
+class product_cluster_update(osv.osv):
+    _name = 'product.cluster.update'
+    _description = 'Product Cluster Update'
+
+    _columns = {
+        'state': fields.selection(selection=[('draft', 'Draft'),('in_progress', 'In Progress'),('error', 'Error'),('done', 'Done')], string='Status', readonly=True),
+        'product_ids': fields.many2one('product.product', 'Products', selcet=True),
+    }
+
+    _defaults = {
+        'state': 'draft',
+    }
+
+
+product_cluster_update()
