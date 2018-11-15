@@ -12329,10 +12329,10 @@ msgid "Export Contract info - pdf"
 msgstr "Exporter les infos du Contrat - PDF"
 
 #. module: msf_instance
-#: code:addons/msf_instance/add_instance.py:596
+#: code:addons/msf_instance/add_instance.py:597
 #, python-format
-msgid "Proprietary Instance for FP accounts should be only COORDO and/or MISSION"
-msgstr "Proprietary Instance for FP accounts should be only COORDO and/or MISSION"
+msgid "Funding Pools must have a Coordination Proprietary Instance."
+msgstr "Les Funding Pools doivent avoir une Instance Propriétaire de type Coordination."
 
 #. module: msf_accrual
 #: code:addons/msf_accrual/msf_accrual_line.py:150
@@ -15015,12 +15015,6 @@ msgstr "No analytic journal found for ODX!"
 #: constraint:ir.sequence:0
 msgid "Sequence type code doesn't exist."
 msgstr "Le type de code Séquence n'existe pas."
-
-#. module: msf_instance
-#: code:addons/msf_instance/add_instance.py:590
-#, python-format
-msgid "Proprietary Instance is mandatory for FP accounts!"
-msgstr "L'Instance propriétaire est obligatoire pour les comptes FP!"
 
 #. module: tender_flow
 #: model:process.transition,name:tender_flow.process_transition_tender_rfq_po
@@ -23654,7 +23648,7 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 #. module: register_accounting
 #: view:account.bank.statement:0
 msgid "Are you sure you want to freeze closing balance?"
-msgstr "Etes-vous certain de vouloir geler le solde de fermeture ?"
+msgstr "Etes-vous certain de vouloir geler le solde de clôture ?"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
