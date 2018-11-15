@@ -2467,6 +2467,9 @@ class purchase_order(osv.osv):
         ], order='NO_ORDER', context=context)
         line_obj.unlink(cr, uid, no_price_line_ids, context=context)
 
+        line_ids = line_obj.search(cr, uid, [('order_id', '=', new_po_id)], context=context)
+        line_obj.write(cr, uid, line_ids, {'origin': data['name']}, context=context)
+
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
