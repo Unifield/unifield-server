@@ -102671,6 +102671,12 @@ msgstr "Vous ne pouvez pas selectionner manuellement un fichier à importé si l
 msgid "Line #%s: Delivery Confirmed Date is a mandatory field."
 msgstr "Ligne #%s: La date de livraison confirmée est un champ obligatoire."
 
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:888
+#, python-format
+msgid "Line %s: Date of Stock Take is required for PO to ESC"
+msgstr "Ligne %s: Date de Prise de Stock obligatoire pour un BC à un ESC"
+
 #. module: account_override
 #: code:addons/account_override/invoice.py:339
 #, python-format
