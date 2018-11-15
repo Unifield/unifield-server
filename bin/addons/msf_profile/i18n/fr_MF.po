@@ -23654,7 +23654,7 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 #. module: register_accounting
 #: view:account.bank.statement:0
 msgid "Are you sure you want to freeze closing balance?"
-msgstr "Etes-vous certain de vouloir geler le solde de fermeture ?"
+msgstr "Etes-vous certain de vouloir geler le solde de clôture ?"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
