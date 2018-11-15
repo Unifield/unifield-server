@@ -68,7 +68,7 @@
                                     <field name="product_uom_id" domain="[('uom_by_stock_product', '=', product_id)]"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>
@@ -81,7 +81,7 @@
                                     <field name="product_uom_id"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>
@@ -283,6 +283,6 @@
             <field name="help">Periodical Inventories are used to count the number of products available per location. You can use it once a year when you do the general inventory or whenever you need it, to correct the current stock level of a product.</field>
         </record>
         <!-- Menu -->
-        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="23"/>
+        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="24"/>
     </data>
 </openerp>

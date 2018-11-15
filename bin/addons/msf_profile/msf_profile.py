@@ -57,6 +57,61 @@ class patch_scripts(osv.osv):
             cr.execute("update backup_config set beforepatching='t'")
         return True
 
+    def testfield_missing_updates_on_sync(self, cr, uid, *a, **b):
+        if cr.dbname.endswith('HQ1') and self.pool.get('sync.client.entity'):
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if entity.identifier == 'a1d9db61-024f-11e6-856f-480fcf273a8d' and entity.update_last == 304:
+                cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'', ''id'']' where
+                    name in (
+                        select sdref from sync_client_update_to_send where session_id='7ff7242e-7f6f-11e6-b415-0cc47a3516aa' and model in ('hr.payment.method', 'ir.translation', 'product.nomenclature', 'product.product', 'sync.trigger.something')
+                    )''')
+        return True
+
+    def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
+        """
+        rest cu_qty and central_qty
+        """
+        trigger_up = self.pool.get('sync.trigger.something.up')
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+
+        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
+        if not central_loc:
+            cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
+
+        cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
+        if not cu_loc:
+            cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_cu', 'args': instance_id.code})
+        return True
+
+    def us_4375_build_xmlid_admin_acl(self, cr, uid, *a, **b):
+        '''
+            some system acl don't have any sdref, recreate a clean unique sdref for all system acl
+        '''
+        access_obj = self.pool.get('ir.model.access')
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.message'):
+            return True
+
+        access_ids = access_obj.search(cr, uid, [('name', '=', 'admin'), ('group_id', '=', False)])
+        if access_ids:
+            access_obj.write(cr, uid, access_ids, {'name': 'user read', 'from_system': True})
+
+        admin_acl_ids = access_obj.search(cr, uid, [('name', '=', 'admin')])
+        access_obj.write(cr, uid, admin_acl_ids, {'from_system': True})
+
+        access_ids += admin_acl_ids
+        if access_ids:
+            cr.execute("delete from ir_model_data where model='ir.model.access' and res_id in %s", (tuple(access_ids),))
+            access_obj.get_sd_ref(cr, uid, access_ids)
+
+        return True
+
+
     # UF10.0
     def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
         """
@@ -2892,14 +2947,26 @@ class sync_tigger_something(osv.osv):
     _name = 'sync.trigger.something'
 
     _columns = {
-        'name': fields.char('Name', size=16),
+        'name': fields.char('Name', size=256),
     }
+
+    def delete_ir_model_access(self, cr, uid, context=None):
+        _logger = logging.getLogger('trigger')
+        ir_model_access = self.pool.get('ir.model.access')
+
+        ids_to_del = ir_model_access.search(cr, uid, [('from_system', '=', False)])
+        access_ids_to_keep = ir_model_access.search(cr, uid, [('from_system', '=', True)])
+        if ids_to_del:
+            cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
+            cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))
+            _logger.warn('Purge %d ir_model_access %d kept'  % (len(ids_to_del), len(access_ids_to_keep)))
+        return True
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        _logger = logging.getLogger('trigger')
         if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
-            _logger = logging.getLogger('tigger')
 
             data_obj = self.pool.get('ir.model.data')
             unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
@@ -2914,6 +2981,37 @@ class sync_tigger_something(osv.osv):
             cr.execute("delete "+ trans_to_delete) # not_a_user_entry
             _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
 
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ir_model_access':
+            self.delete_ir_model_access(cr, uid, context=context)
+
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
 sync_tigger_something()
+
+class sync_tigger_something_up(osv.osv):
+    _name = 'sync.trigger.something.up'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+        'args': fields.text('Args'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            _logger = logging.getLogger('tigger')
+            if vals.get('name') == 'clean_mission_stock_central':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+            elif vals.get('name') == 'clean_mission_stock_cu':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+
+        return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
+
+sync_tigger_something_up()

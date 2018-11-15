@@ -385,13 +385,13 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
         Make the entries in the "Actions" menu depend on the view (Expense lines view or B/S lines view)
         """
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
             new_act = []
             for v in values:

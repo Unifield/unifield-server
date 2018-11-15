@@ -27,6 +27,7 @@ assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
 
+
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
     _logger = logging.getLogger('------sync.sale.order.line')
@@ -62,12 +63,17 @@ class sale_order_line_sync(osv.osv):
         sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
         sol_values['order_id'] = sale_order_ids[0]
         sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+        if sol_values.get('product_id'):
+            sol_values['original_product'] = sol_values['product_id']
+        if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
+            sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
         new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
         message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
         self._logger.info(message)
 
         return message
+
 
 sale_order_line_sync()
 
@@ -98,6 +104,7 @@ class sale_order_line_cancel(osv.osv):
         self.create(cr, uid, line_dict, context=context)
 
         return True
+
 
 sale_order_line_cancel()
 
@@ -144,7 +151,6 @@ class sale_order_sync(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
-
     def create_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:
@@ -161,6 +167,12 @@ class sale_order_sync(osv.osv):
 
         header_result = {}
         so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+
+        if header_result.get('currency_id') and header_result.get('pricelist_id'):
+            if not self.pool.get('product.pricelist').search_exist(cr, uid, [('id', '=', header_result['pricelist_id']), ('currency_id', '=', header_result['currency_id'])]):
+                po_cur = self.pool.get('res.currency').read(cr, uid, header_result['currency_id'], ['name'], context=context)
+                raise Exception, "Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source)
+
         header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
@@ -227,7 +239,7 @@ class sale_order_sync(osv.osv):
         default = {}
         default.update(header_result)
 
-        self.write(cr, uid, so_id, default , context=context)
+        self.write(cr, uid, so_id, default, context=context)
 
         # Just to print the result message when the sync message got executed
         name = self.browse(cr, uid, so_id, context).name
@@ -367,5 +379,6 @@ class sale_order_sync(osv.osv):
                     ('product_uom_qty' in line_changes)
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
+
 
 sale_order_sync()

@@ -38,24 +38,28 @@
         <record id="trans_draft_comparison" model="workflow.transition">
             <field name="act_from" ref="act_draft" />
             <field name="act_to" ref="act_comparison" />
+            <field name="sequence" eval="10" />
             <field name="signal">button_generate</field>
         </record>
         
         <record id="trans_comparison_done" model="workflow.transition">
             <field name="act_from" ref="act_comparison" />
             <field name="act_to" ref="act_done" />
+            <field name="sequence" eval="10" />
             <field name="signal">button_done</field>
         </record>
         
         <record id="trans_draft_cancel" model="workflow.transition">
             <field name="act_from" ref="act_draft" />
             <field name="act_to" ref="act_cancel" />
+            <field name="sequence" eval="20" />
             <field name="signal">tender_cancel</field>
         </record>
         
         <record id="trans_comparison_cancel" model="workflow.transition">
             <field name="act_from" ref="act_comparison" />
             <field name="act_to" ref="act_cancel" />
+            <field name="sequence" eval="20" />
             <field name="signal">tender_cancel</field>
         </record>
 
@@ -104,49 +108,49 @@
         <record id="procurement.trans_confirm_mto_tender" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto"/>
             <field name="act_to" ref="procurement.act_tender"/>
+            <field name="sequence" eval="50" />
             <field name="condition">not is_rfq and not is_rfq_done and is_tender and not is_tender_done</field>
         </record>
         
         <record id="procurement.trans_tender_tender_done" model="workflow.transition">
             <field name="act_from" ref="procurement.act_tender"/>
             <field name="act_to" ref="procurement.act_tender_done"/>
+            <field name="sequence" eval="10" />
             <field name="signal">subflow.tender_done</field>
         </record>
         
         <record id="procurement.trans_tender_done_confirm_mto" model="workflow.transition">
             <field name="act_from" ref="procurement.act_tender_done"/>
             <field name="act_to" ref="procurement.act_confirm_mto"/>
+            <field name="sequence" eval="10" />
             <field name="condition">tender_line_id and tender_line_id.line_state != 'cancel'</field>
         </record>
 
         <record id="procurement.trans_tender_done_cancel" model="workflow.transition">
             <field name="act_from" ref="procurement.act_tender_done" />
             <field name="act_to" ref="procurement.act_cancel" />
+            <field name="sequence" eval="20" />
             <field name="condition">not tender_line_id or tender_line_id.line_state == 'cancel'</field>
         </record>
         
-<!--
-        <record id="procurement.trans_confirm_mto_purchase" model="workflow.transition">
-            <field name="act_from" ref="procurement.act_confirm_mto"/>
-            <field name="act_to" ref="purchase.act_buy"/>
-            <field name="condition">((is_rfq and is_rfq_done) or not is_rfq) and ((is_tender and is_tender_done) or (not is_tender)) and check_buy()</field>
-        </record>
--->
         <record id="procurement.trans_confirm_mto_rfq" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto" />
             <field name="act_to" ref="procurement.act_rfq" />
+            <field name="sequence" eval="60" />
             <field name="condition">is_rfq and not is_rfq_done and not is_tender and not is_tender_done and supplier.address</field>
         </record>
 
         <record id="procurement.trans_rfq_rfq_exception" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto" />
             <field name="act_to" ref="procurement.act_rfq_exception" />
+            <field name="sequence" eval="70" />
             <field name="condition">is_rfq and not is_rfq_done and not is_tender and not is_tender_done and not supplier.address</field>
         </record>
 
         <record id="procurement.trans_rfq_exception_confirm_wait" model="workflow.transition">
             <field name="act_from" ref="procurement.act_rfq_exception" />
             <field name="act_to" ref="procurement.act_confirm_mto" />
+            <field name="sequence" eval="10" />
             <field name="signal">button_restart</field>
             <field name="condition">procure_method=='make_to_order'</field>
         </record>
@@ -154,18 +158,21 @@
         <record id="procurement.trans_rfq_rfq_done" model="workflow.transition">
             <field name="act_from" ref="procurement.act_rfq" />
             <field name="act_to" ref="procurement.act_rfq_done" />
+            <field name="sequence" eval="10" />
             <field name="signal">subflow.rfq_done</field>
         </record>
 
         <record id="procurement.trans_rfq_done_cancel" model="workflow.transition">
             <field name="act_from" ref="procurement.act_rfq_done" />
             <field name="act_to" ref="procurement.act_cancel" />
+            <field name="sequence" eval="10" />
             <field name="condition">rfq_id and (not rfq_line_id or rfq_line_id.state == 'cancel')</field>
         </record>
 
         <record id="procurement.trans_rfq_done_confirm_mto" model="workflow.transition">
             <field name="act_from" ref="procurement.act_rfq_done" />
             <field name="act_to" ref="procurement.act_confirm_mto" />
+            <field name="sequence" eval="20" />
             <field name="condition">rfq_line_id.state != 'cancel'</field>
         </record>
 

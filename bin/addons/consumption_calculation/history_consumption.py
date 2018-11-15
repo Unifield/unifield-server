@@ -509,7 +509,7 @@ class product_product(osv.osv):
 
         return res
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         if not context:
             context = {}
 

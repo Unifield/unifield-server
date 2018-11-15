@@ -678,7 +678,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (first_day_of_last_fy, last_day_of_period),
             },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'Currency'],
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance', 'Closing balance', 'Currency'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
                 'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id, reg_types, last_day_of_period, tuple(instance_ids)),
