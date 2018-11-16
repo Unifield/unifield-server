@@ -160,7 +160,7 @@ class O2M(TinyInputWidget):
                 assert len(self.filter_selector) > 0
                 assert len(self.filter_selector[0]) == 2
                 default_domain = self.filter_selector[0][1]
-                current.domain = [default_domain]
+                current.domain = default_domain
 
 
         if not current.domain:
