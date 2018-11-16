@@ -172,7 +172,7 @@
                             <field name="order_line" colspan="4" mode="tree,form,graph" nolabel="1" widget="one2many_list"
                                 context="{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id}"
                                 on_change="order_line_change(order_line)"
-                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
+                                filter_selector="[('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all', []), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 o2m_selectable="2"
                                 >
                                 <form string="Sales Order Lines">

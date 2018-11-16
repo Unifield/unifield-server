@@ -235,6 +235,8 @@
 								widget="one2many_list"
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
 							    on_change="onchange_move()"
+                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirm', 'assigned']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirm')])]"
+                                hide_selector="not backorder_id"
 							    >
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
 								colors="red: inactive_product==True">
@@ -638,7 +640,7 @@
 							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
 								default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  
 								attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" 
-								filter_selector="[('Hide returned', ('ppl_returned_ok', '=', False)), ('Show all', '')]">
+								filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]">
 								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
