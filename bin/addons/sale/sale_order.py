@@ -1879,18 +1879,18 @@ class sale_order_line(osv.osv):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
             if sol.resourced_original_line and sol.state != 'done':
                 if sol.state.startswith('validated'):
-                    res[sol.id] = 'Resourced-v'
+                    res[sol.id] = _('Resourced-v')
                 elif sol.state.startswith('sourced'):
                     if sol.state in ('sourced_v', 'sourced_n'):
-                        res[sol.id] = 'Resourced-pv'
+                        res[sol.id] = _('Resourced-pv')
                     elif sol.state == 'sourced_sy':
-                        res[sol.id] = 'Resourced-sy'
+                        res[sol.id] = _('Resourced-sy')
                     else:
-                        res[sol.id] = 'Resourced-s'
+                        res[sol.id] = _('Resourced-s')
                 elif sol.state.startswith('confirmed'):
-                    res[sol.id] = 'Resourced-c'
+                    res[sol.id] = _('Resourced-c')
                 else: # draft + unexpected PO line state:
-                    res[sol.id] = 'Resourced-d'
+                    res[sol.id] = _('Resourced-d')
             else: # state_to_display == state
                 res[sol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, sol, 'state', context=context)
 

@@ -103654,3 +103654,56 @@ msgstr "Droits Utilisateurs"
 #, python-format
 msgid "Line Number must be empty to add a new line to an existing IR. "
 msgstr "Le Numéro de Ligne doit être vide pour ajouter une nouvelle ligne à la DI. "
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "0 months"
+msgstr "0 mois"
+
+#. modules: purchase, purchase_override
+#: view:purchase.order.line.cancel.wizard:0
+#: view:purchase.order.cancel.wizard:0
+msgid "If you click on 'Cancel & Resource' button, all linked FO/IR lines will be re-sourced."
+msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes des CT/DI seront ressourcées."
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:179
+#: code:addons/sale/sale_order.py:1887
+#, python-format
+msgid "Resourced-sy"
+msgstr "Ressourcé-sy"
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:183
+#: code:addons/sale/sale_order.py:1891
+#, python-format
+msgid "Resourced-c"
+msgstr "Ressourcé-c"
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:174
+#: code:addons/sale/sale_order.py:1882
+#, python-format
+msgid "Resourced-v"
+msgstr "Ressourcé-v"
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:177
+#: code:addons/sale/sale_order.py:1885
+#, python-format
+msgid "Resourced-pv"
+msgstr "Ressourcé-pv"
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:185
+#: code:addons/sale/sale_order.py:1893
+#, python-format
+msgid "Resourced-d"
+msgstr "Ressourcé-b"
+
+#. module: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:181
+#: code:addons/sale/sale_order.py:1889
+#, python-format
+msgid "Resourced-s"
+msgstr "Ressourcé-s"
