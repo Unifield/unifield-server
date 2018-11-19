@@ -37,30 +37,7 @@ class res_company(osv.osv):
         'revaluation_default_account': fields.many2one('account.account', string="Revaluation account", 
             help="Default account used for revaluation"),
     }
-    
-    def check_revaluation_default_account_has_sup_destination(self, cr, uid, company, context=None):
-        if company and company.revaluation_default_account:
-            reval_account = company.revaluation_default_account
-            if reval_account.default_destination_id \
-                and reval_account.default_destination_id.code == 'SUP':
-                return True
-            for dest in reval_account.destination_ids:
-                if dest.code == 'SUP':
-                    return True
-            return False
-        return True
-    
-    def _check_revaluation_default_account(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.browse(cr, uid, ids, context=context):
-            if not self.check_revaluation_default_account_has_sup_destination(cr, uid, obj, context=context):
-                raise osv.except_osv('Settings Error!','The default revaluation account must have a default destination SUP')
-        return True
-        
-    _constraints = [
-        (_check_revaluation_default_account, 'The default revaluation account must have a default destination SUP', ['revaluation_default_account'])
-    ]
+
 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

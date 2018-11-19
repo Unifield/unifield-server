@@ -80948,23 +80948,11 @@ msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec la même de
 msgid "contract_soft_closed - (financing.contract.contract)"
 msgstr "contract_soft_closed - (financing.contract.contract)"
 
-#. modules: msf_order_date, purchase, account, msf_homere_interface, msf_instance, sale, account_hq_entries, account_override, procurement, base, account_period_closing_level, msf_currency_revaluation, report_webkit
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:265
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
-#: constraint:res.company:0
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:521
 #, python-format
-msgid "The default revaluation account must have a default destination SUP"
-msgstr "The default revaluation account must have a default destination SUP"
+msgid "The default revaluation account \"%s - %s\" must have a default destination."
+msgstr "Le compte de réévaluation par défaut \"%s - %s\" doit avoir une destination par défaut."
 
 #. module: register_accounting
 #: code:addons/register_accounting/register_tools.py:308
@@ -85743,7 +85731,7 @@ msgstr "Total Project - Actuals"
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:760
 #, python-format
 msgid "Settings Error!"
-msgstr "Settings Error!"
+msgstr "Erreur de paramétrage !"
 
 #. modules: msf_budget, account, finance, account_mcdb, account_override, account_journal, analytic_distribution
 #: view:account.account:0
