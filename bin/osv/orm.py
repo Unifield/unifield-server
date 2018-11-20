@@ -838,6 +838,14 @@ class orm_template(object):
 
         return processed, rejected, headers
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init',
+                        current_module='', noupdate=False, context=None, filename=None,
+                        display_all_errors=False, has_header=False):
+        if context is None:
+            context = {}
+        context['import_from_web_interface'] = True
+        return self.import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename, display_all_errors=display_all_errors, has_header=has_header)
+
     def import_data(self, cr, uid, fields, datas, mode='init',
                     current_module='', noupdate=False, context=None, filename=None,
                     display_all_errors=False, has_header=False):
@@ -1108,6 +1116,7 @@ class orm_template(object):
                     error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                                                           tools.ustr(e) + "\n" +
                                                           tools.ustr(traceback.format_exc())))
+                    cr.rollback()
                     continue
                 else:
                     return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
@@ -1127,15 +1136,8 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
-    def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None,
-                        filename=None, display_all_errors=False, has_header=False):
-        """
-        Import data method called at import from web ONLY (contrary to the import_data method also used for sync msgs).
-        Call import_data by default but can be overridden if needed.
-        """
-        return super(orm, self).import_data(cr, uid, fields, datas, mode=mode, current_module=current_module,
-                                            noupdate=noupdate, context=context, filename=filename,
-                                            display_all_errors=display_all_errors, has_header=has_header)
+    def read_web(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        return self.read(cr, user, ids, fields, context=context, load=load)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
@@ -1967,14 +1969,14 @@ class orm_template(object):
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
                                          'client_print_multi', [(self._name, False)], False,
-                                         context)
+                                         context, view_id=view_id)
             resaction = ir_values_obj.get(cr, user, 'action',
                                           'client_action_multi', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
                                           'client_action_relate', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -2764,13 +2766,15 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        rounding_uom = [self._columns[f].related_uom for f in fields_pre if f in self._columns and getattr(self._columns[f], 'related_uom')]
-        for f in fields_pre + rounding_uom:
+        rounding_uom = set(self._columns[f].related_uom for f in fields_pre if f in self._columns and hasattr(self._columns[f], 'related_uom') and self._columns[f].related_uom)
+        for f in fields_pre + list(rounding_uom):
             if f not in ['id', 'sequence']:
                 if f in rounding_uom:
                     group_operator = fget[f].get('group_operator', 'max')
                 else:
                     group_operator = fget[f].get('group_operator', 'sum')
+                if group_operator == 'no_group':
+                    continue
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)

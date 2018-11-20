@@ -866,6 +866,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
     try:
         processed_modules = []
         report = tools.assertion_report()
+        reload_base_module = False
         # NOTE: Try to also load the modules that have been marked as uninstallable previously...
         STATES_TO_LOAD = ['installed', 'to upgrade', 'uninstallable']
         if 'base' in tools.config['update'] or 'all' in tools.config['update']:
@@ -874,11 +875,15 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         # STEP 0: Check if BASE module is marked as to upgrade or to install
         cr.execute("SELECT name FROM ir_module_module WHERE name = 'base' AND state IN ('to install', 'to upgrade')")
         if cr.fetchone():
+            reload_base_module = True
             cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = 'ir_model_fields'")
             if cr.fetchone():
                 cr.execute("update ir_model_fields set state='deprecated' where state='base'")
 
-        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps) 
+            if cr.column_exists('msf_button_access_rights_button_access_rule', 'deprecated'):
+                cr.execute("update msf_button_access_rights_button_access_rule set deprecated='t'")
+
+        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps)
         graph = create_graph(cr, ['base'], force)
         if not graph:
             logger.notifyChannel('init', netsvc.LOG_CRITICAL, 'module base cannot be loaded! (hint: verify addons-path)')
@@ -1001,6 +1006,17 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
 
             cr.execute("update ir_module_module set state=%s where state=%s", ('uninstalled', 'to remove',))
             cr.commit()
+
+        if reload_base_module and cr.column_exists('msf_button_access_rights_button_access_rule', 'deprecated'):
+            cr.execute("""
+                select d.module||'.'||d.name from msf_button_access_rights_button_access_rule r
+                left join ir_model_data d on d.res_id = r.id and d.model='msf_button_access_rights.button_access_rule' and d.module='sd'
+                where r.deprecated='t'
+            """)
+            deleted_sdref = [x[0] for x in cr.fetchall()]
+            cr.execute("delete from msf_button_access_rights_button_access_rule where deprecated='t'")
+            cr.commit()
+            logger.notifyChannel('init', netsvc.LOG_INFO, 'BAR: %d deprecated rules deleted: %s' % (cr.rowcount,', '.join(deleted_sdref)))
     finally:
         cr.close()
 

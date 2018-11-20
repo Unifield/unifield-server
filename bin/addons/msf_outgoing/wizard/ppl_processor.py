@@ -182,8 +182,8 @@ class ppl_processor(osv.osv):
                 ok = False
                 ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_int'}, context=context)
         else:
-            qty_per_pack = quantity/num_of_packs
-            rounded_qty_pp = uom_obj._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack, context=context)
+            qty_per_pack = quantity/int(num_of_packs)
+            rounded_qty_pp = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack)
             if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
                     and abs(qty_per_pack - rounded_qty_pp) != 0:
                 ok = False

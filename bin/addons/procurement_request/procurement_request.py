@@ -23,6 +23,7 @@ import time
 
 from osv import osv, fields
 from tools.translate import _
+import datetime
 import decimal_precision as dp
 import netsvc
 
@@ -274,7 +275,6 @@ class procurement_request(osv.osv):
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
 
-
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
@@ -329,7 +329,7 @@ class procurement_request(osv.osv):
             pl = pricelist_obj.search(cr, uid, [('type', '=', 'sale'),
                                                 ('currency_id', '=', company.currency_id.id)], limit=1)[0]
             vals['pricelist_id'] = pl
-            if 'delivery_requested_date' in vals:
+            if vals.get('delivery_requested_date'):
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
         elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
@@ -348,7 +348,7 @@ class procurement_request(osv.osv):
 
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
-            if req.procurement_request and 'delivery_requested_date' in vals:
+            if req.procurement_request and vals.get('delivery_requested_date'):
                 rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
                 vals['ready_to_ship_date'] = rts
                 for line in req.order_line:
@@ -559,7 +559,103 @@ class procurement_request(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
+    def ir_import_by_order_to_create(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        import_id = import_obj.create(cr, uid, {}, context)
+        context.update({'active_id': [], 'ir_import_id': import_id})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_import_by_order_to_update(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        context.update({'active_id': ids[0], 'to_update_ir': True})
+        ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line', 'state'], context=context)
+        if ir.state not in ['draft', 'draft_p']:
+            raise osv.except_osv(_('Warning'), _('Importing from IR Excel template is only allowed on an IR which is in Draft state'))
+        import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
+        import_obj.unlink(cr, uid, import_ids, context=context)
+        new_import_vals = {
+            'order_id': ids[0],
+            'imp_line_ids': [(0, 0, {
+                'ir_line_id': l.id,
+                'ir_line_number': l.line_number,
+            }) for l in ir.order_line],
+        }
+        import_id = import_obj.create(cr, uid, new_import_vals, context)
+        context.update({'ir_import_id': import_id})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_export_get_file_name(self, cr, uid, ids, prefix='IR', context=None):
+        """
+        get export file name
+        :return IR_14_OC_MW101_IR00060_YYYY_MM_DD.xls
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        ir_r = self.read(cr, uid, ids[0], ['name'], context=context)
+        if not ir_r or not ir_r['name']:
+            return False
+        dt_now = datetime.datetime.now()
+        ir_name = "%s_%s_%d_%02d_%02d" % (prefix, ir_r['name'].replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
+        return ir_name
+
+    def export_excel_ir(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of IR
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data = {'ids': ids}
+        file_name = self.ir_export_get_file_name(cr, uid, ids, prefix='IR', context=context)
+        if file_name:
+            data['target_filename'] = file_name
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'internal_request_export',
+            'datas': data,
+            'context': context,
+        }
+
+
 procurement_request()
+
 
 class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
@@ -632,23 +728,6 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
-    def _check_changed(self, cr, uid, ids, name, arg, context=None):
-        '''
-        Check if an original value has been changed
-        '''
-        if context is None:
-            context = {}
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            changed = False
-            if line.modification_comment or (line.original_qty and line.product_uom_qty != line.original_qty):
-                changed = True
-
-            res[line.id] = changed
-
-        return res
-
     def button_view_changed(self, cr, uid, ids, context=None):
         """
         Launch wizard to display line information
@@ -692,11 +771,6 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
-        'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
-        'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
-        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):
