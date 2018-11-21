@@ -103724,6 +103724,12 @@ msgstr "Zone Destination %s inactive, ne peut traiter %s, ligne %s, produit %s"
 msgid "Destination Location is inactive"
 msgstr "Zone Destination inactive"
 
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:223
+#, python-format
+msgid "estination Location %s is inactive"
+msgstr "Zone Destination %s inactive"
+
 #. module: msf_config_locations
 #: field:stock.remove.location.wizard,move_from:0
 msgid "Has a move from the location"
@@ -103739,13 +103745,20 @@ msgstr "A des mouvements vers cette zone"
 msgid "Location has related IR open"
 msgstr "La Zone est des DI ouverte"
 
-#. modules: msf_doc_import, stock
+#. modules: msf_doc_import, stock, specific_rules
 #: code:addons/msf_doc_import/initial_stock_inventory.py:477
 #: code:addons/msf_doc_import/initial_stock_inventory.py:1018
 #: code:addons/stock/physical_inventory.py:166
+#: code:addons/specific_rules/specific_rules.py:1739
 #, python-format
 msgid "Location is inactive"
 msgstr "Zone inactive"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1207
+#, python-format
+msgid "Location %s is inactive"
+msgstr "Zone %s inactive"
 
 #. module: msf_config_locations
 #: view:stock.remove.location.wizard:0
@@ -103768,3 +103781,9 @@ msgstr "Zone Source %s est inactive, ne peux traiter %s, ligne %s, produit %s"
 #, python-format
 msgid "Source Location is inactive"
 msgstr "La Zone Source est inactive"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:219
+#, python-format
+msgid "Source Location %s is inactive"
+msgstr "La Zone Source %s est inactive"

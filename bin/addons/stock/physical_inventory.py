@@ -1207,6 +1207,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            if not inv.location_id.active:
+                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
+
         self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
 

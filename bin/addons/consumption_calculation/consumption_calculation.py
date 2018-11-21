@@ -340,6 +340,12 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
 
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['cons_location_id', 'activity_id'], context=context):
+            if not x.cons_location_id.active:
+                raise osv.except_osv(_('Warning'), _("Source Location %s is inactive") % (x.cons_location_id.name,))
+            if not x.activity_id.active:
+                raise osv.except_osv(_('Warning'), _("Destination Location %s is inactive") % (x.activity_id.name,))
+
         self.write(cr, uid, ids, {'state':'draft'}, context=context)
 
         return {'type': 'ir.actions.act_window',
