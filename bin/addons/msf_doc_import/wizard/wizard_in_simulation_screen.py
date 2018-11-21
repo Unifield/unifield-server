@@ -515,7 +515,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
                 except IndexError, e:
-                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s" % (index+1, len(row), tools.ustr(traceback.format_exc()))))
+                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s") % (index+1, len(row), tools.ustr(traceback.format_exc())))
 
         return values, nb_line, error
 
