@@ -821,6 +821,9 @@ function onChangePop(caller){
                     }
                 }
                 switch (kind) {
+                    case 'full_text':
+                        $('#' + prefix + k).text(value || '');
+                        break;
                     case 'picture':
                         fld.src = value;
                         break;
