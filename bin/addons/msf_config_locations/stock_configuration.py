@@ -609,7 +609,25 @@ class stock_remove_location_wizard(osv.osv_memory):
         'not_empty': fields.boolean(string='Location not empty'),
         'has_child': fields.boolean(string='Location has children locations'),
         'related_ir': fields.boolean(string='Location has related IR open'),
+        'other': fields.char('Other doc: PI/ISI/Conso', size=128),
     }
+
+    _defaults = {
+        'error_message': ' ',
+    }
+
+    def get_dom(self, obj, location_id):
+        if obj._name == 'physical.inventory':
+            return [('location_id', '=', location_id), ('state', 'not in', ['cancel', 'closed'])]
+
+        if obj._name == 'initial.stock.inventory.line':
+            return [('location_id', '=', location_id), ('inventory_id.state', 'not in', ['done', 'cancel'])]
+
+        if obj._name == 'stock.inventory.line':
+            return [('location_id', '=', location_id), ('inventory_id.state', 'not in', ['done', 'cancel'])]
+
+        if obj._name == 'real.average.consumption':
+            return [('state', '=', 'draft') , '|', ('cons_location_id', '=', location_id), ('activity_id', '=', location_id)]
 
     def location_id_on_change(self, cr, uid, ids, location_id, context=None):
         '''
@@ -620,6 +638,7 @@ class stock_remove_location_wizard(osv.osv_memory):
                'move_from': False,
                'move_to': False,
                'not_empty': False,
+               'other': False,
                'has_child': False,
                'related_ir': False}
         warning = {}
@@ -678,39 +697,49 @@ class stock_remove_location_wizard(osv.osv_memory):
                 res['related_ir'] = True
                 res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
 
+
+
             pi_obj = self.pool.get('physical.inventory')
-            pi_ids = pi_obj.search(cr, uid, [('location_id', '=', location.id), ('state', 'not in', ['cancel', 'closed'])], context=context)
+            pi_ids = pi_obj.search(cr, uid, self.get_dom(pi_obj, location.id), context=context)
             if pi_ids:
                 error = True
                 can_force = False
+                if not res.get('other'):
+                    res['other'] = 'physical.inventory'
                 res['error_message'] += _("* Warning the following PI are in progess:\n")
                 for x in pi_obj.browse(cr, uid, pi_ids, fields_to_fetch=['name', 'ref'], context=context):
-                    res['error_message'] += "  - %s %s (%s)\n" % (x.name, x.ref)
+                    res['error_message'] += "  - %s %s\n" % (x.name, x.ref)
 
 
             isi_line_obj = self.pool.get('initial.stock.inventory.line')
-            isi_line_ids = isi_line_obj.search(cr, uid, [('location_id', '=', location.id), ('inventory_id.state', 'not in', ['done', 'cancel'])], context=context)
+            isi_line_ids = isi_line_obj.search(cr, uid, self.get_dom(isi_line_obj, location.id), context=context)
             if isi_line_ids:
                 error = True
                 can_force = False
+                if not res.get('other'):
+                    res['other'] = 'initial.stock.inventory.line'
                 res['error_message'] += _("* Warning the following ISI are in progess:\n")
-                for x in isi_line_obj.browse(cr, uid, isi_line_ids, fields_to_fetch=['product', 'inventory_id'], context=context):
-                    res['error_message'] += "  - %s %s (%s)\n" % (x.inventory_id.name, x.product.default_code)
+                for x in isi_line_obj.browse(cr, uid, isi_line_ids, fields_to_fetch=['product_id', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s\n" % (x.inventory_id.name, x.product_id.default_code)
 
             oldpi_line_obj = self.pool.get('stock.inventory.line')
-            oldpi_line_ids = oldpi_line_obj.search(cr, uid, [('location_id', '=', location.id), ('inventory_id.state', 'not in', ['done', 'cancel'])], context=context)
+            oldpi_line_ids = oldpi_line_obj.search(cr, uid, self.get_dom(oldpi_line_obj, location.id), context=context)
             if oldpi_line_ids:
                 error = True
                 can_force = False
+                if not res.get('other'):
+                    res['other'] = 'stock.inventory.line'
                 res['error_message'] += _("* Warning the following Previous PI are in progess:\n")
-                for x in oldpi_line_obj.browse(cr, uid, oldpi_line_ids, fields_to_fetch=['product', 'inventory_id'], context=context):
-                    res['error_message'] += "  - %s %s (%s)\n" % (x.inventory_id.name, x.product.default_code)
+                for x in oldpi_line_obj.browse(cr, uid, oldpi_line_ids, fields_to_fetch=['product_id', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s\n" % (x.inventory_id.name, x.product_id.default_code)
 
             conso_obj = self.pool.get('real.average.consumption')
-            conso_ids = conso_obj.search(cr, uid, [('state', '=', 'draft') , '|', ('conso_location_id', '=', location.id), ('activity_id', '=', location.id) ], context=context)
+            conso_ids = conso_obj.search(cr, uid, self.get_dom(conso_obj, location.id), context=context)
             if conso_ids:
                 error = True
                 can_force = False
+                if not res.get('other'):
+                    res['other'] = 'real.average.consumption'
                 res['error_message'] += _("* Warning the following Consumption Reports are in progess:\n")
                 for x in conso_obj.browse(cr, uid, conso_ids, fields_to_fetch=['name'], context=context):
                     res['error_message'] += "  - %s\n" % (x.name, )
@@ -831,6 +860,45 @@ class stock_remove_location_wizard(osv.osv_memory):
                 'view_mode': 'tree,form',
                 'target': 'current',
                 }
+
+
+    def open_other(self, cr, uid, ids, context=None):
+        act_obj = self.pool.get('ir.actions.act_window')
+
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['other', 'location_id'], context=context)
+        dom = []
+
+        obj = self.pool.get(wiz['other'])
+        if obj:
+            dom = self.get_dom(obj, wiz.location_id.id)
+
+        if wiz['other'] == 'physical.inventory':
+            data = act_obj.open_view_from_xmlid(cr, uid, 'stock.action_physical_inventory', new_tab=True, context=context)
+            data['domain'] = dom
+
+        if wiz['other'] == 'initial.stock.inventory.line':
+            line_ids = obj.search(cr, uid, dom, context=context)
+            parent = set()
+            for x in obj.browse(cr, uid, line_ids, fields_to_fetch=['inventory_id'], context=context):
+                parent.add(x.inventory_id.id)
+            data = act_obj.open_view_from_xmlid(cr, uid, 'specific_rules.action_initial_inventory', new_tab=True, context=context)
+            data['domain'] = [('id', 'in', list(parent))]
+
+
+        if wiz['other'] == 'stock.inventory.line':
+            line_ids = obj.search(cr, uid, dom, context=context)
+            parent = set()
+            for x in obj.browse(cr, uid, line_ids, fields_to_fetch=['inventory_id'], context=context):
+                parent.add(x.inventory_id.id)
+            data = act_obj.open_view_from_xmlid(cr, uid, 'stock.action_inventory_form', new_tab=True, context=context)
+            data['domain'] = [('id', 'in', list(parent))]
+
+        if wiz['other'] == 'real.average.consumption':
+            data = act_obj.open_view_from_xmlid(cr, uid, 'consumption_calculation.action_real_average_consumption', new_tab=True, context=context)
+            data['domain'] = dom
+
+        data['keep_open'] = 1
+        return data
 
 
     def related_ir(self, cr, uid, ids, context=None):
