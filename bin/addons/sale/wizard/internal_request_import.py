@@ -475,13 +475,13 @@ class internal_request_import(osv.osv):
                 # Line 6: Creation date
                 create_date = values.get(6, [])[1]
                 if type(create_date) == type(DateTime.now()):
-                    req_date = create_date.strftime('%d-%m-%Y')
-                    header_values['imp_creation_date'] = req_date
+                    create_date = create_date.strftime('%Y-%m-%d')
+                    header_values['imp_creation_date'] = create_date
                 else:
                     for format in l_date_format:
                         try:
-                            time.strptime(create_date, format)
-                            header_values['imp_creation_date'] = create_date
+                            create_date = datetime.datetime.strptime(create_date, format)
+                            header_values['imp_creation_date'] = create_date.strftime('%Y-%m-%d')
                             break
                         except:
                             continue
@@ -496,13 +496,13 @@ class internal_request_import(osv.osv):
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]
                 if type(req_date) == type(DateTime.now()):
-                    req_date = req_date.strftime('%d-%m-%Y')
+                    req_date = req_date.strftime('%Y-%m-%d')
                     header_values['imp_requested_date'] = req_date
                 else:
                     for format in l_date_format:
                         try:
-                            time.strptime(req_date, format)
-                            header_values['imp_requested_date'] = req_date
+                            req_date = datetime.datetime.strptime(req_date, format)
+                            header_values['imp_requested_date'] = req_date.strftime('%Y-%m-%d')
                             break
                         except:
                             continue
@@ -694,13 +694,13 @@ class internal_request_import(osv.osv):
                     if vals[8]:
                         dost = vals[8]
                         if type(dost) == type(DateTime.now()):
-                            dost = dost.strftime('%d-%m-%Y')
+                            dost = dost.strftime('%Y-%m-%d')
                             line_data.update({'imp_stock_take_date': dost})
                         else:
                             for format in l_date_format:
                                 try:
-                                    time.strptime(dost, format)
-                                    line_data.update({'imp_stock_take_date': dost})
+                                    dost = datetime.datetime.strptime(dost, format)
+                                    line_data.update({'imp_stock_take_date': dost.strftime('%Y-%m-%d')})
                                     break
                                 except:
                                     continue
