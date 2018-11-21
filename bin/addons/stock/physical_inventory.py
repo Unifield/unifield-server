@@ -160,7 +160,11 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
 
-        return super(PhysicalInventory, self).create(cr, uid, values, context=context)
+        new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
+
+        if self.search(cr, uid, [('id', '=', new_id), ('location_id.active', '=', False)]):
+            raise osv.except_osv(_('Warning'), _("Location is inactive"))
+        return new_id
 
 
     def copy(self, cr, uid, id_, default=None, context=None):

@@ -214,6 +214,14 @@ class real_average_consumption(osv.osv):
         if not 'name' in vals:
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
 
+        if 'cons_location_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['cons_location_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Source Location is inactive"))
+
+        if 'activity_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['activity_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Destination Location is inactive"))
+
         return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
 
