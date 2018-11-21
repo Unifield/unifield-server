@@ -678,6 +678,45 @@ class stock_remove_location_wizard(osv.osv_memory):
                 res['related_ir'] = True
                 res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
 
+            pi_obj = self.pool.get('physical.inventory')
+            pi_ids = pi_obj.search(cr, uid, [('location_id', '=', location.id), ('state', 'not in', ['cancel', 'closed'])], context=context)
+            if pi_ids:
+                error = True
+                can_force = False
+                res['error_message'] += _("* Warning the following PI are in progess:\n")
+                for x in pi_obj.browse(cr, uid, pi_ids, fields_to_fetch=['name', 'ref'], context=context):
+                    res['error_message'] += "  - %s %s (%s)\n" % (x.name, x.ref)
+
+
+            isi_line_obj = self.pool.get('initial.stock.inventory.line')
+            isi_line_ids = isi_line_obj.search(cr, uid, [('location_id', '=', location.id), ('inventory_id.state', 'not in', ['done', 'cancel'])], context=context)
+            if isi_line_ids:
+                error = True
+                can_force = False
+                res['error_message'] += _("* Warning the following ISI are in progess:\n")
+                for x in isi_line_obj.browse(cr, uid, isi_line_ids, fields_to_fetch=['product', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s (%s)\n" % (x.inventory_id.name, x.product.default_code)
+
+            oldpi_line_obj = self.pool.get('stock.inventory.line')
+            oldpi_line_ids = oldpi_line_obj.search(cr, uid, [('location_id', '=', location.id), ('inventory_id.state', 'not in', ['done', 'cancel'])], context=context)
+            if oldpi_line_ids:
+                error = True
+                can_force = False
+                res['error_message'] += _("* Warning the following Previous PI are in progess:\n")
+                for x in oldpi_line_obj.browse(cr, uid, oldpi_line_ids, fields_to_fetch=['product', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s (%s)\n" % (x.inventory_id.name, x.product.default_code)
+
+            conso_obj = self.pool.get('real.average.consumption')
+            conso_ids = conso_obj.search(cr, uid, [('state', '=', 'draft') , '|', ('conso_location_id', '=', location.id), ('activity_id', '=', location.id) ], context=context)
+            if conso_ids:
+                error = True
+                can_force = False
+                res['error_message'] += _("* Warning the following Consumption Reports are in progess:\n")
+                for x in conso_obj.browse(cr, uid, conso_ids, fields_to_fetch=['name'], context=context):
+                    res['error_message'] += "  - %s\n" % (x.name, )
+
+
+
         if error:
             warning.update({'title': _('Be careful !'),
                             'message': _('You have a problem with this location − Please see the message in the form for more information.')})
