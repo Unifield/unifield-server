@@ -663,6 +663,7 @@ class stock_remove_location_wizard(osv.osv_memory):
             move_from = self.pool.get('stock.move').search(cr, uid, [
                 ('state', 'not in', ['done', 'cancel']),
                 ('id', 'not in', move_to),
+                ('picking_id', '!=', False),
                 '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id),
             ])
             if move_from:
