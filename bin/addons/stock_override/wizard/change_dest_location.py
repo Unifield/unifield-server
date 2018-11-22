@@ -98,7 +98,7 @@ class change_dest_location(osv.osv_memory):
             show_warn_msg = False
             for move in wizard.picking_id.move_lines:
                 # Check if the new destination location is not the source location
-                if move.location_dest_id.id == wizard.dest_location_id.id:
+                if move.location_id.id == wizard.dest_location_id.id:
                     show_warn_msg = True
                     warn_msg += _('Line %s : The new destination location is the same as the source location of the move, so the destination location has not been changed for this move. \n') % move.line_number
                     continue
