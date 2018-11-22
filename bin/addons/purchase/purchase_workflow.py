@@ -56,6 +56,8 @@ class purchase_order_line(osv.osv):
             if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
                 new_qty = pol.original_line_id.product_qty - pol.product_qty
                 # update the PO line with new qty
+                if new_qty <= 0:
+                    continue
                 self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
 
                 # update IN moves of the original pol:
