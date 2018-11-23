@@ -103032,18 +103032,13 @@ msgstr "Requête Finance Siège"
 #: view:finance.sync.query:0
 #: model:ir.actions.act_window,name:account_mcdb.finance_sync_query_action
 #: model:ir.ui.menu,name:account_mcdb.finance_sync_query_menu
-msgid "Finance Synced Queries"
-msgstr "Requêtes Finance Synchronisées"
+msgid "Finance Queries"
+msgstr "Requêtes Finance"
 
 #. module: account_mcdb
 #: view:finance.sync.query:0
 msgid "Group by Model"
 msgstr "Grouper par Modèle"
-
-#. module: account_mcdb
-#: model:ir.model,name:account_mcdb.model_finance_sync_query
-msgid "HQ Finance Synced Queries"
-msgstr "Requêtes Finance Siège Synchronisées"
 
 #. modules: resource, account_mcdb
 #: field:account.mcdb,hq_template:0
