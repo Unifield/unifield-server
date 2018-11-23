@@ -39,12 +39,12 @@ Scenario: SSL US4517 PO split from IR
 	I click "Edit" on line:
 	 | CODE        |
 	 | DINJPENB1V- |
-	I fill "20000.00" within column "QTY"
+	I fill "20000" within column "QTY"
 	I validate the line
 	I click "Edit" on line:
 	 | CODE        |
 	 | DINJPENG5V- |
-	I fill "30000.00" within column "QTY"
+	I fill "30000" within column "QTY"
 	I validate the line
 
 	I click on "Add products" and close the window
@@ -53,13 +53,13 @@ Scenario: SSL US4517 PO split from IR
     # Add products line by line
     I click on "New"
     I fill "[ALIFCLOC1--] CLOCK, ALARM, mechanical" within column "PRODUCT"
-    I fill "50000.00" within column "Quantity (UoM)"
+    I fill "50000" within column "Quantity (UoM)"
     I validate the line
 
 
     I click on "New"
     I fill "[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups" within column "PRODUCT"
-    I fill "10000.00" within column "Quantity (UoM)"
+    I fill "10000" within column "Quantity (UoM)"
 	
 	I click on "OK"
 	
@@ -146,18 +146,18 @@ Scenario: SSL US4517 PO split from IR
         | PRODUCT                                                  |
 		| [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups |
 
-   I fill "New line quantity" with "3000.00"
+   I fill "New line quantity" with "3000"
    
    I click on "Split line" and close the window
    
    
    I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE     |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced   |  20,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced   |  30,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced   |  50,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Validated |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Validated |   3,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced   |  20,000   |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced   |  30,000   |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced   |  50,000   |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Validated |   7,000   |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Validated |   3,000   |
 		
 	I should see "Validated-p" in "Order State"
 
@@ -168,16 +168,16 @@ Scenario: SSL US4517 PO split from IR
 	I click on "Search"	
 	I click "Edit" on line:
         | PRODUCT                                                 | QTY      | 
-        |[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 7,000.00 |
+        |[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 7,000|
 	I fill "Local Market" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
         | PRODUCT                                                  | QTY      |
-        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 7,000.00 |
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 7,000|
 	
 	I click "Edit" on line:
         | PRODUCT                                                 | QTY      | 
-        |[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 3,000.00 |
+        |[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | 3,000|
 	I fill "from Stock" within column "PROC. METHOD"
 	I validate the line
 	I click "Source Line" on line:
@@ -195,11 +195,11 @@ Scenario: SSL US4517 PO split from IR
 
    I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE     |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced   |  20,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced   |  30,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced   |  50,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced   |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed |   3,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced   |  20,000   |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced   |  30,000   |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced   |  50,000   |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced   |   7,000   |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed |   3,000   |
 		
 	I should see "Sourced-p" in "Order State"
 		
@@ -213,7 +213,7 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         |LINE |  PRODUCT                                                 | STATE     |QUANTITY   | 
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | Available | 3,000.000 |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | Available | 3,000 |
 
 #LINE 7
 		
@@ -237,10 +237,10 @@ Scenario: SSL US4517 PO split from IR
   
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       | 
-        |  1  | DINJPENB1V-   | Validated | 20,000.00 |
-        |  2  | DINJPENG5V-   | Validated | 30,000.00 |
-        |  3  | ALIFCLOC1--   | Validated | 50,000.00 |
-		|  4  | ALIFCOFM1E-   | Validated |  7,000.00 |
+        |  1  | DINJPENB1V-   | Validated | 20,000 |
+        |  2  | DINJPENG5V-   | Validated | 30,000 |
+        |  3  | ALIFCLOC1--   | Validated | 50,000 |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |
 	   
     I should see "Validated" in "Order State"	
 
@@ -251,16 +251,16 @@ Scenario: SSL US4517 PO split from IR
        |LINE | PRODUCT CODE |
        |  1  | DINJPENB1V-  |	
 	   
-	I fill "New line quantity" with "15,000.00"
+	I fill "New line quantity" with "15,000"
 	I click on "Split line" and close the window
 	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       | 
-        |  1  | DINJPENB1V-   | Validated |  5,000.00 |
-        |  1  | DINJPENB1V-   | Validated | 15,000.00 |
-        |  2  | DINJPENG5V-   | Validated | 30,000.00 |
-        |  3  | ALIFCLOC1--   | Validated | 50,000.00 |
-		|  4  | ALIFCOFM1E-   | Validated |  7,000.00 |
+        |  1  | DINJPENB1V-   | Validated |  5,000 |
+        |  1  | DINJPENB1V-   | Validated | 15,000 |
+        |  2  | DINJPENG5V-   | Validated | 30,000 |
+        |  3  | ALIFCLOC1--   | Validated | 50,000 |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |
 
 
 		
@@ -272,12 +272,12 @@ Scenario: SSL US4517 PO split from IR
 
    I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE     |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v |  30,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v |  50,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed |   3,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v |  30,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v |  50,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed |   3,000    |
 
 		
 #LINE 9	   
@@ -297,7 +297,7 @@ Scenario: SSL US4517 PO split from IR
     I open tab "Purchase Order"
     I click "Inline Edit" on line:
         |LINE |  PRODUCT CODE | QTY       | 
-        |  1  | DINJPENB1V-   | 15,000.00 |
+        |  1  | DINJPENB1V-   | 15,000 |
     I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "05/Oct/2018"
     I validate the line
 
@@ -308,17 +308,17 @@ Scenario: SSL US4517 PO split from IR
        |LINE | PRODUCT CODE |
        |  2  | DINJPENG5V-  |	
 	   
-	I fill "New line quantity" with "20,000.00"
+	I fill "New line quantity" with "20,000"
 	I click on "Split line" and close the window
 	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       | DELIVERY CONFIRMED DATE |  
-        |  1  | DINJPENB1V-   | Validated |  5,000.00 |       28/May/2018       |
-        |  1  | DINJPENB1V-   | Validated | 15,000.00 |       05/Oct/2018       |
-        |  2  | DINJPENG5V-   | Validated | 10,000.00 |       28/May/2018       |
-        |  2  | DINJPENG5V-   | Validated | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Validated | 50,000.00 |       28/May/2018       |
-		|  4  | ALIFCOFM1E-   | Validated |  7,000.00 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Validated | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Validated | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated | 50,000 |       28/May/2018       |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |       28/May/2018       |
 
 		
 			
@@ -327,14 +327,14 @@ Scenario: SSL US4517 PO split from IR
 
 	I click "Cancel" on line and open the window:
         |LINE | PRODUCT CODE |  QTY       |  
-        |  1  | DINJPENB1V-  |   5,000.00 |
+        |  1  | DINJPENB1V-  |   5,000 |
 	I click on "Cancel & Resource" and close the window
 
     I set "Show all" on lines filter		
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE        | QTY       | DELIVERY CONFIRMED DATE |  
-        |  1  | DINJPENB1V-   | Cancelled-r |  5,000.00 |       28/May/2018       |
-        |  1  | DINJPENB1V-   | Validated   | 15,000.00 |       05/Oct/2018       |
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated   | 15,000 |       05/Oct/2018       |
 
     I should see "Validated" in "Order State"
 
@@ -347,14 +347,14 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  20,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  50,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v   |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  20,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  50,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v   |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
 
  
 #LINE 12
@@ -368,14 +368,14 @@ Scenario: SSL US4517 PO split from IR
 
 	I click "Cancel" on line and open the window:
         |LINE | PRODUCT CODE |  QTY       |  
-        |  2  | DINJPENG5V-  |  20,000.00 |
+        |  2  | DINJPENG5V-  |  20,000 |
 	I click on "Cancel & Resource" and close the window
 
     I set "Show all" on lines filter		
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       | QTY       | DELIVERY CONFIRMED DATE |  
-        |  2  | DINJPENG5V-   | Validated   | 10,000.00 |       28/May/2018       |
-        |  2  | DINJPENG5V-   | Cancelled-r | 20,000.00 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Validated   | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
 
     I should see "Validated" in "Order State"			
 
@@ -388,15 +388,15 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  50,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v   |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  50,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Sourced-v   |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000    |
 
 
 
@@ -413,46 +413,46 @@ Scenario: SSL US4517 PO split from IR
        |LINE | PRODUCT CODE |
        |  3  | ALIFCLOC1--  |	
 	   
-	I fill "New line quantity" with "30,000.00"
+	I fill "New line quantity" with "30,000"
 	I click on "Split line" and close the window
 	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       | DELIVERY CONFIRMED DATE |  
-        |  3  | ALIFCLOC1--   | Validated | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Validated | 30,000.00 |       28/May/2018       |
-		|  4  | ALIFCOFM1E-   | Validated |  7,000.00 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated | 30,000 |       28/May/2018       |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |       28/May/2018       |
 		
 #LINE 14
 		
     I click "Inline Edit" on line:
         |LINE | PRODUCT CODE | QTY       | 
-        |  3  | ALIFCLOC1--  | 30,000.00 |
+        |  3  | ALIFCLOC1--  | 30,000 |
     I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "05/Oct/2018"
     I validate the line
 
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE        | QTY       | DELIVERY CONFIRMED DATE |  
-        |  1  | DINJPENB1V-   | Cancelled-r |  5,000.00 |       28/May/2018       |
-        |  1  | DINJPENB1V-   | Validated   | 15,000.00 |       05/Oct/2018       |
-        |  2  | DINJPENG5V-   | Validated   | 10,000.00 |       28/May/2018       |
-        |  2  | DINJPENG5V-   | Cancelled-r | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Validated   | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Validated   | 30,000.00 |       05/Oct/2018       |
-		|  4  | ALIFCOFM1E-   | Validated   |  7,000.00 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated   | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Validated   | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated   | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated   | 30,000 |       05/Oct/2018       |
+		|  4  | ALIFCOFM1E-   | Validated   |  7,000 |       28/May/2018       |
 		
 
 #LINE 15
 
 	I click "Cancel" on line and open the window:
         |LINE | PRODUCT CODE |  QTY      |  
-        |  4  | ALIFCOFM1E-  |  7,000.00 |
+        |  4  | ALIFCOFM1E-  |  7,000 |
 	I click on "Cancel & Resource" and close the window
 
     I set "Show all" on lines filter		
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       | QTY       | 
-        |  4  | ALIFCOFM1E-   | Cancelled-r |  7,000.00 |
+        |  4  | ALIFCOFM1E-   | Cancelled-r |  7,000 |
 
 
     I open tab menu "ORDERS"
@@ -464,17 +464,17 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  20,000.00    |   
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  30,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Sourced-v   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Sourced-v   |  10,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  20,000    |   
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Sourced-v   |  30,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000    |
 
 #LINE 16
 
@@ -489,13 +489,13 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE        | QTY       | DELIVERY CONFIRMED DATE |  
-        |  1  | DINJPENB1V-   | Cancelled-r |  5,000.00 |       28/May/2018       |
-        |  1  | DINJPENB1V-   | Confirmed   | 15,000.00 |       05/Oct/2018       |
-        |  2  | DINJPENG5V-   | Confirmed   | 10,000.00 |       28/May/2018       |
-        |  2  | DINJPENG5V-   | Cancelled-r | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Confirmed   | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Confirmed   | 30,000.00 |       05/Oct/2018       |
-		|  4  | ALIFCOFM1E-   | Cancelled-r |  7,000.00 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Confirmed   | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Confirmed   | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Confirmed   | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Confirmed   | 30,000 |       05/Oct/2018       |
+		|  4  | ALIFCOFM1E-   | Cancelled-r |  7,000 |       28/May/2018       |
 	
     I should see "Confirmed" in "Order State"			
 
@@ -509,17 +509,17 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |  10,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  20,000.00    |	
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  30,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |  10,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  20,000    |	
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  30,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000    |
 
 	
 	
@@ -533,10 +533,10 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018 00:00     |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018 00:00     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  20,000.000 |     28/May/2018 00:00     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000 |     05/Oct/2018 00:00     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  20,000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018 00:00     |	
 	
 	I should see "Available" in "State"
 
@@ -545,16 +545,16 @@ Scenario: SSL US4517 PO split from IR
 
     I click "Cancel" on line and open the window:
         |  PRODUCT                                 | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE   | 
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000.000 |     28/May/2018 00:00    |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000 |     28/May/2018 00:00    |	
 
     I click on "Cancel and Resource" and close the window		
 
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000.000 |     05/Oct/2018 00:00     |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000.000 |     28/May/2018 00:00     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |  15,000 |     05/Oct/2018 00:00     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |  10,000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018 00:00     |	
 
     I open tab menu "PURCHASES"	   
     I click on menu "Purchase Orders"
@@ -565,8 +565,8 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       | QTY       | DELIVERY CONFIRMED DATE |  
-        |  3  | ALIFCLOC1--   | Cancelled-r | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Confirmed   | 30,000.00 |       05/Oct/2018       |
+        |  3  | ALIFCLOC1--   | Cancelled-r | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Confirmed   | 30,000 |       05/Oct/2018       |
 		
 		
 	I open tab menu "ORDERS"
@@ -578,18 +578,18 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |  10,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.00    |	
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  30,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  20,000.00    |	
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |  10,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000    |	
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Confirmed   |  30,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  20,000    |	
 		
 		
 #LINE 18
@@ -607,14 +607,14 @@ Scenario: SSL US4517 PO split from IR
         | PRODUCT                                                           |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
 		
-	I fill "Quantity" with "5000.00"
+	I fill "Quantity" with "5000"
     I click on "Ok"
 
 	I click on "Copy all"
 	
 	I click "Edit" on line:
         | PRODUCT                                                           | QUANTITY TO PROCESS |
-	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     10,000.000      |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     10,000      |
 
 	I fill "batchA{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -624,7 +624,7 @@ Scenario: SSL US4517 PO split from IR
 		
 	I click "Edit" on line:
         | PRODUCT                                                           |  QUANTITY TO PROCESS |
-	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |       5,000.000      |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |       5,000      |
 
 	I fill "batchB{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -657,9 +657,9 @@ Scenario: SSL US4517 PO split from IR
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000.000 |     28/May/2018 00:00     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018 00:00     |	
 	
 	I should see "Available" in "State"		
 			
@@ -673,9 +673,9 @@ Scenario: SSL US4517 PO split from IR
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE    |  QUANTITY   | BATCH         | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |  10,000.000 | batchA{{ID}}  |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |   5,000.000 | batchB{{ID}}  |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed   |   8,000.000 | batchC{{ID}}  |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |  10,000 | batchA{{ID}}  |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |   5,000 | batchB{{ID}}  |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed   |   8,000 | batchC{{ID}}  |
 
 
     I open tab menu "PURCHASES"	   
@@ -687,8 +687,8 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       |  
-        |  1  | DINJPENB1V-   | Closed    | 15,000.00 |
-        |  2  | DINJPENG5V-   | Confirmed | 10,000.00 |
+        |  1  | DINJPENB1V-   | Closed    | 15,000 |
+        |  2  | DINJPENG5V-   | Confirmed | 10,000 |
 	
 		
 #LINE 19
@@ -703,16 +703,16 @@ Scenario: SSL US4517 PO split from IR
 
    I click "Cancel" on line and open the window:
         |  PRODUCT                                                                | STATE     | QUANTITY   | 
-        |[DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial| Available |  2,000.000 |	
+        |[DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial| Available |  2,000 |	
 
     I click on "Cancel and Resource" and close the window		
 
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018 00:00     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000.000 |     05/Oct/2018 00:00     |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018 00:00     |	
 
 
     I open tab menu "PURCHASES"	   
@@ -724,9 +724,9 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE        |  QTY      |  
-        |  2  | DINJPENG5V-   | Closed      |  8,000.00 |
-#TBC    |  2  | DINJPENG5V-   | Cancelled-r |  2,000.00 |
-	    |  2  | DINJPENG5V-   | Cancelled-r | 20,000.00 |
+        |  2  | DINJPENG5V-   | Closed      |  8,000 |
+#TBC    |  2  | DINJPENG5V-   | Cancelled-r |  2,000 |
+	    |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |
 	
 
 	
@@ -739,10 +739,10 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |   8,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-#TBC    |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.00    |
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |   2,000.00    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |   8,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+#TBC    |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000    |
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |   2,000    |
 	
 	
 #LINE 20	
@@ -757,16 +757,16 @@ Scenario: SSL US4517 PO split from IR
 
     I click "Cancel" on line and open the window:
         |  PRODUCT                              | STATE     | QUANTITY   | 
-        |[ALIFCLOC1--] CLOCK, ALARM, mechanical | Available | 30,000.000 |	
+        |[ALIFCLOC1--] CLOCK, ALARM, mechanical | Available | 30,000 |	
 
     I click on "Cancel and Resource" and close the window		
 
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY    |    ACTUAL RECEIPT DATE    | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.000 |     28/May/2018 00:00     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.000 |     28/May/2018 00:00     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000.000 |     05/Oct/2018 00:00     |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000 |     28/May/2018 00:00     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018 00:00     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000 |     05/Oct/2018 00:00     |	
 
 #TBC    I should see "Cancelled" in "State"		
 
@@ -779,20 +779,20 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       |  QTY       |  
-        |  3  | ALIFCLOC1--   | Cancelled-r |  20,000.00 |
-        |  3  | ALIFCLOC1--   | Cancelled-r |  30,000.00 |
+        |  3  | ALIFCLOC1--   | Cancelled-r |  20,000 |
+        |  3  | ALIFCLOC1--   | Cancelled-r |  30,000 |
 
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       | QTY       | DELIVERY CONFIRMED DATE |  
-        |  1  | DINJPENB1V-   | Cancelled-r |  5,000.00 |       28/May/2018       |
-        |  1  | DINJPENB1V-   | Closed      | 15,000.00 |       05/Oct/2018       |
-        |  2  | DINJPENG5V-   | Closed      |  8,000.00 |       28/May/2018       |
-        |  2  | DINJPENG5V-   | Cancelled-r | 20,000.00 |       28/May/2018       |
-#TBC    |  2  | DINJPENG5V-   | Cancelled-r |  2,000.00 |       28/May/2018       |  
-        |  3  | ALIFCLOC1--   | Cancelled-r | 20,000.00 |       28/May/2018       |
-        |  3  | ALIFCLOC1--   | Cancelled-r | 30,000.00 |       05/Oct/2018       |
-		|  4  | ALIFCOFM1E-   | Cancelled-r |  7,000.00 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Closed      | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Closed      |  8,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
+#TBC    |  2  | DINJPENG5V-   | Cancelled-r |  2,000 |       28/May/2018       |  
+        |  3  | ALIFCLOC1--   | Cancelled-r | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Cancelled-r | 30,000 |       05/Oct/2018       |
+		|  4  | ALIFCOFM1E-   | Cancelled-r |  7,000 |       28/May/2018       |
 
     I should see "Closed" in "Order State"	
 
@@ -806,21 +806,21 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |   8,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-#TBC    |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.00    | 
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.00    |	
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  30,000.00    |	
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Confirmed   |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Confirmed   |   8,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+#TBC    |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000    | 
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000    |	
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Confirmed   |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-v |   5,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |  20,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  20,000    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v |   2,000    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-v |  30,000    |	
 
 		
 #LINE 21
@@ -842,13 +842,13 @@ Scenario: SSL US4517 PO split from IR
 		
 	I should see in the main table the following data:
         | PRODUCT                                                                   | STATE      | QUANTITY    | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed     |  10,000.000 |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed     |   5,000.000 |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled  |   2,000.000 |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed     |   8,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  20,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  30,000.000 |
-		| [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed     |   3,000.000 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed     |  10,000 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed     |   5,000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled  |   2,000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed     |   8,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  20,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled  |  30,000 |
+		| [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed     |   3,000 |
 
 	I should see "Closed" in "State"
 
@@ -861,9 +861,9 @@ Scenario: SSL US4517 PO split from IR
 		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   8,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed      |   3,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   8,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed      |   3,000    |
 
 #LINE 22
 
@@ -874,19 +874,19 @@ Scenario: SSL US4517 PO split from IR
 	I click "Split line" on line and open the window:
         |LINE | PRODUCT                                                           |
         |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
-	I fill "New line quantity" with "3000.00"
+	I fill "New line quantity" with "3000"
 	I click on "Split line" and close the window
 
 	
     I click "Edit" on line:
         | PRODUCT                                                           | QTY     |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000.00 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000 |
 
 	I fill "Local Market" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
         | PRODUCT                                                           | QTY     |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000.00 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000 |
 
     		
     I tick all the lines
@@ -909,12 +909,12 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         |LINE | PRODUCT CODE |STATE  | QTY       |
-        |  1  | DINJPENB1V-  | Draft |  2,000.00 |
-        |  2  | DINJPENG5V-  | Draft | 20,000.00 |	
-        |  3  | ALIFCOFM1E-  | Draft |  7,000.00 |
-	    |  4  | ALIFCLOC1--  | Draft | 20,000.00 |
-	    |  5  | DINJPENG5V-  | Draft |  2,000.00 |	
-        |  6  | ALIFCLOC1--  | Draft | 30,000.00 |
+        |  1  | DINJPENB1V-  | Draft |  2,000 |
+        |  2  | DINJPENG5V-  | Draft | 20,000 |	
+        |  3  | ALIFCOFM1E-  | Draft |  7,000 |
+	    |  4  | ALIFCLOC1--  | Draft | 20,000 |
+	    |  5  | DINJPENG5V-  | Draft |  2,000 |	
+        |  6  | ALIFCLOC1--  | Draft | 30,000 |
 	
     I should see "Draft" in "Order State"		
 	I store "Order Reference" in "PO_REF_COO_2"
@@ -923,16 +923,16 @@ Scenario: SSL US4517 PO split from IR
 #LINE 23	
     I click "Split line" on line and open the window:
         | PRODUCT CODE |STATE  | QTY       |
-        | DINJPENG5V-  | Draft | 20,000.00 |	
+        | DINJPENG5V-  | Draft | 20,000 |	
 	   
-	I fill "New line quantity" with "13,000.00"
+	I fill "New line quantity" with "13,000"
 	I click on "Split line" and close the window		
 		
 	I should see in the main table the following data:
         | LINE | PRODUCT CODE |STATE  | QTY       |
-        |  2   | DINJPENG5V-  | Draft |  7,000.00 |
-        |  2   | DINJPENG5V-  | Draft | 13,000.00 |	
-	    |  5   | DINJPENG5V-  | Draft |  2,000.00 |	
+        |  2   | DINJPENG5V-  | Draft |  7,000 |
+        |  2   | DINJPENG5V-  | Draft | 13,000 |	
+	    |  5   | DINJPENG5V-  | Draft |  2,000 |	
  		
 		
     I click on menu "Purchase Orders"
@@ -947,7 +947,7 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         | PRODUCT CODE |STATE  | QTY       |
-        | DINJPENB1V-  | Draft |  3,000.00 |
+        | DINJPENB1V-  | Draft |  3,000 |
 
     I should see "Draft" in "Order State"       
     I store "Order Reference" in "PO_REF_COO_3" 
@@ -971,14 +971,14 @@ Scenario: SSL US4517 PO split from IR
 		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-s  |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-pv |   3,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |   7,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |  13,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-s  |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-s  |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-s  |  30,000.00    |	
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-s  |   2,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-pv |   3,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |   7,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |  13,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-s  |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-s  |  20,000    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-s  |   2,000    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-s  |  30,000    |	
 
 #LINE 25
 
@@ -995,7 +995,7 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         | PRODUCT CODE |STATE      | QTY       |
-        | DINJPENB1V-  | Validated |  3,000.00 |
+        | DINJPENB1V-  | Validated |  3,000 |
 		
 	I click "Inline Edit" on line:
         | PRODUCT CODE |
@@ -1040,20 +1040,20 @@ Scenario: SSL US4517 PO split from IR
 
 	I click "Cancel" on line and open the window:
         |LINE | PRODUCT CODE |  QTY      |  
-        |  2  | DINJPENG5V-  | 13,000.00 |
+        |  2  | DINJPENG5V-  | 13,000 |
 	I click on "Cancel & Resource" and close the window
 
 	I click "Cancel" on line and open the window:
         |LINE | PRODUCT CODE |  QTY      |  
-        |  3  | ALIFCOFM1E-  |  7,000.00 |
+        |  3  | ALIFCOFM1E-  |  7,000 |
 	I click on "Cancel & Resource" and close the window	
 	
 	
     I set "Show all" on lines filter		
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE | STATE       | QTY       | 
-        |  2  | DINJPENG5V-   | Cancelled-r | 13,000.00 |
-        |  3  | ALIFCOFM1E-   | Cancelled-r |  7,000.00 |
+        |  2  | DINJPENG5V-   | Cancelled-r | 13,000 |
+        |  3  | ALIFCOFM1E-   | Cancelled-r |  7,000 |
 
 		
 	I open tab menu "ORDERS"
@@ -1065,16 +1065,16 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-pv |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-pv |   7,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-pv |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-pv |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-pv |  30,000.00    |	
-        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000.00    |
-		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v  |   7,000.00    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-pv |   2,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-pv |   7,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-pv |  20,000    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-pv |   2,000    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-pv |  30,000    |	
+        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000    |
+		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v  |   7,000    |
    
 
 #LINE 28
@@ -1105,16 +1105,16 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   7,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  30,000.00    |	
-        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000.00    |
-		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v  |   7,000.00    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   2,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Resourced-c  |   3,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   7,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r  |  13,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r  |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  20,000    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-c  |   2,000    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Resourced-c  |  30,000    |	
+        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000    |
+		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Resourced-v  |   7,000    |
    
    
 #LINE 29
@@ -1133,7 +1133,7 @@ Scenario: SSL US4517 PO split from IR
     
     I click "Edit" on line:
         | PRODUCT                                                           | ORDERED QUANTITY |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     2,000.000    |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     2,000    |
 
     I fill "LotA{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -1143,7 +1143,7 @@ Scenario: SSL US4517 PO split from IR
         
     I click "Edit" on line:
         | PRODUCT                                                                   | ORDERED QUANTITY |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     7,000.000    |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     7,000    |
 
     I fill "LotB{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -1154,7 +1154,7 @@ Scenario: SSL US4517 PO split from IR
     
     I click "Edit" on line:
         | PRODUCT                                                                   | ORDERED QUANTITY |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     2,000.000    |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |     2,000    |
 
     I fill "LotC{{ID}}" within column "Batch Number" and open the window
     I click on "New"
@@ -1171,11 +1171,11 @@ Scenario: SSL US4517 PO split from IR
         
     I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY    | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000.000 |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000.000 |    
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   2,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000.000 |    
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000 |    
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   2,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000 |    
    
 
 #LINE 30
@@ -1191,7 +1191,7 @@ Scenario: SSL US4517 PO split from IR
 
     I click "Edit" on line:
         | PRODUCT                                                           | ORDERED QUANTITY |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     3,000.000    |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |     3,000    |
     I fill "LotD{{ID}}" within column "Batch Number" and open the window
     I click on "New"
     I fill "Expiry Date" with "13/May/2023"
@@ -1206,7 +1206,7 @@ Scenario: SSL US4517 PO split from IR
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                          | STATE  | QUANTITY    | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | Closed |   3,000.000 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | Closed |   3,000 |
 
   
     I open tab menu "PURCHASES"
@@ -1219,13 +1219,13 @@ Scenario: SSL US4517 PO split from IR
     I set "Show all" on lines filter
  	I should see in the main table the following data:
         |LINE | PRODUCT CODE |STATE        | QTY       |
-        |  1  | DINJPENB1V-  | Closed      |  2,000.00 |
-        |  2  | DINJPENG5V-  | Closed      |  7,000.00 |	
-        |  2  | DINJPENG5V-  | Cancelled-r | 13,000.00 |	
-        |  3  | ALIFCOFM1E-  | Cancelled-r |  7,000.00 |
-	    |  4  | ALIFCLOC1--  | Closed      | 20,000.00 |
-	    |  5  | DINJPENG5V-  | Closed      |  2,000.00 |	
-        |  6  | ALIFCLOC1--  | Closed      | 30,000.00 |
+        |  1  | DINJPENB1V-  | Closed      |  2,000 |
+        |  2  | DINJPENG5V-  | Closed      |  7,000 |	
+        |  2  | DINJPENG5V-  | Cancelled-r | 13,000 |	
+        |  3  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+	    |  4  | ALIFCLOC1--  | Closed      | 20,000 |
+	    |  5  | DINJPENG5V-  | Closed      |  2,000 |	
+        |  6  | ALIFCLOC1--  | Closed      | 30,000 |
 
 
 
@@ -1240,13 +1240,13 @@ Scenario: SSL US4517 PO split from IR
 
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE     | QUANTITY   | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  2,000.000 |
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  3,000.000 | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  7,000.000 |
-	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 20,000.000 |	
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000.000 |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000.000 |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 30,000.000 |	
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  2,000 |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  3,000 | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  7,000 |
+	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 20,000 |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  1,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 30,000 |	
    
     I click on "Process" and open the window
 	I click on "Copy all"
@@ -1270,37 +1270,37 @@ Scenario: SSL US4517 PO split from IR
 		
 	I click "Cancel" on line and open the window:
         |LINE |  PRODUCT                                                                  | STATE        |QUANTITY (UOM) | 
-        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000.00    |
+        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Resourced-v  |  13,000    |
    
 	I click on "OK, cancel line" and close the window if necessary
 	
 	I click "Cancel" on line and open the window:
         |LINE |  PRODUCT                                                 | STATE        |QUANTITY (UOM) | 
-		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | Resourced-v  |   7,000.00    |
+		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups | Resourced-v  |   7,000    |
 
 	I click on "OK, cancel line" and close the window if necessary
 
     I set "Show all" on lines filter	
     I should see in the main table the following data:
         |LINE |  PRODUCT                                                                  | STATE       |QUANTITY (UOM) | 
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000.00    |
-        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |  15,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   8,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000.00    |
-        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000.00    |
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000.00    |	
-        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000.00    |	
-		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
- 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed      |   3,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |   2,000.00    |
-        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |   3,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   7,000.00    |
-        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  13,000.00    |
-		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000.00    |
-        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed      |  20,000.00    |	
-        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   2,000.00    |
-        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed      |  30,000.00    |	
-        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled   |  13,000.00    |
-		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled   |   7,000.00    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Cancelled-r |   5,000    |
+        |  1  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |  15,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   8,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  20,000    |
+        |  2  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000    |
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000    |	
+        |  3  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  30,000    |	
+		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+ 		|  4  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed      |   3,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |   2,000    |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed      |   3,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   7,000    |
+        |  6  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |  13,000    |
+		|  7  | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled-r |   7,000    |
+        |  8  | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed      |  20,000    |	
+        |  9  | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed      |   2,000    |
+        |  10 | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed      |  30,000    |	
+        |  11 | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled   |  13,000    |
+		|  12 | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Cancelled   |   7,000    |
    
 	I should see "Closed" in "Order State"	
