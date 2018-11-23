@@ -22,6 +22,7 @@ Scenario: SSL US4517 PO split from IR
     I fill "Requestor" with "LogCoo"
     I fill "Location Requestor" with "Ext CU Sara"
     I fill "Requested date" with "28/May/2018"
+    I fill "Order category" with "Other"
 	
    # Add multiple products at the same time
 	I click on "Add multiple lines" and open the window
