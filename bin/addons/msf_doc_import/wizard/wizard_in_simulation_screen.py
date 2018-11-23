@@ -13,6 +13,7 @@ from osv import osv
 import pooler
 from tools.translate import _
 import tools
+import traceback
 
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -35,20 +36,18 @@ LN_BY_EXT_REF = {}
 
 
 LINES_COLUMNS = [
-    (_('Line number*'), 'line_number', ''),
-    (_('Ext. Reference'), 'external_ref', ''),
-    (_('Product Code*'), 'product_code', 'mandatory'),
-    (_('Product Description'), 'product_name', ''),
-    (_('Product Qty*'), 'product_qty', 'mandatory'),
-    (_('Product UoM'), 'product_uom', 'mandatory'),
-    (_('Price Unit'), 'price_unit', 'mandatory'),
-    (_('Currency'), 'price_currency_id', 'mandatory'),
-    (_('Batch'), 'prodlot_id', ''),
-    (_('Expiry Date'), 'expired_date', ''),
-    (_('Qty. p.p.'), 'qty_pp', ''),
-    (_('Packing List'), 'packing_list', ''),
-    (_('ESC message 1'), 'message_esc1', ''),
-    (_('ESC message 2'), 'message_esc2', ''),
+    (_('Line number*'), 'line_number', '', 'int'),
+    (_('Ext. Reference'), 'external_ref', '', 'string'),
+    (_('Product Code*'), 'product_code', 'mandatory', 'string'),
+    (_('Product Description'), 'product_name', '', 'string'),
+    (_('Product Qty*'), 'product_qty', 'mandatory', 'float'),
+    (_('Product UoM'), 'product_uom', 'mandatory', 'string'),
+    (_('Price Unit'), 'price_unit', 'mandatory', 'float'),
+    (_('Currency'), 'price_currency_id', 'mandatory', 'string'),
+    (_('Batch'), 'prodlot_id', '', 'string'),
+    (_('Expiry Date'), 'expired_date', '', 'date'),
+    (_('ESC message 1'), 'message_esc1', '', 'string'),
+    (_('ESC message 2'), 'message_esc2', '', 'string'),
 ]
 
 
@@ -69,19 +68,17 @@ PACK_HEADER = [
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
     (_('Weight*'), 'total_weight', 'mandatory', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
-    (_('Height'), 'total_height', '', 'float'),
-    (_('Length'), 'total_length', '', 'float',),
-    (_('Width'), 'total_width', '', 'float'),
-    ('', '', '', ''),
-    ('', '', '', ''),
-    ('', '', '', ''),
+    (_('Height'), 'total_height', '', 'float', 10),
+    (_('Length'), 'total_length', '', 'float', 10),
+    (_('Width'), 'total_width', '', 'float', 10),
+    (_('Packing List'), 'packing_list', '', ''),
     (_('ESC Message 1'), 'message_esc1', '', ''),
     (_('ESC Message 2'), 'message_esc2', '', ''),
 ]
 
 pack_header = [x[1] for x in PACK_HEADER if x[0]]
 pack_header_mandatory = [x[1] for x in PACK_HEADER if x[2] == 'mandatory']
-
+pack_coeff = dict((x[1], x[4]) for x in PACK_HEADER if len(x) == 5)
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
@@ -131,6 +128,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'error_filename': fields.char(size=64, string='Lines with errors'),
         'nb_file_lines': fields.integer(string='Total of file lines',
                                         readonly=True),
+        'extra_info': fields.text('Extra Info'),
         'nb_treated_lines': fields.integer(string='Nb treated lines',
                                            readonly=True),
         'percent_completed': fields.float(string='Percent completed',
@@ -160,6 +158,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
+        'pack_found': fields.boolean('Pack Found'),
 
     }
 
@@ -167,6 +166,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         'state': 'draft',
         'filetype': 'excel',
         'with_pack': False,
+        'pack_found': False,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -504,6 +504,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                     cell_data = row.cells and row.cells[cell_nb] and \
                         row.cells[cell_nb].data
                     if is_line:
+                        if cell_data and LINES_COLUMNS[cell_nb][3] == 'string':
+                            cell_data = '%s' % cell_data
                         values[index][LINES_COLUMNS[cell_nb][1]] = cell_data
                     elif process_pack_line:
                         values[index][PACK_HEADER[cell_nb][1]] = cell_data
@@ -512,6 +514,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                 except DateTime.mxDateTime.RangeError as e:
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
+                except IndexError, e:
+                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s" % (index+1, len(row), tools.ustr(traceback.format_exc()))))
 
         return values, nb_line, error
 
@@ -649,7 +653,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if wiz.purchase_id.name not in origin:
+                if origin and wiz.purchase_id.name not in origin:
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -677,13 +681,15 @@ Nothing has been imported because of %s. See below:
                 '''
                 file_lines = {}
                 file_in_lines = {}
+                data_per_pack = {}
                 new_in_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
 
                 x = NB_OF_HEADER_LINES + 1
-                pack_sequences = []
+                pack_sequences = {}
                 pack_id = False
+                pack_found = False
                 while x < len(values) + 1:
                     not_ok = False
                     file_line_error = []
@@ -695,8 +701,16 @@ Nothing has been imported because of %s. See below:
                             pack_info = {'wizard_id': wiz.id}
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
+                                if pack_coeff.get(key):
+                                    pack_info[key] = float(pack_info[key]) * pack_coeff[key]
+                                if key == 'packing_list' and pack_info[key]:
+                                    pack_info[key] = '%s' % pack_info[key]
+                            if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
+                                values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            pack_sequences.setdefault(pack_info.get('packing_list', ''), []).append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
+                            if values[x]['parcel_from']:
+                                pack_found = True
                         x += 2
 
                     if pack_id:
@@ -782,6 +796,8 @@ Nothing has been imported because of %s. See below:
                             prodlot_cache[product_id].setdefault(tools.ustr(vals['prodlot_id']), exp_value)
 
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, pack_id)
+                    if pack_id:
+                        data_per_pack.setdefault(pack_id, []).append(file_lines[x])
 
                     x += 1
                 '''
@@ -794,14 +810,27 @@ Nothing has been imported because of %s. See below:
                 If a matching line is found in one of these cases, keep the link between the
                 file line and the simulation screen line.
                 '''
-
+                if pack_found:
+                    self.write(cr, uid, [wiz.id], {'pack_found': True}, context=context)
                 if pack_sequences:
-                    self.pool.get('ppl.processor').check_sequences(cr, uid, pack_sequences, pack_info_obj)
-                    pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences]), ('integrity_status', '!=', 'empty')], context=context)
-                    if pack_errors_ids:
-                        pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
-                        for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                            values_header_errors.append("Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                    uom_ids = uom_obj.search(cr, uid, [])
+                    uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))
+                    ppl_processor = self.pool.get('ppl.processor')
+                    self.write(cr, uid, wiz.id, {'extra_info': _('There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created') % {'num_pl': len(pack_sequences)}}, context=context)
+                    for ppl in pack_sequences:
+                        ppl_processor.check_sequences(cr, uid, pack_sequences[ppl], pack_info_obj)
+                        for pack_d in pack_sequences[ppl]:
+                            num_of_pack = pack_d[1] -  pack_d[0] + 1
+                            if num_of_pack:
+                                for line in data_per_pack.get(pack_d[2], []):
+                                    if line[3] and line[2] in uom_data:
+                                        ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3], pack_info_obj)
+
+                        pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)
+                        if pack_errors_ids:
+                            pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
+                            for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
+                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
 
 
                 to_del = []
@@ -923,10 +952,10 @@ Nothing has been imported because of %s. See below:
                         # Commit modifications
                         cr.commit()
 
-                    if err_msg:
-                        for err in err_msg:
-                            err = 'Line %s of the Excel file: %s' % (file_line[0], err)
-                            values_line_errors.append(err)
+                        if err_msg:
+                            for err in err_msg:
+                                err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                                values_line_errors.append(err)
 
 
                 # Create new lines
@@ -955,7 +984,8 @@ Nothing has been imported because of %s. See below:
 
                 # Lines to delete
                 for in_line in SIMU_LINES[wiz.id]['line_ids']:
-                    wl_obj.write(cr, uid, in_line, {'type_change': 'del'}, context=context)
+                    l_d = wl_obj.read(cr, uid, in_line, ['move_uom_id'], context=context)
+                    wl_obj.write(cr, uid, in_line, {'type_change': 'del', 'imp_uom_id': l_d['move_uom_id'] and l_d['move_uom_id'][0]}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -977,6 +1007,8 @@ Nothing has been imported because of %s. See below:
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
+                    if wiz.with_pack:
+                        can_be_imported = False
 
                 header_values['message'] = message
                 header_values['state'] = can_be_imported and 'simu_done' or 'error'
@@ -1124,6 +1156,7 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
         'total_height': fields.float('Height', digits=(16,2)),
         'total_length': fields.float('Length', digits=(16,2)),
         'total_width': fields.float('Width', digits=(16,2)),
+        'packing_list': fields.char('Supplier Packing List', size=30),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
     }
 
@@ -1221,7 +1254,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'move_product_id': fields.many2one('product.product', string='Product', readonly=True),
-        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True),
+        'move_product_qty': fields.float(digits=(16, 2), string='Ordered Qty', readonly=True, related_uom='move_uom_id'),
         'move_uom_id': fields.many2one('product.uom', string='Ordered UoM', readonly=True),
         'move_price_unit': fields.function(_get_values, method=True, type='float', string='Price Unit',
                                            digits=(16, 2), store=True, readonly=True, multi='computed'),
@@ -1246,7 +1279,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         # Values after import
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_asset_id': fields.many2one('product.asset', string='Asset', readonly=True),
-        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True),
+        'imp_product_qty': fields.float(digits=(16, 2), string='Qty to Process', readonly=True, related_uom='imp_uom_id'),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price_unit': fields.float(digits=(16, 2), string='Price Unit', readonly=True),
         'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',
@@ -1418,6 +1451,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if prod_uom_c_id != uom_c_id:
                     errors.append(_("Given UoM is not compatible with the product UoM"))
 
+            if write_vals.get('imp_uom_id') and not line.move_uom_id:
+                write_vals['move_uom_id'] = write_vals['imp_uom_id']
+
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')
             try:
@@ -1532,7 +1568,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
                     warnings.append(_('The \'Expired date\' is not defined in file - The expired date of the Batch was put instead.'))
 
-
             if exp_check and not lot_check and batch_value:
                 write_vals.update({
                     'imp_batch_id': False,
@@ -1556,12 +1591,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         'imp_exp_date': exp_date,
                     })
 
-                if not write_vals.get('imp_batch_id') and not write_vals.get('imp_batch_name') and not context.get('simulation_bypass_missing_lot', False):
+                if not write_vals.get('imp_batch_id') and (not write_vals.get('imp_batch_name') or not write_vals.get('imp_exp_date'))  and not context.get('simulation_bypass_missing_lot', False):
                     errors.append(_('No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation.'))
                     write_vals['imp_batch_id'] = False
 
-            # Packing list
-            write_vals['imp_packing_list'] = values.get('packing_list')
+            if exp_check and not lot_check and not write_vals.get('imp_exp_date') and not context.get('simulation_bypass_missing_lot', False):
+                errors.append(_('No expiry date set on ED product.'))
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')
@@ -1602,6 +1637,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if values.get('pack_info_id'):
                 write_vals['pack_info_id'] = values['pack_info_id']
+                pack_info_data = self.pool.get('wizard.import.in.pack.simulation.screen').read(cr, uid,  values['pack_info_id'], ['parcel_from', 'parcel_to', 'packing_list'])
+                if not pack_info_data['packing_list']:
+                    pack_info_data['packing_list'] = ''
+                write_vals['imp_packing_list'] = '%(packing_list)s %(parcel_from)d-%(parcel_to)d' % pack_info_data
 
             self.write(cr, uid, [line.id], write_vals, context=context)
 

@@ -47,6 +47,8 @@ from itertools import islice, izip
 from lxml import etree
 from which import which
 from threading import local
+import math
+
 try:
     from html2text import html2text
 except ImportError:
@@ -1783,3 +1785,13 @@ def use_prod_sync(cr):
 
 def escape_html(string):
     return escape(string, {'"': '&quot;', "'": '&apos;'})
+
+def float_uom_to_str(value, uom_obj):
+    """
+        round the value according to uom rounding attribute
+    """
+    if not isinstance(value, (int, long, float)):
+        return value
+    digit = int(abs(math.log10(uom_obj.rounding)))
+    return '%.*f' % (digit, value)
+

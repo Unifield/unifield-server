@@ -263,6 +263,8 @@ class purchase_order_line(osv.osv):
                 if ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
+                if pol.created_by_sync:
+                    sol_values['created_by_sync'] = True
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
 
@@ -581,7 +583,6 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
-
         # checks before validating the line:
         self.check_origin_for_validation(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
@@ -613,7 +614,7 @@ class purchase_order_line(osv.osv):
             self.write(cr, uid, pol.id, line_update, context=context)
 
 
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated', 'validation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
         return True
 
@@ -754,7 +755,7 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
-            self.write(cr, uid, [pol.id], {'state': 'confirmed'}, context=context)
+            self.write(cr, uid, [pol.id], {'state': 'confirmed', 'confirmation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
@@ -793,7 +794,7 @@ class purchase_order_line(osv.osv):
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
         return True
 
@@ -807,6 +808,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
@@ -814,12 +816,13 @@ class purchase_order_line(osv.osv):
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
+                if pol.cancelled_by_sync:
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
-
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
@@ -830,6 +833,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
@@ -837,11 +841,14 @@ class purchase_order_line(osv.osv):
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
+                if pol.cancelled_by_sync:
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
         return True
+
 
 purchase_order_line()
 
@@ -879,7 +886,19 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         for po in self.browse(cr, uid, ids, context=context):
-            return self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id for pol in po.order_line], context=context)
+            pol_ids_to_confirm = []
+            if po.partner_type == 'esc':
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po.id), ('state', 'in', ['validated', 'validated_p']), ('stock_take_date', '=', False)], context=context)
+                if pol_ids:
+                    pol_line = self.pool.get('purchase.order.line').read(cr, uid, pol_ids, ['line_number'], context=context)
+                    raise osv.except_osv(_('Error'), _('Line %s: Date of Stock Take is required for PO to ESC') % ', '.join(['#%s'%x['line_number'] for x in pol_line]))
+
+            for pol in po.order_line:
+                if pol.state not in ('cancel', 'cancel_r') and not pol.confirmed_delivery_date:
+                    raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)
+                pol_ids_to_confirm.append(pol.id)
+
+            return self.pool.get('purchase.order.line').button_confirmed(cr, uid, pol_ids_to_confirm, context=context)
 
         return True
 

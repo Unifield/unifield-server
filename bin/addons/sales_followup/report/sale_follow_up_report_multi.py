@@ -125,12 +125,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             m_index = 0
             bo_qty = line.product_uom_qty
             po_name = '-'
+            supplier_name = '-'
             cdd = False
             linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.order_id.delivery_confirmed_date
+                supplier_name = linked_pol.order_id.partner_id.name
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
@@ -155,6 +157,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     )
                     data.update({
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'cdd': cdd,
                         'line_number': line.line_number,
                         'product_name': line.product_id.name,
@@ -251,6 +254,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data = {
                         'line_number': line.line_number,
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'cdd': cdd,
                         'rts': line.state not in ('draft', 'validated', 'validated_n', 'cancel', 'cancel_r')
                         and line.order_id.ready_to_ship_date or '',
@@ -270,6 +274,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data.update({
                         'line_number': line.line_number,
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'product_code': line.product_id.default_code,
                         'product_name': line.product_id.name,
                         'uom_id': line.product_uom.name,
@@ -287,6 +292,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if not only_bo and bo_qty and bo_qty > 0 and not first_line and line.order_id.state != 'cancel':
                 lines.append({
                     'po_name': po_name,
+                    'supplier_name': supplier_name,
                     'cdd': cdd,
                     'line_number': line.line_number,
                     'product_name': line.product_id.name,

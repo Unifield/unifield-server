@@ -88,7 +88,7 @@
                     <para style="TextInfoBold">Location : </para>
                 </td>
                 <td>
-                    <para style="TextInfo">[[ objects[0].msf_instance or '' ]]</para>
+                    <para style="TextInfo">[[ objects[0].location_id and objects[0].location_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInfo"> </para>
