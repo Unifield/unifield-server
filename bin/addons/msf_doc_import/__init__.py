@@ -54,6 +54,7 @@ import account
 import stock_picking
 import replenishment_rules
 import product_list
+import product_mass_update
 import supplier_catalogue
 import report
 import msf_import_export

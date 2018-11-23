@@ -55,7 +55,7 @@
         'product_view.xml',
         'pricelist_view.xml',
         'process/product_process.xml',
-        'wizard/product_cluster_update_view.xml',
+        'wizard/product_mass_update_view.xml',
     ],
     'test':[],
     'installable': True,

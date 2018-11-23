@@ -61,6 +61,7 @@
         'wizard/wizard_import_threshold_value_line.xml',
         'wizard/wizard_import_stock_warehouse_order_point_line.xml',
         'wizard/wizard_import_product_list.xml',
+        'wizard/wizard_import_product_line_view.xml',
         'wizard/wizard_import_supplier_catalogue.xml',
         'wizard/wizard_po_simulation_screen_view.xml',
         'wizard/wizard_in_simulation_screen_view.xml',

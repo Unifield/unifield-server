@@ -19,7 +19,7 @@
 #
 ##############################################################################
 import product_price
-import product_cluster_update
+import product_mass_update
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
