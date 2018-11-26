@@ -1635,7 +1635,28 @@ class stock_move(osv.osv):
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
 
-        return super(stock_move, self).create(cr, uid, vals, context=context)
+        new_id = super(stock_move, self).create(cr, uid, vals, context=context)
+
+        self._check_locations_active(cr, uid, [new_id], context=context)
+        return new_id
+
+    def _check_locations_active(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wrong_loc_ids = self.search(cr, uid, [('id', 'in', ids), '|', ('location_id.active', '=', False), ('location_dest_id.active', '=', False)], context=context)
+        if wrong_loc_ids:
+            error = []
+            for move in self.browse(cr, uid, wrong_loc_ids, fields_to_fetch=['picking_id', 'line_number', 'product_id', 'location_id', 'location_dest_id']):
+                if not move.location_id.active:
+                    error.append(_("Source Location %s is inactive, can't process %s, line %s, product %s") % (move.location_id.name, move.picking_id and move.picking_id.name or '', move.line_number, move.product_id and move.product_id.default_code or ''))
+                if not move.location_dest_id.active:
+                    error.append(_("Destination Location %s is inactive, can't process %s, line %s, product %s") % (move.location_dest_id.name, move.picking_id and move.picking_id.name or '', move.line_number, move.product_id and move.product_id.default_code or ''))
+
+            if error:
+                raise osv.except_osv(_('Warning'), "\n".join(error[0:10]))
+
+        return True
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1719,6 +1740,7 @@ class stock_move(osv.osv):
                 pick_obj.write(cr, uid, pick_ids, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
