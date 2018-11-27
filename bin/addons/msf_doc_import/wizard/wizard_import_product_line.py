@@ -72,7 +72,6 @@ class wizard_import_product_line(osv.osv_memory):
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
         product_obj = self.pool.get('product.product')
-        obj_data = self.pool.get('ir.model.data')
         p_mass_upd_obj = self.pool.get('product.mass.update')
         line_with_error = []
 
@@ -159,8 +158,14 @@ class wizard_import_product_line(osv.osv_memory):
                             # Cell 0: Product
                             if row[0]:
                                 prod_ids = product_obj.search(cr, uid, [('default_code', '=ilike', row[0].data)], context=context)
-                                if prod_ids and prod_ids not in product_ids:
-                                    product_ids.append(prod_ids[0])
+                                if prod_ids and prod_ids[0] not in product_ids:
+                                    prod = product_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=['international_status'], context=context)
+                                    expected_prod_creator = p_mass_upd_obj._get_expected_prod_creator(cr, uid, [wiz_browse.id], False, False, context=context)[wiz_browse.id]
+                                    if expected_prod_creator and prod.international_status.id == expected_prod_creator:
+                                        product_ids.append(prod.id)
+                                    else:
+                                        error_list_line.append(_('Product %s doesn\'t have the expected Product Creator ("Local" on a Coordo instance and "HQ" on a HQ instance). ')
+                                                               % (row[0].data,))
                                 elif not prod_ids:
                                     error_list_line.append(_('Product code %s doesn\'t exist in the DB. ') % (row[0].data,))
                             else:

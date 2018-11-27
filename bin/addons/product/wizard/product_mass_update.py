@@ -30,13 +30,52 @@ class product_mass_update(osv.osv):
 
     _order = 'id desc'
 
+    def _get_expected_prod_creator(self, cr, uid, ids, field_names, arg, context=None):
+        if context is None:
+            context = {}
+
+        obj_data = self.pool.get('ir.model.data')
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        res = {}
+        for p_mass_upd in self.browse(cr, uid, ids, fields_to_fetch=[], context=context):
+            if instance_level == 'section':
+                res[p_mass_upd.id] = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+            elif instance_level == 'coordo':
+                res[p_mass_upd.id] = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            else:
+                res[p_mass_upd.id] = False
+
+        return res
+
+    def _expected_prod_creator_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all documents according to the product creator
+        '''
+        if context is None:
+            context = {}
+
+        obj_data = self.pool.get('ir.model.data')
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        prod_creator_id = False
+        for arg in args:
+            if arg[0] == 'expected_prod_creator':
+                if instance_level == 'section':
+                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+                elif instance_level == 'coordo':
+                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        return [('international_status', '=', prod_creator_id)]
+
     _columns = {
         'state': fields.selection(selection=[('draft', 'Draft'), ('done', 'Done')], string='Status', readonly=True),
-        'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
-                                        'prod_cluster_import_id', string="Product selection", order_by="default_code"),
         'date_done': fields.datetime(string='Date of the update'),
         'log': fields.char(string='Information', size=128, readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
+        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='many2one', relation='product.international.status',
+                                                 fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator'),
+        'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
+                                        'prod_cluster_import_id', string="Product selection", order_by="default_code",
+                                        domain=[('international_status', '=', 'expected_prod_creator')]),
         # Fields
         'active_product': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'dangerous_goods': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous goods'),
