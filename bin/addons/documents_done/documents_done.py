@@ -46,6 +46,9 @@ class documents_done_wizard(osv.osv):
         for model in context.get('models', ['sale.order', 'purchase.order', 'tender']):
             sel = self.pool.get(model).fields_get(cr, uid, ['state'])
             res = sel['state']['selection']
+            if model == 'purchase.order':
+                res = self.pool.get(model).fields_get(cr, uid, ['rfq_state'])['rfq_state']['selection'] + res
+                
             for st in res:
                 if not 'db_value' in context:
                     if (st[1], st[1]) not in states and st[0] not in ('done', 'cancel'):
@@ -81,14 +84,13 @@ class documents_done_wizard(osv.osv):
         Returns the good value according to the doc type
         '''
         res = {}
-        if not context:
+        if context is None:
             context = {}
 
         for doc in self.browse(cr, uid, ids, context=context):
-            context.update({'models': [doc.real_model], 'db_value': True})
-            for state in self._get_selection(cr, uid, context=context):
-                if state[0] == doc.state:
-                    res[doc.id] = state[1]
+            field = 'rfq_state' if doc.model == 'rfq' else 'state'
+            state_str = self.pool.get('ir.model.fields').get_selection(cr, uid, doc.real_model, field, doc.state, context=context)
+            res[doc.id] = state_str
 
         return res
 
