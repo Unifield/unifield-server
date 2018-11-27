@@ -22,6 +22,11 @@
 from osv import osv, fields
 from tools.translate import _
 import time
+import base64
+from msf_doc_import import GENERIC_MESSAGE
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_doc_import.wizard import COLUMNS_FOR_PRODUCT_LINE_IMPORT as columns_for_product_line_import
 
 
 class product_mass_update(osv.osv):
@@ -34,16 +39,9 @@ class product_mass_update(osv.osv):
         if context is None:
             context = {}
 
-        obj_data = self.pool.get('ir.model.data')
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         res = {}
-        for p_mass_upd in self.browse(cr, uid, ids, fields_to_fetch=[], context=context):
-            if instance_level == 'section':
-                res[p_mass_upd.id] = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-            elif instance_level == 'coordo':
-                res[p_mass_upd.id] = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-            else:
-                res[p_mass_upd.id] = False
+        for id in ids:
+            res[id] = False
 
         return res
 
@@ -64,18 +62,18 @@ class product_mass_update(osv.osv):
                 elif instance_level == 'coordo':
                     prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
-        return [('international_status', '=', prod_creator_id)]
+        return [('id', '=', prod_creator_id)]
 
     _columns = {
         'state': fields.selection(selection=[('draft', 'Draft'), ('done', 'Done')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update'),
         'log': fields.char(string='Information', size=128, readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
-        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='many2one', relation='product.international.status',
-                                                 fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator'),
+        'international_status': fields.function(_get_expected_prod_creator, method=True, type='many2one', relation='product.product',
+                                                fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator'),
         'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
-                                        'prod_cluster_import_id', string="Product selection", order_by="default_code",
-                                        domain=[('international_status', '=', 'expected_prod_creator')]),
+                                        'prod_mass_update_id', string="Product selection", order_by="default_code",
+                                        domain=[('international_status', '=', 'True')]),
         # Fields
         'active_product': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'dangerous_goods': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous goods'),
@@ -214,6 +212,37 @@ class product_mass_update(osv.osv):
         self.write(cr, uid, ids[0], {'date_done': time.strftime('%Y-%m-%d %H:%M'), 'log': log, 'state': 'done'}, context=context)
 
         return True
+
+    def wizard_import_products(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        context.update({'active_id': ids[0]})
+        columns_header = [(_(f[0]), f[1]) for f in columns_for_product_line_import]
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.product.line').create(cr, uid, {
+            'file': file,
+            'filename_template': 'template.xls',
+            'filename': 'Lines_Not_Imported.xls',
+            'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_product_line_import]), ),
+            'product_mass_upd_id': ids[0],
+            'state': 'draft',
+        }, context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.product.line',
+            'res_id': export_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'crush',
+            'context': context,
+        }
 
 
 product_mass_update()

@@ -29,7 +29,7 @@
                     <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                         <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                     </group>
-                    <field name="expected_prod_creator" invisible="1" />
+                    <field name="international_status" invisible="1" />
                     <field name="product_ids" colspan="4" nolabel="1" context="{'active_test': False}">
                         <tree string="Products" hide_edit_button="1">
                             <field name="default_code" />
