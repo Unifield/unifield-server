@@ -260,7 +260,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 packing = move.picking_id.name or '-'
                                 shipment = '-'
 
-                            key = (move.picking_id.id, packing, shipment, move.product_uom.name, line.line_number)
+                            key = (packing, shipment, move.product_uom.name, line.line_number)
                             data.update({
                                 'packing': packing,
                                 'shipment': shipment,
@@ -279,7 +279,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.shipment_id.name or '-'
                                 is_shipment_done = move.picking_id.shipment_id.state == 'done'
                             elif from_stock:
-                                packing = '-'
+                                packing = move.picking_id.name or '-'
                                 shipment = '-'
                                 is_shipment_done = move.picking_id.state == 'done' and move.state != 'cancel'
                                 state = move.picking_id.state
@@ -287,7 +287,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.name or '-'
                                 is_shipment_done = move.picking_id.state == 'done'
                                 packing = '-'
-                            key = (move.picking_id.id, packing, shipment, move.product_uom.name, line.line_number, state)
+                            key = (packing, shipment, move.product_uom.name, line.line_number, state)
                             data.update({
                                 'packing': packing,
                                 'shipment': shipment,
@@ -306,7 +306,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.name or '-'
                                 is_shipment_done = move.picking_id.state == 'done'
                                 packing = '-'
-                            key = (move.picking_id.id, packing, False, move.product_uom.name, line.line_number)
+                            key = (packing, False, move.product_uom.name, line.line_number)
                             data.update({
                                 'packing': packing,
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
@@ -317,8 +317,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
                         if key in keys:
                             for rline in lines:
-                                if rline['packing'] == key[1] and rline['shipment'] == key[2] and \
-                                        rline['delivered_uom'] == key[3] and line.line_number == key[4]:
+                                if rline['packing'] == key[0] and rline['shipment'] == key[1] and \
+                                        rline['delivered_uom'] == key[2] and line.line_number == key[3]:
                                     if rline['is_delivered']:
                                         rline.update({
                                             'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
@@ -373,7 +373,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
                         is_done = line_move.picking_id.state == 'done'
 
-                        key = (line_move.picking_id.id, line_move.product_uom.name, line.line_number, line_move.picking_id.id)
+                        key = (line_move.product_uom.name, line.line_number, line_move.picking_id.id)
                         data.update({
                             'delivered_qty': is_done and line_move.product_qty or 0.00,
                             'delivered_uom': line_move.product_uom.name or '-',
@@ -384,7 +384,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
                         if key in keys:
                             for rline in lines:
-                                if rline['delivered_uom'] == key[1] and rline['line_number'] == key[2] and rline['delivery_order'] == delivery_order:
+                                if rline['delivered_uom'] == key[0] and rline['line_number'] == key[1] and rline['delivery_order'] == delivery_order:
                                     rline.update({
                                         'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
                                     })
