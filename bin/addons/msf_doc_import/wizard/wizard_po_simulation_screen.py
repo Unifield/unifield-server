@@ -1692,7 +1692,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 continue
 
             if line.type_change == 'del' and line.po_line_id:
+                self.pool.get('purchase.order.line').write(cr, uid, [line.po_line_id.id], {'product_qty': line.imp_qty}, context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+
+            elif line.type_change == 'del' and not line.po_line_id and line.parent_line_id and line.parent_line_id.po_line_id:
+                ctx = context.copy()
+                ctx.update({
+                    'from_simu_screen': True,
+                    'allow_cancelled_pol_copy': True,
+                    'keepLineNumber': True,
+                })
+                new_pol = self.pool.get('purchase.order.line').copy(cr, uid, line.parent_line_id.po_line_id.id, {'product_qty': line.imp_qty}, context=ctx)
+                wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'cancel', cr)
+
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
