@@ -1788,7 +1788,6 @@ class stock_move(osv.osv):
         if not 'sync_dpo' in default:
             default['sync_dpo'] = False
 
-        self._check_locations_active(cr, uid, id, context=context)
         return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
 
     def fefo_update(self, cr, uid, ids, context=None):

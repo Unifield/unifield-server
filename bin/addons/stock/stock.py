@@ -748,8 +748,17 @@ class stock_picking(osv.osv):
             'claim_name': '',
             'from_manage_expired': False,
         })
-        picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
+
+        fields_to_read = ['name', 'type']
+
+        if not context.get('keep_prodlot'):
+            fields_to_read += ['move_lines']
+
+        picking_obj = self.read(cr, uid, id, fields_to_read, context=context)
         move_obj = self.pool.get('stock.move')
+
+        if not context.get('keep_prodlot') and picking_obj.get('move_lines'):
+            move_obj._check_locations_active(cr, uid, picking_obj['move_lines'], context=context)
         if ('name' not in default) or (picking_obj['name'] == '/'):
             seq_obj_name =  ''.join(('stock.picking.', picking_obj['type']))
             default['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_obj_name)
