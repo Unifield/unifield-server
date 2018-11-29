@@ -77477,7 +77477,7 @@ msgstr "Modifié"
 msgid "# of lines imported"
 msgstr "# de lignes importées"
 
-#. modules: purchase, account, msf_outgoing, finance, purchase_override, sales_followup, supplier_catalogue, sale, product, kit, account_override, purchase_allocation_report, order_types, tender_flow, msf_supply_doc_export, msf_doc_import, register_accounting, stock, purchase_followup
+#. modules: purchase, account, msf_outgoing, finance, purchase_override, sales_followup, supplier_catalogue, sale, product, kit, account_override, purchase_allocation_report, order_types, tender_flow, msf_supply_doc_export, msf_doc_import, register_accounting, stock, purchase_followup, procurement_request
 #: field:account.invoice.line,price_unit:0
 #: report:account.invoice2:0
 #: report:allocation.invoices.report:0
@@ -77522,6 +77522,11 @@ msgstr "# de lignes importées"
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:75
 #: field:supplier.catalogue.line,unit_price:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:577
+#: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:133
+#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:217
+#: code:addons/sale/wizard/internal_request_import.py:46
+#: field:internal.request.import.line,imp_cost_price:0
+#: field:internal.request.import.line,in_cost_price:0
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -101500,16 +101505,6 @@ msgstr "Ligne 2 du fichier: Impossible d'importer un fichier avec une Référenc
 msgid "UoM '%s' is not consistent with the Product '%s'. "
 msgstr "L'UdM '%s' n'est pas cohérente avec le Produit '%s'. "
 
-#. modules: msf_supply_doc_export, sale, procurement_request
-#: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:133
-#: code:addons/sale/wizard/internal_request_import.py:46
-#: field:internal.request.import.line,imp_cost_price:0
-#: field:internal.request.import.line,in_cost_price:0
-#: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:217
-#, python-format
-msgid "Cost Price"
-msgstr "Prix Unitaire"
-
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:294
 #, python-format
@@ -101776,7 +101771,7 @@ msgstr "La Quantité doit être un nombre. "
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:487
 #, python-format
-msgid "Cost Price must be a number. "
+msgid "Unit Price must be a number. "
 msgstr "Le Prix Unitaire doit être un nombre. "
 
 #. module: sale
