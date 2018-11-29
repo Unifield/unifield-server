@@ -1049,6 +1049,29 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if line_data['type_change'] != 'del':
                         wl_obj.write(cr, uid, po_line, {'type_change': 'ignore', 'imp_uom': line_data['in_uom']}, context=context)
 
+                simu_wiz = self.pool.get('wizard.import.po.simulation.screen').browse(cr, uid, wiz.id, context=context)
+                ln_to_del = set()
+                for simu_wiz_line in simu_wiz.simu_line_ids:
+                  if simu_wiz_line.type_change == 'del' and simu_wiz_line.id in file_po_lines:
+                    ln_to_del.add(file_po_lines[simu_wiz_line.id][0][2])
+                  elif simu_wiz_line.type_change == 'del' and simu_wiz_line.parent_line_id and simu_wiz_line.parent_line_id.id in file_po_lines:
+                    ln_to_del.add(file_po_lines[simu_wiz_line.parent_line_id.id][0][2])
+
+                po_line_to_del = self.pool.get('purchase.order.line').search(cr, uid, [
+                  ('order_id', '=', simu_wiz.order_id.id),
+                  ('line_number', 'in', list(ln_to_del)),
+                ], context=context)
+                simu_wiz_line_to_del = self.pool.get('wizard.import.po.simulation.screen.line').search(cr, uid, [
+                  ('simu_id', '=', simu_wiz.id),
+                  ('po_line_id', 'in', po_line_to_del),
+                ], context=context)
+                simu_wiz_line_to_del += self.pool.get('wizard.import.po.simulation.screen.line').search(cr, uid, [
+                  ('simu_id', '=', simu_wiz.id),
+                  ('parent_line_id.po_line_id', '!=', False),
+                  ('parent_line_id.po_line_id', 'in', po_line_to_del),
+                ], context=context)
+                self.pool.get('wizard.import.po.simulation.screen.line').write(cr, uid, simu_wiz_line_to_del, {'type_change': 'del'}, context=context)
+
                 '''
                 We generate the message which will be displayed on the simulation
                 screen. This message is a merge between all errors.
@@ -1443,6 +1466,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                 ('in_line_number', '=', line.in_line_number),
                             ], context=context)
                             self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
+                    elif not line.po_line_id:
+                         write_vals['type_change'] = 'del'
                     else:
                         write_vals['type_change'] = 'ignore'
 
