@@ -1635,10 +1635,7 @@ class stock_move(osv.osv):
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
 
-        new_id = super(stock_move, self).create(cr, uid, vals, context=context)
-
-        self._check_locations_active(cr, uid, [new_id], context=context)
-        return new_id
+        return super(stock_move, self).create(cr, uid, vals, context=context)
 
     def _check_locations_active(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
@@ -1791,6 +1788,7 @@ class stock_move(osv.osv):
         if not 'sync_dpo' in default:
             default['sync_dpo'] = False
 
+        self._check_locations_active(cr, uid, id, context=context)
         return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
 
     def fefo_update(self, cr, uid, ids, context=None):
