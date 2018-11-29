@@ -160,7 +160,11 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
 
-        return super(PhysicalInventory, self).create(cr, uid, values, context=context)
+        new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
+
+        if self.search(cr, uid, [('id', '=', new_id), ('location_id.active', '=', False)]):
+            raise osv.except_osv(_('Warning'), _("Location is inactive"))
+        return new_id
 
 
     def copy(self, cr, uid, id_, default=None, context=None):
@@ -1203,6 +1207,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            if not inv.location_id.active:
+                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
+
         self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
 

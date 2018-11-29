@@ -52,6 +52,15 @@ class patch_scripts(osv.osv):
     }
 
     # UF11.0
+    def us_5356_reset_ud_prod(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_fff'})
+        return True
+
+
     def us_4996_bck_beforepatch(self, cr, uid, *a, **b):
         if self.pool.get('backup.config'):
             cr.execute("update backup_config set beforepatching='t'")
@@ -2983,6 +2992,41 @@ class sync_tigger_something(osv.osv):
 
         if context.get('sync_update_execution') and vals.get('name') == 'clean_ir_model_access':
             self.delete_ir_model_access(cr, uid, context=context)
+
+        if vals.get('name') == 'clean_ud_fff':
+            # US-5356
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_query = """
+                ir_translation where name in ('product.product,function_value', 'product.product,form_value', 'product.product,fit_value') and
+                type = 'model' and
+                res_id in (
+                  select id from product_product where international_status=%s
+                )
+            """
+            # 1/ delete xmlid linked to trans
+            cr.execute('''delete from ir_model_data where
+                model='ir.translation' and
+                module='sd' and
+                res_id in (
+                    select id from '''+trans_query+'''
+                )
+            ''', (unidata_id,))  # not_a_user_entry
+            _logger.warn('Delete %d ir.model.data trans linked to UD' % (cr.rowcount,))
+
+            # 2/ delete trans
+            cr.execute('delete from '+ trans_query, (unidata_id,))  # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD' % (cr.rowcount,))
+
+            # 3/ reset fields
+            cr.execute('''update product_product set
+                  form_value=NULL,
+                  fit_value=NULL,
+                  function_value=NULL,
+                  product_catalog_path=NULL
+                where international_status=%s ''', (unidata_id,))
+            _logger.warn('Reset %d UD products' % (cr.rowcount,))
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 

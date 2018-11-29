@@ -27,20 +27,20 @@
         % for l in o.move_lines:
             <record>
                 <field name="line_number">${l.line_number or ''}</field>
-                <field name="external_ref">${l.purchase_line_id and l.purchase_line_id.external_ref or ''}</field>
+                <field name="external_ref">${(l.purchase_line_id and l.purchase_line_id.external_ref or '')|x}</field>
                 <field name="product_id" key="default_code,name">
-                    <field name="product_code">${l.product_id and l.product_id.default_code or ''}</field>
-                    <field name="product_name">${l.product_id and l.product_id.name or ''}</field>
+                    <field name="product_code">${(l.product_id and l.product_id.default_code or '')|x}</field>
+                    <field name="product_name">${(l.product_id and l.product_id.name or '')|x}</field>
                 </field>
                 <field name="product_qty">${l.product_qty or 0.00}</field>
                 <field name="product_uom" key="name">
-                    <field name="name">${l.product_uom and l.product_uom.name or ''}</field>
+                    <field name="name">${(l.product_uom and l.product_uom.name or '')|x}</field>
                 </field>
                 <field name="price_unit">${((l.purchase_line_id and l.purchase_line_id.price_unit) or (l.product_id and l.product_id.standard_price) or 0.00)|x}</field>
                 <field name="price_currency_id" key="name">
                     <field name="name">${(l.picking_id and l.picking_id.purchase_id and l.picking_id.purchase_id.pricelist_id.currency_id.name or l.company_id.currency_id.name or '')|x}</field>
                 </field>
-                <field name="prodlot_id">${l.prodlot_id and l.prodlot_id.name or ''}</field>
+                <field name="prodlot_id">${(l.prodlot_id and l.prodlot_id.name or '')|x}</field>
                 % if l.expired_date and l.expired_date not in (False, 'False'):
                 <field name="expired_date">${l.expired_date|n}</field>
                 % else:

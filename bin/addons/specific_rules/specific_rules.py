@@ -1739,6 +1739,17 @@ Expiry date. Only one line with same data is expected."""))
                 inv['id'], inv['name'],
             ))
 
+        if self._name == 'initial.stock.inventory':
+            line_obj = self.pool.get('initial.stock.inventory.line')
+        else:
+            line_obj = self.pool.get('stock.inventory.line')
+
+        line_inactive = line_obj.search(cr, uid, [('inventory_id', 'in', ids), ('location_id.active', '=', False)], context=context)
+        if line_inactive:
+            line_obj.write(cr, uid, line_inactive, {'comment': _('Location is inactive'), 'location_id': False, 'location_not_found': True}, context=context)
+            # should be done in 2 passes
+            line_obj.write(cr, uid, line_inactive, {'to_correct_ok': True}, context=context)
+
         return res
 
     def action_done(self, cr, uid, ids, context=None):

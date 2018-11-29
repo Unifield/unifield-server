@@ -1173,7 +1173,7 @@ endif
             <Data ss:Type="String"></Data>
           </Cell>
         % endif
-        <Cell ss:StyleID="grey_left">
+        <Cell ss:StyleID="grey_left_bold">
           <Data ss:Type="String">${"%s %s" % (aml.account_id.code, aml.account_id.name)|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">

@@ -881,6 +881,12 @@ class purchase_order(osv.osv):
 
         for po in self.browse(cr, uid, ids, context=context):
             pol_ids_to_confirm = []
+            if po.partner_type == 'esc':
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po.id), ('state', 'in', ['validated', 'validated_p']), ('stock_take_date', '=', False)], context=context)
+                if pol_ids:
+                    pol_line = self.pool.get('purchase.order.line').read(cr, uid, pol_ids, ['line_number'], context=context)
+                    raise osv.except_osv(_('Error'), _('Line %s: Date of Stock Take is required for PO to ESC') % ', '.join(['#%s'%x['line_number'] for x in pol_line]))
+
             for pol in po.order_line:
                 if pol.state not in ('cancel', 'cancel_r') and not pol.confirmed_delivery_date:
                     raise osv.except_osv(_('Error'), _('Line #%s: Delivery Confirmed Date is a mandatory field.') % pol.line_number)

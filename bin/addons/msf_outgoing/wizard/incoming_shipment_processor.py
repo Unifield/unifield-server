@@ -805,7 +805,7 @@ class stock_incoming_processor(osv.osv):
                     'integrity_status': fam.integrity_status,
                     'packing_list': fam.packing_list,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight', 'packing_list']:
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)

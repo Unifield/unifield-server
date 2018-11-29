@@ -55,6 +55,7 @@
 					<field name="not_empty" invisible="1" />
 					<field name="has_child" invisible="1" />
 					<field name="related_ir" invisible="1" />
+					<field name="other" invisible="1" />
 					<field name="can_force" invisible="1" />
 					<separator string="Parameters" colspan="4" />
 					<!--<field name="location_usage" string="Which is the usage of the location to remove ?" colspan="4" 
@@ -67,11 +68,12 @@
 							on_change="location_id_on_change(location_id)" domain="[('optional_loc', '=', True), ('usage', 'not in', ['view',])]"/>
 					<group colspan="4" col="3" attrs="{'invisible': [('error', '=', False)]}">
 						<separator string="Message" colspan="4" />
-						<field name="error_message" nolabel="1" colspan="4" />
+						<field name="error_message" nolabel="1" colspan="4" widget="full_text"/>
 						<button type="object" name="see_moves" string="See moves" attrs="{'invisible': [('move_from', '=', False),('move_to', '=', False)]}" />
 						<button type="object" name="products_in_location" string="Products in location" attrs="{'invisible': [('not_empty', '=', False)]}" />
 						<button type="object" name="children_location" string="Children locations" attrs="{'invisible': [('has_child', '=', False)]}" />
 						<button type="object" name="related_ir" string="See documents" attrs="{'invisible': [('related_ir', '=', False)]}" />
+                        <button type="object" name="open_other" string="Open documents" attrs="{'invisible': [('other', '=', False)]}" />
 					</group>
 					<separator colspan="4" string="Actions" />
 					<button special="cancel" icon="gtk-cancel" string="Cancel" />
