@@ -19,6 +19,7 @@
 #
 ##############################################################################
 import product_pricelist
+import product_mass_update_export
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

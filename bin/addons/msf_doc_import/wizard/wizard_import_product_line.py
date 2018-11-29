@@ -71,9 +71,18 @@ class wizard_import_product_line(osv.osv_memory):
         wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
+        obj_data = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
         p_mass_upd_obj = self.pool.get('product.mass.update')
         line_with_error = []
+
+        # Get the expected product creator id
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        prod_creator_id = False
+        if instance_level == 'section':
+            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+        elif instance_level == 'coordo':
+            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             p_mass_upd_id = wiz_browse.product_mass_upd_id.id
@@ -128,13 +137,6 @@ class wizard_import_product_line(osv.osv_memory):
                     percent_completed = 0
                     for row in rows:
                         line_num += 1
-
-                        # default values
-                        to_write = {
-                            'show_msg_ok': False,
-                            'msg': '',
-                            'default_code': False,
-                        }
                         error_list_line = []
 
                         col_count = len(row)
@@ -160,12 +162,17 @@ class wizard_import_product_line(osv.osv_memory):
                                 prod_ids = product_obj.search(cr, uid, [('default_code', '=ilike', row[0].data)], context=context)
                                 if prod_ids and prod_ids[0] not in product_ids:
                                     prod = product_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=['international_status'], context=context)
-                                    expected_prod_creator = p_mass_upd_obj._get_expected_prod_creator(cr, uid, [wiz_browse.id], False, False, context=context)[wiz_browse.id]
-                                    if expected_prod_creator and prod.international_status.id == expected_prod_creator:
+                                    if prod_creator_id and prod.international_status.id == prod_creator_id:
                                         product_ids.append(prod.id)
                                     else:
-                                        error_list_line.append(_('Product %s doesn\'t have the expected Product Creator ("Local" on a Coordo instance and "HQ" on a HQ instance). ')
-                                                               % (row[0].data,))
+                                        if instance_level == 'section':
+                                            error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "HQ". ')
+                                                                   % (row[0].data,))
+                                        elif instance_level == 'coordo':
+                                            error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "Local". ')
+                                                                   % (row[0].data,))
+                                        else:
+                                            error_list_line.append(_('You must be on Coordo or HQ instance to add products to the list. '))
                                 elif not prod_ids:
                                     error_list_line.append(_('Product code %s doesn\'t exist in the DB. ') % (row[0].data,))
                             else:
@@ -263,8 +270,7 @@ class wizard_import_product_line(osv.osv_memory):
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             except StopIteration:
-                return self.write(cr, uid, ids, {'message': _('The file has not row, nothing to import')})
-            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
+                return self.write(cr, uid, ids, {'message': _('The file has no row, nothing to import')})
             p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'state': 'done', 'import_in_progress': True}, context)
         if not context.get('yml_test', False):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
