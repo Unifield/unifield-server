@@ -30340,7 +30340,7 @@ msgstr "Générer le rapport"
 #. module: msf_outgoing
 #: model:ir.actions.report.xml,name:msf_outgoing.report_packing_list_xls
 msgid "Packing List (xls)"
-msgstr "Packing List (xls)"
+msgstr "Liste de Colisage (xls)"
 
 #. module: purchase
 #: help:purchase.order,invoice_method:0
@@ -54202,6 +54202,12 @@ msgstr "Exception"
 #: field:cash.request.payable,balance:0
 msgid "Balance in functional currency"
 msgstr "Solde en devise fonctionnelle"
+
+#. modules: purchase, purchase_override
+#: view:purchase.order.line.cancel.wizard:0
+#: view:purchase.order.cancel.wizard:0
+msgid "If you click on 'Cancel & Resource' button, all linked FO/IR lines will be re-sourced."
+msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes des BCT/DI seront ressourcées."
 
 #. module: export_import_lang
 #: view:msf.language.import:0
