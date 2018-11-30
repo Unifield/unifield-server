@@ -839,26 +839,34 @@ class stock_remove_location_wizard(osv.osv_memory):
         Returns all stock.picking containing a stock move not done from/to the location
         '''
         location = False
-        picking_ids = []
+        picking_ids = set()
 
         for wizard in self.browse(cr, uid, ids, context=context):
             location = wizard.location_id
 
+        sys_int_po_ids = set()
         move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['done', 'cancel']), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
         for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
-            if move.picking_id and move.picking_id.id not in picking_ids:
-                picking_ids.append(move.picking_id.id)
+            if move.picking_id.subtype == 'sysint' and move.picking_id.purchase_id:
+                sys_int_po_ids.add(move.picking_id.purchase_id.id)
+            elif move.picking_id and move.picking_id.id not in picking_ids:
+                picking_ids.add(move.picking_id.id)
 
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'vpicktree')[1]
+        if sys_int_po_ids:
+            in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', 'in', list(sys_int_po_ids)), ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in')], context=context)
+            picking_ids.update(in_ids)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'genericpick')[1]
         if location.usage == 'customer':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'domain': [('id', 'in', picking_ids)],
+                'domain': [('id', 'in', list(picking_ids))],
                 'view_id': [view_id],
                 'view_type': 'form',
-                'view_mode': 'tree,form',
+                'view_mode': 'tree',
+                'name': _('Moves'),
                 'target': 'current',
                 }
 
