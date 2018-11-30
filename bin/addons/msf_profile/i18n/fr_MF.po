@@ -103894,7 +103894,7 @@ msgstr "Barre de Progression de la MàJ de Produits en Masse"
 msgid "Product Mass Update Errors"
 msgstr "Erreurs de la MàJ de Produits en Masse"
 
-#. modules: msf_doc_import, product
+#. modules: msf_doc_import, product, product_attributes
 #: field:wizard.import.product.line,product_mass_upd_id:0
 #: model:ir.actions.act_window,name:product.previous_mass_update_action
 #: model:ir.model,name:product.model_product_mass_update
@@ -103961,7 +103961,7 @@ msgstr "\n"
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:177
 #, python-format
 msgid "Product code %s doesn't exist in the DB. "
-msgstr "Le Code Produit %s n'existe pas dans le BDD. "
+msgstr "Le Code Produit %s n'existe pas dans la BDD. "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:110
@@ -104121,3 +104121,9 @@ msgstr "ERREURS DE LA MÀJ DE PRODUITS EN MASSE"
 #: view:product.mass.update:0
 msgid "Reset Update"
 msgstr "Réinitialiser la Mise à Jour"
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:182
+#, python-format
+msgid "You can not apply an update on no products."
+msgstr "Vous ne pouvez pas appliquer de mise à jour à aucun produits."
