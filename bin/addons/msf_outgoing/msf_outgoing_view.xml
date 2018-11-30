@@ -1423,9 +1423,9 @@
 				<search string="Shipment">
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
-						<filter icon="terp-check" name="shipped" string="Shipped" domain="[('state','=','shipped')]" />
-						<filter icon="terp-dialog-close" name="closed" string="Closed" domain="[('state','=','done')]" />
-						<filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state','=','delivered')]" />
+						<filter icon="terp-check" name="shipped" string="Ready to ship" domain="[('state','=','shipped')]" />
+						<filter icon="terp-dialog-close" name="closed" string="Dispatched" domain="[('state','=','done')]" />
+						<filter icon="gtk-yes" name="delivered" string="Received" domain="[('state','=','delivered')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />

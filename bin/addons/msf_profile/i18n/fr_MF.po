@@ -35728,7 +35728,9 @@ msgstr "Stock - Fréquence"
 msgid "Created by split PO"
 msgstr "Créé à partir du fractionnement du BC"
 
-#. modules: purchase, sales_followup
+#. modules: purchase, sales_followup, msf_outgoing
+#: view:shipment:0
+#: selection:shipment,state:0
 #: field:purchase.order,shipped:0
 #: field:purchase.order,shipped_rate:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:283
@@ -97482,10 +97484,10 @@ msgid "(Keep empty to open the current situation. Adjust HH:MM:SS to 00:00:00 to
 msgstr "(Laissez vide pour ouvrir la situation actuelle. Ajustez HH:MM:SS à 00:00:00 pour filtrer toutes les ressources du jour pour la date 'Depuis' et 23:59:59 pour la date 'Jusqu'à')"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1780
+#: code:addons/msf_outgoing/msf_outgoing.py:1781
 #, python-format
-msgid "The shipment must be 'Closed'. Please check this and re-try"
-msgstr "The shipment must be 'Closed'. Please check this and re-try"
+msgid "The shipment must be 'Dispatched'. Please check this and re-try"
+msgstr "L'expédition doit être 'Expédiée'. Veuillez vérifier et ré-essayer."
 
 #. modules: hr, base, product_nomenclature, msf_partner, msf_homere_interface
 #: view:res.partner:0
@@ -100389,10 +100391,10 @@ msgstr "The location of the selected order doesn't                             m
 ""
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1722
+#: code:addons/msf_outgoing/msf_outgoing.py:1723
 #, python-format
-msgid "The state of the shipment must be 'Shipped'. Please check it and re-try."
-msgstr "The state of the shipment must be 'Shipped'. Please check it and re-try."
+msgid "The state of the shipment must be 'Ready to ship'. Please check it and re-try."
+msgstr "L'état de l'expédition doit être 'Prêt à envoyer'. Veuillez vérifier et ré-essayer."
 
 #. module: msf_processes
 #: model:ir.module.module,shortdesc:msf_processes.module_meta_information
@@ -103778,3 +103780,15 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: msf_outgoing
+#: view:shipment:0
+#: selection:shipment,state:0
+msgid "Ready to ship"
+msgstr "Prêt à être Expédié"
+
+#. module: msf_outgoing
+#: view:shipment:0
+#: selection:shipment,state:0
+msgid "Dispatched"
+msgstr "Envoyé"
