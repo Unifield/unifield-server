@@ -67908,6 +67908,7 @@ msgstr "New Mexico"
 #: field:stock.incoming.processor,move_ids:0
 #: field:stock.picking.processor,move_ids:0
 #: view:stock.reserved.products:0
+#: view:stock.picking:0
 msgid "Moves"
 msgstr "Mouvements"
 
