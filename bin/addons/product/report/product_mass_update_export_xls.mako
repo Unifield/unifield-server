@@ -89,7 +89,7 @@
 
 
 % for r in objects:
-<ss:Worksheet ss:Name="Product Mass Update Errors">
+<ss:Worksheet ss:Name="${_('Product Mass Update Errors')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product code
         <Column ss:AutoFitWidth="1" ss:Width="150.00" />
@@ -101,7 +101,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="80.00" />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">PRODUCT MASS UPDATE ERRORS</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('PRODUCT MASS UPDATE ERRORS')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row></Row>

@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+import tools
 import time
 import base64
 import threading
@@ -70,11 +71,11 @@ class product_mass_update(osv.osv):
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
         # Fields
         'active_product': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'dangerous_goods': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous goods'),
+        'dangerous_goods': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous Goods'),
         'heat_sensitive_item': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Temperature sensitive item'),
-        'single_use': fields.selection(selection=[('', ''), ('yes', 'Yes'), ('no', 'No'), ('no_know', 'tbd')], string='Single Use'),
+        'single_use': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Single Use'),
         'short_shelf_life': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Short Shelf Life'),
-        'alert_time': fields.char(string='Product Alert Time', size=32, help="The number of days after which an alert should be notified about the production lot."),
+        'alert_time': fields.char(string='Product Alert Time', size=32, help="The number of months after which an alert should be notified about the production lot."),
         'life_time': fields.char('Product Life Time', size=32, help='The number of months before a production lot may become dangerous and should not be consumed.'),
         'use_time': fields.char('Product Use Time', size=32, help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
         'procure_delay': fields.char(string='Procurement Lead Time', size=32,
@@ -82,8 +83,8 @@ class product_mass_update(osv.osv):
         'procure_method': fields.selection([('', ''), ('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
         'product_state': fields.selection([('', ''), ('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
-        'sterilized': fields.selection(selection=[('', ''), ('yes', 'Yes'), ('no', 'No'), ('no_know', 'tbd')], string='Sterile'),
-        'supply_method': fields.selection([('', ''), ('produce', 'Produce'), ('buy', 'Buy')], 'Supply method',
+        'sterilized': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
+        'supply_method': fields.selection([('', ''), ('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),
         'seller_id': fields.many2one('res.partner', 'Default Partner'),
         'property_account_income': fields.many2one('account.account', string='Income Account',
@@ -283,7 +284,7 @@ class product_mass_update(osv.osv):
                     'has_not_deactivable': True,
                     'state': 'draft',
                 }
-                self.write(cr, uid, ids[0], p_mass_upd_vals, context=context)
+                self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
             else:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
                 user = self.pool.get('res.users').browse(cr, uid, uid, context=context).name
@@ -296,9 +297,16 @@ class product_mass_update(osv.osv):
                     'log': log,
                     'state': 'done',
                 }
-                self.write(cr, uid, ids[0], p_mass_upd_vals, context=context)
+                self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
         except Exception as e:
-            self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': e}, context=context)
+            err = ''
+            if e.name:
+                err += tools.ustr(e.name) + ': '
+            if e.value:
+                err += tools.ustr(e.value)
+            if not err:
+                err = tool.ustr(e)
+            self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': err}, context=context)
         finally:
             cr.commit()
             cr.close(True)
