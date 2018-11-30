@@ -582,12 +582,27 @@ receivable, item have not been corrected, item have not been reversed and accoun
             success_move_ids.append(new_move_id)
         return success_move_line_ids, success_move_ids
 
-    def update_account_on_st_line(self, cr, uid, ids, account_id=None, context=None):
+    def _get_third_party_fields(self, third_party):
         """
-        Update the account from the statement line attached if different
+        Returns the partner_id, employee_id, transfer_journal_id corresponding to the third_party in parameter
         """
-        # Some verifications
-        if not context:
+        partner_id = False
+        employee_id = False
+        transfer_journal_id = False
+        if third_party:
+            if third_party._table_name == 'res.partner':
+                partner_id = third_party.id
+            elif third_party._table_name == 'hr.employee':
+                employee_id = third_party.id
+            elif third_party._table_name == 'account.journal':
+                transfer_journal_id = third_party.id
+        return partner_id, employee_id, transfer_journal_id
+
+    def update_st_line(self, cr, uid, ids, account_id=None, context=None):
+        """
+        Update the account of the statement line
+        """
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -595,6 +610,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             raise osv.except_osv(_('Warning'), _('No account_id given. No update on account will be done.'))
         # Prepare some values
         absl_obj = self.pool.get('account.bank.statement.line')
+        cor_vals = {'account_id': account_id}
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
             # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
@@ -607,22 +623,28 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     # US-303: only update the statement line that links to this move line
                     if st_line.cash_return_move_line_id:
                         if st_line.cash_return_move_line_id.id == ml.id:
-                            absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                            absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                             # we informs new move line that it have correct a statement line
                             self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
                             break
                     elif not st_line.from_cash_return: #US-1044: only update the account on line if the regline is not cash return!
                         #US-303: If not the case, then we inform the new move line that it has corrected a statement line
-                        absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                        absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                         self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
             # if not, this move line should have a direct link to a register line
             elif ml.statement_id and ml.corrected_st_line_id:
-                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
+                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], cor_vals, context=context)
         return True
 
-    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, context=None):
+    def correct_aml(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, new_third_party=None, context=None):
         """
-        Correct given account_move_line by only changing account
+        Corrects the G/L account and/or the Third Party of the JIs having their ids in param.
+        Generates the related REV/COR lines.
+
+        /!\ WARNING /!\
+        new_third_party is a partner_type, i.e. it can be a res.partner, hr.employee... If it is None (= no 3d party
+        passed as a parameter): no change regarding 3d Party should be made, whereas if it is False/empty/browse_null,
+        the COR line must have an empty Third Party.
         """
         # Verification
         if not context:
@@ -638,6 +660,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
         al_obj = self.pool.get('account.analytic.line')
+        wiz_obj = self.pool.get('wizard.journal.items.corrections')
         success_move_line_ids = []
 
         # New account
@@ -680,8 +703,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 not initial_al_ids and new_account and \
                     new_account.is_analytic_addicted:
                 # we check only if no distrib_id arg passed to function
-                msg = _("The line '%s' with new account '%s - %s' need an" \
-                        " analytic distribution (you may have changed account from" \
+                msg = _("The line '%s' with the new account '%s - %s' needs an" \
+                        " analytic distribution (you may have changed the account from" \
                         " one with no AD required to a new one with AD required).")
                 raise osv.except_osv(_('Error'), msg % (ml.move_id.name,
                                                         new_account.code, new_account.name, ))
@@ -711,7 +734,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for aal in self.pool.get('account.analytic.line').browse(cr, uid, aal_ids):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
-                    raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
+                    raise osv.except_osv(_('Warning'), _('You cannot change this entry since one of its accounts is '
+                                                         'used in a closed financing contract.'))
             # (US-815) use the right period for December HQ Entries
             period_id_dec_hq_entry = False
             if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
@@ -765,13 +789,31 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 cor_vals['analytic_distribution_id'] = distrib_id
             elif ml.analytic_distribution_id:
                 cor_vals['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
+            if new_third_party is not None:  # if None: no correction on Third Party should be made
+                new_partner_id, new_employee_id, new_transfer_journal_id = self._get_third_party_fields(new_third_party)
+                cor_vals.update({
+                    'partner_id': new_partner_id,
+                    'employee_id': new_employee_id,
+                    'transfer_journal_id': new_transfer_journal_id,
+                })
+                # if no Third Party: reset partner_txt (this field is automatically updated only when there is one)
+                if not new_partner_id and not new_employee_id and not new_transfer_journal_id:
+                    cor_vals['partner_txt'] = ''
+            # set the partner_type_mandatory tag
+            third_required = False
+            if new_account.type_for_register in ['advance', 'down_payment', 'payroll', 'transfer', 'transfer_same']:
+                third_required = True
+            cor_vals['partner_type_mandatory'] = third_required
             self.write(cr, uid, [correction_line_id], cor_vals, context=context, check=False, update_check=False)
+            # check the account compatibility with the Third Party on the COR line created
+            correction_line = self.browse(cr, uid, correction_line_id, context=context)
+            wiz_obj._check_account_partner_compatibility(cr, uid, new_account, correction_line, context)
             # UF-2231: Remove the update to the statement line
             # Update register line if exists
 
             # UFTP-119: Reverted a code that has been commented out in UF-2231 without explanation, and which caused the problem of updating back the Reg line
             if ml.statement_id:
-                self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
+                self.update_st_line(cr, uid, [ml.id], account_id=new_account_id, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move
@@ -804,101 +846,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.corrected_upstream_marker(cr, uid, [ml.id], context=context)
         return success_move_line_ids
 
-    def correct_partner_id(self, cr, uid, ids, date=None, partner_id=None, context=None):
+    def correct_account(self, cr, uid, aml_ids, date=None, new_account_id=None, distrib_id=False, context=None):
         """
-        Correct given entries in order to change its partner_id:
-         - do a reverse line for partner line
-         - do a correction line for new partner
+        Corrects the G/L account (only) of the amls
         """
-        # Verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not date:
-            date = strftime('%Y-%m-%d')
-        if not partner_id:
-            raise osv.except_osv(_('Error'), _('No new partner_id given!'))
-        # Prepare some values
-        j_obj = self.pool.get('account.journal')
-        move_obj = self.pool.get('account.move')
-        success_move_line_ids = []
-        # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-        # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
-        # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-                                                            context=context, limit=1, order='date_start, name')
-        # Correct all given move lines
-        for ml in self.browse(cr, uid, ids, context=context):
-            # Search the move line (in the move) to be changed (account that have a payable OR a receivable account)
-            move_line = None
-            for line in ml.move_id.line_id:
-                if line.account_id.type == 'payable' or line.account_id.type == 'receivable':
-                    move_line = line
-                    break
-            # If no move line found or move line has been corrected, continue process
-            if not move_line or move_line.corrected:
-                continue
-            # Retrieve journal. If account is inkind, so use extra-accounting journal, otherwise use correction journal
-            journal_id = j_corr_id
-            if ml.account_id.type_for_register == 'donation':
-                journal_id = j_extra_id
-                if not journal_id:
-                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
-            if not journal_id:
-                raise osv.except_osv(_('Error'), _('No correction journal found!'))
-            # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
-            # Search the new attached account_id
-            partner_type = 'res.partner,%s' % partner_id
-            account_vals = self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, [], partner_type, move_line.credit,
-                                                                                              move_line.debit, context=context)
-            if not 'value' in account_vals and not account_vals.get('value').get('account_id', False):
-                raise osv.except_osv(_('Error'), _('No account found for this partner!'))
-            account_id = account_vals.get('value').get('account_id')
-            # Prepare default value for new line
-            vals = {
-                'move_id': move_id,
-                'date': date,
-                'journal_id': journal_id,
-                'period_id': period_ids[0],
-                'source_date': ml.date,
-            }
-            # Copy the line
-            rev_line_id = self.copy(cr, uid, move_line.id, vals, context=context)
-            correction_line_id = self.copy(cr, uid, move_line.id, vals, context=context)
-            # Do the reverse
-            name = self.join_without_redundancy(move_line.name, 'REV')
-            amt = -1 * move_line.amount_currency
-            vals.update({
-                'debit': move_line.credit,
-                'credit': move_line.debit,
-                'amount_currency': amt,
-                'journal_id': journal_id,
-                'name': name,
-                'reversal_line_id': move_line.id,
-                'account_id': move_line.account_id.id,
-            })
-            self.write(cr, uid, [rev_line_id], vals, context=context)
-            # Do the correction line
-            name = self.join_without_redundancy(move_line.name, 'COR')
-            self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': journal_id, 'corrected_line_id': move_line.id,
-                                                       'account_id': account_id, 'partner_id': partner_id, 'have_an_historic': True,}, context=context)
-            # Inform old line that it have been corrected
-            self.write(cr, uid, [move_line.id], {'corrected': True, 'have_an_historic': True,}, context=context)
-            # Post the move
-            move_obj.post(cr, uid, [move_id], context=context)
-            # Reconcile the line with its reversal
-            self.reconcile_partial(cr, uid, [line.id, rev_line_id], context=context)
-            # Add this line to succeded lines
-            success_move_line_ids.append(move_line.id)
-        return success_move_line_ids
+        return self.correct_aml(cr, uid, aml_ids, date=date, new_account_id=new_account_id, distrib_id=distrib_id, context=context)
 
     def corrected_upstream_marker(self, cr, uid, ids, context=None):
         """
@@ -930,7 +882,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ji_ids, (int, long)):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
-        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
+        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id', 'account_id'], context=context):
             # check that the account can be corrected
             if ji.account_id.is_not_hq_correctible:
                 raise osv.except_osv(_('Error'), _('The account "%s - %s" is set as "Prevent correction on '

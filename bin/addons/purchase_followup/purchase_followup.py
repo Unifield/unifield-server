@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-
+from tools.misc import float_uom_to_str
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
@@ -125,7 +125,7 @@ class purchase_order_followup(osv.osv_memory):
                                      'move_state': 'No move',
                                      'line_name': line.line_number,
                                      'line_product_id': line.product_id.id,
-                                     'line_product_qty': line.product_qty,
+                                     'line_product_qty': float_uom_to_str(line.product_qty, line.product_uom),
                                      'line_uom_id': line.product_uom.id,
                                      'line_confirmed_date': line.confirmed_delivery_date,
                                      'line_shipped_rate': 0.0,
@@ -171,12 +171,12 @@ class purchase_order_followup(osv.osv_memory):
                                          'move_state': self._get_move_state(cr, uid, move.state, context=context),
                                          'line_name': line.line_number,
                                          'line_product_id': first_move and line.product_id.id or False,
-                                         'line_product_qty': first_move and line.product_qty or False,
+                                         'line_product_qty': first_move and float_uom_to_str(line.product_qty, line.product_uom) or False,
                                          'line_uom_id': first_move and line.product_uom.id or False,
                                          'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
                                          'line_shipped_rate': line_shipped_rate,
                                          'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
-                                         'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
+                                         'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and float_uom_to_str(move.product_qty, move.product_uom or line.product_uom) or '',
                                          'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
                                          'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date[:10] or False,
                                          'return_move': move.type == 'out',

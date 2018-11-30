@@ -24,7 +24,6 @@
 # cr.execute('delete from wkf_triggers where model=%s and res_id=%s', (res_type,res_id))
 #
 
-import netsvc
 import instance
 
 import wkf_expr
@@ -64,7 +63,7 @@ def process(cr, workitem, ident, signal=None, force_running=False, stack=None):
         triggers = triggers and not ok
 
     if triggers:
-        cr.execute("select * from wkf_transition where act_from=%s and coalesce(trigger_model,'') != ''", (workitem['act_id'],))
+        cr.execute("select * from wkf_transition where act_from=%s and coalesce(trigger_model,'') != '' order by sequence,id", (workitem['act_id'],))
         alltrans = cr.dictfetchall()
         for trans in alltrans:
             ids = wkf_expr._eval_expr(cr, ident, workitem,trans['trigger_expr_id'])
@@ -148,7 +147,7 @@ def _execute(cr, workitem, activity, ident, stack):
 def _split_test(cr, workitem, split_mode, ident, signal=None, stack=None):
     if stack is None:
         raise 'Error !!!'
-    cr.execute('select * from wkf_transition where act_from=%s', (workitem['act_id'],))
+    cr.execute('select * from wkf_transition where act_from=%s order by sequence,id', (workitem['act_id'],))
     test = False
     transitions = []
     alltrans = cr.dictfetchall()
@@ -183,7 +182,7 @@ def _join_test(cr, trans_id, inst_id, ident, stack):
         create(cr,[activity], inst_id, ident, stack)
         cr.execute('delete from wkf_witm_trans where inst_id=%s and trans_id=%s', (inst_id,trans_id))
     else:
-        cr.execute('select id from wkf_transition where act_to=%s', (activity['id'],))
+        cr.execute('select id from wkf_transition where act_to=%s order by sequence,id', (activity['id'],))
         trans_ids = cr.fetchall()
         ok = True
         for (id,) in trans_ids:

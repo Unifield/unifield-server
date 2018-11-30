@@ -362,6 +362,7 @@
                     <field name="product_id"/>
                     <field name="stock_available"/>
                     <field name="date"/>
+                    <field name="uom_id" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -509,7 +510,7 @@
                         <field name="company_id" groups="base.group_multi_company" widget="selection" colspan="4"/>
                         <field name="icon" groups="base.group_extended" colspan="4"/>
                         <field name="scrap_location" groups="base.group_extended"/>
-                        <field name="active" groups="base.group_extended"/>
+                        <field name="active" groups="base.group_extended" readonly="1" />
                     </group>
                     <group col="2" colspan="2" groups="base.group_extended">
                         <separator string="Chained Locations" colspan="2"/>

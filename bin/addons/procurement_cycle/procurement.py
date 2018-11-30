@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -61,7 +61,7 @@ class stock_warehouse_order_cycle(osv.osv):
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
             for proc in self.browse(cr, uid, ids):
                 if not proc.frequence_id:
-                    raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !')) 
+                    raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !'))
 
         return super(stock_warehouse_order_cycle, self).write(cr, uid, ids, data, context=context)
 
@@ -124,10 +124,10 @@ class stock_warehouse_order_cycle(osv.osv):
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
-        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True, 
+        'location_id': fields.many2one('stock.location', 'Location', ondelete="cascade", required=True,
                                        domain="[('is_replenishment', '=', warehouse_id)]",
                                        help='Location where the computation is made'),
-        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char', 
+        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char',
                                           help='Define the time between two replenishments'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequency', help='It\'s the time between two replenishments'),
         'product_ids': fields.one2many('stock.warehouse.order.cycle.line', 'order_cycle_id', string='Products'),
@@ -141,21 +141,21 @@ Time used to compute the quantity of products to order according to the monthly 
         'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time', help='In months. \
 Define the time while the stock is not negative but should be replenished. \
 Time used to compute the quantity of products to order according to the monthly consumption.'),
-        'past_consumption': fields.boolean(string='Average monthly consumption', 
+        'past_consumption': fields.boolean(string='Average monthly consumption',
                                            help='If checked, the system will used the average monthly consumption to compute the quantity to order'),
-        'consumption_period_from': fields.date(string='Period of calculation', 
+        'consumption_period_from': fields.date(string='Period of calculation',
                                                help='This period is a number of past months the system has to consider for AMC calculation.'\
                                                'By default this value is equal to the order coverage of the rule.'),
         'consumption_period_to': fields.date(string='-'),
-        'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption', 
+        'reviewed_consumption': fields.boolean(string='Forecasted monthly consumption',
                                                help='If checked, the system will used the forecasted monthly consumption to compute the quantity to order'),
         'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption',
                                            help='If not 0.00, the system will used the entered monthly consumption to compute the quantity to order'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
-                                    help='As this date is not in the past, no new replenishment will be run', 
+                                    help='As this date is not in the past, no new replenishment will be run',
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context=None: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
-        'product_line_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids, 
+        'product_line_ids': fields.function(_get_product_ids, fnct_search=_src_product_ids,
                                             type='many2many', relation='product.product', method=True, string='Products'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
@@ -211,7 +211,7 @@ Time used to compute the quantity of products to order according to the monthly 
             warn = {'title': 'Issue on date',
                     'message': 'The start date must be younger than end date'}
 
-        # Set the from date to the first day of the month            
+        # Set the from date to the first day of the month
         if from_date:
             val.update({'consumption_period_from': (DateFrom(from_date) + RelativeDate(day=1)).strftime('%Y-%m-%d')})
 
@@ -263,11 +263,11 @@ Time used to compute the quantity of products to order according to the monthly 
             for product in product_obj.browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already in the list
                 if product.type not in ('consu', 'service', 'service_recep') and \
-                        not line_obj.search(cr, uid, [('order_cycle_id', '=', report.id), 
+                        not line_obj.search(cr, uid, [('order_cycle_id', '=', report.id),
                                                       ('product_id', '=', product.id),
                                                       ('uom_id', '=', product.uom_id.id)], context=context):
                     line_obj.create(cr, uid, {'order_cycle_id': report.id,
-                                              'product_id': product.id, 
+                                              'product_id': product.id,
                                               'safety_stock': 0.00,
                                               'uom_id': product.uom_id.id}, context=context)
 
@@ -296,7 +296,7 @@ Time used to compute the quantity of products to order according to the monthly 
             v.update({'past_consumption': 0, 'manual_consumption': 0.00})
             v.update({'consumption_period_from': False, 'consumption_period_to': False})
         elif field == 'review' and not reviewed_consumption:
-            v.update({'past_consumption': 1, 'manual_consumption': 0.00, 
+            v.update({'past_consumption': 1, 'manual_consumption': 0.00,
                       'consumption_period_from': dates.get('value', {}).get('consumption_period_from'),
                       'consumption_period_to': dates.get('value', {}).get('consumption_period_to'),})
         elif field == 'manual' and manual_consumption < 0.00:
@@ -344,7 +344,7 @@ Time used to compute the quantity of products to order according to the monthly 
                 self.write(cr, uid, proc.id, {'frequence_id': frequence_id}, context=context)
                 res_ok = True
 
-        context.update({'active_id': res_id, 
+        context.update({'active_id': res_id,
                         'active_model': 'stock.warehouse.order.cycle',
                         'res_ok': res_ok})
 
@@ -470,12 +470,12 @@ class stock_warehouse_order_cycle_line(osv.osv):
         'product_id': fields.many2one('product.product', required=True, string='Product'),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'order_cycle_id': fields.many2one('stock.warehouse.order.cycle', string='Order cycle', required=True, ondelete='cascade'),
-        'safety_stock': fields.float(digits=(16,2), string='Safety stock (Qty)', required=True),
+        'safety_stock': fields.float(digits=(16,2), string='Safety stock (Qty)', required=True, related_uom='uom_id'),
         'consumption': fields.function(_get_data, method=True, type='float', digits=(16,3), string='AMC/FMC', multi='data', readonly=True),
-        'real_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Real stock', multi='data', readonly=True),
-        'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True),
-        'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True),
-        'qty_to_order': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Qty. to order', multi='data', readonly=True),
+        'real_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Real stock', multi='data', readonly=True, related_uom='uom_id'),
+        'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True, related_uom='uom_id'),
+        'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True, related_uom='uom_id'),
+        'qty_to_order': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Qty. to order', multi='data', readonly=True, related_uom='uom_id'),
         'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
         'required_date': fields.function(_get_data, method=True, type='date', string='Required by date', multi='data', readonly=True),
     }
@@ -489,7 +489,7 @@ class stock_warehouse_order_cycle_line(osv.osv):
         Check if the product is not already in the current rule
         '''
         for line in self.browse(cr, uid, ids, context=context):
-            lines = self.search(cr, uid, [('id', '!=', line.id), 
+            lines = self.search(cr, uid, [('id', '!=', line.id),
                                           ('product_id', '=', line.product_id.id),
                                           ('order_cycle_id', '=', line.order_cycle_id.id)], context=context)
             if lines:
