@@ -757,7 +757,7 @@ class stock_picking(osv.osv):
         picking_obj = self.read(cr, uid, id, fields_to_read, context=context)
         move_obj = self.pool.get('stock.move')
 
-        if not context.get('keep_prodlot') and picking_obj.get('move_lines'):
+        if not context.get('keep_prodlot') and picking_obj.get('move_lines') and not context.get('allow_copy'):
             move_obj._check_locations_active(cr, uid, picking_obj['move_lines'], context=context)
         if ('name' not in default) or (picking_obj['name'] == '/'):
             seq_obj_name =  ''.join(('stock.picking.', picking_obj['type']))
