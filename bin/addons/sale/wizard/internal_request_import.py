@@ -41,7 +41,7 @@ LINES_COLUMNS = [
     (1, _('Product Code'), 'optionnal'),
     (2, _('Product Description'), 'optionnal'),
     (3, _('Quantity'), 'mandatory'),
-    (4, _('Cost Price'), 'optionnal'),
+    (4, _('Unit Price'), 'optionnal'),
     (5, _('UoM'), 'mandatory'),
     (6, _('Currency'), 'optionnal'),
     (7, _('Comment'), 'optionnal'),
@@ -660,6 +660,7 @@ class internal_request_import(osv.osv):
                             if cost_price > 0:
                                 line_data.update({'imp_cost_price': cost_price})
                             else:
+                                line_data.update({'imp_cost_price': product['standard_price']})
                                 line_errors += _('Price \'%s\' must be above 0, default cost price has been used. ') \
                                     % (cost_price,)
                         except:
@@ -683,7 +684,7 @@ class internal_request_import(osv.osv):
                                 line_errors += _('Price \'%s\' must be above 0. ') % (cost_price,)
                         except:
                             red = True
-                            line_errors += _('Cost Price must be a number. ')
+                            line_errors += _('Unit Price must be a number. ')
                         if uom_ids:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
@@ -845,6 +846,8 @@ class internal_request_import(osv.osv):
                                 'product_uom_qty': line.imp_qty or 0.00,
                                 'comment': line.imp_comment or '',
                                 'stock_take_date': line.imp_stock_take_date or False,
+                                'cost_price': line.imp_cost_price or 0.00,
+                                'price_unit': line.imp_cost_price or 0.00,
                             }
                             if line.imp_uom_id:
                                 line_vals.update({'product_uom': line.imp_uom_id.id})
@@ -853,8 +856,6 @@ class internal_request_import(osv.osv):
                             else:  # create IR line
                                 line_vals.update({
                                     'order_id': wiz.order_id.id,
-                                    'cost_price': line.imp_cost_price or 0.00,
-                                    'price_unit': line.imp_cost_price or 0.00,
                                 })
                                 sol_obj.create(cr, uid, line_vals, context=context)
                 else:  # Create IR
@@ -945,7 +946,7 @@ class internal_request_import_line(osv.osv):
         'in_product': fields.char(string='Product', size=64, readonly=True),
         'in_product_desc': fields.char(string='Product Description', size=128, readonly=True),
         'in_qty': fields.char(string='Quantity', size=64, readonly=True),
-        'in_cost_price': fields.char(string='Cost Price', size=64, readonly=True),
+        'in_cost_price': fields.char(string='Unit Price', size=64, readonly=True),
         'in_uom': fields.char(string='UoM', size=64, readonly=True),
         'in_comment': fields.char(string='Comment', size=256, readonly=True),
         'in_stock_take_date': fields.char(string='Date of Stock Take', size=64, readonly=True),
@@ -953,7 +954,7 @@ class internal_request_import_line(osv.osv):
         'imp_line_number': fields.integer(string='Line Number'),
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_qty': fields.float(digits=(16, 2), string='Quantity', readonly=True),
-        'imp_cost_price': fields.float(digits=(16, 2), string='Cost Price', readonly=True),
+        'imp_cost_price': fields.float(digits=(16, 2), string='Unit Price', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_comment': fields.char(size=256, string='Comment', readonly=True),
         'imp_stock_take_date': fields.date(string='Date of Stock Take', readonly=True),
