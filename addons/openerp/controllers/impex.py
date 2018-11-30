@@ -379,7 +379,7 @@ class ImpEx(SecuredController):
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
 
-        view_name = ctx.get('_terp_view_name', '')
+        view_name = ctx.get('_terp_view_name', '') or ctx.get('_terp_view_name_for_export', '')
 
         ids = None
         report_path = None
