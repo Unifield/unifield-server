@@ -1541,6 +1541,31 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return new_rfq_id
 
 
+    def check_location_integrity(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        med_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        stock_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.order_id.location_requestor_id.id in (med_loc_id, log_loc_id) and sourcing_line.location_id.id == stock_loc_id:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('You cannot source with location \'Stock\' if the destination location of the Internal request is LOG or MED')
+                )
+            elif sourcing_line.order_id.location_requestor_id.id == sourcing_line.location_id.id:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('You cannot choose a source location which is the destination location of the Internal request')
+                )
+
+        return True
+
+
     def source_line(self, cr, uid, ids, context=None):
         """
         Source a sale.order.line
@@ -1558,6 +1583,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
+                    self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
+
                     if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                         # In case of loan, create the PO for later goods return:
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
