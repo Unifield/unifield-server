@@ -510,9 +510,10 @@ class msf_import_export(osv.osv_memory):
                 else:
                     column_name = fields_get_dict[model][first_part]['string']
 
-            if column_name.upper() != header_columns[field_index].upper():
+            file_column_name = header_columns[field_index] or ''
+            if column_name.upper() != file_column_name.upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
-                                       % (self.excel_col(field_index+1), header_columns[field_index], column_name))
+                                       % (self.excel_col(field_index+1), file_column_name, column_name))
         if missing_columns and model not in MODEL_HEADER_NOT_CHECKED:
             raise osv.except_osv(_('Info'), _('The following columns '
                                               'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))

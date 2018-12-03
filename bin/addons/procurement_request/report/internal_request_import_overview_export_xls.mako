@@ -218,7 +218,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>

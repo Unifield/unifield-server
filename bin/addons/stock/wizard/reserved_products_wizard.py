@@ -47,45 +47,45 @@ class reserved_products_wizard(osv.osv):
         lot_obj = self.pool.get('stock.production.lot')
         pick_obj = self.pool.get('stock.picking')
         ship_obj = self.pool.get('shipment')
-        partner_obj = self.pool.get('res.partner')
+        so_line_obj = self.pool.get('sale.order.line')
 
         wizard = self.browse(cr, uid, ids[0], context=context)
         loc_id = wizard.location_id and wizard.location_id.id or False
-        loc_name = wizard.location_id and wizard.location_id.name or False
+        header_loc_name = wizard.location_id and wizard.location_id.name or False
         prod_id = wizard.product_id and wizard.product_id.id or False
-        prod_name = wizard.product_id and wizard.product_id.name or False
+        header_prod_name = wizard.product_id and wizard.product_id.default_code or False
 
         if loc_id and prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
                     AND location_id = %s AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
                 ORDER BY location_id, product_id
             ''', (loc_id, prod_id))
         elif loc_id and not prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND location_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
                 ORDER BY location_id, product_id
             ''', (loc_id,))
         elif not loc_id and prod_id:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out') AND product_id = %s
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
                 ORDER BY location_id, product_id
             ''', (prod_id,))
         else:
             cr.execute('''
-                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, partner_id, origin
+                SELECT location_id, product_id, product_uom, product_qty, prodlot_id, picking_id, pick_shipment_id, sale_line_id
                 FROM stock_move
                 WHERE state = 'assigned' AND product_qty > 0 AND type in ('internal', 'out')
-                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, partner_id, origin, product_qty
+                GROUP BY location_id, product_id, prodlot_id, picking_id, pick_shipment_id, product_uom, sale_line_id, product_qty
                 ORDER BY location_id, product_id
             ''')
 
@@ -103,7 +103,7 @@ class reserved_products_wizard(osv.osv):
                                                  context=context) or False
             pick_name = pick_obj.browse(cr, uid, line[5], fields_to_fetch=['name'], context=context).name
             ship = ship_obj.browse(cr, uid, line[6], fields_to_fetch=['name'], context=context)
-            partner_name = partner_obj.browse(cr, uid, line[7], fields_to_fetch=['name'], context=context).name
+            sale = so_line_obj.browse(cr, uid, line[7], fields_to_fetch=['order_id'], context=context).order_id
             docs_name = pick_name or ''
             if ship:
                 docs_name += pick_name and '/' + ship.name or ship.name
@@ -117,8 +117,8 @@ class reserved_products_wizard(osv.osv):
                 'exp_date': prodlot and prodlot.life_date or '',
                 'prod_qty': line[3],
                 'documents': docs_name,
-                'partner_name': partner_name,
-                'origin': line[8],
+                'partner_name': sale and not sale.procurement_request and sale.partner_id and sale.partner_id.name or '',
+                'origin': sale and sale.procurement_request and sale.location_requestor_id and sale.location_requestor_id.name or '',
                 'sum_qty': 0.00,
             })
             current_tuple = (loc_name, product and product.id or False, prodlot and prodlot.name or False)
@@ -148,7 +148,7 @@ class reserved_products_wizard(osv.osv):
             if i == len(lines) - 1:
                 lines_data.insert(index, line_sum)
 
-        return {'loc_name': loc_name, 'prod_name': prod_name, 'lines_data': lines_data}
+        return {'loc_name': header_loc_name, 'prod_name': header_prod_name, 'lines_data': lines_data}
 
     def export_reserved_products_report_xls(self, cr, uid, ids, context=None):
         if context is None:
