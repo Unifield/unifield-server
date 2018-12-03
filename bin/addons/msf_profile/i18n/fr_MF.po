@@ -103898,9 +103898,9 @@ msgstr "Erreurs de la MàJ de Produits en Masse"
 #: field:wizard.import.product.line,product_mass_upd_id:0
 #: model:ir.actions.act_window,name:product.previous_mass_update_action
 #: model:ir.model,name:product.model_product_mass_update
-#: model:ir.ui.menu,name:product.menu_import_request
 #: view:product.mass.update:0
 #: field:product.mass.update.progressbar,p_mass_upd_id:0
+#: model:ir.ui.menu,name:product_attributes.menu_import_request
 msgid "Product Mass Update"
 msgstr "MàJ de Produits en Masse"
 

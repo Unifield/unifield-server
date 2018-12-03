@@ -29,6 +29,7 @@ import pooler
 from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_doc_import.wizard import COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT as columns_header_for_product_line_import
 from msf_doc_import.wizard import COLUMNS_FOR_PRODUCT_LINE_IMPORT as columns_for_product_line_import
 
 
@@ -322,7 +323,7 @@ class product_mass_update(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = [(_(f[0]), f[1]) for f in columns_for_product_line_import]
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_product_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.product.line').create(cr, uid, {
