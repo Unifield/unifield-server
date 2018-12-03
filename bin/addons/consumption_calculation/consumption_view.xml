@@ -183,7 +183,8 @@
         <menuitem
             id="consumption_reports_menu"
             action="action_real_average_consumption"
-            parent="warehouse_consumption_menu" />
+            parent="stock.menu_stock_warehouse_mgmt"
+            sequence="3"/>
           
         <record id="monthly_review_consumption_form_view" model="ir.ui.view">
             <field name="name">monthly.review.consumption.form.view</field>
