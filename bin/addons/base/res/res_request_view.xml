@@ -10,6 +10,7 @@
             <field name="arch" type="xml">
                 <tree string="Requests" colors="blue:state in ('waiting');gray:state in ('closed')">
                     <field name="create_date"/>
+                    <field name="import_name"/>
                     <field name="act_from"/>
                     <field name="act_to"/>
                     <field name="name"/>

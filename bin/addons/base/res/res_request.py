@@ -74,7 +74,8 @@ class res_request(osv.osv):
         'ref_doc1':fields.reference('Document Ref 1', selection=_links_get, size=128, states={'closed':[('readonly',True)]}),
         'ref_doc2':fields.reference('Document Ref 2', selection=_links_get, size=128, states={'closed':[('readonly',True)]}),
         'state': fields.selection([('draft','draft'),('waiting','waiting'),('active','active'),('closed','closed')], 'State', required=True, readonly=True),
-        'history': fields.one2many('res.request.history','req_id', 'History')
+        'history': fields.one2many('res.request.history','req_id', 'History'),
+        'import_name': fields.char('Import name', size=512),
     }
     _defaults = {
         'act_from': lambda obj,cr,uid,context={}: uid,
