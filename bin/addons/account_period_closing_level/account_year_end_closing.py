@@ -186,6 +186,7 @@ class account_year_end_closing(osv.osv):
                 ci_ids = mi_obj.search(cr, uid, [
                     ('parent_id', '=', instance_id.id),
                     ('level', '=', 'coordo'),
+                    ('state', '!=', 'inactive'),
                 ], context=context)
                 if ci_ids:
                     afs_obj = self.pool.get("account.fiscalyear.state")

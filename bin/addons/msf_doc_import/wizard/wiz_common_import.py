@@ -330,6 +330,7 @@ class product_product(osv.osv):
             type='float',
             string='Qty',
             store=False,
+            related_uom='uom_id',
         ),
     }
 
@@ -344,7 +345,11 @@ class product_product(osv.osv):
                 'title': _('Warning'),
                 'message': _('You can not set a negative quantity'),
             }
-        return res
+            return res
+        if import_product_qty:
+            uom = self.read(cr, uid, ids, ['uom_id'], context=context)[0]['uom_id'][0]
+            return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, import_product_qty, ['import_product_qty'], context=context)
+        return {}
 
 product_product()
 

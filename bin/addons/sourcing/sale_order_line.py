@@ -589,6 +589,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
             multi='stock_qty',
+            related_uom='product_uom',
         ),
         'virtual_stock': fields.function(
             _getVirtualStock, method=True,
@@ -596,6 +597,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='Virtual Stock',
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
+            related_uom='product_uom',
             multi='stock_qty',
         ),
         'available_stock': fields.function(
@@ -604,6 +606,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             type='float',
             string='Available Stock',
             digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
         ),
         # Fields used for export
@@ -1647,15 +1650,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
                             'date_planned': sourcing_line.date_planned,
                             'stock_take_date': sourcing_line.stock_take_date or False,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id
                         }
                         if not sourcing_line.product_id:
                             pol_values['name'] = sourcing_line.comment
-                        if sourcing_line.order_id.procurement_request:
-                            pol_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                         self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
                         self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
@@ -1708,13 +1708,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'linked_sol_id': sourcing_line.id,
                             'analytic_distribution_id': anal_dist,
                             'link_so_id': sourcing_line.order_id.id,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
                         }
-                        if sourcing_line.order_id.procurement_request:
-                            rfq_line_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
                         self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
@@ -1737,13 +1734,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'tender_id': tender_to_use,
                             'sale_order_line_id': sourcing_line.id,
                             'location_id': proc_location_id,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
                         }
-                        if sourcing_line.order_id.procurement_request:
-                            tender_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('tender.line').create(cr, uid, tender_values, context=context)
                     else:
                         raise osv.except_osv(_('Error'), _('Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool') % (sourcing_line.line_number, sourcing_line.order_id.name))

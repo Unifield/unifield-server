@@ -15,9 +15,6 @@
 "access_res_widget_user_user_all","res_widget_user_user all","res.widget.user",1,0,0,0,
 "access_res_log_user_all","res_log_user all","res.log",1,0,0,0,
 "access_ir_ui_menu_user_all","ir_ui_menu_user all","ir.ui.menu",1,0,0,0,
-"access_sync_client_register_entity_user_all","sync_client_register_entity_user all","sync.client.register_entity",1,1,1,1,"sync_common.sync_read_group"
-"access_sync_client_update_entity_user_all","sync_client_update_entity_user all","sync.client.update_entity",1,1,1,1,"sync_common.sync_read_group"
-"access_sync_client_view_entity_id_user_all","sync_client_view_entity_id_user all","sync.client.view_entity_id",1,1,1,1,"sync_common.sync_read_group"
 "access_res_company_user_all","res_company_user all","res.company",1,0,0,0,
 "access_ir_actions_act_window_view_user_all","ir_actions_act_window_view_user all","ir.actions.act_window.view",1,0,0,0,
 "access_ir_filters_user_all","ir_filters_user all","ir.filters",1,0,0,0,

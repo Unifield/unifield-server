@@ -510,7 +510,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'object': 'account.move.line',
             },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance',
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
                             'Closing balance', 'Currency'],
                 'filename': liquidity_balance_filename,
                 'key': 'liquidity',
@@ -520,7 +520,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'fnct_params': context,
             },
             {
-                'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Opening balance', 'Calculated balance',
+                'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Starting balance', 'Calculated balance',
                             'Closing balance', 'Booking Currency'],
                 'filename': account_balance_filename,
                 'key': 'account_balances_per_currency',

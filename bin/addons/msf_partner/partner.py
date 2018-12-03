@@ -406,25 +406,9 @@ class res_partner(osv.osv):
 
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
-        cur =  bro and bro.currency_id and bro.currency_id.id
-
-        po_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist_purchase'))
-        fo_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist'))
 
         if res in ids:
             for obj in self.browse(cr, uid, [res], context=context):
-
-                if context.get('from_setup') and bro.second_time and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
-
-                if context.get('from_setup') and bro.second_time and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
 
                 if obj.customer:
                     raise osv.except_osv(_('Warning !'), _('This partner can not be checked as customer'))
@@ -511,7 +495,7 @@ class res_partner(osv.osv):
                                            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
                                            context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('rfq_state', 'not in', ['done', 'cancel'])],
                                       context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
                                    [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
@@ -649,6 +633,22 @@ class res_partner(osv.osv):
                     payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
                     raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
 
+    def check_same_pricelist(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name'], context=context):
+            if x.property_product_pricelist_purchase and x.property_product_pricelist and x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
+                raise osv.except_osv(_('Warning'),
+                                     _('Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same') % (x.name, x.property_product_pricelist_purchase.currency_id.name, x.property_product_pricelist.currency_id.name)
+                                     )
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -659,8 +659,11 @@ class res_partner(osv.osv):
             context = {}
 
         #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
-        if context.get('sync_update_execution', False) and 'active' in vals:
-            del vals['active']
+        if context.get('sync_update_execution', False):
+            if 'active' in vals:
+                del vals['active']
+            if 'po_by_project' in vals:
+                del vals['po_by_project']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -686,7 +689,17 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        return super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        self.check_same_pricelist(cr, uid, ids, context=context)
+        return ret
+
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
+        '''
+            bo_py_poject field must not trigger an sync update
+        '''
+        if touched_fields and 'po_by_project' in touched_fields:
+            touched_fields = [x for x in touched_fields if x!='po_by_project']
+        return super(res_partner, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
         fields_to_create = vals.keys()
@@ -721,7 +734,7 @@ class res_partner(osv.osv):
 
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
         self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
-
+        self.check_same_pricelist(cr, uid, [new_id], context=context)
         # US-3945: checking user's rights
         if not context.get('sync_update_execution') and uid != 1:
             instance_level = _get_instance_level(self, cr, uid)

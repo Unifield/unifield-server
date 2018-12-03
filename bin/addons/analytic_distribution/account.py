@@ -122,7 +122,7 @@ class account_destination_summary(osv.osv):
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),
     }
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         fields = super(account_destination_summary, self).fields_get(cr, uid, fields, context)
         dest_obj = self.pool.get('account.analytic.account')
         destination_ids = dest_obj.search(cr, uid, [('type', '!=', 'view'), ('category', '=', 'DEST'), ('parent_id', '!=', False)])
