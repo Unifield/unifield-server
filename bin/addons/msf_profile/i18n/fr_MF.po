@@ -103778,3 +103778,9 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:64
+#, python-format
+msgid "You cannot have the sourcing location and destination location with the same location."
+msgstr "Vous ne pouvez pas sélectionner un emplacement source et de destination qui soit le même."

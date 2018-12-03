@@ -35,7 +35,7 @@ class manage_expired_stock(osv.osv):
             string='Location',
             help="The requested Location",
             required=True,
-            domain=[('quarantine_location', '=', False), ('destruction_location', '=', False), ('usage', '!=', 'view')],
+            domain=['&', '|', ('quarantine_location', '=', True), ('destruction_location', '=', False), ('usage', '!=', 'view')],
         ),
         'dest_loc_id': fields.many2one(
             'stock.location',
@@ -57,6 +57,13 @@ class manage_expired_stock(osv.osv):
         lot_obj = self.pool.get('stock.production.lot')
 
         wizard = self.browse(cr, uid, ids[0], context=context)
+
+        if wizard.location_id.id == wizard.dest_loc_id.id:
+            raise osv.except_osv(
+                _('Error'),
+                _('You cannot have the sourcing location and destination location with the same location.')
+            )
+
         lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', date.today())])
 
         dest_loc_id = wizard.dest_loc_id.id
