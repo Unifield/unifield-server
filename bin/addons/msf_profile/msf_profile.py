@@ -35,7 +35,8 @@ import traceback
 #import re
 
 from msf_field_access_rights.osv_override import _get_instance_level
-
+import cStringIO
+import csv
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -50,6 +51,15 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF11.1
+    def us_5398_reset_ud_cost_price(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section' and instance_id.code == 'CH':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-5398-product-price'})
+        return True
 
     # UF11.0
     def us_5356_reset_ud_prod(self, cr, uid, *a, **b):
@@ -3027,6 +3037,60 @@ class sync_tigger_something(osv.osv):
                   product_catalog_path=NULL
                 where international_status=%s ''', (unidata_id,))
             _logger.warn('Reset %d UD products' % (cr.rowcount,))
+
+        if vals.get('name') == 'us-5398-product-price':
+            msf_instance_obj = self.pool.get('msf.instance')
+            prod_obj = self.pool.get('product.product')
+
+            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance.instance.startswith('OCG') and \
+                '_KE1_' not in instance.instance and \
+                '_UA1_' not in instance.instance and \
+                '_MX1_' not in instance.instance and \
+                    '_LB1_' not in instance.instance:
+
+                data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
+                data = data_file.read()
+
+                hq_id = msf_instance_obj.search(cr, uid, [('code', '=', 'CH')])
+                hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
+
+                crypt_o = tools.misc.crypt(hq_info.instance_identifier)
+                clear_data = cStringIO.StringIO(crypt_o.decrypt(data))
+                csv_reader = csv.reader(clear_data, delimiter=',')
+                csv_reader.next()
+                xmlid_price = {}
+                xmlid_code = {}
+                prod_id_price = {}
+
+                for line in csv_reader:
+                    xmlid_price[line[1]] = float(line[2])
+                    xmlid_code[line[1]] = line[0]
+
+
+                all_xmlid = xmlid_price.keys()
+
+                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).iteritems():
+                    prod_id_price[p_id] = xmlid_price[sdref]
+                    del xmlid_code[sdref]
+
+                if xmlid_code:
+                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(xmlid_code.values())))
+
+                nb_updated= 0
+                nb_ignored = 0
+                for prod in prod_obj.read(cr, uid, prod_id_price.keys(), ['standard_price', 'product_tmpl_id']):
+                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.00001:
+                        nb_updated += 1
+                        cr.execute('update product_template set standard_price=%s where id=%s', (prod_id_price[prod['id']], prod['product_tmpl_id'][0]))
+                        cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
+                            """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
+                    else:
+                        nb_ignored += 1
+
+                _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
+
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
