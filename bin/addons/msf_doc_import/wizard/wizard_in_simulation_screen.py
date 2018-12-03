@@ -1555,8 +1555,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if write_vals.get('imp_exp_date') and write_vals.get('imp_batch_id') and lot_check:
                     batch_exp_date = prodlot_obj.browse(cr, uid, write_vals.get('imp_batch_id'), context=context).life_date
                     if batch_exp_date != write_vals.get('imp_exp_date'):
-                        warnings.append(_('The \'Expired date\' value doesn\'t match with the expired date of the Batch - The expired date of the Batch was kept.'))
-                        write_vals['imp_exp_date'] = batch_exp_date
+                        write_vals['imp_batch_id'] = False
                 elif write_vals.get('imp_exp_date') and write_vals.get('imp_batch_name') and lot_check:
                     if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False):
                         if prodlot_cache.get(write_vals['imp_product_id'], {}).get(write_vals['imp_batch_name'], False) != write_vals['imp_exp_date']:
