@@ -57,6 +57,7 @@ class product_mass_update(osv.osv):
         return res
 
     _columns = {
+        'name': fields.char(size=64, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update'),
         'log': fields.char(string='Information', size=128, readonly=True),
@@ -66,9 +67,8 @@ class product_mass_update(osv.osv):
         'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
                                         'prod_mass_update_id', string="Product selection", order_by="default_code",
                                         domain=[('expected_prod_creator', '=', 'True'), '|', ('active', '=', True), ('active', '=', False)]),
-        'not_deactivated_product_ids': fields.many2many('product.product', 'not_deactivated_prod_mass_update_product_rel', 'product_id',
-                                                        'not_deactivated_prod_mass_update_id', string="Product(s) that can not be deactivated",
-                                                        order_by="default_code"),
+        'not_deactivated_product_ids': fields.one2many('product.mass.update.errors', 'p_mass_upd_id',
+                                                       string="Product(s) that can not be deactivated"),
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
         # Fields
         'active_product': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
@@ -97,6 +97,7 @@ class product_mass_update(osv.osv):
     _defaults = {
         'state': 'draft',
         'import_in_progress': False,
+        'message': '',
         'active_product': '',
         'dangerous_goods': '',
         'heat_sensitive_item': '',
@@ -117,6 +118,7 @@ class product_mass_update(osv.osv):
         default.update({
             'log': '',
             'date_done': False,
+            'message': '',
             'not_deactivated_product_ids': [(6, 0, [])],
             'has_not_deactivable': False,
         })
@@ -159,10 +161,14 @@ class product_mass_update(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Unlink existing errors
+        upd_errors_obj = self.pool.get('product.mass.update.errors')
+        errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', 'in', ids)], context=context)
+        upd_errors_obj.unlink(cr, uid, errors_ids, context=context)
+
         vals = {
             'state': 'draft',
             'message': '',
-            'not_deactivated_product_ids': [(6, 0, [])],
             'has_not_deactivable': False,
         }
         self.write(cr, uid, ids, vals, context=context)
@@ -252,6 +258,7 @@ class product_mass_update(osv.osv):
         prod_obj = self.pool.get('product.product')
         p_suppinfo_obj = self.pool.get('product.supplierinfo')
         upd_progress_obj = self.pool.get('product.mass.update.progressbar')
+        upd_errors_obj = self.pool.get('product.mass.update.errors')
 
         p_mass_upd = self.browse(cr, uid, ids[0], context=context)
         try:
@@ -273,17 +280,26 @@ class product_mass_update(osv.osv):
                     elif prod.active and p_mass_upd.active_product == 'no':
                         deactivated = prod_obj.deactivate_product(cr, uid, [prod.id], context=context)
                         if deactivated != True:  # If doesn't return True, the product has not been deactivated
-                            not_deactivated.append(prod.id)
+                            not_deactivated.append(deactivated.get('res_id'))
                 num_prod += 1
                 percent_completed = float(num_prod) / float(len(p_mass_upd.product_ids)) * 100.0
                 upd_progress_obj.write(cr, uid, upd_progress_id, {'percent_completed': percent_completed}, context=context)
 
             if not_deactivated:
                 cr.rollback()  # Rollback deactivation and product seller creation
+                for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                    err_vals = {
+                        'p_mass_upd_id': p_mass_upd.id,
+                        'product_id': wiz_prod_error.product_id.id,
+                        'stock_exist': wiz_prod_error.stock_exist,
+                        'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines]) or '',
+                    }
+                    upd_errors_obj.create(cr, uid, err_vals, context=context)
+
                 p_mass_upd_vals = {
-                    'not_deactivated_product_ids': [(6, 0, not_deactivated)],
                     'has_not_deactivable': True,
-                    'state': 'draft',
+                    'message': _('Some products could not be deactivated. Please check the corresponding tab.'),
+                    'state': 'error',
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
             else:
@@ -291,8 +307,12 @@ class product_mass_update(osv.osv):
                 user = self.pool.get('res.users').browse(cr, uid, uid, context=context).name
                 log = _('Modification of %s product(s) the %s done by %s') % \
                       (len(p_mass_upd.product_ids), time.strftime('%d/%m/%Y'), user)
+
+                # Unlink existing errors
+                errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', 'in', ids)], context=context)
+                upd_errors_obj.unlink(cr, uid, errors_ids, context=context)
+
                 p_mass_upd_vals = {
-                    'not_deactivated_product_ids': [(6, 0, [])],
                     'has_not_deactivable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
                     'log': log,
@@ -306,7 +326,7 @@ class product_mass_update(osv.osv):
             if e.value:
                 err += tools.ustr(e.value)
             if not err:
-                err = tool.ustr(e)
+                err = tools.ustr(e)
             self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': err}, context=context)
         finally:
             cr.commit()
@@ -374,3 +394,25 @@ class product_mass_update_progressbar(osv.osv_memory):
 
 
 product_mass_update_progressbar()
+
+
+class product_mass_update_errors(osv.osv):
+    _name = 'product.mass.update.errors'
+    _description = 'Product Mass Update Errors'
+
+    _order = 'product_id'
+
+    _columns = {
+        'p_mass_upd_id': fields.many2one('product.mass.update', 'Product Mass Update', ondelete='cascade'),
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'stock_exist': fields.boolean(string='Stock Exist'),
+        'open_documents': fields.char(string='Open Documents', size=256),
+    }
+
+    _default = {
+        'stock_exist': False,
+        'open_documents': '',
+    }
+
+
+product_mass_update_errors()

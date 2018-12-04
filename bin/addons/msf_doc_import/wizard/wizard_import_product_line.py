@@ -61,10 +61,7 @@ class wizard_import_product_line(osv.osv_memory):
         '''
         Import file
         '''
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
+        cr = pooler.get_db(dbname).cursor()
 
         if context is None:
             context = {}
@@ -205,8 +202,7 @@ class wizard_import_product_line(osv.osv_memory):
                             continue
                         finally:
                             self.write(cr, uid, ids, {'percent_completed': percent_completed})
-                            if not context.get('yml_test', False):
-                                cr.commit()
+                            cr.commit()
 
                 # Update products
                 p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'product_ids': [(6, 0, product_ids)]}, context=context)
@@ -238,9 +234,8 @@ class wizard_import_product_line(osv.osv_memory):
                 }, context=context)
             finally:
                 p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'state': 'draft', 'import_in_progress': False}, context)
-        if not context.get('yml_test', False):
-            cr.commit()
-            cr.close(True)
+        cr.commit()
+        cr.close(True)
 
     def import_file(self, cr, uid, ids, context=None):
         """
@@ -272,11 +267,8 @@ class wizard_import_product_line(osv.osv_memory):
             except StopIteration:
                 return self.write(cr, uid, ids, {'message': _('The file has no row, nothing to import')})
             p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'state': 'done', 'import_in_progress': True}, context)
-        if not context.get('yml_test', False):
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-        else:
-            self._import(cr, uid, ids, context)
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)

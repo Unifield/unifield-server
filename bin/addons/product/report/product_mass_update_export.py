@@ -33,20 +33,21 @@ class product_mass_update_export_parser(report_sxw.rml_parse):
         })
 
     def get_errors(self):
-        products = []
+        upd_errors = []
 
         if not self.ids:
-            return products
+            return upd_errors
 
-        for product in self.pool.get('product.mass.update').browse(self.cr, self.uid, self.ids[0], fields_to_fetch=['not_deactivated_product_ids'], context=self.localcontext).not_deactivated_product_ids:
-            products.append({
-                'default_code': product.default_code,
-                'name': product.name,
-                'qty_available': product.qty_available,
-                'virtual_available': product.virtual_available,
+        for upd_error in self.pool.get('product.mass.update').browse(self.cr, self.uid, self.ids[0], fields_to_fetch=['not_deactivated_product_ids'], context=self.localcontext).not_deactivated_product_ids:
+            upd_errors.append({
+                'default_code': upd_error.product_id.default_code,
+                'name': upd_error.product_id.name,
+                'qty_available': upd_error.product_id.qty_available,
+                'virtual_available': upd_error.product_id.virtual_available,
+                'open_documents': upd_error.open_documents,
             })
 
-        return products
+        return upd_errors
 
 
 SpreadsheetReport('report.product_mass_update_export_xls', 'product.mass.update', 'addons/product/report/product_mass_update_export_xls.mako', parser=product_mass_update_export_parser)

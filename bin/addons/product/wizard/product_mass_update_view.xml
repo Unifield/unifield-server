@@ -8,6 +8,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Product Mass Update" hide_delete_button="1" >
+                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <group string=" New Data " colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
                         <field name="active_product" />
                         <field name="dangerous_goods" />
@@ -23,15 +24,31 @@
                         <field name="sterilized" />
                         <field name="supply_method" />
                         <field name="seller_id" />
-                        <field name="property_account_income" />
-                        <field name="property_account_expense" />
+                        <field name="property_account_income"
+                            domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                            ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                            ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
+                        <field name="property_account_expense"
+                            domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                            ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                            ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
                     </group>
                     <field name="has_not_deactivable" invisible="1" />
-                    <group colspan="4" attrs="{'invisible': [('has_not_deactivable', '=', False)]}">
+                    <group colspan="4" attrs="{'invisible':[('has_not_deactivable', '=', False), ('state', 'not in', ['in_progress', 'error'])]}">
                         <html>
-                            <p style="text-align: center; v-align: middle; color:red; font-weight:bold; font-size:1.2em">
-                                <translate>Some products could not be deactivated. Please check the corresponding tab.</translate>
-                            </p>
+                            <style>
+                                #prod_mass_upd_error p, #prod_mass_upd_error span, #prod_mass_upd_error textarea {
+                                    text-align: center;
+                                    v-align: middle;
+                                    color: red;
+                                    font-weight: bold;
+                                    font-size: 1.2em;
+                                    resize: None;
+                                }
+                            </style>
+                            <div id="prod_mass_upd_error">
+                                <field name="message" colspan="4" nolabel="1" />
+                            </div>
                         </html>
                     </group>
                     <notebook>
@@ -50,18 +67,15 @@
                             <button name="export_product_errors" string="Export Product List" icon="gtk-execute" colspan="4" type="object" />
                             <field name="not_deactivated_product_ids" colspan="4" nolabel="1" readonly="1">
                                 <tree string="Products" noteditable="1">
-                                    <field name="default_code" />
-                                    <field name="name" />
-                                    <field name="active" />
-                                    <field name="qty_available" />
-                                    <field name="virtual_available" />
+                                    <field name="product_id" />
+                                    <field name="stock_exist" />
+                                    <field name="open_documents" />
                                 </tree>
                             </field>
                         </page>
                     </notebook>
                     <group colspan="4">
                         <group colspan="4">
-                            <field name="message" colspan="4" nolabel="1" attrs="{'invisible':[('state', 'not in', ['in_progress', 'error'])]}" />
                             <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', 'not in', ['in_progress', 'done'])]}"/>
                             <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
                             <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
@@ -80,6 +94,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="product_ids"/>
                     <field name="date_done"/>
                     <field name="log"/>
                     <field name="state"/>

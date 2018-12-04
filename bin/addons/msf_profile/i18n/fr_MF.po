@@ -83955,6 +83955,7 @@ msgstr "SFTP connection succeeded"
 #: field:reserved.products.wizard,product_id:0
 #: field:internal.request.import.line,imp_product_id:0
 #: field:internal.request.import.line,in_product_id:0
+#: field:product.mass.update.errors,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -104108,11 +104109,6 @@ msgid "Export Product List"
 msgstr "Exporter la Liste des Produits"
 
 #. module: product
-#: view:product.mass.update:0
-msgid "Some products could not be deactivated. Please check the corresponding tab."
-msgstr "Certains produits n'ont pas pu être désactivés. Veuillez vérifier l'onglet approprié."
-
-#. module: product
 #: report:addons/product/report/product_mass_update_export_xls.mako:104
 msgid "PRODUCT MASS UPDATE ERRORS"
 msgstr "ERREURS DE LA MÀJ DE PRODUITS EN MASSE"
@@ -104127,3 +104123,24 @@ msgstr "Réinitialiser la Mise à Jour"
 #, python-format
 msgid "You can not apply an update on no products."
 msgstr "Vous ne pouvez pas appliquer de mise à jour à aucun produits."
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:287
+msgid "Some products could not be deactivated. Please check the corresponding tab."
+msgstr "Certains produits n'ont pas pu être désactivés. Veuillez vérifier l'onglet approprié."
+
+#. module: product
+#: field:product.mass.update,name:0
+msgid "Update Reference"
+msgstr "Référence de la MàJ"
+
+#. module: product
+#: field:product.mass.update.errors,stock_exist:0
+msgid "Stock Exist"
+msgstr "Stock Présent"
+
+#. module: product
+#: field:product.mass.update.errors,open_documents:0
+#: report:addons/product/report/product_mass_update_export_xls.mako:119
+msgid "Open Documents"
+msgstr "Documents Ouverts"

@@ -99,6 +99,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="80.00" />
         ## Virtual Stock
         <Column ss:AutoFitWidth="1" ss:Width="80.00" />
+        ## Open Documents
+        <Column ss:AutoFitWidth="1" ss:Width="450.00" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('PRODUCT MASS UPDATE ERRORS')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -114,6 +116,7 @@
                 _('Description'),
                 _('Real Stock'),
                 _('Virtual Stock'),
+                _('Open Documents'),
             ]
         %>
 
@@ -123,12 +126,13 @@
         % endfor
         </Row>
 
-        % for prod in getErrors():
+        % for upd_errors in getErrors():
             <Row>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${prod.get('default_code', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${prod.get('name', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${prod.get('qty_available', 0)|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${prod.get('virtual_available', 0)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${upd_errors.get('default_code', '')|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${upd_errors.get('name', '')|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${upd_errors.get('qty_available', 0)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${upd_errors.get('virtual_available', 0)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${upd_errors.get('open_documents', '')|x}</Data></Cell>
             </Row>
         % endfor
     </Table>
