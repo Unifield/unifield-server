@@ -214,7 +214,7 @@
                     <para style="TextInfoLeft">[[ line.line_product_id and '[%s] %s' % (line.line_product_id.default_code, line.line_product_id.name) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfo">[[ line.line_product_qty and formatLang(line.line_product_qty) or '' ]]</para>
+                    <para style="TextInfo">[[ line.line_product_qty and line.line_product_qty or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInfo">[[ line.line_uom_id and line.line_uom_id.name or '' ]]</para>
