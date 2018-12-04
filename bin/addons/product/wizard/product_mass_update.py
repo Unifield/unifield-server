@@ -309,7 +309,7 @@ class product_mass_update(osv.osv):
                       (len(p_mass_upd.product_ids), time.strftime('%d/%m/%Y'), user)
 
                 # Unlink existing errors
-                errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', 'in', ids)], context=context)
+                errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
                 upd_errors_obj.unlink(cr, uid, errors_ids, context=context)
 
                 p_mass_upd_vals = {
