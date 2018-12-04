@@ -104150,5 +104150,5 @@ msgstr "Documents Ouverts"
 #, python-format
 msgid "An error has occured during the update:\n"
 "%s"
-msgstr "Une erreur est survenue durant la mise à jour:\n"
+msgstr "Une erreur est survenue lors de la mise à jour:\n"
 "%s"

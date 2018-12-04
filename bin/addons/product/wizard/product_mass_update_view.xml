@@ -123,7 +123,7 @@
             <field name="res_model">product.mass.update</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_product_mass_update_tree"/>
-            <field name="context">{'active_test': False}</field>
+            <field name="context">{}</field>
         </record>
     </data>
 </openerp>
