@@ -153,7 +153,7 @@
                     string="Picking Tickets" hide_new_button="1">
 					<field name="name" />
 					<field name="partner_id2" />
-					<field name="backorder_id" />
+					<field name="backorder_id" string="ORIGINAL PICK" />
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
@@ -210,7 +210,7 @@
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
-							<field name="backorder_id" readonly="1" />
+							<field name="backorder_id" readonly="1" string="Original PICK" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
                             <field name="order_category" />
 							<field name="incoming_id" readonly="True" />
