@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-
+from tools.misc import float_uom_to_str
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
@@ -101,13 +101,12 @@ class purchase_order_followup(osv.osv_memory):
         line_obj = self.pool.get('purchase.order.followup.line')
 
         for order in order_obj.browse(cr, uid, ids, context=context):
-            if order.state not in ('approved', 'done', 'confirmed_wait', 'split',
-                                   'sourced', 'except_picking', 'except_invoice'):
+            if not order_obj.search(cr, uid, [('id', '=', order.id), ('has_confirmed_or_further_line', '=', True)], context=context):
                 raise osv.except_osv(_('Error'),
-                       _('You cannot follow a non-confirmed Purchase order !'))
+                                     _('You can only follow up confirmed Purchase order (lines)'))
 
             followup_id = self.create(cr, uid,
-                                       {'order_id': order.id}, context=context)
+                                      {'order_id': order.id}, context=context)
 
             order_ids = order_obj.search(cr, uid, [('id', '!=', order.id), ('name', 'like', order.name)], context=context)
             if not order_ids:
@@ -120,22 +119,22 @@ class purchase_order_followup(osv.osv_memory):
                     if not line.move_ids:
                         line_data = {'followup_id': followup_id,
                                      'order_id': line.order_id and line.order_id.id or False,
-                                      'move_id': False,
-                                      'line_id': line.id,
-                                      'picking_id': False,
-                                      'move_state': 'No move',
-                                      'line_name': line.line_number,
-                                      'line_product_id': line.product_id.id,
-                                      'line_product_qty': line.product_qty,
-                                      'line_uom_id': line.product_uom.id,
-                                      'line_confirmed_date': line.confirmed_delivery_date,
-                                      'line_shipped_rate': 0.0,
-                                      'move_product_id': False,
-                                      'move_product_qty': '',
-                                      'move_uom_id': False,
-                                      'move_delivery_date': False,
-                                      'return_move': False,
-                                      }
+                                     'move_id': False,
+                                     'line_id': line.id,
+                                     'picking_id': False,
+                                     'move_state': 'No move',
+                                     'line_name': line.line_number,
+                                     'line_product_id': line.product_id.id,
+                                     'line_product_qty': float_uom_to_str(line.product_qty, line.product_uom),
+                                     'line_uom_id': line.product_uom.id,
+                                     'line_confirmed_date': line.confirmed_delivery_date,
+                                     'line_shipped_rate': 0.0,
+                                     'move_product_id': False,
+                                     'move_product_qty': '',
+                                     'move_uom_id': False,
+                                     'move_delivery_date': False,
+                                     'return_move': False,
+                                     }
                         line_obj.create(cr, uid, line_data, context=context)
                     first_move = True
                     move_ids1 = []
@@ -172,12 +171,12 @@ class purchase_order_followup(osv.osv_memory):
                                          'move_state': self._get_move_state(cr, uid, move.state, context=context),
                                          'line_name': line.line_number,
                                          'line_product_id': first_move and line.product_id.id or False,
-                                         'line_product_qty': first_move and line.product_qty or False,
+                                         'line_product_qty': first_move and float_uom_to_str(line.product_qty, line.product_uom) or False,
                                          'line_uom_id': first_move and line.product_uom.id or False,
                                          'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
                                          'line_shipped_rate': line_shipped_rate,
                                          'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
-                                         'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
+                                         'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and float_uom_to_str(move.product_qty, move.product_uom or line.product_uom) or '',
                                          'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
                                          'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date[:10] or False,
                                          'return_move': move.type == 'out',
@@ -217,8 +216,8 @@ class purchase_order_followup(osv.osv_memory):
             return False
         dt_now = datetime.datetime.now()
         po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-            foup.order_id.name.replace('/', '_'),
-            dt_now.year, dt_now.month, dt_now.day)
+                                          foup.order_id.name.replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
         return po_name
 
     def export_xls(self, cr, uid, ids, context=None):
@@ -315,14 +314,10 @@ class purchase_order_followup_line(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             if not line.picking_id:
                 raise osv.except_osv(_('Error'), _('This line has no incoming shipment !'))
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)[1]
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'stock.picking',
-                    'res_id': line.picking_id.id,
-                    'target': 'current',
-                    'view_type': 'form',
-                    'view_mode': 'form,tree',
-                    'view_id': [view_id]}
+            xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+            res['res_id'] = line.picking_id.id
+            return res
 
 purchase_order_followup_line()
 

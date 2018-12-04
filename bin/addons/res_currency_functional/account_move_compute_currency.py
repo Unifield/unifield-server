@@ -164,14 +164,18 @@ class account_move_compute_currency(osv.osv):
             amount_currency = 0
             sorted_line_ids = move.line_id
             sorted_line_ids.sort(key=lambda x: abs(x.debit - x.credit), reverse=True)
+            all_line_zero_func = True
             for line in sorted_line_ids:
                 amount += line.debit - line.credit
+                if all_line_zero_func:
+                    # because of high fx rate, funct. amount could be 0 on all lines, we must not consider this case as func balanced
+                    all_line_zero_func = abs(line.debit - line.credit) < 10**-4
                 amount_currency += line.amount_currency
 
             if move.period_id and not move.period_id.is_system \
                     and len(sorted_line_ids) > 2:
-                if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
-                    # The move is balanced, but there is a difference in the converted amounts;
+                if not all_line_zero_func and abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
+                    # The move is func. balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = self._sub_sort_by_xmlid(cr, uid, sorted_line_ids)
                     amount_currency = line_to_be_balanced.amount_currency - amount_currency
@@ -189,7 +193,7 @@ class account_move_compute_currency(osv.osv):
                     if line_to_be_balanced.reconcile_id:
                         reconcile[line_to_be_balanced.reconcile_id.id] = 1
                 elif abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
-                    # The move is balanced, but there is a difference in the converted amounts;
+                    # The move is book. balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = self._sub_sort_by_xmlid(cr, uid, sorted_line_ids)
                     amount = line_to_be_balanced.debit - line_to_be_balanced.credit - amount

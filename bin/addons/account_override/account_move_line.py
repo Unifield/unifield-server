@@ -340,6 +340,12 @@ class account_move_line(osv.osv):
         'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
         'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
                                                                    "to the original SI and to the SR created are marked as 'is_si_refund'"),
+        'revaluation_date': fields.datetime(string='Revaluation date'),
+        'revaluation_reference': fields.char(string='Revaluation reference', size=64,
+                                             help="Entry sequence of the related Revaluation Entry"),
+        # US-3874
+        'partner_register_line_id': fields.many2one('account.bank.statement.line', string="Register Line", required=False, readonly=True,
+                                                    help="Register line to which this partner automated entry is linked"),
     }
 
     _defaults = {
@@ -629,11 +635,12 @@ class account_move_line(osv.osv):
     def copy(self, cr, uid, aml_id, default=None, context=None):
         """
         When duplicate a JI, don't copy:
-        - the link to register lines
+        - the links to register lines
         - the reconciliation date
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
         - the tag 'is_si_refund'
+        - the fields related to revaluation
         """
         if context is None:
             context = {}
@@ -641,10 +648,13 @@ class account_move_line(osv.osv):
             default = {}
         default.update({
             'imported_invoice_line_ids': [],
+            'partner_register_line_id': False,
             'reconcile_date': None,
             'unreconcile_date': None,
             'unreconcile_txt': '',
             'is_si_refund': False,
+            'revaluation_date': None,
+            'revaluation_reference': '',
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

@@ -29,6 +29,7 @@ from time import strftime
 from lxml import etree
 import threading
 import pooler
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -193,7 +194,10 @@ class mass_reallocation_wizard(osv.osv_memory):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
-            domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
+            if _get_instance_level(self, cr, uid) == 'hq':
+                domain = "[('category', '=', 'FUNDING'), ('type', '!=', 'view')]"
+            else:
+                domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
             for free in ['FREE1', 'FREE2']:
                 if first_line.account_id and first_line.account_id.category == free:
                     domain = "[('category', '=', '" + free + "'), ('type', '!=', 'view')]"
@@ -213,6 +217,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
+        gl_acc_obj = self.pool.get('account.account')
         # Default behaviour
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
 
@@ -233,25 +238,29 @@ class mass_reallocation_wizard(osv.osv_memory):
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
             # Search which lines are eligible (add another criteria if we come from project)
+            not_ad_correctable_acc_ids = gl_acc_obj.search(cr, uid, [('is_not_ad_correctable', '=', True)],
+                                                           order='NO_ORDER', context=context)
             search_args = [
-                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|',
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
-                ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                ('journal_id.type', 'in', ['engagement', 'revaluation', 'cur_adj']),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
+                ('general_account_id', 'in', not_ad_correctable_acc_ids),
             ]
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
-                    ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                    ('journal_id.type', 'in', ['engagement', 'revaluation', 'cur_adj']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('move_id.corrected_upstream', '=', True)
+                    ('move_id.corrected_upstream', '=', True),
+                    ('general_account_id', 'in', not_ad_correctable_acc_ids),
                 ]
 
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args, context=context)
@@ -326,6 +335,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         process_ids = []
         account_id = False
         date = False
+        gl_acc_obj = self.pool.get('account.account')
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         level = company and company.instance_id and company.instance_id.level or ''
         # Browse given wizard
@@ -341,28 +351,38 @@ class mass_reallocation_wizard(osv.osv_memory):
             # - that have been reversed
             # - that come from an engagement journal
             # - that come from a write-off (is_write_off = True)
+            # - that are booked on G/L account set as is_not_ad_correctable
+            # - that are booked on a Currency Adj. Analytic Journal
             account_field_name = 'account_id'
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
+
+            if _get_instance_level(self, cr, uid) == 'hq' and wiz.account_id.category in ['OC', 'DEST']:
+                raise osv.except_osv(_('Error'), _('At HQ level you can only mass reallocate FP !'))
+
+            not_ad_correctable_acc_ids = gl_acc_obj.search(cr, uid, [('is_not_ad_correctable', '=', True)],
+                                                           order='NO_ORDER', context=context)
             search_args = [
-                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
+                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
-                ('journal_id.type', '=', 'engagement'),
+                ('journal_id.type', 'in', ['engagement', 'cur_adj']),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
+                ('general_account_id', 'in', not_ad_correctable_acc_ids),
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
-                    ('journal_id.type', 'in', ['engagement', 'revaluation']),
+                    ('journal_id.type', 'in', ['engagement', 'revaluation', 'cur_adj']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('move_id.corrected_upstream', '=', True)
+                    ('move_id.corrected_upstream', '=', True),
+                    ('general_account_id', 'in', not_ad_correctable_acc_ids),
                 ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:

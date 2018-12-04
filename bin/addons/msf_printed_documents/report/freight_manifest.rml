@@ -115,7 +115,7 @@
 
 
             <blockAlignment value="LEFT" />
-            <blockVAlign value="MIDDLE"  />
+            <blockValign value="MIDDLE"  />
             <blockBackground colorName="silver"  />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5"  />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
@@ -481,7 +481,7 @@
 
 
         <section>
-            <blockTable colWidths="170.0,75.0,220.0,45.0,51.0,50.0,56.0,35.0,35.0,35.0" style="LinesTable2" repeatRows="1" >
+            <blockTable colWidths="120.0,125.0,220.0,45.0,51.0,50.0,56.0,35.0,35.0,35.0" style="LinesTable2" repeatRows="1" >
 
 
                 <tr >
@@ -521,10 +521,10 @@
                 <tr>
                     [[ repeatIn(get_group_lines(objects), 'line') ]]
                     <td>
-                        <para style="LinesBlue">[[ line['ref'] ]]</para>
+                        <parawrap style="LinesBlue">[[ line['ref'] ]]</parawrap>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['ppl'] ]]</para>
+                        <parawrap style="LinesBlue">[[ line['ppl'] ]]</parawrap>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line['desc'] ]]</para>

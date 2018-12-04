@@ -253,6 +253,19 @@ class stock_picking(osv.osv):
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
+            with_pack = self.pool.get('wizard.import.in.simulation.screen').read(cr, uid, simu_id, ['pack_found'], context=context)['pack_found']
+            if with_pack:
+                info_wiz = self.pool.get('wizard.import.in.simulation.screen').read(cr,uid, [simu_id], ['state', 'message'])[0]
+                if info_wiz['state'] == 'error':
+                    errors = []
+                    if info_wiz['message']:
+                        for error in info_wiz['message'].split("\n"):
+                            if not error:
+                                continue
+                            errors.append(('', [], error))
+
+                    return ([], errors, [])
+
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
             context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread'); context.pop('simulation_bypass_missing_lot'); context.pop('auto_import_ok')
@@ -283,6 +296,7 @@ class stock_picking(osv.osv):
             import_success = True
         except Exception, e:
             raise e
+
 
         return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
 
