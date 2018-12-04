@@ -292,7 +292,7 @@ class product_mass_update(osv.osv):
                         'p_mass_upd_id': p_mass_upd.id,
                         'product_id': wiz_prod_error.product_id.id,
                         'stock_exist': wiz_prod_error.stock_exist,
-                        'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines]) or '',
+                        'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines if x.doc_ref]) or '',
                     }
                     upd_errors_obj.create(cr, uid, err_vals, context=context)
 
@@ -320,13 +320,7 @@ class product_mass_update(osv.osv):
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
         except Exception as e:
-            err = ''
-            if e.name:
-                err += tools.ustr(e.name) + ': '
-            if e.value:
-                err += tools.ustr(e.value)
-            if not err:
-                err = tools.ustr(e)
+            err = _('An error has occured during the update:\n%s') % tools.ustr(e)
             self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': err}, context=context)
         finally:
             cr.commit()

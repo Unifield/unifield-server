@@ -56,7 +56,7 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" context="{'active_test': False}" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Products" hide_edit_button="1">
                                     <field name="default_code" />
                                     <field name="name" />
@@ -109,8 +109,10 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Product Mass Update">
+                    <field name="name"/>
                     <field name="date_done"/>
                     <field name="log"/>
+                    <field name="state"/>
                 </search>
             </field>
         </record>

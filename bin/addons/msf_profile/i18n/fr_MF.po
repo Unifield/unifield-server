@@ -104144,3 +104144,11 @@ msgstr "Stock Présent"
 #: report:addons/product/report/product_mass_update_export_xls.mako:119
 msgid "Open Documents"
 msgstr "Documents Ouverts"
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:323
+#, python-format
+msgid "An error has occured during the update:\n"
+"%s"
+msgstr "Une erreur est survenue durant la mise à jour:\n"
+"%s"
