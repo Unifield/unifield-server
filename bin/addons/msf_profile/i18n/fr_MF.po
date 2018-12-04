@@ -55814,12 +55814,12 @@ msgid "You should pass a integer to the _compute_next_daily_date"
 msgstr "Vous devriez passer un entier to the _compute_next_daily_date"
 
 #. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:98
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:108
 #, python-format
-msgid "No employee found for this code: %s (%s).\n"
+msgid "No employee found for this code: %s.\n"
 "DEBIT: %s.\n"
 "CREDIT: %s."
-msgstr "Aucun employé ne correspond au code: %s (%s).\n"
+msgstr "Aucun employé ne correspond au code : %s.\n"
 "DEBIT: %s.\n"
 "CREDIT: %s."
 
