@@ -3080,7 +3080,7 @@ class sync_tigger_something(osv.osv):
                 nb_updated= 0
                 nb_ignored = 0
                 for prod in prod_obj.read(cr, uid, prod_id_price.keys(), ['standard_price', 'product_tmpl_id']):
-                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.00001:
+                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
                         nb_updated += 1
                         cr.execute('update product_template set standard_price=%s where id=%s', (prod_id_price[prod['id']], prod['product_tmpl_id'][0]))
                         cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
