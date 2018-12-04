@@ -434,7 +434,7 @@
                         <para style="LineValue">[[ m.location_id.name ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ formatLang(getStock(m) or 0.00, digits=get_digits(dp='Product UoM')) ]]</para>
+                        <para style="LineValue">[[ objects[0].state != 'done' and formatLang(getStock(m) or 0.00, digits=get_digits(dp='Product UoM')) or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.uom_id.name ]]</para>
