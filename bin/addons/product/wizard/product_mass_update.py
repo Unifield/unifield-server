@@ -146,6 +146,9 @@ class product_mass_update(osv.osv):
             'message': '',
             'not_deactivated_product_ids': [(6, 0, [])],
             'has_not_deactivable': False,
+            'empty_status': False,
+            'empty_inc_account': False,
+            'empty_exp_account': False,
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
