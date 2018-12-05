@@ -1057,13 +1057,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 import_error_ok = False
                 if len(values_header_errors):
                     import_error_ok = True
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'), )
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'), )
                     for err in values_line_errors:
                         message += '%s\n' % err
 

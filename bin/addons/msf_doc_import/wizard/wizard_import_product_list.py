@@ -246,7 +246,7 @@ class wizard_import_product_list(osv.osv_memory):
         total_time = tools.ustr(round(end_time-start_time)) + _(' second(s)')
         final_message = _('''
 Importation completed in %s!
-# of imported linse: %s on %s lines
+# of imported lines: %s on %s lines
 # of ignored lines: %s
 # of lines to correct: %s
 %s
