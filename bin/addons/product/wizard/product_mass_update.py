@@ -71,21 +71,21 @@ class product_mass_update(osv.osv):
                                                        string="Product(s) that can not be deactivated"),
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
         # Fields
-        'active_product': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'dangerous_goods': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous Goods'),
-        'heat_sensitive_item': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Temperature sensitive item'),
-        'single_use': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Single Use'),
-        'short_shelf_life': fields.selection(selection=[('', ''), ('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Short Shelf Life'),
+        'active_product': fields.selection(selection=[('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
+        'dangerous_goods': fields.selection(selection=[('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous Goods'),
+        'heat_sensitive_item': fields.selection(selection=[('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Temperature sensitive item'),
+        'single_use': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Single Use'),
+        'short_shelf_life': fields.selection(selection=[('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Short Shelf Life'),
         'alert_time': fields.char(string='Product Alert Time', size=32, help="The number of months after which an alert should be notified about the production lot."),
         'life_time': fields.char('Product Life Time', size=32, help='The number of months before a production lot may become dangerous and should not be consumed.'),
         'use_time': fields.char('Product Use Time', size=32, help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
         'procure_delay': fields.char(string='Procurement Lead Time', size=32,
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
-        'procure_method': fields.selection([('', ''), ('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
+        'procure_method': fields.selection([('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
-        'product_state': fields.selection([('', ''), ('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
-        'sterilized': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
-        'supply_method': fields.selection([('', ''), ('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
+        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
+        'sterilized': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
+        'supply_method': fields.selection([('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),
         'seller_id': fields.many2one('res.partner', 'Default Partner'),
         'property_account_income': fields.many2one('account.account', string='Income Account',
@@ -117,6 +117,9 @@ class product_mass_update(osv.osv):
         '''
         if context is None:
             context = {}
+
+        if context.get('button') == 'dummy' and '__last_update' in context:
+            del context['__last_update']
 
         if not ids:
             return True

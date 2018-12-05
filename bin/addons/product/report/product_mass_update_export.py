@@ -21,6 +21,7 @@
 
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 
 class product_mass_update_export_parser(report_sxw.rml_parse):
@@ -42,6 +43,7 @@ class product_mass_update_export_parser(report_sxw.rml_parse):
             upd_errors.append({
                 'default_code': upd_error.product_id.default_code,
                 'name': upd_error.product_id.name,
+                'stock_exist': upd_error.stock_exist,
                 'qty_available': upd_error.product_id.qty_available,
                 'virtual_available': upd_error.product_id.virtual_available,
                 'open_documents': upd_error.open_documents,

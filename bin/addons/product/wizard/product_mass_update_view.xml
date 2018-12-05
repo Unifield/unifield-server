@@ -60,6 +60,11 @@
                             </div>
                         </html>
                     </group>
+                    <group colspan="4">
+                        <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', 'not in', ['in_progress', 'done'])]}"/>
+                        <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                        <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
+                    </group>
                     <notebook>
                         <page string="Products">
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
@@ -84,11 +89,6 @@
                         </page>
                     </notebook>
                     <group colspan="4">
-                        <group colspan="4">
-                            <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', 'not in', ['in_progress', 'done'])]}"/>
-                            <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
-                            <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
-                        </group>
                         <field name="state" colspan="2" />
                         <button name="cancel_update" string="Delete Update" icon="gtk-cancel" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                         <button name="launch_update" string="Apply Update" icon="gtk-go-forward" colspan="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
@@ -102,7 +102,7 @@
             <field name="model">product.mass.update</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state='draft';red:state='error'">
+                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error')">
                     <field name="name"/>
                     <field name="product_ids"/>
                     <field name="date_done"/>

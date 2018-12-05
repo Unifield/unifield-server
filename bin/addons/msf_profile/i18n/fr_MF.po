@@ -12394,6 +12394,7 @@ msgstr "2ème Fabricant"
 #. modules: stock_forecast, product
 #: selection:product.template,procure_method:0
 #: selection:stock.forecast,procurement_method:0
+#: selection:product.mass.update,procure_method:0
 msgid "Make to Stock"
 msgstr "Production sur Stock"
 
@@ -16909,6 +16910,7 @@ msgstr "%s update%s"
 #: selection:product.mass.update,short_shelf_life:0
 #: selection:product.mass.update,single_use:0
 #: selection:product.mass.update,sterilized:0
+#: report:addons/product/report/product_mass_update_export_xls.mako:136
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -25279,6 +25281,7 @@ msgstr "Europe/Bucharest"
 #: selection:product.mass.update,short_shelf_life:0
 #: selection:product.mass.update,single_use:0
 #: selection:product.mass.update,sterilized:0
+#: report:addons/product/report/product_mass_update_export_xls.mako:136
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -91511,6 +91514,7 @@ msgstr "Poste :"
 #: model:process.node,name:procurement.process_node_serviceonorder0
 #: selection:product.template,procure_method:0
 #: selection:stock.forecast,procurement_method:0
+#: selection:product.mass.update,procure_method:0
 msgid "Make to Order"
 msgstr "Production sur Commande"
 
@@ -104128,6 +104132,7 @@ msgstr "Référence de la MàJ"
 
 #. module: product
 #: field:product.mass.update.errors,stock_exist:0
+#: report:addons/product/report/product_mass_update_export_xls.mako:119
 msgid "Stock Exist"
 msgstr "Stock Présent"
 
@@ -104144,3 +104149,23 @@ msgid "An error has occured during the update:\n"
 "%s"
 msgstr "Une erreur est survenue lors de la mise à jour:\n"
 "%s"
+
+#. module: product
+#: field:product.mass.update,user_id:0
+msgid "User who Updated"
+msgstr "Utilisateur qui a Mis à Jour"
+
+#. module: product
+#: field:product.mass.update,empty_exp_account:0
+msgid "Set Expense Account as empty"
+msgstr "Mettre le Compte de Charge à vide"
+
+#. module: product
+#: field:product.mass.update,empty_inc_account:0
+msgid "Set Income Account as empty"
+msgstr "Mettre le Compte de Produits à vide"
+
+#. module: product
+#: field:product.mass.update,empty_status:0
+msgid "Set Status as empty"
+msgstr "Mettre le Statut à vide"
