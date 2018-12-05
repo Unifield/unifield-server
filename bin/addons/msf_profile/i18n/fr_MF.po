@@ -47895,11 +47895,10 @@ msgstr "Section"
 msgid "Legal    3   8.5 x 14 inches, 215.9 x 355.6 mm"
 msgstr "Legal    3   8.5 x 14  pouces, 215.9 x 355.6 mm"
 
-#. modules: procurement, sourcing, sale, product
+#. modules: procurement, sourcing, sale
 #: selection:procurement.order,procure_method:0
 #: selection:sale.order.line,type:0
 #: selection:multiple.sourcing.wizard,type:0
-#: selection:product.mass.update,procure_method:0
 msgid "from stock"
 msgstr "Du stock"
 
@@ -55102,11 +55101,10 @@ msgstr "Aborting"
 msgid "Dec"
 msgstr "Dec"
 
-#. modules: procurement, sourcing, sale, product
+#. modules: procurement, sourcing, sale
 #: selection:procurement.order,procure_method:0
 #: selection:sale.order.line,type:0
 #: selection:multiple.sourcing.wizard,type:0
-#: selection:product.mass.update,procure_method:0
 msgid "on order"
 msgstr "Sur commande"
 
@@ -103904,12 +103902,6 @@ msgstr "Erreurs de la MàJ de Produits en Masse"
 #: model:ir.ui.menu,name:product_attributes.menu_import_request
 msgid "Product Mass Update"
 msgstr "MàJ de Produits en Masse"
-
-#. module: product
-#: code:addons/product/wizard/product_mass_update.py:290
-#, python-format
-msgid "Modification of %s product(s) the %s done by %s"
-msgstr "Modification de %s produit(s) le %s par %s"
 
 #. module: product
 #: field:product.mass.update,date_done:0

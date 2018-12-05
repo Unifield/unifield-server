@@ -60,7 +60,7 @@ class product_mass_update(osv.osv):
         'name': fields.char(size=64, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update'),
-        'log': fields.char(string='Information', size=128, readonly=True),
+        'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
         'percent_completed': fields.function(_get_percent_completed, method=True, string='% completed', type='integer', readonly=True),
         'message': fields.text(string='Message', readonly=True),
@@ -81,7 +81,7 @@ class product_mass_update(osv.osv):
         'use_time': fields.char('Product Use Time', size=32, help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
         'procure_delay': fields.char(string='Procurement Lead Time', size=32,
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
-        'procure_method': fields.selection([('', ''), ('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method',
+        'procure_method': fields.selection([('', ''), ('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
         'product_state': fields.selection([('', ''), ('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
         'sterilized': fields.selection(selection=[('', ''), ('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
@@ -92,6 +92,9 @@ class product_mass_update(osv.osv):
                                                    help='This account will be used for invoices instead of the default one to value sales for the current product'),
         'property_account_expense': fields.many2one('account.account', string='Expense Account',
                                                     help='This account will be used for invoices instead of the default one to value expenses for the current product'),
+        'empty_status': fields.boolean(string='Set Status as empty'),
+        'empty_inc_account': fields.boolean(string='Set Income Account as empty'),
+        'empty_exp_account': fields.boolean(string='Set Expense Account as empty'),
     }
 
     _defaults = {
@@ -108,6 +111,25 @@ class product_mass_update(osv.osv):
         'supply_method': '',
     }
 
+    def write(self, cr, user, ids, vals, context=None):
+        '''
+        override write method
+        '''
+        if context is None:
+            context = {}
+
+        if not ids:
+            return True
+
+        if 'empty_status' in vals and vals['empty_status']:
+            vals['product_state'] = ''
+        if 'empty_inc_account' in vals and vals['empty_inc_account']:
+            vals['property_account_income'] = False
+        if 'empty_exp_account' in vals and vals['empty_exp_account']:
+            vals['property_account_expense'] = False
+
+        return super(product_mass_update, self).write(cr, user, ids, vals, context)
+
     def copy(self, cr, uid, id, default=None, context=None):
         if context is None:
             context = {}
@@ -116,7 +138,7 @@ class product_mass_update(osv.osv):
             default = {}
 
         default.update({
-            'log': '',
+            'user_id': False,
             'date_done': False,
             'message': '',
             'not_deactivated_product_ids': [(6, 0, [])],
@@ -124,6 +146,21 @@ class product_mass_update(osv.osv):
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
+
+    def onchange_status_check(self, cr, uid, ids, empty_status):
+        if empty_status:
+            return {'value': {'product_state': ''}}
+        return {'value': {}}
+
+    def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
+        if empty_inc_account:
+            return {'value': {'property_account_income': False}}
+        return {'value': {}}
+
+    def onchange_exp_check(self, cr, uid, ids, empty_exp_account):
+        if empty_exp_account:
+            return {'value': {'property_account_expense': False}}
+        return {'value': {}}
 
     def cancel_update(self, cr, uid, ids, context=None):
         '''
@@ -230,14 +267,20 @@ class product_mass_update(osv.osv):
             p_state_ids = p_state_obj.search(cr, uid, [('code', '=', p_mass_upd.product_state)], context=context)
             if p_state_ids:
                 vals.update({'state': p_state_ids[0]})
+        elif p_mass_upd.empty_status:
+            vals.update({'state': False})
         if p_mass_upd.sterilized:
             vals.update({'sterilized': p_mass_upd.sterilized})
         if p_mass_upd.supply_method:
             vals.update({'supply_method': p_mass_upd.supply_method})
         if p_mass_upd.property_account_income:
             vals.update({'property_account_income': p_mass_upd.property_account_income.id})
+        elif p_mass_upd.empty_inc_account:
+            vals.update({'property_account_income': False})
         if p_mass_upd.property_account_expense:
             vals.update({'property_account_expense': p_mass_upd.property_account_expense.id})
+        elif p_mass_upd.empty_exp_account:
+            vals.update({'property_account_expense': False})
 
         thread = threading.Thread(target=self.apply_update, args=(cr, uid, ids, vals, context))
         thread.start()
@@ -304,9 +347,7 @@ class product_mass_update(osv.osv):
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
             else:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
-                user = self.pool.get('res.users').browse(cr, uid, uid, context=context).name
-                log = _('Modification of %s product(s) the %s done by %s') % \
-                      (len(p_mass_upd.product_ids), time.strftime('%d/%m/%Y'), user)
+                user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
 
                 # Unlink existing errors
                 errors_ids = upd_errors_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
@@ -315,7 +356,7 @@ class product_mass_update(osv.osv):
                 p_mass_upd_vals = {
                     'has_not_deactivable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
-                    'log': log,
+                    'user_id': user_id,
                     'state': 'done',
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
