@@ -21,21 +21,21 @@
                         <field name="procure_delay" />
                         <field name="procure_method" />
                         <group colspan="2">
-                            <field name="product_state" attrs="{'readonly':[('empty_status', '=', True)]}" />
+                            <field name="product_state" attrs="{'readonly':['|', ('empty_status', '=', True), ('state', '!=', 'draft')]}" />
                             <field name="empty_status" on_change="onchange_status_check(empty_status)" />
                         </group>
                         <field name="sterilized" />
                         <field name="supply_method" />
                         <field name="seller_id" />
                         <group colspan="2">
-                            <field name="property_account_income" attrs="{'readonly':[('empty_inc_account', '=', True)]}"
+                            <field name="property_account_income" attrs="{'readonly':['|', ('empty_inc_account', '=', True), ('state', '!=', 'draft')]}"
                                 domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
                                 ('user_type_code', 'in', ['expense', 'income', 'asset']),
                                 ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
                             <field name="empty_inc_account" on_change="onchange_inc_check(empty_inc_account)" />
                         </group>
                         <group colspan="2">
-                            <field name="property_account_expense" attrs="{'readonly':[('empty_exp_account', '=', True)]}"
+                            <field name="property_account_expense" attrs="{'readonly':['|', ('empty_exp_account', '=', True), ('state', '!=', 'draft')]}"
                                 domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
                                 ('user_type_code', 'in', ['expense', 'income', 'asset']),
                                 ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
