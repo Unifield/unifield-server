@@ -41,14 +41,14 @@
     <para style="P1">
       <font color="white"> </font>
     </para>
-    <para style="P3">Product Description : [[ data['form']['product_id'] ]]</para>
+    <para style="P3">Product Description : [[ data['form']['product_id'] ]]</para>
     <para style="P3">Product Code: [[ data['form']['product_code'] ]]</para>
-    <para style="P3">Batch number : [[ data['form']['prodlot_id'] ]]</para>
-    <para style="P3">Expired date : [[ data['form']['expired_date'] ]]</para>
+    <para style="P3">Batch number : [[ data['form']['prodlot_id'] ]]</para>
+    <para style="P3">Expired date : [[ data['form']['expired_date'] ]]</para>
     <para style="P3">
       <font color="white"> </font>
     </para>
-    <para style="P3">All transactions :</para>
+    <para style="P3">All transactions :</para>
     <para style="P2">
       <font color="white"> </font>
     </para>

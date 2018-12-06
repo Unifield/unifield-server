@@ -4213,12 +4213,13 @@ msgstr "Montrer les Inactifs"
 msgid "UoM Stock"
 msgstr "UoM Stock"
 
-#. modules: stock, sync_client, base, stock_override
+#. modules: stock, sync_client, base, stock_override, stock_move_tracking
 #: view:stock.move:0
 #: field:ir.translation,src:0
 #: view:sync.client.message_received:0
 #: view:sync.client.update_received:0
 #: report:addons/stock_override/report/report_stock_move_xls.mako:142
+#: report:tracking.move.report:0
 msgid "Source"
 msgstr "Origine"
 
@@ -15904,6 +15905,7 @@ msgstr "Non eligible analytic journal items"
 #: field:stock.batch.recall,expired_date:0
 #: view:stock.move:0
 #: report:destruction.location:0
+#: report:tracking.move.report:0
 msgid "Expired Date"
 msgstr "Date Expirée"
 
@@ -27483,7 +27485,7 @@ msgstr "Error, packing in wrong state !"
 msgid "Total Volume[dm³]"
 msgstr "Volume Total [dm³]"
 
-#. modules: purchase, account, msf_outgoing, sales_followup, procurement_auto, sale, product, specific_rules, kit, account_override, purchase_allocation_report, sourcing, order_types, stock_override, tender_flow, return_claim, purchase_followup, msf_doc_import, purchase_followup, purchase_compare_rfq, kit
+#. modules: purchase, account, msf_outgoing, sales_followup, procurement_auto, sale, product, specific_rules, kit, account_override, purchase_allocation_report, sourcing, order_types, stock_override, tender_flow, return_claim, purchase_followup, msf_doc_import, purchase_followup, purchase_compare_rfq, kit, stock_move_tracking
 #: view:account.invoice.report:0
 #: field:account.invoice.report,product_qty:0
 #: field:wizard.split.invoice.lines,quantity:0
@@ -27536,6 +27538,7 @@ msgstr "Volume Total [dm³]"
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
 #: view:purchase.order:0
 #: field:stock.reserved.products,product_qty:0
+#: report:tracking.move.report:0
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -37800,7 +37803,7 @@ msgstr "Le packing Brouillon doit être en statut \"Brouillon\""
 msgid "On Multiple Doc."
 msgstr "Sur Plusieurs Documents"
 
-#. modules: tender_flow, financing_contract, product_asset, account_corrections, product_attributes, msf_accrual, analytic_override, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, board, stock_override, msf_doc_import, stock, finance, msf_homere_interface, account_voucher, base, kit, stock_schedule, account, msf_outgoing, resource, msf_audittrail
+#. modules: tender_flow, financing_contract, product_asset, account_corrections, product_attributes, msf_accrual, analytic_override, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, board, stock_override, msf_doc_import, stock, finance, msf_homere_interface, account_voucher, base, kit, stock_schedule, account, msf_outgoing, resource, msf_audittrail, stock_move_tracking
 #: selection:account.aged.trial.balance,filter:0
 #: report:account.analytic.account.journal:0
 #: field:account.bank.statement,date:0
@@ -37914,6 +37917,7 @@ msgstr "Sur Plusieurs Documents"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:89
 #: report:addons/msf_audittrail/report/log_line_xls.mako:72
+#: report:tracking.move.report:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -46422,6 +46426,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:433
 #: report:addons/consumption_calculation/report/expiry_report.mako:159
 #: report:addons/consumption_calculation/report/expiry_report.mako:212
+#: report:tracking.move.report:0
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -65309,7 +65314,7 @@ msgstr "Remplir le Relevé :"
 msgid "Location Stock"
 msgstr "Zone - Stock"
 
-#. modules: tender_flow, product_asset, mission_stock, procurement_cycle, import_data, stock_override, unifield_setup, purchase_compare_rfq, stock_batch_recall, msf_supply_doc_export, stock, threshold_value, reason_types_moves, sales_followup, service_purchasing, consumption_calculation, specific_rules, kit, procurement_report, msf_cross_docking, purchase, msf_outgoing, procurement_auto, msf_config_locations, procurement, sourcing, specific_locations
+#. modules: tender_flow, product_asset, mission_stock, procurement_cycle, import_data, stock_override, unifield_setup, purchase_compare_rfq, stock_batch_recall, msf_supply_doc_export, stock, threshold_value, reason_types_moves, sales_followup, service_purchasing, consumption_calculation, specific_rules, kit, procurement_report, msf_cross_docking, purchase, msf_outgoing, procurement_auto, msf_config_locations, procurement, sourcing, specific_locations, stock_move_tracking
 #: view:expiry.quantity.report:0
 #: field:expiry.quantity.report,location_id:0
 #: report:expiry.report:0
@@ -65411,6 +65416,7 @@ msgstr "Zone - Stock"
 #: report:addons/consumption_calculation/report/expiry_report.mako:156
 #: report:addons/consumption_calculation/report/expiry_report.mako:209
 #: report:addons/stock_override/report/stock_card_report_xls.mako:122
+#: report:tracking.move.report:0
 msgid "Location"
 msgstr "Zone"
 
@@ -75934,7 +75940,7 @@ msgstr "Montant hors-taxe"
 msgid "You cannot uncheck the Section checkbox because this currency is used on these 'Inter-section' partners :                                       %s"
 msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est utilisée avec ces partenaires 'Inter-sections' :                                       %s"
 
-#. modules: purchase, account, msf_outgoing, stock_override, register_accounting, sale, stock_forecast, tender_flow, msf_supply_doc_export, msf_doc_import, stock, sales_followup, purchase_override, procurement_request
+#. modules: purchase, account, msf_outgoing, stock_override, register_accounting, sale, stock_forecast, tender_flow, msf_supply_doc_export, msf_doc_import, stock, sales_followup, purchase_override, procurement_request, stock_move_tracking
 #: field:account.invoice.line,origin:0
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:129
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:58
@@ -75969,6 +75975,7 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 #: field:internal.request.import,imp_origin:0
 #: field:internal.request.import,in_origin:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:205
+#: report:tracking.move.report:0
 #, python-format
 msgid "Origin"
 msgstr "Origine"
@@ -96340,7 +96347,7 @@ msgstr "Major upgrade is available.<br/>The synchronization process is disabled<
 msgid "Invoice we come from"
 msgstr "Facture venant de"
 
-#. modules: msf_budget, purchase, account, sync_client, account_mcdb, msf_homere_interface, financing_contract, register_accounting, account_hq_entries, sale, account_override, purchase_allocation_report, base, msf_supply_doc_export, msf_doc_import, stock, analytic_override, analytic_distribution, stock_override
+#. modules: msf_budget, purchase, account, sync_client, account_mcdb, msf_homere_interface, financing_contract, register_accounting, account_hq_entries, sale, account_override, purchase_allocation_report, base, msf_supply_doc_export, msf_doc_import, stock, analytic_override, analytic_distribution, stock_override, stock_move_tracking
 #: report:combined.journals.report.pdf:0
 #: field:hq.analytic.reallocation,destination_id:0
 #: field:hq.entries,destination_id:0
@@ -96398,6 +96405,7 @@ msgstr "Facture venant de"
 #: view:sync.client.message_to_send:0
 #: report:addons/account/report/free_allocation_report.mako:202
 #: report:addons/stock_override/report/report_stock_move_xls.mako:143
+#: report:tracking.move.report:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -104400,3 +104408,47 @@ msgstr "Quand le rapport sera prêt, il sera disponible dans le menu Entrepôt /
 msgid "Your export moves analysis demand will be treated quickly."
 msgstr "L'export de l'anlyse des mouvements est en cours."
 
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "All transactions :"
+msgstr "Toutes les transactions :"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Batch number :"
+msgstr "Numéro de lot :"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Expired date :"
+msgstr "Date d'expiration :"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Items stock transaction report"
+msgstr "Rapport des transactions des articles du stock"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Move number"
+msgstr "Numéro du mouvement"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Product Code:"
+msgstr "Code Produit:"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "Product Description :"
+msgstr "Description du Produit :"
+
+#. module: stock_move_tracking
+#: model:ir.actions.report.xml,name:stock_move_tracking.tracking_move_report
+msgid "Tracking Move Report"
+msgstr "Rapport du suivi des mouvements"
+
+#. module: stock_move_tracking
+#: report:tracking.move.report:0
+msgid "number"
+msgstr "numéro"
