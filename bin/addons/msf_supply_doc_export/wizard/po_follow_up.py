@@ -55,7 +55,7 @@ class po_follow_up(osv.osv_memory):
         for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
             states[state_val] = state_string
         report_parms = {
-            'title': 'PO Follow Up per Supplier',
+            'title': _('PO Follow Up per Supplier'),
             'run_date': time.strftime("%d.%m.%Y"),
             'date_from': '',
             'date_thru': '',
@@ -128,7 +128,6 @@ class po_follow_up(osv.osv_memory):
         background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
         context['background_id'] = background_id
         context['background_time'] = wiz.background_time
-
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
@@ -139,19 +138,3 @@ class po_follow_up(osv.osv_memory):
 
 po_follow_up()
 
-
-# already defined in account_mcdb/wizard/output_currency_for_export.py
-# class background_report(osv.osv_memory):
-#        _name = 'memory.background.report'
-#        _description = 'Report result'
-#
-#        _columns = {
-#            'file_name': fields.char('Filename', size=256),
-#            'report_name': fields.char('Report Name', size=256),
-#            'report_id': fields.integer('Report id'),
-#            'percent': fields.float('Percent'),
-#            'finished': fields.boolean('Finished'),
-#        }
-#        def update_percent(self, cr, uid, ids, percent, context=None):
-#            self.write(cr, uid, ids, {'percent': percent})
-# background_report()

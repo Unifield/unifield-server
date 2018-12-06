@@ -104033,7 +104033,7 @@ msgid "\n"
 "\n"
 "%s\n"
 ""
-msgstr  "\n"
+msgstr "\n"
 "Import effectué en %s!\n"
 "# de lignes importées: %s sur %s lignes\n"
 "# de lignes ignorées: %s\n"
@@ -104056,7 +104056,7 @@ msgid "\n"
 "\n"
 "%s\n"
 ""
-msgstr  "\n"
+msgstr "\n"
 "Import effectué en %s!\n"
 "# de lignes importées: %s sur %s lignes (%s mises à jour at %s créées)\n"
 "# de lignes ignorées: %s\n"
@@ -104079,7 +104079,7 @@ msgid "\n"
 "\n"
 "%s\n"
 ""
-msgstr  "\n"
+msgstr "\n"
 "Import effectué en %s!\n"
 "# de lignes importées: %s sur %s lignes\n"
 "# de lignes ignorées: %s\n"
@@ -104098,7 +104098,7 @@ msgid "\n"
 "# of ignored lines: %s\n"
 "%s\n"
 ""
-msgstr  "\n"
+msgstr "\n"
 "Import effectué en %s!\n"
 "# de lignes importées: %s sur %s lignes\n"
 "# de lignes ignorées: %s\n"
@@ -104178,3 +104178,55 @@ msgstr "Utile pour un OUT converti en PICK puis à nouveau en OUT"
 #: view:stock.incoming.processor:0
 msgid "Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually. Continue ?"
 msgstr "Attention la Zone de desitnation finale des marchandises est inactive. Le IN sera traité mais vous devrez vérifier et traiter les Mouvement Interne. Continuer ?"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:489
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:500
+#, python-format
+msgid "Confirmed delivery date: %s"
+msgstr "Date de livraison confirmée: %s"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:488
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:499
+#, python-format
+msgid "Created: %s"
+msgstr "Créé: %s"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:491
+#, python-format
+msgid "Estimated amount: "
+msgstr "Montant estimé: "
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:502
+#, python-format
+msgid "Estimated amount: %s"
+msgstr "Montant estimé: %s"
+
+#. module: msf_supply_doc_export
+#: model:ir.actions.report.xml,name:msf_supply_doc_export.internal_request_export
+msgid "Export to IR Excel template"
+msgstr "Export du Modèle Excel DI"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:490
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:501
+#, python-format
+msgid "Nb items: %s"
+msgstr "Nb art.: %s"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:486
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:497
+#, python-format
+msgid "Order ref: %s"
+msgstr "Réf comm: %s"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:487
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:498
+#, python-format
+msgid "Status: %s"
+msgstr "Statut: %s"
