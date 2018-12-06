@@ -249,6 +249,7 @@ msgstr "Card lines"
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:287
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:886
 msgid "Qty ordered"
 msgstr "Qté commandée"
 
@@ -4878,7 +4879,7 @@ msgstr "Livraison en attente"
 msgid "Month:"
 msgstr "Mois :"
 
-#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import
+#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import, msf_supply_doc_export
 #: view:account.invoice.line:0
 #: report:allocation.invoices.report:0
 #: field:product.likely.expire.report.item,line_id:0
@@ -4926,6 +4927,7 @@ msgstr "Mois :"
 #: field:supplier.catalogue.line,line_number:0
 #: view:account.invoice:0
 #: field:internal.request.import.line,ir_line_id:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:883
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -6964,6 +6966,7 @@ msgstr "Date d'entrée en vigueur de la facture"
 
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_thru:0
+#: report:addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako:157
 msgid "PO date to"
 msgstr "BdC à la date"
 
@@ -10355,6 +10358,7 @@ msgstr "Différence en devise d'enregistrement entre entrées comptables et anal
 #. modules: sale, msf_supply_doc_export
 #: report:po.follow.up_rml:0
 #: report:msf.report_reception_in:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:888
 msgid "Qty received"
 msgstr "Qté reçue"
 
@@ -10982,7 +10986,7 @@ msgstr "Date de Réception"
 msgid "Cancel and Resource"
 msgstr "Annuler et Ressourcer"
 
-#. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration
+#. modules: procurement, account, register_accounting, purchase, account_override, vertical_integration, msf_supply_doc_export
 #: report:account.invoice2:0
 #: report:addons/account_override/report/open_invoices_xls.mako:340
 #: view:purchase.order.line:0
@@ -10993,6 +10997,7 @@ msgstr "Annuler et Ressourcer"
 #: field:procurement.order,origin:0
 #: field:purchase.order,origin:0
 #: field:wizard.account.invoice,origin:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:903
 msgid "Source Document"
 msgstr "Document d'origine"
 
@@ -26097,6 +26102,7 @@ msgstr "Options de Paiement"
 #: field:purchase.order,delivery_requested_date:0
 #: field:purchase.order.line,date_planned:0
 #: field:purchase.order.merged.line,date_planned:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:897
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
@@ -41017,6 +41023,7 @@ msgstr "De confirmé à attribué."
 #: code:addons/mission_stock/mission_stock.py:512
 #: report:addons/consumption_calculation/report/expiry_report.mako:158
 #: report:addons/consumption_calculation/report/expiry_report.mako:211
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:887
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44098,6 +44105,7 @@ msgstr "Contient des Produits Dangereux"
 #: code:addons/sale/wizard/internal_request_import.py:43
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
 #: code:addons/consumption_calculation/weekly_forecast_report.py:504
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:884
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -62986,6 +62994,7 @@ msgstr "Tél. :"
 #: field:purchase.report,order_type:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:82
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:162
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:882
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -67466,7 +67475,7 @@ msgstr "The nomenclature '%s' is an Unifield internal nomenclature, so you can't
 msgid "'Make to Stock': When needed, take from the stock or wait until re-supplying. 'Make to Order': When needed, purchase or produce for the procurement request."
 msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réapprovisionnement. 'Faire sur commande' : Au besoin, acheter ou produire pour la demande d'acquisition."
 
-#. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override
+#. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
 #: field:sale.order,delivery_confirmed_date:0
 #: field:sale.order.line,confirmed_delivery_date:0
@@ -67483,6 +67492,7 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #: field:wizard.simu.import.po.line,delivery_confirmed_date:0
 #: field:purchase.order.merged.line,confirmed_delivery_date:0
 #: field:tender.line,delivery_confirmed_date:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:898
 #, python-format
 msgid "Delivery Confirmed Date"
 msgstr "Date de Livraison Confirmée"
@@ -68844,8 +68854,9 @@ msgstr "Importer PCM"
 msgid "XmlRPC retry"
 msgstr "XmlRPC retry"
 
-#. module: sale
+#. module: sale, msf_supply_doc_export
 #: field:sale.order,client_order_ref:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:902
 msgid "Customer Reference"
 msgstr "Référence Client"
 
@@ -69725,7 +69736,7 @@ msgstr "Kit - Composition"
 msgid "Untax Amount"
 msgstr "Montant Hors Taxe"
 
-#. modules: register_accounting, account_payment, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client
+#. modules: register_accounting, account_payment, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client, msf_supply_doc_export
 #: view:ir.attachment:0
 #: field:payment.line,create_date:0
 #: view:ir.attachment:0
@@ -69738,6 +69749,7 @@ msgstr "Montant Hors Taxe"
 #: field:account.direct.invoice.wizard,create_date:0
 #: field:account.direct.invoice.wizard.line,create_date:0
 #: selection:sync.client.log_sale_purchase,action_type:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:896
 msgid "Created"
 msgstr "Créé"
 
@@ -76779,6 +76791,7 @@ msgstr "Sorte de Node"
 #: code:addons/sale/wizard/internal_request_import.py:44
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
 #: field:internal.request.import.line,in_product_desc:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:885
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -82133,6 +82146,7 @@ msgstr "Cette période est un nombre qui correspond aux derniers mois que le sys
 #: field:purchase.import.xml.line,partner_ref:0
 #: field:wizard.import.po.simulation.screen,in_supplier_ref:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:98
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:904
 #, python-format
 msgid "Supplier Reference"
 msgstr "Référence Fournisseur"
@@ -87055,6 +87069,7 @@ msgstr "Statistiques Ecritures Analytiques"
 #: view:local.transport.cost.report:0
 #: field:local.transport.cost.report,partner_id:0
 #: field:stock.incoming.processor,claim_partner_id:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:881
 #, python-format
 msgid "Supplier"
 msgstr "Fournisseur"
@@ -90515,9 +90530,10 @@ msgstr "Qté indicative en stock"
 msgid "Close CashBox"
 msgstr "Fermer Caisse"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, msf_supply_doc_export
 #: field:shipment,in_ref:0
 #: field:stock.picking,in_ref:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:889
 msgid "IN Reference"
 msgstr "Référence IN"
 
@@ -91032,6 +91048,7 @@ msgstr "Asie/ Qatar"
 
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_from:0
+#: report:addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako:153
 msgid "PO date from"
 msgstr "BdC de la date"
 
@@ -91770,6 +91787,7 @@ msgstr "Correspondances de Champ"
 #. modules: sale, msf_supply_doc_export
 #: report:msf.report_reception_in:0
 #: report:po.follow.up_rml:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:890
 msgid "Qty backorder"
 msgstr "Qté en attente"
 
@@ -94307,6 +94325,7 @@ msgstr "America/Anguilla"
 #: field:physical.inventory.counting,currency_id:0
 #: field:physical.inventory.discrepancy,currency_id:0
 #: report:addons/consumption_calculation/report/expiry_report.mako:141
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:893
 #, python-format
 msgid "Currency"
 msgstr "Devise"
@@ -94426,6 +94445,7 @@ msgstr "Rapport Journal"
 #: field:internal.request.import,in_ref:0
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:85
 #: field:internal.request.import,in_order_name:0
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:880
 #, python-format
 msgid "Order Reference"
 msgstr "Référence de la Commmande"
@@ -98550,7 +98570,7 @@ msgstr "Aperçu"
 msgid "product.likely.expire.report.item"
 msgstr "product.likely.expire.report.item"
 
-#. modules: sales_followup, account, msf_outgoing, vertical_integration, account_voucher, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock
+#. modules: sales_followup, account, msf_outgoing, vertical_integration, account_voucher, msf_config_locations, sale, account_override, sourcing, base, return_claim, stock_batch_recall, stock, msf_supply_doc_export
 #: selection:account.bank.statement.line,type:0
 #: view:account.invoice:0
 #: view:account.invoice.report:0
@@ -98586,6 +98606,7 @@ msgstr "product.likely.expire.report.item"
 #: view:stock.move:0
 #: view:report.batch.recall:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:293
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:901
 #, python-format
 msgid "Customer"
 msgstr "Client"
@@ -104230,3 +104251,44 @@ msgstr "Réf comm: %s"
 #, python-format
 msgid "Status: %s"
 msgstr "Statut: %s"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:892
+#, python-format
+msgid "IN unit price (Currency)"
+msgstr "Prix Unitaire IN (Devise)"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:900
+#, python-format
+msgid "PO Document Status"
+msgstr "Statut du BdC"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:899
+#, python-format
+msgid "PO Line Status"
+msgstr "Statut ligne BdC"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:891
+#, python-format
+msgid "PO Unit Price (Currency)"
+msgstr "Prix Unitaire BdC (Devise)"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:894
+#, python-format
+msgid "Total value received (Currency)"
+msgstr "Valeur totale reçue (Devise)"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:895
+#, python-format
+msgid "Total value received (Functional Currency)"
+msgstr "Valeur totale reçue (Devis Fonct.)"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako:149
+msgid "Report run date"
+msgstr "Date génération"
