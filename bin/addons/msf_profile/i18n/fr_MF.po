@@ -302,6 +302,7 @@ msgstr "Repasser en statut Brouillon"
 
 #. module: stock_override
 #: report:stock.card.report:0
+#: report:addons/stock_override/report/stock_card_report_xls.mako:103
 msgid "STOCK CARD"
 msgstr "FICHE STOCK"
 
@@ -4212,11 +4213,12 @@ msgstr "Montrer les Inactifs"
 msgid "UoM Stock"
 msgstr "UoM Stock"
 
-#. modules: stock, sync_client, base
+#. modules: stock, sync_client, base, stock_override
 #: view:stock.move:0
 #: field:ir.translation,src:0
 #: view:sync.client.message_received:0
 #: view:sync.client.update_received:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:142
 msgid "Source"
 msgstr "Origine"
 
@@ -6100,6 +6102,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:294
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:430
 #: code:addons/consumption_calculation/weekly_forecast_report.py:505
+#: report:addons/stock_override/report/stock_card_report_xls.mako:142
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -24481,6 +24484,7 @@ msgstr "Zone Interne"
 #: report:destruction.location:0
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:191
+#: report:addons/stock_override/report/stock_card_report_xls.mako:136
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -31388,6 +31392,7 @@ msgstr "Alloc.Analyt."
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
+#: report:addons/stock_override/report/report_stock_move_xls.mako:125
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -35515,6 +35520,7 @@ msgstr "Michigan"
 #: field:stock.incoterms,code:0
 #: report:stock.card.report:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:429
+#: report:addons/stock_override/report/stock_card_report_xls.mako:132
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -38032,6 +38038,7 @@ msgstr "Do reconfigure..."
 #: report:stock.card.report:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
+#: report:addons/stock_override/report/stock_card_report_xls.mako:112
 msgid "From"
 msgstr "De"
 
@@ -41025,6 +41032,8 @@ msgstr "De confirmé à attribué."
 #: report:addons/consumption_calculation/report/expiry_report.mako:158
 #: report:addons/consumption_calculation/report/expiry_report.mako:211
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:887
+#: report:addons/stock_override/report/report_stock_move_xls.mako:137
+#: report:addons/stock_override/report/stock_card_report_xls.mako:128
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -41988,6 +41997,7 @@ msgstr "Engagements"
 
 #. module: stock_override
 #: report:stock.card.report:0
+#: report:addons/stock_override/report/stock_card_report_xls.mako:126
 msgid "Stock Balance"
 msgstr "Niveau de Stock"
 
@@ -44108,6 +44118,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
 #: code:addons/consumption_calculation/weekly_forecast_report.py:504
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:884
+#: report:addons/stock_override/report/report_stock_move_xls.mako:135
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -51602,9 +51613,10 @@ msgstr "DEMANDE DE DEVIS"
 msgid "Unifield Account Code"
 msgstr "Unifield Account Code"
 
-#. module: specific_rules, consumption_calculation
+#. module: specific_rules, consumption_calculation, stock_override
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:88
+#: report:addons/stock_override/report/report_stock_move_xls.mako:121
 msgid "DB/instance name"
 msgstr "BD/nom de l'instance"
 
@@ -58392,9 +58404,10 @@ msgstr "Are you sure you want to reopen this FY ?"
 msgid "Import Intl Commitments"
 msgstr "Import des Engagements"
 
-#. module: msf_supply_doc_export, register_accounting
+#. module: msf_supply_doc_export, register_accounting, stock_override
 #: report:po.follow.up_rml:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:566
+#: report:addons/stock_override/report/report_stock_move_xls.mako:140
 msgid "IN"
 msgstr "ENTRANT"
 
@@ -58461,6 +58474,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:192
 #: report:addons/consumption_calculation/report/expiry_report.mako:160
 #: report:addons/consumption_calculation/report/expiry_report.mako:213
+#: report:addons/stock_override/report/stock_card_report_xls.mako:144
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -65396,6 +65410,7 @@ msgstr "Zone - Stock"
 #: report:addons/consumption_calculation/report/expiry_report.mako:129
 #: report:addons/consumption_calculation/report/expiry_report.mako:156
 #: report:addons/consumption_calculation/report/expiry_report.mako:209
+#: report:addons/stock_override/report/stock_card_report_xls.mako:122
 msgid "Location"
 msgstr "Zone"
 
@@ -70187,10 +70202,11 @@ msgstr "% RECEPTION"
 msgid "MOZAMBICAN METICAL"
 msgstr "MOZAMBICAN METICAL"
 
-#. modules: specific_rules, stock
+#. modules: specific_rules, stock, stock_override
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:125
+#: report:addons/stock_override/report/report_stock_move_xls.mako:139
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -76797,6 +76813,7 @@ msgstr "Sorte de Node"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
 #: field:internal.request.import.line,in_product_desc:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:885
+#: report:addons/stock_override/report/report_stock_move_xls.mako:136
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -79288,8 +79305,9 @@ msgstr "Budget vs. Réel"
 msgid "Please choose an export format!"
 msgstr "Veuillez choisir un format d'exportation!"
 
-#. module: msf_tools
+#. module: msf_tools, stock_override
 #: view:export.report.inconsistencies:0
+#: view:export.report.stock.move:0
 msgid "Due to the volume of data, your report cannot be shown immediatly."
 msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché immédiatement."
 
@@ -88547,6 +88565,7 @@ msgstr "TbD"
 #: report:stock.card.report:0
 #: code:addons/account/report/free_allocation_report.py:306
 #: code:addons/account/report/free_allocation_report.py:321
+#: report:addons/stock_override/report/stock_card_report_xls.mako:114
 msgid "To"
 msgstr "Au"
 
@@ -92131,6 +92150,8 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -104358,3 +104379,24 @@ msgstr "\n"
 #, python-format
 msgid "All lines have been succesfully imported !"
 msgstr "Toutes les lignes ont été correctement importées !"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:145
+msgid "Document Ref."
+msgstr "Réf. Doc."
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:144
+msgid "Reason Code"
+msgstr "Code Raison"
+
+#. module: stock_override
+#: view:export.report.stock.move:0
+msgid "When the report will be ready, you can access to it by the menu Warehouse / Reporting / Export Moves Analysis."
+msgstr "Quand le rapport sera prêt, il sera disponible dans le menu Entrepôt / Rapports / Export d'Analyse des Mouvements"
+
+#. module: stock_override
+#: view:export.report.stock.move:0
+msgid "Your export moves analysis demand will be treated quickly."
+msgstr "L'export de l'anlyse des mouvements est en cours."
+
