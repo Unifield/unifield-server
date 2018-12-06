@@ -6749,7 +6749,7 @@ msgstr "Wizard lines for incoming shipment processing"
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
 msgid "Dated before :"
-msgstr "Daté avant:"
+msgstr "Daté avant :"
 
 #. module: msf_config_locations
 #: model:stock.location,name:msf_config_locations.stock_location_quarantine_view
@@ -6965,7 +6965,7 @@ msgstr "Date d'entrée en vigueur de la facture"
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_thru:0
 msgid "PO date to"
-msgstr "PO date to"
+msgstr "BdC à la date"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -17958,7 +17958,7 @@ msgstr "Les %s de l'expédition ont été fermés."
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "PO Date To:"
-msgstr "Date BC jusqu' au:"
+msgstr "Date BC jusqu'au:"
 
 #. module: sale
 #: field:sale.order.cancelation.wizard,order_ids:0
@@ -25119,7 +25119,7 @@ msgstr "Display file with error"
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "IN unit price"
-msgstr "IN unit price"
+msgstr "Prix unitaire IN"
 
 #. module: account_period_closing_level
 #: view:account.fiscalyear:0
@@ -27069,7 +27069,7 @@ msgstr "Méthode d'Acq."
 #: view:product.list:0
 #: field:product.list,old_product_ids:0
 msgid "Old Products"
-msgstr "Vieux Produits"
+msgstr "Anciens Produits"
 
 #. module: account
 #: help:res.company,property_reserve_and_surplus_account:0
@@ -28683,7 +28683,7 @@ msgstr "FO state"
 #. module: import_data
 #: view:update_product:0
 msgid "Update Datas"
-msgstr "Update Datas"
+msgstr "Mettre à jours des Données"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,from_pack:0
@@ -32754,7 +32754,17 @@ msgstr "Ajouter Boutons pour Impression"
 #: report:kit.report:0
 #: report:procurement.request.report:0
 msgid "Creation Date :"
-msgstr "Creation Date :"
+msgstr "Date de Création :"
+
+#. module: kit
+#: report:kit.report:0
+msgid "THEORETICAL KIT COMPOSITION"
+msgstr "COMPOSITION DE KIT THÉORIQUE"
+
+#. module: kit
+#: report:kit.report:0
+msgid "KIT COMPOSITION LIST"
+msgstr "LISTE DE COMPOSITION DE KIT"
 
 #. module: account_mcdb
 #: code:addons/account_mcdb/report/account_mcdb_export.py:57
@@ -33598,7 +33608,7 @@ msgstr "Suisse"
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
 msgid "Functional currency:"
-msgstr "Functional currency:"
+msgstr "Devise fonctionnelle:"
 
 #. module: account_payment
 #: selection:payment.order,date_prefered:0
@@ -34570,7 +34580,7 @@ msgstr "Hide download template"
 #. module: kit
 #: report:kit.report:0
 msgid "Product :"
-msgstr "Product :"
+msgstr "Produit :"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:325
@@ -37431,7 +37441,7 @@ msgstr "Editeur du Plan de travail"
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "Report Run Date:"
-msgstr "Report Run Date:"
+msgstr "Date de génération:"
 
 #. module: account_payment
 #: view:payment.order:0
@@ -41755,6 +41765,7 @@ msgstr "Prix Unitaire doit être spécifié pour chaque ligne."
 #. module: msf_supply_doc_export
 #: model:ir.actions.act_window,name:msf_supply_doc_export.po_follow_up_menu
 #: model:ir.ui.menu,name:msf_supply_doc_export.po_follow_up_menu2
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:58
 msgid "PO Follow Up per Supplier"
 msgstr "Suivi BdC par Fournisseur"
 
@@ -47992,7 +48003,7 @@ msgstr "Objet Déclencheur"
 #. module: kit
 #: report:kit.report:0
 msgid "B. Num"
-msgstr "B. Num"
+msgstr "N. Lot"
 
 #. modules: msf_budget, account, financing_contract, analytic_distribution
 #: view:account.analytic.account:0
@@ -77110,7 +77121,7 @@ msgstr "Id distante"
 #. module: return_claim
 #: field:return.claim,origin_claim:0
 msgid "Original Claim Reference"
-msgstr "Original Claim Reference"
+msgstr "Référence de la réclamation d'origine"
 
 #. module: finance
 #: field:account.partner.balance.tree,build_ts:0
@@ -78737,7 +78748,7 @@ msgstr "No line selected"
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "PO Date From:"
-msgstr "PO Date From:"
+msgstr "BdC de la date:"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -91022,7 +91033,7 @@ msgstr "Asie/ Qatar"
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_from:0
 msgid "PO date from"
-msgstr "PO date from"
+msgstr "BdC de la date"
 
 #. module: purchase
 #: help:purchase.order,invoice_address_id:0
@@ -91571,7 +91582,7 @@ msgstr "Non Alloué"
 #: code:addons/kit/kit.py:325
 #, python-format
 msgid "This kit product / batch is not available in stock !"
-msgstr "This kit product / batch is not available in stock !"
+msgstr "Ce produit / lot n'est pas disponible en stock !"
 
 #. module: msf_field_access_rights
 #: selection:msf_field_access_rights.field_access_rule,status:0
@@ -92469,6 +92480,7 @@ msgstr "Order in last month"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:297
+#: report:msf.pdf.engagement:0
 msgid "Budget missing"
 msgstr "Budget manquant"
 
@@ -93493,6 +93505,7 @@ msgstr "%s :: Nouvelle procédure d'export automatisée créée"
 
 #. module: msf_budget
 #: report:addons/msf_budget/report/order_impact_vs_budget.mako:282
+#: report:msf.pdf.engagement:0
 msgid "TOTALS"
 msgstr "TOTAUX"
 
@@ -101164,7 +101177,7 @@ msgstr "Livraison Complète"
 #: model:ir.actions.act_window,name:msf_budget.action_order_impact_vs_budget_menu
 #: model:ir.actions.report.xml,name:msf_budget.order_impact_vs_budget_xls
 msgid "Order Impact vs. Budget"
-msgstr "Order Impact vs. Budget"
+msgstr "Répercussion sur le Budget"
 
 #. module: finance
 #: field:account.partner.balance.tree,ib_balance:0
