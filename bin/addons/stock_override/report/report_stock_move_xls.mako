@@ -110,7 +110,7 @@
     <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Destination
     <Column ss:AutoFitWidth="1" ss:Width="150" />
-    # Reason Code
+    # Reason Type
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Document Ref
     <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -141,7 +141,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('OUT')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Source')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Destination')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reason Code')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reason Type')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Document Ref.')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Stock Move Date')|x}</Data></Cell>
     </Row>

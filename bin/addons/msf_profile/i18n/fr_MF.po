@@ -82252,10 +82252,11 @@ msgstr "Ceci va supprimer toutes les écritures de Paie. Etes-vous certain?"
 msgid "Update(s) not run left: %d"
 msgstr "Update(s) not run left: %d"
 
-#. modules: reason_types_moves, msf_outgoing, stock
+#. modules: reason_types_moves, msf_outgoing, stock, stock_override
 #: view:stock.picking:0
 #: view:stock.move:0
 #: view:report.stock.move:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:144
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -104044,11 +104045,6 @@ msgstr "Toutes les lignes ont été correctement importées !"
 #: report:addons/stock_override/report/report_stock_move_xls.mako:145
 msgid "Document Ref."
 msgstr "Réf. Doc."
-
-#. module: stock_override
-#: report:addons/stock_override/report/report_stock_move_xls.mako:144
-msgid "Reason Code"
-msgstr "Code Raison"
 
 #. module: stock_override
 #: view:export.report.stock.move:0
