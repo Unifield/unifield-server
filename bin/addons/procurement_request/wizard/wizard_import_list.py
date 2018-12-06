@@ -43,7 +43,7 @@ class wizard_import_list(osv.osv_memory):
     }
 
     _defaults = {
-        'info': lambda *a : """
+        'info': lambda s, cr, uid, context : _("""
         The file should be in CSV format (with ';' character as delimiter).
         The columns should be in this order :
           * Product Code
@@ -52,7 +52,7 @@ class wizard_import_list(osv.osv_memory):
           * Quantity
           * Comment
           * From stock ? (Write True if you want that the product will be supply from stock, leave blank if not)
-        """
+        """)
     }
 
     def close_window(self, cr, uid, ids, context=None):
@@ -137,7 +137,7 @@ class wizard_import_list(osv.osv_memory):
             product_ids = product_obj.search(cr, uid, [('default_code', '=', line[0])], context=context)
             if not product_ids:
                 product_ids = product_obj.search(cr, uid, [('name', '=', line[1])], context=context)
-            
+
             if not product_ids:
                 error += 'Product [%s] %s not found !' % (line[0], line[1])
                 error += '\n'
@@ -174,16 +174,16 @@ class wizard_import_list(osv.osv_memory):
                                            'procurement_request': True,
                                            'order_id': list_id})
 
-        view_ids = model_data_obj.search(cr, uid, 
-                                        [('module', '=', 'procurement_request'), 
-                                         ('name', '=', 'wizard_import_list_done')],
-                                        offset=0, limit=1)[0]
+        view_ids = model_data_obj.search(cr, uid,
+                                         [('module', '=', 'procurement_request'),
+                                          ('name', '=', 'wizard_import_list_done')],
+                                         offset=0, limit=1)[0]
         view_id = model_data_obj.browse(cr, uid, view_ids).res_id
 
         if error and error != '':
             context['message'] = error
         else:
-            context['message'] = 'All lines have been succesfully imported !'
+            context['message'] = _('All lines have been succesfully imported !')
 
         context['step'] = 'import'
         context['list_id'] = list_id
@@ -195,7 +195,7 @@ class wizard_import_list(osv.osv_memory):
                 'target': 'new',
                 'view_id': [view_id],
                 'context': context,
-               }
+                }
 
 wizard_import_list()
 

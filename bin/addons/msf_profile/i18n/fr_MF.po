@@ -2746,7 +2746,7 @@ msgstr "Total amount should be equal or superior to 0!"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Requestor :"
-msgstr "Requestor :"
+msgstr "Demandeur :"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.bg
@@ -3613,7 +3613,7 @@ msgstr "Date d'Engagement"
 #: field:procurement.request.sourcing.document.mem,sourcing_document_name:0
 #: field:unconsistent.stock.report.line,document_number:0
 msgid "Document name"
-msgstr "Document name"
+msgstr "Nom du Document"
 
 #. module: msf_tools
 #: help:automated.export,ftp_ok:0
@@ -10564,7 +10564,7 @@ msgstr "Sélectionnez une Période"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Requested date :"
-msgstr "Requested date :"
+msgstr "Date souhaitée :"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -17664,7 +17664,7 @@ msgstr "Notes de Crédit"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Order Reference :"
-msgstr "Order Reference :"
+msgstr "Référence de la Commande :"
 
 #. module: base
 #: help:ir.attachment,res_model:0
@@ -23181,7 +23181,7 @@ msgstr "Compte Ajustement"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Total Purchase"
-msgstr "Total Purchase"
+msgstr "Total Achat"
 
 #. module: stock
 #: code:addons/stock/stock.py:1726
@@ -29450,7 +29450,7 @@ msgstr "Souaziland"
 #. module: procurement_request
 #: report:procurement.request.report:0
 msgid "Functional Currency :"
-msgstr "Functional Currency :"
+msgstr "Devise Fonctionnelle :"
 
 #. module: base
 #: model:res.currency,currency_name:base.DOP
@@ -39267,7 +39267,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes
+#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -39291,6 +39291,7 @@ msgstr "Is inactive for destination given in context"
 #: selection:account.journal.column,field:0
 #: code:addons/product_attributes/product_attributes.py:908
 #: field:product.product,uf_create_date:0
+#: field:purchase.order.merged.line,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -44012,12 +44013,13 @@ msgstr "Mise à jour de l'entité"
 msgid "Monthly Budget (XLS)"
 msgstr "Budget Mensuel (XLS)"
 
-#. modules: msf_doc_import, account_payment
+#. modules: msf_doc_import, account_payment, procurement_request
 #: view:payment.line:0
 #: view:payment.order:0
 #: field:abstract.wizard.import,info_message:0
 #: view:wizard.import.batch:0
 #: field:wizard.import.batch,info_message:0
+#: view:internal.request.import:0
 msgid "Information"
 msgstr "Informations"
 
@@ -44544,7 +44546,7 @@ msgstr "Mode de Réapprovisionnement"
 msgid "End date"
 msgstr "Date de fin"
 
-#. modules: stock_forecast, product_attributes, msf_doc_import, msf_supply_doc_export
+#. modules: stock_forecast, product_attributes, msf_doc_import, msf_supply_doc_export, purchase_override
 #: view:product.justification.code:0
 #: field:product.justification.code,code:0
 #: field:product.product,justification_code_id:0
@@ -44553,6 +44555,7 @@ msgstr "Date de fin"
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:79
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:78
+#: field:purchase.order.merged.line,justification_code_id:0
 #, python-format
 msgid "Justification Code"
 msgstr "Justification - Code"
@@ -72293,9 +72296,10 @@ msgstr "ED management"
 msgid "Work Days"
 msgstr "Jours Ouvrés"
 
-#. module: product_attributes, purchase
+#. module: product_attributes, purchase, purchase_override
 #: field:product.product,cold_chain:0
 #: field:purchase.order.line,cold_chain:0
+#: field:purchase.order.merged.line,cold_chain:0
 msgid "Cold Chain"
 msgstr "Chaîne du Froid"
 
@@ -87549,8 +87553,9 @@ msgstr "Symbole Devise, à utiliser lors de l'impression des montants"
 msgid "Display analytic periods?"
 msgstr "Display analytic periods?"
 
-#. module: sale
+#. module: sale, purchase_override
 #: field:sale.order,date_confirm:0
+#: field:purchase.order.merged.line,confirmation_date:0
 msgid "Confirmation Date"
 msgstr "Date de Confirmation"
 
@@ -95776,9 +95781,10 @@ msgstr "Ligne %s du fichier Excel : Cette ligne est obligatoire et doit comporte
 msgid "This ISO code is the name of po files to use for translations"
 msgstr "Ce code ISO est le nom des fichiers po utilisés pour les traductions"
 
-#. module: product_attributes, purchase
+#. module: product_attributes, purchase, purchase_override
 #: field:product.product,heat_sensitive_item:0
 #: field:purchase.order.line,heat_sensitive_item:0
+#: field:purchase.order.merged.line,heat_sensitive_item:0
 msgid "Temperature sensitive item"
 msgstr "Article sensible à la température"
 
@@ -102338,8 +102344,9 @@ msgstr "D.A"
 msgid "Changes"
 msgstr "Modifications"
 
-#. module: purchase
+#. module: purchase, purchase_override
 #: field:purchase.order.line,controlled_substance:0
+#: field:purchase.order.merged.line,controlled_substance:0
 msgid "Controlled Substance"
 msgstr "Substance contrôlée"
 
@@ -104292,3 +104299,55 @@ msgstr "Valeur totale reçue (Devis Fonct.)"
 #: report:addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako:149
 msgid "Report run date"
 msgstr "Date génération"
+
+#. module: purchase_override
+#: field:purchase.order.merged.line,closed_date:0
+msgid "Closed Date"
+msgstr "Date de Clôture"
+
+#. module: purchase_override
+#: field:purchase.order.merged.line,validation_date:0
+msgid "Validation Date"
+msgstr "Date de Validation"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:315
+#, python-format
+msgid "Warning you are about to add a product which does not conform to this order category, do you wish to proceed ?"
+msgstr "Attention vous avez ajouté un produit qui ne correspond à la catégorie de la commande, voulez-vous continuer ?"
+
+#. module: procurement_request
+#: code:addons/procurement_request/procurement_request.py:595
+#, python-format
+msgid "Importing from IR Excel template is only allowed on an IR which is in Draft state"
+msgstr "L'import depuis un modèle Excel est autorisé uniquement sur le DI en statut brouillon"
+
+#. module: procurement_request
+#: code:addons/procurement_request/wizard/wizard_import_list.py:46
+#, python-format
+msgid "\n"
+"        The file should be in CSV format (with ';' character as delimiter).\n"
+"        The columns should be in this order :\n"
+"          * Product Code\n"
+"          * Product Description\n"
+"          * UoM\n"
+"          * Quantity\n"
+"          * Comment\n"
+"          * From stock ? (Write True if you want that the product will be supply from stock, leave blank if not)\n"
+"        "
+msgstr "\n"
+"        Le fichier doit être au format CSV (; comme séparateur de champs).\n"
+"        Les colonnes doivent être :\n"
+"          * Code Produit\n"
+"          * Description Produit\n"
+"          * UdM\n"
+"          * Quantité\n"
+"          * Commentaire\n"
+"          * Du stock ? (mettre la valeur True pour sourcer du stock, sinon laisser vide)\n"
+"        "
+
+#. module: procurement_request
+#: code:addons/procurement_request/wizard/wizard_import_list.py:46
+#, python-format
+msgid "All lines have been succesfully imported !"
+msgstr "Toutes les lignes ont été correctement importées !"
