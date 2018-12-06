@@ -4438,7 +4438,7 @@ msgstr "Rechercher Processus de Transition"
 msgid "Free Gift Certificate"
 msgstr "Certificat de Don Gratuit"
 
-#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile
+#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile, specific_rules
 #: field:ir.config_parameter,value:0
 #: field:ir.property,value_binary:0
 #: field:ir.property,value_datetime:0
@@ -4464,6 +4464,7 @@ msgstr "Certificat de Don Gratuit"
 #: report:lot.stock.overview:0
 #: report:lot.stock.overview_all:0
 #: view:physical.inventory:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:152
 msgid "Value"
 msgstr "Valeur"
 
@@ -27539,6 +27540,7 @@ msgstr "Volume Total [dm³]"
 #: view:purchase.order:0
 #: field:stock.reserved.products,product_qty:0
 #: report:tracking.move.report:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:151
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -31396,6 +31398,7 @@ msgstr "Alloc.Analyt."
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
 #: report:addons/stock_override/report/report_stock_move_xls.mako:125
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:132
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -41038,6 +41041,7 @@ msgstr "De confirmé à attribué."
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:887
 #: report:addons/stock_override/report/report_stock_move_xls.mako:137
 #: report:addons/stock_override/report/stock_card_report_xls.mako:128
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:148
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -43366,6 +43370,7 @@ msgstr "Numéro de Révision"
 
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:147
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:153
 msgid "Total Qty"
 msgstr "Qté Totale"
 
@@ -44123,6 +44128,7 @@ msgstr "Contient des Produits Dangereux"
 #: code:addons/consumption_calculation/weekly_forecast_report.py:504
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:884
 #: report:addons/stock_override/report/report_stock_move_xls.mako:135
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:146
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -46427,6 +46433,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/consumption_calculation/report/expiry_report.mako:159
 #: report:addons/consumption_calculation/report/expiry_report.mako:212
 #: report:tracking.move.report:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:149
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -51622,6 +51629,7 @@ msgstr "Unifield Account Code"
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:88
 #: report:addons/stock_override/report/report_stock_move_xls.mako:121
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:128
 msgid "DB/instance name"
 msgstr "BD/nom de l'instance"
 
@@ -65417,6 +65425,7 @@ msgstr "Zone - Stock"
 #: report:addons/consumption_calculation/report/expiry_report.mako:209
 #: report:addons/stock_override/report/stock_card_report_xls.mako:122
 #: report:tracking.move.report:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:140
 msgid "Location"
 msgstr "Zone"
 
@@ -70213,6 +70222,7 @@ msgstr "MOZAMBICAN METICAL"
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:125
 #: report:addons/stock_override/report/report_stock_move_xls.mako:139
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:150
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -76821,6 +76831,7 @@ msgstr "Sorte de Node"
 #: field:internal.request.import.line,in_product_desc:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:885
 #: report:addons/stock_override/report/report_stock_move_xls.mako:136
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:147
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -79312,9 +79323,10 @@ msgstr "Budget vs. Réel"
 msgid "Please choose an export format!"
 msgstr "Veuillez choisir un format d'exportation!"
 
-#. module: msf_tools, stock_override
+#. module: msf_tools, stock_override, specific_rules
 #: view:export.report.inconsistencies:0
 #: view:export.report.stock.move:0
+#: view:export.report.stock.inventory:0
 msgid "Due to the volume of data, your report cannot be shown immediatly."
 msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché immédiatement."
 
@@ -87513,7 +87525,7 @@ msgstr "Si cette case est cochée, la zone est une zone virtuel."
 msgid "Create Menu For Dashboard"
 msgstr "Créer un Menu pour le Tableau de Bord"
 
-#. modules: sale, stock, consumption_calculation
+#. modules: sale, stock, consumption_calculation, specific_rules
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:132
 #: field:report.stock.inventory,value:0
 #: field:report.stock.move,value:0
@@ -87521,6 +87533,7 @@ msgstr "Créer un Menu pour le Tableau de Bord"
 #: report:product.likely.expire.report_pdf:0
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:121
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:154
 msgid "Total Value"
 msgstr "Valeur Totale"
 
@@ -104452,3 +104465,18 @@ msgstr "Rapport du suivi des mouvements"
 #: report:tracking.move.report:0
 msgid "number"
 msgstr "numéro"
+
+#. module: specific_rules
+#: field:stock.production.lot,has_stock_move:0
+msgid "Has stock move"
+msgstr "À des mouvements"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "When the report will be ready, you can access to it by the menu Warehouse / Inventory Management / Export Inventory Level."
+msgstr "Une fois généré le rapport sera disponible dans le menu Entrepôt / Gestion Inventaire / Export du Niveau de Stock."
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "Your export inventory level demand will be treated quickly."
+msgstr "Le rapport est en cours de génération."
