@@ -180,14 +180,12 @@ class ppl_processor(osv.osv):
         if uom_obj.rounding == 1:
             if quantity % int(num_of_packs) != 0:
                 ok = False
-                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_int'}, context=context)
         else:
             qty_per_pack = quantity/int(num_of_packs)
             rounded_qty_pp = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack)
             if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
                     and abs(qty_per_pack - rounded_qty_pp) != 0:
                 ok = False
-                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_rounded'}, context=context)
         return ok
 
     def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=False):
@@ -224,7 +222,7 @@ class ppl_processor(osv.osv):
             )
 
         ok_ids = []
-        ok = True
+        seq_ok, qty_ok = True, True
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
             sequences = []
@@ -237,13 +235,27 @@ class ppl_processor(osv.osv):
             if not sequences:
                 return False
 
-            ok = ok and self.check_sequences(cr, uid, sequences, ppl_move_obj) \
-                and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj)
+            seq_ok = seq_ok and self.check_sequences(cr, uid, sequences, ppl_move_obj) 
+            qty_ok = qty_ok and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj)
 
-        if ok and just_check:
+            if not qty_ok:
+                wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {'ppl_processor_id': wizard.id}, context=context)
+                return {
+                    'name': _("PPL integrity"),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'check.ppl.integrity',
+                    'target': 'new',
+                    'res_id': [wiz_check_ppl_id],
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'context': context,
+                }
+                
+        if seq_ok and qty_ok and just_check:
             ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
-        if not ok or just_check:
+
+        if not (seq_ok and qty_ok) or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
