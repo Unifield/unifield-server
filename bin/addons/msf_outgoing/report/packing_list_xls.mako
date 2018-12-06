@@ -427,7 +427,7 @@
    % endif
    % for pf in getParcel(p['pf']):
    <Row>
-    <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">${_('Parcel No:')|x} ${(pf.from_pack)|x} to ${(pf.to_pack)|x}</Data></Cell>
+    <Cell ss:StyleID="s135" ss:MergeAcross="1"><Data ss:Type="String">${_('Parcel No:')|x} ${(pf.from_pack)|x} ${_('to')|x} ${(pf.to_pack)|x}</Data></Cell>
     <Cell ss:StyleID="s135"><Data ss:Type="String">${(pf.num_of_packs)|x} ${_('Parcel')|x}${(pf.num_of_packs > 1 and 's' or '')|x}</Data></Cell>
     <Cell ss:StyleID="s135" ss:MergeAcross="3"><Data ss:Type="String">${_('Total weight')|x} ${(formatLang(pf.total_weight or 0.00))|x} kg     -     ${_('Total volume')|x} ${(formatLang(pf.total_volume or 0.00))|x} dm³</Data></Cell>
     <Cell ss:StyleID="s135"/>

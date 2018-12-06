@@ -498,7 +498,7 @@ class stock_mission_report(osv.osv):
         sheet.write(0, 1, instance_name, row_style)
         sheet.col(0).width=5000
         sheet.write(1, 0, _("Instance selection"), row_style)
-        report_name = 'All loc'
+        report_name = _('All loc')
         sheet.write(1, 1, report_name, row_style)
         sheet.col(1).width=5000
 

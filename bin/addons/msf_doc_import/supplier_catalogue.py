@@ -133,7 +133,7 @@ class supplier_catalogue(osv.osv):
             'file': template_file,
             'filename_template': _('Supplier Catalogue template.xls'),
             'message': """%s %s""" % (
-                GENERIC_MESSAGE,
+                _(GENERIC_MESSAGE),
                 ', '.join([_(f) for f in sup_cat_columns]),
             ),
             'filename': _('Lines Not imported.xls'),

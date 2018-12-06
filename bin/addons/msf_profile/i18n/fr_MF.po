@@ -303,7 +303,7 @@ msgstr "Repasser en statut Brouillon"
 #. module: stock_override
 #: report:stock.card.report:0
 msgid "STOCK CARD"
-msgstr "STOCK CARD"
+msgstr "FICHE STOCK"
 
 #. module: procurement_cycle
 #: view:stock.warehouse.order.cycle:0
@@ -8264,7 +8264,7 @@ msgstr "Charger écritures de Version"
 #: view:shipment:0
 #: view:stock.picking:0
 msgid "Synchronization engine should confirm the delivery at the project reception, are you sure?"
-msgstr "Synchronization engine should confirm the delivery at the project reception, are you sure?"
+msgstr "Le moteur de synchro devrait Valider la livraison lors de la réception au projet, voulez-vous continuer ?"
 
 #. modules: account, base, account_payment
 #: selection:res.partner.bank,state:0
@@ -11344,7 +11344,7 @@ msgstr "Délai d'achat"
 #: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:78
 #, python-format
 msgid "No line to remove"
-msgstr "No line to remove"
+msgstr "Aucune ligne à supprimer"
 
 #. modules: sale, purchase_override
 #: code:addons/purchase_override/wizard/split_order_line.py:85
@@ -21415,7 +21415,7 @@ msgstr "La nomenclature sélectionnée ne devrait pas être proposée."
 #: code:addons/consumption_calculation/expiry_calculation.py:682
 #, python-format
 msgid "There is not any product in expiry"
-msgstr "There is not any product in expiry"
+msgstr "Il n'y a aucun produit expiré"
 
 #. module: report_webkit
 #: field:report.webkit.actions,open_action:0
@@ -29838,7 +29838,7 @@ msgstr "Décimal"
 #. module: supplier_catalogue
 #: model:ir.actions.server,name:supplier_catalogue.action_create_new_catalogue
 msgid "New Catalogue"
-msgstr "New Catalogue"
+msgstr "Nouveau Catalogue"
 
 #. module: vertical_integration
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:271
@@ -52926,7 +52926,7 @@ msgstr "# de Commandes"
 #: code:addons/msf_outgoing/msf_outgoing.py:716
 #, python-format
 msgid "The new Shipment id:%s (%s) has been created."
-msgstr "The new Shipment id:%s (%s) has been created."
+msgstr "La nouvelle expédition id:%s (%s) a été créée."
 
 #. modules: base, msf_button_access_rights
 #: sql_constraint:ir.ui.view:0
@@ -67707,7 +67707,7 @@ msgstr "Please, format the line number %s, column \"Min Order Qty\"."
 #. module: msf_outgoing
 #: field:shipment,picking_ids:0
 msgid "Associated Packing List"
-msgstr "Associated Packing List"
+msgstr "Liste de Colisage associée"
 
 #. module: vertical_integration
 #: model:ir.model,name:vertical_integration.model_ocp_matching_export_wizard
@@ -71448,7 +71448,7 @@ msgstr "Contrepasser Calcul du Code "
 #: code:addons/stock/stock.py:1724
 #, python-format
 msgid " for the "
-msgstr "pour le"
+msgstr " pour le "
 
 #. module: account_mcdb
 #: field:account.mcdb,rev_analytic_account_f2_ids:0
@@ -73243,6 +73243,7 @@ msgstr "Import des numéros de lot"
 #: report:packing.list:0
 #: field:free.allocation.wizard,document_date_to:0
 #: field:free.allocation.wizard,posting_date_to:0
+#: report:addons/msf_outgoing/report/packing_list_xls.mako:419
 msgid "to"
 msgstr "à"
 
@@ -80834,7 +80835,7 @@ msgstr "A un Tiers"
 #. module: supplier_catalogue
 #: model:ir.actions.server,name:supplier_catalogue.action_server_export_catalogue_lines
 msgid "Export lines (csv)"
-msgstr "Export lines (csv)"
+msgstr "Export CSV des lignes"
 
 #. module: base
 #: selection:ir.property,value_reference:0
@@ -103885,6 +103886,12 @@ msgstr "Niveau de l'instance"
 #, python-format
 msgid "Instance selection"
 msgstr "Sélection Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:360
+#, python-format
+msgid "All loc"
+msgstr "Toutes zones"
 
 #. module: mission_stock
 #: code:addons/mission_stock/mission_stock.py:54
