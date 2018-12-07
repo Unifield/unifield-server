@@ -279,6 +279,12 @@ class List(SecuredController):
                 if k.startswith('search_default'):
                     del params.context[k]
 
+            for x in params.context.get('set_by_field', []):
+                try:
+                    del params.context[x]
+                except KeyError:
+                    pass
+
             if 'group_by' in params.context:
                 del params.context['group_by']
             params.group_by_ctx = []
