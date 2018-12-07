@@ -84273,7 +84273,7 @@ msgstr "Configuration des Zones configurables"
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_sale_order_xls
 msgid "Field Order Excel Export"
-msgstr "Exportation en Excel des commandes de terrain"
+msgstr "Export Excel de la Commande de Terrain"
 
 #. modules: stock_batch_recall, product_asset
 #: field:product.asset,xmlid_name:0
