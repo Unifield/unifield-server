@@ -4875,7 +4875,6 @@ msgstr "Mois :"
 #: report:msf.purchase.quotation:0
 #: field:purchase.order.merged.line,line_number:0
 #: report:msf.sale.order:0
-#: report:delivery.order:0
 #: report:internal.move:0
 #: field:supplier.catalogue.line,line_number:0
 #: view:account.invoice:0
@@ -4884,6 +4883,11 @@ msgstr "Mois :"
 #, python-format
 msgid "Line"
 msgstr "Ligne"
+
+#. module: stock_override
+#: report:delivery.order:0
+msgid "Line"
+msgstr "N°"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:132
@@ -12361,7 +12365,7 @@ msgstr "Création de facture en cours"
 #. module: stock_override
 #: report:delivery.order:0
 msgid "Expected Shipped Date :"
-msgstr "Date d'expédition prévue :"
+msgstr "Date d'expédition prévue:"
 
 #. module: account_override
 #: help:res.company,additional_allocation:0
@@ -19215,15 +19219,19 @@ msgstr "Could not cancel this sales order !"
 msgid "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 msgstr "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 
-#. modules: msf_field_access_rights, financing_contract, register_accounting, stock_override
+#. modules: msf_field_access_rights, financing_contract, register_accounting
 #: view:financing.contract.contract:0
 #: view:msf_field_access_rights.field_access_rule:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,comments:0
 #: field:account.bank.statement,notes:0
-#: report:delivery.order:0
 msgid "Comments"
 msgstr "Commentaires"
+
+#. module: stock_override
+#: report:delivery.order:0
+msgid "Comments"
+msgstr "Comm."
 
 #. module: finance
 #: view:cash.request:0
@@ -72877,7 +72885,7 @@ msgstr "Homere interface with OpenERP"
 #. module: stock_override
 #: report:delivery.order:0
 msgid "Reason Type :"
-msgstr "Reason Type :"
+msgstr "Raison - Type :"
 
 #. module: register_accounting
 #: model:ir.module.module,description:register_accounting.module_meta_information
