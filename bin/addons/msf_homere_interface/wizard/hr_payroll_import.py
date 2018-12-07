@@ -104,7 +104,7 @@ class hr_payroll_import(osv.osv_memory):
             employee_ids = employee_obj.search(cr, uid,
                                                [('identification_id', '=', employee_identification_id)],
                                                context=context, order='NO_ORDER')
-        if not employee_ids and account.is_analytic_addicted and not is_counterpart:
+        if employee_identification_id and not employee_ids and account.is_analytic_addicted and not is_counterpart:
             raise osv.except_osv(_('Error'), _('No employee found for this code: %s.\nDEBIT: %s.\nCREDIT: %s.') % (
                 employee_identification_id, debit, credit,))
         if employee_ids and len(employee_ids) > 1:
