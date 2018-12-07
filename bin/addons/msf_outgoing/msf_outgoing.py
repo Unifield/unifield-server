@@ -906,6 +906,8 @@ class shipment(osv.osv):
                             _('Error'),
                             _('All returned lines must be \'Available\'. Please check this and re-try.')
                         )
+                    if family.selected_number < int(family.num_of_packs) and move.qty_per_pack % 1 != 0:
+                        raise osv.except_osv(_('Error'), _('You cannot return a partial number of packs containing a split integer product'))
                     """
                     Stock moves are not canceled as for PPL return process
                     because this represents a draft packing, meaning some shipment could be canceled and
