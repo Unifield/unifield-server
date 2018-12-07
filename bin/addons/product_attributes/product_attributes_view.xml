@@ -488,7 +488,7 @@
             <field name="inherit_id" ref="product.product_search_form_view"/>
             <field name="arch" type="xml">
                    <field name="list_ids" position="before">
-                       <field name="location_id" context="{'location': self or context.get('location')}"/>
+                       <field name="location_id" context="{'search_location': self or context.get('location')}"/>
                        <separator orientation="vertical"/>
                    </field>
             </field>
