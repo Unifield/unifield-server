@@ -968,6 +968,7 @@ class user_rights_tools(osv.osv_memory):
                         if error:
                             raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
 
+
             if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
                 dom = [('imported_flag', '=', False)]
                 if model == 'ir.model.access':
@@ -979,6 +980,9 @@ class user_rights_tools(osv.osv_memory):
                     else:
                         obj_to_import.unlink(cr, uid, to_del_ids, context=context)
                     self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
+
+            if model == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return True
 
     def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):

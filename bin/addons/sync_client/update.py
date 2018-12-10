@@ -669,6 +669,9 @@ class update_received(osv.osv,fv_formatter):
 
             if obj._name == 'ir.translation':
                 self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
+            elif obj._name == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""
