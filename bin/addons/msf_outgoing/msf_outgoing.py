@@ -684,6 +684,17 @@ class shipment(osv.osv):
                     continue
 
                 picking = family.draft_packing_id
+
+                move_ids = self.pool.get('stock.move').search(cr, uid, [
+                    ('picking_id', '=', picking.id),
+                    ('from_pack', '=', family.from_pack),
+                    ('to_pack', '=', family.to_pack)
+                ], context=context)
+                for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
+                    if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
+                                                                        move.qty_per_pack % move.product_uom.rounding != 0:
+                        raise osv.except_osv(_('Error'), _('You cannot process a partial number of packs containing a split integer product'))
+
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method
                 sequence = picking.sequence_id
