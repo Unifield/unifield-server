@@ -175,7 +175,10 @@ class ppl_processor(osv.osv):
 
         return ok
 
-    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status',  context=False):
+    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status', line_number=False, context=None):
+        if context is None:
+            context = {}
+
         ok = True
         if uom_obj.rounding == 1:
             if quantity % int(num_of_packs) != 0:
@@ -186,9 +189,15 @@ class ppl_processor(osv.osv):
             if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
                     and abs(qty_per_pack - rounded_qty_pp) != 0:
                 ok = False
+
+        if not ok and line_number:
+            line_number_with_issue = context.get('line_number_with_issue', [])
+            line_number_with_issue.append(line_number)
+            context['line_number_with_issue'] = line_number_with_issue
+
         return ok
 
-    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=False):
+    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=None):
         '''
         Check quantities per pack integrity with UoM
         '''
@@ -197,7 +206,7 @@ class ppl_processor(osv.osv):
 
         ok = True
         for line in lines:
-            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, context=context)
+            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, line_number=line.line_number, context=context)
         return ok
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
@@ -236,10 +245,18 @@ class ppl_processor(osv.osv):
                 return False
 
             seq_ok = seq_ok and self.check_sequences(cr, uid, sequences, ppl_move_obj) 
-            qty_ok = qty_ok and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj)
+            qty_ok = qty_ok and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj, context=context)
 
             if not qty_ok:
-                wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {'ppl_processor_id': wizard.id}, context=context)
+                ln_issue = context.get('line_number_with_issue', [])
+                if ln_issue:
+                    ln_sorted = sorted(list(set(ln_issue)))
+                    ln_str = ', '.join([str(x) for x in ln_sorted]).strip(', ')
+
+                wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                    'ppl_processor_id': wizard.id,
+                    'line_number_with_issue': ln_str,
+                }, context=context)
                 return {
                     'name': _("PPL integrity"),
                     'type': 'ir.actions.act_window',

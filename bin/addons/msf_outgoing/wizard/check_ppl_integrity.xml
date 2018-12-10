@@ -7,17 +7,21 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="PPL integrity">
-					<field name="ppl_processor_id" invisible="1" />
+                    <field name="ppl_processor_id" invisible="1" />
                     <group colspan="2">
                         <html>
-                            <p id="ppl_integrity_message" style="text-align:center; color: red; font-weight: bold; font-size: 1.2em">
+                            <p id="ppl_integrity_message" style="text-align:center; color: red; font-weight: bold; font-size: 1.3em">
                                 <translate>
                                     WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs
                                 </translate>
                            </p>
                         </html>
                     </group>
-                    <newline />
+                    <newline/>
+                    <group>
+                        <field name="line_number_with_issue"/>
+                    </group>
+                    <separator/>
 					<button name="cancel" type="object" icon="gtk-cancel" string="Return to PPL" />
 				    <button name="next" type="object" icon="gtk-jump-to" string="Continue" />
                 </form>

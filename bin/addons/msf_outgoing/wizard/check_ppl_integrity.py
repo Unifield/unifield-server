@@ -31,6 +31,7 @@ class check_ppl_integrity(osv.osv_memory):
 
     _columns = {
         'ppl_processor_id': fields.many2one('ppl.processor', string='PPL processor', readonly=True),
+        'line_number_with_issue': fields.char('Line # with issue', size=512, readonly=True),
     }
 
     def next(self, cr, uid, ids, context=None):
