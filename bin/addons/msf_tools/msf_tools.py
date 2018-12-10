@@ -980,9 +980,6 @@ class user_rights_tools(osv.osv_memory):
                     else:
                         obj_to_import.unlink(cr, uid, to_del_ids, context=context)
                     self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
-
-            if model == 'ir.model.access':
-                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return True
 
     def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):
