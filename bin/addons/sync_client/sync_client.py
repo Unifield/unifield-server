@@ -817,6 +817,7 @@ class Entity(osv.osv):
 
         cr.commit()
         self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+        self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return True
 
     @sync_process('data_pull')
