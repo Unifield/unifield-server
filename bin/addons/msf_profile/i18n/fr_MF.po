@@ -74427,6 +74427,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_instance/msf_instance.py:565
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:77
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:115
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:55
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:221
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:287
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
@@ -74586,6 +74587,7 @@ msgstr "Autre liste de prix"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:78
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:116
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:56
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:288
 #: code:addons/msf_outgoing/wizard/picking_processor.py:144
 #: code:addons/msf_outgoing/wizard/picking_processor.py:173
@@ -103778,3 +103780,29 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:696
+#, python-format
+msgid "You cannot process a partial number of packs containing a split integer product"
+msgstr "Vous ne pouvez pas valider partiellement un nombre de colis contenant des produits entiers divisés"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:922
+#, python-format
+msgid "You cannot return a partial number of packs containing a split integer product"
+msgstr "Vous ne pouvez pas valider retourner un nombre de colis contenant des produits entiers divisés"
+
+#. module: msf_outgoing
+#: field:check.ppl.integrity,line_number_with_issue:0
+msgid "Line # with issue"
+msgstr "Numero des lignes problématiques"
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "\n"
+"                                    WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs\n"
+"                                "
+msgstr "\n"
+"                                    Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement\n"
+"                                "
