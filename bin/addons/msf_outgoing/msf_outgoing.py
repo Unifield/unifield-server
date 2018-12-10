@@ -1200,6 +1200,10 @@ class shipment(osv.osv):
                             _('One of the returned family is not \'Available\'. Check the state of the pack families and re-try.'),
                         )
 
+                    if (family.from_pack != family.return_from or family.to_pack != family.return_to) \
+                                            and move.product_uom.rounding == 1 and move.qty_per_pack % move.product_uom.rounding != 0:
+                        raise osv.except_osv(_('Error'), _('You cannot return a partial number of packs containing a split integer product'))
+
                     move_data.setdefault(move.id, {
                         'initial': move.product_qty,
                         'partial_qty': 0,
