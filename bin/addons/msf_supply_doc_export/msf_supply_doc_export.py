@@ -125,6 +125,24 @@ class internal_request_export(WebKitParser):
 internal_request_export('report.internal_request_export','sale.order','addons/msf_supply_doc_export/internal_request_export_xls.mako')
 
 
+class report_pick_export_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(report_pick_export_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(report_pick_export_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+report_pick_export_xls('report.pick.export.xls','stock.picking','addons/msf_supply_doc_export/report/report_pick_export_xls.mako')
+
+
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object
 class purchase_order_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
