@@ -226,6 +226,8 @@
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
 						</group>
 					</group>
+					<button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
+					<button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
 					<notebook colspan="4">
 						<page string="Products">
 							<field name="from_wkf" invisible="1"/>
