@@ -26,6 +26,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from datetime import datetime
+import tools
 from msf_doc_import import check_line
 from msf_doc_import.wizard import PPL_COLUMNS_LINES_FOR_IMPORT as ppl_columns_lines_for_import
 
@@ -181,14 +182,42 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
         return error_log
 
+    def split_move(self, cr, uid, move_id, new_qty=0.00, context=None):
+        """
+        Split the line according to new parameters
+        """
+        if not move_id:
+            raise osv.except_osv(
+                _('Error'),
+                _('No line to split !'),
+            )
+
+        move_obj = self.pool.get('stock.move')
+        move = move_obj.browse(cr, uid, move_id, fields_to_fetch=['product_qty'], context=context)
+
+        # New quantity must be greater than 0.00 and lower than the original move's qty
+        if new_qty <= 0.00 or new_qty > move.product_qty or new_qty == move.product_qty:
+            return False
+
+        # Create a copy of the move with the new quantity
+        new_move_id = move_obj.copy(cr, uid, move_id, {'product_qty': new_qty}, context=context)
+
+        # Update the original move
+        update_qty = move.product_qty - new_qty
+        move_obj.write(cr, uid, move_id, {'product_qty': update_qty}, context=context)
+
+        return new_move_id
+
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
         '''
         # Objects
         wiz_common_import = self.pool.get('wiz.common.import')
+        prod_obj = self.pool.get('product.product')
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
+        prodlot_obj = self.pool.get('stock.production.lot')
         pack_type_obj = self.pool.get('pack.type')
         import_cell_data_obj = self.pool.get('import.cell.data')
 
@@ -200,11 +229,12 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         start_time = time.time()
         line_with_error = []
         error_log = ''
-        move_ids = False
         # List of sequences for from_pack and to_pack
         sequences = []
 
         for wiz_browse in self.browse(cr, uid, ids, context):
+            # List of data to update moves
+            updated_data = []
             try:
                 picking = wiz_browse.picking_id
 
@@ -231,28 +261,21 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 if not current_row.cells:
                     rows.next()
                 line_num = 0
-                to_update = {}
                 total_line_num = len([row for row in file_obj.getRows()])
                 percent_completed = 0
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)], order='line_number')
-                # List of data to update moves
-                updated_data = []
+                # List of lines treated
+                treated_lines = []
                 for i, row in enumerate(rows):
                     line_num += 1
                     # default values
                     to_update = {
-                        'error_list': [],
                         'warning_list': [],
                         'to_correct_ok': False,
                         'show_msg_ok': False,
-                        'from_pack': 1,
-                        'to_pack': 1,
-                        'weight': 0.00,
-                        'width': 0.00,
-                        'length': 0.00,
-                        'height': 0.00,
+                        'move_id': False,
                         'pack_type': False,
                     }
+                    line_errors = []
 
                     col_count = len(row)
                     template_col_count = len(header_index.items())
@@ -274,39 +297,157 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             total_line_num -= 1
                             continue
 
-                        # Stock Move
-                        move = move_obj.browse(cr, uid, move_ids[i], context=context)
-                        m_value = check_line.pack_move_value_for_update(cr, uid, ids, move_obj=move_obj, row=row,
-                                                                        to_write=to_update, pack_type_obj=pack_type_obj,
-                                                                        import_cell_data_obj=import_cell_data_obj,
-                                                                        move=move, line_num=line_num,
-                                                                        context=context)
+                        imp_line_num = False
+                        if row.cells[0].data:
+                            if row.cells[0].type != 'int':
+                                line_errors.append(_(' The Line Number has to be an integer.'))
+                            else:
+                                imp_line_num = row.cells[0].data
+                        else:
+                            line_errors.append(_(' The Line Number has to be defined.'))
+
+                        # product default code
+                        product = False
+                        if row.cells[1].data:
+                            product_code = tools.ustr(row.cells[1].data)
+                            product_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
+                            if product_ids:
+                                product = prod_obj.browse(cr, uid, product_ids[0], context=context)
+                            else:
+                                line_errors.append(_(' The Product Code (%s) was not found in the DB.') % (product_code,))
+                        else:
+                            line_errors.append(_(' The Product Code has to be defined.'))
+
+                        # total qty to pack
+                        imp_qty = 0
+                        if row.cells[4].data:
+                            if row.cells[4].type in ('int', 'float'):
+                                imp_qty = row.cells[4].data
+                            else:
+                                line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
+                        else:
+                            line_errors.append(_(' The Total Qty to Pack has to be defined.'))
+
+                        # batch
+                        imp_batch = False
+                        if product:
+                            if product.batch_management:
+                                if row.cells[5].data:
+                                    batch_name = tools.ustr(row.cells[5].data)
+                                    lot_ids = prodlot_obj.search(cr, uid, [('name', '=', batch_name),
+                                                                           ('product_id', '=', product.id)], context=context)
+                                    if lot_ids:
+                                        imp_batch = prodlot_obj.browse(cr, uid, lot_ids[0], context=context)
+                                    else:
+                                        line_errors.append(_(' The Batch Number (%s) for the Product (%s) was not found in the DB.')
+                                                           % (batch_name, product.default_code))
+                                else:
+                                    line_errors.append(_(' The Batch Number is mandatory for this product.'))
+                            if product.perishable:
+                                if row.cells[6].data:
+                                    # check date format
+                                    cell_expiry_date = import_cell_data_obj.get_expired_date(cr, uid, ids, row, 6, line_errors,
+                                                                                             line_num, context)
+                                    if not cell_expiry_date:
+                                        line_errors.append( _(' The Expiry Date (%s) does not have a good date format.')
+                                                            % (row.cells[6].data))
+                                else:
+                                    line_errors.append(_(' The Expiry Date is mandatory for this product.'))
+
+                        # Check data and for split as well
+                        move = False
+                        if imp_line_num:
+                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', wiz_browse.picking_id.id),
+                                                                 ('line_number', '=', imp_line_num)], context=context)
+                            if move_ids:
+                                move = False
+                                for move in move_obj.browse(cr, uid, move_ids, context=context):
+                                    if (product and move.product_id.id == product.id) and move.product_qty == imp_qty:
+                                        if move.prodlot_id:
+                                            if imp_batch and move.prodlot_id.id == imp_batch.id:
+                                                to_update.update({'move_id': move.id})
+                                                break
+                                        elif not imp_batch:
+                                            to_update.update({'move_id': move.id})
+                                            break
+                                if not to_update.get('move_id'):
+                                    line_errors.append(_(' The imported line %s\'s data does not match %s\'s data.')
+                                                       % (imp_line_num, wiz_browse.picking_id.name))
+                            else:
+                                line_errors.append(_(' The Line %s does not exist in %s.')
+                                                   % (imp_line_num, wiz_browse.picking_id.name))
+                            if imp_line_num not in treated_lines:
+                                treated_lines.append(imp_line_num)
+                            else:
+                                if to_update.get('move_id'):
+                                    new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
+                                    if not new_move_id:
+                                        line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
+                                    to_update.update({
+                                        'move_id': new_move_id,
+                                    })
+
+                        # from pack and to pack
+                        if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[
+                            12].type == 'int' \
+                                and row.cells[11].data > 0 and row.cells[12].data > 0:
+                            to_update.update({
+                                'from_pack': row.cells[11].data,
+                                'to_pack': row.cells[12].data,
+                            })
+                        elif row.cells[11].data and row.cells[12].data and (
+                                row.cells[11].type != 'int' or row.cells[12].type != 'int'):
+                            line_errors.append(_(' From pack and To pack have to be integers.'))
+                        else:
+                            to_update.update({
+                                'from_pack': 1,
+                                'to_pack': 1,
+                            })
+                            line_errors.append(
+                                _(' From pack and To pack to be defined and over 0, set to 1 by default.'))
+
+                        # weight per pack
+                        if row.cells[13].data and row.cells[13].type in ('int', 'float') and row.cells[13].data > 0:
+                            to_update.update({
+                                'weight': row.cells[13].data,
+                            })
+                        elif row.cells[13].data and row.cells[13].type not in ('int', 'float'):
+                            line_errors.append(_(' Weight per pack has to be an float.'))
+                        else:
+                            line_errors.append(_(' Weight per pack has to be defined and over 0.'))
+
+                        # pack type + width, length & height
+                        if row.cells[15].data:
+                            pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
+                            if pack_type_ids:
+                                pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                                to_update.update({
+                                    'pack_type': pack_type
+                                })
+                            else:
+                                line_errors.append(_(' This Pack Type doesn\'t exists.'))
 
                         # Check quantity per pack
-                        qty_pp_error = self.check_qty_pp(cr, uid, move, m_value['from_pack'], m_value['to_pack'], context=context)
+                        qty_pp_error = self.check_qty_pp(cr, uid, move, to_update['from_pack'], to_update['to_pack'], context=context)
                         if qty_pp_error:
-                            m_value['error_list'].append(qty_pp_error)
-
-                        to_update.update({'error_list': m_value['error_list'], 'from_pack': m_value['from_pack'],
-                                          'to_pack': m_value['to_pack'], 'weight': m_value['weight'],
-                                          'width': m_value['width'], 'length': m_value['length'],
-                                          'height': m_value['height'], 'pack_type': m_value['pack_type']})
+                            line_errors.append(qty_pp_error)
 
                         to_update.update({
-                            'to_correct_ok': any(to_update['error_list']),
+                            'error_list': line_errors,
+                            'to_correct_ok': any(line_errors),
                             # the lines with to_correct_ok=True will be red
                             'show_msg_ok': any(to_update['warning_list']),
                             # the lines with show_msg_ok=True won't change color, it is just info
-                            'text_error': '\n'.join(to_update['error_list'] + to_update['warning_list']),
+                            'text_error': '\n'.join(line_errors + to_update['warning_list']),
                         })
 
-                        sequences.append((m_value['from_pack'], m_value['to_pack'], i + 1))
+                        sequences.append((to_update['from_pack'], to_update['to_pack'], i + 1))
 
                         # update move line on picking
                         if to_update['error_list']:
                             error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
                             lines_to_correct += 1
-                            raise osv.except_osv(_('Error'), ''.join(x for x in m_value['error_list']))
+                            raise osv.except_osv(_('Error'), ''.join(x for x in to_update['error_list']))
                         updated_data.append(to_update)
                         complete_lines += 1
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
@@ -343,20 +484,23 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 if error_log:
                     error_log = _("Reported errors : \n") + error_log
 
-                # checking the number of lines
-                if move_ids and line_num != len(move_ids):
-                    error_log += _("There is %s lines in the file and %s lines in %s. Please import the same number of lines.\n") \
-                                 % (line_num, len(move_ids), picking.name)
-                    lines_to_correct += abs(len(move_ids) - line_num)
-
                 # checking integrity of from_pack and to_pack
                 from_to_pack_errors = self._check_from_to_pack_integrity(sequences, context=context)
                 if from_to_pack_errors:
                     from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
 
                 if not error_log and not from_to_pack_errors:
-                    for i, move_data in enumerate(updated_data):
-                        move_obj.write(cr, uid, [move_ids[i]], move_data, context=context)
+                    for data in updated_data:
+                        if data.get('move_id'):
+                            vals = {
+                                'from_pack': data['from_pack'],
+                                'to_pack': data['to_pack'],
+                                'pack_type': data['pack_type'].id,
+                                'width': data.get('pack_type') and data['pack_type'].width or data.get('width', 0),
+                                'length': data.get('pack_type') and data['pack_type'].length or data.get('length', 0),
+                                'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
+                            }
+                            move_obj.write(cr, uid, data['move_id'], vals, context=context)
                 end_time = time.time()
                 total_time = str(round(end_time - start_time)) + _(' second(s)')
                 final_message = _('''    Importation completed in %s!
@@ -375,7 +519,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     wizard_vals.update(file_to_export)
                 self.write(cr, uid, ids, wizard_vals, context=context)
                 # we reset the state of the PPL to assigned (initial state)
-                pick_obj.write(cr, uid, picking.id, {'state': 'assigned', 'import_in_progress': False},
+                pick_obj.write(cr, uid, wiz_browse.picking_id.id, {'state': 'assigned', 'import_in_progress': False},
                                context)
 
         cr.commit()
@@ -459,8 +603,7 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = \
-            self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',
@@ -479,8 +622,7 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = \
-            self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
                 'view_type': 'form',

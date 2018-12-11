@@ -8,7 +8,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="PPL Import">
-                    <separator colspan="4" string="Purchase information" />
+                    <separator colspan="4" string="Packing information" />
                     <field name="picking_id" readonly="1" />
                     <separator colspan="4" string="File to import" />
                     <field name="file" filename="filename_template" />

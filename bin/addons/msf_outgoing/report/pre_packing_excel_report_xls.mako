@@ -240,7 +240,7 @@
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Transport mode')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Transport Mode')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
