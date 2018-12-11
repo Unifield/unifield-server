@@ -104495,4 +104495,4 @@ msgstr " La Ligne %s n'existe pas dans %s."
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:385
 #, python-format
 msgid " The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line's quantity."
-msgstr " La Ligne n'a pas pu etre scindée. Veuillez vous assurer que la nouvelle quantité est au dessus de 0 et en dessous de la quantité de la ligne originelle."
+msgstr " La Ligne n'a pas pu être scindée. Veuillez vous assurer que la nouvelle quantité est au dessus de 0 et en dessous de la quantité de la ligne originelle."

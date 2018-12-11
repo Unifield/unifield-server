@@ -201,6 +201,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
         # Create a copy of the move with the new quantity
         new_move_id = move_obj.copy(cr, uid, move_id, {'product_qty': new_qty}, context=context)
+        move_obj.action_confirm(cr, uid, new_move_id, context=context)
+        move_obj.action_assign(cr, uid, new_move_id, context=context)
 
         # Update the original move
         update_qty = move.product_qty - new_qty
@@ -273,6 +275,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         'to_correct_ok': False,
                         'show_msg_ok': False,
                         'move_id': False,
+                        'ordered_qty': 0.0,
                         'pack_type': False,
                     }
                     line_errors = []
@@ -319,11 +322,12 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             line_errors.append(_(' The Product Code has to be defined.'))
 
                         # total qty to pack
-                        imp_qty = 0
+                        imp_qty = 0.0
                         if row.cells[4].data:
-                            if row.cells[4].type in ('int', 'float'):
-                                imp_qty = row.cells[4].data
-                            else:
+                            try:
+                                imp_qty = float(row.cells[4].data)
+                                to_update.update({'ordered_quantity': imp_qty})
+                            except:
                                 line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
                         else:
                             line_errors.append(_(' The Total Qty to Pack has to be defined.'))
@@ -362,7 +366,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             if move_ids:
                                 move = False
                                 for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                    if (product and move.product_id.id == product.id) and move.product_qty == imp_qty:
+                                    if product and move.product_id.id == product.id:
                                         if move.prodlot_id:
                                             if imp_batch and move.prodlot_id.id == imp_batch.id:
                                                 to_update.update({'move_id': move.id})
@@ -445,6 +449,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
                         # update move line on picking
                         if to_update['error_list']:
+                            cr.rollback()
                             error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
                             lines_to_correct += 1
                             raise osv.except_osv(_('Error'), ''.join(x for x in to_update['error_list']))
@@ -493,6 +498,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     for data in updated_data:
                         if data.get('move_id'):
                             vals = {
+                                'ordered_quantity': data['ordered_quantity'],
                                 'from_pack': data['from_pack'],
                                 'to_pack': data['to_pack'],
                                 'pack_type': data['pack_type'].id,
