@@ -78,80 +78,89 @@
     ## Date of Stock Take
     <Column ss:AutoFitWidth="1" ss:Width="75.75" />
 
-    <Row ss:Height="18">
-        <Cell ss:StyleID="big_header" ss:MergeAcross="2"><Data ss:Type="String">${_('INTERNAL REQUEST')}</Data></Cell>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('To:')}</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Reference')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or '' | x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date | n}T00:00:00.000</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'state') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FO Ref.')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin or '-' | x}</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Category')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'categ') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin Ref.')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell> <!-- TODO customer ref -->
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Incoming Ref.')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.incoming_id.name or '-' | x}</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Category')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.order_category or '-' | x}</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Packing Date')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total items')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Content')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+    </Row>
+    <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Priority')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'priority') or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_order | n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell> <!-- TODO -->
     </Row>
+
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Date')}</Data></Cell>
-        % if isDate(o.delivery_requested_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date | n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        %endif
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requestor')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.requestor or '' | x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Location Requestor')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.location_requestor_id.name or '' | x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin or '' | x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.functional_currency_id.name or '' | x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Item')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Changed Article')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date of Stock Take')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Src. Location')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty in Stock')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Pick')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty Picked')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('KC')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('DG')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CS')}</Data></Cell>
     </Row>
-    % for line in o.order_line:
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.line_number or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.default_code or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.name or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.product_uom_qty or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.price_unit or (line.product_id and line.product_id.standard_price) or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_uom.name or ''| x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.functional_currency_id.name or ''| x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''| x}</Data></Cell>
-        % if isDate(line.stock_take_date):
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date | n}T00:00:00.000</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        %endif
-    </Row>
+    % for move in o.move_lines:
+      <Row>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.line_number or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.default_code or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.name or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or _('No') | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or _('No') | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or _('No') | x}</Data></Cell>
+      </Row>
     % endfor
 </Table>
 <x:WorksheetOptions/>
