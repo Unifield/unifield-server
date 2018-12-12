@@ -1116,15 +1116,11 @@ class Entity(osv.osv):
 
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            if packet and packet[0].get('sync_id'):
-                data_ids = [data['sync_id'] for data in packet]
-                res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-            else:
-                # migration
-                data_ids = [data['id'] for data in packet]
-                res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-            if not res[0]: raise Exception, res[1]
             cr.commit()
+            data_ids = [data['sync_id'] for data in packet]
+            res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+
+            if not res[0]: raise Exception, res[1]
 
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
