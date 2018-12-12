@@ -147,7 +147,6 @@ class product_history_consumption(osv.osv):
         obj = self.browse(cr, uid, ids[0],
                           fields_to_fetch=['consumption_type',
                                            'location_id',
-                                           'location_dest_id',
                                            'id',
                                            'nomen_manda_0',
                                            'sublist_id'],
@@ -157,13 +156,7 @@ class product_history_consumption(osv.osv):
         # Update the locations in context
         if obj.consumption_type == 'rac':
             location_ids = []
-            if obj.location_id and obj.location_dest_id:
-                loc_domain = [
-                    ('location_id', 'child_of', [obj.location_id.id, obj.location_dest_id.id]),
-                    ('usage', 'in', ['internal', 'customer']),
-                ]
-                location_ids = self.pool.get('stock.location').search(cr, uid, loc_domain, context=context)
-            elif obj.location_id and not obj.location_dest_id:
+            if obj.location_id:
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
             context.update({'location_id': location_ids})
 
@@ -252,11 +245,18 @@ class product_history_consumption(osv.osv):
 
         res = self.browse(cr, uid, ids[0], context=context)
         if res.consumption_type == 'rac':
-            cr.execute('''
-            SELECT distinct(product_id)
-            FROM real_average_consumption_line
-            WHERE move_id IS NOT NULL
-            ''')
+            if res.location_dest_id:
+                cr.execute('''
+                SELECT distinct(r.product_id)
+                FROM real_average_consumption_line r, stock_move m
+                WHERE m.id = r.move_id AND m.location_dest_id = %s
+                ''', (res.location_dest_id.id,))
+            else:
+                cr.execute('''
+                SELECT distinct(product_id)
+                FROM real_average_consumption_line
+                WHERE move_id IS NOT NULL
+                ''')
         else:
             cr.execute('''
               SELECT distinct(s.product_id)
