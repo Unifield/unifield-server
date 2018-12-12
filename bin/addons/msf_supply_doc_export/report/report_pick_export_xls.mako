@@ -57,7 +57,7 @@
 </Styles>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${_('Internal Request Export')|x}">
+<ss:Worksheet ss:Name="${_('PICK Export')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
     ## Line Number
     <Column ss:AutoFitWidth="1" ss:Width="120.75" />
@@ -85,15 +85,15 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date | n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date|n}T00:00:00.000</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FO Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.origin or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.name or '-' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell> <!-- TODO customer ref -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.client_order_ref or '-' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Incoming Ref.')}</Data></Cell>
@@ -105,7 +105,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Packing Date')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total items')}</Data></Cell>
@@ -125,7 +125,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell> <!-- TODO -->
     </Row>
 
     <Row>
