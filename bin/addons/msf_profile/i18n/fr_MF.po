@@ -103806,3 +103806,8 @@ msgid "\n"
 msgstr "\n"
 "                                    Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement\n"
 "                                "
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "Go Back"
+msgstr "Précédent"

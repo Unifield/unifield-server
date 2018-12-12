@@ -31,6 +31,7 @@ class check_ppl_integrity(osv.osv_memory):
 
     _columns = {
         'ppl_processor_id': fields.many2one('ppl.processor', string='PPL processor', readonly=True),
+        'incoming_processor_id': fields.many2one('stock.incoming.processor', string='IN processor', readonly=True),
         'line_number_with_issue': fields.char('Line # with issue', size=512, readonly=True),
     }
 
@@ -42,7 +43,12 @@ class check_ppl_integrity(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
 
-        return self.pool.get('stock.picking').do_ppl_step1(cr, uid, [wiz.ppl_processor_id.id], context=context)
+        if wiz.ppl_processor_id:
+            res = self.pool.get('stock.picking').do_ppl_step1(cr, uid, [wiz.ppl_processor_id.id], context=context)
+        elif wiz.incoming_processor_id:
+            res = self.pool.get('stock.incoming.processor').do_process_to_ship(cr, uid, [wiz.incoming_processor_id.id], context=context)          
+
+        return res
 
 
     def return_to_wizard(self, cr, uid, ids, context=None):
@@ -57,15 +63,22 @@ class check_ppl_integrity(osv.osv_memory):
             )
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
+        if wiz.ppl_processor_id:
+            res_model = 'ppl.processor'
+            res_id = wiz.ppl_processor_id.id
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
+        elif wiz.incoming_processor_id:
+            res_model = 'stock.incoming.processor'
+            res_id = wiz.incoming_processor_id.id
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'ppl.processor',
+            'res_model': res_model,
             'view_type': 'form',
             'view_mode': 'form',
             'view_id': [view_id],
-            'res_id': wiz.ppl_processor_id.id,
+            'res_id': res_id,
             'target': 'new',
             'context': context,
         }

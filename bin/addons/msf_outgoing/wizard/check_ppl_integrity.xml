@@ -22,7 +22,7 @@
                         <field name="line_number_with_issue"/>
                     </group>
                     <separator/>
-					<button name="cancel" type="object" icon="gtk-cancel" string="Return to PPL" />
+					<button name="cancel" type="object" icon="gtk-cancel" string="Go Back" />
 				    <button name="next" type="object" icon="gtk-jump-to" string="Continue" />
                 </form>
             </field>
