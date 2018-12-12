@@ -173,12 +173,12 @@ class finance_archive(finance_export.finance_archive):
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
         sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", 
-CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", 
-CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", 
-c.name AS "booking_currency", 
-CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", 
-CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit",
-j.type AS "journal_type"
+            CASE WHEN req.total > 0 THEN ROUND(req.total, 2) ELSE 0.0 END AS "debit", 
+            CASE WHEN req.total < 0 THEN ABS(ROUND(req.total, 2)) ELSE 0.0 END as "credit", 
+            c.name AS "booking_currency", 
+            CASE WHEN req.func_total > 0 THEN ROUND(req.func_total, 2) ELSE 0.0 END AS "func_debit", 
+            CASE WHEN req.func_total < 0 THEN ABS(ROUND(req.func_total, 2)) ELSE 0.0 END AS "func_credit",
+            j.type AS "journal_type"
             FROM (
                 SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, 
                        SUM(amount_currency) AS total, 
@@ -247,10 +247,41 @@ j.type AS "journal_type"
             new_data.append(self.line_to_utf8(tmp_line))
         return self.postprocess_selection_columns(cr, uid, new_data, [('account.bank.statement', 'state', 6)], column_deletion=column_deletion)
 
+    def postprocess_liquidity_balances(self, cr, uid, data, context=None, column_deletion=False):
+        """
+        Note that the param "column_deletion" is needed (see def archive in finance_export) but NOT used here.
+        """
+        return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
-# request used for OCB VI and for Liquidity Balances report
+    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False):
+        """
+        Formats data:
+        - replaces the Journal ID by the Journal Name in the current language
+        - then calls postprocess_selection_columns on data
+        """
+        changes, context = tuple_params
+        # number of the column containing the journal id
+        col_nbr = 2
+        if context is None or 'lang' not in context:
+            context = {'lang': 'en_MF'}  # English by default
+        pool = pooler.get_pool(cr.dbname)
+        journal_obj = pool.get('account.journal')
+        new_data = []
+        for line in data:
+            tmp_l = list(line)  # convert from tuple to list
+            if tmp_l[col_nbr]:
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
+            tmp_l = tuple(tmp_l)  # restore back the initial format
+            new_data.append(tmp_l)
+        return self.postprocess_selection_columns(cr, uid, new_data, changes, column_deletion=column_deletion)
+
+
+# request & postprocess method used for OCB, OCP, and OCG VI and for Liquidity Balances report
 liquidity_sql = """
-            SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+            SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
             (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
@@ -260,7 +291,7 @@ liquidity_sql = """
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN ('cash', 'bank', 'cheque')
+                        WHERE j.type IN %s
                         AND aml.date < %s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
@@ -271,7 +302,7 @@ liquidity_sql = """
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN ('cash', 'bank', 'cheque')
+                        WHERE j.type IN %s
                         AND aml.period_id = %s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
@@ -282,7 +313,7 @@ liquidity_sql = """
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN ('cash', 'bank', 'cheque')
+                        WHERE j.type IN %s
                         AND aml.date <= %s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
@@ -296,6 +327,51 @@ liquidity_sql = """
             AND j.currency = c.id
             AND j.instance_id IN %s;
             """
+
+
+def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=None):
+    """
+    Returns data after having replaced the Journal ID by the Journal Name in the current language
+    (the language code should be stored in context['lang']).
+    Encodes the journal name to UTF-8 if encode is True.
+    """
+    # number and name of the column containing the journal id
+    col_nbr = 2
+    col_name = 'id'
+    col_new_name = 'name'
+    if context is None or 'lang' not in context:
+        context = {'lang': 'en_MF'}  # English by default
+    pool = pooler.get_pool(cr.dbname)
+    journal_obj = pool.get('account.journal')
+    new_data = []
+    for line in data:
+        tmp_l = line
+        # list
+        if isinstance(tmp_l, list):
+            if tmp_l[col_nbr]:
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
+        # tuple
+        elif isinstance(tmp_l, tuple):
+            tmp_l = list(tmp_l)
+            if tmp_l[col_nbr]:
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
+            tmp_l = tuple(tmp_l)  # restore back the initial format
+        # dictionary
+        elif isinstance(tmp_l, dict):
+            if tmp_l[col_name]:
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_new_name] = journal_name
+                del tmp_l[col_name]
+        new_data.append(tmp_l)
+    return new_data
 
 
 class hq_report_ocb(report_sxw.report_sxw):
@@ -321,7 +397,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
-        excluded_journal_types = ['hq'] # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -403,7 +479,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.code, j.code, j.name, j.type, c.name
+                SELECT i.code, j.code, j.id, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
@@ -435,7 +511,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     WHERE tr.res_id = aa.id 
                     and tr.lang = 'en_MF' 
                     and tr.name = 'account.analytic.account,name');
-                """, 
+                """,
             'fxrate': """
                 SELECT req.name, req.code, req.rate, req.period
                 FROM (
@@ -518,16 +594,17 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             # Exclude lines that come from a HQ or MIGRATION journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
-            # The subrequest permit to disallow lines that have analytic lines. This is to not retrieve expense/income accounts
+            # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
                 SELECT aml.id
-                FROM account_move_line AS aml, account_account AS aa, account_journal AS j
+                FROM account_move_line AS aml
+                INNER JOIN account_account AS aa ON aml.account_id = aa.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                LEFT JOIN account_analytic_line aal ON aml.id = aal.move_id
                 WHERE aml.period_id = %s
-                AND aml.account_id = aa.id
-                AND aml.journal_id = j.id
-                AND j.type not in %s
+                AND j.type NOT IN %s
                 AND aa.shrink_entries_for_hq = 't'
-                AND aml.id not in (SELECT amla.id FROM account_move_line amla, account_analytic_line al WHERE al.move_id = amla.id)
+                AND aal.id IS NULL
                 AND aml.exported in %s
                 AND aml.instance_id in %s;
                 """,
@@ -536,32 +613,24 @@ class hq_report_ocb(report_sxw.report_sxw):
             'bs_entries': """
                 SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
                        a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id, hr.name_resource as hr_name
-                FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
-                     account_account AS a, 
-                     res_currency AS c, 
-                     account_move AS m, 
-                     res_company AS e, 
-                     account_journal AS j, 
-                     res_currency AS cc, 
-                     msf_instance AS i
-                WHERE aml.account_id = a.id
-                AND aml.id not in (
-                  SELECT amla.id
-                  FROM account_analytic_line al, account_move_line amla
-                  WHERE al.move_id = amla.id
-                )
-                AND aml.move_id = m.id
-                AND aml.currency_id = c.id
-                AND aml.company_id = e.id
-                AND aml.journal_id = j.id
-                AND e.currency_id = cc.id
-                AND aml.instance_id = i.id
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", 
+                       aml.partner_id, hr.name_resource as hr_name
+                FROM account_move_line aml 
+                LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                INNER JOIN account_account AS a ON aml.account_id = a.id
+                INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                INNER JOIN account_move AS m ON aml.move_id = m.id
+                INNER JOIN res_company AS e ON aml.company_id = e.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                INNER JOIN res_currency AS cc ON e.currency_id = cc.id
+                INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                WHERE aal.id IS NULL
                 AND aml.period_id = %s
                 AND a.shrink_entries_for_hq != 't'
-                AND j.type not in %s
-                AND aml.exported in %s
-                AND aml.instance_id in %s
+                AND j.type NOT IN %s
+                AND aml.exported IN %s
+                AND aml.instance_id IN %s
                 AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,
@@ -606,6 +675,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance_name = 'OCB'  # since US-949
+        reg_types = ('cash', 'bank', 'cheque')
         processrequests = [
             {
                 'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],
@@ -625,8 +695,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': instance_name + '_' + year + month + '_Journals.csv',
                 'key': 'journal',
                 'query_params': (tuple(instance_ids),),
-                'function': 'postprocess_selection_columns',
-                'fnct_params': [('account.journal', 'type', 3)],
+                'function': 'postprocess_journals',
+                'fnct_params': ([('account.journal', 'type', 3)], context),
             },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
@@ -643,10 +713,12 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (first_day_of_last_fy, last_day_of_period),
             },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'Currency'],
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance', 'Closing balance', 'Currency'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
-                'query_params': (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
+                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id, reg_types, last_day_of_period, tuple(instance_ids)),
+                'function': 'postprocess_liquidity_balances',
+                'fnct_params': context,
             },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],

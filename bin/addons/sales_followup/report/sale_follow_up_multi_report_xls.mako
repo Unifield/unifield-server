@@ -111,6 +111,56 @@
         <NumberFormat ss:Format="Short Date" />
         <Font ss:Color="#0000FF" />
     </Style>
+
+    <Style ss:ID="line_left_grey">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#747474"/>
+    </Style>
+    <Style ss:ID="line_right_grey">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#747474"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+     <Style ss:ID="line_center_grey">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+         <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#747474"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_left_date_grey">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <NumberFormat ss:Format="Short Date" />
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#747474"/>
+    </Style>
+
+    <Style ss:ID="short_date_grey">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
+        <NumberFormat ss:Format="Short Date" />
+        <Font ss:Color="#747474" />
+    </Style>
 </Styles>
 
 
@@ -123,7 +173,11 @@
         <Column ss:AutoFitWidth="1" ss:Width="170.0" />
         ## PO ref
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
-        ## Status
+        ## Supplier
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        ## Doc. Status
+        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## Line Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Received
         <Column ss:AutoFitWidth="1" ss:Width="54.75" />
@@ -225,7 +279,9 @@
                 _('Order ref'),
                 _('Customer ref'),
                 _('PO ref'),
-                _('Status'),
+                _('Supplier'),
+                _('Doc. Status'),
+                _('Line Status'),
                 _('Received'),
                 _('RDD'),
                 _('Item'),
@@ -254,46 +310,89 @@
         % for o in getOrders(r):
             % for line in getLines(o, grouped=True):
             <Row ss:Height="11.25">
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
-                % if line.get('ordered_qty'):
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
+                %if line.get('state', '') in ['cancel', 'cancel_r']:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    % if line.get('ordered_qty'):
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    % if line.get('delivered_qty'):
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">0.00</Data></Cell>
+                    % if o.transport_type and o.transport_type not in (False, 'False', ''):
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if line.get('is_delivered'):
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    % if line.get('ordered_qty'):
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    % if line.get('delivered_qty'):
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
+                    % if line.get('extra_qty', False):
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
+                    % endif
+                    % if o.transport_type and o.transport_type not in (False, 'False', ''):
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if line.get('is_delivered'):
+                    <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                    % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
-                % if line.get('delivered_qty'):
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                % if line.get('extra_qty', False):
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
-                % endif
-                % if o.transport_type and o.transport_type not in (False, 'False', ''):
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                % endif
-                % if line.get('is_delivered'):
-                <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
             </Row>
             % endfor
 

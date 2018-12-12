@@ -1096,8 +1096,7 @@ class return_claim(osv.osv):
             event_obj.create(cr, uid, event_values, context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.'
-                    % (name, claim_info.name, source))
+        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.') % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message
@@ -1120,8 +1119,7 @@ class return_claim(osv.osv):
         self.write(cr, uid, claim_id, ({'state': 'done'}), context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s."
-                    % (name, claim_info.name, source))
+        message = _("The claim %s has been closed by the closed claim %s by Push Flow at %s.") % (name, claim_info.name, source)
         self._logger.info(message)
 
         return message
@@ -1981,6 +1979,12 @@ class claim_event(osv.osv):
                                                               field='type_claim_event',
                                                               key=event.type_claim_event,
                                                               context=context)
+            # Cancel created INT backorder in case of claim from scratch
+            if not event.from_picking_wizard_claim_event and event.event_picking_id_claim_event.type == 'internal' \
+                    and event.type_claim_event in ('return', 'surplus'):
+                # To cancel the created INT
+                netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', event.event_picking_id_claim_event.id,
+                                                             'button_cancel', cr)
             log_msgs.append((event.id, _('%s Event %s has been processed.') % (event_type_name, event.name)))
             claim_ids.add(event.return_claim_id_claim_event.id)
 
@@ -2373,7 +2377,7 @@ class claim_product_line(osv.osv):
 
     _columns = {'integrity_status_claim_product_line': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'name': fields.char(string='Name', size=1024),  # auto data from create/write
-                'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_claim_product_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_claim_product_line'),
                 'price_unit_claim_product_line': fields.float(string='Currency', digits_compute=dp.get_precision('Account'), required=True),
                 # many2one
                 'claim_id_claim_product_line': fields.many2one('return.claim', string='Claim', required=True, ondelete='cascade'),
@@ -2389,7 +2393,7 @@ class claim_product_line(osv.osv):
                 'type_check': fields.char(string='Type Check', size=1024,),  # default value
                 # functions
                 'claim_type_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim Type', type='selection', selection=CLAIM_TYPE, store=False, readonly=True, multi='get_vals_claim'),
-                'hidden_stock_available_claim_product_line': fields.function(_vals_get_claim, method=True, string='Available Stock', type='float', digits_compute=dp.get_precision('Product UoM'), store=False, readonly=True, multi='get_vals_claim'),
+                'hidden_stock_available_claim_product_line': fields.function(_vals_get_claim, method=True, string='Available Stock', type='float', digits_compute=dp.get_precision('Product UoM'), store=False, readonly=True, multi='get_vals_claim', related_uom='uom_id_claim_product_line'),
                 'claim_state_claim_product_line': fields.function(_vals_get_claim, method=True, string='Claim State', type='selection', selection=CLAIM_STATE, store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_perishable_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='Exp', store=False, readonly=True, multi='get_vals_claim'),
                 'hidden_batch_management_mandatory_claim_product_line': fields.function(_vals_get_claim, method=True, type='boolean', string='B.Num', store=False, readonly=True, multi='get_vals_claim'),

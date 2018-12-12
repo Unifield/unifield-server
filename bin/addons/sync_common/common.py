@@ -26,6 +26,7 @@ WHITE_LIST_MODEL = [
     'account.fiscalyear.state',
     'account.invoice',
     'account.journal',
+    'account.mcdb',
     'account.move',
     'account.move.line',
     'account.move.reconcile',
@@ -76,6 +77,7 @@ WHITE_LIST_MODEL = [
     'msf.budget.decision.moment',
     'msf.budget.line',
     'msf.instance',
+    'msf.instance.cloud',
     'msf_button_access_rights.button_access_rule',
     'msf_field_access_rights.field_access_rule',
     'msf_field_access_rights.field_access_rule_line',
@@ -140,6 +142,8 @@ WHITE_LIST_MODEL = [
     'supplier.catalogue.line',
     'sync.monitor',
     'sync.sale.order.line.split',
+    'sync.trigger.something',
+    'sync.trigger.something.up',
     'sync.version.instance.monitor',
     'tender',
     'tender.line',
@@ -158,6 +162,8 @@ WHITE_LIST_MODEL = [
     'cash.request.liquidity.bank',
     'cash.request.liquidity.cheque',
     'cash.request.liquidity.total',
+    'hr.payment.method',
+    'wizard.template',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

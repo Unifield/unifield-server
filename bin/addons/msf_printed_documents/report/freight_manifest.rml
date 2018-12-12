@@ -115,7 +115,7 @@
 
 
             <blockAlignment value="LEFT" />
-            <blockVAlign value="MIDDLE"  />
+            <blockValign value="MIDDLE"  />
             <blockBackground colorName="silver"  />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5"  />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
@@ -524,13 +524,13 @@
                 <tr>
                     [[ repeatIn(get_group_lines(objects), 'line') ]]
                     <td>
-                        <para style="LinesBlue">[[ line['ref'] ]]</para>
+                        <parawrap style="LinesBlue">[[ line['ref'] ]]</parawrap>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['po_ref'] ]]</para>
+                        <parawrap style="LinesBlue">[[ line['po_ref'] ]]</parawrap>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['ppl'] ]]</para>
+                        <parawrap style="LinesBlue">[[ line['ppl'] ]]</parawrap>
                     </td>
                     <td>
                         <para style="LinesBlue">[[ line['desc'] ]]</para>

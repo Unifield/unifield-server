@@ -126,9 +126,9 @@ class module(osv.osv):
                     aa = v.inherit_id and '* INHERIT ' or ''
                     res_mod_dic['views_by_module'].append(aa + v.name + '('+v.type+')')
                 elif key=='ir.actions.report.xml':
-                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id).name)
+                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['name']).name)
                 elif key=='ir.ui.menu':
-                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id).complete_name)
+                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['complete_name']).complete_name)
             except KeyError:
                 self.__logger.warning(
                     'Data not found for reference %s[%s:%s.%s]', data_id.model,
@@ -389,7 +389,7 @@ class module(osv.osv):
                 updated_values = {}
                 for key in values:
                     old = getattr(mod, key)
-                    updated = isinstance(values[key], basestring) and tools.ustr(values[key]) or values[key] 
+                    updated = isinstance(values[key], basestring) and tools.ustr(values[key]) or values[key]
                     if not old == updated:
                         updated_values[key] = values[key]
                 if terp.get('installable', True) and mod.state == 'uninstallable':
@@ -538,13 +538,6 @@ class module(osv.osv):
             if not mod.description:
                 logger.warn('module %s: description is empty !', mod.name)
 
-            if not mod.certificate or not mod.certificate.isdigit():
-                logger.info('module %s: no quality certificate', mod.name)
-            else:
-                val = long(mod.certificate[2:]) % 97 == 29
-                if not val:
-                    logger.critical('module %s: invalid quality certificate: %s', mod.name, mod.certificate)
-                    raise osv.except_osv(_('Error'), _('Module %s: Invalid Quality Certificate') % (mod.name,))
 
     def list_web(self, cr, uid, context=None):
         """ list_web(cr, uid, context) -> [(module_name, module_version)]

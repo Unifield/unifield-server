@@ -23,11 +23,12 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE
+from account_override import ACCOUNT_RESTRICTED_AREA
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
 from lxml import etree
-
+from msf_field_access_rights.osv_override import _record_matches_domain
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -133,18 +134,12 @@ class res_partner(osv.osv):
                     partner_currency_id = pricelist.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price, round=False, context=context)
                     currency = partner_currency_id
-                    # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
-#                    currency = info_price.currency_id.id
-#                    price = info_price.price
                     res[partner.id] = {'price_currency': currency,
                                        'price_unit': price,
                                        'valide_until_date': info_price.valid_till}
 
         return res
 
-## QT : Remove _get_price_unit
-
-## QT : Remove _get_valide_until_date
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -357,6 +352,7 @@ class res_partner(osv.osv):
         Check if the deleted partner is not a system one
         """
         data_obj = self.pool.get('ir.model.data')
+        property_obj = self.pool.get('ir.property')
 
         partner_data_id = [
             'supplier_tbd',
@@ -385,6 +381,18 @@ class res_partner(osv.osv):
 
         address_obj.unlink(cr, uid, address_ids, context)
 
+        # delete the related fields.properties
+        property_fields = ['property_account_receivable', 'property_account_payable', 'property_product_pricelist',
+                           'property_product_pricelist_purchase', 'property_stock_supplier',
+                           'property_stock_customer', 'property_account_position', 'property_payment_term']
+        res_ids = []
+        for partner_id in ids:
+            res_id = 'res.partner,%s' % partner_id
+            res_ids.append(res_id)
+        property_domain = [('name', 'in', property_fields), ('res_id', 'in', res_ids)]
+        property_ids = property_obj.search(cr, uid, property_domain, order='NO_ORDER', context=context)
+        property_obj.unlink(cr, uid, property_ids, context=context)
+
         mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
         ir_model_data_obj.unlink(cr, uid, mdids, context)
         return res
@@ -398,25 +406,9 @@ class res_partner(osv.osv):
 
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
-        cur =  bro and bro.currency_id and bro.currency_id.id
-
-        po_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist_purchase'))
-        fo_def_cur = self.pool.get('product.pricelist').browse(cr,uid,vals.get('property_product_pricelist'))
 
         if res in ids:
             for obj in self.browse(cr, uid, [res], context=context):
-
-                if context.get('from_setup') and bro.second_time and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and po_def_cur and po_def_cur.currency_id and po_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Purchase Default Currency of this partner'))
-
-                if context.get('from_setup') and bro.second_time and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner anymore'))
-
-                if not context.get('from_setup') and fo_def_cur and fo_def_cur.currency_id and fo_def_cur.currency_id.id != cur:
-                    raise osv.except_osv(_('Warning !'), _('You can not change the Field Orders Default Currency of this partner'))
 
                 if obj.customer:
                     raise osv.except_osv(_('Warning !'), _('This partner can not be checked as customer'))
@@ -503,7 +495,7 @@ class res_partner(osv.osv):
                                            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
                                            context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('rfq_state', 'not in', ['done', 'cancel'])],
                                       context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
                                    [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
@@ -594,6 +586,69 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
+    def check_partner_unicity(self, cr, uid, partner_id, context=None):
+        """
+        If the partner name is already used, check that the city is not empty AND not used by another partner with the
+        same name. Checks are case insensitive, done with active and inactive External partners, and NOT done at synchro time.
+        """
+
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            address_obj = self.pool.get('res.partner.address')
+            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
+            if partner.partner_type == 'external':
+                city = partner.city or ''  # city of the first address created for this partner
+                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner.name),
+                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])]
+                duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
+                if duplicate_partner_ids:
+                    address_ids = address_obj.search(cr, uid, [('partner_id', 'in', duplicate_partner_ids)],
+                                                     context=context, order='NO_ORDER')
+                    if not city or address_obj.search_exist(cr, uid, [('id', 'in', address_ids),
+                                                                      ('city', '=ilike', city)], context=context):
+                        raise osv.except_osv(_('Warning'),
+                                             _("The partner can't be saved because already exists under the same name for "
+                                               "the same city. Please change the partner name or city or use the existing partner."))
+
+    def _check_default_accounts(self, cr, uid, vals, context=None):
+        """
+        Checks if the property_account_receivable and property_account_payable in vals are allowed based on the domains
+        stored in ACCOUNT_RESTRICTED_AREA. If not raises a warning.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            account_obj = self.pool.get('account.account')
+            if vals.get('property_account_receivable'):
+                receivable_domain = [('id', '=', vals['property_account_receivable'])]
+                receivable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_receivable'])
+                if not account_obj.search_exist(cr, uid, receivable_domain, context=context):
+                    receivable_acc = account_obj.browse(cr, uid, vals['property_account_receivable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Receivable.') % (receivable_acc.code, receivable_acc.name))
+            if vals.get('property_account_payable'):
+                payable_domain = [('id', '=', vals['property_account_payable'])]
+                payable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_payable'])
+                if not account_obj.search_exist(cr, uid, payable_domain, context=context):
+                    payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
+
+    def check_same_pricelist(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return True
+
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name'], context=context):
+            if x.property_product_pricelist_purchase and x.property_product_pricelist and x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
+                raise osv.except_osv(_('Warning'),
+                                     _('Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same') % (x.name, x.property_product_pricelist_purchase.currency_id.name, x.property_product_pricelist.currency_id.name)
+                                     )
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -604,8 +659,11 @@ class res_partner(osv.osv):
             context = {}
 
         #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
-        if context.get('sync_update_execution', False) and 'active' in vals:
-            del vals['active']
+        if context.get('sync_update_execution', False):
+            if 'active' in vals:
+                del vals['active']
+            if 'po_by_project' in vals:
+                del vals['po_by_project']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -619,7 +677,7 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore 
+            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore
             oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
             if oldValue == True: # from active to inactive ---> check if any ref to it
                 objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
@@ -629,14 +687,27 @@ class res_partner(osv.osv):
                                            ) % (objects_linked_to_partner))
 
         if vals.get('name'):
-            vals['name'] = vals['name'].strip()
+            vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        return super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
+        self.check_same_pricelist(cr, uid, ids, context=context)
+        return ret
+
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
+        '''
+            bo_py_poject field must not trigger an sync update
+        '''
+        if touched_fields and 'po_by_project' in touched_fields:
+            touched_fields = [x for x in touched_fields if x!='po_by_project']
+        return super(res_partner, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
+        fields_to_create = vals.keys()
+
         if context is None:
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
+        self._check_default_accounts(cr, uid, vals, context=context)
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
@@ -659,9 +730,58 @@ class res_partner(osv.osv):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
         if vals.get('name'):
-            vals['name'] = vals['name'].strip()
+            vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
-        return super(res_partner, self).create(cr, uid, vals, context=context)
+        new_id = super(res_partner, self).create(cr, uid, vals, context=context)
+        self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
+        self.check_same_pricelist(cr, uid, [new_id], context=context)
+        # US-3945: checking user's rights
+        if not context.get('sync_update_execution') and uid != 1:
+            instance_level = _get_instance_level(self, cr, uid)
+
+            if instance_level:  # get rules for this model, instance and user
+                model_name = self._name
+                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
+
+                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+                if not rules_pool:
+                    return new_id
+
+                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name),
+                                                         ('instance_level', '=', instance_level), '|',
+                                                         ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+                # do we have rules that apply to this user and model?
+                if rules_search:
+                    # for each rule, check the record against the rule domain.
+                    rules_to_check = []
+                    for rule in rules_pool.read(cr, uid, rules_search, ['domain_text']):
+                        dom = rule['domain_text']
+                        if isinstance(dom, (str, unicode)):
+                            dom = eval(rule['domain_text'])
+                            if not isinstance(dom, bool) and dom:
+                                dom = ['&', ('active','in', ['t', 'f'])] + dom
+
+                        if _record_matches_domain(self, cr, new_id, dom):
+                            rules_to_check.append(rule['id'])
+                    if rules_to_check:
+                        # get the fields with write_access=False
+                        cr.execute("""SELECT DISTINCT field_name
+                              FROM msf_field_access_rights_field_access_rule_line
+                              WHERE write_access='f' AND
+                              field_access_rule in %s AND
+                              field_name in %s
+                              limit 1
+                        """, (tuple(rules_to_check), tuple(fields_to_create)))
+
+                        x = cr.fetchone()
+                        if x:
+                            # throw access denied error
+                            raise osv.except_osv(_('Access Denied'),
+                                                 _('You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.') % (x[0], )
+                                                 )
+
+        return new_id
 
 
     def copy_data(self, cr, uid, id, default=None, context=None):

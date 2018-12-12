@@ -132,6 +132,7 @@ class report_xml(osv.osv):
         'report_rml_content_data': fields.binary('RML content'),
         'report_sxw_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='SXW content',),
         'report_rml_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='RML content'),
+        'run_in_background': fields.boolean('Run report in bg'),
 
     }
     _defaults = {
@@ -142,6 +143,7 @@ class report_xml(osv.osv):
         'report_sxw_content': lambda *a: False,
         'report_type': lambda *a: 'pdf',
         'attachment': lambda *a: False,
+        'run_in_background': False,
     }
 
 report_xml()
@@ -150,7 +152,7 @@ class act_window(osv.osv):
     _name = 'ir.actions.act_window'
     _table = 'ir_act_window'
     _sequence = 'ir_actions_id_seq'
-    _order = 'name'
+    _order = 'name, id'
     _replace_exported_fields = {
         'groups_txt': [
             (['groups_id', 'Groups'], 10)
@@ -209,7 +211,7 @@ class act_window(osv.osv):
             if act.search_view_id:
                 search_view_id = act.search_view_id.id
             else:
-                res_view = self.pool.get('ir.ui.view').search(cr, uid, 
+                res_view = self.pool.get('ir.ui.view').search(cr, uid,
                                                               [('model','=',act.res_model),('type','=','search'),
                                                                ('inherit_id','=',False)], context=context)
                 if res_view:
@@ -349,6 +351,25 @@ class act_window(osv.osv):
         res_id = dataobj.browse(cr, uid, data_id, context).res_id
         return self.read(cr, uid, res_id, [], context)
 
+    def open_view_from_xmlid(self, cr, uid, xmlid, views_order=None,  new_tab=False, context=None):
+        if views_order is None:
+            views_order = ['tree', 'form']
+
+        keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
+        module, xmlid = xmlid.split('.', 1)
+        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+        res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], keys, context=context)
+        views_dict = {}
+        for view_id, view_type in res['views']:
+            views_dict[view_type] = view_id
+
+        views = []
+        for v in views_order:
+            views.append((views_dict.get(v), v))
+        res['views'] = views
+        if not new_tab:
+            res['target'] = 'crush'
+        return res
 act_window()
 
 class act_window_view(osv.osv):

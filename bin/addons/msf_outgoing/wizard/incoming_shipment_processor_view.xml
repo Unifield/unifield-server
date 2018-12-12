@@ -11,6 +11,7 @@
                     <field name="date" invisible="1" />
                     <field name="linked_to_out"  invisible="1"/>
                     <field name="picking_id" invisible="1" />
+                    <field name="display_process_to_ship_button" invisible="1" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <group name="import_file_lines" string="Import Lines" colspan="4">
@@ -19,36 +20,37 @@
                     </group>
                     <field name="contains_dg" invisible="1" />
                     <field name="contains_kc" invisible="1" />
+                    <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive heat sensitive products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', True), ('contains_dg', '=', False)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive dangerous goods products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
                         <html>
                             <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                            </p>
-                        </html>
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', False), '&amp;', ('contains_kc', '=', True), ('contains_dg', '=', True)]}">
-                        <html>
-                            <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                            </p>
-                        </html>
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), '&amp;', ('contains_dg', '=', True), ('contains_kc', '=', True)]}">
-                        <html>
-                            <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
                             </p>
                         </html>
                     </group>
                     <separator colspan="4" string="Move lines" />
-                    <field name="move_ids" mode="tree"
+                    <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
                         colspan="4" nolabel="1" />
                     <group colspan="4" col="4" name="claim">
                         <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
@@ -72,8 +74,8 @@
                             </page>
                         </notebook>
                     </group>
-                    <group colspan="8" col="8" name="actions">
-                        <separator string="Actions" colspan="8" />
+                    <group colspan="9" col="10" name="actions">
+                        <separator string="Actions" colspan="9" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
                             />
@@ -83,7 +85,10 @@
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" />
+                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', True)]}" />
+                        <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', False)]}"
+                            confirm="Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually. Continue ?" />
+                        <button name="process_to_ship" attrs="{'invisible': [('display_process_to_ship_button', '!=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
             </field>
@@ -141,7 +146,6 @@
                         type="object"
                         icon="gtk-convert"
                         string="Change Product"
-                        attrs="{'invisible': [('type_check', '!=', 'in')]}"
                         />
                     <field name="asset_id"
                         domain="[('product_id', '=', product_id)]"
@@ -161,11 +165,13 @@
                         domain="[('category_id', '=', ordered_uom_category)]"
                         on_change="onchange_uom_qty(uom_id, quantity)"
                         />
+                    <field name="from_pack" on_change="onchange_from_pack_to_pack()" invisible="not context.get('display_process_to_ship_button')" />
+                    <field name="to_pack" on_change="onchange_from_pack_to_pack()" invisible="not context.get('display_process_to_ship_button')" />
+                    <field name="packing_list" on_change="onchange_from_pack_to_pack()" invisible="not context.get('display_process_to_ship_button')" />
                     <button name="open_split_wizard"
                         type="object"
                         icon="terp-stock_effects-object-colorize"
                         string="Split"
-                        attrs="{'invisible': [('type_check', 'not in', ['in', 'internal', 'out'])]}"
                         />
                     <field name="prodlot_id"
                         domain="[('product_id', '=', product_id), ('check_type', '=', True)]"
@@ -184,6 +190,44 @@
                     <field name="cost" />
                     <field name="currency" />
                     <field name="integrity_status" string="" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="incoming_shipment_processor_step2_form_view" model="ir.ui.view">
+            <field name="name">stock.incoming.processor.step2.form.view</field>
+            <field name="model">stock.incoming.processor</field>
+            <field name="type">form</field>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <form string="PPL Information - Step 2">
+                    <separator colspan="4" string="Pack families" />
+                    <field name="family_ids" mode="tree" colspan="4" nolabel="1" />
+                    <group colspan="4" col="6" name="actions">
+                        <separator string="Actions" colspan="6" />
+                        <label colspan="4"> </label>
+                        <button name="do_in_back" type="object" string="Previous" icon="gtk-go-back" />
+                        <button name="do_in_step2" type="object" string="Process" icon="gtk-go-forward" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="in_family_processor_tree_view" model="ir.ui.view">
+            <field name="name">in.family.processor.tree.view</field>
+            <field name="model">in.family.processor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Moves" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:integrity_status!='empty'">
+                    <field name="packing_list" readonly="1" />
+                    <field name="from_pack" readonly="1"/>
+                    <field name="to_pack" readonly="1"/>
+                    <field name="pack_type" on_change="onchange_pack_type(pack_type)"/>
+                    <field name="length"/>
+                    <field name="width"/>
+                    <field name="height"/>
+                    <field name="weight" default_focus="1" required="1"/>
+                    <field name="integrity_status" string=""/>
                 </tree>
             </field>
         </record>

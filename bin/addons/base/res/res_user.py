@@ -920,6 +920,7 @@ class users(osv.osv):
         if new_passwd:
             cr = pooler.get_db(db_name).cursor()
             try:
+                login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
                               WHERE login=%s AND active=%s""",
@@ -978,10 +979,10 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         new_values = values
         if context.get('user_white_list', False):
             # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -80,11 +80,11 @@ class real_average_consumption(osv.osv):
                 raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
-                    raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+                    raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
                 else:
                     for move in report.picking_id.move_lines:
                         if move.state != 'cancel':
-                            raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+                            raise osv.except_osv(_('Error'), _(u'You cannot delete this report because stock moves has been generated and validated from this report !'))
 
         return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
 
@@ -165,7 +165,7 @@ class real_average_consumption(osv.osv):
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
         },),
-        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer')], required=1, select=1),
+        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], required=1, select=1),
         'activity_name': fields.function(_get_act_name, method=True, type='char', string='Destination Location', readonly=True, size=128, multi='loc_name', store={
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
@@ -183,17 +183,17 @@ class real_average_consumption(osv.osv):
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}, add_empty=True),
+        'details': fields.char(size=86, string='Details', states={'done':[('readonly',True)]}),
+        'notes': fields.text('Notes', states={'done':[('readonly',True)]}),
     }
 
     _defaults = {
-        #'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-        'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
     }
 
     _sql_constraints = [
@@ -213,6 +213,14 @@ class real_average_consumption(osv.osv):
 
         if not 'name' in vals:
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
+
+        if 'cons_location_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['cons_location_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Source Location is inactive"))
+
+        if 'activity_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['activity_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Destination Location is inactive"))
 
         return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
@@ -271,7 +279,7 @@ class real_average_consumption(osv.osv):
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN real_average_consumption rac ON l.rac_id = rac.id
                           WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                       (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:
@@ -331,6 +339,12 @@ class real_average_consumption(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['cons_location_id', 'activity_id'], context=context):
+            if not x.cons_location_id.active:
+                raise osv.except_osv(_('Warning'), _("Source Location %s is inactive") % (x.cons_location_id.name,))
+            if not x.activity_id.active:
+                raise osv.except_osv(_('Warning'), _("Destination Location %s is inactive") % (x.activity_id.name,))
 
         self.write(cr, uid, ids, {'state':'draft'}, context=context)
 
@@ -482,14 +496,14 @@ class real_average_consumption(osv.osv):
         header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
         list_of_lines = []
         for line in rac.line_ids:
-            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name, 
+            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name,
                                   line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.asset_id and line.asset_id.name, line.consumed_qty, line.remark or ''])
         instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
 
-        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 
+        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0],
                                                                         'file': file,
-                                                                        'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')), 
+                                                                        'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')),
                                                                         'message': _('The RAC lines has been exported. Please click on Save As button to download the file'),}, context=context)
 
         return {'type': 'ir.actions.act_window',
@@ -629,7 +643,7 @@ class real_average_consumption(osv.osv):
                         values.update({'remark': _('You must assign an asset')})
                     self.pool.get('real.average.consumption.line').create(cr, uid, values)
 
-        self.write(cr, uid, ids, {'created_ok': False})    
+        self.write(cr, uid, ids, {'created_ok': False})
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
@@ -754,7 +768,7 @@ class real_average_consumption_line(osv.osv):
             if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id:
                     if not noraise:
-                        raise osv.except_osv(_('Error'), 
+                        raise osv.except_osv(_('Error'),
                                              _("Product: %s, You must assign a Batch Number to process it.")%(obj.product_id.name,))
                     elif context.get('import_in_progress'):
                         error_message.append(_("You must assign a Batch Number to process it."))
@@ -770,7 +784,7 @@ class real_average_consumption_line(osv.osv):
                 expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
-                        raise osv.except_osv(_('Error'), 
+                        raise osv.except_osv(_('Error'),
                                              _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
                         error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
@@ -794,7 +808,7 @@ class real_average_consumption_line(osv.osv):
 
             if prodlot_id and obj.consumed_qty > product_qty:
                 if not noraise:
-                    raise osv.except_osv(_('Error'), 
+                    raise osv.except_osv(_('Error'),
                                          _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)")%(obj.product_id.name, obj.consumed_qty, product_qty))
                 elif context.get('import_in_progress'):
                     error_message.append(_("Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)") % (context.get('line_num', False), obj.consumed_qty, product_qty))
@@ -802,7 +816,7 @@ class real_average_consumption_line(osv.osv):
                     # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
                     prodlot_id = None
             #recursion: can't use write
-            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
         return True
 
@@ -827,12 +841,12 @@ class real_average_consumption_line(osv.osv):
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
+        'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True,
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
-        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
+        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
+        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
         'asset_check': fields.function(_get_checks_all, method=True, string='Asset Check', type='boolean', readonly=True, multi="m"),
@@ -1043,7 +1057,7 @@ class real_average_consumption_line(osv.osv):
             context = {}
         product_obj = self.pool.get('product.product')
         v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
-        d = {'uom_id': []} 
+        d = {'uom_id': []}
         warning = False
         if product_id:
             # Test the compatibility of the product with a consumption report
@@ -1532,7 +1546,7 @@ class monthly_review_consumption_line(osv.osv):
         'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
-        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
+        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True,
                                store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
                                       'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
         'fmc': fields.float(digits=(16,2), string='FMC'),
@@ -1573,7 +1587,7 @@ class monthly_review_consumption_line(osv.osv):
             if line.valid_ok:
                 raise osv.except_osv(_('Error'), _('The line is already validated !'))
 
-            self.write(cr, uid, [line.id], {'valid_ok': True, 
+            self.write(cr, uid, [line.id], {'valid_ok': True,
                                             'last_reviewed': time.strftime('%Y-%m-%d'),
                                             'last_reviewed2': time.strftime('%Y-%m-%d')}, context=context)
 
@@ -1723,7 +1737,7 @@ class product_product(osv.osv):
             to_date = context.get('to_date')
             rac_domain.append(('period_to', '<=', to_date))
 
-        # Filter for one or some locations    
+        # Filter for one or some locations
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
@@ -1737,12 +1751,13 @@ class product_product(osv.osv):
             if from_date and to_date:
                 rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
                     ('cons_location_id', 'in', location_ids),
+                    ('state', '!=', 'cancel'),
                     # All lines with a report started out the period and finished in the period
                     '|', '&', ('period_to', '>=', from_date), ('period_to', '<=', to_date),
                     #  All lines with a report started in the period and finished out the period
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
-                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date)
+                    '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
                 ])
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
@@ -1837,7 +1852,7 @@ class product_product(osv.osv):
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
         if from_date and to_date:
-            rcr_domain = ['&', ('product_id', 'in', ids),
+            rcr_domain = ['&', '&', ('rac_id.state', '!=', 'cancel'), ('product_id', 'in', ids),
                           # All lines with a report started out the period and finished in the period
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
                           # All lines with a report started in the period and finished out the period
@@ -2043,7 +2058,7 @@ class product_product(osv.osv):
         return result
 
     _columns = {
-        'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
+        'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time',
                                       help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Real Consumption', readonly=True),
         'product_amc': fields.function(_compute_product_amc, method=True, type='float', string='Monthly consumption', readonly=True),

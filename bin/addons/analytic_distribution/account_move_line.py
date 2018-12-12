@@ -396,9 +396,13 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        aml_duplication = '__copy_data_seen' in context and 'account.move.line' in context['__copy_data_seen'] or False
+        from_duplication = context.get('copy', False) or aml_duplication
+        if context.get('from_je_import', False) or from_duplication:
+            return True
         for l in self.browse(cr, uid, ids):
-            # Next line if this one comes from a non-manual move (journal entry)
-            if l.move_id.status != 'manu':
+            # Next line if this one comes from a non-manual move (journal entry) or an imported one
+            if l.move_id.status != 'manu' or l.move_id.imported:
                 continue
             # Do not continue if no employee or no cost center (could not be invented)
             if not l.employee_id or not l.employee_id.cost_center_id:
@@ -485,9 +489,6 @@ class account_move_line(osv.osv):
                 # Add account_id because of an error with account_activable module for checking date
                 if not 'account_id' in vals and 'date' in vals:
                     vals.update({'account_id': ml.account_id and ml.account_id.id or False})
-                check = self._check_employee_analytic_distribution(cr, uid, [ml.id], context={'from_write': True})
-                if check and isinstance(check, dict):
-                    vals.update(check)
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res

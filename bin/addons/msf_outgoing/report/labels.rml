@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
+  <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="15.0" y1="42.0" width="539" height="758"/>
+      <frame id="first" x1="28.0" y1="60.0" width="386" height="481"/>
+      <frame id="sencond" x1="414" y1="60.0" width="386" height="481"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -12,7 +13,7 @@
     </blockTableStyle>
     <blockTableStyle id="Table6">
       <blockAlignment value="LEFT"/>
-      <blockValign value="TOP"/>
+      <blockValign value="MIDDLE"/>
       <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" stop="0,-1"/>
       <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
       <lineStyle kind="LINEAFTER" colorName="#000000" start="1,0" stop="1,-1"/>
@@ -34,9 +35,6 @@
       <lineStyle kind="LINEAFTER" colorName="#000000" start="1,7" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
     </blockTableStyle>
-    <initialize>
-      <paraStyle name="all" alignment="justify"/>
-    </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="10.0" leading="13"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P3" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -85,86 +83,95 @@
     <para style="P8">[[repeatIn(objects,'stock_picking')]]</para>
       <section>
         <para style="P7">[[repeatIn(range(1,stock_picking.num_of_packs+1),'titi')]]</para>
-        <blockTable colWidths="186.0,351.0" style="Table6">
+        <blockTable colWidths="150.0,230.0" style="Table6">
           <tr>
-            <td><image>[[ company.logo or removeParentNode('image') ]]</image></td>
+            <td><image x="0" y="0" height="79.95" width="150">[[ stock_picking.ppl_customize_label.logo and company.logo or removeParentNode('image') ]]</image></td>
             <td></td>
           </tr>
           <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and translate('Your Order:') or ' ' ]]</para>
+			  <td>
+		      [[ stock_picking.ppl_customize_label.requestor_order_reference or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Your Order Reference:') ]]</para>
             </td>
             <td>
-              <parawrap style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</parawrap>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and translate('Parcel No:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
+              <parawrap style="P2">[[ stock_picking.sale_id.client_order_ref or ' ' ]]</parawrap>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and translate('Our Pre Packing List Reference:') or ' ' ]]</para>
+              <para style="P4"><i>Our Order Reference:</i></para>
             </td>
             <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and translate('Project Destination:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
+              <parawrap style="P2"><i>[[ stock_picking.sale_id.name or ' ' ]]</i></parawrap>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and translate('Project Destination Address:') or '' ]]</para>
+		      [[ stock_picking.ppl_customize_label.packing_parcel_number or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Parcel No:') ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
-              <para style="P3">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
-              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.weight and translate('Weight:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
+              <para style="P2">[[ '%s / %s'%(titi, stock_picking.num_of_packs)  ]]</para>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and translate('Specific Information:') or ' ' ]]</para>
+		      [[ stock_picking.ppl_customize_label.pre_packing_list_reference or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Our Pre Packing List Reference:') ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('CS') or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.name or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr> 
+            <td>
+             [[ stock_picking.ppl_customize_label.packing_list or removeParentNode('tr') ]]
+              <para style="P4"><i>Supplier Packing List:</i></para>
+            </td>
+            <td>
+              <parawrap style="P3"><i>[[ stock_picking.packing_list or ' ' ]]</i></parawrap>
+            </td>
+          </tr>
+          <tr>
+            <td>
+             [[ stock_picking.ppl_customize_label.destination_partner or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Project Destination:') ]]</para>
+            </td>
+            <td>
+              <para style="P3">[[ stock_picking.sale_id.partner_id.name or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr>
+            <td>
+             [[ stock_picking.ppl_customize_label.destination_address or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Project Destination Address:')  ]]</para>
+            </td>
+            <td>
+              <para style="P2">[[ stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr>
+            <td>
+             [[ stock_picking.ppl_customize_label.weight or removeParentNode('tr') ]]
+              <para style="P4">[[ translate('Weight:') ]]</para>
+            </td>
+            <td>
+              <para style="P3">[[ get_pack_weight(stock_picking, titi) + ' kg' or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr>
+            <td>
+             [[ stock_picking.ppl_customize_label.specific_information or removeParentNode('tr') ]]
+              <para style="P4">[[  translate('Specific Information:') ]]</para>
+            </td>
+            <td>
+              <para style="P2">[[ stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.is_narcotic and translate('CS') or ' ' ]]</para>
             </td>
           </tr>
         </blockTable>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <condPageBreak height="10cm">[[ titi==stock_picking.num_of_packs and removeParentNode('condPageBreak') ]]</condPageBreak>
+        <nextFrame>[[ titi==stock_picking.num_of_packs and removeParentNode('nextFrame') ]]</nextFrame>
     </section>
   </story>
 </document>

@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
+import tools
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from datetime import datetime
 from mx import DateTime
@@ -111,7 +112,7 @@ class stock_inventory(osv.osv):
             # Check length of the row
             if len(row) != 6:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code, Product Description, Location, Batch, Expiry Date, Quantity"""))
 
             # default values
             product_id = False
@@ -179,7 +180,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             batch = row.cells[3].data
             if batch:
                 if isinstance(batch, int):
-                    batch = str(batch)
+                    batch = tools.ustr(batch)
                 try:
                     batch = batch.strip()
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
@@ -188,7 +189,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         batch = False
                         to_correct_ok = True
                     else:
-                            batch = batch_ids[0]
+                        batch = batch_ids[0]
                 except Exception:
                     batch = False
 
@@ -349,7 +350,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 _('Product not found in the database for %s line%s: %s') % (
                     len(product_error) > 1 and 'these' or 'this',
                     len(product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in product_error)),
+                    ' / '.join(tools.ustr(x) for x in product_error)),
             )
         if no_product_error:
             raise osv.except_osv(
@@ -357,7 +358,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 _('Product not defined on %s line%s: %s') % (
                     len(no_product_error) > 1 and 'these' or 'this',
                     len(no_product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in no_product_error)),
+                    ' / '.join(tools.ustr(x) for x in no_product_error)),
             )
 
         # write order line on Inventory
@@ -467,10 +468,19 @@ class stock_inventory_line(osv.osv):
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
 
+        if location_id and not self.pool.get('stock.location').search_exist(cr, uid, [('id', '=', location_id), ('active', '=', True)], context=context):
+            location_id = False
+            vals['location_id'] = False
+            location_not_found = True
+            vals['location_not_found'] = True
+            vals['to_correct_ok'] = True
+            vals['comment'] = _('Location is inactive')
+
         if not location_id and not location_not_found:
             comment += _('Location is missing.\n')
         elif location_not_found:
             comment += _('Location not found.\n')
+
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
@@ -635,6 +645,7 @@ class initial_stock_inventory(osv.osv):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         product_cache = {}
+        product_non_stockable_cache = {}
         product_error = []
         no_product_error = []
 
@@ -651,7 +662,7 @@ class initial_stock_inventory(osv.osv):
             # Check length of the row
             if len(row) != 7:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry Date, Quantity"""))
 
             # default values
             product_id = False
@@ -680,20 +691,29 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     product_code = product_code.strip()
                     if product_code in product_cache:
                         product_id = product_cache.get(product_code)
+                    elif product_code in product_non_stockable_cache:
+                        product_id = product_non_stockable_cache(product_code)
                     if not product_id:
-                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
+                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code), ('type', 'not in', ['service_recep', 'consu'])], context=context)
                         if product_ids:
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
+                        else:
+                            product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code), ('type', 'in', ['service_recep', 'consu'])], context=context)
+                            if product_ids:
+                                product_id = product_ids[0]
+                                product_non_stockable_cache[product_code] = product_id
+                    if product_code in product_non_stockable_cache:
+                        to_correct_ok = True
+                        comment += _('Impossible to import non-stockable products.')
+
                 except Exception:
                     to_correct_ok = True
 
-                # Product name
-                if not product_id:
+                if not product_id:  # Product name
                     to_correct_ok = True
                     product_error.append(line_num)
                     continue
-
             # Average cost
             cost = row.cells[2].data
             if not cost:
@@ -874,7 +894,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 _('Product not found in the database for %s line%s: %s') % (
                     len(product_error) > 1 and 'these' or 'this',
                     len(product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in product_error)),
+                    ' / '.join(tools.ustr(x) for x in product_error)),
             )
         if no_product_error:
             raise osv.except_osv(
@@ -882,7 +902,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 _('Product not defined on %s line%s: %s') % (
                     len(no_product_error) > 1 and 'these' or 'this',
                     len(no_product_error) > 1 and 's' or '',
-                    ' / '.join(str(x) for x in no_product_error)),
+                    ' / '.join(tools.ustr(x) for x in no_product_error)),
             )
 
         # write order line on Inventory
@@ -988,6 +1008,15 @@ class initial_stock_inventory_line(osv.osv):
 
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
+
+        if location_id and not self.pool.get('stock.location').search_exist(cr, uid, [('id', '=', location_id), ('active', '=', True)], context=context):
+            location_id = False
+            vals['location_id'] = False
+            location_not_found = True
+            vals['location_not_found'] = True
+            vals['to_correct_ok'] = True
+            vals['comment'] = _('Location is inactive')
+
 
         if not location_id and not location_not_found:
             comment += _('Location is missing.\n')

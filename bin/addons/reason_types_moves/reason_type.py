@@ -354,8 +354,8 @@ class stock_picking(osv.osv):
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
-        'is_donation': fields.function(_get_is_donation, string='Is Donation ?', type='boolean', fnct_search=_search_is_donation),
-        'is_loan': fields.function(_get_is_loan, string='Is Loan ?', type='boolean', fnct_search=_search_is_loan),
+        'is_donation': fields.function(_get_is_donation, string='Is Donation ?', method=True, type='boolean', fnct_search=_search_is_donation),
+        'is_loan': fields.function(_get_is_loan, string='Is Loan ?', method=True, type='boolean', fnct_search=_search_is_loan),
     }
 
     _constraints = [
@@ -443,7 +443,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
-        'comment': fields.char(size=128, string='Comment'),
+        'comment': fields.char(size=300, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
                                         store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),

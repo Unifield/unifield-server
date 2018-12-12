@@ -23,6 +23,7 @@ import time
 
 from osv import osv, fields
 from tools.translate import _
+import datetime
 import decimal_precision as dp
 import netsvc
 
@@ -229,28 +230,9 @@ class procurement_request(osv.osv):
             if ir.procurement_request:
                 curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
                 for line in ir.order_line:
-                    val += line.price_subtotal
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val += line.price_subtotal
                 res[ir.id] = cur_obj.round(cr, uid, curr_browse.rounding, val)
-        return res
-
-    def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Override the method to return 0.0 if the sale.order is a prcourement request
-        '''
-        res = {}
-        new_ids = []
-
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.procurement_request:
-                res[order.id] = {}
-                res[order.id]['amount_tax'] = 0.0
-                res[order.id]['amount_total'] = 0.0
-                res[order.id]['amount_untaxed'] = 0.0
-            else:
-                new_ids.append(order.id)
-
-        res.update(super(procurement_request, self)._amount_all(cr, uid, new_ids, field_name, arg, context=context))
-
         return res
 
     def _amount_by_type(self, cr, uid, ids, field_name, arg, context=None):
@@ -266,14 +248,15 @@ class procurement_request(osv.osv):
 
         line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
 
-        for line_data in line_obj.read(cr, uid, line_ids, ['product_uom_qty', 'cost_price', 'order_id', 'type'], context=context):
-            order_id = line_data['order_id'][0]
-            line_amount = line_data['product_uom_qty'] * line_data['cost_price']
-            res[order_id]['proc_amount'] += line_amount
-            if line_data['type'] == 'make_to_stock':
-                res[order_id]['stock_amount'] += line_amount
-            else:
-                res[order_id]['purchase_amount'] += line_amount
+        for line_data in line_obj.read(cr, uid, line_ids, ['price_subtotal', 'order_id', 'type', 'state'], context=context):
+            if line_data['state'] not in ('cancel', 'cancel_r'):
+                order_id = line_data['order_id'][0]
+                line_amount = line_data['price_subtotal'] or 0
+                res[order_id]['proc_amount'] += line_amount
+                if line_data['type'] == 'make_to_stock':
+                    res[order_id]['stock_amount'] += line_amount
+                else:
+                    res[order_id]['purchase_amount'] += line_amount
 
         return res
 
@@ -292,15 +275,6 @@ class procurement_request(osv.osv):
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
 
-    #@@@ override sale.sale.order._get_order
-    # Not modified method, but simply add here to fix an error on amount_total field
-    def _get_order(self, cr, uid, ids, context=None):
-        result = {}
-        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
-            result[line.order_id.id] = True
-        return result.keys()
-    #@@@end override
-
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
@@ -317,42 +291,9 @@ class procurement_request(osv.osv):
             readonly=True,
         ),
         'ir_total_amount': fields.function(_ir_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Indicative Total Value'),
-        'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Untaxed Amount',
-                                          store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The amount without tax."),
-        'amount_tax': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Taxes',
-                                      store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The tax amount."),
-        'amount_total': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Total',
-                                        store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The total amount."),
-        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total',
-                                           store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced on order"),
-        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-                                        store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced from stock"),
-        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-                                       store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced from stock"),
+        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total', help="The amount of lines sourced on order", multi='by_type'),
+        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
+        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }
@@ -388,7 +329,7 @@ class procurement_request(osv.osv):
             pl = pricelist_obj.search(cr, uid, [('type', '=', 'sale'),
                                                 ('currency_id', '=', company.currency_id.id)], limit=1)[0]
             vals['pricelist_id'] = pl
-            if 'delivery_requested_date' in vals:
+            if vals.get('delivery_requested_date'):
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
         elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
@@ -407,7 +348,7 @@ class procurement_request(osv.osv):
 
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
-            if req.procurement_request and 'delivery_requested_date' in vals:
+            if req.procurement_request and vals.get('delivery_requested_date'):
                 rts = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
                 vals['ready_to_ship_date'] = rts
                 for line in req.order_line:
@@ -461,7 +402,6 @@ class procurement_request(osv.osv):
 
         if not default:
             default = {}
-
         order = self.browse(cr, uid, id)
         proc = order.procurement_request or context.get('procurement_request', False)
         default.update({
@@ -472,7 +412,7 @@ class procurement_request(osv.osv):
             'procurement_request': proc,
         })
         # UFTP-322: Remove the block of code to calculate 'name' as the creation could be blocked by the user right to make a wrong increase of sequence
-        # moved this block of code to analytic_distribution_supply/sale.py method copy_data() 
+        # moved this block of code to analytic_distribution_supply/sale.py method copy_data()
         return default
 
     def copy(self, cr, uid, id, default, context=None):
@@ -482,6 +422,9 @@ class procurement_request(osv.osv):
         if not default.get('order_ids'):
             default['order_ids'] = None
 
+        obj = self.browse(cr, uid, id, fields_to_fetch=['location_requestor_id'], context=context)
+        if obj.location_requestor_id and not obj.location_requestor_id.active:
+            default['location_requestor_id'] = False
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
@@ -618,7 +561,103 @@ class procurement_request(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
+    def ir_import_by_order_to_create(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        import_id = import_obj.create(cr, uid, {}, context)
+        context.update({'active_id': [], 'ir_import_id': import_id})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_import_by_order_to_update(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        import_obj = self.pool.get('internal.request.import')
+
+        if context is None:
+            context = {}
+
+        context.update({'active_id': ids[0], 'to_update_ir': True})
+        ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line', 'state'], context=context)
+        if ir.state not in ['draft', 'draft_p']:
+            raise osv.except_osv(_('Warning'), _('Importing from IR Excel template is only allowed on an IR which is in Draft state'))
+        import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
+        import_obj.unlink(cr, uid, import_ids, context=context)
+        new_import_vals = {
+            'order_id': ids[0],
+            'imp_line_ids': [(0, 0, {
+                'ir_line_id': l.id,
+                'ir_line_number': l.line_number,
+            }) for l in ir.order_line],
+        }
+        import_id = import_obj.create(cr, uid, new_import_vals, context)
+        context.update({'ir_import_id': import_id})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'internal.request.import',
+                'res_id': import_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
+
+    def ir_export_get_file_name(self, cr, uid, ids, prefix='IR', context=None):
+        """
+        get export file name
+        :return IR_14_OC_MW101_IR00060_YYYY_MM_DD.xls
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            return False
+        ir_r = self.read(cr, uid, ids[0], ['name'], context=context)
+        if not ir_r or not ir_r['name']:
+            return False
+        dt_now = datetime.datetime.now()
+        ir_name = "%s_%s_%d_%02d_%02d" % (prefix, ir_r['name'].replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
+        return ir_name
+
+    def export_excel_ir(self, cr, uid, ids, context=None):
+        '''
+        Call the Excel report of IR
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data = {'ids': ids}
+        file_name = self.ir_export_get_file_name(cr, uid, ids, prefix='IR', context=context)
+        if file_name:
+            data['target_filename'] = file_name
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'internal_request_export',
+            'datas': data,
+            'context': context,
+        }
+
+
 procurement_request()
+
 
 class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
@@ -642,6 +681,9 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
+
+        if vals.get('price_unit') and not vals.get('original_price'):
+            vals.update({'original_price': vals['price_unit'] or 0.00})
 
         # Compute the rounding of the product qty
         if vals.get('product_uom') and vals.get('product_uom_qty'):
@@ -688,23 +730,6 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
-    def _check_changed(self, cr, uid, ids, name, arg, context=None):
-        '''
-        Check if an original value has been changed
-        '''
-        if context is None:
-            context = {}
-        res = {}
-
-        for line in self.browse(cr, uid, ids, context=context):
-            changed = False
-            if line.modification_comment or (line.original_qty and line.product_uom_qty != line.original_qty):
-                changed = True
-
-            res[line.id] = changed
-
-        return res
-
     def button_view_changed(self, cr, uid, ids, context=None):
         """
         Launch wizard to display line information
@@ -748,11 +773,6 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
-        'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty'),
-        'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
-        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):

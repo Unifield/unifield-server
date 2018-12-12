@@ -44,7 +44,7 @@ class hr_payroll(osv.osv):
         res = {}
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                         'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
@@ -63,7 +63,7 @@ class hr_payroll(osv.osv):
         # 2/ FP, no DEST => Check D except B
         # 3/ no FP, DEST => Check E
         # 4/ FP, DEST => Check C, D except B, E
-        ## 
+        ##
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
@@ -291,7 +291,7 @@ class hr_payroll(osv.osv):
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
             # Search MSF Private Fund element, because it's valid with all accounts
             try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                             'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
@@ -305,7 +305,7 @@ class hr_payroll(osv.osv):
         # Otherway: delete FP
         else:
             res = {'value': {'funding_pool_id': False}}
-        # If destination given, search if given 
+        # If destination given, search if given
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -385,17 +385,17 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         """
         Make the entries in the "Actions" menu depend on the view (Expense lines view or B/S lines view)
         """
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[1] == 'action_payroll_deletion':
+                if v[1] in ['action_payroll_deletion', 'action_payment_orders']:
                     # for all Payroll views
                     new_act.append(v)
                 elif context.get('payroll_bs_lines'):

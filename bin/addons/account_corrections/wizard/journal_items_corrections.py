@@ -59,7 +59,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for line_br in self.browse(cr, uid, ids, context=context):
-            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted or False
+            res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted and not line_br.account_id.is_not_ad_correctable or False
         return res
 
     def _get_is_account_correctible(self, cr, uid, ids, name, args,  context=None):
@@ -76,6 +76,132 @@ class journal_items_corrections_lines(osv.osv_memory):
             elif line_br.account_id and line_br.account_id.is_not_hq_correctible:
                 res[line_br.id] = False
         return res
+
+    def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Gets the right Third Parties based on:
+        - the partner / employee of the line if any (Journal 3d Party is excluded)
+        - or on the line account type
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.employee_id:
+                res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
+                res[line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')],
+                                                'selection': 'hr.employee,%s' % line.employee_id.id}
+            elif line.partner_id:
+                res[line.id] = {'third_parties': 'res.partner,%s' % line.partner_id.id}
+                res[line.id]['partner_type'] = {'options': [('res.partner', 'Partner')],
+                                                'selection': 'res.partner,%s' % line.partner_id.id}
+            else:
+                res[line.id] = {'third_parties': False}
+                if line.account_id:
+                    acc_type = line.account_id.type_for_register
+                    if acc_type == 'advance':
+                        third_type = [('hr.employee', 'Employee')]
+                        third_selection = 'hr.employee,'
+                    elif acc_type == 'down_payment':
+                        third_type = [('res.partner', 'Partner')]
+                        third_selection = 'res.partner,'
+                    else:
+                        # by default when no restriction and for the "payroll" type
+                        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                        third_selection = 'res.partner,'
+                    res[line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
+        return res
+
+    def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_arg=None, context=None):
+        """
+        Sets the chosen 3d Party to the wizard line (can be: a partner, an employee, or empty)
+        """
+        if context is None:
+            context = {}
+        if name == 'partner_type':
+            employee_id = False
+            partner_id = False
+            element = False
+            if value:
+                fields = value.split(",")
+                element = fields[0]
+            if element == 'hr.employee':
+                employee_id = fields[1] and int(fields[1]) or False
+            elif element == 'res.partner':
+                partner_id = fields[1] and int(fields[1]) or False
+            vals = {
+                'employee_id': employee_id,
+                'partner_id': partner_id,
+            }
+            self.write(cr, uid, obj_id, vals, context=context)
+        return True
+
+    def _get_partner_txt_only(self, cr, uid, ids, name, args, context=None):
+        """
+        True if the JI to be corrected has got a partner_txt without any partner/employee/transfer_journal
+        Ex.: coordo line with an internal partner synched to HQ
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        for corr_line in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id'], context=context):
+            res[corr_line.id] = False
+            aml = corr_line.move_line_id
+            if aml.partner_txt and not (aml.partner_id or aml.employee_id or aml.transfer_journal_id):
+                res[corr_line.id] = True
+        return res
+
+    def onchange_correction_line_account_id(self, cr, uid, ids, account_id=False, current_tp=False):
+        """
+        Adapts the "Third Parties" selectable on the wizard line according to the account selected
+        """
+        vals = {}
+        warning = {}
+        if isinstance(account_id, (list, tuple)):
+            account_id = account_id[0]
+        acc_obj = self.pool.get('account.account')
+        if account_id:
+            third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+            third_required = False
+            third_selection = 'res.partner,0'
+            account = acc_obj.browse(cr, uid, account_id, fields_to_fetch=['code', 'name', 'type_for_register'])
+            acc_type = account.type_for_register
+            if acc_type in ['transfer', 'transfer_same']:  # requires a journal 3d party on which corr. are forbidden
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _('The account %s - %s requires a Journal Third Party.') % (account.code, account.name)
+                }
+                vals.update({'account_id': False})  # empty the account
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                third_required = False
+                third_selection = 'res.partner,0'
+            elif acc_type == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'hr.employee,0'
+            elif acc_type == 'down_payment':
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            elif acc_type == 'payroll':
+                third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'res.partner,0'
+            # keep the current Third Party if it is compatible with the new account selected
+            if current_tp:
+                current_tp_type = current_tp.split(',')[0]  # ex: 'res.partner'
+                for th_type in third_type:
+                    if current_tp_type == th_type[0]:
+                        third_selection = current_tp
+                        continue
+            vals.update({'partner_type_mandatory': third_required,
+                         'partner_type': {'options': third_type,
+                                          'selection': third_selection}})
+        return {'value': vals, 'warning': warning}
 
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
@@ -100,12 +226,25 @@ class journal_items_corrections_lines(osv.osv_memory):
         'is_account_correctible': fields.function(_get_is_account_correctible,
                                                   type='boolean', string='Is account correctible',
                                                   method=True, invisible=True),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
+                                        string="Third Parties", readonly=False,
+                                        selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')],
+                                        multi="third_parties_key"),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
+        'third_parties': fields.function(_get_third_parties, type='reference', method=True,
+                                         string="Third Parties",
+                                         selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')],
+                                         help="To use for python code when registering", multi="third_parties_key"),
+        'partner_txt_only': fields.function(_get_partner_txt_only, type='boolean', method=True, invisible=True,
+                                            string='Has a "partner_txt" without any related partner/employee/transfer journal',
+                                            help="The Third Party of the line to be corrected hasn't been synched to this instance"),
     }
 
     _defaults = {
         'from_donation': lambda *a: False,
         'is_analytic_target': lambda *a: False,
         'is_account_correctible': lambda *a: True,
+        'partner_type_mandatory': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -152,10 +291,14 @@ class journal_items_corrections_lines(osv.osv_memory):
             'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
             'currency_id': currency or False,
             'old_account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+            'old_partner_id': wiz.move_line_id and wiz.move_line_id.partner_id and wiz.move_line_id.partner_id.id or False,
+            'old_employee_id': wiz.move_line_id and wiz.move_line_id.employee_id and wiz.move_line_id.employee_id.id or False,
             'distribution_id': distrib_id,
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
             'date': wiz.date or strftime('%Y-%m-%d'),
             'account_id': this_line.account_id and this_line.account_id.id or False,
+            'new_partner_id': this_line.partner_id and this_line.partner_id.id or False,
+            'new_employee_id': this_line.employee_id and this_line.employee_id.id or False,
             'document_date': wiz.move_line_id.document_date,
             'posting_date': wiz.date or wiz.move_line_id.date,
         }
@@ -257,7 +400,7 @@ class journal_items_corrections(osv.osv_memory):
                 'partner_id': move_line.partner_id and move_line.partner_id.id or None,
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
                 'transfer_journal_id': move_line.transfer_journal_id and move_line.transfer_journal_id.id or None,
-                #                'partner_type_mandatory': move_line.partner_type_mandatory or None,
+                'partner_type_mandatory': move_line.partner_type_mandatory or False,
                 'analytic_distribution_id': move_line.analytic_distribution_id and move_line.analytic_distribution_id.id or None,
             }
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
@@ -265,14 +408,12 @@ class journal_items_corrections(osv.osv_memory):
 
     def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context=None):
         """
-        Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
+        Compare an account move line to a wizard journal items corrections line regarding 2 fields:
          - account_id (1)
          - partner_type (partner_id, employee_id or transfer_journal_id) (2)
-         - analytic_distribution_id (4)
         Then return the sum.
         """
-        # Verifications
-        if not context:
+        if context is None:
             context = {}
         if not old_line_id or not new_line_id:
             raise osv.except_osv(_('Error'), _('An ID is missing!'))
@@ -284,23 +425,12 @@ class journal_items_corrections(osv.osv_memory):
         # Fields
         old_account = old_line.account_id and old_line.account_id.id or False
         new_account = new_line.account_id and new_line.account_id.id or False
-        old_partner = old_line.partner_id and old_line.partner_id.id or False
-        new_partner = new_line.partner_id and new_line.partner_id.id or False
-        old_distrib = old_line.analytic_distribution_id and old_line.analytic_distribution_id.id or False
-        new_distrib = new_line.analytic_distribution_id and new_line.analytic_distribution_id.id or False
+        old_third_party = old_line.partner_id or old_line.employee_id or old_line.transfer_journal_id or False
+        new_third_party = new_line.partner_id or new_line.employee_id or new_line.transfer_journal_id or False
         if cmp(old_account, new_account):
             res += 1
-        if cmp(old_partner, new_partner): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or
-            # cmp(old_line.register_id, new_line.register_id):
+        if cmp(old_third_party, new_third_party):
             res += 2
-        if cmp(old_distrib, new_distrib):
-            # UFTP-1187
-            if old_line.account_id.is_analytic_addicted and \
-                    new_account.account_id.is_analytic_addicted:
-                # tolerate this diff (no +4)
-                # if we correct an account with no AD required to a new account
-                # with AD required or from AD required to no AD
-                res += 4
         return res
 
     # UF-2056: Delete reverse button
@@ -330,7 +460,7 @@ class journal_items_corrections(osv.osv_memory):
         """
         Check the compatibility between the account and the aml Third Party: raise a warning if they are not compatible.
         :param account: new account selected in the Correction Wizard
-        :param aml: Journal Item to be corrected
+        :param aml: Journal Item with the Third Party to check
         """
         acc_obj = self.pool.get('account.account')
         acc_type = account.type_for_register
@@ -350,9 +480,12 @@ class journal_items_corrections(osv.osv_memory):
             elif acc_type == 'advance' and not aml.employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with an Employee Third Party.') % (account.code, account.name))
-            elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
+            elif acc_type == 'down_payment' and not aml.partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
+            elif acc_type == 'payroll' and not aml.partner_id and not aml.employee_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with a Partner or an Employee Third Party.') % (account.code, account.name))
         else:
             # Check the compatibility with the Allowed Partner Types
             # (according to US-1307 this check is done only when the account has no "Type For Specific Treatment")
@@ -405,25 +538,17 @@ class journal_items_corrections(osv.osv_memory):
         new_lines = wizard.to_be_corrected_ids
         # compare lines
         comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
-        # Result
-        res = [] # no result yet
-        # Correct account
-        if comparison == 1:
-            self._check_account_partner_compatibility(cr, uid, new_lines[0].account_id, old_line, context)
-            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
+        if 1 <= comparison <= 3:  # corr. on account and 3d Party are currently handled the same way (REV/COR generated)
+            if new_lines[0].partner_txt_only:
+                # prevent change on 3d Party if the 3d Party of the initial line hasn't been synched to the current
+                # instance (=> only partner_txt exists)
+                new_tp = None
+            else:
+                new_tp = new_lines[0].partner_type
+            res = aml_obj.correct_aml(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id,
+                                      new_third_party=new_tp, context=context)
             if not res:
-                raise osv.except_osv(_('Error'), _('No account changed!'))
-        # Correct third parties
-        elif comparison == 2:
-            if not old_line.statement_id:
-                res = aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
-                if not res:
-                    raise osv.except_osv(_('Error'),
-                                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
-        elif comparison == 4:
-            raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
-        elif comparison in [3, 5, 7]:
-            raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amongst Account, Third Party or Analytical Distribution"))
+                raise osv.except_osv(_('Error'), _('No change made!'))
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}

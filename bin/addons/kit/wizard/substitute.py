@@ -831,7 +831,7 @@ class substitute_item(osv.osv_memory):
                 'location_id_substitute_item': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'module_substitute_item': fields.char(string='Module', size=1024),
                 'product_id_substitute_item': fields.many2one('product.product', string='Product', required=True),
-                'qty_substitute_item': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_substitute_item': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_substitute_item'),
                 'uom_id_substitute_item': fields.many2one('product.uom', string='UoM', required=True),
                 'asset_id_substitute_item': fields.many2one('product.asset', string='Asset'),
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),

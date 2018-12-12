@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <menuitem icon="terp-partner" id="base.menu_base_partner" name="Sales" sequence="0"
+        <menuitem icon="terp-partner" id="base.menu_base_partner" name="Orders" sequence="0"
             groups="base.group_sale_salesman,base.group_sale_manager"/>
 
         <menuitem id="base.menu_sales" name="Sales" parent="base.menu_base_partner" sequence="1"/>
@@ -90,6 +90,7 @@
                     <field name="client_order_ref" groups="base.group_extended"/>
                     <field name="partner_id"/>
                     <field name="user_id" />
+                    <field name="line_count"/>
                     <field name="picked_rate" widget="progressbar"/>
                     <!-- <field name="invoiced_rate" widget="progressbar"/> -->
                     <field name="amount_total" sum="Total Tax Included"/>
@@ -142,7 +143,10 @@
                     <notebook colspan="5">
                         <page string="Sales Order">
                             <field name="company_id2" invisible="1"/>
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/> <!-- RO if state!=draft set on _columns -->
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" 
+                                context="{'search_default_customer':1}" 
+                                domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"
+                                attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}"/>
                             <field name="partner_type"/>
                             <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
@@ -195,7 +199,16 @@
                                             <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
                                             <field name="stock_take_date"/>
                                             <field name="display_resourced_orig_line"/>
-                                            <field name="modification_comment"/>
+                                            <separator colspan="4" string="Changes"/>
+                                            <group colspan="4">
+                                                <group colspan="2">
+                                                    <field name="original_product" colspan="1" readonly="1"/>
+                                                    <field name="original_qty" colspan="1" readonly="1"/>
+                                                    <field name="original_price" colspan="1" readonly="1"/>
+                                                    <field name="original_uom" colspan="1" readonly="1"/>
+                                                </group>
+                                                <field name="modification_comment" colspan="2"/>
+                                            </group>
                                             <newline/>
                                             <field name="vat_ok" invisible="1"/>
                                             <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
@@ -295,6 +308,7 @@
                                     <field name="comment"/>
                                     <field name="nomenclature_description"/>
                                     <field name="product_uom_qty" string="Qty"/>
+                                    <field name="original_changed" readonly="1"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="kc_dg"/>
                                     <field name="date_planned"/>
@@ -316,7 +330,7 @@
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
-                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
+                                    <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                 </tree>
                             </field>
                             <newline/>
@@ -325,7 +339,7 @@
                             <group colspan="4" col="4" name="date">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
+                                    <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
                                     <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">

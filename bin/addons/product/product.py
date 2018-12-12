@@ -26,6 +26,7 @@ import math
 from _common import rounding
 import re
 from tools.translate import _
+from tools import cache
 
 def is_pair(x):
     return not x%2
@@ -74,6 +75,18 @@ class product_uom(osv.osv):
     _name = 'product.uom'
     _description = 'Product Unit of Measure'
 
+    @cache(skiparg=3)
+    def get_rounding(self, cr, uid):
+        uom_ids = self.search(cr, 1, [])
+        res = {}
+        for uom_data in self.read(cr, 1, uom_ids, ['rounding']):
+            res[uom_data['id']] = uom_data['rounding']
+        return res
+
+    def clear_caches(self, cr):
+        self.get_rounding.clear_cache(cr.dbname)
+        return self
+
     def _compute_factor_inv(self, factor):
         return factor and round(1.0 / factor, 6) or 0.0
 
@@ -91,7 +104,13 @@ class product_uom(osv.osv):
             if data['factor_inv'] <> 1:
                 data['factor'] = self._compute_factor_inv(data['factor_inv'])
             del(data['factor_inv'])
+        self.clear_caches(cr)
         return super(product_uom, self).create(cr, uid, data, context)
+
+    def write(self, cr, uid, ids, data, context=None):
+        if 'rounding' in data:
+            self.get_rounding.clear_cache(cr.dbname)
+        return super(product_uom, self).write(cr, uid, ids, data, context=context)
 
     def one_reference_by_categ(self, cr, uid, ids, context=None):
         cr.execute("""select count(*), category_id from product_uom where uom_type='reference' group by category_id""")
@@ -304,7 +323,7 @@ class product_template(osv.osv):
                                   ' uos = uom * coeff'),
         'mes_type': fields.selection((('fixed', 'Fixed'), ('variable', 'Variable')), 'Measure Type', required=True),
         'seller_delay': fields.function(_calc_seller, method=True, type='integer', string='Supplier Lead Time', multi="seller_delay", help="This is the average delay in days between the purchase order confirmation and the reception of goods for this product and for the default supplier. It is used by the scheduler to order requests based on reordering delays."),
-        'seller_qty': fields.function(_calc_seller, method=True, type='float', string='Supplier Quantity', multi="seller_qty", help="This is minimum quantity to purchase from Main Supplier."),
+        'seller_qty': fields.function(_calc_seller, method=True, type='float', string='Supplier Quantity', multi="seller_qty", help="This is minimum quantity to purchase from Main Supplier.", related_uom='uom_id'),
         'seller_id': fields.function(_calc_seller, method=True, type='many2one', relation="res.partner", string='Main Supplier', help="Main Supplier who has highest priority in Supplier List.", multi="seller_id"),
         'seller_ids': fields.one2many('product.supplierinfo', 'product_id', 'Partners'),
         'loc_rack': fields.char('Rack', size=16),
@@ -521,10 +540,10 @@ class product_product(osv.osv):
     _inherits = {'product.template': 'product_tmpl_id'}
     _order = 'default_code,name_template'
     _columns = {
-        'qty_available': fields.function(_product_qty_available, method=True, type='float', string='Real Stock'),
-        'virtual_available': fields.function(_product_virtual_available, method=True, type='float', string='Virtual Stock'),
-        'incoming_qty': fields.function(_product_incoming_qty, method=True, type='float', string='Incoming'),
-        'outgoing_qty': fields.function(_product_outgoing_qty, method=True, type='float', string='Outgoing'),
+        'qty_available': fields.function(_product_qty_available, method=True, type='float', string='Real Stock', related_uom='uom_id'),
+        'virtual_available': fields.function(_product_virtual_available, method=True, type='float', string='Virtual Stock', related_uom='uom_id'),
+        'incoming_qty': fields.function(_product_incoming_qty, method=True, type='float', string='Incoming', related_uom='uom_id'),
+        'outgoing_qty': fields.function(_product_outgoing_qty, method=True, type='float', string='Outgoing', related_uom='uom_id'),
         'price': fields.function(_product_price, method=True, type='float', string='Pricelist', digits_compute=dp.get_precision('Sale Price')),
         'lst_price' : fields.function(_product_lst_price, method=True, type='float', string='Public Price', digits_compute=dp.get_precision('Sale Price')),
         'code': fields.function(_product_code, method=True, type='char', string='Reference'),
@@ -702,6 +721,20 @@ class product_product(osv.osv):
         else:
             return super(product_product, self).copy(cr, uid, id, default=default,
                                                      context=context)
+
+    def is_field_translatable(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+
+        lang_obj = self.pool.get('res.lang')
+
+        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True)], context=context)
+        if len(active_lang_ids) > 1:
+            return False
+
+        return True
+
+
 product_product()
 
 class product_packaging(osv.osv):
@@ -814,8 +847,8 @@ class product_supplierinfo(osv.osv):
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
         'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
-        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
-        'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom."),
+        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
+        'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom.", related_uom='product_uom'),
         'product_id' : fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),
         'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
         'pricelist_ids': fields.one2many('pricelist.partnerinfo', 'suppinfo_id', 'Supplier Pricelist'),
@@ -890,7 +923,7 @@ class pricelist_partnerinfo(osv.osv):
     _columns = {
         'name': fields.char('Description', size=64),
         'suppinfo_id': fields.many2one('product.supplierinfo', 'Partner Information', required=True, ondelete='cascade', select=True),
-        'min_quantity': fields.float('Quantity', required=True, help="The minimal quantity to trigger this rule, expressed in the supplier UoM if any or in the default UoM of the product otherrwise."),
+        'min_quantity': fields.float('Quantity', required=True, help="The minimal quantity to trigger this rule, expressed in the supplier UoM if any or in the default UoM of the product otherrwise.", related_uom='uom_id'),
         'price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price'), help="This price will be considered as a price for the supplier UoM if any or the default Unit of Measure of the product otherwise"),
     }
     _order = 'min_quantity asc'

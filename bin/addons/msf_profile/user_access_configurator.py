@@ -164,6 +164,8 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        data_obj = self.pool.get('ir.model.data')
+
         # data structure returned with processed data from file
         data_structure = {}
 
@@ -212,7 +214,7 @@ class user_access_configurator(osv.osv_memory):
                 else:
                     # information rows
                     try:
-                        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
+                        menu_id = data_obj.get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
                     except ValueError:
                         # menu is in the file but not in the database
                         data_structure[obj.id]['menu']['error'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
@@ -313,7 +315,7 @@ class user_access_configurator(osv.osv_memory):
                     file_level_dict[group] = level
                 elif len(group_name.split('$')) > 2:
                     raise osv.except_osv(_('Error'),
-                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum" % group_name))
+                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum") % group_name)
                 else:
                     file_level_dict[group_name] = False
 
@@ -459,6 +461,7 @@ class user_access_configurator(osv.osv_memory):
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+            group_ids_list = list(set(group_ids_list))  # remove duplicates
             # for admin user, set all unifield groups + admin group (only user to have this group)
             user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
 
@@ -578,20 +581,24 @@ class user_access_configurator(osv.osv_memory):
         # drop all ACL
         access_obj.unlink(cr, uid, access_ids, context=context)
         # first line, for admin group, all access
-        acl_admin_values = {'name': 'admin',
-                            'group_id': admin_group_user_rights_id,
-                            'perm_read': True,
-                            'perm_write': True,
-                            'perm_create': True,
-                            'perm_unlink': True,
-                            }
-        acl_read_values = {'name': 'admin',
-                           'group_id': False,
-                           'perm_read': True,
-                           'perm_write': False,
-                           'perm_create': False,
-                           'perm_unlink': False,
-                           }
+        acl_admin_values = {
+            'name': 'admin',
+            'group_id': admin_group_user_rights_id,
+            'perm_read': True,
+            'perm_write': True,
+            'perm_create': True,
+            'perm_unlink': True,
+            'from_system': True,
+        }
+        acl_read_values = {
+            'name': 'user read',
+            'group_id': False,
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+            'from_system': True,
+        }
         # create lines for theses models with deletion of existing ACL
         # [(0, 0, {'field_name':field_value_record1, ...}), (0, 0, {'field_name':field_value_record2, ...})]
         model_obj.write(cr, uid, two_lines_ids.keys(), {'access_ids' : [(0, 0, acl_admin_values), (0, 0, acl_read_values)]}, context=context)
@@ -667,6 +674,12 @@ class user_access_configurator(osv.osv_memory):
 
         reset data potentially reset to default values
         '''
+        logger = logging.getLogger('ACL')
+
+        if not self.pool.get('sync.server.update'):
+            cr.execute("select name, model_id from ir_model_access group by name, model_id having (count(*) > 1)")
+            for x in cr.fetchall():
+                logger.error('Duplicates ACL (ir.model.access) name: %s module_id: %s'% (x[0], x[1]))
         if mode == 'init':
             # process ACL
             self._process_objects_uac(cr, uid, context=context)
@@ -686,10 +699,10 @@ class user_access_configurator(osv.osv_memory):
             models_to_clean = ['ir.model.access', 'ir.rule']
             for model in models_to_clean:
                 m_obj = self.pool.get(model)
-                cr.execute('''select m.id from '''+ m_obj._table+''' m
-                    left join ir_model_data d on d.res_id = m.id and d.model = %s
+                cr.execute('''select m.id from %s m
+                    left join ir_model_data d on d.res_id = m.id and d.model = %%s
                     where module not in ('sd', 'sync_client', 'sync_server', 'sync_common', 'sync_so', 'update_client', 'update_server', '')
-                ''', (model,))
+                ''' % m_obj._table, (model,))  # not_a_user_entry
                 ids_to_del = [x[0] for x in cr.fetchall()]
                 if ids_to_del:
                     m_obj.unlink(cr, 1, ids_to_del)

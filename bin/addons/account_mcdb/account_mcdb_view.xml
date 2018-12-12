@@ -4,6 +4,7 @@
     <!ENTITY general SYSTEM "mcdb_view_general.xml">
     <!ENTITY account SYSTEM "mcdb_view_account.xml">
     <!ENTITY currency SYSTEM "mcdb_view_currency.xml">
+    <!ENTITY gl_journals_and_periods SYSTEM "mcdb_view_gl_journals_and_periods.xml">
     <!ENTITY end SYSTEM "mcdb_view_end.xml">
 ]>
 
@@ -17,57 +18,10 @@
             <field name="type">form</field>
             <field name="priority" eval="17"/>
             <field name="arch" type="xml">
-                <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" >
+                <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1"
+                      hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
                     &general;
-                    <group col="5" colspan="4">
-                        <group col="2" colspan="2">
-                            <group col="4" colspan="2">
-                                <separator string="G/L journals" colspan="3"/>
-                                <field name="display_journal" colspan="1" nolabel="1"/>
-                            </group>
-                            <group col="2" colspan="2" attrs="{'invisible': [('display_journal', '=', False)]}">
-                                <group col="2" colspan="2">
-                                    <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
-                                    <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
-                                </group>
-                                <field name="rev_journal_ids" colspan="2"/>
-                                <field name="journal_ids" colspan="2" nolabel="1">
-                                    <tree string="Journals" editable="top" noteditable="1">
-                                        <field name="code"/>
-                                        <field name="name" string="Name"/>
-                                        <field name="type"/>
-                                    </tree>
-                                </field>
-                            </group>
-                        </group>
-                        <group col="2" colspan="2">
-                            <group col="4" colspan="2">
-                                <separator string="Periods" colspan="3"/>
-                                <field name="display_period" colspan="1" nolabel="1"/>
-                            </group>
-                            <group col="2" colspan="2" attrs="{'invisible': [('display_period', '=', False)]}">
-                                <group col="2" colspan="2">
-                                    <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
-                                    <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
-                                </group>
-                                <field name="rev_period_ids" colspan="2"/>
-                                <field name="period_ids" colspan="2" nolabel="1">
-                                    <tree string="Periods" editable="top" noteditable="1">
-                                        <field name="name" string="Name"/>
-                                        <field name="state"/>
-                                    </tree>
-                                </field>
-                            </group>
-                        </group>
-                        <group col="2" colspan="1">
-                            <field name="fiscalyear_id"/>
-                        </group>
-                    </group>
-                    <group colspan="2" col="2">
-                        <html>
-                            <br />
-                        </html>
-                    </group>
+                    &gl_journals_and_periods;
                     &account;
                     <separator string="Reconciliation" colspan="4"/>
                     <field name="reconciled"/>
@@ -78,9 +32,70 @@
                     &currency;
                     <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>
-                        <field name="partner_id" colspan="2" context="{'show_button_show_inactive':1}" />
-                        <field name="employee_id" colspan="2" context="{'disrupt_inactive': False}"/>
-                        <field name="transfer_journal_id" colspan="2"/>
+                        <!-- PARTNERS -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Partners" colspan="3"/>
+                                <field name="display_partner" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_partner', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_partner_clear" type="object" string="Remove all Partners" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_partner_add" type="object" string="Add all Partners" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_partner_ids" colspan="2"/>
+                                <field name="partner_ids" colspan="2" nolabel="1" context="{'show_button_show_inactive':1}">
+                                    <tree string="Partners" editable="top" noteditable="1">
+                                        <field name="name"/>
+                                        <field name="ref"/>
+                                        <field name="partner_type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <!-- EMPLOYEES -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Employees" colspan="3"/>
+                                <field name="display_employee" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_employee', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_employee_clear" type="object" string="Remove all Employees" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_employee_add" type="object" string="Add all Employees" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_employee_ids" colspan="2"/>
+                                <field name="employee_ids" colspan="2" nolabel="1" context="{'disrupt_inactive': False}">
+                                    <tree string="Employees" editable="top" noteditable="1">
+                                        <field name="name"/>
+                                        <field name="identification_id"/>
+                                        <field name="employee_type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <!-- JOURNAL THIRD PARTIES -->
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Journals" colspan="3"/>
+                                <field name="display_transfer_journal" colspan="1" nolabel="1"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_transfer_journal', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_transfer_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_transfer_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_transfer_journal_ids" colspan="2"/>
+                                <field name="transfer_journal_ids" colspan="2" nolabel="1">
+                                    <tree string="Journals" editable="top" noteditable="1">
+                                        <field name="instance_id"/>
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
                     &end;
                 </form>
@@ -94,7 +109,8 @@
             <field name="type">form</field>
             <field name="priority" eval="16"/>
             <field name="arch" type="xml">
-                <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1"
+                      hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
                     &general;
                     <group col="5" colspan="4">
                         <group col="2" colspan="2">
@@ -309,6 +325,29 @@
             </field>
         </record>
 
+        <!-- Combined Journals Report FORM -->
+        <record model="ir.ui.view" id="account_mcdb_combined_form">
+            <field name="name">account.mcdb.combined.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <form string="Selector - Combined Journals Report" hide_new_button="1" hide_duplicate_button="1"
+                      hide_delete_button="1" hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
+                    <field name="model" invisible="1"/>
+                    &general;
+                    &gl_journals_and_periods;
+                    &currency;
+                    <separator string=" " colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button icon="gtk-clear" name="button_clear" string="Clear" type="object"/>
+                        <button icon="gtk-print" name="combined_export_pdf" string="Export PDF" type="object"/>
+                        <button icon="gtk-print" name="combined_export_xls" string="Export Excel" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     <!-- Tree view -->
         <record id="account_mcdb_tree" model="ir.ui.view">
             <field name="name">account.mcdb.tree</field>
@@ -318,67 +357,33 @@
                 <tree string="Selector list">
                     <field name="description"/>
                     <field name="user"/>
+                    <field name="hq_template" />
                 </tree>
             </field>
         </record>
 
-    <!-- Search view with different name -->
+    <!-- Search view -->
         <record id="account_mcdb_search" model="ir.ui.view">
             <field name="name">account.mcdb.search</field>
             <field name="model">account.mcdb</field>
             <field name="type">search</field>
             <field name="priority" eval="17"/>
             <field name="arch" type="xml">
-                <search string="Selector - G/L">
+                <search string="Selector">
                     <field name="description" select="1"/>
                     <field name="user" select="1"/>
+                    <field name="hq_template" />
                 </search>
             </field>
         </record>
 
-        <record id="account_mcdb_analytic_search" model="ir.ui.view">
-            <field name="name">account.mcdb.analytic.search</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="Selector - Analytic">
-                    <field name="description" select="1"/>
-                    <field name="user" select="1"/>
-                </search>
-            </field>
-        </record>
-
-    <!-- Actions to display search view (analytic OR G/L) -->
-        <record id="action_account_mcdb" model="ir.actions.act_window">
-            <field name="name">G/L Selector - Saved queries</field>
-            <field name="res_model">account.mcdb</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account_mcdb_tree"/>
-            <field name="search_view_id" ref="account_mcdb_search"/>
-            <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
-            <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
-        </record>
-
-        <record id="action_account_mcdb_analytic" model="ir.actions.act_window">
-            <field name="name">Analytic Selector - Saved queries</field>
-            <field name="res_model">account.mcdb</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account_mcdb_tree"/>
-            <field name="search_view_id" ref="account_mcdb_analytic_search"/>
-            <field name="context">{'from': 'account.analytic.line', 'search_default_user': uid}</field>
-            <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
-        </record>
-
-    <!-- Actions to display form view (analytic OR G/L) -->
+    <!-- Actions to display form view (analytic OR G/L or Combined report) -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
             <field name="name">G/L Selector</field>
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_form"/>
-            <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
             <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
@@ -389,44 +394,25 @@
             <field name="view_type">form</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_analytic_form"/>
-            <field name="search_view_id" ref="account_mcdb_analytic_search"/>
             <field name="context">{'from': 'account.analytic.line', 'search_default_user': uid}</field>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
         </record>
 
-    <!-- Actions that link each specific search view to a specific form view -->
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_form2">
-            <field name="sequence" eval="20"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="account_mcdb_form"/>
-            <field name="act_window_id" ref="action_account_mcdb"/>
-        </record>
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_tree">
-            <field name="sequence" eval="10"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="account_mcdb_tree"/>
-            <field name="act_window_id" ref="action_account_mcdb"/>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_analytic_form2">
-            <field name="sequence" eval="20"/>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="account_mcdb_analytic_form"/>
-            <field name="act_window_id" ref="action_account_mcdb_analytic"/>
-        </record>
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_analytic_tree">
-            <field name="sequence" eval="10"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="account_mcdb_tree"/>
-            <field name="act_window_id" ref="action_account_mcdb_analytic"/>
+        <record id="action_account_mcdb_combined_form" model="ir.actions.act_window">
+            <field name="name">Combined Journals Report</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="account_mcdb_combined_form"/>
+            <field name="context">{'from': 'combined.line', 'search_default_user': uid}</field>
+            <field name="domain">[('description', '!=', False), ('model', '=', 'combined.line')]</field>
         </record>
 
     <!-- Menu -->
         <menuitem id="menu_finance_mcdb" name="Selector" parent="account.menu_finance" sequence="9"/>
         <menuitem string="G/L Selector" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
-        <menuitem string="G/L Selector - Saved queries" action="action_account_mcdb" id="menu_finance_mcdb_move_line_search" parent="menu_finance_mcdb" sequence="2"/>
         <menuitem string="Analytic Selector" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="3"/>
-        <menuitem string="Analytic Selector - Saved queries" action="action_account_mcdb_analytic" id="menu_finance_mcdb_analytic_move_line_search" parent="menu_finance_mcdb" sequence="4"/>
+        <menuitem string="Combined Journals Report" action="action_account_mcdb_combined_form" id="menu_finance_mcdb_combined_line" parent="menu_finance_mcdb" sequence="5"/>
 
     <!-- Redefine MCDB to add instance -->
         <record id="account_mcdb_form_instance_inherit" model="ir.ui.view">

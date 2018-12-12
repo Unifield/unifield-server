@@ -65,7 +65,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'supplier_id': fields.many2one(
             'res.partner',
             string='Supplier',
-            help="If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.",
+            help="If you chose lines coming from Field Orders, External/ESC suppliers will be available for Internal/Inter-section/Intermission customers and Internal/External/Inter-section/Intermission/ESC suppliers will be available for External customers",
         ),
         'company_id': fields.many2one(
             'res.company',
@@ -277,9 +277,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
         lines_to_confirm = []
         for wiz in self.browse(cr, uid, ids, context=context):
             for sol in wiz.line_ids:
-                if sol.order_id.procurement_request and wiz.po_cft == 'dpo':
-                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-                lines_to_confirm.append(sol.id)
+                if sol.state in ['validated', 'validated_p']:
+                    if sol.order_id.procurement_request and wiz.po_cft == 'dpo':
+                        raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
+                    lines_to_confirm.append(sol.id)
+
+                if wiz.type == 'make_to_order' and sol.order_id.order_type == 'loan':
+                    raise osv.except_osv(_('Error'), _('Line #%s of %s You cannot cannot source a loan on order') % (sol.line_number, sol.order_id.name))
 
         line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
 

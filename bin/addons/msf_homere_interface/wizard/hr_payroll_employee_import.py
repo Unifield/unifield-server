@@ -37,6 +37,8 @@ from lxml import etree
 import subprocess
 import os
 import shutil
+import ConfigParser
+
 
 def get_7z():
     if os.name == 'nt':
@@ -285,6 +287,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         updated = 0
         if context is None:
             context = {}
+        payment_method_obj = self.pool.get('hr.payment.method')
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
@@ -310,6 +313,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             statutfamilial = employee_data.get('statutfamilial', False)
             tel_bureau = employee_data.get('tel_bureau', False)
             tel_prive = employee_data.get('tel_prive', False)
+            bqmodereglement = employee_data.get('bqmodereglement', False)
+            bqnom = employee_data.get('bqnom', False)
+            bqnumerocompte = employee_data.get('bqnumerocompte', False)
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
@@ -356,10 +362,26 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'mobile_phone': portable or False,
                 'work_phone': tel_bureau or False,
                 'private_phone': tel_prive or False,
+                'bank_name': bqnom,
+                'bank_account_number': bqnumerocompte,
             }
             # Update Birthday if equal to 0000-00-00
             if datenaissance and datenaissance == '0000-00-00':
                 vals.update({'birthday': False,})
+
+            # Update the payment method
+            payment_method_id = False
+            if bqmodereglement:
+                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
+                if payment_method_ids:
+                    payment_method_id = payment_method_ids[0]
+                else:
+                    message = _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (ustr(bqmodereglement), line_number)
+                    self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
+                    return False, created, updated
+
+            vals.update({'payment_method_id': payment_method_id})
+
             # Update Nationality
             if nation:
                 n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation))])
@@ -414,6 +436,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # Check job
                 if contract.job_id:
                     vals.update({'job_id': contract.job_id.id})
+                # Check the contract dates
+                vals.update({'contract_start_date': contract.date_start or False})
+                vals.update({'contract_end_date': contract.date_end or False})
             # Desactivate employee if no current contract
             if not current_contract:
                 vals.update({'active': False})
@@ -511,23 +536,31 @@ class hr_payroll_employee_import(osv.osv_memory):
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
         job_file = 'fonction.csv'
+        ini_file = 'envoi.ini'
         job_reader =False
         contract_reader = False
         staff_reader = False
+        config_parser = False
         desc_to_close = []
         tmpdir = False
         if is_zipfile(filename):
             zipobj = zf(filename)
+            if zipobj:
+                desc_to_close.append(zipobj)
             if zipobj.namelist() and job_file in zipobj.namelist():
                 job_reader = csv.DictReader(zipobj.open(job_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
                 # Do not raise error for job file because it's just a useful piece of data, but not more.
-        # read the contract file
+            # read the contract file
             if zipobj.namelist() and contract_file in zipobj.namelist():
                 contract_reader = csv.DictReader(zipobj.open(contract_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-        # read the staff file
+            # read the staff file
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 staff_reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            # read the ini file
+            if zipobj.namelist() and ini_file in zipobj.namelist():
+                config_parser = ConfigParser.SafeConfigParser()
+                config_parser.readfp(zipobj.open(ini_file))
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
@@ -548,11 +581,20 @@ class hr_payroll_employee_import(osv.osv_memory):
                 desc_to_close.append(staff_file_desc)
                 staff_reader = csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
+            ini_file_name = os.path.join(tmpdir, ini_file)
+            if os.path.isfile(ini_file_name):
+                ini_file_desc = open(ini_file_name, 'rb')
+                desc_to_close.append(ini_file_desc)
+                config_parser = ConfigParser.SafeConfigParser()
+                config_parser.readfp(ini_file_desc)
+
         if not contract_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
         if not staff_reader:
             raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-        return (job_reader, contract_reader, staff_reader, desc_to_close, tmpdir)
+        if not config_parser:
+            raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (ini_file,))
+        return job_reader, contract_reader, staff_reader, config_parser, desc_to_close, tmpdir
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -580,9 +622,16 @@ class hr_payroll_employee_import(osv.osv_memory):
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()
-            job_reader, contract_reader, staff_reader, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
+            job_reader, contract_reader, staff_reader, config_parser, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
             filename = wiz.filename or ""
-
+            # Check data from the ini file
+            mois_ko = not config_parser.has_option('DEFAUT', 'MOIS')
+            liste_terr_ko = not config_parser.has_option('DEFAUT', 'LISTETERRAIN') or \
+                config_parser.get('DEFAUT', 'LISTETERRAIN').count(';') > 1  # it should contain only 1 project code
+            if mois_ko or liste_terr_ko:
+                # block all the import if the file imported is not a valid PER_MOIS file
+                raise osv.except_osv(_('Error'), _("You can't import this file. Please check that it contains data "
+                                                   "for only one month and one field."))
             if job_reader:
                 self.update_job(cr, uid, ids, job_reader, context=context)
             # Do not raise error for job file because it's just a useful piece of data, but not more.
@@ -654,7 +703,6 @@ class hr_payroll_employee_import(osv.osv_memory):
         context.update({'from': 'employee_import'})
 
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context)
-
         return {
             'name': 'Employee Import Confirmation',
             'type': 'ir.actions.act_window',

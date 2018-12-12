@@ -51,6 +51,759 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF11.0
+    def us_5356_reset_ud_prod(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_fff'})
+        return True
+
+
+    def us_4996_bck_beforepatch(self, cr, uid, *a, **b):
+        if self.pool.get('backup.config'):
+            cr.execute("update backup_config set beforepatching='t'")
+        return True
+
+    def testfield_missing_updates_on_sync(self, cr, uid, *a, **b):
+        if cr.dbname.endswith('HQ1') and self.pool.get('sync.client.entity'):
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if entity.identifier == 'a1d9db61-024f-11e6-856f-480fcf273a8d' and entity.update_last == 304:
+                cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'', ''id'']' where
+                    name in (
+                        select sdref from sync_client_update_to_send where session_id='7ff7242e-7f6f-11e6-b415-0cc47a3516aa' and model in ('hr.payment.method', 'ir.translation', 'product.nomenclature', 'product.product', 'sync.trigger.something')
+                    )''')
+        return True
+
+    def us_4541_stock_mission_recompute_cu_qty(self, cr, uid, *a, **b):
+        """
+        rest cu_qty and central_qty
+        """
+        trigger_up = self.pool.get('sync.trigger.something.up')
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+
+        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
+        if not central_loc:
+            cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
+
+        cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
+        if not cu_loc:
+            cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
+            if cr.rowcount:
+                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_cu', 'args': instance_id.code})
+        return True
+
+    def us_4375_build_xmlid_admin_acl(self, cr, uid, *a, **b):
+        '''
+            some system acl don't have any sdref, recreate a clean unique sdref for all system acl
+        '''
+        access_obj = self.pool.get('ir.model.access')
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.message'):
+            return True
+
+        access_ids = access_obj.search(cr, uid, [('name', '=', 'admin'), ('group_id', '=', False)])
+        if access_ids:
+            access_obj.write(cr, uid, access_ids, {'name': 'user read', 'from_system': True})
+
+        admin_acl_ids = access_obj.search(cr, uid, [('name', '=', 'admin')])
+        access_obj.write(cr, uid, admin_acl_ids, {'from_system': True})
+
+        access_ids += admin_acl_ids
+        if access_ids:
+            cr.execute("delete from ir_model_data where model='ir.model.access' and res_id in %s", (tuple(access_ids),))
+            access_obj.get_sd_ref(cr, uid, access_ids)
+
+        return True
+
+
+    # UF10.0
+    def us_3427_update_third_parties_in_gl_selector(self, cr, uid, *a, **b):
+        """
+        Third Parties in G/L selector (partners / employees / journals) become many2many fields
+        Updates the existing selectors accordingly
+        (note: selectors aren't synched for now)
+        """
+        selector_obj = self.pool.get('account.mcdb')
+        selector_ids = selector_obj.search(cr, uid, [('model', '=', 'account.move.line')])
+        for selector in selector_obj.browse(cr, uid, selector_ids,
+                                            fields_to_fetch=['partner_id', 'employee_id', 'transfer_journal_id']):
+            partner_ids, employee_ids, transfer_journal_ids = [], [], []
+            display_partner = display_employee = display_transfer_journal = False
+            if selector.partner_id:
+                partner_ids = [selector.partner_id.id]
+                display_partner = True
+            if selector.employee_id:
+                employee_ids = [selector.employee_id.id]
+                display_employee = True
+            if selector.transfer_journal_id:
+                transfer_journal_ids = [selector.transfer_journal_id.id]
+                display_transfer_journal = True
+            vals = {
+                # old fields not used anymore: to set to False in any cases
+                'partner_id': False,
+                'employee_id': False,
+                'transfer_journal_id': False,
+                # new fields: to fill in if need be
+                'partner_ids': [(6, 0, partner_ids)],
+                'employee_ids': [(6, 0, employee_ids)],
+                'transfer_journal_ids': [(6, 0, transfer_journal_ids)],
+                # 'display' boolean: to set to True to display the relative section by default in the selector
+                'display_partner': display_partner,
+                'display_employee': display_employee,
+                'display_transfer_journal': display_transfer_journal,
+            }
+            selector_obj.write(cr, uid, selector.id, vals)
+
+    def us_4879_fo_from_shipping_except_to_close(self, cr, uid, *a, **b):
+        cr.execute("update sale_order set state='done' where state='shipping_except' and procurement_request='f'")
+        self._logger.warn('FO from shipping_except to done: %d' % (cr.rowcount,))
+        return True
+
+    def us_3873_update_reconcile_filter_in_partner_report_templates(self, cr, uid, *a, **b):
+        """
+        Updates the Wizard Templates for the "Partner Ledger" and "Partner Balance" following the change on reconcile filter:
+        - "Include Reconciled Entries" ticked ==> becomes "Reconciled: Empty"
+        - "Include Reconciled Entries" unticked ==> becomes "Reconciled: No"
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', 'in',
+                                                      ['account.partner.ledger', 'wizard.account.partner.balance.tree'])])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['wizard_name', 'values']):
+            old_field = template.wizard_name == 'account.partner.ledger' and 'reconcil' or 'include_reconciled_entries'
+            new_field = 'reconciled'
+            try:
+                values_dict = eval(template.values)
+                if old_field in values_dict:
+                    if not values_dict[old_field]:
+                        reconciled = 'no'
+                    else:
+                        reconciled = 'empty'
+                    values_dict[new_field] = reconciled
+                    del values_dict[old_field]
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    def us_3873_update_display_partner_in_partner_balance_templates(self, cr, uid, *a, **b):
+        """
+        Updates the Wizard Templates for the "Partner Balance" report following the fact that the display_partner field
+        is now required: an empty display_partner becomes "With movements" (= will give the same results as before US-3873 dev)
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['values']):
+            try:
+                values_dict = eval(template.values)
+                if 'display_partner' in values_dict:
+                    if not values_dict['display_partner']:
+                        values_dict['display_partner'] = 'with_movements'
+                        template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    def us_3873_remove_initial_balance_in_partner_balance_templates(self, cr, uid, *a, **b):
+        """
+        Removes the initial_balance from the Wizard Templates for the "Partner Balance" report
+        (Note: templates aren't synched for now)
+        """
+        template_obj = self.pool.get('wizard.template')
+        template_ids = template_obj.search(cr, uid, [('wizard_name', '=', 'wizard.account.partner.balance.tree')])
+        for template in template_obj.browse(cr, uid, template_ids, fields_to_fetch=['values']):
+            try:
+                values_dict = eval(template.values)
+                if 'initial_balance' in values_dict:
+                    del values_dict['initial_balance']
+                    template_obj.write(cr, uid, template.id, {'values': values_dict})
+            except:
+                pass
+
+    # UF9.1
+    def change_xml_payment_method(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if not level_current:
+            return True
+
+
+        identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
+        cr.execute("update sync_client_update_received set run='t', log='Set as run by US-4762' where run='f' and model='hr.payment.method'")
+        cr.execute("delete from ir_model_data where model='hr.payment.method' and res_id not in (select id from hr_payment_method)")
+        cr.execute("update ir_model_data set name=(select 'hr_payment_method_'||name from hr_payment_method where id=res_id) where model='hr.payment.method'")
+
+        # on HQ sync down payment method
+        if level_current == 'section':
+            cr.execute("update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='hr.payment.method'")
+            pay_obj = self.pool.get('hr.payment.method')
+            for pm in ['ESP', 'CHQ', 'VIR']:
+                if not pay_obj.search(cr, uid, [('name', '=', pm)]):
+                    pay_obj.create(cr, uid, {'name': pm})
+
+
+        # touch employee created on this instance
+        cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''payment_method_id'']' where model='hr.employee' and module='sd' and name like %s||'/%%'
+            and res_id in (select id from hr_employee where payment_method_id is not null)""" , (identifier,))
+
+        return True
+
+    # UF9.0
+    def change_fo_seq_to_nogap(self, cr, uid, *a, **b):
+        data = self.pool.get('ir.model.data')
+        seq_id = False
+        try:
+            seq_id = data.get_object_reference(cr, uid, 'sale', 'seq_sale_order')[1]
+        except:
+            return True
+
+        if seq_id:
+            seq_obj = self.pool.get('ir.sequence')
+            seq_id = seq_obj.search(cr, uid, [('id', '=', seq_id), ('implementation', '=', 'psql')])
+            if seq_id:
+                seq_obj.write(cr, uid, seq_id[0], {'implementation': 'no_gap'})
+                self._logger.warn('Change FO seq to no_gap')
+        return True
+
+    def us_4481_monitor_set_null_size(self,cr, uid, *a, **b):
+        if self.pool.get('sync.version.instance.monitor'):
+            cr.execute('update sync_version_instance_monitor set cloud_size=0 where cloud_size is null')
+            cr.execute('update sync_version_instance_monitor set backup_size=0 where backup_size is null')
+        return True
+
+    def us_3319_product_track_price(self, cr, uid, *a, **b):
+        cr.execute('select count(*) from standard_price_track_changes')
+        num = cr.fetchone()
+        if num and num[0]:
+            cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name)
+                    select 1, NOW(), t.standard_price, t.standard_price, 1, p.id, date_trunc('second', now()::timestamp), 'Price corrected' from product_product p, product_template t where p.product_tmpl_id=t.id and t.cost_method='average'
+                    """)
+        return True
+
+    def us_3015_remove_whitespaces_product_description(self, cr, uid, *a, **b):
+        # Checking product's description
+        cr.execute('''SELECT id, name FROM product_template WHERE name LIKE ' %' or name LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE product_template SET name = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        # Checking product's description in the translations
+        cr.execute('''SELECT id, value FROM ir_translation 
+            WHERE name = 'product.template,name' AND value LIKE ' %' or value LIKE '% ' ''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE ir_translation SET value = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
+        return True
+
+    # UF8.2
+    def ud_trans(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid])[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        if level_current == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ud_trans'})
+
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+
+            cr.execute("""
+                update ir_translation r set xml_id =
+                    (select d.name from ir_model_data d where model='product.product' and module='sd' and d.res_id=(select p.id from product_product p where p.product_tmpl_id=r.res_id))
+                    where r.name='product.template,name'
+            """)
+            self._logger.warn('HQ update xml_id no %d product trans' % (cr.rowcount,))
+
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''value'']' where
+                model='ir.translation' and
+                res_id in (
+                   select id from ir_translation where name='product.template,name' and res_id in (
+                        select p.product_tmpl_id from product_product p where p.international_status=%s
+                        )
+                )
+            """, (unidata_id,))
+            self._logger.warn('HQ touching %d UD trans' % (cr.rowcount,))
+
+            # send product on which UD has changed the name without any lang ctx, if there isn't any ir.trans record
+            cr.execute("""update ir_model_data set last_modification=NOW(), touched='[''name'']'
+                where model='product.product' and
+                res_id in (
+                    select id from product_product where product_tmpl_id in
+                        ( select id from product_template where id in
+                            (select res_id from audittrail_log_line where name='name' and object_id=128 and method='write')
+                          and id not in (select res_id from ir_translation where name='product.template,name' and lang='en_MF')
+                        )
+                )
+            """)
+            self._logger.warn('HQ touching %d UD prod' % (cr.rowcount,))
+
+        return True
+
+    # UF8.1
+    def cancel_extra_empty_draft_po(self, cr, uid, *a, **b):
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+
+        if self.pool.get('sync_client.version'):
+            rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.update_fo_ref')
+            cr.execute('''
+                select bad.id,bad.name,bad.state, bad.client_order_ref
+                from sale_order bad
+                left join sale_order_line badline on badline.order_id = bad.id
+                left join sale_order old on old.client_order_ref=bad.client_order_ref
+                where 
+                bad.split_type_sale_order='original_sale_order' and
+                bad.client_order_ref ~ '.*-[1,2,3]$' and
+                bad.procurement_request='f' and
+                bad.state in ('draft', 'cancel') and
+                old.split_type_sale_order != 'original_sale_order'
+                group by bad.id, bad.name, bad.state
+                having count(badline)=0 and count(old.id) > 0
+            ''')
+            for x in cr.fetchall():
+                self._logger.warn('US-4454: cancel FO %s, ref: %s (id:%s)' % (x[1], x[3], x[0]))
+                cr.execute("update sale_order set state='cancel', client_order_ref='' where id=%s", (x[0],))
+                gen_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', x[3]), ('state', '!=', 'cancel')])
+                if gen_ids:
+                    self._logger.warn('US-4454: gen ref %s' % gen_ids)
+                    for gen_id in gen_ids:
+                        arguments = self.pool.get('sale.order').get_message_arguments(cr, uid, gen_id, rule)
+                        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, 'sale.order', [gen_id], rule.server_id)
+                        data = {
+                            'identifier' : identifiers[gen_id],
+                            'remote_call': rule.remote_call,
+                            'arguments': arguments,
+                            'destination_name': x[3].split('.')[0],
+                            'sent' : False,
+                            'res_object': '%s,%s' % ('sale.order', gen_id),
+                            'generate_message' : True,
+                        }
+                        msg_to_send_obj.create(cr, uid, data)
+
+        return True
+
+    def us_4430_set_puf_to_reversal(self, cr, uid, *a, **b):
+        """
+        Context: in case of an SI refund-cancel or modify since US-1255 (UF7.0) the original PUR are marked as reallocated,
+        since US-4137 (UF7.2) PUF are marked as reversal.
+        This method fixes the entries generated in between:
+        - sets the PUF AJIs as is_reversal: will fix the discrepancies in Financing Contracts and Budget Monitoring Report
+        - sets the PUF JIs as is_si_refund: will make the lines not correctable
+
+        Criteria used to spot the JIs to fix:
+        - JIs booked on a journal having the type "Purchase refund"
+        - which belong to a JE system
+        - which are reconciled (implies that all SI headers were booked on a reconcilable account) with a JI:
+            ==> booked on a journal having the type "Purchase"
+            ==> which belongs to a JE system
+            ==> which belongs to a JE having at least one leg set as "corrected"
+                Cf: - the JI corresponding to the SI header line is not set as corrected during a refund-cancel, only the SI lines are.
+                    - since US-1255 (UF7.0) it is not possible to do a refund-cancel once one of the SI lines has been corrected.
+        - with a creation date after 7.0
+            ==> no ending date to cover the diff between UF7.2 patch date at sync server and within each instance
+            ==> entries generated after 7.2 are already correct and won't be impacted
+        - which are set neither as "is_si_refund" nor as "reversal".
+        """
+        if self.pool.get('sync_client.version'):  # exclude sync server + new instances being created
+            user_obj = self.pool.get('res.users')
+            update_aji = """
+                UPDATE account_analytic_line
+                SET is_reversal = 't'
+                WHERE move_id IN (
+                    SELECT id FROM account_move_line
+                    WHERE move_id IN (
+                        SELECT DISTINCT(am.id)
+                            FROM account_move_line aml
+                            INNER JOIN account_move am ON aml.move_id = am.id
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            WHERE j.type = 'purchase_refund'
+                            AND am.status = 'sys'
+                            AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                            AND aml.is_si_refund = 'f'
+                            AND aml.reversal = 'f'
+                            AND aml.reconcile_id IS NOT NULL
+                            AND aml.reconcile_id IN (
+                                SELECT r.id
+                                FROM account_move_reconcile r
+                                INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                                AND aml.id IN (
+                                    SELECT aml.id
+                                    FROM account_move_line aml
+                                    INNER JOIN account_move am ON aml.move_id = am.id
+                                    INNER JOIN account_journal j ON aml.journal_id = j.id
+                                    WHERE j.type = 'purchase'
+                                    AND am.status = 'sys'
+                                    AND am.id IN (
+                                        SELECT DISTINCT(am.id)
+                                        FROM account_move am
+                                        INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                        WHERE aml.corrected = 't'
+                                        )
+                                    )
+                                )
+                            )
+                    );
+                """
+            update_ji = """
+                UPDATE account_move_line
+                SET is_si_refund = 't'
+                WHERE move_id IN (
+                    SELECT DISTINCT(am.id)
+                    FROM account_move_line aml
+                    INNER JOIN account_move am ON aml.move_id = am.id
+                    INNER JOIN account_journal j ON aml.journal_id = j.id
+                    WHERE j.type = 'purchase_refund'
+                    AND am.status = 'sys'
+                    AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                    AND aml.is_si_refund = 'f'
+                    AND aml.reversal = 'f'
+                    AND aml.reconcile_id IS NOT NULL
+                    AND aml.reconcile_id IN (
+                        SELECT r.id
+                        FROM account_move_reconcile r
+                        INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                        AND aml.id IN (
+                            SELECT aml.id
+                            FROM account_move_line aml
+                            INNER JOIN account_move am ON aml.move_id = am.id
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            WHERE j.type = 'purchase'
+                            AND am.status = 'sys'
+                            AND am.id IN (
+                                SELECT DISTINCT(am.id)
+                                FROM account_move am
+                                INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                WHERE aml.corrected = 't'
+                                )
+                            )
+                        )
+                    );
+                """
+            # trigger the sync for all AJIs whose the prop. instance is the current instance, to cover the use case
+            # where only AJIs exist in a project because the doc was generated in coordo or in another project
+            current_instance = user_obj.browse(cr, uid, uid).company_id.instance_id
+            if current_instance and current_instance.level in ('coordo', 'project'):
+                trigger_sync = """
+                    UPDATE ir_model_data SET last_modification=NOW(), touched='[''is_reversal'']'
+                    WHERE module='sd' AND model='account.analytic.line' AND res_id IN (
+                        SELECT aal.id
+                        FROM account_analytic_line aal
+                        INNER JOIN account_analytic_journal aaj ON aal.journal_id = aaj.id
+                        WHERE aaj.is_current_instance = 't'
+                        AND move_id IN (
+                        SELECT id FROM account_move_line
+                        WHERE move_id IN (
+                            SELECT DISTINCT(am.id)
+                                FROM account_move_line aml
+                                INNER JOIN account_move am ON aml.move_id = am.id
+                                INNER JOIN account_journal j ON aml.journal_id = j.id
+                                WHERE j.type = 'purchase_refund'
+                                AND am.status = 'sys'
+                                AND aml.create_date > (SELECT applied FROM sync_client_version WHERE name = 'UF7.0' LIMIT 1)
+                                AND aml.is_si_refund = 'f'
+                                AND aml.reversal = 'f'
+                                AND aml.reconcile_id IS NOT NULL
+                                AND aml.reconcile_id IN (
+                                    SELECT r.id
+                                    FROM account_move_reconcile r
+                                    INNER JOIN account_move_line aml ON aml.reconcile_id = r.id
+                                    AND aml.id IN (
+                                        SELECT aml.id
+                                        FROM account_move_line aml
+                                        INNER JOIN account_move am ON aml.move_id = am.id
+                                        INNER JOIN account_journal j ON aml.journal_id = j.id
+                                        WHERE j.type = 'purchase'
+                                        AND am.status = 'sys'
+                                        AND am.id IN (
+                                            SELECT DISTINCT(am.id)
+                                            FROM account_move am
+                                            INNER JOIN account_move_line aml ON aml.move_id = am.id
+                                            WHERE aml.corrected = 't'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    );
+                """
+                cr.execute(trigger_sync)
+                self._logger.warn('%s entries for which a sync will be triggered.' % (cr.rowcount,))
+            cr.execute(update_aji)
+            self._logger.warn('%s AJI updated.' % (cr.rowcount,))
+            cr.execute(update_ji)
+            self._logger.warn('%s JI updated.' % (cr.rowcount,))
+
+
+    # UF8.0
+    def set_sequence_main_nomen(self, cr, uid, *a, **b):
+        nom = ['MED', 'LOG', 'LIB', 'SRV']
+        nom_obj = self.pool.get('product.nomenclature')
+        seq = 0
+        for name in nom:
+            seq += 10
+            nom_ids = nom_obj.search(cr, uid, [('level', '=', 0), ('name', '=', name)])
+            if nom_ids:
+                nom_obj.write(cr, uid, nom_ids, {'sequence': seq})
+
+        return True
+
+    def us_3734_rename_partners_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the name of the partners, as well as in the related JIs and AJIs
+        """
+        update_partner = """
+            UPDATE res_partner 
+            SET name = regexp_replace(name, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE name like '%' || chr(10) || '%';
+            """
+        update_ji = """
+            UPDATE account_move_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        update_aji = """
+            UPDATE account_analytic_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        cr.execute(update_partner)
+        cr.execute(update_ji)
+        cr.execute(update_aji)
+
+    def us_4407_update_free_lines_ad(self, cr, uid, *a, **b):
+        """
+        Updates the distribution_id of the Free1/2 lines by using the distrib_line_id
+        """
+        update_free_1 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_1_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.1.distribution.line,', '')::int) 
+                        WHERE distrib_line_id ~ 'free.1.distribution.line,[0-9]+$' AND distribution_id IS NULL;
+                        """
+        update_free_2 = """
+                        UPDATE account_analytic_line 
+                        SET distribution_id = (SELECT distribution_id FROM free_2_distribution_line 
+                                               WHERE id=regexp_replace(distrib_line_id, 'free.2.distribution.line,', '')::int) 
+                        WHERE distrib_line_id ~ 'free.2.distribution.line,[0-9]+$' AND distribution_id IS NULL;
+                        """
+        cr.execute(update_free_1)
+        cr.execute(update_free_2)
+
+    def us_4151_change_correct_out_currency(self, cr, uid, *a, **b):
+        '''
+        search the currency_id in FO/IR for each OUT/PICK to set the correct one, doesn't change it if no FO/IR found
+        '''
+        company_curr = self.pool.get('res.company').browse(cr, uid, 1, fields_to_fetch=['currency_id']).currency_id.id
+
+        move_ids_currencies = {}
+        cr.execute('''
+            select m.id, m.price_currency_id, s.procurement_request, pl.currency_id
+            from stock_move m
+                left join stock_picking p on (m.picking_id = p.id)
+                left join sale_order_line sl on (m.sale_line_id = sl.id)
+                left join sale_order s on (sl.order_id = s.id)
+                left join product_pricelist pl on (s.pricelist_id = pl.id)
+            where m.sale_line_id is not null and m.type = 'out' and p.type = 'out' and p.subtype in ('standard', 'picking')
+        ''')
+        for x in cr.fetchall():
+            if x[2]:
+                currency_id_key = company_curr
+            else:
+                currency_id_key = x[3]
+            if x[1] != currency_id_key:
+                if currency_id_key in move_ids_currencies:
+                    move_ids_currencies[currency_id_key].append(x[0])
+                else:
+                    move_ids_currencies.update({currency_id_key: [x[0]]})
+
+        for currency_id in move_ids_currencies:
+            cr.execute('''update stock_move set price_currency_id = %s where id in %s'''
+                       , (currency_id, tuple(move_ids_currencies[currency_id])))
+
+        return True
+
+    # UF7.3
+    def flag_pi(self, cr, uid, *a, **b):
+        cr.execute('''select distinct i.id, p.default_code from
+            physical_inventory_discrepancy d,
+            physical_inventory i,
+            product_product p,
+            stock_move m
+            left join stock_production_lot lot on lot.id=m.prodlot_id
+            where d.inventory_id=i.id and d.product_id = p.id and m.product_id=d.product_id and
+                m.location_id=i.location_id and m.location_dest_id=i.location_id and
+                m.state='done' and coalesce(m.expired_date, '2999-01-01')=coalesce(d.expiry_date, '2999-01-01') and coalesce(lot.name,'')=coalesce(d.batch_number,'') and d.ignored='f'
+        ''')
+        pi = {}
+        for x in cr.fetchall():
+            pi.setdefault(x[0], []).append(x[1])
+
+        for pi_id in pi:
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+
+        return True
+
+    def send_instance_uuid(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance_id and not instance_id.instance_identifier and instance_id.state == 'active':
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                identifier = entity.get_uuid(cr, uid)
+                self._logger.warn('missing instance_identifier, set to %s' % (identifier,))
+                self.pool.get('msf.instance').write(cr, uid, [instance_id.id], {'instance_identifier': identifier})
+
+        return True
+
+    # UF7.1 patches
+    def recompute_amount(self, cr, uid, *a, **b):
+        cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        pol_ids = [x[0] for x in cr.fetchall()]
+        if pol_ids:
+            self.pool.get('purchase.order.line')._call_store_function(cr, uid, pol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d POs" % (len(pol_ids), ))
+
+        cr.execute("select min(id) from sale_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        sol_ids = [x[0] for x in cr.fetchall()]
+        if sol_ids:
+            self.pool.get('sale.order.line')._call_store_function(cr, uid, sol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d SOs" % (len(sol_ids), ))
+
+    def gen_pick(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.code
+        if instance_name == 'SO_SOMA':
+            self._logger.warn("SO_SOMA_OCA fix PO00027 to FO00013-1")
+            self.pool.get('purchase.order.line').write(cr, uid, [499, 500, 501, 502], {'origin': '17/NL/SO001/FO00013-1'})
+            self.pool.get('purchase.order.line').action_confirmed(cr, uid, [499, 500, 501, 502])
+
+        cr.execute("""select l.id,l.line_number, o.name, o.state, l.state
+        from sale_order_line l
+        inner join sale_order o on o.id = l.order_id
+        left join product_product p on p.id=l.product_id
+        left join product_template t on t.id=p.product_tmpl_id
+        left join stock_move m on m.sale_line_id=l.id
+        left join purchase_order_line pol on pol.linked_sol_id = l.id
+        where l.state in ('confirmed', 'done')
+        and l.type='make_to_order'
+        and m.id is null
+        and pol.state != 'cancel'
+        and o.split_type_sale_order!='original_sale_order'
+        and l.write_date > '2018-01-10 00:00:00'
+        and l.write_date is not null""")
+        to_conf = []
+        state_dict = {}
+        for x in cr.fetchall():
+            to_conf.append(x[0])
+            state_dict.setdefault(x[4], [])
+            state_dict[x[4]].append(x[0])
+            self._logger.warn("Gen pick for FO %s, line %s (line id:%s)" % (x[2], x[1], x[0]))
+        if to_conf:
+            self.pool.get('sale.order.line').action_confirmed(cr, uid, to_conf, {})
+        for state in state_dict:
+            self.pool.get('sale.order.line').write(cr, uid, state_dict[state], {'state': state}, {})
+        return True
+
+    def trigger_pofomsg(self, cr, uid, *a, **b):
+        sync_client_obj = self.pool.get('sync.client.entity')
+        if sync_client_obj:
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='sale.order.create_so'")
+            po_sent = [0]
+            for x in cr.fetchall():
+                po_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    po_sent.append(int(po_id))
+                except:
+                    pass
+            cr.execute("""
+                select po.id from purchase_order po where po.partner_type not in ('external', 'esc') and po.split_po='f'
+                and po.state in ('draft', 'draft-p', 'validated_p', 'validated') and po.id in (select res_id from ir_model_data where model='purchase.order' and (sync_date > last_modification and sync_date is not null))
+                and po.id not in %s
+                """, (tuple(po_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("PO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order'", (tuple(to_touch),))
+
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='purchase.order.normal_fo_create_po'")
+            fo_sent = [0]
+            for x in cr.fetchall():
+                fo_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    fo_sent.append(int(fo_id))
+                except:
+                    pass
+            cr.execute("""
+                select fo.id from sale_order fo, res_partner p where
+                p.id = fo.partner_id and p.partner_type not in ('external', 'esc') and procurement_request='f' and coalesce(fo.client_order_ref, '')=''
+                and fo.state != 'cancel' and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
+                and (fo.state != 'done' or fo.id in (select order_id from sale_order_line where coalesce(write_date, create_date) > '2018-01-14 18:00:00'))
+                and fo.id not in %s
+                """, (tuple(fo_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("FO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='sale.order'", (tuple(to_touch),))
+
+
+            # trigger sync msg for confirmed FO line
+            cr.execute('''
+                select l.id, l.line_number, o.name
+                from sale_order_line l, sale_order o where
+                     l.order_id=o.id and l.state in ('done', 'confirmed') and l.write_date>'2018-01-10' and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.line.sol_update_original_pol' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.update_split_po' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.procurement_request='f'
+                     and o.split_type_sale_order!='original_sale_order'
+            ''')
+            for x in cr.fetchall():
+                self._logger.warn("Fo line trigger confirmed msg FO: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context={})
+
+
+            # trigger sync msg for validated po lines
+            cr.execute('''
+                select l.id, l.line_number, o.name
+                from purchase_order_line l, purchase_order o where
+                     l.order_id=o.id and l.state = 'validated' and l.write_date>'2018-01-10' and o.partner_type not in ('esc', 'external') and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.line.create_so_line' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.create_so' and arguments like '%order_line%' and identifier ~ '/[0-9-]+_[0-9]+$')
+            ''')
+            to_touch = []
+            for x in cr.fetchall():
+                self._logger.warn("PO line to touch: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
+                to_touch.append(x[0])
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order.line'", (tuple(to_touch),))
+
+
+            cr.commit()
+            return True
+
+    def close_pol_already_processed(self, cr, uid, *a, **b):
+        wf_service = netsvc.LocalService("workflow")
+        cr.execute("select l.id, l.order_id, l.product_qty, o.name, l.line_number from purchase_order_line l, purchase_order o where l.order_id=o.id and l.state='confirmed'")
+        for x in cr.fetchall():
+            cr.execute('''select sum(product_qty) from stock_picking p, stock_move m
+            where m.picking_id = p.id and p.type='in' and p.state in ('done', 'cancel', 'cancel_r')
+            and p.purchase_id = %s and m.purchase_line_id = %s''', (x[1], x[0]))
+            res = cr.fetchone()
+            if res and res[0] and res[0] >= x[2]:
+                self._logger.warn("PO line to close: PO %s, line number: %s, poline id %s" % (x[3], x[4], x[0]))
+                wf_service.trg_validate(uid, 'purchase.order.line', x[0], 'done', cr)
+        cr.commit()
+        return True
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
@@ -297,7 +1050,7 @@ class patch_scripts(osv.osv):
                     cr.execute("""
                         ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
                         """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
-                               'unique(name, currency_id)'))
+                               'unique(name, currency_id)'))  # not_a_user_entry
                 except:
                     self._logger.warn('Unable to set unique constraint on currency rate')
                     cr.rollback()
@@ -366,7 +1119,7 @@ class patch_scripts(osv.osv):
                         select id from stock_mission_report_line where 
                         """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
                     )
-            """)
+            """) # not_a_user_entry
 
         cr.execute("""
             update stock_mission_report_line set
@@ -375,7 +1128,7 @@ class patch_scripts(osv.osv):
             (
                 select id from stock_mission_report where full_view='f' and export_ok='t'
             )
-        """)
+        """) # not_a_user_entry
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
@@ -631,7 +1384,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
 
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
+                    cr.execute("DELETE FROM ir_model_data WHERE model=%s AND module='sd'", (model,))
                     current_count = cr.rowcount
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
@@ -710,7 +1463,7 @@ class patch_scripts(osv.osv):
                         and d.model='res.partner'
                         and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
                         and name not like '%s%%'
-                    ) """ % (identifier, ))
+                    ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))
         return True
 
@@ -1621,22 +2374,22 @@ class patch_scripts(osv.osv):
                 cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                     (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
-                    and name like '"""+instance_id+"""%'
-                )""")
+                    and name like '%s%%'
+                )""" % instance_id)  # not_a_user_entry
                 cr.execute("""delete from ir_translation t
                     where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and id in
-                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""%')
-                """)
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                """ % instance_id)  # not_a_user_entry
                 if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
                     # also remove old UniData trans sent by coordo
                     cr.execute("""delete from ir_translation t
                         where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                             (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                         and id in
-                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+coordo_id+"""%')
-                    """)
+                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%%')
+                    """ % coordo_id)  # not_a_user_entry
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
 
@@ -1767,7 +2520,7 @@ class patch_scripts(osv.osv):
         SET touched = '[''state_ud'', ''product_active'', ''international_status_code'']', last_modification = now()
         WHERE model = 'stock.mission.report.line' AND res_id IN (
           SELECT id FROM stock_mission_report_line WHERE mission_report_id IN %s)
-        ''' % (tuple(smr_ids),))
+        ''', (tuple(smr_ids),))
 
         return True
 
@@ -2055,10 +2808,8 @@ class email_configuration(osv.osv):
 
     def set_config(self, cr):
         data = ['smtp_server', 'email_from', 'smtp_port', 'smtp_ssl', 'smtp_user', 'smtp_password']
-        cr.execute("""select """+','.join(data)+"""
-            from email_configuration
-            limit 1
-        """)
+        cr.execute("""select %s from email_configuration
+            limit 1""" % ','.join(data))  # not_a_user_entry
         res = cr.fetchone()
         if res:
             for i, key in enumerate(data):
@@ -2200,3 +2951,111 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something(osv.osv):
+    _name = 'sync.trigger.something'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+
+    def delete_ir_model_access(self, cr, uid, context=None):
+        _logger = logging.getLogger('trigger')
+        ir_model_access = self.pool.get('ir.model.access')
+
+        ids_to_del = ir_model_access.search(cr, uid, [('from_system', '=', False)])
+        access_ids_to_keep = ir_model_access.search(cr, uid, [('from_system', '=', True)])
+        if ids_to_del:
+            cr.execute("delete from ir_model_access where id in %s", (tuple(ids_to_del),))
+            cr.execute("delete from ir_model_data where res_id in %s and model='ir.model.access'", (tuple(ids_to_del),))
+            _logger.warn('Purge %d ir_model_access %d kept'  % (len(ids_to_del), len(access_ids_to_keep)))
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        _logger = logging.getLogger('trigger')
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ud_trans':
+
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_to_delete = """from ir_translation where name='product.template,name'
+                and ( res_id in (select p.product_tmpl_id from product_product p where p.international_status=%s) or coalesce(res_id,0)=0) and type='model'
+            """ % (unidata_id,)  # not_a_user_entry
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id  """ + trans_to_delete + """
+            )""")  # not_a_user_entry
+            _logger.warn('Delete %d sdref linked to UD trans' % (cr.rowcount,))
+            cr.execute("delete "+ trans_to_delete) # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD trans' % (cr.rowcount,))
+
+        if context.get('sync_update_execution') and vals.get('name') == 'clean_ir_model_access':
+            self.delete_ir_model_access(cr, uid, context=context)
+
+        if vals.get('name') == 'clean_ud_fff':
+            # US-5356
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+
+            trans_query = """
+                ir_translation where name in ('product.product,function_value', 'product.product,form_value', 'product.product,fit_value') and
+                type = 'model' and
+                res_id in (
+                  select id from product_product where international_status=%s
+                )
+            """
+            # 1/ delete xmlid linked to trans
+            cr.execute('''delete from ir_model_data where
+                model='ir.translation' and
+                module='sd' and
+                res_id in (
+                    select id from '''+trans_query+'''
+                )
+            ''', (unidata_id,))  # not_a_user_entry
+            _logger.warn('Delete %d ir.model.data trans linked to UD' % (cr.rowcount,))
+
+            # 2/ delete trans
+            cr.execute('delete from '+ trans_query, (unidata_id,))  # not_a_user_entry
+            _logger.warn('Delete %d trans linked to UD' % (cr.rowcount,))
+
+            # 3/ reset fields
+            cr.execute('''update product_product set
+                  form_value=NULL,
+                  fit_value=NULL,
+                  function_value=NULL,
+                  product_catalog_path=NULL
+                where international_status=%s ''', (unidata_id,))
+            _logger.warn('Reset %d UD products' % (cr.rowcount,))
+
+        return super(sync_tigger_something, self).create(cr, uid, vals, context)
+
+sync_tigger_something()
+
+class sync_tigger_something_up(osv.osv):
+    _name = 'sync.trigger.something.up'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+        'args': fields.text('Args'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            _logger = logging.getLogger('tigger')
+            if vals.get('name') == 'clean_mission_stock_central':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set central_qty=0,central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+            elif vals.get('name') == 'clean_mission_stock_cu':
+                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
+                if remote_id:
+                    cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
+                    _logger.warn('Reset %d mission stock CU Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
+
+        return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
+
+sync_tigger_something_up()

@@ -29,6 +29,8 @@ from tools.safe_eval import safe_eval as eval
 class ir_rule(osv.osv):
     _name = 'ir.rule'
     _order = 'name'
+    _inherit = 'common.import.ur'
+    _auto = True
     _MODES = ['read', 'write', 'create', 'unlink']
 
     def _domain_force_get(self, cr, uid, ids, field_name, arg, context=None):
@@ -115,7 +117,7 @@ class ir_rule(osv.osv):
                 AND r.perm_""" + mode + """
                 AND (r.id IN (SELECT rule_group_id FROM rule_group_rel g_rel
                             JOIN res_groups_users_rel u_rel ON (g_rel.group_id = u_rel.gid)
-                            WHERE u_rel.uid = %s) OR r.global)""", (model_name, uid))
+                            WHERE u_rel.uid = %s) OR r.global)""", (model_name, uid)) # not_a_user_entry
         ids = map(lambda x: x[0], cr.fetchall())
         if ids:
             for rule in self.browse(cr, uid, ids):

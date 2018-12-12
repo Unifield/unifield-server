@@ -106,7 +106,7 @@
                     <para style="HeaderRight">Actual Shipped Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.date, date_time=True) ]]</para>
+                    <para style="Header">[[ picking.move_lines and formatLang(picking.move_lines[0].date, date_time=True) or '' ]]</para>
                 </td>
             </tr>
             <tr>
@@ -117,10 +117,10 @@
                     <para style="Header">[[ picking.partner_id and picking.partner_id.name or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Delivery Address :</para>
+                    <para style="HeaderRight">Requestor :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.address_id and get_address(picking.address_id.id) or '' ]]</para>
+                    <para style="Header">[[ picking.requestor or '' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight">Expected Shipped Date :</para>
@@ -137,10 +137,10 @@
                     <para style="Header">[[ picking.backorder_id and picking.backorder_id.name or '']]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Reason Type :</para>
+                    <para style="HeaderRight">Delivery Address :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.reason_type_id and picking.reason_type_id.name or '' ]]</para>
+                    <para style="Header">[[ picking.address_id and get_address(picking.address_id.id) or '' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight">Warehouse :</para>
@@ -157,10 +157,10 @@
                     <para style="Header">[[ get_state(picking.state) ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight"></para>
+                    <para style="HeaderRight">Reason Type :</para>
                 </td>
                 <td>
-                    <para style="Header"></para>
+                    <para style="Header">[[ picking.reason_type_id and picking.reason_type_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight"></para>
@@ -177,7 +177,7 @@
 
 
         <section>
-        <blockTable colWidths="20.0,70.0,120.0,50.0,60.0,45.0,40.0,70.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,100.0,120.0,50.0,50.0,45.0,40.0,60.0,70.0,70.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -186,10 +186,10 @@
                     <para style="LHeader">Product Code</para>
                 </td>
                 <td>
-                    <para style="LHeader">Product Name</para>
+                    <para style="LHeader">Product Description</para>
                 </td>
                 <td>
-                    <para style="LHeader">CommentS</para>
+                    <para style="LHeader">Comments</para>
                 </td>
                 <td>
                     <para style="LHeader">Kit</para>
@@ -214,9 +214,6 @@
                 </td>
                 <td>
                     <para style="LHeader">Destination Location</para>
-                </td>
-                <td>
-                    <para style="LHeader">Actual Shipped Date</para>
                 </td>
             </tr>
             <tr>
@@ -257,9 +254,6 @@
                 </td>
                 <td>
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
-                </td>
-                <td>
-                    <para style="Line">[[ formatLang(line.date[:10], date=True) ]]</para>
                 </td>
             </tr>
         </blockTable>

@@ -27,6 +27,7 @@ assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
 
+
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
     _logger = logging.getLogger('------sync.sale.order.line')
@@ -62,14 +63,17 @@ class sale_order_line_sync(osv.osv):
         sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
         sol_values['order_id'] = sale_order_ids[0]
         sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
-        if 'line_number' in sol_values:
-            del(sol_values['line_number'])
+        if sol_values.get('product_id'):
+            sol_values['original_product'] = sol_values['product_id']
+        if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
+            sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
         new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
         message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
         self._logger.info(message)
 
         return message
+
 
 sale_order_line_sync()
 
@@ -100,6 +104,7 @@ class sale_order_line_cancel(osv.osv):
         self.create(cr, uid, line_dict, context=context)
 
         return True
+
 
 sale_order_line_cancel()
 
@@ -146,7 +151,6 @@ class sale_order_sync(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
-
     def create_so(self, cr, uid, source, po_info, context=None):
         self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:
@@ -163,6 +167,12 @@ class sale_order_sync(osv.osv):
 
         header_result = {}
         so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+
+        if header_result.get('currency_id') and header_result.get('pricelist_id'):
+            if not self.pool.get('product.pricelist').search_exist(cr, uid, [('id', '=', header_result['pricelist_id']), ('currency_id', '=', header_result['currency_id'])]):
+                po_cur = self.pool.get('res.currency').read(cr, uid, header_result['currency_id'], ['name'], context=context)
+                raise Exception, "Wrong FO/PO Currency on partner: please set FO/PO currency to %s on partner %s" % (po_cur['name'], source)
+
         header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
@@ -229,7 +239,7 @@ class sale_order_sync(osv.osv):
         default = {}
         default.update(header_result)
 
-        self.write(cr, uid, so_id, default , context=context)
+        self.write(cr, uid, so_id, default, context=context)
 
         # Just to print the result message when the sync message got executed
         name = self.browse(cr, uid, so_id, context).name
@@ -370,77 +380,5 @@ class sale_order_sync(osv.osv):
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
 
-    def _hook_create_sync_split_fo_messages(self, cr, uid, split_ids, original_id, context=None):
-        """
-        Generate sync. messages manually for the FOs in ids
-        """
-        sol_obj = self.pool.get('sale.order.line')
-        solc_obj = self.pool.get('sale.order.line.cancel')
-        rule_obj = self.pool.get('sync.client.message_rule')
-        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
-
-        if isinstance(split_ids, (int, long)):
-            split_ids = [split_ids]
-
-        super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
-
-        def generate_msg_to_send(rule, model_obj, object_id, partner):
-            partner_name = partner.name
-            arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, destination=partner, context=context)
-            identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
-            if not identifiers:
-                return
-
-            xml_id = identifiers[object_id]
-            existing_message_id = msg_to_send_obj.search(cr, uid, [
-                ('identifier', '=', xml_id),
-                ('destination_name', '=', partner_name),
-            ], limit=1, order='NO_ORDER', context=context)
-            if existing_message_id:
-                return
-
-            # if not then create a new one --- FOR THE GIVEN FO AND DESTINATION
-            data = {
-                'identifier': xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': arguments,
-                'destination_name': partner_name,
-                'sent': False,
-                'generate_message': True,
-            }
-            return msg_to_send_obj.create(cr, uid, data, context=context)
-
-        solccl_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'sale.order.line.cancel.create_line', context=context)
-        nfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.normal_fo_create_po', context=context)
-        vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
-
-        solccl_model_obj = solccl_rule and self.pool.get(solccl_rule.model) or None
-        nfo_model_obj = nfo_rule and self.pool.get(nfo_rule.model) or None
-        vfo_model_obj = vfo_rule and self.pool.get(vfo_rule.model) or None
-
-        if original_id:
-            orig_partner = self.browse(cr, uid, original_id, context=context).partner_id
-
-            # Generate messages for cancel lines
-            if solccl_rule:
-                available_solc_ids = solc_obj.search(cr, uid, eval(solccl_rule.domain),
-                                                     order='NO_ORDER', context=context)
-                for asolc in solc_obj.browse(cr, uid, available_solc_ids, context=context):
-                    sol_ids = sol_obj.search(cr, uid, [
-                        ('order_id', '=', original_id),
-                        ('sync_order_line_db_id', '=', asolc.resource_sync_line_db_id),
-                    ], context=context)
-                    if sol_ids:
-                        generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner)
-
-            if nfo_model_obj and nfo_rule:
-                available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
-                                                order='NO_ORDER', context=context)
-                if original_id in available_nfo_ids:
-                    generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner)
-            if vfo_model_obj and vfo_rule:
-                generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner)
-
-        return
 
 sale_order_sync()

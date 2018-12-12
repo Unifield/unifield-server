@@ -187,7 +187,7 @@ class purchase_order(osv.osv):
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
                           WHERE (t.type != 'service_recep' %s) AND po.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                       (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:
@@ -376,7 +376,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                     move_ids = move.id
                     for move in move_obj.browse(cr, uid, [move_ids], context=context):
                         # Don't change done stock moves
-                        if move.state != 'done':
+                        if move.state not in ['done', 'cancel']:
                             move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location,
                                                                  'move_cross_docking_ok': True}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
@@ -408,7 +408,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr, uid, [move_ids], context=context):
-                        if move.state != 'done':
+                        if move.state not in ['done', 'cancel']:
                             '''
                             Specific rules for non-stockable products:
                                * if the move is an outgoing delivery, picked them from cross-docking
@@ -625,7 +625,7 @@ class stock_move(osv.osv):
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'done':
+            if move.state not in ['done', 'cancel']:
                 todo.append(move.id)
                 self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
         ret = True
@@ -663,7 +663,7 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'done':
+            if move.state not in ['done', 'cancel']:
                 '''
                 Specific rules for non-stockable products:
                    * if the move is an outgoing delivery, picked them from cross-docking

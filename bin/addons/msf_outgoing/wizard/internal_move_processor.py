@@ -85,6 +85,7 @@ class internal_picking_processor(osv.osv):
             type='boolean',
             readonly=True,
         ),
+        'draft': fields.boolean('Draft'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None):
@@ -130,6 +131,21 @@ class internal_picking_processor(osv.osv):
 
         return super(internal_picking_processor, self).create(cr, uid, vals, context=context)
 
+
+    def check_destination_location(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            for line in wizard.move_ids:
+                if line.move_id and not line.move_id.location_dest_id.active:
+                    raise osv.except_osv(_('Error'), _('Warning, destination location is no longer active, please select an active location'))
+
+        return True
+
+
     def do_partial(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
@@ -149,10 +165,20 @@ class internal_picking_processor(osv.osv):
                 _('No data to process !'),
             )
 
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
+
+        if wizard_brw_list[0].picking_id.type != 'internal':
+            raise osv.except_osv(
+                _('Error'),
+                _('This object: %s is not an Internal Move') % (wizard_brw_list[0].picking_id.name)
+            )
 
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
+        self.check_destination_location(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
         res = picking_obj.do_partial(cr, uid, ids, context=context)
         return self.return_hook_do_partial(cr, uid, ids, context=context, res=res)
@@ -340,6 +366,40 @@ class internal_picking_processor(osv.osv):
             proc_line_obj.unlink(cr, uid, to_unlink, context=context)
 
         return True
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
 
 internal_picking_processor()
 

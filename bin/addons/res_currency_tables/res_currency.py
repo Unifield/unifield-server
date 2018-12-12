@@ -87,6 +87,10 @@ class res_currency(osv.osv):
         '''
         Create purchase and sale pricelists according to the currency
         '''
+
+        if context is None:
+            context = {}
+
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
         item_obj = self.pool.get('product.pricelist.item')
@@ -130,6 +134,11 @@ class res_currency(osv.osv):
                                   'base': -2,
                                   'min_quantity': 0.00}, context=context)
 
+        if context.get('sync_update_execution'):
+            # new currency created by sync
+            # create pricelist xmlid
+            pricelist_obj.get_sd_ref(cr, uid, [sale_price_id, purchase_price_id], context=context)
+
         return [sale_price_id, purchase_price_id]
 
     def create(self, cr, uid, values, context=None):
@@ -138,7 +147,6 @@ class res_currency(osv.osv):
         currency creation
         '''
         res = super(res_currency, self).create(cr, uid, values, context=context)
-
         # Create the corresponding pricelists (only for non currency that have a currency_table)
         if not values.get('currency_table_id', False):
             self.create_associated_pricelist(cr, uid, res, context=context)
@@ -229,7 +237,9 @@ class res_currency(osv.osv):
                                                          ('name', '=', 'property_product_pricelist_purchase'),
                                                          ('value_reference', 'in', value_reference)], order='NO_ORDER', context=context)
             for prop in property_obj.browse(cr, uid, property_ids, fields_to_fetch=['res_id'], context=context):
-                if prop.res_id and prop.res_id._table_name == 'res.partner' and prop.res_id.active:
+                # ensure that the partner referenced in ir_property exists before checking if he is active
+                if prop.res_id and prop.res_id._table_name == 'res.partner' and hasattr(prop.res_id, 'active') and \
+                        getattr(prop.res_id, 'active') or False:
                     raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
                                                                           'in at least one active partner form.') % keyword)
 

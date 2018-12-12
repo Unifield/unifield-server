@@ -958,7 +958,7 @@ class stock_picking(osv.osv):
             sync_in = False
 
         in_out_updated = True
-        if sync_in:
+        if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
 
         backorder_id = False
@@ -1010,15 +1010,18 @@ class stock_picking(osv.osv):
                 average_values = {}
                 move_sptc_values = []
 
-                for line in move_proc_obj.browse(cr, uid, proc_ids,
-                                                 context=context):
+                line = False
+                for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
+                    if context.get('do_not_process_incoming') and line.pack_info_id:
+                        # we are processing auto import IN, we must register pack_info data
+                        values['pack_info_id'] = line.pack_info_id.id
+
                     if not values.get('product_qty', 0.00):
                         continue
-
                     # Check if we must re-compute the price of the product
-                    compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method
-                    if values.get('location_dest_id', False):
+                    compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
+                    if not sync_in and values.get('location_dest_id', False):
                         compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
@@ -1066,13 +1069,11 @@ class stock_picking(osv.osv):
 
                     # Sort the OUT moves to get the closest quantities as the IN quantity
                     out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
-
                     for lst_out_move in out_moves:
                         if remaining_out_qty <= 0.00:
                             break
 
                         out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
-
                         if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
                             price_unit = cur_obj.compute(
                                 cr,
@@ -1084,12 +1085,13 @@ class stock_picking(osv.osv):
                                 context=context
                             )
                             out_values['price_unit'] = price_unit
+                            out_values['price_currency_id'] = out_move.price_currency_id.id
 
                         # List the Picking Ticket that need to be created from the Draft Picking Ticket
-                        if out_move.picking_id.type == 'out' \
-                           and out_move.picking_id.subtype == 'picking' \
-                           and out_move.picking_id.state == 'draft':
-                            out_picks.add(out_move.picking_id.id)
+                        if out_move.picking_id.type == 'out':
+                            out_values['purchase_line_id'] = False
+                            if out_move.picking_id.subtype == 'picking' and out_move.picking_id.state == 'draft':
+                                out_picks.add(out_move.picking_id.id)
 
                         if line.uom_id.id != out_move.product_uom.id:
                             uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
@@ -1122,7 +1124,10 @@ class stock_picking(osv.osv):
                                             ('in_out_updated', '=', False),
                                         ], context=context))
 
-                        if uom_partial_qty < out_move.product_qty:
+                        # we need to check if the current IN has already been modified by this loop (out_move.id not in processed_out_moves)
+                        # to not change again an already modifier qty
+                        # split IN lines two times and set the whole original qty on the 3 lines (ie: extra qty received with split)
+                        if uom_partial_qty < out_move.product_qty and out_move.id not in processed_out_moves:
                             # Splt the out move
                             out_values.update({
                                 'product_qty': remaining_out_qty,
@@ -1133,12 +1138,25 @@ class stock_picking(osv.osv):
                             new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                             context['keepLineNumber'] = False
                             remaining_out_qty = 0.00
-                            move_obj.write(cr, uid, [out_move.id], {
+                            move_values = {
                                 'product_qty': out_move.product_qty - uom_partial_qty,
                                 'product_uos_qty': out_move.product_qty - uom_partial_qty,
-                            }, context=context)
+                            }
+                            # search for sol that match with the updated move:
+                            sol_to_relink = self.pool.get('sale.order.line').search(cr, uid, [
+                                ('order_id', '=', out_move.sale_line_id.order_id.id),
+                                ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
+                                ('line_number', '=', out_move.sale_line_id.line_number),
+                                ('order_id', '=', out_move.picking_id.sale_id.id),
+                            ], context=context)
+                            if sol_to_relink:
+                                move_values.update({'sale_line_id': sol_to_relink[0],})
+                            move_obj.write(cr, uid, [out_move.id], move_values, context=context)
+                            if sol_to_relink:
+                                if self.pool.get('sale.order.line').browse(cr, uid, sol_to_relink[0], context=context).state.startswith('cancel'):
+                                    move_obj.action_cancel(cr, uid, [out_move.id], context=context)
                             processed_out_moves.append(new_out_move_id)
-                        elif uom_partial_qty == out_move.product_qty:
+                        elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
                             out_values.update({
                                 'product_qty': remaining_out_qty,
                                 'product_uom': line.uom_id.id,
@@ -1147,7 +1165,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
-                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1]:
+                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
                             # Just update the out move with the value of the out move with UoM of IN
                             out_qty = out_move.product_qty
                             if line.uom_id.id != out_move.product_uom.id:
@@ -1169,8 +1187,14 @@ class stock_picking(osv.osv):
                                 'product_uom': line.uom_id.id,
                                 'in_out_updated': in_out_updated,
                             })
-                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
-                            processed_out_moves.append(out_move.id)
+                            if out_move.id in processed_out_moves:
+                                context['keepLineNumber'] = True
+                                new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
+                                context['keepLineNumber'] = False
+                                processed_out_moves.append(new_out_move_id)
+                            else:
+                                move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                                processed_out_moves.append(out_move.id)
 
                             if line.uom_id.id != out_move.product_uom.id:
                                 uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
@@ -1185,7 +1209,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
                     if not sync_in:
                         # decrement qty of linked INTernal move:
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
@@ -1195,7 +1219,7 @@ class stock_picking(osv.osv):
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
                         track_changes_to_create.append({
-                            'product_id': move.product_id.id,
+                            'product_id': line.product_id.id,
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
@@ -1208,7 +1232,6 @@ class stock_picking(osv.osv):
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
             }, context=context)
-
             # Create the backorder if needed
             if backordered_moves:
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
@@ -1258,9 +1281,9 @@ class stock_picking(osv.osv):
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
-                for bo_move, bo_qty, av_values, data_back, move_sptc_values in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back, move_sptc_values, p_id in backordered_moves:
                     for sptc_values in move_sptc_values:
-                        sptc_obj.track_change(cr, uid, move.product_id.id,
+                        sptc_obj.track_change(cr, uid, p_id,
                                               _('Reception %s') % backorder_name,
                                               sptc_values, context=context)
                     if bo_move.product_qty != bo_qty:
@@ -1311,7 +1334,12 @@ class stock_picking(osv.osv):
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     else:
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
-
+                    return backorder_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, backorder_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return backorder_id
 
                 self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
@@ -1369,6 +1397,12 @@ class stock_picking(osv.osv):
                         self.write(cr, uid, [picking_id], {'in_dpo': True}, context=context)
                     else:
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
+                    return picking_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', picking_id, 'updated', cr)
+                    prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
+                        'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    }, context=context)
                     return picking_id
                 else:
                     # Cancel missing IN instead of processing
@@ -1429,64 +1463,69 @@ class stock_picking(osv.osv):
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'prepare_pick': _('In progress'),
                 }, context=context)
+                pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
+                for pack in pack_obj.read_group(cr, uid, [('id', 'in', all_pack_info.keys())], ['packing_list'], ['packing_list'], offset=0, orderby='packing_list'):
+                    pack_ids = pack_obj.search(cr, uid, pack['__domain'], context=context)
 
-                move_to_process_ids = self.pool.get('stock.move').search(cr, uid,
-                                                                         [('picking_id', '=', picking_id), ('state', 'not in', ['draft', 'done', 'cancel', 'confirmed']), ('product_qty', '!=', 0),
-                                                                          ('pack_info_id', 'in', all_pack_info.keys())],
-                                                                         context=context)
+                    move_to_process_ids = self.pool.get('stock.move').search(cr, uid,
+                                                                             [('picking_id', '=', picking_id), ('state', 'not in', ['draft', 'done', 'cancel', 'confirmed']), ('product_qty', '!=', 0),
+                                                                              ('pack_info_id', 'in', pack_ids)],
+                                                                             context=context)
 
-                if move_to_process_ids:
-                    proc_obj = self.pool.get('create.picking.processor')
-                    proc_id = proc_obj.create(cr, uid, {'picking_id': picking_id}, context=context)
-                    proc_bro = proc_obj.browse(cr, uid, proc_id, context=context)
-                    for move_to_process in self.pool.get('stock.move').browse(cr, uid, move_to_process_ids, context=context):
-                        line_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, proc_bro, move_to_process, context=context)
-                        self.pool.get('create.picking.move.processor').create(cr, uid, line_data, context=context)
+                    if move_to_process_ids:
+                        proc_obj = self.pool.get('create.picking.processor')
+                        proc_id = proc_obj.create(cr, uid, {'picking_id': picking_id}, context=context)
+                        proc_bro = proc_obj.browse(cr, uid, proc_id, context=context)
+                        for move_to_process in self.pool.get('stock.move').browse(cr, uid, move_to_process_ids, context=context):
+                            line_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, proc_bro, move_to_process, context=context)
+                            self.pool.get('create.picking.move.processor').create(cr, uid, line_data, context=context)
 
-                    wiz_context = {}
-                    #UF-2531: Pass the name of PICKxxx-y when creating a Pick from crossdocking from an IN partial
-                    if context.get('associate_pick_name', False) and context.get('sync_message_execution', False):
-                        wiz_context['associate_pick_name'] = context.get('associate_pick_name')
-                        del context['associate_pick_name']
-                    # We copy all data in lines
-                    proc_obj.copy_all(cr, uid, [proc_id], context=wiz_context)
+                        wiz_context = {}
+                        #UF-2531: Pass the name of PICKxxx-y when creating a Pick from crossdocking from an IN partial
+                        if context.get('associate_pick_name', False) and context.get('sync_message_execution', False):
+                            wiz_context['associate_pick_name'] = context.get('associate_pick_name')
+                            del context['associate_pick_name']
+                        # We copy all data in lines
+                        proc_obj.copy_all(cr, uid, [proc_id], context=wiz_context)
 
-                    # We process the creation of the picking
-                    res_wiz = proc_obj.do_create_picking(cr, uid, [proc_id], context=wiz_context)
+                        # We process the creation of the picking
+                        res_wiz = proc_obj.do_create_picking(cr, uid, [proc_id], context=wiz_context)
 
-                    # Validate sub pick
-                    new_pick = res_wiz['res_id']
-                    pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
-                    self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
-                    ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
+                        # Validate sub pick
+                        new_pick = res_wiz['res_id']
+                        if  pack['packing_list']:
+                            self.pool.get('stock.picking').write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
+                        pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
+                        self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
+                        ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
 
-                    # validate PPL
-                    ppl_wiz = self.ppl(cr, uid, [ppl_val_wiz['res_id']], context=context)
-                    pack_created = {}
-                    for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
-                        if ppl_line.move_id.pack_info_id:
-                            if ppl_line.move_id.pack_info_id.id not in pack_created:
-                                pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
-                                    'wizard_id': ppl_wiz['res_id'],
-                                    'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
-                                    'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
-                                    'length': ppl_line.move_id.pack_info_id.total_length,
-                                    'width': ppl_line.move_id.pack_info_id.total_width,
-                                    'height': ppl_line.move_id.pack_info_id.total_height,
-                                    'weight': ppl_line.move_id.pack_info_id.total_weight,
+                        # validate PPL
+                        ppl_wiz = self.ppl(cr, uid, [ppl_val_wiz['res_id']], context=context)
+                        pack_created = {}
+                        for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
+                            if ppl_line.move_id.pack_info_id:
+                                if ppl_line.move_id.pack_info_id.id not in pack_created:
+                                    pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
+                                        'wizard_id': ppl_wiz['res_id'],
+                                        'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
+                                        'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
+                                        'length': ppl_line.move_id.pack_info_id.total_length,
+                                        'width': ppl_line.move_id.pack_info_id.total_width,
+                                        'height': ppl_line.move_id.pack_info_id.total_height,
+                                        'weight': ppl_line.move_id.pack_info_id.total_weight,
 
-                                })
-                            ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
-                    self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
-                    error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
-                    if error_lines_ids:
-                        error_data = []
-                        error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
-                        for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
-                            error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
-                        raise osv.except_osv(_('Error'), "\n".join(error_data))
+                                    })
+                                ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
+                        self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
+                        error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
+                        if error_lines_ids:
+                            error_data = []
+                            error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
+                            for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
+                                error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
+                            raise osv.except_osv(_('Error'), "\n".join(error_data))
 
-                    self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
+                        self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
 
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'prepare_pick': _('Done'),

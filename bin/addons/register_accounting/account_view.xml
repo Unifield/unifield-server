@@ -27,15 +27,20 @@
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
-                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply"
+                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                    confirm="Are you sure you want to freeze closing balance?"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
-                            <field name="balance_gap"/>
-                            <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
-                            <field name="virtual_id" invisible="1" readonly="1"/>
-                            <field name="closing_balance_frozen" invisible="1"/>
+                            <group col="3" colspan="4">
+                                <field name="balance_gap" colspan="2"/>
+                                <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                                <field name="virtual_id" invisible="1" readonly="1"/>
+                                <field name="closing_balance_frozen" invisible="1"/>
+                                <button name="button_cancel_closing_balance_confirmation" type="object"
+                                        string="Re-open End-of-Month Balance" icon="gtk-undo" colspan="1"
+                                        attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
+                            </group>
                         </group>
                         <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
@@ -175,7 +180,8 @@
                             </page>
                         </notebook>
                         <separator string="Comments"/>
-                        <field name="notes" nolabel="1"/>
+                        <field name="notes" nolabel="1" colspan="4"/>
+                        <field name="register_closed_by"/>
                         <separator string="Dates"/>
                         <group col="6" colspan="4">
                            <field name="date" string="Opening Date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
@@ -185,7 +191,7 @@
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
-                            <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
                             <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
@@ -341,12 +347,12 @@
                                 <field name="prev_reg_id" invisible="1"/>
                                 <group col="4" colspan="4">
                                     <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
-                                        <tree string = "Opening Balance" editable="bottom">
+                                        <tree string="Starting Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal" sum="Total"/>
                                         </tree>
-                                        <form string = "Opening Balance">
+                                        <form string="Starting Balance">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal"/>
@@ -366,8 +372,11 @@
                                         </form>
                                     </field>
                                     <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
-                                        colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                        confirm="Are you sure you want to freeze closing balance?"/>
+                                    <button name="button_cancel_closing_balance_confirmation" type="object"
+                                            string="Re-open month-end cash count" icon="gtk-undo" colspan="4"
+                                            attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
                             <page string="Responsible">
@@ -381,8 +390,8 @@
                                 <field name="closing_date" select="1" readonly="1"/>
                             </group>
                             <group col="2" colspan="2">
-                                <separator string="Opening Balance" colspan="4"/>
-                                <field name="balance_start" string="Opening Balance" readonly="True"/>
+                                <separator string="Starting Balance" colspan="4"/>
+                                <field name="balance_start" readonly="True"/>
                                 <field name="total_entry_encoding"/>
                                 <field name="msf_calculated_balance"/>
                                 <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
@@ -396,12 +405,13 @@
                             </group>
                         </group>
                         <separator string="Comments"/>
-                        <field name="notes" nolabel="1"/>
+                        <field name="notes" nolabel="1" colspan="4"/>
+                        <field name="register_closed_by"/>
                         <separator string="State" />
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>
                         </group>
-                        <button name="button_open_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <button name="button_open_cash_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
                             <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
                         </group>
@@ -562,6 +572,33 @@
             </field>
         </record>
 
+        <!-- Track Changes Search View for Registers -->
+        <record id="view_audittrail_log_line_register_search" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.register.search</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="19"/>  <!-- view not used by default (for other objects than registers) -->
+            <field name="arch" type="xml">
+                <search string="Search Log">
+                    <group col="10" colspan="4">
+                        <group colspan="2">
+                            <filter string="Creation" icon="gtk-new" domain="[('method', 'in', ['create'])]" context="{}"/>
+                            <filter string="Modification" icon="gtk-edit" domain="[('method', 'in', ['write'])]" context="{}"/>
+                            <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['unlink'])]" context="{}"/>
+                        </group>
+                        <field name="log" colspan="4"/>
+                        <field name="timestamp" colspan="4"/>
+                        <newline />
+                        <field name="sub_obj_name" colspan="2"/>
+                        <field name="trans_field_description" colspan="2"/>
+                        <field name="old_value_text" colspan="2"/>
+                        <field name="new_value_text" colspan="2"/>
+                        <field name="user_id" colspan="1"/>
+                        <field name="other_column" string="Sequence" colspan="1"/>
+                    </group>
+                </search>
+            </field>
+        </record>
 
         <!-- Bank Statement Track changes view (US-1587 -->
         <record id="view_audittrail_log_line_other_column_tree" model="ir.ui.view">
@@ -602,7 +639,7 @@
                     <field name="balance_end" />
                     <field name="balance_end_real"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -646,7 +683,7 @@
                     <field name="msf_calculated_balance"/>
                     <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
-                    <button type="object" string="Open" name="button_open_register" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Open" name="button_open_cash_register" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -769,6 +806,7 @@
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="currency" readonly="1"/>
+                        <field name="balance_end" string="Calculated Balance" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                         <field name="prev_reg_id" invisible="1"/>
@@ -897,7 +935,7 @@
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
-                        <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
                         <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
                 </form>
@@ -918,7 +956,7 @@
                     <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>
