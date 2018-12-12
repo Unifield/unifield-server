@@ -99311,11 +99311,6 @@ msgstr "Do you manage VAT locally ?"
 msgid "Scrap"
 msgstr "Rebut"
 
-#. module: register_accounting
-#: code:addons/register_accounting/report/report_fully_report.py:69
-msgid "Cheque Import"
-msgstr "Import de Chèque"
-
 #. module: base
 #: field:ir.actions.server,mobile:0
 msgid "Mobile No"

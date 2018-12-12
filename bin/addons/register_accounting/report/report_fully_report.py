@@ -65,8 +65,6 @@ class report_fully_report(report_sxw.rml_parse):
                 entry_type = _('Advance')
         elif line.is_down_payment:
             entry_type = _('Down Payment')
-        elif line.from_import_cheque_id:
-            entry_type = _('Cheque Import')
         elif line.transfer_journal_id:
             if line.transfer_with_change:
                 entry_type = _('Transfer with change')
