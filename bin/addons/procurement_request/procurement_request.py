@@ -402,7 +402,6 @@ class procurement_request(osv.osv):
 
         if not default:
             default = {}
-
         order = self.browse(cr, uid, id)
         proc = order.procurement_request or context.get('procurement_request', False)
         default.update({
@@ -423,6 +422,9 @@ class procurement_request(osv.osv):
         if not default.get('order_ids'):
             default['order_ids'] = None
 
+        obj = self.browse(cr, uid, id, fields_to_fetch=['location_requestor_id'], context=context)
+        if obj.location_requestor_id and not obj.location_requestor_id.active:
+            default['location_requestor_id'] = False
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
