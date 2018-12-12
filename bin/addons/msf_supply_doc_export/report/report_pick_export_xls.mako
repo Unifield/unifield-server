@@ -80,52 +80,52 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.name or '' | x}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('To:')}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date or ''|n}T00:00:00.000</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FO Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.name or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.name or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.client_order_ref or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.client_order_ref or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Incoming Ref.')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.incoming_id.name or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.incoming_id.name or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Category')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.order_category or '-' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'order_category') or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Packing Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.sale_id.delivery_requested_date or ''| n}T00:00:00.000</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total items')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${len(o.move_lines) | x}</Data></Cell> <!-- TODO -->
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Content')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell> <!-- TODO -->
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o.sale_id, 'transport_type') or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Priority')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'-' | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${ getSel(o.sale_id, 'priority') or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_done | n}T00:00:00.000</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.sale_id.ready_to_ship_date or ''| n}T00:00:00.000</Data></Cell>
     </Row>
 
     <Row>

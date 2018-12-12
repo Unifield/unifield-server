@@ -121,7 +121,6 @@ class internal_request_export(WebKitParser):
         a = super(internal_request_export, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-
 internal_request_export('report.internal_request_export','sale.order','addons/msf_supply_doc_export/internal_request_export_xls.mako')
 
 
