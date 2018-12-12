@@ -86,13 +86,6 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
 #                job_id = self.pool.get('hr.job').create(cr, uid, {'name': vals.get('job')})
 #                vals.update({'job_id': job_id})
 #        del(vals['job'])
-        # Search default nat staff destination
-        try:
-            ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
-        except ValueError:
-            ns_id = False
-        if ns_id:
-            vals.update({'destination_id': ns_id})
         return vals, employee_id
 
     def button_validate(self, cr, uid, ids, context=None):
