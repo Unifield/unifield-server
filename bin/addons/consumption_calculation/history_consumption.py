@@ -51,7 +51,8 @@ class product_history_consumption(osv.osv):
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
         'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
                                              string='Consumption type'),
-        'location_id': fields.many2one('stock.location', string='Location', domain="[('usage', '=', 'internal')]"),
+        'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
+        'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level', ondelete='set null'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
@@ -146,6 +147,7 @@ class product_history_consumption(osv.osv):
         obj = self.browse(cr, uid, ids[0],
                           fields_to_fetch=['consumption_type',
                                            'location_id',
+                                           'location_dest_id',
                                            'id',
                                            'nomen_manda_0',
                                            'sublist_id'],
@@ -155,7 +157,13 @@ class product_history_consumption(osv.osv):
         # Update the locations in context
         if obj.consumption_type == 'rac':
             location_ids = []
-            if obj.location_id:
+            if obj.location_id and obj.location_dest_id:
+                loc_domain = [
+                    ('location_id', 'in', [obj.location_id.id, obj.location_dest_id.id]),
+                    ('usage', 'in', ['internal', 'customer']),
+                ]
+                location_ids = self.pool.get('stock.location').search(cr, uid, loc_domain, context=context)
+            elif obj.location_id and not obj.location_dest_id:
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
             context.update({'location_id': location_ids})
 
