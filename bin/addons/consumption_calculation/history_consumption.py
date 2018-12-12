@@ -159,7 +159,7 @@ class product_history_consumption(osv.osv):
             location_ids = []
             if obj.location_id and obj.location_dest_id:
                 loc_domain = [
-                    ('location_id', 'in', [obj.location_id.id, obj.location_dest_id.id]),
+                    ('location_id', 'child_of', [obj.location_id.id, obj.location_dest_id.id]),
                     ('usage', 'in', ['internal', 'customer']),
                 ]
                 location_ids = self.pool.get('stock.location').search(cr, uid, loc_domain, context=context)
@@ -472,7 +472,7 @@ class product_product(osv.osv):
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
-            line_view = """<tree string="Historical consumption">
+            line_view = """<tree string="Historical consumption" hide_new_button="1">
                    <field name="default_code"/>
                    <field name="name" />"""
 
