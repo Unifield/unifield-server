@@ -1105,6 +1105,7 @@ class Entity(osv.osv):
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         instance_uuid = entity.identifier
+
         while True:
             res = proxy.get_message(instance_uuid, self._hardware_id,
                                     max_packet_size, last_seq)
@@ -1116,10 +1117,17 @@ class Entity(osv.osv):
 
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
+# DO NOT MERGE THIS
+            if max_packet_size == 501:
+                raise Exception, "Aborted before commit: msg as set as Not Sent on sync server, not saved on instance"
+# DO NOT MERGE THIS
             cr.commit()
             data_ids = [data['sync_id'] for data in packet]
+# DO NOT MERGE THIS
+            if max_packet_size == 502:
+                raise Exception, "Aborted after commit: msg set a Sent on sync server, but saved on instance, following sync must not create duplicates"
+# DO NOT MERGE THIS
             res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-
             if not res[0]: raise Exception, res[1]
 
             if logger and messages_count:
