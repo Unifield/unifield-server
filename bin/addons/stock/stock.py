@@ -2435,15 +2435,6 @@ class stock_move(osv.osv):
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
-    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
-        '''
-        Always return True
-        '''
-        already_confirmed = kwargs['already_confirmed']
-        move_id = kwargs['move_id']
-        if not already_confirmed:
-            self.action_confirm(cr, uid, [move_id])
-        return True
 
     def action_assign(self, cr, uid, ids, *args):
         """ Changes state to confirmed or waiting.
@@ -2451,7 +2442,8 @@ class stock_move(osv.osv):
         """
         todo = []
         for move in self.read(cr, uid, ids, ['state', 'already_confirmed']):
-            self._hook_confirmed_move(cr, uid, already_confirmed=move['already_confirmed'], move_id=move['id'])
+            if not move['already_confirmed']:
+                self.action_confirm(cr, uid, [move['id']])
             if move['state'] in ('confirmed', 'waiting'):
                 todo.append(move['id'])
         res = self.check_assign(cr, uid, todo)
