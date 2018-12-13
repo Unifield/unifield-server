@@ -221,7 +221,7 @@ class analytic_line(osv.osv):
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
                                        help="Indicates the Journal Type of the Analytic journal item"),
-        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True, select=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
@@ -515,7 +515,7 @@ class analytic_line(osv.osv):
             dest_ids = [d.id for d in general_account_br.destination_ids]
             if not new_dest_id in dest_ids:
                 # not compatible with general account
-                res.append((id, entry_sequence, 'DEST'))
+                res.append((id, entry_sequence, _('DEST')))
                 return False
 
             # check funding pool (expect for MSF Private Fund)
@@ -524,7 +524,7 @@ class analytic_line(osv.osv):
                 cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
                 if not new_cc_id in cc_ids:
                     # not compatible with CC
-                    res.append((id, entry_sequence, 'CC'))
+                    res.append((id, entry_sequence, _('CC')))
                     return False
 
                 # - destination / account
@@ -533,19 +533,19 @@ class analytic_line(osv.osv):
                                     (x.account_id.id, x.destination_id.id) \
                                     for x in new_fp_br.tuple_destination_account_ids if not x.disabled]:
                     # not compatible with dest/account
-                    res.append((id, entry_sequence, 'account/dest'))
+                    res.append((id, entry_sequence, _('account/dest')))
                     return False
 
             # check active date
             if not check_date(new_dest_br, posting_date):
-                res.append((id, entry_sequence, 'DEST date'))
+                res.append((id, entry_sequence, _('DEST date')))
                 return False
             if not check_date(new_cc_br, posting_date):
-                res.append((id, entry_sequence, 'CC date'))
+                res.append((id, entry_sequence, _('CC date')))
                 return False
             if new_fp_id != msf_pf_id and not \
                     check_date(new_fp_br, posting_date):
-                res.append((id, entry_sequence, 'FP date'))
+                res.append((id, entry_sequence, _('FP date')))
                 return False
 
             return True

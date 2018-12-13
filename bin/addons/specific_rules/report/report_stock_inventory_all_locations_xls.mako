@@ -99,7 +99,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="PO Follow Up">
+<ss:Worksheet ss:Name="Inventory Level all Locations">
 ## definition of the columns' size
 <% locations = getLocations() %>
 <% nb_of_columns = 5 + len(locations) %>
@@ -149,7 +149,7 @@
 
     % for prd in getLines():
         % for line in prd['lines'].itervalues():
-          % if line['qty']:
+          % if line['qty'] or prd['with_product_list']:
           <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>

@@ -218,8 +218,8 @@
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_currency_id.name or '')|x}</Data></Cell>
         % endif
-        % if l.imp_batch_id:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_batch_id.name or '')|x}</Data></Cell>
+        % if l.imp_batch_name:
+        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_batch_name or '')|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif

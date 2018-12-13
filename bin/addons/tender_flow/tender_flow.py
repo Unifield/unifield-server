@@ -108,7 +108,7 @@ class tender(osv.osv):
                 'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True),
+                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
@@ -122,7 +122,7 @@ class tender(osv.osv):
                 'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
 
-    _defaults = {'categ': 'other',
+    _defaults = {'categ': False,
                  'state': 'draft',
                  'internal_state': 'draft',
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
@@ -132,6 +132,9 @@ class tender(osv.osv):
                  'priority': 'normal',
                  'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
                  }
+
+    _sql_constraints = [
+    ]
 
     _order = 'name desc'
 
@@ -647,7 +650,8 @@ class tender(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
+            rfq_ids = self.pool.get('purchase.order').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -861,7 +865,7 @@ class tender_line(osv.osv):
         return res
 
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True),
+                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
                 'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
@@ -956,7 +960,7 @@ class tender_line(osv.osv):
         # Variables
         to_remove = []
         to_cancel = []
-        sol_ids = {}
+        sol_to_resource = []
         sol_to_update = {}
         sol_not_to_delete = []
         so_to_update = set()
@@ -973,7 +977,7 @@ class tender_line(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, line.qty, line.sale_order_line_id.product_uom.id)
 
                 if line.has_to_be_resourced:
-                    sol_ids.update({line.sale_order_line_id.id: diff_qty})
+                    sol_to_resource.append(line.sale_order_line_id.id)
 
                 sol_to_update.setdefault(line.sale_order_line_id.id, 0.00)
                 sol_to_update[line.sale_order_line_id.id] += diff_qty
@@ -985,24 +989,16 @@ class tender_line(osv.osv):
         if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
 
-        if sol_ids:
-            for sol in sol_ids:
-                sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
-
         # Update sale order lines
         so_to_cancel_ids = []
         for sol in sol_to_update:
             context['update_or_cancel_line_not_delete'] = sol in sol_not_to_delete
-            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], context=context)
+            so_to_cancel_id = sol_obj.update_or_cancel_line(cr, uid, sol, sol_to_update[sol], sol in sol_to_resource, context=context)
             if so_to_cancel_id:
                 so_to_cancel_ids.append(so_to_cancel_id)
 
         if context.get('update_or_cancel_line_not_delete', False):
             del context['update_or_cancel_line_not_delete']
-
-        # Update the FO state
-        # for so in so_to_update:
-        #    wf_service.trg_write(uid, 'sale.order', so, cr)
 
         # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
         # for proceeding to other actions (create PO, Done etc)
@@ -1164,14 +1160,19 @@ class tender_line(osv.osv):
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id
+            location_id = tender.location_id.id
+            cross_docking_ok = True if tender_line.sale_order_line_id else False
+            if tender.sale_order_id and tender.sale_order_id.procurement_request:
+                location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
+                cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
                 'customer_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.partner_id.id or False,
-                'location_id': tender.location_id.id,
+                'location_id': location_id,
                 'company_id': tender.company_id.id,
-                'cross_docking_ok': True if tender_line.sale_order_line_id else False,
+                'cross_docking_ok': cross_docking_ok,
                 'pricelist_id': pricelist,
                 'fiscal_position': tender_line.supplier_id.property_account_position and tender_line.supplier_id.property_account_position.id or False,
                 'warehouse_id': tender.warehouse_id.id,
@@ -2121,10 +2122,10 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         new_values = values
 
         po_accepted_values = {'client_action_multi': ['Order Follow Up',

@@ -416,7 +416,7 @@ class payment_line(osv.osv):
                         break
         return {'value': data}
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         res = super(payment_line, self).fields_get(cr, uid, fields, context)
         if 'communication2' in res:
             res['communication2'].setdefault('states', {})

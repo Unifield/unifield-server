@@ -23,6 +23,8 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
+
 
 class field_access_rule_line(osv.osv):
     """
@@ -33,7 +35,9 @@ class field_access_rule_line(osv.osv):
     _name = "msf_field_access_rights.field_access_rule_line"
     _description = 'Field Access Rule Line'
     _rec_name = "field_name"
-    
+    _inherit = "common.import.ur"
+    _auto = True
+
     _columns = {
         'field': fields.many2one('ir.model.fields', 'Field', help='The field of the model for which this rule applies', required=True),
         'field_name': fields.char('Field Name', size=256, help='The technical name for the field. This is used to make searching for Field Access Rule Lines easier.'),
@@ -55,33 +59,37 @@ class field_access_rule_line(osv.osv):
         ('rule_id_field_unique', 'unique (field_access_rule, field)', 'You cannot have two Field Access Rule Lines for the same Field in the same Rule')
     ]
 
-    def _get_field_name_from_id(self, cr, uid, field, context={}):
-        if field: 
+    def _get_field_name_from_id(self, cr, uid, field, context=None):
+        if context is None:
+            context = {}
+        if field:
             fields_pool = self.pool.get('ir.model.fields')
-            fields = fields_pool.browse(cr, uid, field, context=context)
+            fields = fields_pool.browse(cr, uid, field, fields_to_fetch=['name', 'state'], context=context)
+            if context.get('import_from_web_interface') and fields.state == 'deprecated':
+                raise osv.except_osv(_('Warning !'), _("Field %s is deprecated") % (fields.name))
             return fields.name
         else:
             return ''
 
-    def _add_field_name_to_values(self, cr, uid, values, context={}):
+    def _add_field_name_to_values(self, cr, uid, values, context=None):
         if 'field' in values and ('field_name' not in values or not values['field_name']):
             values['field_name'] = self._get_field_name_from_id(cr, uid, values['field'], context=context)
         return values
 
-    def create(self, cr, uid, values, context={}):
+    def create(self, cr, uid, values, context=None):
         values = self._add_field_name_to_values(cr, uid, values, context)
         return super(field_access_rule_line, self).create(cr, uid, values, context=context)
 
-    def write(self, cr, uid, ids, values, context={}):
+    def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
         values = self._add_field_name_to_values(cr, uid, values, context)
         return super(field_access_rule_line, self).write(cr, uid, ids, values, context=context)
 
-    def onchange_field(self, cr, uid, ids, field, context={}):
+    def onchange_field(self, cr, uid, ids, field, context=None):
         field_name = self._get_field_name_from_id(cr, uid, field, context=context)
         return {'value': {'field_name' : field_name}}
-    
+
     def onchange_field_access_rule(self, cr, uid, ids, field_access_rule, context=None):
         if field_access_rule:
             model_id = self.pool.get('msf_field_access_rights.field_access_rule').browse(cr, uid, field_access_rule).model_id.id

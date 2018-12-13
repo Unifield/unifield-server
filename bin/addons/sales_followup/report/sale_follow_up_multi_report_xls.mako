@@ -173,6 +173,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="170.0" />
         ## PO ref
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
+        ## Supplier
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Doc. Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
@@ -277,6 +279,7 @@
                 _('Order ref'),
                 _('Customer ref'),
                 _('PO ref'),
+                _('Supplier'),
                 _('Doc. Status'),
                 _('Line Status'),
                 _('Received'),
@@ -311,6 +314,7 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
@@ -331,11 +335,7 @@
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                    % if line.get('extra_qty', False):
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
-                    % else:
-                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
-                    % endif
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">0.00</Data></Cell>
                     % if o.transport_type and o.transport_type not in (False, 'False', ''):
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
                     % else:
@@ -353,6 +353,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>

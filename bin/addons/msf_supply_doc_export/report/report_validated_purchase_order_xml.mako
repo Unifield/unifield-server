@@ -28,7 +28,7 @@
             % if o.order_type == 'direct':
             <field name="delivery_name">${getContactName(o.dest_address_id.id) or ''|x}</field>
             % else:
-            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
+            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.office_name or ''|x}</field>
             % endif
             % if o.order_type == 'direct':
             <field name="delivery_address">${o.dest_partner_id and o.dest_partner_id.name or ''|x}</field>
@@ -47,7 +47,7 @@
         <field name="origin">${o.origin or ''|x}</field>
         <field name="project_ref">${o.fnct_project_ref or ''|x}</field>
         <field name="message_esc">${o.message_esc or ''|x}</field>
-        <field name="related_sourcing_id">${o.related_sourcing_id and o.related_sourcing_id.name or ''|x}</field>
+        <field name="sourcing_group">${o.related_sourcing_id and o.related_sourcing_id.name or ''|x}</field>
         <field name="analytic_distribution_id">
             % if need_ad and o.analytic_distribution_id:
                 % for ccl in o.analytic_distribution_id.cost_center_lines:

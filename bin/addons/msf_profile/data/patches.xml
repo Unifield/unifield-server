@@ -1,6 +1,52 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF11.0 -->
+        <record id="us_5356_reset_ud_prod" model="patch.scripts">
+            <field name="method">us_5356_reset_ud_prod</field>
+        </record>
+
+        <record id="us_4541_stock_mission_recompute_cu_qty" model="patch.scripts">
+            <field name="method">us_4541_stock_mission_recompute_cu_qty</field>
+        </record>
+
+        <record id="us_4996_bck_beforepatch" model="patch.scripts">
+            <field name="method">us_4996_bck_beforepatch</field>
+        </record>
+
+        <record id="testfield_missing_updates_on_sync" model="patch.scripts">
+            <field name="method">testfield_missing_updates_on_sync</field>
+        </record>
+
+        <record id="us_4375_build_xmlid_admin_acl" model="patch.scripts">
+            <field name="method">us_4375_build_xmlid_admin_acl</field>
+        </record>
+
+        <!-- UF10.0 -->
+        <record id="us_3427_update_third_parties_in_gl_selector" model="patch.scripts">
+            <field name="method">us_3427_update_third_parties_in_gl_selector</field>
+        </record>
+
+        <record id="us_4879_fo_from_shipping_except_to_close" model="patch.scripts">
+            <field name="method">us_4879_fo_from_shipping_except_to_close</field>
+        </record>
+        <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
+            <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
+        </record>
+
+        <record id="us_3873_update_display_partner_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_update_display_partner_in_partner_balance_templates</field>
+        </record>
+
+        <record id="us_3873_remove_initial_balance_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_remove_initial_balance_in_partner_balance_templates</field>
+        </record>
+
+        <!-- UF 9.1 -->
+        <record id="change_xml_payment_method" model="patch.scripts">
+            <field name="method">change_xml_payment_method</field>
+        </record>
+
         <!-- UF9.0 -->
         <record id="change_fo_seq_to_nogap" model="patch.scripts">
             <field name="method">change_fo_seq_to_nogap</field>
