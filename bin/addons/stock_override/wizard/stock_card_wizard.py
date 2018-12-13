@@ -356,12 +356,13 @@ class stock_card_wizard_line(osv.osv_memory):
         'date_done': fields.datetime(string='Date'),
         'doc_ref': fields.char(size=64, string='Doc. Ref.'),
         'origin': fields.char(size=512, string='Origin'),
-        'qty_in': fields.float(digits=(16,2), string='Qty IN'),
-        'qty_out': fields.float(digits=(16,2), string='Qty OUT'),
-        'balance': fields.float(digits=(16,2), string='Balance'),
+        'qty_in': fields.float(digits=(16,2), string='Qty IN', related_uom='uom_id'),
+        'qty_out': fields.float(digits=(16,2), string='Qty OUT', related_uom='uom_id'),
+        'balance': fields.float(digits=(16,2), string='Balance', related_uom='uom_id'),
         'src_dest': fields.char(size=128, string='Source/Destination'),
         'partner_id': fields.many2one('res.partner', string='Source/Destination'),
         'notes': fields.text(string='Notes'),
+        'uom_id': fields.related('card_id', 'uom_id', type='many2one', relation='product.uom', readonly=1, write_relate=False, string='UoM'),
     }
 
 stock_card_wizard_line()

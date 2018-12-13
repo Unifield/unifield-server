@@ -28,7 +28,6 @@ import threading
 from osv import fields, osv
 from tools.translate import _
 from osv.orm import browse_record
-from workflow.wkf_expr import _eval_expr
 import decimal_precision as dp
 import netsvc
 import pooler
@@ -604,13 +603,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, required=True, change_default=True, select=True),
+        'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
                                        string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}, add_empty=True),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details', readonly=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
@@ -672,7 +671,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'order_type': lambda *a: 'regular',
         'invoice_quantity': lambda *a: 'procurement',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
         'loan_duration': lambda *a: 2,
         'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'order_policy': lambda *a: 'picking',
@@ -850,17 +849,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        if 'partner_id' in vals and vals.get('yml_module_name') != 'sale':
+        if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
             if vals.get('order_type', 'regular') != 'regular' or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
-        elif vals.get('yml_module_name') == 'vals':
-            if not vals.get('order_policy'):
-                vals['order_policy'] = 'picking'
-            if not vals.get('invoice_quantity'):
-                vals['invoice_quantity'] = 'order'
 
         if vals.get('order_policy', False):
             if vals['order_policy'] == 'prepaid':
@@ -1458,6 +1452,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'subtype': 'standard',
                         'already_replicated': False,
                         'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
                 else:
@@ -1618,13 +1613,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         if all_doc:
-            # Detach the PO from his workflow and set the state to done
-            for order_id in ids:
-                wf_service.trg_delete(uid, 'sale.order', order_id, cr)
-                # Search the method called when the workflow enter in last activity
-                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
-                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
+            for order_id in self.browse(cr, uid, ids, context=context):
+                for sol in order_id.order_line:
+                    if sol.state not in ('done', 'cancel', 'cancel_r'):
+                        if not wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'cancel', cr):
+                            # sol are in 'exception' state, this is causing issue when UF is trying to compute the SO state ...
+                            cr.execute("update sale_order_line set state = 'cancel' where id = %s", (sol.id,))
+                self.write(cr, uid, [order_id.id], {'state': 'cancel'}, context=context)
+                if self.read(cr, uid, order_id.id, ['state'])['state'] != 'cancel':
+                    # idk why but sometimes the write statement doesn't update the SO state
+                    cr.execute("update sale_order set state = 'cancel' where id = %s", (order_id.id, ))
 
         return True
 
@@ -1930,6 +1928,26 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if (line.order_id.procurement_request or line.order_id.fo_created_by_po_sync or line.state != 'draft')\
+                    and (line.modification_comment or line.created_by_sync or line.cancelled_by_sync
+                         or (line.original_qty and line.product_uom_qty != line.original_qty)
+                         or (line.original_product and line.product_id and line.product_id.id != line.original_product.id)):
+                changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -1947,9 +1965,9 @@ class sale_order_line(osv.osv):
         'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'property_ids': fields.many2many('mrp.property', 'sale_order_line_property_rel', 'order_id', 'property_id', 'Properties', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
-        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uos'),
         'product_uos': fields.many2one('product.uom', 'Product UoS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging'),
         'move_ids': fields.one2many('stock.move', 'sale_line_id', 'Inventory Moves', readonly=True),
@@ -2001,10 +2019,17 @@ class sale_order_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
+        'original_product': fields.many2one('product.product', 'Original Product'),
+        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
+        'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Sale Price Computation')),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
         'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
         'from_cancel_out': fields.boolean('OUT cancel'),
+        'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2024,6 +2049,8 @@ class sale_order_line(osv.osv):
         'soq_updated': False,
         'set_as_sourced_n': False,
         'stock_take_date': _get_stock_take_date,
+        'created_by_sync': False,
+        'cancelled_by_sync': False,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):
@@ -2123,6 +2150,8 @@ class sale_order_line(osv.osv):
             'in_name_goods_return': '',
             'from_cancel_out': False,
             'is_line_split': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2157,6 +2186,8 @@ class sale_order_line(osv.osv):
             'invoiced': False,
             'invoice_lines': [],
             'set_as_sourced_n': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
         })
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
@@ -2216,6 +2247,7 @@ class sale_order_line(osv.osv):
             uom2 = product_uom_obj.browse(cr, uid, uom)
             if product_obj.uom_id.category_id.id != uom2.category_id.id:
                 uom = False
+            result['product_uom'] = uom
         if uos:
             if product_obj.uos_id:
                 uos2 = product_uom_obj.browse(cr, uid, uos)
@@ -2811,11 +2843,15 @@ class sale_order_line(osv.osv):
         pricelist = False
         order_id = vals.get('order_id', False)
         if order_id:
-            order_data = self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request', 'pricelist_id'], context)
+            order_data = self.pool.get('sale.order').\
+                read(cr, uid, order_id, ['procurement_request', 'pricelist_id', 'fo_created_by_po_sync'], context)
             if order_data['procurement_request']:
                 vals.update({'cost_price': vals.get('cost_price', False)})
             if order_data['pricelist_id']:
                 pricelist = order_data['pricelist_id'][0]
+            # New line created out of synchro on a FO/IR created by synchro
+            if order_data['fo_created_by_po_sync'] and not context.get('sync_message_execution'):
+                vals.update({'created_by_sync': True})
 
         # force the line creation with the good state, otherwise track changes for order state will
         # go back to draft (US-3671):

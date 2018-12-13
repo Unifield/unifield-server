@@ -103,7 +103,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                                     'Code',
                                     'Name',
                                     'Period',
-                                    'Opening balance',
+                                    'Starting balance',
                                     'Calculated balance',
                                     'Closing balance',
                                     'Currency']
@@ -123,7 +123,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                               'Account',
                               'Account Name',
                               'Period',
-                              'Opening balance',
+                              'Starting balance',
                               'Calculated balance',
                               'Closing balance',
                               'Booking Currency']

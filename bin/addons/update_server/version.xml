@@ -2,19 +2,127 @@
 <openerp>
     <data>
 
-		<record model="ir.ui.view" id="version_tree_view">
+        <record model="ir.ui.view" id="version_tree_view">
             <field name="name">version_tree_view</field>
             <field name="model">sync_server.version</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Update Version">
+                <tree string="Update Version">
                     <field name="name"/>
                     <field name="sum" />
                     <field name="date" />
                 </tree>
             </field>
         </record>
-        
+
+        <record model="ir.ui.view" id="sync_server_user_rights_search">
+            <field name="name">sync_server_user_rights_search</field>
+            <field name="model">sync_server.user_rights</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="sum" />
+                    <field name="date" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sync_server_user_rights_tree">
+            <field name="name">sync_server_user_rights_tree</field>
+            <field name="model">sync_server.user_rights</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="User Rights" colors="blue:state=='confirmed';gray:state=='deprecated';red:state=='draft'" editable="top" hide_new_button="1">
+                    <field name="name"/>
+                    <field name="sum" />
+                    <field name="date" />
+                    <field name="state" />
+                    <button type="object" name="download_file" string="Download File" icon="gtk-go-forward"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sync_server_user_rights_form">
+            <field name="name">sync_server_user_rights_form</field>
+            <field name="model">sync_server.user_rights</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="User Rights" hide_new_button="1" hide_duplicate_button="1">
+                    <field name="name"/>
+                    <field name="sum" />
+                    <field name="date" />
+                    <field name="state" />
+                    <button name="activate" type="object" icon="gtk-ok" string="Activate" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                </form>
+            </field>
+        </record>
+
+
+        <record model="ir.actions.act_window" id="sync_server_user_rights_action">
+            <field name="name">Instances User Rights</field>
+            <field name="res_model">sync_server.user_rights</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+
+        <menuitem id="sync_server_user_rights_menu" parent="sync_server.sync_menu" sequence="100" action="sync_server_user_rights_action" />
+
+        <record model="ir.ui.view" id="sync_server_user_rights_add_file_form">
+            <field name="name">sync_server_user_rights_add_file_form</field>
+            <field name="model">sync_server.user_rights.add_file</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="User Right: import new file">
+                    <group colspan="4">
+                    <field name="name" />
+                    <newline />
+                    <field name="zip_file" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <separator colspan="4" string="Message" />
+                        <field name="message" colspan="4" nolabel="1"  widget="full_text"/>
+                    </group>
+                    <field name="state" invisible="1" />
+                    <html>
+                        <script language="javascript">
+                            $(document).ready(function() {
+                                if ($('#state').val() == 'inprogress') {
+                                    setTimeout(function(){
+                                       $('#dummy').click();
+                                    },2400)
+                                }
+                            });
+                        </script>
+                    </html>
+
+                    <group colspan="4">
+                        <separator colspan="4" string="Actions" />
+                        <button name="import_zip" type="object" icon="gtk-ok" string="Import" colspan="2"  attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <button name="dummy" string="Update" icon="gtk-refresh" type="object" attrs="{'invisible':[('state', '!=', 'inprogress')]}"/>
+                        <button name="done" string="Deploy on server" icon="gtk-ok" type="object" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                    </group>
+                    <newline />
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'inprogress')]}">
+                        <separator colspan="4" string="Cancel" />
+                        <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window
+            id="sync_server_user_rights_add_file_link"
+            name="Add new file"
+            src_model="sync_server.user_rights"
+            res_model="sync_server.user_rights.add_file"
+            target="new"
+            view_mode="form"
+            view_type="form"
+            empty_ids="1" />
+
     </data>
 </openerp>
 
