@@ -3,7 +3,7 @@
         <input id ="${name}" name="${name}" type="text" class="${css_class}" size="1"
             ${py.attrs(attrs, kind=kind, value=value)}/>
     % else:
-        <textarea rows="6" id ="${name}" name="${name}" class="${css_class}"
+        <textarea rows="${rows}" id ="${name}" name="${name}" class="${css_class}"
             ${py.attrs(attrs, kind=kind)} style="width: 100%;"
     % if translatable:
         translatable="1"

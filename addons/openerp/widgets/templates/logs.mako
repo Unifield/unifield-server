@@ -9,7 +9,7 @@
                             <tr>
                                 <td class="logActions">
                                     % if log['read_ok']:
-                                    <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
+                                    <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'], **dict((x, log[x]) for x in ['action_id', 'view_ids', 'view_mode'] if log.get(x)))}">
                                         &rarr; ${log['name']}
                                     </a>
                                     % else:
@@ -29,7 +29,7 @@
                                      % for log in logs[5:]:
                                          <div>
                                              % if log['read_ok']:
-                                             <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
+                                             <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'], **dict((x, log[x]) for x in ['action_id', 'view_ids', 'view_mode'] if log.get(x)))}">
                                                 &rarr; ${log['name']}
                                              </a>
                                              % else:
@@ -51,7 +51,7 @@
                             <tr>
                                 <td class="logActions">
                                     % if log['read_ok']:
-                                    <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'])}">
+                                    <a href="${py.url('/openerp/form/edit', model=log['res_model'], id=log['res_id'], context=log['context'], domain=log['domain'], **dict((x, log[x]) for x in ['action_id', 'view_ids', 'view_mode'] if log.get(x)))}">
                                         &rarr; ${log['name']}
                                     </a>
                                     % else:

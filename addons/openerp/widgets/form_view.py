@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -27,7 +27,7 @@ from sidebar import Sidebar
 from listgroup import ListGroup
 from logs import Logs
 
-from openobject.widgets import Form, JSLink, locations
+from openobject.widgets import Form
 
 class ViewForm(Form):
 
@@ -59,7 +59,7 @@ class ViewForm(Form):
 
         if readonly is None:
             readonly = False
-       
+
         self.is_dashboard = getattr(cherrypy.request, '_terp_dashboard', False)
 
         self.search = None
@@ -81,7 +81,7 @@ class ViewForm(Form):
             if params and '_terp_search_view' in params:
                 if not params.search_view and params.context:
                     search_view_id = params.context.get('search_view')
-                    
+
             self.search = Search(source=params.source, model=params.model, domain=search_param, context=params.context, values=params.search_data or {},
                                  filter_domain=params.filter_domain or [], search_view=params.search_view, group_by_ctx=params.group_by_ctx or [],
                                  **{'clear': params.get('_terp_clear'), 'search_view_id': search_view_id})
@@ -91,24 +91,24 @@ class ViewForm(Form):
             params.search_domain = self.search.listof_domain
             params.filter_domain = self.search.custom_filter_domain
             params.group_by_ctx = self.search.groupby
-        
+
         get_source = params.get_source or False
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
                              selectable=params.selectable or 2, get_source=get_source)
 
         if self.screen.widget and self.screen.view_type in ['form', 'tree']:
             self.logs = Logs()
-            
+
         if self.screen.widget and hasattr(self.screen.widget, 'sidebar'):
             self.sidebar = self.screen.widget.sidebar
         else:
             if params.target != 'new' and not self.screen.is_dashboard and not self.screen.is_wizard and len(params.view_mode) > 1:
                 self.sidebar = Sidebar(self.screen.model, self.screen.submenu, self.screen.toolbar, self.screen.id,
-                               self.screen.view_type, context=self.screen.context)
+                                       self.screen.view_type, context=self.screen.context, view_id=self.screen.view_id)
 
         if params.view_type == 'tree':
             self.screen.id = False
-            
+
         if 'form' not in self.screen.view_mode and not isinstance(self.screen.widget, ListGroup):
             self.screen.widget.link = 0
             self.screen.editable = False
@@ -128,16 +128,16 @@ class ViewForm(Form):
         self.search_domain = params.search_domain
         self.search_data = params.search_data
         self.filter_domain = params.filter_domain or []
-        
+
         if params.hidden_fields:
             self.hidden_fields = params.hidden_fields
 
         #self.fields = cherrypy.request.terp_fields
     def update_params(self, params):
         super(ViewForm, self).update_params(params)
-        if self.search:            
+        if self.search:
             params['attrs']['onsubmit']='submit_search_form()'
-        
+
 
 
 # vim: ts=4 sts=4 sw=4 si et

@@ -59,11 +59,10 @@ function displayErrorOverlay(xhr) {
     var options = {
         showCloseButton: true,
         overlayOpacity: 0.7,
-        scrolling: 'no'
+        scrolling: 'auto'
     };
     if(xhr.getResponseHeader('X-Maintenance-Error')) {
         options['autoDimensions'] = false;
-        options['scrolling'] = 'auto';
     }
     jQuery.fancybox(xhr.responseText, options);
 }
@@ -433,3 +432,4 @@ jQuery(document).bind({
 });
 
 var global_list_refresh;
+var unique_id ='';

@@ -91,7 +91,7 @@
     %if total == 'True':
         <div>
             <input type="button" value="Download report"
-            onclick="window.open('/openerp/downloadbg?res_id=${res_id}&from_button=1', '_blank'); window.frameElement.close()" />
+            onclick="setTimeout(function(){window.close();}, 1000); window.open('/openerp/downloadbg?res_id=${res_id}&from_button=1', '_blank'); window.frameElement.close()" />
         </div>
     %endif
     </div>

@@ -192,7 +192,7 @@ class M2O_search(form.M2O):
 
 class Search(TinyInputWidget):
     template = "/openerp/widgets/templates/search/search.mako"
-    javascript = [JSLink("openerp", "javascript/search.js", location=locations.bodytop)]
+    javascript = [JSLink("openerp", "javascript/search.js?v=11.0", location=locations.bodytop)]
 
     params = ['fields_type', 'filters_list', 'operators_map', 'fields_list', 'filter_domain', 'flt_domain', 'source']
     member_widgets = ['frame']

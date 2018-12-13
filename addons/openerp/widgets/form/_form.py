@@ -26,6 +26,7 @@ several widget components.
 import random
 import re
 import xml.dom.minidom
+import math
 
 import cherrypy
 import simplejson
@@ -196,6 +197,8 @@ class Frame(TinyWidget):
             attrs['attrs'] = str(widget.attributes)
             attrs['widget'] = widget.name
 
+        if widget.__class__.__name__ == 'O2M' and widget.view_type == 'form':
+            attrs['id'] = widget.name
         if not isinstance(widget, (Char, Frame, Float, DateTime, Integer, Selection, Notebook, Separator, NewLine, Label)):
             from openerp.widgets.search import Filter
             if self.is_search \
@@ -390,9 +393,10 @@ register_widget(Email, ["email"])
 
 class Text(TinyInputWidget):
     template = "/openerp/widgets/form/templates/text.mako"
-    params = ['ro_by_trans']
+    params = ['ro_by_trans', 'rows']
 
     def __init__(self, **attrs):
+        self.rows = attrs.get('rowspan', 6)
         super(Text, self).__init__(**attrs)
         self.validator = validators.String()
 
@@ -457,6 +461,16 @@ class Float(TinyInputWidget):
     def __init__(self, **attrs):
         super(Float, self).__init__(**attrs)
 
+
+        rounding = False
+        if attrs.get('rounding_value') and attrs.get('uom_rounding'):
+            if isinstance(attrs.get('rounding_value'), (list, tuple)):
+                rounding_value = attrs.get('rounding_value')[0]
+            else:
+                rounding_value = attrs.get('rounding_value')
+
+            if rounding_value in attrs.get('uom_rounding'):
+                rounding = int(abs(math.log10(attrs['uom_rounding'][rounding_value])))
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
@@ -467,8 +481,7 @@ class Float(TinyInputWidget):
         computation = attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
-
-        self.validator = validators.Float(digit=digit, computation=computation)
+        self.validator = validators.Float(digit=digit, computation=computation, rounding=rounding)
 
 #        if not self.default:
 #            self.default = 0.0
@@ -512,9 +525,10 @@ register_widget(ProgressBar, ["progressbar"])
 class Selection(TinyInputWidget):
     template = "/openerp/widgets/form/templates/selection.mako"
 
-    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state']
+    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state', 'add_empty']
     options = []
     search_context = {}
+    add_empty = False
 
     def __init__(self, **attrs):
         super(Selection, self).__init__(**attrs)
@@ -523,6 +537,7 @@ class Selection(TinyInputWidget):
         self.type2 = attrs.get('type2')
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
+        self.add_empty = attrs.get('add_empty', False)
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
         if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection' and not attrs.get('get_selection'):
             proxy = rpc.RPCProxy(attrs['relation'])
@@ -811,6 +826,8 @@ class Form(TinyInputWidget):
                             **(context or {}))
         self.context['bin_size'] = True
 
+        self.rounding_values = view.get('uom_rounding', {})
+
         values = {}
         defaults = {}
         try:
@@ -1011,7 +1028,8 @@ class Form(TinyInputWidget):
                     raise common.error(_('Application Error'), _('Invalid view, duplicate field: %s') % name)
 
                 self.view_fields.append(name)
-
+                if fields[name].get('type') == 'float' and self.rounding_values and fields[name].get('related_uom') and values.get(fields[name]['related_uom']):
+                    fields[name]['rounding_value'] = values.get(fields[name]['related_uom'])
                 field = self._make_field_widget(fields[name], values.get(name))
                 views.append(field)
 
@@ -1074,6 +1092,9 @@ class Form(TinyInputWidget):
         if kind == 'image' or kind == 'picture':
             attrs['id'] = self.id
 
+        if (kind in ('one2many', 'many2many') or attrs.get('rounding_value')) and self.rounding_values:
+            attrs['uom_rounding'] = self.rounding_values
+
         # suppress by container's readonly property
         if self.readonly:
             attrs['readonly'] = True
@@ -1083,6 +1104,7 @@ class Form(TinyInputWidget):
             attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
         if attrs.get('force_readonly', False) and 'states' in attrs:
             del attrs['states']
+
         field = get_widget(kind)(**attrs)
 
         if isinstance(field, TinyInputWidget):

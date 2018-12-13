@@ -198,7 +198,9 @@ class Search(Form):
             params.group_by = []
 
         # Fixed header string problem for m2m,m2o field when parent context takes '_terp_view_name'
-        parent_context.pop('_terp_view_name', None)
+        _terp_view_name = parent_context.pop('_terp_view_name', None)
+        if _terp_view_name:
+            parent_context.update({'_terp_view_name_for_export': _terp_view_name})
 
         return dict(domain=ustr(domain), context=ustr(parent_context), group_by = ustr(params.group_by))
 
@@ -502,3 +504,7 @@ class Search(Form):
                 del context_own[ctx[0]]
 
         return context_own
+
+    @expose()
+    def kill_search_filter(self, model, unique_id):
+        rpc.session.execute('object', 'execute', model, 'kill_search_filter', unique_id, rpc.session.context)

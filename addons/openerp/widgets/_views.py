@@ -119,6 +119,7 @@ class ListView(TinyView):
                                     default_data=screen.default_value,
                                     force_readonly=screen.force_readonly,
                                     approximation=screen.approximation,
+                                    unique_id=screen.unique_id,
                                     filter_selector=screen.filter_selector)
 
         screen.ids = widget.ids

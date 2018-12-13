@@ -71,10 +71,9 @@ class Attachment(SecuredController):
         raise Exception('Unknown attachment type %(type)s for attachment name %(name)s' % attachment)
 
     @expose('json', methods=('POST',))
-    def save(self, datas, **kwargs):
-        params, data = TinyDict.split(cherrypy.session['params'])
+    def save(self, model, model_id, datas, **kwargs):
         ctx = dict(rpc.session.context,
-                   default_res_model=params.model, default_res_id=params.id,
+                   default_res_model=model, default_res_id=model_id,
                    active_id=False, active_ids=[])
         ctx['from_web_interface'] = True
 

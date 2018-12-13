@@ -88,6 +88,8 @@ def start():
     if options.static:
         openobject.enable_static_paths()
 
+    if not cherrypy.config.get('tools.sessions.locking'):
+        cherrypy.config['tools.sessions.locking'] = 'explicit'
     # Try to start revprox now so that we know what default to set for
     # port number (revprox ok? port = 18061)
     if options.port is None:

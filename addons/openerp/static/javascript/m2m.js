@@ -108,11 +108,12 @@ Many2Many.prototype = {
         } else {
             jQuery(this.text).val('(' + ids.length + ')');
             jQuery(idSelector(this.name)).val(ids);
+
+            if ($id.attr('callback') && !options.no_onchange) {
+                onChange(this.id);
+            }
         }
 
-        if ($id.attr('callback') && !options.no_onchange) {
-            onChange(this.id);
-        }
         // Mark form as changed so save alert can appear
         // TODO: should we actually do that if we just set the same ids as previously?
         jQuery('#view_form').data('is_form_changed', true);

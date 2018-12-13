@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -31,7 +31,7 @@ class Sidebar(TinyWidget):
 
     def add_remote_action_values(self, action_type, current_actions):
         actions = rpc.RPCProxy('ir.values').get(
-            'action', action_type, [(self.model, False)], False, self.context)
+            'action', action_type, [(self.model, False)], False, self.context, False, True, True, self.view_id)
         for action in [a[-1] for a in actions]:
             if action['id'] not in [a['id'] for a in current_actions]:
                 action['context'] = self.context
@@ -45,14 +45,14 @@ class Sidebar(TinyWidget):
         self.view_type = view_type
         toolbar = toolbar or {}
         submenu = submenu
-        self.id = id or None 
+        self.id = id or None
         self.reports = toolbar.get('print', [])
         self.actions = toolbar.get('action', [])
         self.relates = toolbar.get('relate', [])
         self.max_attachment_size = utils.get_max_attachment_size()
         self.attachments = []
         self.sub_menu = None
-
+        self.view_id = kw.get('view_id', False)
 
         # add context to relate action to get the lang
         if self.context:

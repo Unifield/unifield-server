@@ -75,8 +75,11 @@ class Float(formencode.validators.Number):
     if_empty = False
     digit = 2
     computation = False
+    rounding = False
 
     def _from_python(self, value, state):
+        if self.rounding is not False:
+            return format.format_decimal(float(value) or 0.0, self.rounding)
         return format.format_decimal(float(value) or 0.0, self.digit, computation=self.computation)
 
     def _to_python(self, value, state):

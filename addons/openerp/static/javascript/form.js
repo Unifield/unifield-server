@@ -669,21 +669,6 @@ function onChangePop(caller){
     var $caller = jQuery(openobject.dom.get(caller));
     var $form = $caller.closest('form');
 
-    // From http://bazaar.launchpad.net/~openerp-dev/openobject-client-web/6.0-opw-4079-cpa/revision/4726
-    // Running onChange on a one2many with a lines being currently edited
-    // triggers some issue. To fix that, simply save/remove the line before
-    // continuing 
-    if (($('tr.editors').length) && (!$caller.closest('tr.editors').length)) 
-    {
-        var edit_line_id = $('tr.editors').attr('record');
-        if(edit_line_id != "-1"){
-            o2m_id = $('tr.editors').closest('.gridview').attr('id');
-            new One2Many(o2m_id).save(edit_line_id);
-        }
-        $('tr.editors').remove();
-    }
-
-
     var callback = $caller.attr('callback');
     var change_default = $caller.attr('change_default');
 
@@ -700,6 +685,25 @@ function onChangePop(caller){
     var select = function (id) { return $form.find(idSelector(id_prefix + id)); };
 
     var post_url = callback ? '/openerp/form/on_change' : '/openerp/form/change_default_get';
+
+    // From http://bazaar.launchpad.net/~openerp-dev/openobject-client-web/6.0-opw-4079-cpa/revision/4726
+    // Running onChange on a one2many with a lines being currently edited
+    // triggers some issue. To fix that, simply save/remove the line before
+    // continuing 
+    if (($('tr.editors').length) && (!$caller.closest('tr.editors').length)) 
+    {
+        var terp_id = select('_terp_id').val();
+        if (terp_id && terp_id != 'False') {
+            var edit_line_id = $('tr.editors').attr('record');
+            if(edit_line_id != "-1"){
+                o2m_id = $('tr.editors').closest('.gridview').attr('id');
+                new One2Many(o2m_id).save(edit_line_id);
+            }
+            $('tr.editors').remove();
+        }
+    }
+
+
 
     var form_data = getFormData(1, true, $form);
     /* testing if the record is an empty record, if it does not contain anything except
@@ -824,6 +828,9 @@ function onChangePop(caller){
                     }
                 }
                 switch (kind) {
+                    case 'full_text':
+                        $('#' + prefix + k).text(value || '');
+                        break;
                     case 'picture':
                         fld.src = value;
                         break;
@@ -925,12 +932,17 @@ function onChangePop(caller){
                             }
                             v = value.split(',');
                             ref.value = v[0];
-                            fld.value = v[1] || '';
                             fld._m2o.on_reference_changed();
+                            if (v[1] == '0') {
+                                v[1] = '';
+                            }
+                            fld.value = v[1] || '';
+                            if (v[1]) {
+                                fld._m2o.on_change();
+                            }
                             try {
                                 openobject.dom.get(prefix + k + '_text').value = v[2] || '';
-                            }
-                            catch (e) {
+                            } catch(e) {
                             }
                         }
                         break;

@@ -10,7 +10,7 @@
         ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)}>
         ## add empty option only if no empty option exist
         ## and no default value is set
-        % if all(label for _, label in options) and not required:
+        % if all(label for _, label in options) and (not required or add_empty):
             <option value=""></option>
         % endif
         % for (val, label) in options:

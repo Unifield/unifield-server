@@ -181,8 +181,6 @@ class Form(SecuredController):
         if tg_errors:
             return cherrypy.request.terp_form
 
-        cherrypy.session['params'] = params
-
         params.offset = params.offset or 0
         params.count = params.count or 0
         params.approximation = params.approximation or False
@@ -313,6 +311,9 @@ class Form(SecuredController):
 
         rules_pool = rpc.RPCProxy('msf_button_access_rights.button_access_rule')
         model_pool = rpc.RPCProxy('ir.model')
+
+        if btn_name and '/' in btn_name:
+            btn_name = btn_name.split('/')[-1]
 
         if btn_name and view_id:
             view_ids = rules_pool.get_family_ids(int(view_id))
@@ -1229,6 +1230,17 @@ class Form(SecuredController):
         # apply validators (transform values from python)
         values = result['value']
         values2 = {}
+
+        float_fields = []
+        float_def = {}
+        for k in values:
+            key = ((prefix or '') and prefix + '/') + k
+            kind = data.get(key, {}).get('type', '')
+            if data.get(key, {}).get('type', '') == 'float':
+                float_fields.append(k)
+        if float_fields:
+            float_def = proxy.fields_get(float_fields, with_uom_rounding=True, context=ctx2)
+
         for k, v in values.items():
             key = ((prefix or '') and prefix + '/') + k
 
@@ -1241,13 +1253,16 @@ class Form(SecuredController):
                 values2[k] = {'value': v}
 
             if kind == 'float':
-                field = proxy.fields_get([k], ctx2)
-                digit = field[k].get('digits')
-                if digit: digit = digit[1]
+                if float_def.get(k, {}).get('related_uom') and float_def.get(k, {}).get('related_uom') in values:
+                    values2[k]['rounding_value'] = values[float_def[k]['related_uom']]
+                    values2[k]['uom_rounding'] = float_def[k].get('uom_rounding')
+                digit = float_def.get(k, {}).get('digits')
+                if digit:
+                    digit = digit[1]
                 values2[k]['digit'] = digit or 2
 
                 # custom fields - decimal_precision computation
-                computation = field[k].get('computation')
+                computation = float_def.get(k, {}).get('computation')
                 values2[k]['computation'] = computation
 
         values = TinyForm(**values2).from_python().make_plain()

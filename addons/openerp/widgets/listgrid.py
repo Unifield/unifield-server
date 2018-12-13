@@ -43,7 +43,7 @@ class List(TinyWidget):
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
               'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
-              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs' ]
+              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs', 'bothedit' ]
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -71,6 +71,7 @@ class List(TinyWidget):
     hide_new_button = False
     hide_delete_button = False
     hide_edit_button = False
+    bothedit = False
 
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
@@ -106,6 +107,8 @@ class List(TinyWidget):
         self.selector = None
         self.force_readonly = kw.get('force_readonly', False)
         self.filter_selector = kw.get('filter_selector', None)
+
+        self.rounding_values = view.get('uom_rounding', {})
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
@@ -183,7 +186,11 @@ class List(TinyWidget):
         search_text = terp_params.get('_terp_search_text', False)
         if not self.source:
             self.source = terp_params.get('_terp_source', None)
+
+
         if not default_data and not self.o2m and not self.m2m:
+            if 'unique_id' in kw:
+                context['unique_id'] = kw['unique_id']
             if self.limit > 0:
                 if self.sort_key:
                     ids = proxy.search(search_param, self.offset, self.limit, self.sort_key + ' ' +self.sort_order + ',id', context)
@@ -221,7 +228,7 @@ class List(TinyWidget):
             ctx.update(context)
 
             try:    
-                data = proxy.read(ids, fields.keys() + ['__last_update'], ctx)
+                data = proxy.read_web(ids, fields.keys() + ['__last_update'], ctx)
             except:
                 pass
 
@@ -288,7 +295,8 @@ class List(TinyWidget):
                 except:
                     pass
 
-        if self.editable and attrs.get('editable') in ('top', 'bottom'):
+        if self.editable and attrs.get('editable') in ('top', 'bottom', 'both'):
+            self.bothedit = attrs.get('editable') == 'both'
             for f, fa in self.headers:
                 if not isinstance(fa, int):
                     fa['prefix'] = '_terp_listfields' + ((self.name != '_terp_list' or '') and '/' + self.name)
@@ -371,6 +379,7 @@ class List(TinyWidget):
         ctx = dict(rpc.session.context,
                    **self.context)
 
+        headers_info = dict(self.headers)
         fields = [name for name, _ in chain(self.headers, self.hiddens)]
 
         proxy = rpc.RPCProxy(self.model)
@@ -391,6 +400,10 @@ class List(TinyWidget):
 
         for f in fields:
             if f in values:
+                if headers_info.get(f, {}).get('related_uom') and self.rounding_values and headers_info[f]['related_uom'] in values:
+                    headers_info[f]['uom_rounding'] = self.rounding_values
+                    headers_info[f]['rounding_value'] = values[headers_info[f]['related_uom']]
+                    self.editors[f] = get_widget('float')(**headers_info[f])
                 self.editors[f].set_value(values[f])
 
         return super(List, self).display(value, **params)
@@ -486,7 +499,14 @@ class List(TinyWidget):
                             cell = Hidden(**fields[name])
                             cell.set_value(row_value.get(name, False))
                         else:
-                            cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
+                            if kind == 'float' and fields[name].get('related_uom') and self.rounding_values and row_value.get(fields[name]['related_uom']):
+                                if isinstance(row_value.get(fields[name]['related_uom']), (list, tuple)):
+                                    rounding = row_value.get(fields[name]['related_uom'])[0]
+                                else:
+                                    rounding = row_value.get(fields[name]['related_uom'])
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), rounding=self.rounding_values.get(rounding), **fields[name])
+                            else:
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
 
                         for color, expr in self.colors.items():
                             try:
@@ -617,6 +637,9 @@ class Float(Char):
         computation = self.attrs.get('computation', False)
         if isinstance(computation, basestring):
             computation = eval(computation)
+
+        if self.attrs.get('rounding'):
+            return format.format_decimal(self.value or 0.0, int(abs(math.log10(self.attrs['rounding']))))
 
         integer, digit = digits
         return format.format_decimal(self.value or 0.0, digit, computation=computation)

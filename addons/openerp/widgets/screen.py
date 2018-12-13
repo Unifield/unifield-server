@@ -85,7 +85,7 @@ class Screen(TinyInputWidget):
         self.count         = params.count
         self.approximation = params.approximation
         self.target_action_id = params.target_action_id or False
-
+        self.unique_id = params.unique_id or False
         if (self.ids or self.id) and self.count == 0:
             if self.ids and len(self.ids) < self.limit:
                 self.count = len(self.ids)
@@ -128,6 +128,8 @@ class Screen(TinyInputWidget):
 
         if view_type in self.views_preloaded:
             view = self.views_preloaded[view_type]
+            if 'uom_rounding' in self.views_preloaded:
+                view['uom_rounding'] = self.views_preloaded['uom_rounding']
         else:
             ctx = rpc.session.context.copy()
             ctx.update(self.context)
@@ -137,7 +139,6 @@ class Screen(TinyInputWidget):
                 if 'view_id' in cherrypy.request.terp_params['_terp_context']:
                     cherrypy.request.terp_params['_terp_context'].pop('view_id')
             view = cache.fields_view_get(self.model, view_id or False, view_type, ctx, self.hastoolbar, self.hassubmenu)
-
         self.add_view(view, view_type)
 
     def add_view(self, view, view_type='form'):
