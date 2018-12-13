@@ -66,7 +66,7 @@ class report_fully_report(report_sxw.rml_parse):
         elif line.is_down_payment:
             entry_type = _('Down Payment')
         elif line.transfer_journal_id:
-            if line.transfer_with_change:
+            if line.is_transfer_with_change:
                 entry_type = _('Transfer with change')
             else:
                 entry_type = _('Transfer')
