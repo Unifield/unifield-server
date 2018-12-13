@@ -5,6 +5,7 @@ from mx import DateTime
 from tools.translate import _
 from osv import osv
 import csv
+from . import RECORD_SEPARATOR
 from . import UNIT_SEPARATOR
 import fileinput
 
@@ -134,10 +135,11 @@ class SpreadsheetXML(SpreadsheetTools):
         try:
             if xmlfile:
                 if context.get('from_je_import', False):
-                    # replace the unit separator code by an arbitrary string (cf &#31; is invalid in XML 1.0 used by etree)
+                    # replace the record and unit separator codes by arbitrary strings (cf &#30; and &#31; are invalid in XML 1.0 used by etree)
+                    record_separator_code = '&#30;'
                     unit_separator_code = '&#31;'
                     for line in fileinput.input(xmlfile, inplace=1):
-                        print line.replace(unit_separator_code, UNIT_SEPARATOR)
+                        print line.replace(record_separator_code, RECORD_SEPARATOR).replace(unit_separator_code, UNIT_SEPARATOR)
                 self.xmlobj = etree.parse(xmlfile)
             else:
                 self.xmlobj = etree.XML(xmlstring)
