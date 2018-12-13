@@ -1502,9 +1502,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
-
-            ###################################################################
-
+            # Batch number :: data initialisation
             batch_value = values.get('prodlot_id')
             exp_value = values.get('expired_date')
             lot_check = line.lot_check
@@ -1550,9 +1548,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'imp_batch_name': False,
                     'imp_exp_date': False,
                 })
-
-
-            ####################################################################
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')
