@@ -1763,7 +1763,6 @@ class stock_move(osv.osv):
             context = {}
 
         loc_obj = self.pool.get('stock.location')
-        prodlot_obj = self.pool.get('stock.production.lot')
         compare_date = context.get('rw_date', False)
         if compare_date:
             compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
@@ -1797,80 +1796,86 @@ class stock_move(osv.osv):
                 res = loc_obj.compute_availability(cr, uid,
                                                    [move['location_id'][0]], True, move['product_id'][0],
                                                    move['product_uom'][0], context=context)
+
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
                     picking_id = move['picking_id'] and move['picking_id'][0] or False
-                    values = {'name': move['name'],
-                              'sale_line_id': move['sale_line_id'] and move['sale_line_id'][0] or False,
-                              'picking_id': picking_id,
-                              'product_uom': move['product_uom'][0],
-                              'product_id': move['product_id'][0],
-                              'date_expected': move['date_expected'],
-                              'date': move['date'],
-                              'state': 'assigned',
-                              'location_dest_id': move['location_dest_id'][0],
-                              'reason_type_id': move['reason_type_id'][0],
-                              }
-                    for loc in res['fefo']:
-                        # if source == destination, the state becomes 'done', so we don't do fefo logic in that case
-                        if not move['location_dest_id'][0] == loc['location_id']:
-                            # as long all needed are not fulfilled
-                            if needed_qty:
-                                # we ignore the batch that are outdated
-                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                                if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
-                                    existed_moves = []
-                                    if not move['move_dest_id']:
-                                        # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
-                                        existed_moves = self.search(cr, uid,
-                                                                    [('picking_id', '!=', False),
-                                                                     ('picking_id', '=', picking_id),
-                                                                        ('product_id', '=', move['product_id'][0]),
-                                                                        ('product_uom', '=', loc['uom_id']),
-                                                                        ('line_number', '=', move['line_number']),
-                                                                        ('location_id', '=', loc['location_id']),
-                                                                        ('sale_line_id', '=', move['sale_line_id'] and move['sale_line_id'][0] or False),
-                                                                        ('location_dest_id', '=', move['location_dest_id'][0]),
-                                                                        ('prodlot_id', '=', loc['prodlot_id'])],
-                                                                    context=context)
-                                    # if the batch already exists and qty is enough, it is available (assigned)
-                                    if needed_qty <= loc['qty']:
-                                        if existed_moves:
-                                            exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
-                                            self.write(cr, uid, [exist_move['id']], {'product_qty': needed_qty + exist_move['product_qty']}, context)
-                                            # We update the linked documents
-                                            self.update_linked_documents(cr, uid, [move['id']], exist_move['id'], context=context)
-                                            self.unlink(cr, uid, [move['id']],
-                                                        context, force=True)
-                                            move_unlinked = True
-                                        else:
-                                            vals.update({'product_qty': needed_qty,
-                                                         'product_uom': loc['uom_id'],
-                                                         'location_id': loc['location_id'],
-                                                         'prodlot_id': loc['prodlot_id']
-                                                         })
-                                        needed_qty = 0.0
-                                        break
-                                    elif needed_qty:
-                                        # we take all available
-                                        selected_qty = loc['qty']
-                                        needed_qty -= selected_qty
-                                        dict_for_create = {}
-                                        dict_for_create = values.copy()
-                                        dict_for_create.update({
-                                            'product_uom': loc['uom_id'],
-                                            'product_qty': selected_qty,
-                                            'location_id': loc['location_id'],
-                                            'prodlot_id': loc['prodlot_id'],
-                                            'line_number': move['line_number'],
-                                            'move_cross_docking_ok': move['move_cross_docking_ok']
+                    values = {
+                        'name': move['name'],
+                        'sale_line_id': move['sale_line_id'] and move['sale_line_id'][0] or False,
+                        'picking_id': picking_id,
+                        'product_uom': move['product_uom'][0],
+                        'product_id': move['product_id'][0],
+                        'date_expected': move['date_expected'],
+                        'date': move['date'],
+                        'state': 'assigned',
+                        'location_dest_id': move['location_dest_id'][0],
+                        'reason_type_id': move['reason_type_id'][0],
+                    }
+                    for expired_date in res['fefo']:
+                        if not needed_qty:
+                            break
+
+                        if datetime.strptime(expired_date, "%Y-%m-%d") < compare_date:
+                            # batch expired
+                            continue
+
+                        for prod_id in res[expired_date]:
+                            if not needed_qty:
+                                break
+                            for loc_id in res[expired_date][prod_id]:
+                                if not needed_qty:
+                                    break
+                                existed_moves = []
+                                if not move['move_dest_id']:
+                                    # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
+                                    existed_moves = self.search(cr, uid,[
+                                        ('picking_id', '!=', False),
+                                        ('picking_id', '=', picking_id),
+                                        ('product_id', '=', move['product_id'][0]),
+                                        ('product_uom', '=', move['product_uom'][0]),
+                                        ('line_number', '=', move['line_number']),
+                                        ('location_id', '=', loc_id),
+                                        ('sale_line_id', '=', move['sale_line_id'] and move['sale_line_id'][0] or False),
+                                        ('location_dest_id', '=', move['location_dest_id'][0]),
+                                        ('prodlot_id', '=', prod_id)
+                                    ], context=context)
+                                if needed_qty <= res[expired_date][prod_id][loc_id]['total']:
+                                    if existed_moves:
+                                        exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
+                                        self.write(cr, uid, [exist_move['id']], {'product_qty': needed_qty + exist_move['product_qty']}, context)
+                                        # We update the linked documents
+                                        self.update_linked_documents(cr, uid, [move['id']], exist_move['id'], context=context)
+                                        self.unlink(cr, uid, [move['id']], context, force=True)
+                                        move_unlinked = True
+                                    else:
+                                        vals.update({
+                                            'product_qty': needed_qty,
+                                            'product_uom': move['product_uom'][0],
+                                            'location_id': loc_id,
+                                            'prodlot_id': prod_id,
                                         })
-                                        if existed_moves:
-                                            exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
-                                            self.write(cr, uid, [exist_move['id']], {'product_qty': selected_qty + exist_move['product_qty']}, context)
-                                        else:
-                                            self.create(cr, uid, dict_for_create, context)
-                                        vals.update({'product_qty': needed_qty})
+                                    needed_qty = 0.0
+                                else:
+                                    # we take all available
+                                    selected_qty = res[expired_date][prod_id][loc_id]['total']
+                                    needed_qty -= selected_qty
+                                    dict_for_create = values.copy()
+                                    dict_for_create.update({
+                                        'product_uom': move['product_uom'][0],
+                                        'product_qty': selected_qty,
+                                        'location_id': loc_id,
+                                        'prodlot_id': prod_id,
+                                        'line_number': move['line_number'],
+                                        'move_cross_docking_ok': move['move_cross_docking_ok'],
+                                    })
+                                    if existed_moves:
+                                        exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
+                                        self.write(cr, uid, [exist_move['id']], {'product_qty': selected_qty + exist_move['product_qty']}, context)
+                                    else:
+                                        self.create(cr, uid, dict_for_create, context)
+                                    vals.update({'product_qty': needed_qty})
+
                     # if the batch is outdated, we remove it
                     if not move_unlinked and move['expired_date'] and not\
                             datetime.strptime(move['expired_date'], "%Y-%m-%d") >= compare_date:
@@ -2472,23 +2477,6 @@ class stock_location(osv.osv):
             return result, location.chained_auto_packing, location.chained_delay, location.chained_journal_id and location.chained_journal_id.id or False, location.chained_company_id and location.chained_company_id.id or False, location.chained_picking_type
         return result
     # @@@override end
-
-    def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id, ids):
-        result.append((amount, id, True))
-        product_qty -= amount
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if product_qty <= 0.0:
-            return result
-        else:
-            result = []
-            result.append((amount, id, True))
-            if len(ids) >= 1:
-                result.append((product_qty, ids[0], False))
-            else:
-                result.append((product_qty, id, False))
-            return result
-        return []
 
     def on_change_location_type(self, cr, uid, ids, chained_location_type, context=None):
         '''

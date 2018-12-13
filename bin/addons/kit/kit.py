@@ -1419,107 +1419,87 @@ class stock_location(osv.osv):
         else:
             location_ids = ids
         # fefo list of lot
-        fefo_list = []
+
         # data structure
-        data = {'fefo': fefo_list, 'total': 0.0}
+        data = {'fefo': [], 'total': 0.0}
 
-        for id in location_ids:
-            # set up default value
-            data.setdefault(id, {}).setdefault('total', 0.0)
-            # lock the database if needed
-            if lock:
-                try:
-                    # Must lock with a separate select query because FOR UPDATE can't be used with
-                    # aggregation/group by's (when individual rows aren't identifiable).
-                    # We use a SAVEPOINT to be able to rollback this part of the transaction without
-                    # failing the whole transaction in case the LOCK cannot be acquired.
-                    cr.execute("SAVEPOINT stock_location_product_reserve_lot")
-                    cr.execute("""SELECT id FROM stock_move
-                                  WHERE product_id=%s AND
-                                          (
-                                            (location_dest_id=%s AND
-                                             location_id<>%s AND
-                                             state='done')
-                                            OR
-                                            (location_id=%s AND
-                                             location_dest_id<>%s AND
-                                             state in ('done', 'assigned'))
-                                          )
-                                  FOR UPDATE of stock_move NOWAIT""", (product_id, id, id, id, id), log_exceptions=False)
-                except Exception:
-                    # Here it's likely that the FOR UPDATE NOWAIT failed to get the LOCK,
-                    # so we ROLLBACK to the SAVEPOINT to restore the transaction to its earlier
-                    # state, we return False as if the products were not available, and log it:
-                    cr.execute("ROLLBACK TO stock_location_product_reserve_lot")
-                    logger = logging.getLogger('stock.location')
-                    logger.warn("Failed attempt to reserve product %s, likely due to another transaction already in progress. Next attempt is likely to work. Detailed error available at DEBUG level.", product_id)
-                    logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
-                    return False
+        # lock the database if needed
+        if lock:
+            try:
+                # Must lock with a separate select query because FOR UPDATE can't be used with
+                # aggregation/group by's (when individual rows aren't identifiable).
+                # We use a SAVEPOINT to be able to rollback this part of the transaction without
+                # failing the whole transaction in case the LOCK cannot be acquired.
+                cr.execute("SAVEPOINT stock_location_product_reserve_lot")
+                cr.execute("""SELECT id FROM stock_move
+                              WHERE product_id=%s AND
+                                      (
+                                        (location_dest_id in %s AND
+                                         location_id<>location_dest_id AND
+                                         state='done')
+                                        OR
+                                        (location_id in %s AND
+                                         location_dest_id<>location_id AND
+                                         state in ('done', 'assigned'))
+                                      )
+                              FOR UPDATE of stock_move NOWAIT""", (product_id, tuple(location_ids),  tuple(location_ids)), log_exceptions=False)
+            except Exception:
+                # Here it's likely that the FOR UPDATE NOWAIT failed to get the LOCK,
+                # so we ROLLBACK to the SAVEPOINT to restore the transaction to its earlier
+                # state, we return False as if the products were not available, and log it:
+                cr.execute("ROLLBACK TO stock_location_product_reserve_lot")
+                logger = logging.getLogger('stock.location')
+                logger.warn("Failed attempt to reserve product %s, likely due to another transaction already in progress. Next attempt is likely to work. Detailed error available at DEBUG level.", product_id)
+                logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
+                return {}
 
-            # SQL request is FEFO by default
-            # TODO merge different UOM directly in SQL statement
-            # example in class stock_report_prodlots_virtual(osv.osv): in report_stock_virtual.py
-            # class report_stock_inventory(osv.osv): in specific_rules.py
-            cr.execute("""
-                        SELECT subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
-                            (SELECT product_uom, prodlot_id, expired_date, sum(product_qty) AS product_qty
-                                FROM stock_move
-                                WHERE location_dest_id=%s AND
-                                location_id<>%s AND
-                                product_id=%s AND
-                                state='done'
-                                GROUP BY product_uom, prodlot_id, expired_date
-                            
-                                UNION
-                            
-                                SELECT product_uom, prodlot_id, expired_date, -sum(product_qty) AS product_qty
-                                FROM stock_move
-                                WHERE location_id=%s AND
-                                location_dest_id<>%s AND
-                                product_id=%s AND
-                                state in ('done', 'assigned')
-                                GROUP BY product_uom, prodlot_id, expired_date) as subs
-                        GROUP BY product_uom, prodlot_id, expired_date
-                        ORDER BY prodlot_id asc, expired_date asc
-                       """,
-                       (id, id, product_id, id, id, product_id))
-            results = cr.dictfetchall()
-            # merge results according to uom if needed
-            for r in results:
-                # consolidates the uom
-                amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], uom_id)
-                # total for all locations
-                total = data.setdefault('total', 0.0)
-                total += amount
-                data.update({'total': total})
-                # fill the data structure, total value for location
-                loc_tot = data.setdefault(id, {}).setdefault('total', 0.0)
-                loc_tot += amount
-                data.setdefault(id, {}).update({'total': loc_tot})
-                # production lot
-                lot_tot = data.setdefault(id, {}).setdefault(r['prodlot_id'], {}).setdefault('total', 0.0)
-                lot_tot += amount
-                data.setdefault(id, {}).setdefault(r['prodlot_id'], {}).update({'total': lot_tot, 'date': r['expired_date']})
-                # update the fefo list - will be sorted when all location has been treated - we can test only the last one, thanks to ORDER BY sql request
-                # only positive amount are taken into account
-                if r['prodlot_id']:
-                    # FEFO logic is only meaningful if a production lot is associated
-                    if fefo_list and fefo_list[-1]['location_id'] == id and fefo_list[-1]['prodlot_id'] == r['prodlot_id']:
-                        # simply update the qty
-                        if lot_tot > 0:
-                            fefo_list[-1].update({'qty': lot_tot})
-                        else:
-                            fefo_list.pop(-1)
-                    elif lot_tot > 0:
-                        # append a new dic
-                        fefo_list.append({'location_id': id,
-                                          'uom_id': uom_id,
-                                          'expired_date': r['expired_date'],
-                                          'prodlot_id': r['prodlot_id'],
-                                          'product_id': product_id,
-                                          'qty': lot_tot})
-        # global FEFO sorting
-        data['fefo'] = sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')), reverse=False)
+        # SQL request is FEFO by default
+        # TODO merge different UOM directly in SQL statement
+        # example in class stock_report_prodlots_virtual(osv.osv): in report_stock_virtual.py
+        # class report_stock_inventory(osv.osv): in specific_rules.py
+
+        cr.execute("""
+                    SELECT subs.location, subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
+                        (SELECT m.location_dest_id as location, m.product_uom, m.prodlot_id, lot.life_date as expired_date, sum(m.product_qty) AS product_qty
+                            FROM stock_move m
+                            LEFT JOIN stock_production_lot lot on lot.id = m.prodlot_id
+                            WHERE m.location_dest_id in %s AND
+                            m.location_id<>m.location_dest_id AND
+                            m.product_id=%s AND
+                            m.state='done'
+                            GROUP BY m.location_dest_id, m.product_uom, m.prodlot_id, lot.life_date
+
+                            UNION
+
+                            SELECT m.location_id as location, m.product_uom, m.prodlot_id, lot.life_date as expired_date, -sum(m.product_qty) AS product_qty
+                            FROM stock_move m
+                            LEFT JOIN stock_production_lot lot on lot.id = m.prodlot_id
+                            WHERE m.location_id in %s AND
+                            m.location_dest_id<>m.location_id AND
+                            m.product_id=%s AND
+                            m.state in ('done', 'assigned')
+                            GROUP BY m.location_id, m.product_uom, m.prodlot_id, lot.life_date) as subs
+                    GROUP BY location, product_uom, prodlot_id, expired_date
+                    ORDER BY expired_date asc, prodlot_id asc
+                   """,
+                   (tuple(location_ids), product_id, tuple(location_ids), product_id))
+
+        # merge results according to uom if needed
+        fefo_list = []
+        for r in cr.dictfetchall():
+            # consolidates the uom
+            amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], uom_id)
+            # total for all locations
+            data['total'] = data.get('total', 0) + amount
+
+            if r['expired_date'] not in data:
+                fefo_list.append(r['expired_date'])
+
+            data.setdefault(r['expired_date'], {}).setdefault(r['prodlot_id'], {}).setdefault(r['location'], {}).setdefault('total', 0.0)
+            data[r['expired_date']][r['prodlot_id']][r['location']]['total'] += amount
+
+
+        data['fefo'] = fefo_list
         return data
 
 stock_location()

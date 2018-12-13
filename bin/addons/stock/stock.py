@@ -372,7 +372,6 @@ class stock_location(osv.osv):
                  reach the requested product_qty (``qty`` is expressed in the default uom of the product), of False if enough
                  products could not be found, or the lock could not be obtained (and ``lock`` was True).
         """
-        result = []
         amount = 0.0
         if context is None:
             context = {}
@@ -451,7 +450,18 @@ class stock_location(osv.osv):
                 if amount > min(total, product_qty):
                     amount = min(product_qty, total)
 
-                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
+                result = [(amount, id, True)] # qty available (amount) in (id) location
+                product_qty -= amount # remaining to reserve
+                if product_qty <= 0.0:
+                    return result
+
+                if len(ids) >= 1:
+                    result.append((product_qty, ids[0], False))
+                else:
+                    result.append((product_qty, id, False))
+
+                return result
+
 
         return False
 
@@ -2487,6 +2497,7 @@ class stock_move(osv.osv):
         pickings = {}
         if context is None:
             context = {}
+
         for move in self.browse(cr, uid, ids, context=context):
             if move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit'):
                 if move.state in ('confirmed', 'waiting'):
@@ -2505,21 +2516,18 @@ class stock_move(osv.osv):
                     # in the same order. This is e.g. the case when using the button 'split in two' of
                     # the stock outgoing form
                     if move.location_id.id == move.location_dest_id.id:
-                        set_as_done = True
                         done.append(move.id)
                     else:
-                        set_as_done = False
                         move_to_assign.append(move.id)
 
                     pickings[move.picking_id.id] = 1
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
                     while res:
-                        # TODO JFB: check this (UF-1060) + done vs move_to_assign
                         r = res.pop(0)
                         move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1]})
                         if r[2]:
-                            if set_as_done:
+                            if r[1] == move.location_dest_id.id:
                                 done.append(move_id)
                             else:
                                 move_to_assign.append(move_id)
