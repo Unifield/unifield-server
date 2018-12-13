@@ -1677,8 +1677,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         lot_cache.setdefault(product_id, {})
         lot_cache[product_id].setdefault(name, False)
 
-        if lot_cache[product_id][name]:
-            batch_id = lot_cache[product_id][name]
+        if lot_cache[product_id][name] and lot_cache[product_id][name][1] == exp_date:
+            batch_id = lot_cache[product_id][name][0]
         else:
             lot_ids = lot_obj.search(cr, uid, [
                 ('product_id', '=', product_id),
@@ -1695,7 +1695,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'life_date': exp_date,
                 }, context=context)
 
-            lot_cache[product_id][name] = batch_id
+            lot_cache[product_id][name] = (batch_id, exp_date)
 
         return batch_id
 
