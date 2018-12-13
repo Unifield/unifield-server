@@ -802,27 +802,22 @@ class stock_picking(osv.osv):
         # TODO: Check locations to see if in the same location ?
         return True
 
-    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        - allow to choose wether or not an exception should be raised in case of no stock move
-        '''
-        return True
-
-    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
-        pick = kwargs['pick']
-        return [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
-
     def _hook_action_assign_batch(self, cr, uid, ids, context=None):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_assign method from stock>stock.py>stock_picking class
 
-        -  when product is Expiry date mandatory, a "pre-assignment" of batch numbers regarding the available quantity
+        -  when product is Expiry date mandatory, we "pre-assign" batch numbers regarding the available quantity
         and location logic in addition to FEFO logic (First expired first out).
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        for pick in self.browse(cr, uid, ids, context=context):
+            # perishable for perishable or batch management
+            move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context)  # FEFO
         return True
 
     def action_assign(self, cr, uid, ids, context=None, *args):
@@ -834,13 +829,14 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids):
-            move_ids = self._hook_get_move_ids(cr, uid, pick=pick)
-            if not move_ids:
-                if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
-                    raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
+        for pick in self.read(cr, uid, ids, ['name']):
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick['id']),
+                                                 ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
             move_obj.action_assign(cr, uid, move_ids)
-            self._hook_action_assign_batch(cr, uid, ids, context=context)
+            self._hook_action_assign_batch(cr, uid, pick['id'], context=context)
+            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
+                pick['id'], pick['name'],
+            ))
         return True
 
     def force_assign(self, cr, uid, ids, *args):
@@ -2431,7 +2427,10 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        vals.update({'state': 'confirmed'})
+        # check qty > 0 or raise
+        self.check_product_quantity(cr, uid, ids, context=context)
+
+        vals.update({'state': 'confirmed', 'already_confirmed': True})
         self.write(cr, uid, ids, vals)
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
@@ -2440,6 +2439,10 @@ class stock_move(osv.osv):
         '''
         Always return True
         '''
+        already_confirmed = kwargs['already_confirmed']
+        move_id = kwargs['move_id']
+        if not already_confirmed:
+            self.action_confirm(cr, uid, [move_id])
         return True
 
     def action_assign(self, cr, uid, ids, *args):

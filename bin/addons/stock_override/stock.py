@@ -721,17 +721,6 @@ You cannot choose this supplier because some destination locations are not avail
         return res
 
     @check_cp_rw
-    def action_assign(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
-        for pick in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
-        return res
-
-    @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -873,13 +862,6 @@ You cannot choose this supplier because some destination locations are not avail
                 inv_type = 'out_invoice'
         return inv_type
 
-    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
-        move_obj = self.pool.get('stock.move')
-        pick = kwargs['pick']
-        move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id),
-                                             ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
-
-        return move_ids
 
     def draft_force_assign(self, cr, uid, ids, context=None):
         '''
@@ -1072,25 +1054,6 @@ You cannot choose this supplier because some destination locations are not avail
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
 
-    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        -  when product is Expiry date mandatory, we "pre-assign" batch numbers regarding the available quantity
-        and location logic in addition to FEFO logic (First expired first out).
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        move_obj = self.pool.get('stock.move')
-        if not context.get('already_checked'):
-            for pick in self.browse(cr, uid, ids, context=context):
-                # perishable for perishable or batch management
-                move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context)  # FEFO
-        context['already_checked'] = True
-        return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
     # UF-1617: Handle the new state Shipped of IN
     def action_shipped_wkf(self, cr, uid, ids, context=None):
@@ -1909,14 +1872,13 @@ class stock_move(osv.osv):
                                             self.create(cr, uid, dict_for_create, context)
                                         vals.update({'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
-                    if not context.get('yml_test', False):
-                        if not move_unlinked and move['expired_date'] and not\
-                                datetime.strptime(move['expired_date'], "%Y-%m-%d") >= compare_date:
-                            # Don't remove the batch if the move is a chained move
-                            if not self.search(cr, uid,
-                                               [('move_dest_id', '=', move['id'])],
-                                               limit=1, order='NO_ORDER', context=context):
-                                vals.update({'prodlot_id': False})
+                    if not move_unlinked and move['expired_date'] and not\
+                            datetime.strptime(move['expired_date'], "%Y-%m-%d") >= compare_date:
+                        # Don't remove the batch if the move is a chained move
+                        if not self.search(cr, uid,
+                                           [('move_dest_id', '=', move['id'])],
+                                           limit=1, order='NO_ORDER', context=context):
+                            vals.update({'prodlot_id': False})
             elif move['state'] == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
                 vals.update({'prodlot_id': False})
@@ -1937,30 +1899,6 @@ class stock_move(osv.osv):
 
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
-
-    def action_confirm(self, cr, uid, ids, context=None, vals=None):
-        '''
-        Set the bool already confirmed to True
-        '''
-        if vals is None:
-            vals = {}
-        ids = isinstance(ids, (int, long)) and [ids] or ids
-        self.check_product_quantity(cr, uid, ids, context=context)
-
-        vals = {'already_confirmed': True}
-        res = super(stock_move, self).action_confirm(cr, uid, ids,
-                                                     context=context, vals=vals)
-        return res
-
-    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
-        '''
-        Always return True
-        '''
-        already_confirmed = kwargs['already_confirmed']
-        move_id = kwargs['move_id']
-        if not already_confirmed:
-            self.action_confirm(cr, uid, [move_id])
-        return True
 
     def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
         '''

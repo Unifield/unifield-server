@@ -640,15 +640,6 @@ class stock_move(osv.osv):
             self.action_assign(cr, uid, todo, context)
             #FEFO
             self.fefo_update(cr, uid, todo, context)
-            # below we cancel availability to recheck it
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-#            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-#            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return ret
 
     @check_cp_rw
@@ -694,14 +685,6 @@ class stock_move(osv.osv):
 
             #FEFO
             self.fefo_update(cr, uid, todo, context)
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return True
 
 stock_move()

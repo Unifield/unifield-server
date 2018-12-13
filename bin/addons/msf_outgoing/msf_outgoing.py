@@ -3061,16 +3061,6 @@ class stock_picking(osv.osv):
 
         return new_packing_id
 
-    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        - allow to choose wether or not an exception should be raised in case of no stock move
-        '''
-        res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
-        return res and False
-
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         stock>stock.py>log_picking
