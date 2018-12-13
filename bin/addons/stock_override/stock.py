@@ -1908,35 +1908,6 @@ class stock_move(osv.osv):
             kwargs['context'].update({'call_unlink': True})
         return {'state': 'cancel'}, kwargs.get('context', {})
 
-    def _hook_write_state_stock_move(self, cr, uid, done, notdone, count):
-        if done:
-            count += len(done)
-
-            done_ids = []
-            assigned_ids = []
-            # If source location == dest location THEN stock move is done.
-            for line in self.read(cr, uid, done, ['location_id', 'location_dest_id']):
-                if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
-                    done_ids.append(line['id'])
-                else:
-                    assigned_ids.append(line['id'])
-
-            if done_ids:
-                self.write(cr, uid, done_ids, {'state': 'done'})
-            if assigned_ids:
-                self.write(cr, uid, assigned_ids, {'state': 'assigned'})
-
-        if notdone:
-            self.write(cr, uid, notdone, {'state': 'confirmed'})
-            self.action_assign(cr, uid, notdone)
-        return count
-
-    def _hook_check_assign(self, cr, uid, *args, **kwargs):
-        '''
-        kwargs['move'] is the current move
-        '''
-        move = kwargs['move']
-        return move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit')
 
     def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
         '''
@@ -2045,16 +2016,6 @@ class stock_move(osv.osv):
                 self.unlink(cr, uid, move_data['id'], context=context, force=True)
 
         return res
-
-    def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
-        while res:
-            r = res.pop(0)
-            move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1]})
-            if r[2]:
-                done.append(move_id)
-            else:
-                notdone.append(move_id)
-        return done, notdone
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

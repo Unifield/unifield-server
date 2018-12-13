@@ -1392,51 +1392,6 @@ class stock_move(osv.osv):
                 'target': 'crush',
                 }
 
-    def check_assign_lot(self, cr, uid, ids, context=None):
-        """
-        check the assignation of stock move taking into account lot and FEFO rule
-        """
-        # treated move ids
-        done = []
-        count = 0
-        pickings = {}
-        if context is None:
-            context = {}
-        for move in self.browse(cr, uid, ids, context=context):
-            if self._hook_check_assign(cr, uid, move=move):
-                #            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
-                if move.state in ('confirmed', 'waiting'):
-                    done.append(move.id)
-                pickings[move.picking_id.id] = 1
-                continue
-            if move.state in ('confirmed', 'waiting'):
-                # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
-                if res:
-                    #_product_available_test depends on the next status for correct functioning
-                    #the test does not work correctly if the same product occurs multiple times
-                    #in the same order. This is e.g. the case when using the button 'split in two' of
-                    #the stock outgoing form
-                    self.write(cr, uid, [move.id], {'state':'assigned'})
-                    done.append(move.id)
-                    pickings[move.picking_id.id] = 1
-                    r = res.pop(0)
-                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
-
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
-
-        if count:
-            for pick_id in pickings:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-        return count
-
     def unlink(self, cr, uid, ids, context=None, force=False):
         '''
         override the function so we prevent deletion of original_from_process_stock_move stock.moves

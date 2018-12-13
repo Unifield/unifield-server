@@ -2481,13 +2481,6 @@ class stock_move(osv.osv):
         self.write(cr, uid, ids, {'state': 'confirmed'})
         return True
 
-    def _hook_check_assign(self, cr, uid, *args, **kwargs):
-        '''
-        kwargs['move'] is the current move
-        '''
-        move = kwargs['move']
-        return move.product_id.type == 'consu' or move.location_id.usage == 'supplier'
-
     #
     # Duplicate stock.move
     #
@@ -2497,16 +2490,18 @@ class stock_move(osv.osv):
         """
         done = []
         notdone = []
+        move_to_assign = []
         count = 0
         pickings = {}
         if context is None:
             context = {}
-        move_to_assign = set()
         for move in self.browse(cr, uid, ids, context=context):
-            if self._hook_check_assign(cr, uid, move=move):
-                #            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
+            if move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit'):
                 if move.state in ('confirmed', 'waiting'):
-                    done.append(move.id)
+                    if move.location_id.id == move.location_dest_id.id:
+                        done.append(move.id)
+                    else:
+                        move_to_assign.append(move.id)
                 pickings[move.picking_id.id] = 1
                 continue
             if move.state in ('confirmed', 'waiting'):
@@ -2517,15 +2512,37 @@ class stock_move(osv.osv):
                     # the test does not work correctly if the same product occurs multiple times
                     # in the same order. This is e.g. the case when using the button 'split in two' of
                     # the stock outgoing form
-                    move_to_assign.add(move.id)
-                    done.append(move.id)
+                    if move.location_id.id == move.location_dest_id.id:
+                        set_as_done = True
+                        done.append(move.id)
+                    else:
+                        set_as_done = False
+                        move_to_assign.append(move.id)
+
                     pickings[move.picking_id.id] = 1
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
+                    while res:
+                        # TODO JFB: check this (UF-1060) + done vs move_to_assign
+                        r = res.pop(0)
+                        move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1]})
+                        if r[2]:
+                            if set_as_done:
+                                done.append(move_id)
+                            else:
+                                move_to_assign.append(move_id)
+                        else:
+                            notdone.append(move_id)
 
-                    done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
-        count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
+        if done:
+            self.write(cr, uid, done, {'state': 'done'})
+        if move_to_assign:
+            self.write(cr, uid, move_to_assign, {'state': 'assigned'})
+        if notdone:
+            self.write(cr, uid, notdone, {'state': 'confirmed'})
+            self.action_assign(cr, uid, notdone)
 
+        count = len(done+move_to_assign)
         if count:
             for pick_id in pickings:
                 wf_service = netsvc.LocalService("workflow")
