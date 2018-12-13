@@ -1610,11 +1610,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if line.integrity_status != 'empty':
                 sel = self.fields_get(cr, uid, ['integrity_status'])
                 integrity_message = dict(sel['integrity_status']['selection']).get(getattr(line, 'integrity_status'), getattr(line, 'integrity_status'))
-                name = '%s,%s' % (self._name, 'integrity_status')
-                tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', '=', integrity_message)])
-                if tr_ids:
-                    integrity_message = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
-
                 raise osv.except_osv(_('Warning'), integrity_message)
 
         return True
