@@ -103778,3 +103778,23 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Validated where this status change is feasible"
+msgstr "Toutes les lignes seront validées si leur status le permet"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Cancelled where this status change is feasible"
+msgstr "Toutes les lignes seront annulées si leur status le permet"
+
+#. modules: purchase, sale
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Confirmed where this status change is feasible"
+msgstr "Toutes les lignes seront confirmées si leur status le permet"
