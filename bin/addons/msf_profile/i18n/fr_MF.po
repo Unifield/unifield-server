@@ -103778,3 +103778,8 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: msf_homere_interface
+#: view:hr.payroll.import.confirmation:0
+msgid "The import of the file failed!"
+msgstr "L'import du fichier a échoué !"

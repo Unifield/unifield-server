@@ -693,6 +693,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         if res:
             message = _("Employee import successful.")
         else:
+            processed = 0  # reset the processed value so it is clearer for the user that the import had no effect
             context.update({'employee_import_wizard_ids': ids})
         context.update({'message': message})
 
