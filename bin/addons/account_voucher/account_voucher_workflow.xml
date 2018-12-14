@@ -23,13 +23,6 @@
             <field name="flow_stop">True</field>
         </record>
         
-<!--        <record id="act_recheck" model="workflow.activity">-->
-<!--            <field name="wkf_id" ref="wkf"/>-->
-<!--            <field name="name">recheck</field>-->
-<!--            <field name="action">voucher_recheck()</field>-->
-<!--            <field name="kind">function</field>-->
-<!--        </record>-->
-        
         <record id="act_cancel" model="workflow.activity">
             <field name="wkf_id" ref="wkf"/>
             <field name="name">cancel</field>
@@ -41,31 +34,15 @@
         <record id="t2" model="workflow.transition">
             <field name="act_from" ref="act_proforma"/>
             <field name="act_to" ref="act_done"/>
+            <field name="sequence" eval="10" />
             <field name="signal">proforma_voucher</field>
             <field name="condition">True</field>
         </record>
         
-<!--        <record id="t3" model="workflow.transition">-->
-<!--            <field name="act_from" ref="act_proforma"/>-->
-<!--            <field name="act_to" ref="act_recheck"/>-->
-<!--            <field name="signal">proforma_voucher</field>-->
-<!--        </record>-->
-<!--        -->
-<!--        <record id="t4" model="workflow.transition">-->
-<!--            <field name="act_from" ref="act_recheck"/>-->
-<!--            <field name="act_to" ref="act_done"/>-->
-<!--            <field name="signal">recheck_voucher</field>-->
-<!--        </record>-->
-<!--        -->
-<!--        <record id="t5" model="workflow.transition">-->
-<!--            <field name="act_from" ref="act_recheck"/>-->
-<!--            <field name="act_to" ref="act_cancel"/>-->
-<!--            <field name="signal">cancel_voucher</field>-->
-<!--        </record>-->
-        
         <record id="t6" model="workflow.transition">
             <field name="act_from" ref="act_proforma"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="20" />
             <field name="signal">cancel_voucher</field>
         </record>
         

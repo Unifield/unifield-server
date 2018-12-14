@@ -363,6 +363,8 @@ class stock_picking(osv.osv):
             }
         ),
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
+        'from_pick_cancel_id': fields.many2one('stock.picking', string='Linked Picking/Out', readonly=True,
+                                               help='Picking or Out that created this Internal Move after cancellation'),
     }
 
     _defaults = {
@@ -372,6 +374,7 @@ class stock_picking(osv.osv):
         'fake_type': 'in',
         'shipment_ref':False,
         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
+        'from_pick_cancel_id': False,
     }
 
 
@@ -413,6 +416,9 @@ class stock_picking(osv.osv):
 
         if not 'previous_chained_pick_id' in default:
             default['previous_chained_pick_id'] = False
+
+        if not 'from_pick_cancel_id' in default:
+            default['from_pick_cancel_id'] = False
 
         return super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
 
@@ -1386,6 +1392,22 @@ class stock_move(osv.osv):
                         'target': 'new',
                         'res_id': wiz_id,
                         'context': context}
+            if move.type == 'in' and move.purchase_line_id:
+                vals = {'move_id': ids[0]}
+
+                if not move.purchase_line_id.linked_sol_id:
+                    vals['cancel_only'] = True
+
+                wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
+
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.move.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context}
+
 
         return self.unlink(cr, uid, ids, context=context)
 
@@ -1615,6 +1637,24 @@ class stock_move(osv.osv):
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
+    def _check_locations_active(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wrong_loc_ids = self.search(cr, uid, [('id', 'in', ids), '|', ('location_id.active', '=', False), ('location_dest_id.active', '=', False)], context=context)
+        if wrong_loc_ids:
+            error = []
+            for move in self.browse(cr, uid, wrong_loc_ids, fields_to_fetch=['picking_id', 'line_number', 'product_id', 'location_id', 'location_dest_id']):
+                if not move.location_id.active:
+                    error.append(_("Source Location %s is inactive, can't process %s, line %s, product %s") % (move.location_id.name, move.picking_id and move.picking_id.name or '', move.line_number, move.product_id and move.product_id.default_code or ''))
+                if not move.location_dest_id.active:
+                    error.append(_("Destination Location %s is inactive, can't process %s, line %s, product %s") % (move.location_dest_id.name, move.picking_id and move.picking_id.name or '', move.line_number, move.product_id and move.product_id.default_code or ''))
+
+            if error:
+                raise osv.except_osv(_('Warning'), "\n".join(error[0:10]))
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the partner or the address according to the other
@@ -1697,6 +1737,7 @@ class stock_move(osv.osv):
                 pick_obj.write(cr, uid, pick_ids, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -2484,7 +2525,6 @@ class stock_location(osv.osv):
 
         return domain
 
-
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
                                                   'Chained Location Type', required=True,
@@ -2565,6 +2605,7 @@ class stock_location(osv.osv):
 
 stock_location()
 
+
 class stock_location_chained_options(osv.osv):
     _name = 'stock.location.chained.options'
     _rec_name = 'location_id'
@@ -2575,21 +2616,57 @@ class stock_location_chained_options(osv.osv):
         'location_id': fields.many2one('stock.location', string='Location', required=True),
     }
 
+
 stock_location_chained_options()
 
 
 class stock_move_cancel_wizard(osv.osv_memory):
     _name = 'stock.move.cancel.wizard'
 
+    def _check_from_cross_docking(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Is the move from the Cross docking Location ?
+        """
+        if context is None:
+            context = {}
+        res = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        cross_docking_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        for wiz_move in self.browse(cr, uid, ids, context=context):
+            if wiz_move.move_id.location_id.id == cross_docking_id:
+                res[wiz_move.id] = True
+
+        return res
+
     _columns = {
         'move_id': fields.many2one('stock.move', string='Move', required=True),
         'cancel_only': fields.boolean('Just allow cancel only', invisible=True),
+        'is_move_from_cross_docking': fields.function(_check_from_cross_docking, method=True, type='boolean',
+                                                      string='Is the move from the Cross docking Location ?',
+                                                      store=False, readonly=True),
     }
 
     _defaults = {
         'move_id': lambda self, cr, uid, c: c.get('active_id'),
         'cancel_only': False,
+        'is_move_from_cross_docking': False,
     }
+
+    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
+        if context is None:
+            context = {}
+
+        move_id = self.pool.get('stock.move.cancel.wizard').read(cr, uid, ids[0], ['move_id'], context=context)['move_id']
+        wiz_id = self.pool.get('stock.move.cancel.more.wizard').create(cr, uid, {'move_id': move_id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move.cancel.more.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': wiz_id,
+                'context': context}
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2629,7 +2706,6 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-
     def cancel_and_resource(self, cr, uid, ids, context=None):
         '''
         Call the cancel and resource method of the stock move
@@ -2644,7 +2720,155 @@ class stock_move_cancel_wizard(osv.osv_memory):
 
         return self.just_cancel(cr, uid, ids, context=context)
 
+
 stock_move_cancel_wizard()
+
+
+class stock_move_cancel_more_wizard(osv.osv_memory):
+    _name = 'stock.move.cancel.more.wizard'
+
+    _columns = {
+        'move_id': fields.many2one('stock.move', string='Move', required=True),
+    }
+
+    _defaults = {
+        'move_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of stock.move (re-sourcing flag not set)
+        '''
+        # Objects
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+
+        wf_service = netsvc.LocalService("workflow")
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            move_id = wiz.move_id.id
+            picking_id = wiz.move_id.picking_id.id
+            move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
+            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
+                                       limit=1, order='NO_ORDER', context=context)
+            if move_ids and  wiz.move_id.has_to_be_resourced:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
+                    move_id,
+                    picking_id,
+                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
+                ))
+            else:
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled" % (
+                    move_id,
+                    picking_id,
+                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
+                ))
+
+            if move_ids and wiz.move_id.picking_id:
+                lines = wiz.move_id.picking_id.move_lines
+                if all(l.state == 'cancel' for l in lines):
+                    wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_create_int(self, cr, uid, ids, context=None):
+        """
+        Create/Update INT with stock in Cross Docking while cancelling Picking
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+
+        self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
+        stock_loc = loc_obj.browse(cr, uid, context['common']['stock_id'], fields_to_fetch=['chained_options_ids'],
+                                   context=context)
+        cross_docking_id = context['common']['cross_docking']
+        int_reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        int_id = False
+
+        for wiz_move in self.browse(cr, uid, ids, context=context):
+            # Create/Update and validate INT for lines from Cross docking
+            move = wiz_move.move_id
+            if move.product_qty > 0:
+                pick_ids = [move.picking_id.id]
+                if move.picking_id.backorder_id:
+                    pick_ids.append(move.picking_id.backorder_id.id)
+                int_ids = pick_obj.search(cr, uid, [('type', '=', 'internal'), ('subtype', '=', 'standard'),
+                                                    ('from_pick_cancel_id', 'in', pick_ids), ('state', 'not in', ['done', 'cancel'])],
+                                          limit=1, context=context)
+                if not int_ids:  # Create the INT
+                    int_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+                    int_data = {
+                        'name': int_name,
+                        'type': 'internal',
+                        'subtype': 'standard',
+                        'min_date': datetime.today(),
+                        'partner_id': move.picking_id.partner_id and move.picking_id.partner_id.id or False,
+                        'partner_id2': move.picking_id.partner_id2 and move.picking_id.partner_id2.id or False,
+                        'order_category': move.picking_id.order_category,
+                        'origin': move.picking_id.backorder_id and move.picking_id.backorder_id.name or move.picking_id.name,
+                        'address_id': move.picking_id.address_id and move.picking_id.address_id.id or False,
+                        'invoice_state': 'none',
+                        'reason_type_id': int_reason_type_id,
+                        'from_pick_cancel_id': move.picking_id.backorder_id and move.picking_id.backorder_id.id or move.picking_id.id,
+                    }
+                    int_id = pick_obj.create(cr, uid, int_data, context=context)
+                    int_id = int(int_id)
+                    self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been created.') % (int_id, int_name))
+                else:
+                    int_id = int(int_ids[0])
+                    int_name = pick_obj.read(cr, uid, int_id, ['name'], context=context)['name']
+                # Add the move
+                if move.state != 'cancel' and move.location_id.id == cross_docking_id:
+                    dest_loc_id = stock_loc.id
+                    for opt in stock_loc.chained_options_ids:
+                        if opt.nomen_id.id == move.product_id.nomen_manda_0.id:
+                            dest_loc_id = opt.dest_location_id.id
+                    m_data = {
+                        'name': move.name,
+                        'picking_id': int_id,
+                        'product_id': move.product_id.id,
+                        'product_qty': move.product_qty,
+                        'product_uom': move.product_uom.id,
+                        'location_id': move.location_id.id,
+                        'location_dest_id': dest_loc_id,
+                        'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+                        'expired_date': move.expired_date or False,
+                        'reason_type_id': int_reason_type_id,
+                    }
+                    move_obj.create(cr, uid, m_data, context=context)
+
+                pick_obj.draft_force_assign(cr, uid, [int_id], context=context)
+                self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been updated.') % (int_id, int_name))
+                # Cancel Move
+                move_obj.action_cancel(cr, uid, [move.id], context=context)
+                self.infolog(cr, uid, _('The stock.move id:%s of the picking id:%s (%s) has been cancelled') % (
+                    move.id, move.picking_id.id, pick_obj.read(cr, uid, move.picking_id.id, ['name'], context=context)['name'],
+                ))
+                if all(l.state == 'cancel' for l in move.picking_id.move_lines):
+                    wf_service.trg_validate(uid, 'stock.picking', move.picking_id.id, 'button_cancel', cr)
+
+        # Change INT to available
+        if int_id:
+            pick_obj.action_assign(cr, uid, [int_id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+stock_move_cancel_more_wizard()
 
 
 class stock_picking_cancel_wizard(osv.osv_memory):
@@ -2664,15 +2888,48 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 
         return True
 
+    def _check_from_cross_docking(self, cr, uid, context=None):
+        """
+        Is one of the moves from the Cross docking Location ?
+        """
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        cross_docking_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        picking_id = context.get('active_id')
+        for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
+            if move.location_id.id == cross_docking_id:
+                return True
+
+        return False
+
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
         'allow_cr': fields.boolean(string='Allow Cancel and resource'),
+        'has_moves_from_cross_docking': fields.boolean(string='Is one of the moves from the Cross docking Location ?'),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
         'allow_cr': _get_allow_cr,
+        'has_moves_from_cross_docking': _check_from_cross_docking,
     }
+
+    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
+        if context is None:
+            context = {}
+
+        picking_id = self.pool.get('stock.picking.cancel.wizard').read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id']
+        wiz_id = self.pool.get('stock.picking.cancel.more.wizard').create(cr, uid, {'picking_id': picking_id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking.cancel.more.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': wiz_id,
+                'context': context}
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2726,14 +2983,157 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 stock_picking_cancel_wizard()
 
 
+class stock_picking_cancel_more_wizard(osv.osv_memory):
+    _name = 'stock.picking.cancel.more.wizard'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
+    }
+
+    _defaults = {
+        'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of the stock.picking
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        msg_type = {
+            'in': 'Incoming Shipment',
+            'internal': 'Internal Picking',
+            'out': {
+                'standard': 'Delivery Order',
+                'picking': 'Picking Ticket',
+            }
+        }
+
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
+            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
+                wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
+                wiz.picking_id.id,
+                wiz.picking_id.name,
+            ))
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_create_int(self, cr, uid, ids, context=None):
+        """
+        Create/Update INT with stock in Cross Docking while cancelling Picking
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        msg_type = {
+            'in': 'Incoming Shipment',
+            'internal': 'Internal Picking',
+            'out': {
+                'standard': 'Delivery Order',
+                'picking': 'Picking Ticket',
+            }
+        }
+
+        wf_service = netsvc.LocalService("workflow")
+        data_obj = self.pool.get('ir.model.data')
+        loc_obj = self.pool.get('stock.location')
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+
+        self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
+        stock_loc = loc_obj.browse(cr, uid, context['common']['stock_id'], fields_to_fetch=['chained_options_ids'],
+                                   context=context)
+        cross_docking_id = context['common']['cross_docking']
+        int_reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # Create/Update and validate INT for lines from Cross docking
+            pick_ids = [wiz.picking_id.id]
+            if wiz.picking_id.backorder_id:
+                pick_ids.append(wiz.picking_id.backorder_id.id)
+            int_ids = pick_obj.search(cr, uid, [('type', '=', 'internal'), ('subtype', '=', 'standard'),
+                                                ('from_pick_cancel_id', 'in', pick_ids), ('state', 'not in', ['done', 'cancel'])],
+                                      limit=1, context=context)
+            if not int_ids:  # Create the INT
+                int_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+                int_data = {
+                    'name': int_name,
+                    'type': 'internal',
+                    'subtype': 'standard',
+                    'min_date': datetime.today(),
+                    'partner_id': wiz.picking_id.partner_id and wiz.picking_id.partner_id.id or False,
+                    'partner_id2': wiz.picking_id.partner_id2 and wiz.picking_id.partner_id2.id or False,
+                    'order_category': wiz.picking_id.order_category,
+                    'origin': wiz.picking_id.backorder_id and wiz.picking_id.backorder_id.name or wiz.picking_id.name,
+                    'address_id': wiz.picking_id.address_id and wiz.picking_id.address_id.id or False,
+                    'invoice_state': 'none',
+                    'reason_type_id': int_reason_type_id,
+                    'from_pick_cancel_id': wiz.picking_id.backorder_id and wiz.picking_id.backorder_id.id or wiz.picking_id.id,
+                }
+                int_id = pick_obj.create(cr, uid, int_data, context=context)
+                self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been created.') % (int_id, int_name))
+            else:
+                int_id = int_ids[0]
+                int_name = pick_obj.read(cr, uid, int_id, ['name'], context=context)['name']
+            # Add the moves
+            moves_ids_to_cancel = []
+            for m in (move for move in wiz.picking_id.move_lines
+                      if (move.state != 'cancel' and move.location_id.id == cross_docking_id and move.product_qty > 0)):
+                dest_loc_id = stock_loc.id
+                for opt in stock_loc.chained_options_ids:
+                    if opt.nomen_id.id == m.product_id.nomen_manda_0.id:
+                        dest_loc_id = opt.dest_location_id.id
+                m_data = {
+                    'name': m.name,
+                    'picking_id': int_id,
+                    'product_id': m.product_id.id,
+                    'product_qty': m.product_qty,
+                    'product_uom': m.product_uom.id,
+                    'location_id': m.location_id.id,
+                    'location_dest_id': dest_loc_id,
+                    'prodlot_id': m.prodlot_id and m.prodlot_id.id or False,
+                    'expired_date': m.expired_date or False,
+                    'reason_type_id': int_reason_type_id,
+                }
+                move_obj.create(cr, uid, m_data, context=context)
+                moves_ids_to_cancel.append(m.id)
+
+            # Cancel Moves
+            move_obj.action_cancel(cr, uid, moves_ids_to_cancel, context=context)
+            if all(l.state == 'cancel' for l in wiz.picking_id.move_lines):
+                # Cancel Picking
+                wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
+                self.infolog(cr, uid, _('The %s id:%s (%s) has been cancelled.') % (
+                    wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
+                    wiz.picking_id.id, wiz.picking_id.name,
+                ))
+
+            # Change INT to available
+            pick_obj.draft_force_assign(cr, uid, [int_id], context=context)
+            pick_obj.action_assign(cr, uid, [int_id], context=context)
+            self.infolog(cr, uid, _('The Internal Move id:%s (%s) has been updated.') % (int_id, int_name))
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+stock_picking_cancel_more_wizard()
+
+
 class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         trans_obj = self.pool.get('ir.translation')
         new_values = values
         move_accepted_values = {'client_action_multi': [],
@@ -2769,11 +3169,16 @@ class ir_values(osv.osv):
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
             Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
+            Reserved = trans_obj.tr_view(cr, 'Reserved Products', context)
             for v in values:
-                if key == 'action' and v[1] in move_accepted_values[key2]:
+                if context.get('_terp_view_name', False) == Reserved:
+                    if v[1] == 'wizard_reserved_products_export':
+                        new_values.append(v)
+                elif key == 'action' and v[1] in move_accepted_values[key2]:
                     new_values.append(v)
                 elif context.get('_terp_view_name', False) == Destruction_Report:
-                    new_values.append(v)
+                    if v[1] != 'wizard_reserved_products_export':
+                        new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
             for v in values:

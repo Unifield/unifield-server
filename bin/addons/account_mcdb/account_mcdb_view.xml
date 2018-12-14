@@ -357,6 +357,7 @@
                 <tree string="Selector list">
                     <field name="description"/>
                     <field name="user"/>
+                    <field name="hq_template" />
                 </tree>
             </field>
         </record>
@@ -371,6 +372,7 @@
                 <search string="Selector">
                     <field name="description" select="1"/>
                     <field name="user" select="1"/>
+                    <field name="hq_template" />
                 </search>
             </field>
         </record>

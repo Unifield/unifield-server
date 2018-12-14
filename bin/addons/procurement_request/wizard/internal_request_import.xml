@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="internal_request_import_form_view" model="ir.ui.view">
+            <field name="name">internal.request.import.form.view</field>
+            <field name="model">internal.request.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import from IR Excel template">
+                    <separator colspan="4" string="Internal Request Information" />
+                    <field name="order_id" />
+                    <group colspan="4" name="file" string="Import data">
+                        <field name="file_to_import" filename="filename" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="filename" invisible="1" />
+                        <field name="error_file" filename="error_filename" readonly="1"
+                               attrs="{'invisible': [('import_error_ok', '!=', False), ('state', '!=', 'done')]}" />
+                        <field name="error_filename" invisible="1" />
+                        <field name="import_error_ok" invisible="1" />
+                        <field name="state" />
+                        <field name="no_prod_as_comment" />
+                        <field name="nb_treated_lines" attrs="{'invisible': [('state', '=', 'draft')]}" />
+                        <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
+                    </group>
+                    <group name="buttons" colspan="4" col="6">
+                        <button name="go_to_ir" string="Cancel Import" icon="gtk-cancel" type="object" />
+                        <button name="launch_simulate" string="Import File" icon="gtk-go-forward" type="object" states="draft" />
+                        <button name="export_ir_import_overview" string="Export Import Overview" icon="gtk-execute" type="object" states="error,simu_done" />
+                        <button name="launch_import" string="Validate Import" icon="terp-check" type="object" states="simu_done" />
+                        <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object"
+                                states="simu_progress,import_progress" />
+                    </group>
+                    <separator colspan="4" string="Information" />
+                    <field name="has_header_error" invisible="1" />
+                    <field name="has_line_error" invisible="1" />
+                    <group colspan="4" col="2">
+
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="menu_ir_import_action_create" model="ir.actions.server">
+            <field name="name">Import from IR Excel template</field>
+            <field name="model_id" ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.ir_import_by_order_to_create(context=context)</field>
+            <field name="sequence" eval="1"/>
+        </record>
+
+        <record id="ir_open_internal_request_import_to_create" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Import from IR Excel template</field>
+            <field name="view_ids" ref="procurement_request.procurement_request_tree_view" />
+            <field name="sequence" eval="1"/>
+            <field eval="'ir.actions.server,%d'%menu_ir_import_action_create" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="menu_ir_import_action_update" model="ir.actions.server">
+            <field name="name">Import from IR Excel template</field>
+            <field name="model_id" ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.ir_import_by_order_to_update(context=context)</field>
+            <field name="sequence" eval="1"/>
+        </record>
+
+        <record id="ir_open_internal_request_import_to_update" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Import from IR Excel template</field>
+            <field name="view_ids" ref="procurement_request.procurement_request_form_view" />
+            <field name="sequence" eval="1"/>
+            <field eval="'ir.actions.server,%d'%menu_ir_import_action_update" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    </data>
+</openerp>

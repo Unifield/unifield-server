@@ -32,7 +32,6 @@ import json
 import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from workflow.wkf_expr import _eval_expr
 from . import PURCHASE_ORDER_STATE_SELECTION
 from account_override.period import get_period_from_date
 from msf_order_date.order_dates import common_create, get_type, common_requested_date_change, common_onchange_transport_lt, common_onchange_date_order, common_onchange_transport_type, common_onchange_partner_id
@@ -394,7 +393,7 @@ class purchase_order(osv.osv):
         res = {}.fromkeys(ids, 0)
         line_number_by_order = {}
 
-        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids),  ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
         for l in pol_obj.read(cr, uid, lines, ['order_id', 'line_number'], context=context):
             line_number_by_order.setdefault(l['order_id'][0], set())
             line_number_by_order[l['order_id'][0]].add(l['line_number'])
@@ -619,7 +618,7 @@ class purchase_order(osv.osv):
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, add_empty=True),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
@@ -776,7 +775,7 @@ class purchase_order(osv.osv):
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
         'loan_duration': 2,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
@@ -2190,7 +2189,6 @@ class purchase_order(osv.osv):
         '''
         wf_service = netsvc.LocalService("workflow")
         so_obj = self.pool.get('sale.order')
-        move_obj = self.pool.get('stock.move')
 
         if context is None:
             context = {}
@@ -2202,41 +2200,20 @@ class purchase_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
 
-            # Done picking
-            for pick in order.picking_ids:
-                if pick.state not in ('cancel', 'done'):
-                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
-
             # Done loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
                 so_obj.set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
-        # Done stock moves
-        move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
-        move_obj.set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
-
-        # Cancel all procurement ordes which have generated one of these PO
-        proc_ids = self.pool.get('procurement.order').search(cr, uid, [('purchase_id', 'in', ids)], context=context)
-        for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
-            if proc.move_id and proc.move_id.id:
-                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'cancel'}, context=context)
-            wf_service.trg_validate(uid, 'procurement.order', proc.id, 'subflow.cancel', cr)
-
         if all_doc:
             # Detach the PO from his workflow and set the state to done
             for order_id in self.browse(cr, uid, ids, context=context):
-                if order_id.rfq_ok and order_id.state == 'draft':
-                    wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
-                elif order_id.tender_id:
+                if order_id.tender_id:
                     raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
-                else:
-                    wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
-                    # Search the method called when the workflow enter in last activity
-                    wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
-                    activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                    _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
+                for pol in order_id.order_line:
+                    if pol.state not in ('done', 'cancel', 'cancel_r'):
+                        wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'cancel', cr)
 
         return True
 
