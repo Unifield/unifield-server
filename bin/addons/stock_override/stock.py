@@ -1791,7 +1791,7 @@ class stock_move(osv.osv):
             vals = {}
             move_unlinked = False
             # FEFO logic
-            if move['state'] == 'assigned' and not move['prodlot_id']:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+            if move['state'] == 'confirmed':
                 needed_qty = move['product_qty']
                 res = loc_obj.compute_availability(cr, uid,
                                                    [move['location_id'][0]], True, move['product_id'][0],
@@ -1829,6 +1829,8 @@ class stock_move(osv.osv):
                                 existed_moves = []
                                 if not move['move_dest_id']:
                                     # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
+
+                                    # this check is done only bc line is set as available w/o bn (US-1657 / US-1121 / UF-2274)
                                     existed_moves = self.search(cr, uid,[
                                         ('picking_id', '!=', False),
                                         ('picking_id', '=', picking_id),
@@ -1884,9 +1886,6 @@ class stock_move(osv.osv):
                                            [('move_dest_id', '=', move['id'])],
                                            limit=1, order='NO_ORDER', context=context):
                             vals.update({'prodlot_id': False})
-            elif move['state'] == 'confirmed':
-                # we remove the prodlot_id in case that the move is not available
-                vals.update({'prodlot_id': False})
             if vals:
                 self.write(cr, uid, move['id'], vals, context)
         return True

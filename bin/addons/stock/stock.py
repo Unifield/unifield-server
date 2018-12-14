@@ -382,6 +382,7 @@ class stock_location(osv.osv):
             temp.remove(location_dest_id)
             temp.append(location_dest_id)
 
+        result_qty = []
         for id in temp:
             if lock:
                 try:
@@ -434,36 +435,31 @@ class stock_location(osv.osv):
                        """,
                        (id, id, product_id))
             results += cr.dictfetchall()
-            total = 0.0
-            results2 = 0.0
+            total_loc = 0.0
 
             for r in results:
                 amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], context.get('uom', False))
-                results2 += amount
-                total += amount
+                total_loc += amount
 
-            if total <= 0.0:
+            if total_loc <= 0.0:
                 continue
 
-            amount = results2
-            if amount > 0:
-                if amount > min(total, product_qty):
-                    amount = min(product_qty, total)
+            if product_qty <= total_loc:
+                result_qty.append((product_qty, id))
+                return result_qty
 
-                result = [(amount, id, True)] # qty available (amount) in (id) location
-                product_qty -= amount # remaining to reserve
-                if product_qty <= 0.0:
-                    return result
+            result_qty.append((total_loc, id))
+            product_qty -= total_loc
 
-                if len(ids) >= 1:
-                    result.append((product_qty, ids[0], False))
-                else:
-                    result.append((product_qty, id, False))
+        if not result_qty:
+            # zero available stock
+            return []
 
-                return result
+        if product_qty:
+            # remaining not available qty
+            result_qty.append((product_qty, False))
 
-
-        return False
+        return result_qty
 
 
 
@@ -812,24 +808,6 @@ class stock_picking(osv.osv):
         # TODO: Check locations to see if in the same location ?
         return True
 
-    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        -  when product is Expiry date mandatory, we "pre-assign" batch numbers regarding the available quantity
-        and location logic in addition to FEFO logic (First expired first out).
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids, context=context):
-            # perishable for perishable or batch management
-            move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context)  # FEFO
-        return True
-
     def action_assign(self, cr, uid, ids, context=None, *args):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
@@ -843,7 +821,6 @@ class stock_picking(osv.osv):
             move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick['id']),
                                                  ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
             move_obj.action_assign(cr, uid, move_ids)
-            self._hook_action_assign_batch(cr, uid, pick['id'], context=context)
             self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
                 pick['id'], pick['name'],
             ))
@@ -2456,6 +2433,7 @@ class stock_move(osv.osv):
                 self.action_confirm(cr, uid, [move['id']])
             if move['state'] in ('confirmed', 'waiting'):
                 todo.append(move['id'])
+        print 'TODO', todo
         res = self.check_assign(cr, uid, todo)
         return res
 
@@ -2508,13 +2486,10 @@ class stock_move(osv.osv):
                 pickings[move.picking_id.id] = 1
                 continue
             if move.state in ('confirmed', 'waiting'):
+                bn_needed =  move.product_id.perishable
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, move.location_dest_id.id ,{'uom': move.product_uom.id}, lock=True)
+                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True)
                 if res:
-                    # _product_available_test depends on the next status for correct functioning
-                    # the test does not work correctly if the same product occurs multiple times
-                    # in the same order. This is e.g. the case when using the button 'split in two' of
-                    # the stock outgoing form
                     if move.location_id.id == move.location_dest_id.id:
                         done.append(move.id)
                     else:
@@ -2522,11 +2497,21 @@ class stock_move(osv.osv):
 
                     pickings[move.picking_id.id] = 1
                     r = res.pop(0)
-                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
+                    prodlot_id = None
+                    expired_date = None
+                    if bn_needed:
+                        prodlot_id = r[3] or None
+                        expired_date = r[2] or None
+                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, move.id))
                     while res:
                         r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1]})
-                        if r[2]:
+                        prodlot_id = False
+                        expired_date = False
+                        if bn_needed and r[1]:
+                            prodlot_id = r[3]
+                            expired_date = r[2]
+                        move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date})
+                        if r[1]:
                             if r[1] == move.location_dest_id.id:
                                 done.append(move_id)
                             else:
@@ -2540,7 +2525,6 @@ class stock_move(osv.osv):
             self.write(cr, uid, move_to_assign, {'state': 'assigned'})
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
-            self.action_assign(cr, uid, notdone)
 
         count = len(done+move_to_assign)
         if count:

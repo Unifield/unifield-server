@@ -1402,12 +1402,15 @@ class stock_location(osv.osv):
         #print res
         return res
 
-    def _product_reserve_lot(self, cr, uid, ids, product_id, uom_id, context=None, lock=False):
+    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False):
         """
         refactoring of original reserver method, taking production lot into account
 
         returning the original list-tuple structure + the total qty in each location
         """
+
+        # TODO : how to deal with product attrbiutes changes (ie: from BN managed to not BN, from not BN to BN ?)
+        # TODO : update compute_availability used in kit / clail
         amount = 0.0
         if context is None:
             context = {}
@@ -1418,10 +1421,6 @@ class stock_location(osv.osv):
             location_ids = self.search(cr, uid, [('location_id', 'child_of', ids)], context=context)
         else:
             location_ids = ids
-        # fefo list of lot
-
-        # data structure
-        data = {'fefo': [], 'total': 0.0}
 
         # lock the database if needed
         if lock:
@@ -1458,49 +1457,66 @@ class stock_location(osv.osv):
         # example in class stock_report_prodlots_virtual(osv.osv): in report_stock_virtual.py
         # class report_stock_inventory(osv.osv): in specific_rules.py
 
+        factor = pool_uom.read(cr, uid, uom_id, ['factor'])['factor']
         cr.execute("""
-                    SELECT subs.location, subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
-                        (SELECT m.location_dest_id as location, m.product_uom, m.prodlot_id, lot.life_date as expired_date, sum(m.product_qty) AS product_qty
+                    SELECT subs.location, subs.parent_left, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
+                        (SELECT m.location_dest_id as location, loc.parent_left, m.prodlot_id, lot.life_date as expired_date, sum(m.product_qty / move_uom.factor) AS product_qty
                             FROM stock_move m
-                            LEFT JOIN stock_production_lot lot on lot.id = m.prodlot_id
+                            LEFT JOIN stock_production_lot lot ON lot.id = m.prodlot_id
+                            LEFT JOIN stock_location loc ON loc.id = m.location_dest_id
+                            LEFT JOIN product_uom move_uom ON move_uom.id = m.product_uom
                             WHERE m.location_dest_id in %s AND
                             m.location_id<>m.location_dest_id AND
                             m.product_id=%s AND
-                            m.state='done'
-                            GROUP BY m.location_dest_id, m.product_uom, m.prodlot_id, lot.life_date
+                            m.state='done' AND
+                            (expired_date is null or expired_date >= CURRENT_DATE)
+                            GROUP BY m.location_dest_id, loc.parent_left, m.prodlot_id, lot.life_date
 
                             UNION
 
-                            SELECT m.location_id as location, m.product_uom, m.prodlot_id, lot.life_date as expired_date, -sum(m.product_qty) AS product_qty
+                            SELECT m.location_id as location, loc.parent_left, m.prodlot_id, lot.life_date as expired_date, -sum(m.product_qty / move_uom.factor) AS product_qty
                             FROM stock_move m
                             LEFT JOIN stock_production_lot lot on lot.id = m.prodlot_id
+                            LEFT JOIN stock_location loc on loc.id = m.location_id
+                            LEFT JOIN product_uom move_uom ON move_uom.id = m.product_uom
                             WHERE m.location_id in %s AND
                             m.location_dest_id<>m.location_id AND
                             m.product_id=%s AND
-                            m.state in ('done', 'assigned')
-                            GROUP BY m.location_id, m.product_uom, m.prodlot_id, lot.life_date) as subs
-                    GROUP BY location, product_uom, prodlot_id, expired_date
-                    ORDER BY expired_date asc, prodlot_id asc
+                            m.state in ('done', 'assigned') AND
+                            (expired_date is null or expired_date >= CURRENT_DATE)
+                            GROUP BY m.location_id, loc.parent_left, m.prodlot_id, lot.life_date) as subs
+                    GROUP BY location, parent_left, prodlot_id, expired_date
+                    ORDER BY expired_date asc, prodlot_id asc, parent_left
                    """,
                    (tuple(location_ids), product_id, tuple(location_ids), product_id))
 
-        # merge results according to uom if needed
-        fefo_list = []
+        results = []
         for r in cr.dictfetchall():
             # consolidates the uom
-            amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], uom_id)
+            amount = r['product_qty'] * factor
             # total for all locations
-            data['total'] = data.get('total', 0) + amount
+            if amount <= 0:
+                continue
+            if amount >= needed_qty:
+                if results and results[-1][1:4] == [r['location'], r['expired_date'], r['prodlot_id']]:
+                    results[-1][0] += needed_qty
+                else:
+                    results.append([needed_qty, r['location'], r['expired_date'], r['prodlot_id']])
+                return results
 
-            if r['expired_date'] and r['expired_date'] not in data:
-                fefo_list.append(r['expired_date'])
+            if results and results[-1][1:4] == [r['location'], r['expired_date'], r['prodlot_id']]:
+                results[-1][0] += amount
+            else:
+                results.append([amount, r['location'], r['expired_date'], r['prodlot_id']])
 
-            data.setdefault(r['expired_date'], {}).setdefault(r['prodlot_id'], {}).setdefault(r['location'], {}).setdefault('total', 0.0)
-            data[r['expired_date']][r['prodlot_id']][r['location']]['total'] += amount
+            needed_qty -= amount
 
+        if not results:
+            return []
+        if needed_qty:
+            results.append([needed_qty, False, False, False, False])
 
-        data['fefo'] = fefo_list
-        return data
+        return results
 
 stock_location()
 

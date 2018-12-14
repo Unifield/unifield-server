@@ -638,8 +638,6 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo, context)
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
         return ret
 
     @check_cp_rw
@@ -682,9 +680,6 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo)
-
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
         return True
 
 stock_move()
