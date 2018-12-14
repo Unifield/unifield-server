@@ -1492,7 +1492,7 @@ class stock_location(osv.osv):
             # total for all locations
             data['total'] = data.get('total', 0) + amount
 
-            if r['expired_date'] not in data:
+            if r['expired_date'] and r['expired_date'] not in data:
                 fefo_list.append(r['expired_date'])
 
             data.setdefault(r['expired_date'], {}).setdefault(r['prodlot_id'], {}).setdefault(r['location'], {}).setdefault('total', 0.0)
