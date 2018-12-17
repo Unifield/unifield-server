@@ -2050,35 +2050,6 @@ class patch_scripts(osv.osv):
                 where module='sd' and model='msf_button_access_rights.button_access_rule'
             ''')
 
-    def update_volume_patch(self, cr, uid, *a, **b):
-        """
-        Update the volume from dm³ to m³ for OCB databases
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param a: Unnamed parameters
-        :param b: Named parameters
-        :return: True
-        """
-        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance:
-            while instance.level != 'section':
-                if not instance.parent_id:
-                    break
-                instance = instance.parent_id
-
-        if instance and instance.name != 'OCBHQ':
-            cr.execute("""
-                UPDATE product_template
-                SET volume_updated = True
-                WHERE volume_updated = False
-            """)
-        else:
-            cr.execute("""
-                UPDATE product_template
-                SET volume = volume*1000,
-                    volume_updated = True
-                WHERE volume_updated = False
-            """)
 
     def us_750_patch(self, cr, uid, *a, **b):
         """
