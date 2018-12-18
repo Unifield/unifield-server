@@ -247,6 +247,7 @@ class List(SecuredController):
         groupby = params.get('_terp_group_by_ctx')
         if groupby and isinstance(groupby, basestring):
             groupby = groupby.split(',')
+            print 'HHHHHHHHHHHH', groupby
 
         if params.get('_terp_filters_context'):
             if isinstance(params.filters_context, (list, tuple)):
