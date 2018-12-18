@@ -86,6 +86,7 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date or ''|n}T00:00:00.000</Data></Cell>
+        <Cell ><Data ss:Type="String">${o.partner_id2.name or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FO Ref.')}</Data></Cell>
@@ -94,22 +95,27 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin Ref.')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id.client_order_ref or '' | x}</Data></Cell>
+        <Cell ><Data ss:Type="String">${_('Supply responsible') | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Incoming Ref.')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.incoming_id.name or '' | x}</Data></Cell>
+        <Cell ><Data ss:Type="String">${o.partner_id2.address[0].street or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Category')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'order_category') or '' | x}</Data></Cell>
+        <Cell ><Data ss:Type="String">${o.partner_id2.address[0].street2 or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Packing Date')}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.sale_id.delivery_requested_date or ''| n}T00:00:00.000</Data></Cell>
+        <Cell ><Data ss:Type="String">${o.partner_id2.address[0].country_id.name or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total items')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${len(o.move_lines) | x}</Data></Cell> <!-- TODO -->
+        <Cell ><Data ss:Type="String">${o.partner_id2.address[0].phone or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Content')}</Data></Cell>
@@ -149,17 +155,17 @@
           <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.line_number or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.default_code or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id.original_changed and _('Yes') or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_qty or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or _('No') | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or _('No') | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or _('No') | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or '' | x}</Data></Cell>
       </Row>
     % endfor
 </Table>
