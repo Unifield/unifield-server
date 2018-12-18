@@ -59,24 +59,35 @@
 % for o in objects:
 <ss:Worksheet ss:Name="${_('PICK Export')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
-    ## Line Number
-    <Column ss:AutoFitWidth="1" ss:Width="120.75" />
-    ## Product code
-    <Column ss:AutoFitWidth="1" ss:Width="145.75" />
-    ## Product description
-    <Column ss:AutoFitWidth="1" ss:Width="250.25" />
-    ## Qty
-    <Column ss:AutoFitWidth="1" ss:Width="58.75" />
-    ## Cost Price
-    <Column ss:AutoFitWidth="1" ss:Width="75.75" />
-    ## UoM
-    <Column ss:AutoFitWidth="1" ss:Width="63.75" />
-    ## Currency
-    <Column ss:AutoFitWidth="1" ss:Width="63.75" />
-    ## Comment
-    <Column ss:AutoFitWidth="1" ss:Width="209.25" />
-    ## Date of Stock Take
-    <Column ss:AutoFitWidth="1" ss:Width="75.75" />
+
+    ## Item
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    ## Code
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
+    ## Description
+    <Column ss:AutoFitWidth="1" ss:Width="250" />
+    ## Changed Article
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    ## Comment
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    ## Src. Location
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    ## Qty in Stock
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    ## Qty to Pick
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    ## Qty Picked
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    ## Batch
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    ## Expiry Date
+    <Column ss:AutoFitWidth="1" ss:Width="60" />
+    ## KC
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    ## DG
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    ## CS
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
@@ -114,12 +125,12 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Total items')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${len(o.move_lines) | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getNbItems(o) | x}</Data></Cell>
         <Cell ><Data ss:Type="String">${o.partner_id2.address[0].phone or '' | x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Content')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell> <!-- TODO -->
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.sale_id and o.sale_id.details or '' | x}</Data></Cell> 
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
@@ -155,11 +166,11 @@
           <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.line_number or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.default_code or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id.original_changed and _('Yes') or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id and move.sale_line_id.product_id != move.product_id and '[%s] %s' % (move.product_id.default_code, move.product_id.name) or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_qty or '' | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(getStock(m) or 0.00) | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(move.product_qty or 0.00) | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>

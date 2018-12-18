@@ -124,6 +124,74 @@ class internal_request_export(WebKitParser):
 internal_request_export('report.internal_request_export','sale.order','addons/msf_supply_doc_export/internal_request_export_xls.mako')
 
 
+
+class picking_ticket_parser(report_sxw.rml_parse):
+    """
+    Parser for the picking ticket report
+    """
+
+    def __init__(self, cr, uid, name, context=None):
+        """
+        Set the localcontext on the parser
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs this method
+        :param name: Name of the parser
+        :param context: Context of the call
+        """
+        super(picking_ticket_parser, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'cr': cr,
+            'uid': uid,
+            'getStock': self.get_stock,
+            'getNbItems': self.get_nb_items,
+        })
+
+
+    def get_nb_items(self, picking):
+        """
+        Returns the number of different line number. If a line is split
+        with a different product, this line count for +1
+        """
+        res = 0
+        dict_res = {}
+        for m in picking.move_lines:
+            dict_res.setdefault(m.line_number, {})
+            if m.product_id.id not in dict_res[m.line_number]:
+                dict_res[m.line_number][m.product_id.id] = 1
+
+        for ln in dict_res.values():
+            for p in ln.values():
+                res += p
+
+        return res
+
+
+    def get_stock(self, move=False):
+        product_obj = self.pool.get('product.product')
+
+        context = {}
+
+        if not move:
+            return 0.00
+
+        if move.location_id:
+            context = {
+                'location': move.location_id.id,
+                'location_id': move.location_id.id,
+                'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+            }
+
+        qty_available = product_obj.browse(
+            self.cr,
+            self.uid,
+            move.product_id.id,
+            context=context).qty_available
+
+        return qty_available
+
+
 class report_pick_export_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -139,7 +207,8 @@ class report_pick_export_xls(WebKitParser):
         a = super(report_pick_export_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-report_pick_export_xls('report.pick.export.xls','stock.picking','addons/msf_supply_doc_export/report/report_pick_export_xls.mako')
+report_pick_export_xls('report.pick.export.xls','stock.picking','addons/msf_supply_doc_export/report/report_pick_export_xls.mako', parser=picking_ticket_parser)
+
 
 
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object
