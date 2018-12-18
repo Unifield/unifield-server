@@ -1299,12 +1299,14 @@ class product_attributes(osv.osv):
             unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
             if vals.get('international_status') == unidata_id and (vals.get('currency_id') or vals.get('field_currency_id')):
                 curr_obj = self.pool.get('res.currency')
-                if vals.get('standard_price') and vals['standard_price'] != 1 and vals.get('currency_id') != company.currency_id.id:
-                    vals['standard_price'] = round(curr_obj.compute(cr, 1, vals['currency_id'], company.currency_id.id, vals['standard_price'], round=False, context=context), 5)
+                if vals.get('standard_price') and vals.get('currency_id') != company.currency_id.id:
+                    if vals['standard_price'] != 1:
+                        vals['standard_price'] = round(curr_obj.compute(cr, 1, vals['currency_id'], company.currency_id.id, vals['standard_price'], round=False, context=context), 5)
                     vals['currency_id'] = company.currency_id.id
                     converted = True
-                if vals.get('list_price') and vals['list_price'] != 1 and vals.get('field_currency_id') != company.currency_id.id:
-                    vals['list_price'] = round(curr_obj.compute(cr, 1, vals['field_currency_id'], company.currency_id.id, vals['list_price'], round=False, context=context), 5)
+                if vals.get('list_price') and vals.get('field_currency_id') != company.currency_id.id:
+                    if vals['list_price'] != 1:
+                        vals['list_price'] = round(curr_obj.compute(cr, 1, vals['field_currency_id'], company.currency_id.id, vals['list_price'], round=False, context=context), 5)
                     vals['field_currency_id'] = company.currency_id.id
                     converted = True
 
