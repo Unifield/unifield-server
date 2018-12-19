@@ -206,7 +206,7 @@ class ppl_processor(osv.osv):
 
         ok = True
         for line in lines:
-            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, line_number=line.line_number, context=context)
+            ok = ok and self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, line_number=line.line_number, context=context)
         return ok
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
