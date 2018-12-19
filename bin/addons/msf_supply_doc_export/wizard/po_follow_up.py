@@ -33,19 +33,40 @@ class po_follow_up(osv.osv_memory):
 
     _columns = {
         'po_id': fields.many2one('purchase.order', string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
-        'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
         'po_date_from': fields.date("PO date from", required="False"),
         'po_date_thru': fields.date("PO date to", required="False"),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=False),
         'project_ref': fields.char('Supplier reference', size=64, required=False),
-        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
         'background_time': fields.integer('Number of second before background processing'),
+        'draft_ok': fields.boolean('Draft'),
+        'validated_ok': fields.boolean('Validated'),
+        'sourced_ok': fields.boolean('Sourced'),
+        'confirmed_ok': fields.boolean('Confirmed'),
+        'closed_ok': fields.boolean('Closed'),
+        'cancel_ok': fields.boolean('Cancel'),
+        'pending_only_ok': fields.boolean('Pending order only'),
     }
 
     _defaults = {
         'export_format': lambda *a: 'xls',
         'background_time': lambda *a: 20,
     }
+
+    def excel_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        pass
+
+
+    def pdf_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        pass
+        
 
     def button_validate(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids)[0]

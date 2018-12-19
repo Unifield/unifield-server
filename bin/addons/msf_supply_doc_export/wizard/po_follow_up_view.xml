@@ -8,17 +8,33 @@
 		<field name="type">form</field>
 		<field name="arch" type="xml">
 			<form string="Purchase Order Follow Up Report">
-				<field name="po_id" colspan="2" domain="[('rfq_ok', '=', False)]" />
-				<field name="state" colspan="2" />
-				<field name="po_date_from" colspan="2" />  <!-- need to do from / though on dates  -->
-				<field name="po_date_thru" colspan="2" />
-				<field name="partner_id" colspan="2" />
-				<field name="project_ref" colspan="2" />
-				<field name="export_format" colspan="2" />
-				<group col="4" colspan="6">
-					<label string="" colspan="1"/>
-					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
-					<button name="button_validate" type="object" string="Generate report" icon="gtk-ok" colspan="1"/>
+				<group colspan="2">
+					<field name="po_id" domain="[('rfq_ok', '=', False)]" />
+					<field name="po_date_from" />  <!-- need to do from / though on dates  -->
+					<field name="partner_id" />
+					<field name="po_date_thru" />
+					<field name="project_ref" />
+				</group>
+
+				<separator string="Order statuses" colspan="4" />
+				<group>
+					<field name="draft_ok" colspan="4" />
+					<field name="validated_ok" colspan="4" />
+					<field name="sourced_ok" colspan="4" />
+					<field name="confirmed_ok" colspan="4" />
+					<field name="closed_ok" colspan="4" />
+					<field name="cancel_ok" colspan="4" />
+				</group>
+
+				<separator string="Report parameters" colspan="4" />
+				<group colspan="2">
+					<field name="pending_only_ok" />
+				</group>
+				
+				<separator string="Actions" />
+				<group colspan="2">
+					<button name="excel_report" type="object" string="Excel report" icon="gtk-ok"/>
+					<button name="pdf_report" type="object" string="PDF report" icon="gtk-ok"/>
 				</group>
 			</form>
 		</field>
