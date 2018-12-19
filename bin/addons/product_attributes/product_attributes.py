@@ -1473,6 +1473,17 @@ class product_attributes(osv.osv):
 
             cr.execute('select distinct(list.id) from product_list list, product_list_line line where line.list_id = list.id and line.name = %s', (product.id,))
             has_product_list = [x[0] for x in cr.fetchall()]
+            if context.get('sync_update_execution') and has_product_list:
+                # update to deactivate product is executed before the update to remove prod from list
+                # so we have to check if a update is in the pipe
+                cr.execute('''select d.name from ir_model_data d
+                        left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
+                         where d.model='product.list.line' and d.module='sd'
+                            d.res_id in (select id from product_list_line where name=%s) and up.id is null''', (product.id,)
+                           )
+                if not cr.rowcount:
+                    has_product_list = []
+
 
             # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
