@@ -103,10 +103,10 @@
                     <para style="Header">[[ picking.origin ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Actual Shipped Date :</para>
+                    <para style="HeaderRight">Your Ref.:</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.move_lines and formatLang(picking.move_lines[0].date, date_time=True) or '' ]]</para>
+                    <para style="Header">[[ picking.sale_id and not picking.sale_id.procurement_request and picking.sale_id.client_order_ref.split('.')[-1] or '' ]]</para>
                 </td>
             </tr>
             <tr>
@@ -123,10 +123,10 @@
                     <para style="Header">[[ picking.requestor or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Expected Shipped Date :</para>
+                    <para style="HeaderRight">Actual Shipped Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(picking.min_date, date_time=True) ]]</para>
+                    <para style="Header">[[ picking.move_lines and formatLang(picking.move_lines[0].date, date_time=True) or '' ]]</para>
                 </td>
             </tr>
             <tr>
@@ -143,10 +143,10 @@
                     <para style="Header">[[ picking.address_id and get_address(picking.address_id.id) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">Warehouse :</para>
+                    <para style="HeaderRight">Expected Shipped Date :</para>
                 </td>
                 <td>
-                    <para style="Header">[[ picking.warehouse_id and picking.warehouse_id.name or '' ]]</para>
+                    <para style="Header">[[ formatLang(picking.min_date, date_time=True) ]]</para>
                 </td>
             </tr>
             <tr>
@@ -163,10 +163,10 @@
                     <para style="Header">[[ picking.reason_type_id and picking.reason_type_id.name or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight"></para>
+                    <para style="HeaderRight">Warehouse :</para>
                 </td>
                 <td>
-                    <para style="Header"></para>
+                    <para style="Header">[[ picking.warehouse_id and picking.warehouse_id.name or '' ]]</para>
                 </td>
             </tr>
         </blockTable>
