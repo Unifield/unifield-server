@@ -1478,7 +1478,7 @@ class product_attributes(osv.osv):
                 # so we have to check if a update is in the pipe
                 cr.execute('''select d.name from ir_model_data d
                         left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
-                         where d.model='product.list.line' and d.module='sd'
+                         where d.model='product.list.line' and d.module='sd' and
                             d.res_id in (select id from product_list_line where name=%s) and up.id is null''', (product.id,)
                            )
                 if not cr.rowcount:
