@@ -27034,8 +27034,8 @@ msgstr "Erreur de configuration !"
 msgid "Resume All Synchronization Process"
 msgstr "Reprendre le processus de Synchronisation"
 
-#. module: unifield_setup
-#: code:addons/unifield_setup/installer/sales_price.py:146
+#. module: product
+#: code:addons/product/product.py:772
 #, python-format
 msgid "The Cost Price must be greater than 0 !"
 msgstr "Le Prix de revient doit être supérieur à 0 !"
@@ -58795,7 +58795,7 @@ msgstr "Déplacer id."
 msgid "Write-Off Journal"
 msgstr "Journal Ajustement"
 
-#. modules: analytic_distribution_supply, financing_contract, account_hq_entries, account_override, product_attributes, account_journal, register_accounting, msf_accrual, sync_client, account_mcdb, supplier_catalogue, stock_schedule, procurement_request, unifield_setup, order_types, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, msf_homere_interface, account_reconciliation, msf_instance, purchase_override, base, account_period_closing_level, msf_currency_revaluation, account_subscription, threshold_value, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, vertical_integration, sale, sales_followup, sourcing, purchase, product_list, consumption_calculation, stock, msf_profile, msf_config_locations, tender_flow, msf_partner, res_currency_tables
+#. modules: analytic_distribution_supply, financing_contract, account_hq_entries, account_override, product_attributes, account_journal, register_accounting, msf_accrual, sync_client, account_mcdb, supplier_catalogue, stock_schedule, procurement_request, unifield_setup, order_types, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, msf_homere_interface, account_reconciliation, msf_instance, purchase_override, base, account_period_closing_level, msf_currency_revaluation, account_subscription, threshold_value, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, vertical_integration, sale, sales_followup, sourcing, purchase, product_list, consumption_calculation, stock, msf_profile, msf_config_locations, tender_flow, msf_partner, res_currency_tables, product
 #: code:addons/msf_doc_import/account.py:206
 #: code:addons/msf_doc_import/account.py:220
 #: code:addons/msf_doc_import/account.py:477
@@ -59183,6 +59183,7 @@ msgstr "Journal Ajustement"
 #: code:addons/msf_instance/msf_instance.py:759
 #: code:addons/msf_instance/msf_instance.py:768
 #: code:addons/msf_instance/msf_instance.py:775
+#: code:addons/product/product.py:771
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
