@@ -686,7 +686,7 @@ class shipment(osv.osv):
                 picking = family.draft_packing_id
 
                 move_ids = self.pool.get('stock.move').search(cr, uid, [
-                    ('picking_id', '=', picking.id),
+                    ('picking_id', '=', family.ppl_id.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack)
                 ], context=context)
