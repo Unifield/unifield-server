@@ -103783,15 +103783,11 @@ msgstr "La Zone Source %s est inactive"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:696
-#, python-format
-msgid "You cannot process a partial number of packs containing a split integer product"
-msgstr "Vous ne pouvez pas valider partiellement un nombre de colis contenant des produits entiers divisés"
-
-#. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:922
+#: code:addons/msf_outgoing/msf_outgoing.py:1205
 #, python-format
-msgid "You cannot return a partial number of packs containing a split integer product"
-msgstr "Vous ne pouvez pas valider retourner un nombre de colis contenant des produits entiers divisés"
+msgid "Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together"
+msgstr "Attention, cet intervalle de colis contient un ou plusieurs produit(s) avec un nombre non entier par colis. Tous les colis doivent être validés ensemble"
 
 #. module: msf_outgoing
 #: field:check.ppl.integrity,line_number_with_issue:0
