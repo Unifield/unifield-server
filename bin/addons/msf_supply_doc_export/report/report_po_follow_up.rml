@@ -126,7 +126,7 @@
         </td>
       </tr>
       <tr>
-         <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
+         <para style="P4">[[ repeatIn(getPOLines(o.id, getRunParmsRML('pending_only_ok')), 'line') ]]</para>
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>

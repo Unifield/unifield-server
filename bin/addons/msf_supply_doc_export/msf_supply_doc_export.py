@@ -597,14 +597,14 @@ class po_follow_up_mixin(object):
     def get_qty_backordered(self, pol_id, qty_ordered, qty_received, first_line):
         pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
         if pol.state.startswith('cancel'):
-            return '0.00'
+            return 0.0
         if not qty_ordered:
-            return '0.00'
+            return 0.0
         try:
             qty_ordered = float(qty_ordered)
             qty_received = float(qty_received)
         except:
-            return '0.00'
+            return 0.0
 
         # Line partially received:
         in_move_done = self.pool.get('stock.move').search(self.cr, self.uid, [
@@ -633,7 +633,15 @@ class po_follow_up_mixin(object):
         return new_date
 
 
-    def getPOLines(self, po_id):
+    def filter_pending_only(self, report_lines):
+        res = []
+        for line in report_lines:
+            if line['qty_backordered'] > 0:
+                res.append(line)
+        return res
+
+
+    def getPOLines(self, po_id, pending_only_ok=False):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
@@ -829,6 +837,9 @@ class po_follow_up_mixin(object):
                     ),
                 }
                 report_lines.append(report_line)
+
+        if pending_only_ok:
+            report_lines = self.filter_pending_only(report_lines)
 
         return report_lines
 

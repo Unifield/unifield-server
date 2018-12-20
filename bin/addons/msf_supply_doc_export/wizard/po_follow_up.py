@@ -44,7 +44,7 @@ class po_follow_up(osv.osv_memory):
         'confirmed_ok': fields.boolean('Confirmed'),
         'closed_ok': fields.boolean('Closed'),
         'cancel_ok': fields.boolean('Cancel'),
-        'pending_only_ok': fields.boolean('Pending order only'),
+        'pending_only_ok': fields.boolean('Pending order line only'),
     }
 
     _defaults = {
@@ -57,7 +57,8 @@ class po_follow_up(osv.osv_memory):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        pass
+
+        return self.button_validate(cr, uid, ids, report_name='po.follow.up_xls', context=None)
 
 
     def pdf_report(self, cr, uid, ids, context=None):
@@ -65,23 +66,60 @@ class po_follow_up(osv.osv_memory):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        pass
-        
 
-    def button_validate(self, cr, uid, ids, context=None):
+        return self.button_validate(cr, uid, ids, report_name='po.follow.up_rml', context=None)
+
+
+    def get_state_list(self, cr, uid, wiz, context=None):
+        if context is None:
+            context = {}
+        res = []
+        if wiz.draft_ok:
+            res.append('draft')
+            res.append('draft_p')
+        if wiz.validated_ok:
+            res.append('validated')
+            res.append('validated_p')
+        if wiz.sourced_ok:
+            res.append('sourced')
+            res.append('sourced_p')
+        if wiz.confirmed_ok:
+            res.append('confirmed')
+            res.append('confirmed_p')
+        if wiz.closed_ok:
+            res.append('done')
+        if wiz.cancel_ok:
+            res.append('cancel')
+
+        if not res:
+            res = [key for key, value in PURCHASE_ORDER_STATE_SELECTION]
+
+        return res
+
+
+    def get_states_str(selft, cr, uid, states, context=None):
+        if context is None:
+            context = {}
+        res = [value for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
+
+        return ', '.join(res).strip(', ')
+
+
+    def button_validate(self, cr, uid, ids, report_name, context=None):
+        if context is None:
+            context = {}
+
         wiz = self.browse(cr, uid, ids)[0]
 
         domain = [('rfq_ok', '=', False)]
-        states = {}
-        for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
-            states[state_val] = state_string
         report_parms = {
             'title': 'PO Follow Up per Supplier',
             'run_date': time.strftime("%d.%m.%Y"),
             'date_from': '',
             'date_thru': '',
             'state': '',
-            'supplier': ''
+            'supplier': '',
+            'pending_only_ok': wiz.pending_only_ok,
         }
 
         # PO number
@@ -89,9 +127,9 @@ class po_follow_up(osv.osv_memory):
             domain.append(('id', '=', wiz.po_id.id))
 
         # Status
-        if wiz.state:
-            domain.append(('state', '=', wiz.state))
-            report_parms['state'] = states[wiz.state]
+        state_list = self.get_state_list(cr, uid, wiz, context=context)
+        domain.append(('state', 'in', state_list))
+        report_parms['state'] = self.get_states_str(cr, uid, state_list, context=context)
 
         # Dates
         if wiz.po_date_from:
@@ -119,7 +157,7 @@ class po_follow_up(osv.osv_memory):
 
         if not po_ids:
             raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
-            return True
+            return True            
 
         report_header = []
         report_header.append(report_parms['title'])
@@ -138,10 +176,6 @@ class po_follow_up(osv.osv_memory):
         report_header.append(report_header_line2)
 
         datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}
-        if wiz.export_format == 'xls':
-            report_name = 'po.follow.up_xls'
-        else:
-            report_name = 'po.follow.up_rml'
 
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
