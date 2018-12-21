@@ -1,8 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,23 @@
 #
 ##############################################################################
 
-import po_follow_up
-import wizard_pick_import
+from osv import osv
+from osv import fields
+from tools.translate import _
+
+
+class wizard_pick_import(osv.osv_memory):
+    _name = 'wizard.pick.import'
+    _description = 'PICK import wizard'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string="PICK ref", required=True),
+        'import_file': fields.binary('PICK import file'),
+    }
+
+    def import_pick_xls(self, cr, uid, ids, context=None):
+        pass
+
+wizard_pick_import()
+
 

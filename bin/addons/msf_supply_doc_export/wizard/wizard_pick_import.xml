@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record id="wizard_pick_import_view" model="ir.ui.view">
+        <field name="name">wizard.pick.import.view</field>
+        <field name="model">wizard.pick.import</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="PICK import">
+                <field name="import_file" />
+                <separator string="Actions" />
+                <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                <button name="import_pick_xls" type="object" string="Import PICK" icon="gtk-ok" />
+            </form>
+        </field>
+    </record>
+        </data>
+</openerp>
