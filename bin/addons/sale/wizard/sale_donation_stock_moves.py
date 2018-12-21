@@ -53,6 +53,11 @@ class sale_donation_stock_moves(osv.osv_memory):
             'product.product',
             string='Product Ref.',
         ),
+        'product_type': fields.selection(
+            [('product', 'Stockable Product'), ('consu', 'Non-Stockable'), ('service_recep', 'Service with Reception')],
+            'Product Type',
+            help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."
+        ),
         'move_id': fields.many2one(
             'stock.move',
             string='Move Ref.',
@@ -107,6 +112,9 @@ class sale_donation_stock_moves(osv.osv_memory):
 
                 if wizard.product_id:
                     sm_domain.append(('product_id', '=', wizard.product_id.id))
+
+                if wizard.product_type:
+                    sm_domain.append(('product_type', '=', wizard.product_type))
 
                 sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
 
