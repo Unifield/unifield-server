@@ -96,7 +96,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date or ''|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${format_date(o.date)|n}T00:00:00.000</Data></Cell>
         <Cell ><Data ss:Type="String">${o.partner_id2.name or '' | x}</Data></Cell>
     </Row>
     <Row>
@@ -170,7 +170,7 @@
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(getStock(m) or 0.00) | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(move.product_qty or 0.00) | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.product_qty or 0.00 | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${'' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>

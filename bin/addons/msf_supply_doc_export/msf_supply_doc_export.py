@@ -146,8 +146,15 @@ class picking_ticket_parser(report_sxw.rml_parse):
             'uid': uid,
             'getStock': self.get_stock,
             'getNbItems': self.get_nb_items,
+            'format_date': self.format_date,
         })
 
+
+    def format_date(self, date):
+        if not date:
+            return ''
+        struct_time = time.strptime(date, '%Y-%m-%d %H:%M:%S')
+        return time.strftime('%Y-%m-%d', struct_time)
 
     def get_nb_items(self, picking):
         """
