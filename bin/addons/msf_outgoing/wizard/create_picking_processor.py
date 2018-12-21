@@ -46,6 +46,27 @@ class create_picking_processor(osv.osv):
     """
     Model methods
     """
+    def import_pick(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No PICK selected'))
+
+        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {'picking_id': ids[0]}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.pick.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+
     def do_create_picking(self, cr, uid, ids, context=None):
         """
         Made some integrity checks and launch create_picking method of the stock.picking object
