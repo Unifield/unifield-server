@@ -33,6 +33,7 @@ import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import UNIT_SEPARATOR
+import re
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -159,7 +160,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         """
         for i in range(len(line)):
             if line[i] and isinstance(line[i], basestring) and UNIT_SEPARATOR in line[i]:
-                line[i] = line[i].replace(UNIT_SEPARATOR, '\x1F')
+                line[i] = re.sub('%s_([0-9][0-9]{0,1})' % UNIT_SEPARATOR, lambda a: chr(int(a.group(1))), line[i])
         return line
 
     def _import(self, dbname, uid, ids, context=None):
