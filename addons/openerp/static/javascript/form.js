@@ -32,6 +32,7 @@ function showActionSdref(ev, action_name, model, action_id)
         }).addCallback(function(obj){
             if (obj) {
                 alert(
+                    'Name : ' + action_name + '\n' +
                     'Action sdref: sd.' + obj.sdref + '\n' +
                     'Action Id: '+ action_id +'\n' +
                     'Groups: '+ obj.groups +'\n' +
