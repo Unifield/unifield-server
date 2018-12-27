@@ -910,7 +910,13 @@ class orm_template(object):
                 obj_model = self.pool.get(model_name)
                 ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
-                    raise ValueError('No record found for %s' % (id,))
+                    if context.get('sync_update_execution'):
+                        newctx = context.copy()
+                        newctx['active_test'] = False
+                        ids = obj_model.name_search(cr, uid, id, operator='=', context=newctx)
+
+                    if not ids:
+                        raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
             return id
 
