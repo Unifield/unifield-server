@@ -10,7 +10,7 @@
       <field name="model">sync.client.update_received</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:run == False" string="Updates Received" hide_new_button="1">
+        <tree colors="red:run == False" string="Updates Received" hide_new_button="1" hide_delete_button="1">
           <field name="sequence_number"/>
           <field name="source"/>
           <field name="model"/>
@@ -31,9 +31,10 @@
       <field name="type">form</field>
       <field name="priority">1</field>
       <field name="arch" type="xml">
-        <form string="Update Received" hide_new_button="1" hide_duplicate_button="1" >
+        <form string="Update Received" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
           <group col="2" colspan="2">
             <separator string="Record" colspan="2"/>
+            <field name="manually_ran" invisible="1" />
             <field name="model"/>
             <field name="sdref"/>
             <group col="6" colspan="2">
@@ -89,6 +90,9 @@
                    attrs="{'invisible':[('run','=',True)]}"/>
             <button string="Run manually" name="run" type="object"
                     attrs="{'invisible':[('run','=',True)]}"/>
+            <label string="" colspan="2" />
+            <button string="Run without execution" name="manual_set_as_run" type="object" icon="gtk-del"
+                    attrs="{'invisible':['|', ('run','=',True), ('manually_ran', '=', False)]}" confirm="Do you want to set this update as run without execution ?"/>
           </group>
           <separator string="Fields -> Values" colspan="4"/>
           <field name="fieldsvalues" nolabel="1" colspan="4" widget="text"/>

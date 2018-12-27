@@ -361,6 +361,13 @@ class message_received(osv.osv):
         'create_date' :fields.datetime('Receive Date', readonly=True),
         'editable' : fields.boolean("Set editable"),
         'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
+    }
+
+    _defaults = {
+        'manually_ran': False,
+        'manually_set_run_date': False,
     }
 
     _logger = logging.getLogger('sync.client')
@@ -402,6 +409,15 @@ class message_received(osv.osv):
             else:
                 res.append(arg)
         return res
+
+    def manual_execute(self, cr, uid, ids, context=None):
+        self.execute(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'manually_ran': True}, context=context)
+        return True
+
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
 
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
