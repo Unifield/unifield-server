@@ -1255,6 +1255,7 @@ class product_attributes(osv.osv):
 
         vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
 
+        self.convert_price(cr, uid, vals, context)
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
 
@@ -1273,6 +1274,30 @@ class product_attributes(osv.osv):
                               context=context)
 
         return res
+
+    def convert_price(self, cr, uid, vals, context=None):
+        """ on OCG_HQ UniDate creates products with EUR currency: convert prices to CHF """
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        converted = False
+
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and company and company.instance_id and company.instance_id.instance == 'OCG_HQ':
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            if vals.get('international_status') == unidata_id and (vals.get('currency_id') or vals.get('field_currency_id')):
+                curr_obj = self.pool.get('res.currency')
+                if vals.get('standard_price') and vals.get('currency_id') != company.currency_id.id:
+                    if vals['standard_price'] != 1:
+                        vals['standard_price'] = round(curr_obj.compute(cr, 1, vals['currency_id'], company.currency_id.id, vals['standard_price'], round=False, context=context), 5)
+                    vals['currency_id'] = company.currency_id.id
+                    converted = True
+                if vals.get('field_currency_id') != company.currency_id.id:
+                    vals['field_currency_id'] = company.currency_id.id
+                    converted = True
+
+        return converted
+
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1408,6 +1433,7 @@ class product_attributes(osv.osv):
 
         vals['uf_write_date'] = vals.get('uf_write_date', datetime.now())
 
+        self.convert_price(cr, uid, vals, context)
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
         if product_uom_categ:
