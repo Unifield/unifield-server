@@ -175,39 +175,35 @@ class ppl_processor(osv.osv):
 
         return ok
 
-    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status', line_number=False, context=None):
+    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, context=None):
         if context is None:
             context = {}
 
-        ok = True
+
         if uom_obj.rounding == 1:
             if quantity % int(num_of_packs) != 0:
-                ok = False
+                return False
         else:
             qty_per_pack = quantity/int(num_of_packs)
             rounded_qty_pp = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack)
             if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
                     and abs(qty_per_pack - rounded_qty_pp) != 0:
-                ok = False
+                return False
 
-        if not ok and line_number:
-            line_number_with_issue = context.get('line_number_with_issue', [])
-            line_number_with_issue.append(line_number)
-            context['line_number_with_issue'] = line_number_with_issue
+        return True
 
-        return ok
-
-    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=None):
+    def check_qty_pp(self, cr, uid, lines, context=None):
         '''
         Check quantities per pack integrity with UoM
         '''
         if context is None:
             context = {}
 
-        ok = True
+        rounding_issues = []
         for line in lines:
-            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, line_number=line.line_number, context=context) and ok
-        return ok
+            if not self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, context=context):
+                rounding_issues.append(line.line_number)
+        return rounding_issues
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
         """
@@ -230,49 +226,28 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
+        wizard = self.browse(cr, uid, ids, context=context)[0]
+
         ok_ids = []
-        seq_ok, qty_ok = True, True
-        for wizard in self.browse(cr, uid, ids, context=context):
-            # List of sequences
-            sequences = []
+        sequences = []
 
-            for line in wizard.move_ids:
-                sequences.append((line.from_pack, line.to_pack, line.id))
-                ok_ids.append(line.id)
+        for line in wizard.move_ids:
+            sequences.append((line.from_pack, line.to_pack, line.id))
+            ok_ids.append(line.id)
 
-            # If no data, we return False
-            if not sequences:
-                return False
+        # no data
+        if not sequences:
+            return False
 
-            seq_ok = seq_ok and self.check_sequences(cr, uid, sequences, ppl_move_obj)
-            qty_ok = qty_ok and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj, context=context)
-
-            if not qty_ok:
-                ln_issue = context.get('line_number_with_issue', [])
-                if ln_issue:
-                    ln_sorted = sorted(list(set(ln_issue)))
-                    ln_str = ', '.join([str(x) for x in ln_sorted]).strip(', ')
-
-                wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
-                    'ppl_processor_id': wizard.id,
-                    'line_number_with_issue': ln_str,
-                }, context=context)
-                return {
-                    'name': _("PPL integrity"),
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'check.ppl.integrity',
-                    'target': 'new',
-                    'res_id': [wiz_check_ppl_id],
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'context': context,
-                }
-
-        if seq_ok and qty_ok and just_check:
-            ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
+        # reset previous integrity status
+        ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
 
-        if not (seq_ok and qty_ok) or just_check:
+        seq_ok = self.check_sequences(cr, uid, sequences, ppl_move_obj)
+        rounding_issues = self.check_qty_pp(cr, uid, wizard.move_ids, context=context)
+
+
+        if not seq_ok or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
@@ -284,6 +259,24 @@ class ppl_processor(osv.osv):
                 'res_id': ids[0],
                 'context': context,
             }
+
+        if rounding_issues:
+            rounding_issues.sort()
+            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                'ppl_processor_id': wizard.id,
+                'line_number_with_issue': ', '.join([str(x) for x in rounding_issues]),
+            }, context=context)
+            return {
+                'name': _("PPL integrity"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'check.ppl.integrity',
+                'target': 'new',
+                'res_id': [wiz_check_ppl_id],
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+            }
+
 
         # Call stock_picking method which returns action call
         return picking_obj.do_ppl_step1(cr, uid, ids, context=context)

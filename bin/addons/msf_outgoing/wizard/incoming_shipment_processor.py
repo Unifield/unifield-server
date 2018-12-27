@@ -651,7 +651,8 @@ class stock_incoming_processor(osv.osv):
             ids = [ids]
         wizard = self.browse(cr, uid, ids[0], context=context)
 
-        sequence_ok, rounding_ok = True, True
+        sequence_ok = True
+        rounding_issues = []
         total_qty = 0
         sequences = {}
         for move in wizard.move_ids:
@@ -660,12 +661,8 @@ class stock_incoming_processor(osv.osv):
                 sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
                 num_of_packs = move.to_pack - move.from_pack + 1
                 if num_of_packs:
-                    current_rounding_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', line_number=move.line_number, context=context)
-                    if not current_rounding_ok:
-                        ln_issue = context.get('line_number_with_issue', [])
-                        ln_issue.append(move.line_number)
-                        context['line_number_with_issue'] = ln_issue
-                    rounding_ok = rounding_ok and current_rounding_ok
+                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, context=context):
+                        rounding_issues.append(move.line_number)
             if move.integrity_status and move.integrity_status != 'empty':
                 raise osv.except_osv(
                     _('Error'),
@@ -680,11 +677,11 @@ class stock_incoming_processor(osv.osv):
 
         if not sequences:
             sequence_ok = False
-            return (rounding_ok, sequence_ok)
+            return (rounding_issues, sequence_ok)
         for pl in sequences:
             sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
 
-        return (rounding_ok, sequence_ok)
+        return (rounding_issues, sequence_ok)
 
 
     def create_pack_family_lines(self, cr, uid, ids, context=None):
@@ -740,28 +737,7 @@ class stock_incoming_processor(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        rounding_ok, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
-
-        if not rounding_ok:
-            ln_issue = context.get('line_number_with_issue', [])
-            if ln_issue:
-                ln_sorted = sorted(list(set(ln_issue)))
-                ln_str = ', '.join([str(x) for x in ln_sorted]).strip(', ')
-
-            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
-                'incoming_processor_id': ids[0],
-                'line_number_with_issue': ln_str,
-            }, context=context)
-            return {
-                'name': _("PPL integrity"),
-                'type': 'ir.actions.act_window',
-                'res_model': 'check.ppl.integrity',
-                'target': 'new',
-                'res_id': [wiz_check_ppl_id],
-                'view_mode': 'form',
-                'view_type': 'form',
-                'context': context,
-            }
+        rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
 
         if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
@@ -774,6 +750,24 @@ class stock_incoming_processor(osv.osv):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
+                'context': context,
+            }
+
+        if rounding_issues:
+            rounding_issues.sort()
+
+            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                'incoming_processor_id': ids[0],
+                'line_number_with_issue': ', '.join([str(x) for x in rounding_issues]),
+            }, context=context)
+            return {
+                'name': _("PPL integrity"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'check.ppl.integrity',
+                'target': 'new',
+                'res_id': [wiz_check_ppl_id],
+                'view_mode': 'form',
+                'view_type': 'form',
                 'context': context,
             }
 
