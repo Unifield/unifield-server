@@ -1,7 +1,11 @@
 <%def name="sidebox_action_item(item, model, submenu, icon)">
     % if submenu != 1:
     	<li action_id="${item['id']}" relation="${model}" domain="${item.get('domain')}" empty_ids="${item.get('empty_ids') and 1 or 0}"
-    	   context="${item.get('context')}" onclick="validate_action(this, do_action);">
+    	   context="${item.get('context')}" onclick="validate_action(this, do_action);" 
+           % if rpc.session.uid == 1:
+           oncontextmenu="showActionSdref(event, '${item['name']}', '${model}', '${item['id']}');"
+           % endif
+           >
             % if icon:
                 <img src="${icon}" alt=""/>
             % endif

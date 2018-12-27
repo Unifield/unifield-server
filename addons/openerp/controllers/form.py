@@ -293,6 +293,27 @@ class Form(SecuredController):
         return data_pool.read(data_ids[0], ['name'])['name']
 
     @expose('json', methods=('POST',))
+    def display_action_sd_ref(self, action_name, model, action_id):
+        """
+        Get sdref values of Button Access Rule and Model
+        :param view_id: The ID of the ir.ui.view where the button is on
+        :param btn_name: Name of the button to get values
+        :param btn_model: Name (model) of the ir.model on which the button act
+        :param btn_id: ID of the button
+        """
+
+        action_win_pool = rpc.RPCProxy('ir.actions.act_window')
+        data = action_win_pool.read([int(action_id)], ['groups_txt', 'type'])
+        if not data:
+            return False
+        sdref = action_win_pool.get_sd_ref(action_id)
+
+        model_pool = rpc.RPCProxy('ir.model')
+        model_id = model_pool.search([('model', '=', model)])
+        model_sdref = model_pool.get_sd_ref(model_id[0])
+        return dict(model=model, sdref=sdref, groups=data[0]['groups_txt'], model_sdref=model_sdref)
+
+    @expose('json', methods=('POST',))
     def display_button_sd_ref(self, view_id, btn_name, btn_model, btn_id):
         """
         Get sdref values of Button Access Rule and Model
