@@ -175,22 +175,29 @@ class ppl_processor(osv.osv):
 
         return ok
 
-    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status',  context=False):
+    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, ppl_move_obj, field='integrity_status', line_number=False, context=None):
+        if context is None:
+            context = {}
+
         ok = True
         if uom_obj.rounding == 1:
             if quantity % int(num_of_packs) != 0:
                 ok = False
-                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_int'}, context=context)
         else:
             qty_per_pack = quantity/int(num_of_packs)
             rounded_qty_pp = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_obj.id, qty_per_pack)
             if abs(qty_per_pack - rounded_qty_pp) < uom_obj.rounding \
                     and abs(qty_per_pack - rounded_qty_pp) != 0:
                 ok = False
-                ppl_move_obj.write(cr, uid, line_id, {field: 'bad_qty_rounded'}, context=context)
+
+        if not ok and line_number:
+            line_number_with_issue = context.get('line_number_with_issue', [])
+            line_number_with_issue.append(line_number)
+            context['line_number_with_issue'] = line_number_with_issue
+
         return ok
 
-    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=False):
+    def check_qty_pp(self, cr, uid, lines, ppl_move_obj, context=None):
         '''
         Check quantities per pack integrity with UoM
         '''
@@ -199,7 +206,7 @@ class ppl_processor(osv.osv):
 
         ok = True
         for line in lines:
-            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, context=context)
+            ok = self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, ppl_move_obj, line_number=line.line_number, context=context) and ok
         return ok
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
@@ -224,7 +231,7 @@ class ppl_processor(osv.osv):
             )
 
         ok_ids = []
-        ok = True
+        seq_ok, qty_ok = True, True
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
             sequences = []
@@ -237,13 +244,35 @@ class ppl_processor(osv.osv):
             if not sequences:
                 return False
 
-            ok = ok and self.check_sequences(cr, uid, sequences, ppl_move_obj) \
-                and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj)
+            seq_ok = seq_ok and self.check_sequences(cr, uid, sequences, ppl_move_obj)
+            qty_ok = qty_ok and self.check_qty_pp(cr, uid, wizard.move_ids, ppl_move_obj, context=context)
 
-        if ok and just_check:
+            if not qty_ok:
+                ln_issue = context.get('line_number_with_issue', [])
+                if ln_issue:
+                    ln_sorted = sorted(list(set(ln_issue)))
+                    ln_str = ', '.join([str(x) for x in ln_sorted]).strip(', ')
+
+                wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                    'ppl_processor_id': wizard.id,
+                    'line_number_with_issue': ln_str,
+                }, context=context)
+                return {
+                    'name': _("PPL integrity"),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'check.ppl.integrity',
+                    'target': 'new',
+                    'res_id': [wiz_check_ppl_id],
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'context': context,
+                }
+
+        if seq_ok and qty_ok and just_check:
             ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
-        if not ok or just_check:
+
+        if not (seq_ok and qty_ok) or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',

@@ -649,37 +649,42 @@ class stock_incoming_processor(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wizard = self.browse(cr, uid, ids[0], context=context)
 
-        sequence_ok = True
-        for wizard in self.browse(cr, uid, ids, context=context):
-            total_qty = 0
-            sequences = {}
-            for move in wizard.move_ids:
-                total_qty += move.quantity
-                if move.quantity:
-                    sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
-                    num_of_packs = move.to_pack - move.from_pack + 1
-                    if num_of_packs:
-                        sequence_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', context=False)
-                if move.integrity_status and move.integrity_status != 'empty':
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('Please correct red lines before processing')
-                    )
-
-            if not total_qty:
+        sequence_ok, rounding_ok = True, True
+        total_qty = 0
+        sequences = {}
+        for move in wizard.move_ids:
+            total_qty += move.quantity
+            if move.quantity:
+                sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
+                num_of_packs = move.to_pack - move.from_pack + 1
+                if num_of_packs:
+                    current_rounding_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', line_number=move.line_number, context=context)
+                    if not current_rounding_ok:
+                        ln_issue = context.get('line_number_with_issue', [])
+                        ln_issue.append(move.line_number)
+                        context['line_number_with_issue'] = ln_issue
+                    rounding_ok = rounding_ok and current_rounding_ok
+            if move.integrity_status and move.integrity_status != 'empty':
                 raise osv.except_osv(
-                    _('Processing Error'),
-                    _("You have to enter the quantities you want to process before processing the move")
+                    _('Error'),
+                    _('Please correct red lines before processing')
                 )
-            if not sequences:
-                return False
-            for pl in sequences:
-                sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
-        if not sequence_ok:
-            return False
 
-        return True
+        if not total_qty:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _("You have to enter the quantities you want to process before processing the move")
+            )
+
+        if not sequences:
+            sequence_ok = False
+            return (rounding_ok, sequence_ok)
+        for pl in sequences:
+            sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
+
+        return (rounding_ok, sequence_ok)
 
 
     def create_pack_family_lines(self, cr, uid, ids, context=None):
@@ -735,7 +740,30 @@ class stock_incoming_processor(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        if not self.check_before_creating_pack_lines(cr, uid, ids, context=context):
+        rounding_ok, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
+
+        if not rounding_ok:
+            ln_issue = context.get('line_number_with_issue', [])
+            if ln_issue:
+                ln_sorted = sorted(list(set(ln_issue)))
+                ln_str = ', '.join([str(x) for x in ln_sorted]).strip(', ')
+
+            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                'incoming_processor_id': ids[0],
+                'line_number_with_issue': ln_str,
+            }, context=context)
+            return {
+                'name': _("PPL integrity"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'check.ppl.integrity',
+                'target': 'new',
+                'res_id': [wiz_check_ppl_id],
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+            }
+
+        if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
             return {
                 'name': _('Products to Process'),
@@ -748,6 +776,15 @@ class stock_incoming_processor(osv.osv):
                 'target': 'new',
                 'context': context,
             }
+
+        return self.do_process_to_ship(cr, uid, ids, context=context)
+
+
+    def do_process_to_ship(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
 
         # delete previous fam if has:
         pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
