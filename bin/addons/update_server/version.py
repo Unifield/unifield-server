@@ -272,7 +272,8 @@ class sync_server_user_rights_add_file(osv.osv_memory):
                 error = e.value
             else:
                 error = e
-            wiz.write({'state': 'error', 'message': tools.ustr(error)})
+            msg = self.read(cr, uid, wiz_id, ['message'])['message'] or ''
+            wiz.write({'state': 'error', 'message': "%s\n%s" % (msg, tools.ustr(error))})
         finally:
             cr.rollback()
             cr.commit = cr.commit_org
@@ -321,7 +322,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, True, context=context)
 
-        if len(ur['msf_button_access_rights.button_access_rule']) != 3:
+        if len(ur['msf_button_access_rights.button_access_rule']) != 1:
             raise osv.except_osv(_('Warning !'), _("Found %d BAR files, expected 3.") % (len(ur['msf_button_access_rights.button_access_rule'])))
         for x in ur:
             if not ur[x]:

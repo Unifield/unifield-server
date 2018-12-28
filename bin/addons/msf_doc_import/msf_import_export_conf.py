@@ -147,7 +147,7 @@ MODEL_DICT = {
         'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access',
-        'domain': [('name', '!=', 'admin')],
+        'domain': [('from_system', '=', False)],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',
@@ -167,7 +167,8 @@ MODEL_DICT = {
     'window_actions': {
         'name': 'Window Actions',
         'domain_type': 'non_functionnal',
-        'model': 'ir.actions.act_window'
+        'model': 'ir.actions.act_window',
+        'domain': [('res_model', '!=', 'audittrail.log.line')],
     },
 }
 
