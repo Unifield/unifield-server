@@ -444,9 +444,10 @@ class update_received(osv.osv,fv_formatter):
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
-            self.write(cr, uid, ids, {'manually_ran': True})
         except BaseException, e:
             sync_log(self, e)
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True})
         return True
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):

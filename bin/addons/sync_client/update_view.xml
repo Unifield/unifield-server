@@ -89,7 +89,8 @@
             <field name="editable"
                    attrs="{'invisible':[('run','=',True)]}"/>
             <button string="Run manually" name="run" type="object"
-                    attrs="{'invisible':[('run','=',True)]}"/>
+                    attrs="{'invisible':[('run','=',True)]}"
+                    icon="gtk-refresh" />
             <label string="" colspan="2" />
             <button string="Run without execution" name="manual_set_as_run" type="object" icon="gtk-del"
                     attrs="{'invisible':['|', ('run','=',True), ('manually_ran', '=', False)]}" confirm="Do you want to set this update as run without execution ?"/>

@@ -411,8 +411,12 @@ class message_received(osv.osv):
         return res
 
     def manual_execute(self, cr, uid, ids, context=None):
-        self.execute(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'manually_ran': True}, context=context)
+        try:
+            self.execute(cr, uid, ids, context=context)
+        except:
+            raise
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True}, context=context)
         return True
 
     def manual_set_as_run(self, cr, uid, ids, context=None):

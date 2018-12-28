@@ -103782,12 +103782,12 @@ msgstr "La Zone Source %s est inactive"
 #. module: sync_client
 #: view:sync.client.message_received:0
 msgid "Do you want to set this message as run without execution ?"
-msgstr "Voulez marquer ce message comme Exécuté sans traitement ?"
+msgstr "Voulez-vous marquer ce message comme Exécuté sans traitement ?"
 
 #. module: sync_client
 #: view:sync.client.update_received:0
 msgid "Do you want to set this update as run without execution ?"
-msgstr "Voulez marquer cette Mise à Jour comme Exécutée sans traitement ?"
+msgstr "Voulez-vous marquer cette Mise à Jour comme Exécutée sans traitement ?"
 
 #. module: sync_client
 #: field:sync.client.message_received,manually_ran:0
