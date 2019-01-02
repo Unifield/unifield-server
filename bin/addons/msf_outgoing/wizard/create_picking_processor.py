@@ -54,7 +54,12 @@ class create_picking_processor(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No PICK selected'))
 
-        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {'picking_id': ids[0]}, context=context)
+        processor = self.browse(cr, uid, ids[0], context=context)
+
+        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {
+            'picking_id': processor.picking_id.id,
+            'picking_processor_id': ids[0],
+        }, context=context)
 
         return {
             'type': 'ir.actions.act_window',
