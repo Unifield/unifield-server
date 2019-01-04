@@ -9,7 +9,7 @@
             <form string="PICK import">
                 <field name="import_file" />
                 <separator string="Actions" />
-                <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                <button name="cancel" type="object" string="Cancel" icon="gtk-cancel" />
                 <button name="import_pick_xls" type="object" string="Import PICK" icon="gtk-ok" />
             </form>
         </field>
