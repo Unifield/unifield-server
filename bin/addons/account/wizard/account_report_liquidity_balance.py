@@ -32,23 +32,61 @@ class liquidity_balance_wizard(osv.osv_memory):
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'period_id': fields.many2one('account.period', 'Period'),
+        'date_from': fields.date("Date from"),
+        'date_to': fields.date("to"),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
     }
 
+    def onchange_period_id(self, cr, uid, ids, period_id, context=None):
+        """
+        Resets the date fields when a period is selected
+        """
+        res = {}
+        if period_id:
+            res['value'] = {'date_from': False,
+                            'date_to': False,
+                            }
+        return res
+
+    def onchange_date(self, cr, uid, ids, date_from, date_to, context=None):
+        """
+        Resets the period when one the date fields is filled in
+        """
+        res = {}
+        if date_from or date_to:
+            res['value'] = {'period_id': False, }
+        return res
+
+    def _check_wizard_data(self, wiz):
+        """
+        Checks the data selected in the wizard and raises an error if needed
+        """
+        if not wiz.period_id and not wiz.date_from and not wiz.date_to:
+            raise osv.except_osv(_('Error'), _('You must select a period or a date range.'))
+        elif (wiz.date_from and not wiz.date_to) or (wiz.date_to and not wiz.date_from):
+            raise osv.except_osv(_('Error'), _("Either the start date or the end date is missing."))
+        elif wiz.date_to and wiz.date_from and wiz.date_to < wiz.date_from:
+            raise osv.except_osv(_('Error'), _("The end date can't precede the start date."))
+
     def print_liquidity_balance_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['period_id', 'instance_id'], context=context)
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        self._check_wizard_data(wiz)
         data = {}
         data['form'] = {}
-        # get the selected period
-        data['form'].update({'period_id': wiz.period_id and wiz.period_id.id or False})
+        # get the selected period and dates
+        data['form'].update({'period_id': wiz.period_id and wiz.period_id.id or False,
+                             'date_from': wiz.date_from or False,
+                             'date_to': wiz.date_to or False,
+                             })
+
         # get the selected instance AND its children
         data['form'].update({'instance_ids': wiz.instance_id and
                              ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
