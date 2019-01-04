@@ -119,10 +119,10 @@ class hq_entries_import_wizard(osv.osv_memory):
         aa_check_ids = []
         destination_id = False
         account = acc_obj.browse(cr, uid, account_ids[0])
-        if account.user_type.code == 'expense':
+        if account.user_type.code in ['expense', 'income']:
             # Set default destination
             if not account.default_destination_id:
-                raise osv.except_osv(_('Warning'), _('No default Destination defined for expense account: %s') % (account.code or '',))
+                raise osv.except_osv(_('Warning'), _('No default Destination defined for account: %s') % (account.code or '',))
             destination_id = account.default_destination_id and account.default_destination_id.id or False
             # But use those from CSV file if given
             if destination:
@@ -187,12 +187,13 @@ class hq_entries_import_wizard(osv.osv_memory):
         if aa_check_ids:
             for aa_r in anacc_obj.read(cr, uid, aa_check_ids,
                                        ['code', 'name', 'type', 'category']):
-                if aa_r['type'] and aa_r['type'] == 'view':
+                if aa_r['type'] and aa_r['type'] == 'view' and account.user_type_code in ['expense', 'income']:
                     category = ''
                     if aa_r['category']:
                         if aa_r['category'] in aa_check_category_map:
                             category += aa_check_category_map[aa_r['category']] + ' '
-                    aa_check_errors.append('%s"%s - %s" of type "view" is not allowed for import' % (category, aa_r['code'], aa_r['name']))
+                    aa_check_errors.append(_('%s "%s - %s" of type "view" is not allowed '
+                                           'for the account "%s - %s"') % (category, aa_r['code'], aa_r['name'], account.code, account.name))
         if aa_check_errors:
             raise osv.except_osv(_('Error'), ", ".join(aa_check_errors))
 

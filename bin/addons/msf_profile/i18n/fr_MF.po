@@ -26799,8 +26799,8 @@ msgstr "Terres Australes Françaises"
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:121
 #, python-format
-msgid "No default Destination defined for expense account: %s"
-msgstr "Pas de Destination par défaut définie pour le compte de charge: %s"
+msgid "No default Destination defined for account: %s"
+msgstr "Pas de Destination par défaut définie pour le compte : %s"
 
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_sale_order_followup_test
@@ -103778,3 +103778,9 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:195
+#, python-format
+msgid "%s \"%s - %s\" of type \"view\" is not allowed for the account \"%s - %s\""
+msgstr "%s \"%s - %s\" de type \"vue\" n'est pas autorisé pour le compte \"%s - %s\""

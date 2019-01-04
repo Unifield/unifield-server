@@ -67,8 +67,8 @@ class hq_entries(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
-            # if account is not expense, so it's valid
-            if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
+            # if it's neither an expense nor an income account, the AD is valid
+            if line.account_id and line.account_id.user_type_code not in ['expense', 'income']:
                 continue
             # Date checks
             # F Check
@@ -185,9 +185,9 @@ class hq_entries(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'user_validated': fields.boolean("User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
@@ -201,8 +201,8 @@ class hq_entries(osv.osv):
         'amount': fields.float('Amount', readonly=True),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
-        'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
-        'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
+        'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", readonly=True),
+        'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
                                           selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),

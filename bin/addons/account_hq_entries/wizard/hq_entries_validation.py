@@ -176,9 +176,12 @@ class hq_entries_validation(osv.osv_memory):
             for line in hqentries_obj.browse(cr, uid, ids, context=context):
                 if not line.account_id_first_value:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
-                # create new distribution (only for expense accounts)
+                # create new distribution (only for expense or income accounts)
                 line_account = split and line.account_id or line.account_id_first_value
-                distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
+                if line_account.user_type_code in ['income', 'expense']:
+                    distrib_id = self.create_distribution_id(cr, uid, currency_id, line, line_account, split=split)
+                else:
+                    distrib_id = False
                 vals = {
                     'account_id': line_account.id,
                     'period_id': period_id,
