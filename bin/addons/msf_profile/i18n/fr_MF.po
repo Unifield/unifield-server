@@ -91888,9 +91888,10 @@ msgstr "Date de début du Catalogue."
 msgid "Unit price"
 msgstr "Prix unitaire"
 
-#. modules: msf_instance, finance
+#. modules: msf_instance, finance, account_hq_entries
 #: field:cash.request,current_instance_level:0
 #: field:msf.instance,current_instance_level:0
+#: field:hq.entries,current_instance_level:0
 msgid "Current Instance Level"
 msgstr "Niveau de l'Instance Actuelle"
 
@@ -103784,3 +103785,15 @@ msgstr "La Zone Source %s est inactive"
 #, python-format
 msgid "%s \"%s - %s\" of type \"view\" is not allowed for the account \"%s - %s\""
 msgstr "%s \"%s - %s\" de type \"vue\" n'est pas autorisé pour le compte \"%s - %s\""
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:601
+#, python-format
+msgid "You can not perform this action at HQ level."
+msgstr "Vous ne pouvez pas effectuer cette action au niveau HQ."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:607
+#, python-format
+msgid "You can not perform this action on a B/S line."
+msgstr "Vous ne pouvez pas effectuer cette action sur une ligne de bilan."

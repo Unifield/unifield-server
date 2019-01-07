@@ -183,6 +183,20 @@ class hq_entries(osv.osv):
                                                                   context=context)[r.account_id.id]
         return res
 
+    def _get_current_instance_level(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns a String with the level of the current instance (section, coordo, project)
+        """
+        if context is None:
+            context = {}
+        levels = {}
+        user_obj = self.pool.get('res.users')
+        company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        level = company.instance_id and company.instance_id.level or ''
+        for hq_entry_id in ids:
+            levels[hq_entry_id] = level
+        return levels
+
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -212,6 +226,8 @@ class hq_entries(osv.osv):
         'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
         'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
         'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
+        'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
+                                                  string='Current Instance Level', store=False, readonly=True),
     }
 
     _defaults = {
@@ -565,8 +581,9 @@ class hq_entries(osv.osv):
         # US-306: forbid to validate mission closed or + entries
         # => at coordo level you can not validate entries since field closed
         # period; but they can come from HQ mission opened via SYNC)
+        hq_entries = self.browse(cr, uid, ids, context=context)
         period_ids = list(set([ he.period_id.id \
-                                for he in self.browse(cr, uid, ids, context=context) ]))
+                                for he in hq_entries ]))
         # warning if an HQ Entry is in a non-opened period
         if period_ids:
             periods = self.pool.get("account.period").browse(cr, uid, period_ids, context)
@@ -577,6 +594,17 @@ class hq_entries(osv.osv):
                     raise mission_closed_except
                 elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
                     raise mission_closed_except
+
+        # block actions at HQ level
+        if hq_entries and hq_entries[0].current_instance_level == 'section':
+            raise osv.except_osv(_("Warning"),
+                                 _("You can not perform this action at HQ level."))
+        # block edition and split on B/S entries
+        if wizard_model in ['hq.entries.split', 'hq.analytic.reallocation', 'hq.reallocation']:
+            for hq_entry in hq_entries:
+                if hq_entry.account_id.user_type_code not in ['expense', 'income']:
+                    raise osv.except_osv(_("Warning"),
+                                         _("You can not perform this action on a B/S line."))
 
     def check_ad_change_allowed(self, cr, uid, ids, vals, context=None):
         """
