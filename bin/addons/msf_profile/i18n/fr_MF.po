@@ -2079,6 +2079,15 @@ msgstr "Fournisseur sélectionné"
 msgid "PPL or Packing should not be selected."
 msgstr "Liste de Pré-Colisage ou Emballage ne ​​devrait pas être sélectionné."
 
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:764
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:270
+#: view:check.ppl.integrity:0
+#, python-format
+msgid "PPL integrity"
+msgstr "Integrité LPC"
+
+
 #. module: specific_rules
 #: code:addons/specific_rules/stock.py:100
 #, python-format
@@ -74422,6 +74431,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_instance/msf_instance.py:565
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:77
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:115
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:55
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:221
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:287
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
@@ -74581,6 +74591,7 @@ msgstr "Autre liste de prix"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:78
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:116
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:56
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:288
 #: code:addons/msf_outgoing/wizard/picking_processor.py:144
 #: code:addons/msf_outgoing/wizard/picking_processor.py:173
@@ -102967,8 +102978,8 @@ msgstr "La zone demandée"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:804
 #, python-format
-msgid "There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created"
-msgstr "Le fichier d’import IN contient %(num_pl)d Packing lists: quand vous confirmerez l’import, %(num_pl)d PICK et %(num_pl)d PPL seront créés"
+msgid "There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created %(rounding_text)s"
+msgstr "Le fichier d’import IN contient %(num_pl)d Packing lists: quand vous confirmerez l’import, %(num_pl)d PICK et %(num_pl)d PPL seront créés %(rounding_text)s"
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -103779,3 +103790,36 @@ msgstr "La Zone Source %s est inactive"
 #, python-format
 msgid "The account %s - %s has no Default Destination."
 msgstr "Le compte %s - %s n'a pas de Destination par défaut."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:696
+#: code:addons/msf_outgoing/msf_outgoing.py:922
+#: code:addons/msf_outgoing/msf_outgoing.py:1205
+#, python-format
+msgid "Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together"
+msgstr "Attention, cet intervalle de colis contient un ou plusieurs produit(s) avec un nombre non entier par colis. Tous les colis doivent être validés ensemble"
+
+#. module: msf_outgoing
+#: field:check.ppl.integrity,line_number_with_issue:0
+msgid "Line # with issue"
+msgstr "Numero des lignes problématiques"
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "\n"
+"                                    WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs\n"
+"                                "
+msgstr "\n"
+"                                    Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement\n"
+"                                "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:839
+#, python-format
+msgid "WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs"
+msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement"
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "Go Back"
+msgstr "Précédent"
