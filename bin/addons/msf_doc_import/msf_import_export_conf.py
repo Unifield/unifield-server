@@ -136,38 +136,45 @@ MODEL_DICT = {
     'user_access': {
         'name': 'User Access',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'user.access.configurator'
     },
     'record_rules': {
         'name': 'Record Rules',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'ir.rule'
     },
     'access_control_list': {
         'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access',
+        'lang': 'en_MF',
         'domain': [('from_system', '=', False)],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'msf_field_access_rights.field_access_rule'
     },
     'field_access_rule_lines': {
         'name': 'Field Access Rule Lines',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'msf_field_access_rights.field_access_rule_line'
     },
     'button_access_rules': {
         'name': 'Button Access Rules',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'msf_button_access_rights.button_access_rule'
     },
     'window_actions': {
         'name': 'Window Actions',
         'domain_type': 'non_functionnal',
         'model': 'ir.actions.act_window',
+        'lang': 'en_MF',
         'domain': [('res_model', '!=', 'audittrail.log.line')],
     },
 }

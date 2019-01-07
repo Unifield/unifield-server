@@ -240,7 +240,6 @@ class msf_import_export(osv.osv_memory):
         if not field_list:
             field_list = MODEL_DATA_DICT[selection]['header_list']
         model_obj = self.pool.get(model)
-
         fields_get_dict = {}  # keep fields_get result in cache
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
 
@@ -476,7 +475,11 @@ class msf_import_export(osv.osv_memory):
         field_list = MODEL_DATA_DICT[selection]['header_list']
 
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
                                               'than expected (get %s, expected %s). Check your import file and ' \
@@ -484,7 +487,7 @@ class msf_import_export(osv.osv_memory):
 
         for field_index, field in enumerate(field_list):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
             if custom_name:
