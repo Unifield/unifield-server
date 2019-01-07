@@ -103100,6 +103100,18 @@ msgstr "Id. Modèle"
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
 
+#. module: account_override
+#: field:account.move.line,db_id:0
+#: field:account.analytic.line,db_id:0
+msgid "DB ID"
+msgstr "ID BD"
+
+#. module: account_override
+#: help:account.move.line,db_id:0
+#: help:account.analytic.line,db_id:0
+msgid "DB ID used for Vertical Integration"
+msgstr "ID BD utilisé pour l'Intégration Verticale"
+
 #. modules: purchase, purchase_override, sale
 #: field:purchase.order.line,created_by_sync:0
 #: field:purchase.order.merged.line,created_by_sync:0
