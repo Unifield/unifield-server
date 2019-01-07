@@ -46907,12 +46907,6 @@ msgstr "Incoterms"
 msgid "Gujarati / ગુજરાતી"
 msgstr "Gujarati / ગુજરાતી"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:432
-#, python-format
-msgid "%s: No default destination found '%s'"
-msgstr "%s: No default destination found '%s'"
-
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:573
 #, python-format
@@ -103779,3 +103773,9 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:428
+#, python-format
+msgid "The account %s - %s has no Default Destination."
+msgstr "Le compte %s - %s n'a pas de Destination par défaut."
