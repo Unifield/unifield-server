@@ -126,6 +126,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The B/S account %s cannot have an Analytic Distribution. '
                                                    'Only a Cost Center should be given.') % (account_description,))
             elif not cost_center:
+                # a CC is needed for synchro (it can't be added after the import as the B/S lines are not editable)
                 raise osv.except_osv(_('Error'), _('Cost Center is missing for the account %s.') % (account_description,))
         else:  # expense or income accounts
             # Retrieve Destination
