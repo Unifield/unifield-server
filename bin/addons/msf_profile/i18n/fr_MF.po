@@ -93241,7 +93241,7 @@ msgstr "mois"
 msgid "Periodical Processing"
 msgstr "Traitements Périodiques"
 
-#. modules: account_override, account, res_currency_functional, account_mcdb, analytic_distribution
+#. modules: account_override, account, res_currency_functional, account_mcdb, analytic_distribution, account_hq_entries
 #: selection:account.journal.column,field:0
 #: view:account.account:0
 #: field:account.account,user_type:0
@@ -93257,6 +93257,7 @@ msgstr "Traitements Périodiques"
 #: model:ir.model,name:account_override.model_account_account_type
 #: view:account.analytic.account:0
 #: field:account.move.line,account_type:0
+#: field:hq.entries,account_user_type_code:0
 #: code:addons/account/report/account_general_ledger.py:526
 #, python-format
 msgid "Account Type"

@@ -199,6 +199,8 @@ class hq_entries(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
+        'account_user_type_code': fields.related('account_id', 'user_type_code', string="Account Type",
+                                                 type='char', size=32, readonly=True, store=False),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
