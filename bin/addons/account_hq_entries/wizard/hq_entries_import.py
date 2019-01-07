@@ -115,11 +115,20 @@ class hq_entries_import_wizard(osv.osv_memory):
             vals.update({'account_id': account_ids[0], 'account_id_first_value': account_ids[0]})
         else:
             raise osv.except_osv(_('Error'), _('No account code found!'))
-        # Retrieve Destination
         aa_check_ids = []
         destination_id = False
+        fp_id = False
+        free1_id = False
+        free2_id = False
         account = acc_obj.browse(cr, uid, account_ids[0])
-        if account.user_type.code in ['expense', 'income']:
+        if account.user_type.code not in ['expense', 'income']:  # B/S accounts
+            if destination or funding_pool or free1 or free2:
+                raise osv.except_osv(_('Error'), _('The B/S account %s cannot have an Analytic Distribution. '
+                                                   'Only a Cost Center should be given.') % (account_description,))
+            elif not cost_center:
+                raise osv.except_osv(_('Error'), _('Cost Center is missing for the account %s.') % (account_description,))
+        else:  # expense or income accounts
+            # Retrieve Destination
             # Set default destination
             if not account.default_destination_id:
                 raise osv.except_osv(_('Warning'), _('No default Destination defined for account: %s') % (account.code or '',))
@@ -133,7 +142,34 @@ class hq_entries_import_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
             if destination_id:
                 aa_check_ids.append(destination_id)
-        # Retrieve Cost Center and Funding Pool
+            # Retrieve Funding Pool
+            if funding_pool:
+                fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('category', '=', 'FUNDING')])
+                if not fp_id:
+                    raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
+                fp_id = fp_id[0]
+            else:
+                try:
+                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
+            if fp_id:
+                aa_check_ids.append(fp_id)
+            # Retrieve Free 1 / Free 2
+            if free1:
+                free1_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free1), ('name', '=', free1), ('category', '=', 'FREE1')])
+                if not free1_id:
+                    raise osv.except_osv(_('Error'), _('Free 1 "%s" doesn\'t exist!') % (free1,))
+                free1_id = free1_id[0]
+                aa_check_ids.append(free1_id)
+            if free2:
+                free2_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free2), ('name', '=', free2), ('category', '=', 'FREE2')])
+                if not free2_id:
+                    raise osv.except_osv(_('Error'), _('Free 2 "%s" doesn\'t exist!') % (free2,))
+                free2_id = free2_id[0]
+                aa_check_ids.append(free2_id)
+
+        # Retrieve Cost Center
         cc_id = False
         if cost_center:
             cc_id = anacc_obj.search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('category', '=', 'OC')])
@@ -142,35 +178,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             cc_id = cc_id[0]
             if cc_id:
                 aa_check_ids.append(cc_id)
-        # Retrieve Funding Pool
-        if funding_pool:
-            fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('category', '=', 'FUNDING')])
-            if not fp_id:
-                raise osv.except_osv(_('Error'), _('Funding Pool "%s" doesn\'t exist!') % (funding_pool,))
-            fp_id = fp_id[0]
-        else:
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-        if fp_id:
-            aa_check_ids.append(fp_id)
 
-        # Retrive Free 1 / Free 2
-        free1_id = False
-        free2_id = False
-        if free1:
-            free1_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free1), ('name', '=', free1), ('category', '=', 'FREE1')])
-            if not free1_id:
-                raise osv.except_osv(_('Error'), _('Free 1 "%s" doesn\'t exist!') % (free1,))
-            free1_id = free1_id[0]
-            aa_check_ids.append(free1_id)
-        if free2:
-            free2_id = anacc_obj.search(cr, uid, ['|', ('code', '=', free2), ('name', '=', free2), ('category', '=', 'FREE2')])
-            if not free2_id:
-                raise osv.except_osv(_('Error'), _('Free 2 "%s" doesn\'t exist!') % (free2,))
-            free2_id = free2_id[0]
-            aa_check_ids.append(free2_id)
         vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id, 'free_1_id': free1_id, 'free_2_id': free2_id,})
 
         # [utp-928] do not import line with a

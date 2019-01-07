@@ -103798,3 +103798,15 @@ msgstr "Vous ne pouvez pas effectuer cette action au niveau HQ."
 #, python-format
 msgid "You can not perform this action on a B/S line."
 msgstr "Vous ne pouvez pas effectuer cette action sur une ligne de bilan."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:126
+#, python-format
+msgid "The B/S account %s cannot have an Analytic Distribution. Only a Cost Center should be given."
+msgstr "Le compte de bilan %s ne peut pas avoir de Distribution Analytique. Seul un Centre de Coût doit être indiqué."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:129
+#, python-format
+msgid "Cost Center is missing for the account %s."
+msgstr "Il manque le Centre de Coût pour le compte %s."
