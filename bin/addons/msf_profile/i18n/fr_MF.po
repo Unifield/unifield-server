@@ -44853,7 +44853,7 @@ msgstr "Last date when a shortcut was used"
 msgid "Clear IDs"
 msgstr "Effacer les Identités (ID's)"
 
-#. modules: threshold_value, product_nomenclature, order_nomenclature, consumption_calculation, specific_rules, kit, procurement_auto, procurement_cycle, mission_stock, procurement_report, stock
+#. modules: threshold_value, product_nomenclature, order_nomenclature, consumption_calculation, specific_rules, kit, procurement_auto, procurement_cycle, mission_stock, procurement_report, stock, sale
 #: field:monthly.review.consumption,nomen_manda_0:0
 #: field:product.history.consumption,nomen_manda_0:0
 #: field:real.average.consumption,nomen_manda_0:0
@@ -44885,6 +44885,7 @@ msgstr "Effacer les Identités (ID's)"
 #: field:stock.inventory,nomen_manda_0:0
 #: field:physical.inventory.select.products,nomen_manda_0:0
 #: field:threshold.value,nomen_manda_0:0
+#: field:sale.donation.stock.moves,nomen_manda_0:0
 msgid "Main Type"
 msgstr "Type Principal"
 
@@ -69994,9 +69995,8 @@ msgstr "Terminer le comptage"
 msgid "Validate Payroll Expenses and move to Payroll B/S lines"
 msgstr "Valider les lignes de dépense et aller aux lignes de bilan"
 
-#. module: product, sale
+#. module: product
 #: view:product.template:0
-#: field:sale.donation.stock.moves,product_type:0
 msgid "Product Type"
 msgstr "Type de Produit"
 
@@ -103793,3 +103793,9 @@ msgstr "Valeur Totale Entrante"
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:141
 msgid "Total Value OUT"
 msgstr "Valeur Totale Sortante"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:118
+#, python-format
+msgid "The Product (%s) does not have this Nomenclature"
+msgstr "Le Produit (%s) n'a pas cette Nomenclature"

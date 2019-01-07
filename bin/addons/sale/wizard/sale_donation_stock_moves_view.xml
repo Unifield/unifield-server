@@ -13,7 +13,7 @@
                     <field name="partner_id" on_change="partner_onchange(partner_id, move_id)" />
                     <field name="partner_type" />
                     <field name="product_id" />
-                    <field name="product_type" />
+                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
                     <field name="move_id" domain="[('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),('state', '=', 'done'),
                         '|', ('type', '=', 'in'), '&amp;', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]" />
                     <separator colspan="4" string="Actions" />
