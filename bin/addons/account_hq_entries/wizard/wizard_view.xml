@@ -45,7 +45,14 @@
                             <field name="account_hq_correctible" invisible="1"/>
                             <field name="is_not_ad_correctable" invisible="1"/>
                             <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}"
-                                   domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False), ('filter_active', '=', True)]" />
+                                   domain="[('type', '!=', 'view'),
+                                            ('type_for_register', '!=', 'donation'),
+                                            ('is_not_hq_correctible', '=', False),
+                                            '|',
+                                            ('user_type.code', '=', 'income'),
+                                            '&amp;', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),
+                                            ('filter_active', '=', True)]"
+                            />
                             <field name="amount"/>
                             <field name="destination_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>
                             <field name="cost_center_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>

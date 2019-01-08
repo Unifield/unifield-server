@@ -141,6 +141,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'hq_lines': [
         ('type', '!=', 'view'),
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude extra-accounting expense accounts
+        ('type_for_register', '!=', 'donation'),
         #('is_not_hq_correctible', '=', False), # UF-2312: not possibleto add this domain because WE SHOULD ALLOW "Not HQ Correctible" account during the import
     ],
     # MANUEL JOURNAL ENTRIES

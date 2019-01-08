@@ -319,7 +319,7 @@ class hq_entries_validation(osv.osv_memory):
             # Create also the AD from the original line and update it into the counterpart move
             if not line.account_id_first_value:
                 raise osv.except_osv(_('Error'), _('An account is missing!'))
-            # create new distribution (only for expense accounts)
+            # create new distribution
             distrib_id = self.create_distribution_id(cr, uid, line.currency_id.id, line, line.account_id_first_value)
             aml_obj.write(cr, uid, counterpart_id, {
                 'reversal': True,
