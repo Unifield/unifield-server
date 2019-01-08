@@ -51,6 +51,23 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF11.1
+    def us_5425_reset_amount_currency(self, cr, uid, *a, **b):
+        """
+        Sets to zero the JI "amount_currency" which wrongly have a value
+        Note: it fixes only the reval and FX entries where we forced the booking values to be exactly 0.00
+        """
+        update_ji_booking = """
+                    UPDATE account_move_line
+                    SET amount_currency = 0.0
+                    WHERE (debit_currency = 0.0 OR debit_currency IS NULL) 
+                    AND (credit_currency = 0.0 OR credit_currency IS NULL) 
+                    AND (amount_currency != 0.0 AND amount_currency IS NOT NULL)
+                    AND journal_id IN (SELECT id FROM account_journal WHERE type IN ('cur_adj', 'revaluation'));
+                """
+        cr.execute(update_ji_booking)
+        self._logger.warn('amount_currency reset in %s JI.' % (cr.rowcount,))
+
     # UF11.0
     def us_5356_reset_ud_prod(self, cr, uid, *a, **b):
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
