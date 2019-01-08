@@ -250,7 +250,7 @@ msgstr "Card lines"
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
 msgid "Qty ordered"
-msgstr "Qty ordered"
+msgstr "Qté commandée"
 
 #. module: purchase
 #: view:purchase.report:0
@@ -8621,6 +8621,7 @@ msgid "Either there are no moves linked to the picking or Accounting Journals ar
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
 #. modules: tender_flow, financing_contract, msf_tools, account_voucher, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock
+#: code:addons/purchase/__init__.py:53
 #: selection:msf.instance.cloud,state:0
 #: field:ppl.processor,draft_step1:0
 #: field:ppl.processor,draft_step2:0
@@ -37416,7 +37417,7 @@ msgstr "Editeur du Plan de travail"
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "Report Run Date:"
-msgstr "Report Run Date:"
+msgstr "Rapport généré le"
 
 #. module: account_payment
 #: view:payment.order:0
@@ -78732,7 +78733,7 @@ msgstr "No line selected"
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
 msgid "PO Date From:"
-msgstr "PO Date From:"
+msgstr "BC date début:"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
