@@ -462,12 +462,35 @@ class journal_items_corrections(osv.osv_memory):
         :param account: new account selected in the Correction Wizard
         :param aml: Journal Item with the Third Party to check
         """
+        if context is None:
+            context = {}
         acc_obj = self.pool.get('account.account')
+        employee_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+        journal_obj = self.pool.get('account.journal')
         acc_type = account.type_for_register
         if acc_type != 'none':
+            # get the right Third Party to check if there is a partner_txt ONLY (e.g.: correction made on HQ entry)
+            partner_txt = aml.partner_txt
+            partner_id = aml.partner_id and aml.partner_id.id or False
+            employee_id = aml.employee_id and aml.employee_id.id or False
+            partner_journal = aml.transfer_journal_id
+            if partner_txt and not partner_id and not employee_id and not partner_journal:
+                employee_ids = employee_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                if employee_ids:
+                    employee_id = employee_ids[0]
+                else:
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                    if partner_ids:
+                        partner_id = partner_ids[0]
+                    else:
+                        journal_ids = journal_obj.search(cr, uid,
+                                                         ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
+                                                         limit=1, context=context)
+                        if journal_ids:
+                            partner_journal = journal_obj.browse(cr, uid, journal_ids[0], context=context)
             # Check the compatibility with the "Type For Specific Treatment" of the account
             if acc_type in ['transfer', 'transfer_same']:
-                partner_journal = aml.transfer_journal_id
                 is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
                 if acc_type == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != aml.currency_id.id):
                     raise osv.except_osv(_('Warning'),
@@ -477,13 +500,13 @@ class journal_items_corrections(osv.osv_memory):
                     raise osv.except_osv(_('Warning'),
                                          _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
                                            'having a currency different from the booking one.') % (account.code, account.name))
-            elif acc_type == 'advance' and not aml.employee_id:
+            elif acc_type == 'advance' and not employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with an Employee Third Party.') % (account.code, account.name))
-            elif acc_type == 'down_payment' and not aml.partner_id:
+            elif acc_type == 'down_payment' and not partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
-            elif acc_type == 'payroll' and not aml.partner_id and not aml.employee_id:
+            elif acc_type == 'payroll' and not partner_id and not employee_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner or an Employee Third Party.') % (account.code, account.name))
         else:

@@ -570,6 +570,7 @@ class account_account(osv.osv):
                 # existing partner
                 emp_obj = self.pool.get('hr.employee')
                 partner_obj = self.pool.get('res.partner')
+                journal_obj = self.pool.get('account.journal')
                 if partner_type:
                     pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
                         else (partner_type._name, partner_type.id, )
@@ -592,6 +593,12 @@ class account_account(osv.osv):
                                                          order='NO_ORDER', limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
+                        else:
+                            transfer_journal_ids = journal_obj.search(cr, uid,
+                                                                      ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
+                                                                      limit=1, context=context)
+                            if transfer_journal_ids:
+                                transfer_journal_id = transfer_journal_ids[0]
                 if employee_id:
                     tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
                     # note: allowed for employees with no type
@@ -626,24 +633,52 @@ class account_account(osv.osv):
             raise osv.except_osv(_('Error'), error_msg)
 
     def check_type_for_specific_treatment(self, cr, uid, account_ids, partner_id=False, employee_id=False,
-                                          journal_id=False, context=None):
+                                          journal_id=False, partner_txt=False, currency_id=False, context=None):
         """
         Checks if the Third parties and accounts in parameter are compatible regarding the "Type for specific treatment"
-        of the accounts (raises an error if not)
+        of the accounts (raises an error if not).
+        Note that the currency_id is the one of the entry to be checked and is used ONLY for the checks on
+        transfer journals (if a currency is given).
         """
         if isinstance(account_ids, (int, long)):
             account_ids = [account_ids]
         if context is None:
             context = {}
         acc_obj = self.pool.get('account.account')
+        employee_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+        journal_obj = self.pool.get('account.journal')
         not_compatible_ids = []
         for acc_id in acc_obj.browse(cr, uid, account_ids, fields_to_fetch=['type_for_register'], context=context):
+            # get the right Third Party if a partner_txt only has been given
+            if partner_txt and not partner_id and not employee_id and not journal_id:
+                employee_ids = employee_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                if employee_ids:
+                    employee_id = employee_ids[0]
+                else:
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                    if partner_ids:
+                        partner_id = partner_ids[0]
+                    else:
+                        journal_ids = journal_obj.search(cr, uid,
+                                                         ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
+                                                         limit=1, context=context)
+                        if journal_ids:
+                            journal_id = journal_ids[0]
             acc_type = acc_id.type_for_register
-            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
             dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
             payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
-            if transfer_not_ok or advance_not_ok or dp_not_ok or payroll_not_ok:
+            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
+            if currency_id and journal_id and not transfer_not_ok:
+                # check the journal type and currency
+                journal = journal_obj.browse(cr, uid, journal_id, fields_to_fetch=['type', 'currency'], context=context)
+                is_liquidity = journal and journal.type in ['cash', 'bank', 'cheque'] and journal.currency
+                if acc_type == 'transfer_same' and (not is_liquidity or journal.currency.id != currency_id):
+                    transfer_not_ok = True
+                elif acc_type == 'transfer' and (not is_liquidity or journal.currency.id == currency_id):
+                    transfer_not_ok = True
+            if advance_not_ok or dp_not_ok or payroll_not_ok or transfer_not_ok:
                 not_compatible_ids.append(acc_id.id)
         if not_compatible_ids:
             self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)

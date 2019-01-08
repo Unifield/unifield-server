@@ -176,11 +176,21 @@ class hq_entries(osv.osv):
         account_obj = self.pool.get('account.account')
 
         for r in self.browse(cr, uid, ids, context=context):
-            res[r.id] = True
+            is_compatible = True
             if r.account_id:
-                res[r.id] = account_obj.is_allowed_for_thirdparty(cr, uid,
-                                                                  r.account_id.id, partner_txt=r.partner_txt or False,
-                                                                  context=context)[r.account_id.id]
+                # check the Allowed Partner Types
+                is_compatible = account_obj.is_allowed_for_thirdparty(cr, uid, r.account_id.id,
+                                                                      partner_txt=r.partner_txt or False,
+                                                                      context=context)[r.account_id.id]
+                # if the partner type compatibility is OK: also check the "Type for specific treatment"
+                if is_compatible:
+                    # an error will be raised if it isn't compatible
+                    account_obj.check_type_for_specific_treatment(cr, uid, r.account_id.id,
+                                                                  partner_txt=r.partner_txt or False,
+                                                                  currency_id=r.currency_id.id,
+                                                                  context=context)
+
+            res[r.id] = is_compatible
         return res
 
     def _get_current_instance_level(self, cr, uid, ids, name, args, context=None):
