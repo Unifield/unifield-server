@@ -152,6 +152,13 @@ MODEL_DICT = {
         'lang': 'en_MF',
         'domain': [('from_system', '=', False)],
     },
+    'access_control_list_empty': {
+        'name': 'Objects without ACL',
+        'domain_type': 'non_functionnal',
+        'model': 'ir.model.access.empty',
+        'lang': 'en_MF',
+        'domain': [('model_id.osv_memory', '=', False)],
+    },
     'field_access_rules': {
         'name': 'Field Access Rules',
         'domain_type': 'non_functionnal',
@@ -613,6 +620,21 @@ MODEL_DATA_DICT = {
             'name',
             'model_id.id',
         ],
+    },
+    'access_control_list_empty': {
+        'header_list': [
+            'name',
+            'group_id.name',
+            'perm_create',
+            'perm_unlink',
+            'perm_read',
+            'perm_write',
+            'model_id.id',
+        ],
+        'required_field_list': [],
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
+        'display_file_import': False,
     },
     'field_access_rules': {
         'header_list': [

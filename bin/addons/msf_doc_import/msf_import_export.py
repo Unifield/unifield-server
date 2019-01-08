@@ -239,16 +239,21 @@ class msf_import_export(osv.osv_memory):
         headers = []
         if not field_list:
             field_list = MODEL_DATA_DICT[selection]['header_list']
+
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
         model_obj = self.pool.get(model)
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
 
         for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
 
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
@@ -325,6 +330,8 @@ class msf_import_export(osv.osv_memory):
                 result['value']['hide_download_all_entries'] = hide_all
                 csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
                 result['value']['csv_button'] = csv_button
+
+                result['value']['display_file_import'] = MODEL_DATA_DICT[model_list_selection].get('display_file_import', True)
             else:
                 result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
@@ -511,7 +518,6 @@ class msf_import_export(osv.osv_memory):
                                                fields_get_dict[child_model][child_field]['string'])
                 else:
                     column_name = fields_get_dict[model][first_part]['string']
-
             file_column_name = header_columns[field_index] or ''
             if column_name.upper() != file_column_name.upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
