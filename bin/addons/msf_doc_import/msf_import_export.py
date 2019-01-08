@@ -1032,7 +1032,7 @@ class msf_import_export(osv.osv_memory):
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
-                    raise Exception('Line %s, %s' % (row_index+1, e.value))
+                    raise Exception('Line %s, %s' % (row_index+2, e.value))
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
@@ -1040,7 +1040,7 @@ class msf_import_export(osv.osv_memory):
             except Exception, e:
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
                 if raise_on_error:
-                    raise Exception('Line %s: %s' % (row_index+1, tools.ustr(e)))
+                    raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
                 cr.rollback()
                 save_error(tools.ustr(e), row_index)
                 nb_error += 1
