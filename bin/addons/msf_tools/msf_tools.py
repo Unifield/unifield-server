@@ -913,6 +913,8 @@ class user_rights_tools(osv.osv_memory):
         logger: where to log progression of import
         '''
 
+        if context is None:
+            context = {}
         zp = StringIO(plain_zip)
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, context=context)
         z = ZipFile(zp)
@@ -935,6 +937,7 @@ class user_rights_tools(osv.osv_memory):
         for x in MODEL_DICT:
             import_key[MODEL_DICT[x]['model']] = x
 
+        context['from_synced_ur'] = True
         for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
             zip_to_import = ur[model]
             obj_to_import = self.pool.get(model)
