@@ -653,6 +653,7 @@ class msf_import_export(osv.osv_memory):
         # Manage errors
         import_errors = {}
         allow_partial = not raise_on_error and MODEL_DICT[import_brw.model_list_selection].get('partial')
+        forced_values =  MODEL_DICT[import_brw.model_list_selection].get('forced_values', {})
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -1002,6 +1003,8 @@ class msf_import_export(osv.osv_memory):
                 if import_brw.model_list_selection == 'window_actions':
                     if not data.get('groups_id'):
                         data['groups_id'] = [(6, 0, [])]
+
+                data.update(forced_values)
 
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)

@@ -322,7 +322,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, True, context=context)
 
-        if len(ur['msf_button_access_rights.button_access_rule']) != 1:
+        if len(ur['msf_button_access_rights.button_access_rule']) != 3:
             raise osv.except_osv(_('Warning !'), _("Found %d BAR files, expected 3.") % (len(ur['msf_button_access_rights.button_access_rule'])))
         for x in ur:
             if not ur[x]:
