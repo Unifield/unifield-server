@@ -103788,12 +103788,6 @@ msgid "%s \"%s - %s\" of type \"view\" is not allowed for the account \"%s - %s\
 msgstr "%s \"%s - %s\" de type \"vue\" n'est pas autorisé pour le compte \"%s - %s\""
 
 #. module: account_hq_entries
-#: code:addons/account_hq_entries/hq_entries.py:601
-#, python-format
-msgid "You can not perform this action at HQ level."
-msgstr "Vous ne pouvez pas effectuer cette action au niveau HQ."
-
-#. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:607
 #, python-format
 msgid "You can not perform this action on a B/S line."

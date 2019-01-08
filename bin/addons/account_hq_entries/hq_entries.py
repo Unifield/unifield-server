@@ -597,10 +597,6 @@ class hq_entries(osv.osv):
                 elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
                     raise mission_closed_except
 
-        # block actions at HQ level
-        if hq_entries and hq_entries[0].current_instance_level == 'section':
-            raise osv.except_osv(_("Warning"),
-                                 _("You can not perform this action at HQ level."))
         # block edition and split on B/S entries
         if wizard_model in ['hq.entries.split', 'hq.analytic.reallocation', 'hq.reallocation']:
             for hq_entry in hq_entries:
