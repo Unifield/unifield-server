@@ -524,11 +524,11 @@ class po_follow_up_mixin(object):
             report_line['item'] = ''
             report_line['code'] = ''
             report_line['description'] = ''
-            report_line['qty_ordered'] = ''
+            report_line['qty_ordered'] = 0
             report_line['uom'] = ''
-            report_line['qty_received'] = ''
+            report_line['qty_received'] = 0
             report_line['in'] = ''
-            report_line['qty_backordered'] = ''
+            report_line['qty_backordered'] = 0
             report_line['unit_price'] = ''
             report_line['in_unit_price'] = ''
             report_line['delivery_requested_date'] = ''
@@ -888,31 +888,31 @@ class po_follow_up_mixin(object):
 
     def getPOLineHeaders(self):
         return [
-            'Order Reference',
-            'Supplier',
-            'Order Type',
-            'Line',
-            'Product Code',
-            'Product Description',
-            'Qty ordered',
-            'UoM',
-            'Qty received',
-            'IN Reference',
-            'Qty backorder',
-            'PO Unit Price (Currency)',
-            'IN unit price (Currency)',
-            'Currency',
-            'Total value received (Currency)',
-            'Total value received (Functional Currency)',
-            'Created',
-            'Delivery Requested Date',
-            'Delivery Confirmed Date',
-            'PO Line Status',
-            'PO Document Status',
-            'Customer',
-            'Customer Reference',
-            'Source Document',
-            'Supplier Reference',
+            _('Order Reference'),
+            _('Supplier'),
+            _('Order Type'),
+            _('Line'),
+            _('Product Code'),
+            _('Product Description'),
+            _('Qty ordered'),
+            _('UoM'),
+            _('Qty received'),
+            _('IN Reference'),
+            _('Qty backorder'),
+            _('PO Unit Price (Currency)'),
+            _('IN unit price (Currency)'),
+            _('Currency'),
+            _('Total value received (Currency)'),
+            _('Total value received (Functional Currency)'),
+            _('Created'),
+            _('Delivery Requested Date'),
+            _('Delivery Confirmed Date'),
+            _('PO Line Status'),
+            _('PO Document Status'),
+            _('Customer'),
+            _('Customer Reference'),
+            _('Source Document'),
+            _('Supplier Reference'),
         ]
 
 

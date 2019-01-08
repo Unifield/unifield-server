@@ -224,7 +224,10 @@ class po_follow_up(osv.osv_memory):
 
         domain = [('rfq_ok', '=', False)]
         report_parms = {
-            'title': 'PO Follow Up per Supplier',
+            'title': _('PO Follow Up per Supplier'),
+            'run_date_title': _('Report run date'),
+            'date_from_title': _('PO date from'),
+            'date_thru_title': _('PO date to'),
             'run_date': time.strftime("%d.%m.%Y"),
             'date_from': '',
             'date_thru': '',
