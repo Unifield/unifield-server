@@ -151,7 +151,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '=', False),
         '|',
         ('user_type.code', '=', 'income'),
-        '&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),
+        '&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
         ('filter_active', '=', True),
     ],
     # MANUEL JOURNAL ENTRIES
