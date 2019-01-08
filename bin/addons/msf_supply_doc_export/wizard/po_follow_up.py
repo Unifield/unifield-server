@@ -97,10 +97,10 @@ class po_follow_up(osv.osv_memory):
         return res
 
 
-    def get_states_str(selft, cr, uid, states, context=None):
+    def get_states_str(self, cr, uid, states, context=None):
         if context is None:
             context = {}
-        res = [value for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
+        res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
 
         return ', '.join(res).strip(', ')
 

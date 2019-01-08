@@ -8623,7 +8623,7 @@ msgid "Either there are no moves linked to the picking or Accounting Journals ar
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
 #. modules: tender_flow, financing_contract, msf_tools, account_voucher, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock
-#: code:addons/purchase/__init__.py:53
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:msf.instance.cloud,state:0
 #: field:ppl.processor,draft_step1:0
 #: field:ppl.processor,draft_step2:0
@@ -24475,6 +24475,7 @@ msgid "Batch Number"
 msgstr "Numéro de Lot"
 
 #. modules: msf_order_date, purchase, documents_done, purchase_override, sale, stock_forecast, purchase_allocation_report, sourcing, msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:documents.done.wizard,display_state:0
 #: selection:sale.order.line,so_state_stored:0
 #: selection:po.follow.up,state:0
@@ -54082,6 +54083,7 @@ msgid "You cannot import payroll entries. Please validate first draft payroll en
 msgstr "Vous ne pouvez pas importer d'écritures de paie.Veuillez d'abord valider les écritures de paie sous statut brouillon!"
 
 #. modules: msf_order_date, purchase, documents_done, purchase_override, sale, stock_forecast, purchase_allocation_report, sourcing, msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:documents.done.wizard,display_state:0
 #: selection:sale.order.line,so_state_stored:0
 #: selection:po.follow.up,state:0
@@ -57028,6 +57030,7 @@ msgid "Functionality"
 msgstr "Fonctionnalité"
 
 #. modules: msf_order_date, purchase, documents_done, purchase_override, sale, stock_forecast, purchase_allocation_report, sourcing, msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:documents.done.wizard,display_state:0
 #: selection:sale.order.line,so_state_stored:0
 #: selection:po.follow.up,state:0
@@ -97156,6 +97159,7 @@ msgid "Page :"
 msgstr "Page :"
 
 #. modules: msf_order_date, purchase, documents_done, sale, purchase_override, stock_forecast, purchase_allocation_report, sourcing, msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:103
 #: selection:documents.done.wizard,display_state:0
 #: selection:sale.order.line,so_state_stored:0
 #: selection:purchase.order,state:0
