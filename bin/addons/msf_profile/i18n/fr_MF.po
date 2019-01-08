@@ -6958,7 +6958,7 @@ msgstr "Date d'entrée en vigueur de la facture"
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_thru:0
 msgid "PO date to"
-msgstr "PO date to"
+msgstr "BC date fin"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -8788,6 +8788,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: field:internal.picking.processor,draft:0
 #: field:outgoing.delivery.processor,draft:0
 #: selection:internal.request.import,state:0
+#: field:po.follow.up,draft_ok:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10491,6 +10492,7 @@ msgid "Yearly closure"
 msgstr "Clôture Annuelle"
 
 #. modules: msf_order_date, purchase, account, msf_outgoing, purchase_allocation_report, account_payment, procurement, supplier_catalogue, documents_done, purchase_override, sale, sales_followup, out_step, sourcing, transport_mgmt, msf_supply_doc_export, stock_forecast, procurement_request, stock
+#: field:po.follow.up,confirmed_ok:0
 #: view:account.bank.statement:0
 #: view:payment.order:0
 #: selection:payment.order,state:0
@@ -27119,7 +27121,8 @@ msgstr "Code Applicable (si type=code)"
 msgid "Last date"
 msgstr "Last date"
 
-#. modules: sales_followup, sale, purchase_followup
+#. modules: sales_followup, sale, purchase_followup, msf_supply_doc_export
+#: view:po.follow.up:0
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
 #: view:ir.track.changes.wizard:0
@@ -30195,7 +30198,8 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export
+#: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
 #: selection:sale.order.leave.close,order_state:0
@@ -45057,6 +45061,7 @@ msgstr "Sync order line DB ID"
 #: selection:stock.forecast.line,state:0
 #: selection:sync.client.child_entity,state:0
 #: selection:documents.done.wizard,display_state:0
+#: field:po.follow.up,validated_ok:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -45973,7 +45978,8 @@ msgstr "Le montant à facturer par anticipation"
 msgid "Is Keep Cool ?"
 msgstr "Est à maintenir au frais?"
 
-#. modules: sales_followup, stock_override
+#. modules: sales_followup, stock_override, msf_supply_doc_export
+#: view:po.follow.up:0
 #: view:sale.followup.multi.wizard:0
 #: view:export.report.stock.move:0
 #: view:ir.followup.location.wizard:0
@@ -67824,9 +67830,10 @@ msgstr "Type de Réclamation (%s) ne permet pas les événements."
 msgid "Line %s. You cannot use an employee for the given account: %s."
 msgstr "Line %s. You cannot use an employee for the given account: %s."
 
-#. module: sales_followup
+#. modules: sales_followup, msf_supply_doc_export
 #: view:ir.followup.location.wizard:0
 #: view:sale.followup.multi.wizard:0
+#: view:po.follow.up:0
 msgid "PDF report"
 msgstr "Rapport PDF"
 
@@ -76783,8 +76790,9 @@ msgstr "Exporter le rapport des écarts au format XLS"
 msgid "3"
 msgstr "3"
 
-#. module: sales_followup
+#. modules: sales_followup, msf_supply_doc_export
 #: view:sale.followup.multi.wizard:0
+#: view:po.follow.up:0
 msgid "Order statuses"
 msgstr "Statut Commande"
 
@@ -80053,7 +80061,8 @@ msgstr "Délai de Transport Estimé"
 msgid "Line %s. No destination specified!"
 msgstr "Ligne %s. Aucune destination précisée !"
 
-#. modules: msf_order_date, purchase, stock_forecast, sale, sales_followup, sourcing, documents_done
+#. modules: msf_order_date, purchase, stock_forecast, sale, sales_followup, sourcing, documents_done, msf_supply_doc_export
+#: field:po.follow.up,sourced_ok:0
 #: selection:sale.order.line,so_state_stored:0
 #: view:purchase.order:0
 #: view:sale.order:0
@@ -91047,7 +91056,7 @@ msgstr "Asie/ Qatar"
 #. module: msf_supply_doc_export
 #: field:po.follow.up,po_date_from:0
 msgid "PO date from"
-msgstr "PO date from"
+msgstr "BC date début"
 
 #. module: purchase
 #: help:purchase.order,invoice_address_id:0
@@ -97750,6 +97759,7 @@ msgid "Search Uninvoiced Lines"
 msgstr "Rechercher Lignes non-facturées"
 
 #. modules: res_currency_functional, financing_contract, msf_tools, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, purchase, msf_audittrail, tender_flow, stock, msf_profile
+#: field:po.follow.up,cancel_ok:0
 #: view:account.addtmpl.wizard:0
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
@@ -103778,3 +103788,8 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: msf_supply_doc_export
+#: field:po.follow.up,pending_only_ok:0
+msgid "Pending order line only"
+msgstr "Seulement les lignes de commandes en cours"
