@@ -54,7 +54,7 @@ ORDER_TYPES_SELECTION = [
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _description = "Purchase Order"
-    _order = "name desc"
+    _order = "id desc"
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
@@ -624,7 +624,7 @@ class purchase_order(osv.osv):
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
         'date_order': fields.date(string='Creation Date', required=True, select=True, help="Date on which this document has been created."),
         'name': fields.char('Order Reference', size=64, required=True, select=True, readonly=True,
-                            help="unique number of the purchase order,computed automatically when the purchase order is created"),
+                            help="unique number of the purchase order,computed automatically when the purchase order is created", sort_column='id'),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),

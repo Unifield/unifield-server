@@ -97,6 +97,7 @@ class _column(object):
         self.hide_default_menu = hide_default_menu
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
+        self.sort_column = args.get('m2o_order', False)
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
