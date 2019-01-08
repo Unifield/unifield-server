@@ -121,13 +121,13 @@ class hq_entries_import_wizard(osv.osv_memory):
         free1_id = False
         free2_id = False
         account = acc_obj.browse(cr, uid, account_ids[0])
+        if not cost_center:
+            # CC is needed for synchro (and usually it can't be added after the import in HQ because of the user rights)
+            raise osv.except_osv(_('Error'), _('Cost Center is missing for the account %s.') % (account_description,))
         if account.user_type.code not in ['expense', 'income']:  # B/S accounts
             if destination or funding_pool or free1 or free2:
                 raise osv.except_osv(_('Error'), _('The B/S account %s cannot have an Analytic Distribution. '
                                                    'Only a Cost Center should be given.') % (account_description,))
-            elif not cost_center:
-                # a CC is needed for synchro (it can't be added after the import as the B/S lines are not editable)
-                raise osv.except_osv(_('Error'), _('Cost Center is missing for the account %s.') % (account_description,))
         else:  # expense or income accounts
             # Retrieve Destination
             # Set default destination

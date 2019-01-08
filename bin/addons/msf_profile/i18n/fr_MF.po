@@ -103800,7 +103800,7 @@ msgid "The B/S account %s cannot have an Analytic Distribution. Only a Cost Cent
 msgstr "Le compte de bilan %s ne peut pas avoir de Distribution Analytique. Seul un Centre de Coût doit être indiqué."
 
 #. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_import.py:129
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:126
 #, python-format
 msgid "Cost Center is missing for the account %s."
 msgstr "Il manque le Centre de Coût pour le compte %s."
