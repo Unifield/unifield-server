@@ -105,7 +105,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             account_code = account_data and account_data[0] or False
             if not account_code:
                 raise osv.except_osv(_('Error'), _('No account code found!'))
-            account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)] + ACCOUNT_RESTRICTED_AREA['hq_lines'])
+            account_ids = acc_obj.search(cr, uid, [('code', '=', account_code)] + ACCOUNT_RESTRICTED_AREA['hq_lines_import'])
             if not account_ids:
                 raise osv.except_osv(_('Error'), _('Account code %s doesn\'t exist or is not allowed in HQ Entries!') % (account_code,))
 

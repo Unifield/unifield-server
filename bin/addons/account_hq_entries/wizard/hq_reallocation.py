@@ -139,15 +139,7 @@ class hq_reallocation(osv.osv_memory):
 
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True,
-                                      domain="["
-                                             "('type', '!=', 'view'), "
-                                             "('type_for_register', '!=', 'donation'), "
-                                             "('is_not_hq_correctible', '=', False), "
-                                             "'|', "
-                                             "('user_type.code', '=', 'income'), "
-                                             "'&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'), "  # exclude Extra-accounting expenses
-                                             "('filter_active', '=', True), "
-                                             "]"),
+                                      domain="[('restricted_area', '=', 'hq_lines_correction')]"),
     }
 
     def default_get(self, cr, uid, fields, context=None):

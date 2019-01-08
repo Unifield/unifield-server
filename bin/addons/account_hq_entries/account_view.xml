@@ -17,13 +17,7 @@
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="account_id"
-                           domain="[('type', '!=', 'view'),
-                                    ('type_for_register', '!=', 'donation'),
-                                    ('is_not_hq_correctible', '=', False),
-                                    '|',
-                                    ('user_type.code', '=', 'income'),
-                                    '&amp;', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),
-                                    ('filter_active', '=', True)]"
+                           domain="[('restricted_area', '=', 'hq_lines_correction')]"
                            context="{'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '==', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="partner_txt"/>
