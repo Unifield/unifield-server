@@ -17,7 +17,7 @@
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="account_id"
-                           domain="[('restricted_area', '=', 'hq_lines_correction')]"
+                           domain="[('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]"
                            context="{'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '==', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="partner_txt"/>

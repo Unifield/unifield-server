@@ -45,7 +45,7 @@
                             <field name="account_hq_correctible" invisible="1"/>
                             <field name="is_not_ad_correctable" invisible="1"/>
                             <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}"
-                                   domain="[('restricted_area', '=', 'hq_lines_correction')]"
+                                   domain="[('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]"
                             />
                             <field name="amount"/>
                             <field name="destination_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>

@@ -152,7 +152,8 @@ ACCOUNT_RESTRICTED_AREA = {
         '|',
         ('user_type.code', '=', 'income'),
         '&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
-        ('filter_active', '=', True),
+        # note : filter_active isn't set to True here as that would prevent to "Change Account" to an account
+        # currently inactive but active at the date of the entry
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
