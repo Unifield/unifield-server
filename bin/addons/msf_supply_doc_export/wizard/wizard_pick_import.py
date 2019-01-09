@@ -134,6 +134,9 @@ class wizard_pick_import(osv.osv_memory):
                     i += 1
                 import_data_lines[line_index] = line_data
 
+        if import_data_header['reference'] != wiz.picking_id.name:
+            raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
+
         for xls_line_number, line_data in import_data_lines.items():
             line_data = self.normalize_data(cr, uid, line_data)
 

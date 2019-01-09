@@ -74571,6 +74571,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_outgoing/report/packing_list.py:90
 #: code:addons/sale/wizard/internal_request_import.py:162
 #: code:addons/sale/wizard/internal_request_import.py:166
+#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
 #: selection:internal.request.import,state:0
 #, python-format, python-format
 msgid "Error"
@@ -103778,3 +103779,26 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. modules: msf_supply_doc_export, msf_outgoing
+#: view:create.picking.processor:0
+#: view:wizard.pick.import:0
+msgid "Import PICK"
+msgstr "Importer PICK"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Export PICK"
+msgstr "Exporter PICK"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
+#, python-format
+msgid "No PICK selected"
+msgstr "Aucun PICK selectionné"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:138
+#, python-format
+msgid "PICK reference in the import file doesn't match with the current PICK"
+msgstr "La reférence du PICK dans le fichier d'import ne correspond pas au PICK courant"
