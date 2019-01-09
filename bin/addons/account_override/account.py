@@ -584,19 +584,15 @@ class account_account(osv.osv):
                     elif pt_model == 'res.partner':
                         partner_id = pt_id
                 elif partner_txt:
-                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                  order='NO_ORDER', limit=1, context=context)
+                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
                     if employee_ids:
                         employee_id = employee_ids[0]
                     else:
-                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                         order='NO_ORDER', limit=1, context=context)
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
                         else:
-                            transfer_journal_ids = journal_obj.search(cr, uid,
-                                                                      ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
-                                                                      limit=1, context=context)
+                            transfer_journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
                             if transfer_journal_ids:
                                 transfer_journal_id = transfer_journal_ids[0]
                 if employee_id:
@@ -660,9 +656,7 @@ class account_account(osv.osv):
                     if partner_ids:
                         partner_id = partner_ids[0]
                     else:
-                        journal_ids = journal_obj.search(cr, uid,
-                                                         ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
-                                                         limit=1, context=context)
+                        journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
                         if journal_ids:
                             journal_id = journal_ids[0]
             acc_type = acc_id.type_for_register

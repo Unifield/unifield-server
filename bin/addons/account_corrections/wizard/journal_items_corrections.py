@@ -484,9 +484,7 @@ class journal_items_corrections(osv.osv_memory):
                     if partner_ids:
                         partner_id = partner_ids[0]
                     else:
-                        journal_ids = journal_obj.search(cr, uid,
-                                                         ['|', ('name', '=', partner_txt), ('code', '=', partner_txt)],
-                                                         limit=1, context=context)
+                        journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
                         if journal_ids:
                             partner_journal = journal_obj.browse(cr, uid, journal_ids[0], context=context)
             # Check the compatibility with the "Type For Specific Treatment" of the account
