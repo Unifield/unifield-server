@@ -71,6 +71,12 @@ class wizard_pick_import(osv.osv_memory):
 
 
     def normalize_data(self, cr, uid, data):
+        if 'qty_picked' in data: # set to float
+            if not data['qty_picked']:
+                data['qty_picked'] = 0.0
+            if isinstance(data['qty_picked'], (str,unicode)):
+                data['qty_picked'] = float(data['qty_picked'])
+
         if 'qty_to_pick' in data: # set to float
             if not data['qty_to_pick']:
                 data['qty_to_pick'] = 0.0
@@ -129,26 +135,40 @@ class wizard_pick_import(osv.osv_memory):
                 import_data_lines[line_index] = line_data
 
         for xls_line_number, line_data in import_data_lines.items():
+            line_data = self.normalize_data(cr, uid, line_data)
+
             # fields to update on moves are: quantity, prodlot_id, expiry_date
-            move_proc = self.pool.get('create.picking.move.processor').search(cr, uid, [
+            move_proc_ids = self.pool.get('create.picking.move.processor').search(cr, uid, [
                 ('wizard_id', '=', wiz.picking_processor_id.id),
                 ('line_number', '=', line_data['item']),
+                ('ordered_quantity', '=', line_data['qty_to_pick']),
+                ('quantity', '=', 0),
             ], context=context)
-            line_data = self.normalize_data(cr, uid, line_data)
-            if len(move_proc) == 1:
-                to_write = {}
-                if line_data['qty_to_pick']:
-                    to_write['quantity'] = line_data['qty_to_pick']
-                if line_data['batch']:
-                    pass
-                if line_data['expiry_date']:
-                    pass
-                self.pool.get('create.picking.move.processor').write(cr, uid, move_proc, to_write, context=context)
 
-            elif len(move_proc) > 1:
-                pass
-            elif not move_proc:
-                pass
+            if move_proc_ids:
+                move_proc = self.pool.get('create.picking.move.processor').browse(cr, uid, move_proc_ids[0], context=context)
+                to_write = {}
+
+                if line_data['qty_picked']:
+                    to_write['quantity'] = line_data['qty_picked']
+
+                if move_proc.product_id.batch_management and line_data['batch']:
+                    prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
+                        ('product_id', '=', move_proc.product_id.id),
+                        ('name', '=', line_data['batch']),
+                    ], context=context)
+                    if prodlot_ids:
+                        to_write['prodlot_id'] = prodlot_ids[0]
+                elif not move_proc.product_id.batch_management and move_proc.product_id.perishable and line_data['expiry_date']:
+                    prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
+                        ('life_date', '=', line_data['expiry_date']),
+                        ('type', '=', 'internal'),
+                        ('product_id', '=', move_proc.product_id.id),
+                    ], context=context)
+                    if prodlot_ids:
+                        to_write['prodlot_id'] = prodlot_ids[0]
+
+                self.pool.get('create.picking.move.processor').write(cr, uid, [move_proc.id], to_write, context=context)
 
         return {
             'type': 'ir.actions.act_window',
