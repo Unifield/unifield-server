@@ -65,7 +65,8 @@ class wizard_pick_import(osv.osv_memory):
 
     _columns = {
         'picking_id': fields.many2one('stock.picking', string="PICK ref", required=True),
-        'picking_processor_id': fields.many2one('create.picking.processor', string="PICK processor ref", required=True),
+        'picking_processor_id': fields.many2one('create.picking.processor', string="PICK processor ref"),
+        'validate_processor_id': fields.many2one('validate.picking.processor', string="PICK processor ref"),
         'import_file': fields.binary('PICK import file'),
     }
 
@@ -102,8 +103,8 @@ class wizard_pick_import(osv.osv_memory):
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'create.picking.processor',
-            'res_id': wiz.picking_processor_id.id,
+            'res_model': 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor',
+            'res_id': wiz.picking_processor_id.id or wiz.validate_processor_id.id,
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
@@ -117,6 +118,10 @@ class wizard_pick_import(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
         import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
+
+        res_model = 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor'
+        move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
+        res_id = wiz.picking_processor_id.id or wiz.validate_processor_id.id
 
         line_index = 0
         import_data_header = {}
@@ -141,15 +146,15 @@ class wizard_pick_import(osv.osv_memory):
             line_data = self.normalize_data(cr, uid, line_data)
 
             # fields to update on moves are: quantity, prodlot_id, expiry_date
-            move_proc_ids = self.pool.get('create.picking.move.processor').search(cr, uid, [
-                ('wizard_id', '=', wiz.picking_processor_id.id),
+            move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
+                ('wizard_id', '=', res_id),
                 ('line_number', '=', line_data['item']),
                 ('ordered_quantity', '=', line_data['qty_to_pick']),
                 ('quantity', '=', 0),
             ], context=context)
 
             if move_proc_ids:
-                move_proc = self.pool.get('create.picking.move.processor').browse(cr, uid, move_proc_ids[0], context=context)
+                move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_ids[0], context=context)
                 to_write = {}
 
                 if line_data['qty_picked']:
@@ -171,12 +176,12 @@ class wizard_pick_import(osv.osv_memory):
                     if prodlot_ids:
                         to_write['prodlot_id'] = prodlot_ids[0]
 
-                self.pool.get('create.picking.move.processor').write(cr, uid, [move_proc.id], to_write, context=context)
+                self.pool.get(move_proc_model).write(cr, uid, [move_proc.id], to_write, context=context)
 
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'create.picking.processor',
-            'res_id': wiz.picking_processor_id.id,
+            'res_model': res_model,
+            'res_id': res_id,
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
