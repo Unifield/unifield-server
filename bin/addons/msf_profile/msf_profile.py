@@ -3065,6 +3065,13 @@ class sync_tigger_something(osv.osv):
                 '_MX1_' not in instance.instance and \
                     '_LB1_' not in instance.instance:
 
+                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+                if not setup_br:
+                    percent = 0
+                else:
+                    percent = setup_br.sale_price
+
+
                 data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
                 data = data_file.read()
 
@@ -3097,8 +3104,9 @@ class sync_tigger_something(osv.osv):
                 nb_ignored = 0
                 for prod in prod_obj.read(cr, uid, prod_id_price.keys(), ['standard_price', 'product_tmpl_id']):
                     if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
+                        list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
                         nb_updated += 1
-                        cr.execute('update product_template set standard_price=%s where id=%s', (prod_id_price[prod['id']], prod['product_tmpl_id'][0]))
+                        cr.execute('update product_template set standard_price=%s, list_price=%s where id=%s', (prod_id_price[prod['id']], list_price, prod['product_tmpl_id'][0]))
                         cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
                             (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
                             """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
