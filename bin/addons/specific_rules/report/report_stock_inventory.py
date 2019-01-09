@@ -21,6 +21,7 @@
 
 import time
 import threading
+import datetime
 
 from osv import osv
 from osv import fields
@@ -28,6 +29,9 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 from service.web_services import report_spool
+from dateutil.relativedelta import relativedelta
+
+IN_LAST_X_MONTHS = tuple([("%s" % i, _("%s months") % str(i)) for i in range(0, 13)])
 
 
 class export_report_stock_inventory(osv.osv):
@@ -41,8 +45,11 @@ class export_report_stock_inventory(osv.osv):
             readonly=True,
         ),
         'name': fields.datetime(
-            string='Generated on',
+            string='Report Generation date',
             readonly=True,
+        ),
+        'stock_level_date': fields.date(
+            string='Stock Level date',
         ),
         'product_id': fields.many2one(
             'product.product',
@@ -56,7 +63,7 @@ will be shown.""",
         ),
         'product_list_id': fields.many2one(
             'product.list',
-            string='Product list',
+            string='Specific Product list',
         ),
         'expiry_date': fields.date(
             string='Specific expiry date',
@@ -77,6 +84,14 @@ location will be shown.""",
             string='State',
             readonly=True,
         ),
+        'display_0': fields.boolean(
+            string='Include products with stock <= 0 with movements'
+        ),
+        'in_last_x_months': fields.selection(
+            IN_LAST_X_MONTHS,
+            'In the last',
+            select=True,
+        ),
     }
 
     _defaults = {
@@ -85,6 +100,12 @@ location will be shown.""",
         _company_default_get(
             cr, uid, 'export.report.stock.inventory', context=c),
     }
+
+    def onchange_sl_date(self, cr, uid, ids, sl_date=False):
+        if sl_date and sl_date > str(datetime.datetime.now().date()):
+            return {'value': {'stock_level_date': False}}
+        else:
+            return {'value': {'stock_level_date': sl_date}}
 
     def update(self, cr, uid, ids, context=None):
         return {}
@@ -116,6 +137,8 @@ location will be shown.""",
                 ('product_id.type', '=', 'product'),
                 ('state', '=', 'done'),
             ]
+            if report.stock_level_date:
+                domain.append(('date', '<=', report.stock_level_date + ' 23:59:59'))
             list_product_ids = False
             if report.product_list_id:
                 list_product_ids = self.pool.get('product.product').search(cr, uid, [('list_ids', '=', report.product_list_id.id)], context=context)
@@ -127,7 +150,8 @@ location will be shown.""",
                 else:
                     domain.append(('location_id.usage', '=', 'internal'))
             else:
-                domain.append(('product_qty', '!=', 0.00))
+                if not report.display_0:
+                    domain.append(('product_qty', '!=', 0.00))
                 if report.prodlot_id:
                     domain.append(('prodlot_id', '=', report.prodlot_id.id))
                 else:
@@ -153,6 +177,9 @@ location will be shown.""",
                 'ids': [report.id],
                 'lines': rsi_ids,
                 'list_product_ids': list_product_ids,
+                'lines_above_0': 0,
+                'total_values': 0,
+                'stock_level_date': report.stock_level_date or False,
             }
 
             cr.commit()
@@ -296,6 +323,9 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             'time': time,
             'getLines': self.getLines,
             'getLocations': self.getLocations,
+            'getLinesAbove0': self.getLinesAbove0,
+            'getTotalValues': self.getTotalValues,
+            'display0InRange': self.display0InRange,
         })
 
     def getLocations(self):
@@ -310,6 +340,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = {}
+        sptc_obj = self.pool.get('standard.price.track.changes')
         with_product_list = self.datas.get('list_product_ids') and True or False
         for line in self.pool.get('report.stock.inventory').browse(
             self.cr,
@@ -326,11 +357,23 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'sum_qty': 0.00,
                     'sum_value': 0.00,
                     'with_product_list': with_product_list,
+                    'date': line.date,
                     'lines': {},
                 }
 
+            # Look at the product's price at the corresponding Stock Level date
+            line_value = line.value
+            if self.isDate(self.datas.get('stock_level_date')):
+                sptc_ids = sptc_obj.search(self.cr, self.uid, [('product_id', '=', line.product_id.id)], order='change_date desc', context=self.localcontext)
+                if sptc_ids:
+                    sptcs = sptc_obj.browse(self.cr, self.uid, sptc_ids, context=self.localcontext)
+                    for sptc in sptcs:
+                        if sptc.change_date <= self.datas['stock_level_date']:
+                            line_value = sptc.new_standard_price
+                            break
+
             res[key]['sum_qty'] += line.product_qty
-            res[key]['sum_value'] += line.value
+            res[key]['sum_value'] += line_value
             batch_id = 'no_batch'
             batch_name = ''
             expiry_date = False
@@ -350,7 +393,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 }
 
             res[key]['lines'][batch_id]['qty'] += line.product_qty
-            res[key]['lines'][batch_id]['value'] += line.value
+            res[key]['lines'][batch_id]['value'] += line_value
             res[key]['lines'][batch_id]['location_ids'].setdefault(line.location_id.id, 0.00)
             res[key]['lines'][batch_id]['location_ids'][line.location_id.id] += line.product_qty
 
@@ -366,6 +409,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                         'sum_qty': 0.00,
                         'sum_value': 0.00,
                         'with_product_list': with_product_list,
+                        'date': prod.date,
                         'lines': {},
                     }
                     batch_id = 'no_batch'
@@ -389,7 +433,44 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         for k in sorted(res.keys()):
             fres.append(res[k])
 
+        # Count lines with stock and lines' value
+        lines_above_0 = 0
+        total_values = 0
+        for line in fres:
+            if line.get('sum_qty') > 0:
+                lines_above_0 += 1
+            if line.get('sum_value'):
+                total_values += line['sum_value']
+            total_values = round(total_values, 2)
+
+        self.datas.update({
+            'lines_above_0': lines_above_0,
+            'total_values': total_values,
+        })
+
         return fres
+
+    def getLinesAbove0(self):
+        return self.datas.get('lines_above_0', 0)
+
+    def getTotalValues(self):
+        return self.datas.get('total_values', 0)
+
+    def display0InRange(self, display0, gen_date, sl_date, in_last_x_months, line_date):
+        '''
+        Return True if the line with product 0 stock is in range of X months from Stock Level Date or Report Generation date
+        '''
+        res = False
+        if display0:
+            if self.isDate(sl_date):
+                max_date = datetime.datetime.strptime(sl_date, '%Y-%m-%d')
+            else:
+                max_date = datetime.datetime.strptime(gen_date, '%Y-%m-%d %H:%M:%S')
+            min_date = (max_date + relativedelta(months=-int(in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
+            if min_date <= line_date <= max_date.strftime('%Y-%m-%d 23:59:59'):
+                res = True
+
+        return res
 
 
 class report_stock_inventory_xls(SpreadsheetReport):
