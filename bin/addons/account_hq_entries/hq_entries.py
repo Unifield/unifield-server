@@ -184,7 +184,8 @@ class hq_entries(osv.osv):
                                                                       context=context)[r.account_id.id]
                 # if the partner type compatibility is OK: also check the "Type for specific treatment"
                 if is_compatible:
-                    # an error will be raised if it isn't compatible
+                    # will raise an error if the Third Party exists in Unifield, and isn't compatible with the account
+                    context.update({'ignore_non_existing_tp': True})
                     account_obj.check_type_for_specific_treatment(cr, uid, r.account_id.id,
                                                                   partner_txt=r.partner_txt or False,
                                                                   currency_id=r.currency_id.id,

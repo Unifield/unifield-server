@@ -487,6 +487,10 @@ class journal_items_corrections(osv.osv_memory):
                         journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
                         if journal_ids:
                             partner_journal = journal_obj.browse(cr, uid, journal_ids[0], context=context)
+                # if there is a partner_txt but no related Third Party found:
+                # ignore the check if "ignore_non_existing_tp" is in context (e.g. when validating HQ entries)
+                if not partner_id and not employee_id and not partner_journal and context.get('ignore_non_existing_tp', False):
+                    return True
             # Check the compatibility with the "Type For Specific Treatment" of the account
             if acc_type in ['transfer', 'transfer_same']:
                 is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
@@ -513,6 +517,7 @@ class journal_items_corrections(osv.osv_memory):
             acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
                                               employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
                                               partner_id=aml.partner_id or False, raise_it=True, context=context)
+        return True
 
     def correct_manually(self, cr, uid, ids, context=None):
         """

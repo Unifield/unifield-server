@@ -659,6 +659,10 @@ class account_account(osv.osv):
                         journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
                         if journal_ids:
                             journal_id = journal_ids[0]
+                # if there is a partner_txt but no related Third Party found:
+                # ignore the check if "ignore_non_existing_tp" is in context (e.g. when validating HQ entries)
+                if not partner_id and not employee_id and not journal_id and context.get('ignore_non_existing_tp', False):
+                    continue
             acc_type = acc_id.type_for_register
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
             dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
@@ -709,7 +713,7 @@ class account_account(osv.osv):
                 allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
                                                                         transfer_journal_id, partner_id, from_vals, context)
                 if not allowed_partner_field:
-                    res[r.id] = True  # allowed with no specific field
+                    res[r.id] = True  # allowed with no specific field (e.g. don't block validation of HQ entries with non-existing 3d Party)
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
         # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
