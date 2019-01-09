@@ -463,6 +463,22 @@ class hq_entries_validation(osv.osv_memory):
                     elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                         if line.cost_center_id_first_value and line.cost_center_id_first_value.id:
                             cc_change.append(line)
+                    if line in account_change or line in cc_account_change:
+                        # non-correctable accounts should neither be corrected nor used in the correction lines
+                        non_correctable_account = (line.account_id_first_value.is_not_hq_correctible and line.account_id_first_value) or \
+                                                  (line.account_id.is_not_hq_correctible and line.account_id) or False
+                        if non_correctable_account:
+                            raise osv.except_osv(_('Warning'), _('The account %s - %s should neither be corrected nor be used in '
+                                                                 'correction lines.') % (non_correctable_account.code,
+                                                                                         non_correctable_account.name))
+                    if line in cc_change or line in cc_account_change:
+                        # accounts "non correctable on AD" should neither be corrected on AD nor used in the AD corr. lines
+                        ad_non_correctable_account = (line.account_id_first_value.is_not_ad_correctable and line.account_id_first_value) or \
+                                                     (line.account_id.is_not_ad_correctable and line.account_id) or False
+                        if ad_non_correctable_account:
+                            raise osv.except_osv(_('Warning'), _('The account %s - %s should not be used in '
+                                                                 'AD corrections.') % (ad_non_correctable_account.code,
+                                                                                       ad_non_correctable_account.name))
             all_lines = {}
             for currency in to_write:
                 for period in to_write[currency]:

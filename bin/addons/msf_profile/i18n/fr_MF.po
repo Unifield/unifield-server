@@ -103804,3 +103804,15 @@ msgstr "Le compte de bilan %s ne peut pas avoir de Distribution Analytique. Seul
 #, python-format
 msgid "Cost Center is missing for the account %s."
 msgstr "Il manque le Centre de Coût pour le compte %s."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:479
+#, python-format
+msgid "The account %s - %s should not be used in AD corrections."
+msgstr "Le compte %s - %s ne doit pas être utilisé dans les corrections analytiques."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:471
+#, python-format
+msgid "The account %s - %s should neither be corrected nor be used in correction lines."
+msgstr "Le compte %s - %s ne doit ni être corrigé ni être utilisé dans les lignes de correction."
