@@ -38,7 +38,6 @@ import sys
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
     'name': _('UF Payroll rounding'),
-    'destination_code': 'SUP',
 
     'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
 
@@ -422,18 +421,12 @@ class hr_payroll_import(osv.osv_memory):
         if not account_ids:
             err_account(account_code=account_code)
 
-        # get default AD values
-        # destination: from code
-        dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [
-            ('category', '=', 'DEST'),
-            ('code', '=', UF_SIDE_ROUNDING_LINE['destination_code']),
-        ], context=context)
-        if not dest_ids:
-            msg = _("%s: No default destination found '%s'") % (
-                UF_SIDE_ROUNDING_LINE['name'],
-                UF_SIDE_ROUNDING_LINE['destination_code'],
-            )
-            raise osv.except_osv(_('Error'), msg)
+        # get the default Destination to use
+        acc_fields = ['default_destination_id', 'code', 'name']
+        acc = self.pool.get('account.account').browse(cr, uid, account_ids[0], fields_to_fetch=acc_fields, context=context)
+        if not acc.default_destination_id:
+            raise osv.except_osv(_('Error'), _('The account %s - %s has no Default Destination.') % (acc.code, acc.name))
+        dest = acc.default_destination_id
 
         # cost center: 1st FX gain loss of instance
         instance = self.pool.get('res.users').browse(cr, uid, [uid],
@@ -466,7 +459,7 @@ class hr_payroll_import(osv.osv_memory):
 
             # AD
             'cost_center_id': cc_ids[0],
-            'destination_id': dest_ids[0],
+            'destination_id': dest.id,
             #'funding_pool_id':  # default is PF
         }, context=context)
 
