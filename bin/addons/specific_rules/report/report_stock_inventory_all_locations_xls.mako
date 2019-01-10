@@ -135,6 +135,13 @@
     </Row>
     <Row></Row>
     <Row></Row>
+    <%  total_value, nb_items, lines = getLines() %>
+    <Row>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Total Value:</Data></Cell>
+        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${total_value}</Data></Cell>
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Nb Items withj qty>0:</Data></Cell>
+        <Cell ss:StyleID="sumline"><Data ss:Type="Number">${nb_items}</Data></Cell>
+    </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="poheader"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="poheader"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
@@ -147,7 +154,7 @@
         <Cell ss:StyleID="poheader"><Data ss:Type="String">${_('Total Qty')}</Data></Cell>
     </Row>
 
-    % for prd in getLines():
+    % for prd in lines:
         % for line in prd['lines'].itervalues():
           % if line['qty'] or prd['with_product_list']:
           <Row ss:AutoFitHeight="1">
