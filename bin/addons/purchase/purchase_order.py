@@ -2470,6 +2470,22 @@ class purchase_order(osv.osv):
                 cross_docking_ok = True
         self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)
 
+        # set AD:
+        pol_no_ad = pol_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('analytic_distribution_id', '=', False),
+            ('linked_sol_id', '!=', False),
+            ('linked_sol_id.order_id.procurement_request', '=', False),
+        ], order='NO_ORDER', context=context)
+        for pol in pol_obj.browse(cr, uid, pol_no_ad, context=context):
+            dist_sol = pol.linked_sol_id.analytic_distribution_id.id or pol.linked_sol_id.order_id.analytic_distribution_id.id or False
+            if not dist_sol:
+                continue
+            new_dist = self.pool.get('analytic.distribution').copy(cr, uid, dist_sol, {}, context=context)
+            pol_obj.write(cr, uid, [pol.id], {
+                'analytic_distribution_id': new_dist,
+            }, context=context)
+
         # log message describing the previous action
         new_po_data = self.read(cr, uid, new_po_id, ['name'], context=context)
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.') % new_po_data['name'])
