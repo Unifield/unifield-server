@@ -44,7 +44,7 @@
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
-                    <field name="stock_level_date" on_change="onchange_sl_date(stock_level_date)" />
+                    <field name="stock_level_date" on_change="onchange_sl_date(stock_level_date)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <separator colspan="4" string="Advanced filters" />
                     <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" domain="[('type', '=', 'product')]" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
@@ -55,7 +55,8 @@
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <newline/>
                     <field name="display_0" />
-                    <field name="in_last_x_months" attrs="{'readonly': ['|', ('display_0', '=', False), ('state', '!=', 'draft')], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+                    <field name="in_last_x_months" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': ['|', ('display_0', '=', False), ('product_list_id', '!=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="2">
                         <button name="generate_report" type="object"

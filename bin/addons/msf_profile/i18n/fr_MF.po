@@ -103862,12 +103862,6 @@ msgstr "Dans les derniers"
 msgid "Specific Product list"
 msgstr "Liste de Produits spécifique"
 
-#. modules: specific_rules, stock
-#: selection:export.report.stock.inventory,in_last_x_months:0
-#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
-msgid "0 months"
-msgstr "0 mois"
-
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:191
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:194

@@ -29,9 +29,12 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 from service.web_services import report_spool
+
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-IN_LAST_X_MONTHS = tuple([("%s" % i, _("%s months") % str(i)) for i in range(0, 13)])
+
+IN_LAST_X_MONTHS = tuple([("%s" % i, _("%s months") % str(i)) for i in range(1, 13)])
 
 
 class export_report_stock_inventory(osv.osv):
@@ -90,7 +93,6 @@ location will be shown.""",
         'in_last_x_months': fields.selection(
             IN_LAST_X_MONTHS,
             'In the last',
-            select=True,
         ),
     }
 
@@ -102,7 +104,7 @@ location will be shown.""",
     }
 
     def onchange_sl_date(self, cr, uid, ids, sl_date=False):
-        if sl_date and sl_date > str(datetime.datetime.now().date()):
+        if sl_date and sl_date > str(datetime.now().date()):
             return {'value': {'stock_level_date': False}}
         else:
             return {'value': {'stock_level_date': sl_date}}
@@ -125,67 +127,21 @@ location will be shown.""",
         """
         Select the good lines on the report.stock.inventory table
         """
-        rsi_obj = self.pool.get('report.stock.inventory')
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
 
         for report in self.browse(cr, uid, ids, context=context):
-            domain = [
-                ('location_id.usage', '=', 'internal'),
-                ('product_id.type', '=', 'product'),
-                ('state', '=', 'done'),
-            ]
-            if report.stock_level_date:
-                domain.append(('date', '<=', report.stock_level_date + ' 23:59:59'))
-            list_product_ids = False
-            if report.product_list_id:
-                list_product_ids = self.pool.get('product.product').search(cr, uid, [('list_ids', '=', report.product_list_id.id)], context=context)
-                domain.append(('product_id', 'in', list_product_ids))
-                if report.expiry_date:
-                    domain.append(('expired_date', '=', report.expiry_date))
-                if report.location_id:
-                    domain.append(('location_id', '=', report.location_id.id))
-                else:
-                    domain.append(('location_id.usage', '=', 'internal'))
-            else:
-                if not report.display_0:
-                    domain.append(('product_qty', '!=', 0.00))
-                if report.prodlot_id:
-                    domain.append(('prodlot_id', '=', report.prodlot_id.id))
-                else:
-                    if report.product_id:
-                        domain.append(('product_id', '=', report.product_id.id))
-                    if report.expiry_date:
-                        domain.append(('expired_date', '=', report.expiry_date))
-                if not all_locations and report.location_id:
-                    domain.append(('location_id', '=', report.location_id.id))
-                elif all_locations:
-                    domain.append(('location_id.usage', '=', 'internal'))
-
-            rsi_ids = rsi_obj.search(cr, uid, domain, context=context)
-            if not rsi_ids and not report.product_list_id:
-                continue
-
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
             })
 
-            datas = {
-                'ids': [report.id],
-                'lines': rsi_ids,
-                'list_product_ids': list_product_ids,
-                'lines_above_0': 0,
-                'total_values': 0,
-                'stock_level_date': report.stock_level_date or False,
-            }
-
             cr.commit()
             new_thread = threading.Thread(
                 target=self.generate_report_bkg,
-                args=(cr, uid, report.id, datas, context, all_locations)
+                args=(cr, uid, report.id, context, all_locations)
             )
             new_thread.start()
             new_thread.join(30.0)
@@ -213,7 +169,7 @@ location will be shown.""",
             _('No inventory lines found for these parameters'),
         )
 
-    def generate_report_bkg(self, cr, uid, ids, datas, context=None, all_locations=False):
+    def generate_report_bkg(self, cr, uid, ids, context=None, all_locations=False):
         """
         Generate the report in background
         """
@@ -236,7 +192,7 @@ location will be shown.""",
         result = rp_spool.\
             exp_report(
                 cr.dbname, uid,
-                report_name, ids, datas, context)
+                report_name, ids, {'report_id': ids[0]}, context)
 
         file_res = {'state': False}
         while not file_res.get('state'):
@@ -323,9 +279,6 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             'time': time,
             'getLines': self.getLines,
             'getLocations': self.getLocations,
-            'getLinesAbove0': self.getLinesAbove0,
-            'getTotalValues': self.getTotalValues,
-            'display0InRange': self.display0InRange,
         })
 
     def getLocations(self):
@@ -340,137 +293,165 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
     def getLines(self):
         res = {}
-        sptc_obj = self.pool.get('standard.price.track.changes')
-        with_product_list = self.datas.get('list_product_ids') and True or False
-        for line in self.pool.get('report.stock.inventory').browse(
-            self.cr,
-            self.uid,
-            self.datas['lines'],
-            context=self.localcontext
-        ):
-            key = line.product_id.default_code
-            if not key in res:
-                res[key] = {
-                    'product_code': line.product_id.default_code,
-                    'product_name': line.product_id.name,
-                    'uom': line.product_id.uom_id.name,
-                    'sum_qty': 0.00,
-                    'sum_value': 0.00,
-                    'with_product_list': with_product_list,
-                    'date': line.date,
-                    'lines': {},
-                }
+        report_id = self.datas.get('report_id')
 
-            # Look at the product's price at the corresponding Stock Level date
-            line_value = line.value
-            if self.isDate(self.datas.get('stock_level_date')):
-                sptc_ids = sptc_obj.search(self.cr, self.uid, [('product_id', '=', line.product_id.id)], order='change_date desc', context=self.localcontext)
-                if sptc_ids:
-                    sptcs = sptc_obj.browse(self.cr, self.uid, sptc_ids, context=self.localcontext)
-                    for sptc in sptcs:
-                        if sptc.change_date <= self.datas['stock_level_date']:
-                            line_value = sptc.new_standard_price * line.product_qty
-                            break
+        report = self.pool.get('export.report.stock.inventory').browse(self.cr, self.uid, report_id, context=self.localcontext)
 
-            res[key]['sum_qty'] += line.product_qty
-            res[key]['sum_value'] += line_value
-            batch_id = 'no_batch'
-            batch_name = ''
-            expiry_date = False
+        with_zero = False
+        values = {'state': 'done'}
+        cond = ['state=%(state)s']
 
-            if line.prodlot_id:
-                batch_id = line.prodlot_id.id
-                batch_name = line.prodlot_id.name
-                expiry_date = line.prodlot_id.life_date
+        cond.append('location_id in %(location_ids)s')
+        having = "having sum(product_qty) != 0"
+        full_prod_list = []
 
-            if batch_id not in res[key]['lines']:
-                res[key]['lines'][batch_id] = {
-                    'batch': batch_name,
-                    'expiry_date': expiry_date,
-                    'qty': 0.00,
-                    'value': 0.00,
+        if report.location_id:
+            values['location_ids'] = (report.location_id.id,)
+        else:
+            values['location_ids'] = tuple(self.pool.get('stock.location').search(self.cr, self.uid, [('usage', '=', 'internal')]))
+
+        if report.product_id:
+            cond.append('product_id in %(product_ids)s')
+            values['product_ids'] = (report.product_id.id,)
+        elif report.product_list_id:
+            cond.append('product_id in %(product_ids)s')
+            full_prod_list = self.pool.get('product.product').search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=self.localcontext)
+            values['product_ids'] = tuple(full_prod_list)
+            with_zero = True
+
+        if report.prodlot_id:
+            cond.append('prodlot_id=%(prodlot_id)s')
+            values['prodlot_id'] = report.prodlot_id.id
+
+        if report.expiry_date:
+            cond.append('expired_date=%(expiry_date)s')
+            values['expiry_date'] = report.expiry_date
+
+        if report.stock_level_date:
+            cond.append('date<%(stock_level_date)s')
+            values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
+
+        if not report.product_list_id and report.display_0:
+            with_zero = True
+            to_date = datetime.now()
+            if report.stock_level_date:
+                to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
+            from_date = to_date + relativedelta(months=-int(report.in_last_x_months))
+
+            if report.product_id:
+                self.cr.execute('''select distinct(product_id) from stock_move 
+                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s
+                    and product_id = %s''',
+                (values['location_ids'], values['location_ids'], from_date, to_date, report.product_id.id))
+            else:
+                self.cr.execute('''select distinct(product_id) from stock_move 
+                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s''',
+                (values['location_ids'], values['location_ids'], from_date, to_date))
+            for x in self.cr.fetchall():
+                full_prod_list.append(x[0])
+
+        if with_zero:
+            having = ""
+
+        self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
+            from report_stock_inventory
+            where
+                """+' and '.join(cond)+"""
+            group by product_id, expired_date, uom_id, prodlot_id, location_id
+            """ + having, values)
+
+        all_product_ids = {}
+        all_bn_ids = {}
+        bn_data = {}
+        product_data = {}
+        # fetch data with db id: for uom, product, bn ...
+        for line in self.cr.fetchall():
+            all_product_ids[line[1]] = True
+            all_bn_ids[line[3]] = True
+
+            res.setdefault(line[1], {'sum_qty': 0, 'lines': {}})
+            res[line[1]]['sum_qty'] += line[0]
+
+            if line[3] not in res[line[1]]['lines']:
+                res[line[1]]['lines'][line[3]] = {
+                    'qty': 0,
+                    'batch_id': line[3],
+                    'expiry_date': line[2] or '',
                     'location_ids': {},
                 }
+            res[line[1]]['lines'][line[3]]['qty'] += line[0]
+            res[line[1]]['lines'][line[3]]['location_ids'].setdefault(line[4], 0.00)
+            res[line[1]]['lines'][line[3]]['location_ids'][line[4]] += line[0]
 
-            res[key]['lines'][batch_id]['qty'] += line.product_qty
-            res[key]['lines'][batch_id]['value'] += line_value
-            res[key]['lines'][batch_id]['location_ids'].setdefault(line.location_id.id, 0.00)
-            res[key]['lines'][batch_id]['location_ids'][line.location_id.id] += line.product_qty
+        # fetch bn and product data
+        for bn in self.pool.get('stock.production.lot').read(self.cr, self.uid, all_bn_ids.keys(), ['name'], context=self.localcontext):
+            bn_data[bn['id']] = bn['name']
 
-        # No move or qty = 0
-        if self.datas['list_product_ids']:
-            for prod in self.pool.get('product.product').browse(self.cr, self.uid, self.datas['list_product_ids'], context=self.localcontext):
-                key = prod.default_code
-                if key not in res:
-                    res[key] = {
-                        'product_code': prod.default_code,
-                        'product_name': prod.name,
-                        'uom': prod.uom_id.name,
-                        'sum_qty': 0.00,
-                        'sum_value': 0.00,
-                        'with_product_list': with_product_list,
-                        'date': prod.date,
-                        'lines': {},
-                    }
-                    batch_id = 'no_batch'
-                    batch_name = ''
-                    expiry_date = False
+        if full_prod_list:
+            product_ids_to_fetch = list(set(list(values.get('product_ids', []))+all_product_ids.keys()+full_prod_list))
+        else:
+            product_ids_to_fetch = all_product_ids.keys()
 
-                    if batch_id not in res[key]['lines']:
-                        res[key]['lines'][batch_id] = {
-                            'batch': batch_name,
-                            'expiry_date': expiry_date,
-                            'qty': 0.00,
-                            'value': 0.00,
-                            'location_ids': {},
+        cost_price_at_date = {}
+        if report.stock_level_date and product_ids_to_fetch:
+            self.cr.execute("""select distinct on (product_id) product_id, new_standard_price
+                from standard_price_track_changes
+                where
+                    product_id in %s and
+                    create_date <= %s
+                order by product_id, create_date desc""", (tuple(product_ids_to_fetch), values['stock_level_date']))
+
+            for x in self.cr.fetchall():
+                cost_price_at_date[x[0]] = x[1]
+
+        for product in self.pool.get('product.product').browse(self.cr, self.uid, product_ids_to_fetch, fields_to_fetch=['default_code', 'uom_id', 'name', 'standard_price'], context=self.localcontext):
+            product_data[product.id] = product
+            if product.id not in res:
+                res[product.id] = {
+                    'sum_qty': 0,
+                    'lines': {
+                        '': {
+                            'qty': 0,
+                            'batch_id': False,
+                            'expiry_date': '',
+                            'location_ids': {}
                         }
+                    }
+                }
 
-                    res[key]['lines'][batch_id]['qty'] = 0.00
-                    res[key]['lines'][batch_id]['value'] = 0.00
-                    res[key]['lines'][batch_id]['location_ids'][0] = 0.00
+        # replace db id by name, code
+        final_result = {}
+        total_value = 0
+        nb_items = 0
+        for product_id in res:
+            product_code = product_data[product_id].default_code
+            cost_price = cost_price_at_date.get(product_id, product_data[product_id].standard_price)
+            final_result[product_code] = {
+                'sum_qty': res[product_id]['sum_qty'],
+                'product_code': product_code,
+                'product_name': product_data[product_id].name,
+                'uom': product_data[product_id].uom_id.name,
+                'sum_value':  cost_price * res[product_id]['sum_qty'],
+                'with_product_list': with_zero,
+                'lines': {},
+            }
+            total_value += final_result[product_code]['sum_value']
+            if res[product_id]['sum_qty'] > 0:
+                nb_items += 1
+            for batch_id in res[product_id]['lines']:
+                final_result[product_code]['lines'][batch_id] = {
+                    'batch': bn_data.get(batch_id, ''),
+                    'expiry_date': res[product_id]['lines'][batch_id]['expiry_date'],
+                    'qty': res[product_id]['lines'][batch_id]['qty'],
+                    'value': cost_price * res[product_id]['lines'][batch_id]['qty'],
+                    'location_ids': res[product_id]['lines'][batch_id]['location_ids'],
+                }
 
         fres = []
-        for k in sorted(res.keys()):
-            fres.append(res[k])
+        for k in sorted(final_result.keys()):
+            fres.append(final_result[k])
 
-        # Count lines with stock and lines' value
-        lines_above_0 = 0
-        total_values = 0
-        for line in fres:
-            if line.get('sum_qty') > 0:
-                lines_above_0 += 1
-            if line.get('sum_value'):
-                total_values += line['sum_value']
-            total_values = round(total_values, 2)
-
-        self.datas.update({
-            'lines_above_0': lines_above_0,
-            'total_values': total_values,
-        })
-
-        return fres
-
-    def getLinesAbove0(self):
-        return self.datas.get('lines_above_0', 0)
-
-    def getTotalValues(self):
-        return self.datas.get('total_values', 0)
-
-    def display0InRange(self, display0, gen_date, sl_date, in_last_x_months, line_date):
-        '''
-        Return True if the line with product 0 stock is in range of X months from Stock Level Date or Report Generation date
-        '''
-        res = False
-        if display0:
-            if self.isDate(sl_date):
-                max_date = datetime.datetime.strptime(sl_date, '%Y-%m-%d')
-            else:
-                max_date = datetime.datetime.strptime(gen_date, '%Y-%m-%d %H:%M:%S')
-            min_date = (max_date + relativedelta(months=-int(in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
-            if min_date <= line_date <= max_date.strftime('%Y-%m-%d 23:59:59'):
-                res = True
-
-        return res
+        return total_value, nb_items, fres
 
 
 class report_stock_inventory_xls(SpreadsheetReport):

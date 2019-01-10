@@ -195,7 +195,7 @@
         <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.display_0 and _('True (') + o.in_last_x_months + _(' months)') or _('False')|x}</Data></Cell>
     </Row>
 
-    <% processed_lines = getLines() %>
+   <%  total_value, nb_items, lines = getLines() %>
 
     <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="poheader"><Data ss:Type="String"></Data></Cell>
@@ -210,8 +210,8 @@
     </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${getLinesAbove0()|x}</Data></Cell>
-        <Cell ss:StyleID="line"><Data ss:Type="Number">${getTotalValues()|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${nb_items|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${total_value|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${o.company_id.currency_id.name|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
@@ -231,8 +231,8 @@
         <Cell ss:StyleID="poheader"><Data ss:Type="String">${_('Total Value')}</Data></Cell>
     </Row>
     
-    % for prd in processed_lines:
-      % if prd['sum_qty'] or prd['with_product_list'] or display0InRange(o.display_0, o.name, o.stock_level_date, o.in_last_x_months, prd['date']):
+    % for prd in lines:
+      % if prd['sum_qty'] or prd['with_product_list']:
       <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
           <Cell ss:StyleID="sumline"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
@@ -245,7 +245,7 @@
           <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_value'], 2))|x}</Data></Cell>
       </Row>
         % for line in prd['lines'].itervalues():
-          % if line['qty'] or prd['with_product_list'] or display0InRange(o.display_0, o.name, o.stock_level_date, o.in_last_x_months, prd['date']):
+          % if line['qty'] or prd['with_product_list']:
           <Row ss:AutoFitHeight="1">
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_code'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
