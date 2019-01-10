@@ -369,7 +369,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     sptcs = sptc_obj.browse(self.cr, self.uid, sptc_ids, context=self.localcontext)
                     for sptc in sptcs:
                         if sptc.change_date <= self.datas['stock_level_date']:
-                            line_value = sptc.new_standard_price
+                            line_value = sptc.new_standard_price * line.product_qty
                             break
 
             res[key]['sum_qty'] += line.product_qty

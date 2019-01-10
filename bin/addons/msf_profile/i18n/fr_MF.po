@@ -4433,7 +4433,7 @@ msgstr "Rechercher Processus de Transition"
 msgid "Free Gift Certificate"
 msgstr "Certificat de Don Gratuit"
 
-#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile
+#. modules: consumption_calculation, product_asset, sale, base, product_manufacturer, object_query, stock, msf_profile, specific_rules
 #: field:ir.config_parameter,value:0
 #: field:ir.property,value_binary:0
 #: field:ir.property,value_datetime:0
@@ -4459,6 +4459,7 @@ msgstr "Certificat de Don Gratuit"
 #: report:lot.stock.overview:0
 #: report:lot.stock.overview_all:0
 #: view:physical.inventory:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:229
 msgid "Value"
 msgstr "Valeur"
 
@@ -6816,9 +6817,10 @@ msgstr "Validation des écritures de Paie réussie pour cette période: %s et po
 msgid "Public Pricelist"
 msgstr "Public Pricelist"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "7 months"
 msgstr "7 mois"
 
@@ -19957,9 +19959,10 @@ msgstr "Séquence des règles"
 msgid "automated.import.files.available"
 msgstr "automated.import.files.available"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "10 months"
 msgstr "10 mois"
 
@@ -27511,6 +27514,7 @@ msgstr "Volume Total [dm³]"
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
 #: view:purchase.order:0
 #: field:stock.reserved.products,product_qty:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:228
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -29696,6 +29700,8 @@ msgstr "Etiquettes ne sont disponibles que pour les Objets de Liste de Pré-Coli
 #: field:export.report.stock.move,product_id:0
 #: field:stock.warehouse.automatic.supply,product_id:0
 #: field:stock.warehouse.order.cycle,product_id:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:167
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:170
 msgid "Specific product"
 msgstr "Produit Spécifique"
 
@@ -31385,7 +31391,6 @@ msgstr "Alloc.Analyt."
 #. modules: consumption_calculation, specific_rules, stock_override, stock
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:70
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
-#: field:export.report.stock.inventory,name:0
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
@@ -33357,9 +33362,10 @@ msgstr "Valeur du champ supplémentaire affiché"
 msgid "Global taxes defined, click on compute to update tax base !"
 msgstr "Taxes globales définies, cliquez sur 'Calculer les Taxes' pour mettre à jour la base imposable !"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "12 months"
 msgstr "12 mois"
 
@@ -34327,6 +34333,8 @@ msgstr "Commandes"
 #. modules: specific_rules, stock_override
 #: field:export.report.stock.inventory,location_id:0
 #: field:export.report.stock.move,location_id:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:187
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:190
 msgid "Specific location"
 msgstr "Zone spéciale"
 
@@ -36290,9 +36298,10 @@ msgstr "wizard.account.year.end.closing"
 msgid "Account Source"
 msgstr "Compte - Source"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "3 months"
 msgstr "3 mois"
 
@@ -38816,7 +38825,7 @@ msgstr "Mois"
 msgid "Male"
 msgstr "Masculin"
 
-#. modules: stock, account, sale, finance, purchase_followup, msf_homere_interface, procurement_request
+#. modules: stock, account, sale, finance, purchase_followup, msf_homere_interface, procurement_request, specific_rules
 #: report:hr.payment.order.report:0
 #: field:cash.request.expense,currency_id:0
 #: view:cash.request.liquidity.bank:0
@@ -38830,6 +38839,8 @@ msgstr "Masculin"
 #: field:physical.inventory.discrepancy,currency_id:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:219
 #: field:internal.request.import,in_currency:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:201
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:204
 msgid "Currency"
 msgstr "Devise"
 
@@ -39395,9 +39406,10 @@ msgstr "Période : %s"
 msgid "Invoice line origin"
 msgstr "Origine ligne de facture"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "4 months"
 msgstr "4 mois"
 
@@ -40990,6 +41002,7 @@ msgstr "De confirmé à attribué."
 #: field:internal.request.import.line,imp_uom_id:0
 #: field:internal.request.import.line,in_uom:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:218
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:225
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -43315,6 +43328,7 @@ msgstr "Numéro de Révision"
 
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:147
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:230
 msgid "Total Qty"
 msgstr "Qté Totale"
 
@@ -44073,6 +44087,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:130
 #: code:addons/sale/wizard/internal_request_import.py:43
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:223
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -46377,6 +46392,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/stock/report/reserved_products_report_xls.mako:158
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:124
 #: report:addons/stock_override/report/report_stock_move_xls.mako:138
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:226
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -49809,9 +49825,10 @@ msgstr "Ligne de Calcul de l'Inventaire Physique"
 msgid "Location Packing"
 msgstr "Zone Colisage"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "5 months"
 msgstr "5 mois"
 
@@ -51136,9 +51153,10 @@ msgstr "Jours pour Livrer"
 msgid "Direct Invoice Line"
 msgstr "Ligne de Facture Directe"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "11 months"
 msgstr "11 mois"
 
@@ -70150,6 +70168,7 @@ msgstr "MOZAMBICAN METICAL"
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:125
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:227
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -74636,12 +74655,14 @@ msgstr "Jours pour Valider"
 msgid "Lets you install various tools to simplify and enhance OpenERP's report creation."
 msgstr "Vous permet d'installer différents outils destinés à simplifier et à améliorer la création de rapports sous OpenERP."
 
-#. modules: msf_audittrail, account_mcdb
+#. modules: msf_audittrail, account_mcdb, specific_rules
 #: code:addons/account_mcdb/account_mcdb.py:1056
 #: code:addons/account_mcdb/account_mcdb.py:1059
 #: code:addons/account_mcdb/account_mcdb.py:1066
 #: code:addons/account_mcdb/account_mcdb.py:1069
 #: code:addons/msf_audittrail/audittrail.py:1091
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
 #, python-format
 msgid "False"
 msgstr "Faux"
@@ -75357,9 +75378,10 @@ msgstr "Ce champ est uniquement utilisé si vous développez votre propre module
 msgid "Parent Department"
 msgstr "Département Parent"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "2 months"
 msgstr "2 mois"
 
@@ -75612,9 +75634,10 @@ msgstr "Qté non planifiée"
 msgid "assign.to.kit"
 msgstr "assign.to.kit"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "9 months"
 msgstr "9 mois"
 
@@ -76755,6 +76778,7 @@ msgstr "Sorte de Node"
 #: code:addons/sale/wizard/internal_request_import.py:44
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
 #: field:internal.request.import.line,in_product_desc:0
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:224
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -78647,9 +78671,10 @@ msgstr ")"
 msgid "Fiscalyear is missing"
 msgstr "Fiscalyear is missing"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "1 months"
 msgstr "1 mois"
 
@@ -78943,8 +78968,10 @@ msgstr "Amériques/St_Johns"
 #. modules: specific_rules, stock_override
 #: field:export.report.stock.inventory,expiry_date:0
 #: field:export.report.stock.move,expiry_date:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:179
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:182
 msgid "Specific expiry date"
-msgstr "Specific expiry date"
+msgstr "Date d'expiration spécifique"
 
 #. module: tender_flow
 #: field:tender,tender_line_ids:0
@@ -79026,10 +79053,9 @@ msgstr "Product code doesn't exist in the DB."
 msgid "Confirmed (waiting)"
 msgstr "Confirmé (attente)"
 
-#. modules: product_list, msf_doc_import, specific_rules
+#. modules: product_list, msf_doc_import
 #: view:product.list:0
 #: code:addons/msf_doc_import/msf_import_export.py:448
-#: field:export.report.stock.inventory,product_list_id:0
 #, python-format
 msgid "Product list"
 msgstr "Liste Produits"
@@ -85658,8 +85684,10 @@ msgstr "Vous avez sélectionné en Février la date du 29 comme date de planning
 #. modules: specific_rules, stock_override
 #: field:export.report.stock.inventory,prodlot_id:0
 #: field:export.report.stock.move,prodlot_id:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:175
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
 msgid "Specific batch"
-msgstr "Specific batch"
+msgstr "Lot spécifique"
 
 #. module: product
 #: field:product.template,product_manager:0
@@ -87480,7 +87508,7 @@ msgstr "Si cette case est cochée, la zone est une zone virtuel."
 msgid "Create Menu For Dashboard"
 msgstr "Créer un Menu pour le Tableau de Bord"
 
-#. modules: sale, stock, consumption_calculation
+#. modules: sale, stock, consumption_calculation, specific_rules
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:132
 #: field:report.stock.inventory,value:0
 #: field:report.stock.move,value:0
@@ -87488,6 +87516,7 @@ msgstr "Créer un Menu pour le Tableau de Bord"
 #: report:product.likely.expire.report_pdf:0
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:121
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:231
 msgid "Total Value"
 msgstr "Valeur Totale"
 
@@ -87814,6 +87843,7 @@ msgstr "Aucun produit dans cette localisation."
 #: model:ir.actions.act_window,name:specific_rules.export_report_stock_inventory_action
 #: model:ir.actions.report.xml,name:specific_rules.report_stock_inventory_xls
 #: model:ir.ui.menu,name:specific_rules.export_report_stock_inventory_menu
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:124
 msgid "Export Inventory Level"
 msgstr "Export du Niveau de Stock"
 
@@ -88905,9 +88935,10 @@ msgstr "In - disponible"
 msgid "POs creation batches configuration"
 msgstr "Création Bons de Commande - Configuration Lots"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "8 months"
 msgstr "8 mois"
 
@@ -92263,9 +92294,10 @@ msgstr "Date de Facturation"
 msgid "FO created to resource FO in exception"
 msgstr "Commande de Terrain créée pour ressourcer la Commande de Terrain en exception"
 
-#. module: stock
+#. module: stock, specific_rules
 #: selection:physical.inventory.select.products,recent_moves_months:0
 #: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#: selection:export.report.stock.inventory,in_last_x_months:0
 msgid "6 months"
 msgstr "6 mois"
 
@@ -93115,7 +93147,7 @@ msgstr "Qté de stock non allouée."
 #: view:export.report.stock.inventory:0
 #: view:export.report.stock.move:0
 msgid "Advanced filters"
-msgstr "Advanced filters"
+msgstr "Filtres avancés"
 
 #. modules: sales_followup, product, stock_move_tracking, stock
 #: selection:product.price.type,field:0
@@ -103778,3 +103810,80 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,stock_level_date:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:159
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:162
+msgid "Stock Level date"
+msgstr "Date du Niveau de Stock"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,name:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:151
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:154
+msgid "Report Generation date"
+msgstr "Date de Génération du rapport"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,display_0:0
+msgid "Include products with stock <= 0 with movements"
+msgstr "Inclure les produits avec du stock <= 0 ayant des mouvements"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,in_last_x_months:0
+msgid "In the last"
+msgstr "Dans les derniers"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,product_list_id:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:171
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:174
+msgid "Specific Product list"
+msgstr "Liste de Produits spécifique"
+
+#. modules: specific_rules, stock
+#: selection:export.report.stock.inventory,in_last_x_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "0 months"
+msgstr "0 mois"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:191
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:194
+msgid "Including products with stock <= 0 with movements in the last months"
+msgstr "Incluant les les produits avec du stock <= 0 ayant des mouvements durant les derniers mois"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
+msgid "True ("
+msgstr "Vrai ("
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
+msgid " months)"
+msgstr " mois)"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:188
+msgid "All Locations"
+msgstr "Toutes les Zones"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:199
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:202
+msgid "Number of items with stock > 0"
+msgstr "Nombre de d'articles dont le stock est > 0"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:200
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:203
+msgid "Total value of the generated report"
+msgstr "Valeur totale du rapport généré"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:124
+msgid "Export Inventory Level all Locations"
+msgstr "Export du Niveau de Stock pour toutes les Zones"
