@@ -43,7 +43,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         Returns a list of dicts, each containing the data of the liquidity registers for the selected period and instances
         For Cash & Bank registers the calculation is the one used in OCB VI.
         For Cheque Registers:
-            - opening: balance at end of N-1 of entries which are not reconciled within period N-1 or before
+            - starting: balance at end of N-1 of entries which are not reconciled within period N-1 or before
             - calculated: always 0.00
             - closing: balance at end of N of entries which are not reconciled within period N or before
         """
@@ -61,7 +61,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         res.extend(cash_bank_res)
         # Cheque registers
         cheque_sql = """
-                    SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, 
+                    SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, 
                     c.name AS currency
                     FROM res_currency c,
                     (
@@ -103,6 +103,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                          period.date_stop, tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
+        cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
         res.extend(cheque_res)
         return res
 

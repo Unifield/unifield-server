@@ -54,7 +54,7 @@ class liquidity_balance_wizard(osv.osv_memory):
 
     def onchange_date(self, cr, uid, ids, date_from, date_to, context=None):
         """
-        Resets the period when one the date fields is filled in
+        Resets the period when one of the date fields is filled in
         """
         res = {}
         if date_from or date_to:
