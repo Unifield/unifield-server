@@ -532,7 +532,13 @@ class account_account(osv.osv):
             context = {}
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
-        res = super(account_account, self).write(cr, uid, ids, vals, context=context)
+        # remove user_type from vals if it hasn't been modified to avoid the recomputation on JI Account Type (due to store feature)
+        res = True
+        for acc in self.browse(cr, uid, ids, fields_to_fetch=['user_type'], context=context):
+            newvals = vals.copy()
+            if newvals.get('user_type') and newvals['user_type'] == acc.user_type.id:
+                del newvals['user_type']
+            res = res and super(account_account, self).write(cr, uid, [acc.id], newvals, context=context)
         for account_id in ids:
             self._check_reconcile_status(cr, uid, account_id, context=context)
         return res

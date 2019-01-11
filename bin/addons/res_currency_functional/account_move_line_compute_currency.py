@@ -706,7 +706,7 @@ class account_move_line_compute_currency(osv.osv):
         if isinstance(ids, (long, int)):
             ids = [ids]
         ret = {}
-        for line in self.browse(cr, uid, ids):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id']):
             ret[line.id] = line.account_id and line.account_id.user_type and line.account_id.user_type.name or False
         return ret
 
