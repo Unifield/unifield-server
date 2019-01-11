@@ -314,6 +314,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         if report.product_id:
             cond.append('product_id in %(product_ids)s')
             values['product_ids'] = (report.product_id.id,)
+            with_zero = True
         elif report.product_list_id:
             cond.append('product_id in %(product_ids)s')
             full_prod_list = self.pool.get('product.product').search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=self.localcontext)
@@ -323,45 +324,28 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
             values['prodlot_id'] = report.prodlot_id.id
+            with_zero = True
 
         if report.expiry_date:
             cond.append('expired_date=%(expiry_date)s')
             values['expiry_date'] = report.expiry_date
+            with_zero = True
 
         if report.stock_level_date:
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if not report.product_list_id and report.display_0:
+        if (not report.product_id or not report.product_list_id or not report.prodlot_id or not report.expiry_date) \
+                and report.display_0:
             with_zero = True
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
-            from_date = to_date + relativedelta(months=-int(report.in_last_x_months))
-
-            display0_cond = ['state = %(state)s', 'date >= %(from_date)s', 'date <= %(to_date)s']
-            display0_values = {
-                'state': 'done',
-                'from_date': from_date,
-                'to_date': to_date,
-            }
-            display0_values['location_ids'] = values['location_ids']
-            if report.location_id:
-                display0_cond.append('location_id = %(location_ids)s or location_dest_id = %(location_ids)s')
-            else:
-                display0_cond.append('location_id in %(location_ids)s or location_dest_id in %(location_ids)s')
-            if report.product_id:
-                display0_cond.append('product_id = %(product_id)s')
-                display0_values['product_id'] = report.product_id.id
-            if report.prodlot_id:
-                display0_cond.append('prodlot_id = %(prodlot_id)s')
-                display0_values['prodlot_id'] = report.prodlot_id.id
-            if report.expiry_date:
-                display0_cond.append('expired_date = %(expiry_date)s')
-                display0_values['expiry_date'] = report.expiry_date
+            from_date = (to_date + relativedelta(months=-int(report.in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
 
             self.cr.execute("""select distinct(product_id) from stock_move 
-                            where """ + ' and '.join(display0_cond), display0_values)
+                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s""",
+                            (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
 
