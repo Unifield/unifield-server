@@ -301,13 +301,14 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         values = {'state': 'done'}
         cond = ['state=%(state)s']
 
-        cond.append('location_id in %(location_ids)s')
         having = "having sum(product_qty) != 0"
         full_prod_list = []
 
         if report.location_id:
-            values['location_ids'] = (report.location_id.id,)
+            cond.append('location_id = %(location_ids)s')
+            values['location_ids'] = report.location_id.id
         else:
+            cond.append('location_id in %(location_ids)s')
             values['location_ids'] = tuple(self.pool.get('stock.location').search(self.cr, self.uid, [('usage', '=', 'internal')]))
 
         if report.product_id:
@@ -338,15 +339,29 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
             from_date = to_date + relativedelta(months=-int(report.in_last_x_months))
 
-            if report.product_id:
-                self.cr.execute('''select distinct(product_id) from stock_move 
-                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s
-                    and product_id = %s''',
-                (values['location_ids'], values['location_ids'], from_date, to_date, report.product_id.id))
+            display0_cond = ['state = %(state)s', 'date >= %(from_date)s', 'date <= %(to_date)s']
+            display0_values = {
+                'state': 'done',
+                'from_date': from_date,
+                'to_date': to_date,
+            }
+            display0_values['location_ids'] = values['location_ids']
+            if report.location_id:
+                display0_cond.append('location_id = %(location_ids)s or location_dest_id = %(location_ids)s')
             else:
-                self.cr.execute('''select distinct(product_id) from stock_move 
-                where state='done' and (location_id in %s or location_dest_id in %s) and date >= %s and date <= %s''',
-                (values['location_ids'], values['location_ids'], from_date, to_date))
+                display0_cond.append('location_id in %(location_ids)s or location_dest_id in %(location_ids)s')
+            if report.product_id:
+                display0_cond.append('product_id = %(product_id)s')
+                display0_values['product_id'] = report.product_id.id
+            if report.prodlot_id:
+                display0_cond.append('prodlot_id = %(prodlot_id)s')
+                display0_values['prodlot_id'] = report.prodlot_id.id
+            if report.expiry_date:
+                display0_cond.append('expired_date = %(expiry_date)s')
+                display0_values['expiry_date'] = report.expiry_date
+
+            self.cr.execute("""select distinct(product_id) from stock_move 
+                            where """ + ' and '.join(display0_cond), display0_values)
             for x in self.cr.fetchall():
                 full_prod_list.append(x[0])
 
