@@ -304,11 +304,10 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         having = "having sum(product_qty) != 0"
         full_prod_list = []
 
+        cond.append('location_id in %(location_ids)s')
         if report.location_id:
-            cond.append('location_id = %(location_ids)s')
-            values['location_ids'] = report.location_id.id
+            values['location_ids'] = (report.location_id.id,)
         else:
-            cond.append('location_id in %(location_ids)s')
             values['location_ids'] = tuple(self.pool.get('stock.location').search(self.cr, self.uid, [('usage', '=', 'internal')]))
 
         if report.product_id:
