@@ -281,8 +281,6 @@ class supplier_catalogue(osv.osv):
                     new_price_vals['name'] = vals['name']
                 if vals.get('currency_id'):
                     new_price_vals['currency_id'] = vals['currency_id']
-                if vals.get('period_from'):
-                    new_price_vals['period_from'] = vals['period_from']
                 if vals.get('period_to'):
                     new_price_vals['valid_till'] = vals['period_to']
 

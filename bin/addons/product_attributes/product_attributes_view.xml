@@ -210,7 +210,7 @@
                                     _check_uom in unifield-addons/product/product.py -->
                                     <field name="product_uom" domain="[('uom_by_parent', '=', parent.uom_id)]" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <field name="manufacturer_id" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
-                                    <field name="catalogue_id" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="catalogue_id" readonly="1" />
                                     <field name="second_manufacturer_id" attrs="{'readonly': ['|', ('manufacturer_id', '=', False), ('catalogue_id', '!=', False)]}"/>
                                     <field name="delay" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <field name="third_manufacturer_id" attrs="{'readonly': ['|', ('second_manufacturer_id', '=', False), ('catalogue_id', '!=', False)]}"/>
