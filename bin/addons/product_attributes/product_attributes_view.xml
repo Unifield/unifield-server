@@ -203,18 +203,18 @@
                             <field colspan="4" name="seller_ids" nolabel="1">
                                 <form>
                                     <field name="name" on_change="onchange_supplier(name)" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
-                                    <field name="sequence"/>
-                                    <field name="product_code" />
-                                    <field name="product_name" />
+                                    <field name="sequence" />
+                                    <field name="product_code" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="product_name" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <!-- utp-129: we filter the product_uom according to the uom_id of the product because of the constraint
                                     _check_uom in unifield-addons/product/product.py -->
-                                    <field name="product_uom" domain="[('uom_by_parent', '=', parent.uom_id)]"/>
-                                    <field name="manufacturer_id"/>
-                                    <field name="catalogue_id"/>
-                                    <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
-                                    <field name="delay"/>
-                                    <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
-                                    <field colspan="4" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}">
+                                    <field name="product_uom" domain="[('uom_by_parent', '=', parent.uom_id)]" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="manufacturer_id" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="catalogue_id" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="second_manufacturer_id" attrs="{'readonly': ['|', ('manufacturer_id', '=', False), ('catalogue_id', '!=', False)]}"/>
+                                    <field name="delay" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
+                                    <field name="third_manufacturer_id" attrs="{'readonly': ['|', ('second_manufacturer_id', '=', False), ('catalogue_id', '!=', False)]}"/>
+                                    <field colspan="4" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}" attrs="{'readonly': [('catalogue_id', '!=', False)]}">
                                         <tree editable="top" string="Pricelist">
                                             <field name="min_quantity" on_change="onchange_uom_qty(uom_id, min_quantity, False)" />
                                             <field name="uom_id" on_change="onchange_uom_qty(uom_id, min_quantity, min_order_qty)" 

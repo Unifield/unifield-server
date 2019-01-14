@@ -85,6 +85,7 @@ class supplier_catalogue(osv.osv):
             'context': context,
             'domain': [('partner_id', '=', ids[0])],
         }
+
     def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context=None):
         '''
         Check if other catalogues with the same partner/currency exist and are defined in the period of the
@@ -204,7 +205,6 @@ class supplier_catalogue(osv.osv):
 
         return res
 
-
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -226,7 +226,6 @@ class supplier_catalogue(osv.osv):
                 )
 
         return super(supplier_catalogue, self).unlink(cr, uid, list(to_unlink), context=context)
-
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -278,10 +277,14 @@ class supplier_catalogue(osv.osv):
 
                 # Change pricelist data according to new data (only if there is change)
                 new_price_vals = {}
-                for prop in ('period_to', 'period_from', 'currency_id',
-                             'name'):
-                    if prop in vals:
-                        new_price_vals[prop] = vals[prop]
+                if vals.get('name'):
+                    new_price_vals['name'] = vals['name']
+                if vals.get('currency_id'):
+                    new_price_vals['currency_id'] = vals['currency_id']
+                if vals.get('period_from'):
+                    new_price_vals['period_from'] = vals['period_from']
+                if vals.get('period_to'):
+                    new_price_vals['valid_till'] = vals['period_to']
 
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
