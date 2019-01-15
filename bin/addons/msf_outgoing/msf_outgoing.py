@@ -5160,15 +5160,16 @@ class stock_move(osv.osv):
                         'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
                         'stock.picking': (_get_picking, ['shipment_id'], 10),
                     }
-    ),
-        # Fields used for domain
-        'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
-        'location_output_id': fields.many2one('stock.location', string='Output location'),
-        'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
-        'pt_created': fields.boolean(string='PT created'),
-        'not_shipped': fields.boolean(string='Not shipped'),
+                ),
+                'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
+                # Fields used for domain
+                'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
+                'location_output_id': fields.many2one('stock.location', string='Output location'),
+                'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
+                'pt_created': fields.boolean(string='PT created'),
+                'not_shipped': fields.boolean(string='Not shipped'),
 
-        'old_out_location_dest_id': fields.many2one('stock.location', string='Old OUT dest location', help='Usefull in case of OUT converted to PICK and converted back to OUT'),
+                'old_out_location_dest_id': fields.many2one('stock.location', string='Old OUT dest location', help='Usefull in case of OUT converted to PICK and converted back to OUT'),
     }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
