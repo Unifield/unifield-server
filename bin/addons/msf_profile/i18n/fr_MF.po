@@ -76156,8 +76156,8 @@ msgstr "Ligne %s. %s non trouvé : %s"
 
 #. module: account
 #: report:addons/account/report/account_liquidity_balance.mako:171
-msgid "Calculated balance"
-msgstr "Solde calculé (théorique)"
+msgid "Movements"
+msgstr "Mouvements"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:516
@@ -88538,6 +88538,7 @@ msgstr "TbD"
 #: report:stock.card.report:0
 #: code:addons/account/report/free_allocation_report.py:306
 #: code:addons/account/report/free_allocation_report.py:321
+#: field:liquidity.balance.wizard,date_to:0
 msgid "To"
 msgstr "Au"
 
@@ -103778,3 +103779,31 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: account
+#: view:liquidity.balance.wizard:0
+msgid "or Period"
+msgstr "ou Période"
+
+#. module: account
+#: field:liquidity.balance.wizard,date_from:0
+msgid "Date From"
+msgstr "Date Du"
+
+#. module: account
+#: code:addons/account/wizard/account_report_liquidity_balance.py:69
+#, python-format
+msgid "You must select a period or a date range."
+msgstr "Vous devez sélectionner une période ou une plage de dates."
+
+#. module: account
+#: code:addons/account/wizard/account_report_liquidity_balance.py:71
+#, python-format
+msgid "Either the start date or the end date is missing."
+msgstr "Il manque soit la date de début soit la date de fin."
+
+#. module: account
+#: code:addons/account/wizard/account_report_liquidity_balance.py:73
+#, python-format
+msgid "The end date can't precede the start date."
+msgstr "La date de fin ne peut pas précéder la date de début."

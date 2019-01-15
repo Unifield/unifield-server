@@ -168,7 +168,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${_('Starting balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Calculated balance')}</Data>
+    <Data ss:Type="String">${_('Movements')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Closing balance')}</Data>

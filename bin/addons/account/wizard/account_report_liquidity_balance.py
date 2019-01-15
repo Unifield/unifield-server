@@ -33,8 +33,8 @@ class liquidity_balance_wizard(osv.osv_memory):
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period'),
-        'date_from': fields.date("Date from"),
-        'date_to': fields.date("to"),
+        'date_from': fields.date("Date From"),
+        'date_to': fields.date("To"),
     }
 
     _defaults = {
