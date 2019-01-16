@@ -24,6 +24,8 @@ from common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from osv import osv
+from tools.translate import _
 
 from vertical_integration import report as reportvi
 
@@ -32,9 +34,12 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
     def __init__(self, cr, uid, name, context=None):
         self.liquidity_sql = reportvi.hq_report_ocb.liquidity_sql  # same SQL request as in OCB VI
         self.period_id = False
+        self.date_from = False
+        self.date_to = False
         self.instance_ids = False
         self.year = False
         self.month = False
+        self.context = {}
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
@@ -53,16 +58,27 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         """
         res = []
         reg_obj = self.pool.get('account.bank.statement')
-        period = self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context=self.context,
-                                                        fields_to_fetch=['date_start', 'date_stop'])
+        period_obj = self.pool.get('account.period')
+        date_from = date_to = False
+        if self.date_from and self.date_to:
+            date_from = self.date_from
+            date_to = self.date_to
+        elif self.period_id:
+            period = period_obj.browse(self.cr, self.uid, self.period_id, context=self.context,
+                                       fields_to_fetch=['date_start', 'date_stop'])
+            date_from = period.date_start
+            date_to = period.date_stop
+        if not date_from or not date_to:
+            raise osv.except_osv(_('Error'), _('Start date and/or End date missing.'))
         period_yyyymm = "{0}{1}".format(self.year, self.month)
         # Cash and Bank registers
         reg_types = ('cash', 'bank')
-        params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.id, reg_types,
-                  period.date_stop, tuple(self.instance_ids))
+        params = (tuple([period_yyyymm]), reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to,
+                  tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
-        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, encode=False, context=self.context)
+        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res,
+                                                                              encode=False, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
         # Chq Starting Balance
@@ -74,11 +90,11 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             AND aml.date < %s
             AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
         """
-        self.cr.execute(chq_starting_bal_sql, (period.date_start,))
+        self.cr.execute(chq_starting_bal_sql, (date_from,))
         chq_starting_bal_ids = [x for x, in self.cr.fetchall()]
         # get the day before the beginning date (cf the beginning date itself should be included in the Pending Chq computation)
-        date_start_dt = datetime.strptime(period.date_start, "%Y-%m-%d")
-        beginning_date = (date_start_dt + relativedelta(days=-1)).strftime('%Y-%m-%d')
+        date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
+        beginning_date = (date_from_dt + relativedelta(days=-1)).strftime('%Y-%m-%d')
         pending_chq_starting_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], beginning_date,
                                                                       aml_ids=chq_starting_bal_ids, context=self.context)
         # Chq Closing Balance
@@ -90,9 +106,9 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             AND aml.date <= %s
             AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
         """
-        self.cr.execute(chq_closing_bal_sql, (period.date_stop, ))
+        self.cr.execute(chq_closing_bal_sql, (date_to, ))
         chq_closing_bal_ids = [x for x, in self.cr.fetchall()]
-        pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], period.date_stop,
+        pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], date_to,
                                                                      aml_ids=chq_closing_bal_ids, context=self.context)
         cheque_sql = """
                     SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, 
@@ -136,6 +152,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user
         self.period_id = data['form'].get('period_id', False)
+        self.date_from = data['form'].get('date_from', False)
+        self.date_to = data['form'].get('date_to', False)
         self.instance_ids = data['form'].get('instance_ids', False)
         self.year = data['form'].get('year', False)
         self.month = data['form'].get('month', False)

@@ -103797,6 +103797,12 @@ msgid "You must select a period or a date range."
 msgstr "Vous devez sélectionner une période ou une plage de dates."
 
 #. module: account
+#: code:addons/account/report/account_liquidity_balance.py:70
+#, python-format
+msgid "Start date and/or End date missing."
+msgstr "Date de début et/ou Date de fin manquante(s)."
+
+#. module: account
 #: code:addons/account/wizard/account_report_liquidity_balance.py:71
 #, python-format
 msgid "Either the start date or the end date is missing."
