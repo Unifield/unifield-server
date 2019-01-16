@@ -37,8 +37,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_from = False
         self.date_to = False
         self.instance_ids = False
-        self.year = False
-        self.month = False
+        self.period_title = False
         self.context = {}
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
@@ -70,11 +69,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             date_to = period.date_stop
         if not date_from or not date_to:
             raise osv.except_osv(_('Error'), _('Start date and/or End date missing.'))
-        period_yyyymm = "{0}{1}".format(self.year, self.month)
+        period_title = self.period_title or ''
         # Cash and Bank registers
         reg_types = ('cash', 'bank')
-        params = (tuple([period_yyyymm]), reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to,
-                  tuple(self.instance_ids))
+        params = (period_title, reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to, tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res,
@@ -142,7 +140,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         # ensure not to have empty arrays to avoid crash at query execution...
         pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
         pending_chq_closing_bal_ids = pending_chq_closing_bal_ids or [-1]
-        cheque_params = (tuple([period_yyyymm]), tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
+        cheque_params = (period_title, tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
@@ -155,8 +153,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_from = data['form'].get('date_from', False)
         self.date_to = data['form'].get('date_to', False)
         self.instance_ids = data['form'].get('instance_ids', False)
-        self.year = data['form'].get('year', False)
-        self.month = data['form'].get('month', False)
+        self.period_title = data['form'].get('period_title', False)
         self.context = data.get('context', {})
         return super(account_liquidity_balance, self).set_context(objects, data, ids, report_type)
 

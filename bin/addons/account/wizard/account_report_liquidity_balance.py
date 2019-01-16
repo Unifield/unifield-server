@@ -94,16 +94,26 @@ class liquidity_balance_wizard(osv.osv_memory):
                              ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
         data['context'] = context
         instance = wiz.instance_id and wiz.instance_id.code or ''
-        # get the year and month number (used in the file name)
-        year = ''
-        month = ''
+        """
+        Get the period title:
+        - if a period is selected: YYYYMM for both the filename and the value to display in the column "Period"
+        - else: end date as YYYYMMDD for the filename, both dates as YYYYMMDD - YYYYMMDD for the column "Period"
+        """
+        period_title = period_title_filename = ''
         if wiz.period_id:
             tm = strptime(wiz.period_id.date_start, '%Y-%m-%d')
-            year_num = tm.tm_year
-            year = str(year_num)
-            month = '%02d' % tm.tm_mon
-        data['target_filename'] = "%s_%s%s_%s" % (instance, year, month, _('Liquidity Balances'))
-        data['form'].update({'year': year, 'month': month})
+            period_title_filename = "%s%02d" % (str(tm.tm_year), tm.tm_mon)
+            period_title = period_title_filename
+        elif wiz.date_from and wiz.date_to:
+            tm_from = strptime(wiz.date_from, '%Y-%m-%d')
+            tm_from_formatted = "%s%02d%02d" % (str(tm_from.tm_year), tm_from.tm_mon, tm_from.tm_mday)
+            tm_to = strptime(wiz.date_to, '%Y-%m-%d')
+            tm_to_formatted = "%s%02d%02d" % (str(tm_to.tm_year), tm_to.tm_mon, tm_to.tm_mday)
+            period_title_filename = tm_to_formatted
+            period_title = "%s - %s" % (tm_from_formatted, tm_to_formatted)
+
+        data['target_filename'] = "%s_%s_%s" % (instance, period_title_filename, _('Liquidity Balances'))
+        data['form'].update({'period_title': period_title})
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.liquidity.balance',
