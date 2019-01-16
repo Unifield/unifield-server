@@ -61,9 +61,11 @@ class liquidity_balance_wizard(osv.osv_memory):
             res['value'] = {'period_id': False, }
         return res
 
-    def _check_wizard_data(self, wiz):
+    def _check_wizard_data(self, wiz, context=None):
         """
         Checks the data selected in the wizard and raises an error if needed
+        :param wiz: wizard browse_record
+        :param context: context arguments (dict), not directly used in this method but enables the messages to be translated in the right language
         """
         if not wiz.period_id and not wiz.date_from and not wiz.date_to:
             raise osv.except_osv(_('Error'), _('You must select a period or a date range.'))
@@ -78,7 +80,7 @@ class liquidity_balance_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.browse(cr, uid, ids[0], context=context)
-        self._check_wizard_data(wiz)
+        self._check_wizard_data(wiz, context=context)
         data = {}
         data['form'] = {}
         # get the selected period and dates
