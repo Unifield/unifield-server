@@ -22,6 +22,8 @@
 from report import report_sxw
 from common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from vertical_integration import report as reportvi
 
@@ -43,11 +45,14 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         Returns a list of dicts, each containing the data of the liquidity registers for the selected period and instances
         For Cash & Bank registers the calculation is the one used in OCB VI.
         For Cheque Registers:
-            - starting: balance at end of N-1 of entries which are not reconciled within period N-1 or before
-            - calculated: always 0.00
-            - closing: balance at end of N of entries which are not reconciled within period N or before
+            - starting: balance at end of N-1 of entries which are either not reconciled, or reconciled with at least
+                one entry belonging to the same period or later
+            - calculated/Movements: always 0.00
+            - closing: balance at end of N of entries which are either not reconciled, or reconciled with at least
+                one entry belonging to a later period
         """
         res = []
+        reg_obj = self.pool.get('account.bank.statement')
         period = self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context=self.context,
                                                         fields_to_fetch=['date_start', 'date_stop'])
         period_yyyymm = "{0}{1}".format(self.year, self.month)
@@ -60,6 +65,35 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, encode=False, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
+        # Chq Starting Balance
+        chq_starting_bal_sql = """
+            SELECT DISTINCT (aml.id)
+            FROM account_move_line aml 
+            LEFT JOIN account_journal j ON aml.journal_id = j.id 
+            WHERE j.type = 'cheque'
+            AND aml.date < %s
+            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
+        """
+        self.cr.execute(chq_starting_bal_sql, (period.date_start,))
+        chq_starting_bal_ids = [x for x, in self.cr.fetchall()]
+        # get the day before the beginning date (cf the beginning date itself should be included in the Pending Chq computation)
+        date_start_dt = datetime.strptime(period.date_start, "%Y-%m-%d")
+        beginning_date = (date_start_dt + relativedelta(days=-1)).strftime('%Y-%m-%d')
+        pending_chq_starting_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], beginning_date,
+                                                                      aml_ids=chq_starting_bal_ids, context=self.context)
+        # Chq Closing Balance
+        chq_closing_bal_sql = """
+            SELECT DISTINCT (aml.id)
+            FROM account_move_line aml 
+            LEFT JOIN account_journal j ON aml.journal_id = j.id 
+            WHERE j.type = 'cheque'
+            AND aml.date <= %s
+            AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
+        """
+        self.cr.execute(chq_closing_bal_sql, (period.date_stop, ))
+        chq_closing_bal_ids = [x for x, in self.cr.fetchall()]
+        pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], period.date_stop,
+                                                                     aml_ids=chq_closing_bal_ids, context=self.context)
         cheque_sql = """
                     SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, 
                     c.name AS currency
@@ -68,27 +102,17 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                         SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                         FROM (
                             (
-                                SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 
-                                ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
-                                FROM account_move_line AS aml 
-                                LEFT JOIN account_journal j ON aml.journal_id = j.id 
-                                WHERE j.type = 'cheque'
-                                AND aml.date < %s
-                                AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
-                                AND ((reconcile_id IS NULL AND reconcile_partial_id IS NULL) OR reconcile_date >= %s)
-                                GROUP BY aml.journal_id, aml.account_id
+                                SELECT journal_id, account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
+                                FROM account_move_line
+                                WHERE id IN %s
+                                GROUP BY journal_id, account_id
                             )
                         UNION
                             (
-                                SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 
-                                0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
-                                FROM account_move_line AS aml 
-                                LEFT JOIN account_journal j ON aml.journal_id = j.id 
-                                WHERE j.type = 'cheque'
-                                AND aml.date <= %s
-                                AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
-                                AND ((reconcile_id IS NULL AND reconcile_partial_id IS NULL) OR reconcile_date > %s)
-                                GROUP BY aml.journal_id, aml.account_id
+                                SELECT journal_id, account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
+                                FROM account_move_line
+                                WHERE id IN %s
+                                GROUP BY journal_id, account_id
                             )
                         ) AS ssreq
                         GROUP BY journal_id, account_id
@@ -99,8 +123,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                     AND j.currency = c.id
                     AND j.instance_id IN %s;
                     """
-        cheque_params = (tuple([period_yyyymm]), period.date_start, period.date_start, period.date_stop,
-                         period.date_stop, tuple(self.instance_ids))
+        # ensure not to have empty arrays to avoid crash at query execution...
+        pending_chq_starting_bal_ids = pending_chq_starting_bal_ids or [-1]
+        pending_chq_closing_bal_ids = pending_chq_closing_bal_ids or [-1]
+        cheque_params = (tuple([period_yyyymm]), tuple(pending_chq_starting_bal_ids), tuple(pending_chq_closing_bal_ids), tuple(self.instance_ids))
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
