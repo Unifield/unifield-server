@@ -5,7 +5,7 @@
         <report
             id="report_stock_reception_report_xls"
             name="stock.reception.report_xls"
-            model="ir.followup.location.wizard"
+            model="stock.reception.wizard"
             string="Receptions Report"
             file="stock/report/stock_reception_report_xls.mako"
             report_type="webkit"
