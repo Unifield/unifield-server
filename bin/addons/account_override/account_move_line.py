@@ -27,6 +27,8 @@ import re
 import decimal_precision as dp
 from tools.translate import _
 from time import strftime
+import finance_export
+
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -290,6 +292,17 @@ class account_move_line(osv.osv):
                     aml_list.append(l['id'])
         return [('id', 'in', aml_list)]
 
+    def _get_db_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns a dict. with key containing the JI id, and value containing its DB id used for Vertical Integration
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
+        return ret
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
@@ -346,6 +359,8 @@ class account_move_line(osv.osv):
         # US-3874
         'partner_register_line_id': fields.many2one('account.bank.statement.line', string="Register Line", required=False, readonly=True,
                                                     help="Register line to which this partner automated entry is linked"),
+        'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
+                                 store=False, help='DB ID used for Vertical Integration'),
     }
 
     _defaults = {
