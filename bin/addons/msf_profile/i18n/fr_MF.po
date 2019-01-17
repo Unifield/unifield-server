@@ -103837,3 +103837,10 @@ msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier
 #: view:check.ppl.integrity:0
 msgid "Go Back"
 msgstr "Précédent"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:604
+#: constraint:purchase.order.line:0
+#, python-format
+msgid "Price is too big"
+msgstr "Le prix est trop grand"
