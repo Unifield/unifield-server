@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_stock_expired_damaged_report_xls"
+            name="stock.expired.damaged.report_xls"
+            model="stock.expired.damaged.wizard"
+            string="Expired-Damaged Products Report"
+            file="stock/report/stock_expired_damaged_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

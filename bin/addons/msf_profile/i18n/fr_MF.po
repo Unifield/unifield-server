@@ -3810,6 +3810,7 @@ msgstr "Analytic journal code"
 #. modules: stock, stock_override
 #: report:internal.move:0
 #: view:stock.picking:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:230
 msgid "Actual Move Date"
 msgstr "Date de Mouvement Réel"
 
@@ -16949,6 +16950,7 @@ msgstr ","
 #: field:stock.location.chained.options,dest_location_id:0
 #: view:manage.expired.stock:0
 #: field:manage.expired.stock,dest_loc_id:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -19812,6 +19814,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: report:internal.move:0
 #: view:stock.move:0
 #: view:manage.expired.stock:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:227
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -24473,6 +24476,7 @@ msgstr "Zone Interne"
 #: report:destruction.location:0
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:191
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:222
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -27129,13 +27133,14 @@ msgstr "Code Applicable (si type=code)"
 msgid "Last date"
 msgstr "Last date"
 
-#. modules: sales_followup, sale, purchase_followup
+#. modules: sales_followup, sale, purchase_followup, stock
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
 #: view:ir.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
 #: view:ir.followup.location.wizard:0
 #: view:sale.followup.multi.wizard:0
+#: view:stock.expired.damaged.wizard:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -27468,7 +27473,7 @@ msgstr "Error, packing in wrong state !"
 msgid "Total Volume[dm³]"
 msgstr "Volume Total [dm³]"
 
-#. modules: purchase, account, msf_outgoing, sales_followup, procurement_auto, sale, product, specific_rules, kit, account_override, purchase_allocation_report, sourcing, order_types, stock_override, tender_flow, return_claim, purchase_followup, msf_doc_import, purchase_followup, purchase_compare_rfq, kit
+#. modules: purchase, account, msf_outgoing, sales_followup, procurement_auto, sale, product, specific_rules, kit, account_override, purchase_allocation_report, sourcing, order_types, stock_override, tender_flow, return_claim, purchase_followup, msf_doc_import, purchase_followup, purchase_compare_rfq, kit, stock
 #: view:account.invoice.report:0
 #: field:account.invoice.report,product_qty:0
 #: field:wizard.split.invoice.lines,quantity:0
@@ -27521,6 +27526,7 @@ msgstr "Volume Total [dm³]"
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:237
 #: view:purchase.order:0
 #: field:stock.reserved.products,product_qty:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:221
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -31399,6 +31405,7 @@ msgstr "Alloc.Analyt."
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:170
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -34748,13 +34755,14 @@ msgstr "Dépenses prévues"
 msgid "Antarctica"
 msgstr "Antarctique"
 
-#. modules: sales_followup, msf_doc_import, purchase_followup, sale, stock_schedule
+#. modules: sales_followup, msf_doc_import, purchase_followup, sale, stock_schedule, stock
 #: field:stock.frequence,calculated_end_date:0
 #: field:stock.frequence,end_date_ok:0
 #: field:msf.import.export,end_date:0
 #: field:po.track.changes.wizard,end_date:0
 #: field:sale.loan.stock.moves,end_date:0
 #: field:ir.track.changes.wizard,end_date:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:186
 msgid "End date"
 msgstr "Date de Fin"
 
@@ -35067,7 +35075,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, account_override
+#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -35081,6 +35089,7 @@ msgstr "Shipment Date:"
 #: field:sale.loan.stock.moves,start_date:0
 #: field:ir.track.changes.wizard,start_date:0
 #: field:integrity.finance.wizard,date_from:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:178
 msgid "Start date"
 msgstr "Date de début"
 
@@ -38840,6 +38849,7 @@ msgstr "Masculin"
 #: field:physical.inventory.discrepancy,currency_id:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:219
 #: field:internal.request.import,in_currency:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:225
 msgid "Currency"
 msgstr "Devise"
 
@@ -41000,6 +41010,7 @@ msgstr "De confirmé à attribué."
 #: field:internal.request.import.line,imp_uom_id:0
 #: field:internal.request.import.line,in_uom:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:218
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:220
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44018,7 +44029,7 @@ msgstr "Signature :"
 msgid "Contains Dangerous goods"
 msgstr "Contient des Produits Dangereux"
 
-#. modules: sales_followup, register_accounting, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, account_override, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, stock_forecast, purchase_allocation_report, procurement_request, kit, purchase_compare_rfq
+#. modules: sales_followup, register_accounting, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, account_override, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, stock_forecast, purchase_allocation_report, procurement_request, kit, purchase_compare_rfq, stock
 #: field:account.invoice.line,product_code:0
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:69
@@ -44083,6 +44094,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:130
 #: code:addons/sale/wizard/internal_request_import.py:43
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:218
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -49052,7 +49064,7 @@ msgstr "Intermission Partners"
 msgid "Original Qty for Partial process - only for sync and partial processed line"
 msgstr "Original Qty for Partial process - only for sync and partial processed line"
 
-#. modules: sales_followup, purchase_followup, sale
+#. modules: sales_followup, purchase_followup, sale, stock
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:178
 #: view:po.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
@@ -49063,6 +49075,7 @@ msgstr "Original Qty for Partial process - only for sync and partial processed l
 #: view:sale.loan.stock.moves:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:223
 #: view:sale.followup.multi.wizard:0
+#: view:stock.expired.damaged.wizard:0
 msgid "Request parameters"
 msgstr "Paramètres de la requête"
 
@@ -49338,7 +49351,7 @@ msgstr "Résultat - Commande"
 msgid "Chinese (HK)"
 msgstr "Chinese (HK)"
 
-#. modules: tender_flow, purchase_override, sale, msf_outgoing
+#. modules: tender_flow, purchase_override, sale, msf_outgoing, stock
 #: report:msf.purchase.order:0
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
@@ -49346,6 +49359,7 @@ msgstr "Chinese (HK)"
 #: field:sale.report,price_total:0
 #: field:tender.line,total_price:0
 #: report:invoice:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:226
 msgid "Total Price"
 msgstr "Prix Total"
 
@@ -58390,7 +58404,7 @@ msgstr "Le rapport RML"
 msgid "%s was not a number, it is set to %d by default."
 msgstr "%s was not a number, it is set to %d by default."
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, product_expiry, msf_doc_import, msf_supply_doc_export
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, product_expiry, msf_doc_import, msf_supply_doc_export, stock
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:73
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:73
@@ -58429,6 +58443,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: field:report.stock.move,expiry_date:0
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:192
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:223
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -62397,6 +62412,7 @@ msgstr "Albanie"
 #: field:stock.forecast.line,reference:0
 #: view:stock.move:0
 #: field:threshold.value,name:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:215
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -75694,7 +75710,7 @@ msgstr "Num. ligne"
 msgid "There is only one Cross Docking Location"
 msgstr "Il n'y a qu'une Zone Transbordement"
 
-#. modules: account, resource, product, sync_client
+#. modules: account, resource, product, sync_client, stock
 #: report:account.account.balance:0
 #: field:account.aged.trial.balance,date_from:0
 #: field:account.balance.report,date_from:0
@@ -75723,6 +75739,7 @@ msgstr "Il n'y a qu'une Zone Transbordement"
 #: field:product.pricelist.version,date_start:0
 #: field:resource.calendar.leaves,date_from:0
 #: field:sync.monitor,start:0
+#: field:stock.expired.damaged.wizard,start_date:0
 msgid "Start Date"
 msgstr "Date de Début"
 
@@ -76701,7 +76718,7 @@ msgstr "Lignes d'Ecritures Analytiques"
 msgid "Kind of Node"
 msgstr "Sorte de Node"
 
-#. modules: product, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, sale, procurement_request
+#. modules: product, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, sale, procurement_request, stock
 #: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:39
 #: field:old.product.list.line,desc:0
 #: field:product.list.line,desc:0
@@ -76762,6 +76779,7 @@ msgstr "Sorte de Node"
 #: code:addons/sale/wizard/internal_request_import.py:44
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
 #: field:internal.request.import.line,in_product_desc:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:219
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -77535,6 +77553,7 @@ msgstr "# de lignes importées"
 #: code:addons/sale/wizard/internal_request_import.py:46
 #: field:internal.request.import.line,imp_cost_price:0
 #: field:internal.request.import.line,in_cost_price:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:224
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -82508,6 +82527,9 @@ msgstr "Update(s) not run left: %d"
 #: view:stock.picking:0
 #: view:stock.move:0
 #: view:report.stock.move:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:202
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:216
+#: view:stock.expired.damaged.wizard:0
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -87461,7 +87483,7 @@ msgstr "Instances propriétaires"
 msgid "Action Type"
 msgstr "Type d'action"
 
-#. modules: account, finance, analytic_distribution
+#. modules: account, finance, analytic_distribution, stock
 #: report:account.partner.balance:0
 #: field:account.partner.balance,date_to:0
 #: field:account.partner.ledger,date_to:0
@@ -87469,6 +87491,7 @@ msgstr "Type d'action"
 #: report:account.third_party_ledger_other:0
 #: field:import.commitment.wizard,last_stop:0
 #: field:wizard.account.partner.balance.tree,date_to:0
+#: field:stock.expired.damaged.wizard,end_date:0
 msgid "End Date"
 msgstr "Date de Fin"
 
@@ -90590,6 +90613,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: field:export.report.stock.move,company_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:128
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:109
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:166
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
 
@@ -93832,6 +93856,7 @@ msgstr "Statuts Exercice Comptable"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:521
 #: view:purchase.order:0
 #: field:tender,creation_date:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:229
 msgid "Creation Date"
 msgstr "Date de Création"
 
@@ -103837,3 +103862,60 @@ msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier
 #: view:check.ppl.integrity:0
 msgid "Go Back"
 msgstr "Précédent"
+
+#. module: stock
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:126
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:163
+msgid "Expired/Damaged Products Report"
+msgstr "Rapport des Produits Endommagés/Expirés"
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_stock_expired_damaged_wizard
+#: model:ir.ui.menu,name:stock.menu_stock_expired_damaged_wizard
+#: view:stock.expired.damaged.wizard:0
+msgid "Expired/Damaged Products"
+msgstr "Produits Endommagés/Expirés"
+
+#. module: stock
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:194
+#: field:stock.expired.damaged.wizard,location_id:0
+msgid "Specific Source Location"
+msgstr "Zone Source Spécifique"
+
+#. module: stock
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:198
+#: field:stock.expired.damaged.wizard,location_dest_id:0
+msgid "Specific Destination Location"
+msgstr "Zone de Destination Spécifique"
+
+#. module: stock
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:206
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:217
+#: field:stock.expired.damaged.wizard,nomen_manda_0:0
+msgid "Product Main Type"
+msgstr "Type Principal du Produit"
+
+#. module: stock
+#: field:stock.expired.damaged.wizard,loss_damage_ok:0
+msgid "12.4 Loss / Damage"
+msgstr "12.4 Perte / Dommage"
+
+#. module: stock
+#: field:stock.expired.damaged.wizard,loss_ok:0
+msgid "12 Loss"
+msgstr "12 Perte"
+
+#. module: stock
+#: field:stock.expired.damaged.wizard,loss_expiry_ok:0
+msgid "12.3 Loss / Expiry"
+msgstr "12.3 Perte / Expiration"
+
+#. module: stock
+#: field:stock.expired.damaged.wizard,loss_sample_ok:0
+msgid "12.2 Loss / Sample"
+msgstr "12.2 Perte / Échantillon"
+
+#. module: stock
+#: field:stock.expired.damaged.wizard,loss_scrap_ok:0
+msgid "12.1 Loss / Scrap"
+msgstr "12.1 Perte / Détruit"
