@@ -54,23 +54,39 @@ class patch_scripts(osv.osv):
 
     # UF11.1
     def us_5559_set_pricelist(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # new instance nothing to fix
+            return True
+
         data_obj = self.pool.get('ir.model.data')
-        pl_po_id = data_obj.get_object_reference(cr, uid, 'purchase', 'list0')[1]
-        pl_so_id = data_obj.get_object_reference(cr, uid, 'product', 'list0')[1]
+        po_id = data_obj.get_object_reference(cr, uid, 'purchase', 'list0')[1]
+        so_id = data_obj.get_object_reference(cr, uid, 'product', 'list0')[1]
+
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name or ''
+        if instance_name.startswith('OCG'):
+            ch_po_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_purchase')[1]
+            ch_so_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_sale')[1]
+            to_fix = [(po_id, so_id, ['section']), (ch_po_id, ch_so_id, ['intermission'])]
+        else:
+            to_fix = [(po_id, so_id, ['section', 'intermission'])]
 
         partner = self.pool.get('res.partner')
 
-        partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', ['section', 'intermission'])])
 
-        if partner_ids:
-            po_pricelist = 'product.pricelist,%s' % pl_po_id
-            cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist_purchase' and value_reference!=%s and res_id in %s''', (po_pricelist, po_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
-            self._logger.warn('PO Currency changed on %d partners' % (cr.rowcount,))
+        for pl_po_id, pl_so_id, domain in to_fix:
+            partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', ['section', 'intermission'])])
 
 
-            so_pricelist = 'product.pricelist,%s' % pl_so_id
-            cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist' and value_reference!=%s and res_id in %s''', (so_pricelist, so_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
-            self._logger.warn('FO Currency changed on %d partners' % (cr.rowcount,))
+            if partner_ids:
+                po_pricelist = 'product.pricelist,%s' % pl_po_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist_purchase' and value_reference!=%s and res_id in %s''', (po_pricelist, po_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('PO Currency changed on %d partners' % (cr.rowcount,))
+
+
+                so_pricelist = 'product.pricelist,%s' % pl_so_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist' and value_reference!=%s and res_id in %s''', (so_pricelist, so_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('FO Currency changed on %d partners' % (cr.rowcount,))
 
         return True
 
