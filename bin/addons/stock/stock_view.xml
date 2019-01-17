@@ -693,6 +693,23 @@
                 </calendar>
             </field>
         </record>
+        <record id="genericpick" model="ir.ui.view">
+            <field name="name">stock.picking.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field eval="50" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Moves">
+                    <field name="name"/>
+                    <field name="backorder_id" />
+                    <field name="origin"/>
+                    <field name="reason_type_id"/>
+                    <field name="date"/>
+                    <field name="min_date"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
         <record id="vpicktree" model="ir.ui.view">
             <field name="name">stock.picking.tree</field>
             <field name="model">stock.picking</field>

@@ -524,7 +524,7 @@
 
         <act_window
             context="{}"
-            domain="[('procurement_request', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+            domain="[('procurement_request', '=', False), ('product_id', '=', active_id)]"
             id="action_order_line_product_tree"
             name="Field orders"
             res_model="sale.order"
@@ -532,7 +532,7 @@
 
         <act_window
             context="{}"
-            domain="['|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+            domain="[('product_id', '=', active_id)]"
             id="action_tender_product_tree"
             name="Tenders"
             res_model="tender"

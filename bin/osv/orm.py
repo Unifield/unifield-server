@@ -910,7 +910,13 @@ class orm_template(object):
                 obj_model = self.pool.get(model_name)
                 ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
-                    raise ValueError('No record found for %s' % (id,))
+                    if context.get('sync_update_execution'):
+                        newctx = context.copy()
+                        newctx['active_test'] = False
+                        ids = obj_model.name_search(cr, uid, id, operator='=', context=newctx)
+
+                    if not ids:
+                        raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
             return id
 
@@ -1948,7 +1954,10 @@ class orm_template(object):
         result['fields'] = xfields
 
 
-        result['uom_rounding'] = self.pool.get('product.uom').get_rounding(cr, user)
+        result['uom_rounding'] = {}
+        uom_obj = self.pool.get('product.uom')
+        if uom_obj:
+            result['uom_rounding'] = uom_obj.get_rounding(cr, user)
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
