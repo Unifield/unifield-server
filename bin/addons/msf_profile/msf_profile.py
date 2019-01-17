@@ -75,7 +75,7 @@ class patch_scripts(osv.osv):
 
 
         for pl_po_id, pl_so_id, domain in to_fix:
-            partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', ['section', 'intermission'])])
+            partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', domain)])
 
 
             if partner_ids:
