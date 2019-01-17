@@ -952,6 +952,8 @@ class update_received(osv.osv,fv_formatter):
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.analytic.line' and field == 'cost_center_id/id':
+                            return {'res': False, 'error_message': 'Cost Center %s not found' % xmlid}
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
