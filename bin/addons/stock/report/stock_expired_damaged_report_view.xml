@@ -37,7 +37,7 @@
             <field name="model">stock.expired.damaged.report</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Expired/Damaged Products">
+                <form string="Expired/Damaged Products" noteditable="state!='draft'">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
