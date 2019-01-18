@@ -200,7 +200,7 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_center_grey" ss:MergeAcross="1"><Data ss:Type="String">${_('Reason Type')|x}</Data></Cell>
-            <Cell ss:StyleID="line_header_center" ss:MergeAcross="2"><Data ss:Type="String">${getReasonTypesText(r.reason_types_ids)|x}</Data></Cell>
+            <Cell ss:StyleID="line_header_center" ss:MergeAcross="2"><Data ss:Type="String">${getReasonTypesText()|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_center_grey" ss:MergeAcross="1"><Data ss:Type="String">${_('Product Main Type')|x}</Data></Cell>
@@ -236,7 +236,7 @@
         % endfor
         </Row>
 
-        % for move in getMoves(r.moves_ids):
+        % for move in getMoves():
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>

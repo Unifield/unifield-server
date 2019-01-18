@@ -2,10 +2,118 @@
 <openerp>
     <data>
 
+        <record id="stock_expired_damaged_report_tree_view" model="ir.ui.view">
+            <field name="name">stock.expired.damaged.report.tree.view</field>
+            <field name="model">stock.expired.damaged.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <search string="Expired/Damaged Products">
+                    <field name="name" />
+                    <field name="date_from" />
+                    <field name="date_to" />
+                </search>
+            </field>
+        </record>
+
+        <record id="stock_expired_damaged_report_search_view" model="ir.ui.view">
+            <field name="name">stock.expired.damaged.report.search.view</field>
+            <field name="model">stock.expired.damaged.report</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Expired/Damaged Products">
+                    <field name="name" />
+                    <field name="date_from" />
+                    <field name="date_to" />
+                </search>
+            </field>
+        </record>
+
+        <record id="stock_expired_damaged_report_form_view" model="ir.ui.view">
+            <field name="name">stock.expired.damaged.report.form.view</field>
+            <field name="model">stock.expired.damaged.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Expired/Damaged Products">
+                    <separator colspan="4" string="Request information" />
+                    <field name="name" />
+                    <field name="company_id" />
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="date_from" />
+                    <field name="date_to" />
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
+                    <field name="location_dest_id" domain="[('usage', '!=', 'view'), '|', ('quarantine_location', '=', True), ('destruction_location', '=', True)]" />
+                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
+                    <separator colspan="4" string="Reason Type" />
+                    <group colspan="4" col="8">
+                        <field name="loss_ok" />
+                        <field name="loss_scrap_ok" />
+                        <field name="loss_sample_ok" />
+                        <field name="loss_expiry_ok" />
+                        <field name="loss_damage_ok" />
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
+                    <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    <translate>
+                                    Your file is now ready. You can download it on the right side bar (Attachments).
+                                    </translate>
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <field name="state" invisible="1" />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_expired_damaged_report_info_view" model="ir.ui.view">
+            <field name="name">stock.expired.damaged.report.info.view</field>
+            <field name="model">stock.expired.damaged.report</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    <translate>
+                                    Your export of expired/damaged products demand will be treated quickly.<br /><br />
+                                    Due to the volume of data, your report cannot be shown immediatly.<br /><br />
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expired/Damaged Products.<br />
+                                    </translate>
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <label> </label>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_stock_expired_damaged_report" model="ir.actions.act_window">
+            <field name="name">Expired/Damaged Products</field>
+            <field name="res_model">stock.expired.damaged.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="menu_stock_expired_damaged_report"
+            action="action_stock_expired_damaged_report"
+            parent="stock.next_id_61"
+            sequence="10"
+            />
+
         <report
             id="report_stock_expired_damaged_report_xls"
             name="stock.expired.damaged.report_xls"
-            model="stock.expired.damaged.wizard"
+            model="stock.expired.damaged.report"
             string="Expired-Damaged Products Report"
             file="stock/report/stock_expired_damaged_report_xls.mako"
             report_type="webkit"
