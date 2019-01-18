@@ -626,6 +626,16 @@ You cannot choose this supplier because some destination locations are not avail
                     },
                 }
 
+            picking = self.browse(cr, uid, ids[0], context=context)
+            if not picking.origin and partner.partner_type in ('internal', 'intermission', 'intersection'):
+                return {
+                    'value': {'partner_id2': False, 'partner_id': False,},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
+                    },
+                }
+
         return {'value': v,
                 'domain': d}
 
