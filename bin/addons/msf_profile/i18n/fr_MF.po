@@ -27133,14 +27133,13 @@ msgstr "Code Applicable (si type=code)"
 msgid "Last date"
 msgstr "Last date"
 
-#. modules: sales_followup, sale, purchase_followup, stock
+#. modules: sales_followup, sale, purchase_followup
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
 #: view:ir.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
 #: view:ir.followup.location.wizard:0
 #: view:sale.followup.multi.wizard:0
-#: view:stock.expired.damaged.wizard:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -30343,13 +30342,14 @@ msgstr "Cette fenêtre"
 msgid "System period ?"
 msgstr "System period ?"
 
-#. modules: specific_rules, msf_tools, msf_supply_doc_export, stock_override
+#. modules: specific_rules, msf_tools, msf_supply_doc_export, stock_override, stock
 #: view:export.report.inconsistencies:0
 #: view:export.report.stopped.products:0
 #: view:export.report.stock.inventory:0
 #: view:po.follow.up:0
 #: view:export.report.stock.move:0
 #: view:unconsistent.stock.report:0
+#: view:stock.expired.damaged.report:0
 msgid "Generate report"
 msgstr "Générer le rapport"
 
@@ -31406,6 +31406,7 @@ msgstr "Alloc.Analyt."
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:170
+#: field:stock.expired.damaged.report,name:0
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -34755,14 +34756,13 @@ msgstr "Dépenses prévues"
 msgid "Antarctica"
 msgstr "Antarctique"
 
-#. modules: sales_followup, msf_doc_import, purchase_followup, sale, stock_schedule, stock
+#. modules: sales_followup, msf_doc_import, purchase_followup, sale, stock_schedule
 #: field:stock.frequence,calculated_end_date:0
 #: field:stock.frequence,end_date_ok:0
 #: field:msf.import.export,end_date:0
 #: field:po.track.changes.wizard,end_date:0
 #: field:sale.loan.stock.moves,end_date:0
 #: field:ir.track.changes.wizard,end_date:0
-#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:186
 msgid "End date"
 msgstr "Date de Fin"
 
@@ -35075,7 +35075,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock
+#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, account_override
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -35089,7 +35089,6 @@ msgstr "Shipment Date:"
 #: field:sale.loan.stock.moves,start_date:0
 #: field:ir.track.changes.wizard,start_date:0
 #: field:integrity.finance.wizard,date_from:0
-#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:178
 msgid "Start date"
 msgstr "Date de début"
 
@@ -38014,6 +38013,7 @@ msgstr "Do reconfigure..."
 #: report:stock.card.report:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
+#: field:stock.expired.damaged.report,date_from:0
 msgid "From"
 msgstr "De"
 
@@ -42651,6 +42651,7 @@ msgstr "Contrat - Code/Nom:"
 #: view:product.product:0
 #: model:ir.ui.menu,name:sync_client.update_menu
 #: view:sync.client.update_entity:0
+#: view:stock.expired.damaged.report:0
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -49075,7 +49076,7 @@ msgstr "Original Qty for Partial process - only for sync and partial processed l
 #: view:sale.loan.stock.moves:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:223
 #: view:sale.followup.multi.wizard:0
-#: view:stock.expired.damaged.wizard:0
+#: view:stock.expired.damaged.report:0
 msgid "Request parameters"
 msgstr "Paramètres de la requête"
 
@@ -75710,7 +75711,7 @@ msgstr "Num. ligne"
 msgid "There is only one Cross Docking Location"
 msgstr "Il n'y a qu'une Zone Transbordement"
 
-#. modules: account, resource, product, sync_client, stock
+#. modules: account, resource, product, sync_client
 #: report:account.account.balance:0
 #: field:account.aged.trial.balance,date_from:0
 #: field:account.balance.report,date_from:0
@@ -75739,7 +75740,6 @@ msgstr "Il n'y a qu'une Zone Transbordement"
 #: field:product.pricelist.version,date_start:0
 #: field:resource.calendar.leaves,date_from:0
 #: field:sync.monitor,start:0
-#: field:stock.expired.damaged.wizard,start_date:0
 msgid "Start Date"
 msgstr "Date de Début"
 
@@ -82529,7 +82529,7 @@ msgstr "Update(s) not run left: %d"
 #: view:report.stock.move:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:202
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:216
-#: view:stock.expired.damaged.wizard:0
+#: view:stock.expired.damaged.report:0
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -87483,7 +87483,7 @@ msgstr "Instances propriétaires"
 msgid "Action Type"
 msgstr "Type d'action"
 
-#. modules: account, finance, analytic_distribution, stock
+#. modules: account, finance, analytic_distribution
 #: report:account.partner.balance:0
 #: field:account.partner.balance,date_to:0
 #: field:account.partner.ledger,date_to:0
@@ -87491,7 +87491,6 @@ msgstr "Type d'action"
 #: report:account.third_party_ledger_other:0
 #: field:import.commitment.wizard,last_stop:0
 #: field:wizard.account.partner.balance.tree,date_to:0
-#: field:stock.expired.damaged.wizard,end_date:0
 msgid "End Date"
 msgstr "Date de Fin"
 
@@ -90613,6 +90612,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: field:export.report.stock.move,company_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:128
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:109
+#: field:stock.expired.damaged.report,company_id:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:166
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
@@ -99194,13 +99194,14 @@ msgstr "Nettoyage des anciens imports…"
 msgid "You must assign an Asset to process it."
 msgstr "Vous devez assigner un Actif pour le processer."
 
-#. modules: account, stock_override, consumption_calculation, analytic_distribution
+#. modules: account, stock_override, consumption_calculation, analytic_distribution, stock
 #: field:account.chart,period_to:0
 #: field:account.analytic.chart,period_to:0
 #: field:weekly.forecast.report,consumption_to:0
 #: field:export.report.stock.move,date_to:0
+#: field:stock.expired.damaged.report,date_to:0
 msgid "To"
-msgstr "A"
+msgstr "À"
 
 #. modules: delivery_mechanism, account, msf_outgoing, msf_homere_interface, sync_client, stock_override, account_voucher, kit, account_override, register_accounting, msf_doc_import, return_claim, stock
 #: view:account.automatic.reconcile:0
@@ -103867,55 +103868,96 @@ msgstr "Précédent"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:126
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:163
 msgid "Expired/Damaged Products Report"
-msgstr "Rapport des Produits Endommagés/Expirés"
+msgstr "Rapport des Produits Expirés/Endommagés"
 
 #. module: stock
-#: model:ir.actions.act_window,name:stock.action_stock_expired_damaged_wizard
-#: model:ir.ui.menu,name:stock.menu_stock_expired_damaged_wizard
-#: view:stock.expired.damaged.wizard:0
+#: model:ir.actions.act_window,name:stock.action_stock_expired_damaged_report
+#: model:ir.ui.menu,name:stock.menu_stock_expired_damaged_report
+#: view:stock.expired.damaged.report:0
 msgid "Expired/Damaged Products"
-msgstr "Produits Endommagés/Expirés"
+msgstr "Produits Expirés/Endommagés"
 
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:194
-#: field:stock.expired.damaged.wizard,location_id:0
+#: field:stock.expired.damaged.report,location_id:0
 msgid "Specific Source Location"
 msgstr "Zone Source Spécifique"
 
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:198
-#: field:stock.expired.damaged.wizard,location_dest_id:0
+#: field:stock.expired.damaged.report,location_dest_id:0
 msgid "Specific Destination Location"
 msgstr "Zone de Destination Spécifique"
 
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:206
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:217
-#: field:stock.expired.damaged.wizard,nomen_manda_0:0
+#: field:stock.expired.damaged.report,nomen_manda_0:0
 msgid "Product Main Type"
 msgstr "Type Principal du Produit"
 
 #. module: stock
-#: field:stock.expired.damaged.wizard,loss_damage_ok:0
+#: field:stock.expired.damaged.report,loss_damage_ok:0
 msgid "12.4 Loss / Damage"
 msgstr "12.4 Perte / Dommage"
 
 #. module: stock
-#: field:stock.expired.damaged.wizard,loss_ok:0
+#: field:stock.expired.damaged.report,loss_ok:0
 msgid "12 Loss"
 msgstr "12 Perte"
 
 #. module: stock
-#: field:stock.expired.damaged.wizard,loss_expiry_ok:0
+#: field:stock.expired.damaged.report,loss_expiry_ok:0
 msgid "12.3 Loss / Expiry"
 msgstr "12.3 Perte / Expiration"
 
 #. module: stock
-#: field:stock.expired.damaged.wizard,loss_sample_ok:0
+#: field:stock.expired.damaged.report,loss_sample_ok:0
 msgid "12.2 Loss / Sample"
 msgstr "12.2 Perte / Échantillon"
 
 #. module: stock
-#: field:stock.expired.damaged.wizard,loss_scrap_ok:0
+#: field:stock.expired.damaged.report,loss_scrap_ok:0
 msgid "12.1 Loss / Scrap"
 msgstr "12.1 Perte / Détruit"
+
+#. module: stock
+#: view:stock.expired.damaged.report:0
+msgid "\n"
+"                                    Your export of expired/damaged products demand will be treated quickly.<br/>\n"
+"                                    "
+msgstr "\n"
+"                                    Votre demande d'export des produits expirés/endommagés sera rapidement traitée.<br/>\n"
+"                                    "
+
+#. module: stock
+#: view:stock.expired.damaged.report:0
+msgid "\n"
+"                                    Due to the volume of data, your report cannot be shown immediatly.<br/>\n"
+"                                    "
+msgstr "\n"
+"                                    À cause du volume de données, vous ne pouvez pas y avoir accès pour le moment.<br/>\n"
+"                                    "
+
+#. module: stock
+#: view:stock.expired.damaged.report:0
+msgid "\n"
+"                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expired/Damaged Products.<br/>\n"
+"                                    "
+msgstr "\n"
+"                                    Quand le rapport sera prêt, vous pourrez y avoir accès dans le menu Entrepôt / Rapports / Produits Expirés/Endommagés.<br/>\n"
+"                                    "
+
+#. module: stock
+#: view:stock.expired.damaged.report:0
+msgid "Request information"
+msgstr "Informations de la requête"
+
+#. module: stock
+#: view:stock.expired.damaged.report:0
+msgid "\n"
+"                                    Your file is now ready. You can download it on the right side bar (Attachments).\n"
+"                                    "
+msgstr "\n"
+"                                    Votre fichier est prêt. Vous pouvez le télécharger depuis la barre à droite (Pièces Jointes).\n"
+"                                    "

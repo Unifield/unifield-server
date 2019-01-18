@@ -38,13 +38,11 @@ class stock_expired_damaged_report(osv.osv):
         'name': fields.datetime(string='Generated on', readonly=True),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')], string='State'),
         'company_id': fields.many2one('res.company', string='DB/Instance name', readonly=True),
-        # 'moves_ids': fields.text(string='Moves', readonly=True),
-        'date_from': fields.date(string='Start Date'),
-        'date_to': fields.date(string='End Date'),
+        'date_from': fields.date(string='From'),
+        'date_to': fields.date(string='To'),
         'location_id': fields.many2one('stock.location', 'Specific Source Location', select=True),
         'location_dest_id': fields.many2one('stock.location', 'Specific Destination Location', select=True),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Product Main Type'),
-        # 'reason_types_ids': fields.text(string='Reason Types', readonly=True),
         'loss_ok': fields.boolean(string='12 Loss'),
         'loss_scrap_ok': fields.boolean(string='12.1 Loss / Scrap'),
         'loss_sample_ok': fields.boolean(string='12.2 Loss / Sample'),
@@ -172,21 +170,6 @@ class stock_expired_damaged_report(osv.osv):
 
             return res
 
-        # background_id = self.pool.get('memory.background.report').create(cr, uid, {
-        #     'file_name': ,
-        #     'report_name': 'stock.expired.damaged.report_xls',
-        # }, context=context)
-        # context['background_id'] = background_id
-        # context['background_time'] = 3
-        #
-        # data = {'ids': ids, 'context': context}
-        # return {
-        #     'type': 'ir.actions.report.xml',
-        #     'report_name': 'stock.expired.damaged.report_xls',
-        #     'datas': data,
-        #     'context': context,
-        # }
-
         raise osv.except_osv(
             _('Error'),
             _('No data found with these parameters'),
@@ -300,7 +283,7 @@ class stock_expired_damaged_parser(report_sxw.rml_parse):
 
 SpreadsheetReport(
     'report.stock.expired.damaged.report_xls',
-    'stock.expired.damaged.wizard',
+    'stock.expired.damaged.report',
     'stock/report/stock_expired_damaged_report_xls.mako',
     parser=stock_expired_damaged_parser
 )

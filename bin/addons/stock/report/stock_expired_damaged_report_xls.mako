@@ -168,24 +168,24 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_center_grey" ss:MergeAcross="1"><Data ss:Type="String">${_('Generated on')|x}</Data></Cell>
-            % if isDateTime(r.report_date):
-            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.report_date)|n}</Data></Cell>
+            % if isDateTime(r.name):
+            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.name)|n}</Data></Cell>
             % else:
             <Cell ss:StyleID="line_header_center" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
         </Row>
         <Row>
             <Cell ss:StyleID="line_center_grey" ss:MergeAcross="1"><Data ss:Type="String">${_('Start date')|x}</Data></Cell>
-            % if r.start_date and isDate(r.start_date):
-            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.start_date)|n}</Data></Cell>
+            % if r.date_from and isDate(r.date_from):
+            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.date_from)|n}</Data></Cell>
             % else:
             <Cell ss:StyleID="line_header_center" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
         </Row>
         <Row>
             <Cell ss:StyleID="line_center_grey" ss:MergeAcross="1"><Data ss:Type="String">${_('End date')|x}</Data></Cell>
-            % if r.end_date and isDate(r.end_date):
-            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.end_date)|n}</Data></Cell>
+            % if r.date_to and isDate(r.date_to):
+            <Cell ss:StyleID="short_date_header" ss:MergeAcross="2"><Data ss:Type="DateTime">${parseDateXls(r.date_to)|n}</Data></Cell>
             % else:
             <Cell ss:StyleID="line_header_center" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
