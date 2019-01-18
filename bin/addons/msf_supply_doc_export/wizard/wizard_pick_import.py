@@ -143,6 +143,8 @@ class wizard_pick_import(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
 
         for xls_line_number, line_data in import_data_lines.items():
+            if line_data['qty_picked'] is None:
+                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % xls_line_number)
             line_data = self.normalize_data(cr, uid, line_data)
 
             # fields to update on moves are: quantity, prodlot_id, expiry_date

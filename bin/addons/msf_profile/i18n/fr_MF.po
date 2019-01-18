@@ -103840,3 +103840,9 @@ msgstr "Packing Date"
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:127
 msgid "Total items"
 msgstr "Total d'objets"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:147
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" should contains the quantity to process and cannot be empty, please fill it with \"0\" instead"
+msgstr "Ligne %s: La colonne \"Qté prélevée\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
