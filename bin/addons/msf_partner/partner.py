@@ -640,8 +640,25 @@ class res_partner(osv.osv):
         if context.get('sync_update_execution'):
             return True
 
+        curr_obj = self.pool.get('res.currency')
+        section_curr = curr_obj.search(cr, uid, [('is_section_currency', '=', True)])
+        curr_id = self.pool.get('res.users').browse(cr, uid, uid,fields_to_fetch=['company_id'], context=context).company_id.currency_id.id
 
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name'], context=context):
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase', 'property_product_pricelist', 'name', 'partner_type'], context=context):
+            ko_cur = False
+            if x.partner_type == 'section' and x.property_product_pricelist_purchase and x.property_product_pricelist_purchase.currency_id.id not in section_curr:
+                ko_cur = x.property_product_pricelist_purchase.currency_id.name
+            elif  x.partner_type == 'section' and x.property_product_pricelist and x.property_product_pricelist.currency_id.id not in section_curr:
+                ko_cur = x.property_product_pricelist.currency_id.name
+            elif x.partner_type == 'intermission' and x.property_product_pricelist_purchase and x.property_product_pricelist_purchase.currency_id.id != curr_id:
+                ko_cur = x.property_product_pricelist_purchase.currency_id.name
+            elif x.partner_type == 'intermission' and x.property_product_pricelist and x.property_product_pricelist.currency_id.id != curr_id:
+                ko_cur = x.property_product_pricelist.currency_id.name
+
+            if ko_cur:
+                raise osv.except_osv(_('Warning'),
+                                     _('Partner %s (%s): you can not use %s currency') % (x.name, x.partner_type, ko_cur))
+
             if x.property_product_pricelist_purchase and x.property_product_pricelist and x.property_product_pricelist_purchase.currency_id.id != x.property_product_pricelist.currency_id.id:
                 raise osv.except_osv(_('Warning'),
                                      _('Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same') % (x.name, x.property_product_pricelist_purchase.currency_id.name, x.property_product_pricelist.currency_id.name)

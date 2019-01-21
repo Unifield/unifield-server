@@ -2079,6 +2079,15 @@ msgstr "Fournisseur sélectionné"
 msgid "PPL or Packing should not be selected."
 msgstr "Liste de Pré-Colisage ou Emballage ne ​​devrait pas être sélectionné."
 
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:764
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:270
+#: view:check.ppl.integrity:0
+#, python-format
+msgid "PPL integrity"
+msgstr "Integrité LPC"
+
+
 #. module: specific_rules
 #: code:addons/specific_rules/stock.py:100
 #, python-format
@@ -22823,6 +22832,7 @@ msgstr "This months' Sales by type"
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
 #: constraint:sale.order:0
+#: code:addons/purchase/purchase_order.py:1735
 msgid "Partner type and order type are incompatible! Please change either order type or partner."
 msgstr "Le type de partnenaire et le type de commande sont incompatibles. Veuillez changer l'un ou l'autre."
 
@@ -27038,8 +27048,8 @@ msgstr "Erreur de configuration !"
 msgid "Resume All Synchronization Process"
 msgstr "Reprendre le processus de Synchronisation"
 
-#. module: unifield_setup
-#: code:addons/unifield_setup/installer/sales_price.py:146
+#. module: product
+#: code:addons/product/product.py:772
 #, python-format
 msgid "The Cost Price must be greater than 0 !"
 msgstr "Le Prix de revient doit être supérieur à 0 !"
@@ -46911,12 +46921,6 @@ msgstr "Incoterms"
 msgid "Gujarati / ગુજરાતી"
 msgstr "Gujarati / ગુજરાતી"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:432
-#, python-format
-msgid "%s: No default destination found '%s'"
-msgstr "%s: No default destination found '%s'"
-
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:573
 #, python-format
@@ -58799,7 +58803,7 @@ msgstr "Déplacer id."
 msgid "Write-Off Journal"
 msgstr "Journal Ajustement"
 
-#. modules: analytic_distribution_supply, financing_contract, account_hq_entries, account_override, product_attributes, account_journal, register_accounting, msf_accrual, sync_client, account_mcdb, supplier_catalogue, stock_schedule, procurement_request, unifield_setup, order_types, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, msf_homere_interface, account_reconciliation, msf_instance, purchase_override, base, account_period_closing_level, msf_currency_revaluation, account_subscription, threshold_value, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, vertical_integration, sale, sales_followup, sourcing, purchase, product_list, consumption_calculation, stock, msf_profile, msf_config_locations, tender_flow, msf_partner, res_currency_tables
+#. modules: analytic_distribution_supply, financing_contract, account_hq_entries, account_override, product_attributes, account_journal, register_accounting, msf_accrual, sync_client, account_mcdb, supplier_catalogue, stock_schedule, procurement_request, unifield_setup, order_types, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, msf_homere_interface, account_reconciliation, msf_instance, purchase_override, base, account_period_closing_level, msf_currency_revaluation, account_subscription, threshold_value, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, vertical_integration, sale, sales_followup, sourcing, purchase, product_list, consumption_calculation, stock, msf_profile, msf_config_locations, tender_flow, msf_partner, res_currency_tables, product
 #: code:addons/msf_doc_import/account.py:206
 #: code:addons/msf_doc_import/account.py:220
 #: code:addons/msf_doc_import/account.py:477
@@ -59187,6 +59191,7 @@ msgstr "Journal Ajustement"
 #: code:addons/msf_instance/msf_instance.py:759
 #: code:addons/msf_instance/msf_instance.py:768
 #: code:addons/msf_instance/msf_instance.py:775
+#: code:addons/product/product.py:771
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -74433,6 +74438,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_instance/msf_instance.py:565
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:77
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:115
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:55
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:221
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:287
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
@@ -74592,6 +74598,7 @@ msgstr "Autre liste de prix"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:78
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:116
+#: code:addons/msf_outgoing/wizard/check_ppl_integrity.py:56
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:288
 #: code:addons/msf_outgoing/wizard/picking_processor.py:144
 #: code:addons/msf_outgoing/wizard/picking_processor.py:173
@@ -97512,9 +97519,10 @@ msgstr "Catégories"
 msgid "Europe/Athens"
 msgstr "Europe/Athens"
 
-#. module: register_accounting
+#. modules: register_accounting, purchase
 #: code:addons/register_accounting/wizard/cashbox_write_off.py:99
 #: code:addons/register_accounting/wizard/register_reopen.py:82
+#: code:addons/purchase/purchase_order.py:1734
 #, python-format
 msgid "An error has occurred !"
 msgstr "Une erreur est survenue !"
@@ -102981,8 +102989,8 @@ msgstr "La zone demandée"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:804
 #, python-format
-msgid "There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created"
-msgstr "Le fichier d’import IN contient %(num_pl)d Packing lists: quand vous confirmerez l’import, %(num_pl)d PICK et %(num_pl)d PPL seront créés"
+msgid "There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created %(rounding_text)s"
+msgstr "Le fichier d’import IN contient %(num_pl)d Packing lists: quand vous confirmerez l’import, %(num_pl)d PICK et %(num_pl)d PPL seront créés %(rounding_text)s"
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -103102,6 +103110,18 @@ msgstr "Id. Modèle"
 #, python-format
 msgid "Partner %s : Purchase Default Currency (%s) and Field Orders Default Currency (%s) must be the same"
 msgstr "Partenaire %s: la Devise d'Achat (%s) et la Devise de Commande de Projet (%s) doit être indentique"
+
+#. module: account_override
+#: field:account.move.line,db_id:0
+#: field:account.analytic.line,db_id:0
+msgid "DB ID"
+msgstr "ID BD"
+
+#. module: account_override
+#: help:account.move.line,db_id:0
+#: help:account.analytic.line,db_id:0
+msgid "DB ID used for Vertical Integration"
+msgstr "ID BD utilisé pour l'Intégration Verticale"
 
 #. modules: purchase, purchase_override, sale
 #: field:purchase.order.line,created_by_sync:0
@@ -104496,3 +104516,48 @@ msgstr " La Ligne %s n'existe pas dans %s."
 #, python-format
 msgid " The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line's quantity."
 msgstr " La Ligne n'a pas pu être scindée. Veuillez vous assurer que la nouvelle quantité est au dessus de 0 et en dessous de la quantité de la ligne originelle."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:428
+#, python-format
+msgid "The account %s - %s has no Default Destination."
+msgstr "Le compte %s - %s n'a pas de Destination par défaut."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:696
+#: code:addons/msf_outgoing/msf_outgoing.py:922
+#: code:addons/msf_outgoing/msf_outgoing.py:1205
+#, python-format
+msgid "Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together"
+msgstr "Attention, cet intervalle de colis contient un ou plusieurs produit(s) avec un nombre non entier par colis. Tous les colis doivent être validés ensemble"
+
+#. module: msf_outgoing
+#: field:check.ppl.integrity,line_number_with_issue:0
+msgid "Line # with issue"
+msgstr "Numero des lignes problématiques"
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "\n"
+"                                    WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs\n"
+"                                "
+msgstr "\n"
+"                                    Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement\n"
+"                                "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:839
+#, python-format
+msgid "WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs"
+msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier, de ce fait il ne sera pas possible de retourner ou d'envoyer ces colis partiellement"
+
+#. module: msf_outgoing
+#: view:check.ppl.integrity:0
+msgid "Go Back"
+msgstr "Précédent"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:660
+#, python-format
+msgid "Partner %s (%s): you can not use %s currency"
+msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
