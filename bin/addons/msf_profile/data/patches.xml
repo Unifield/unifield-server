@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-         <!-- UF12.0 -->
-         <record id="us_5480_correct_partner_fo_default_currency" model="patch.scripts">
-             <field name="method">us_5480_correct_partner_fo_default_currency</field>
-         </record>
+        <!-- UF12.0 -->
+        <record id="us_5480_correct_partner_fo_default_currency" model="patch.scripts">
+            <field name="method">us_5480_correct_partner_fo_default_currency</field>
+        </record>
 
         <!-- UF11.1 -->
         <record id="us_5425_reset_amount_currency" model="patch.scripts">
