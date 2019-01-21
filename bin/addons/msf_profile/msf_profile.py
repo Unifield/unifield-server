@@ -79,7 +79,7 @@ class patch_scripts(osv.osv):
                           """
                     cr.execute(sql, ('product.pricelist,%s' % pricelist_ids[0], 'res.partner,%s' % partner.id))
                     partner_count += 1
-        self._logger.warn('%s partner(s) modified.' % (partner_count,))
+        self._logger.warn('FO default currency modified for %s partner(s).' % (partner_count,))
         return True
 
     # UF11.1
