@@ -235,6 +235,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         sequences = []
 
         for wiz_browse in self.browse(cr, uid, ids, context):
+            moves_keys = [(move.id, move.line_number) for move in wiz_browse.picking_id.move_lines]
             # List of data to update moves
             updated_data = []
             try:
@@ -383,13 +384,11 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             if imp_line_num not in treated_lines:
                                 treated_lines.append(imp_line_num)
                             else:
-                                if to_update.get('move_id'):
+                                if to_update.get('move_id') and (to_update['move_id'], imp_line_num) not in moves_keys:
                                     new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
                                     if not new_move_id:
                                         line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
-                                    to_update.update({
-                                        'move_id': new_move_id,
-                                    })
+                                    to_update.update({'move_id': new_move_id})
 
                         # from pack and to pack
                         if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[
@@ -449,7 +448,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
                         # update move line on picking
                         if to_update['error_list']:
-                            cr.rollback()
                             error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
                             lines_to_correct += 1
                             raise osv.except_osv(_('Error'), ''.join(x for x in to_update['error_list']))
@@ -487,6 +485,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             finally:
                 error_log += ''.join(error_list)
                 if error_log:
+                    cr.rollback()
                     error_log = _("Reported errors : \n") + error_log
 
                 # checking integrity of from_pack and to_pack
@@ -501,7 +500,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                 'ordered_quantity': data['ordered_quantity'],
                                 'from_pack': data['from_pack'],
                                 'to_pack': data['to_pack'],
-                                'pack_type': data['pack_type'].id,
+                                'pack_type': data.get('pack_type') and data['pack_type'].id or False,
                                 'width': data.get('pack_type') and data['pack_type'].width or data.get('width', 0),
                                 'length': data.get('pack_type') and data['pack_type'].length or data.get('length', 0),
                                 'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
