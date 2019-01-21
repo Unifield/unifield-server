@@ -1010,6 +1010,7 @@ class return_claim(osv.osv):
         Synchronisation method for claims customer->supplier
         - create counterpart claims for validated claims
         '''
+        claim_line_obj = self.pool.get('claim.product.line')
         warehouse_obj = self.pool.get('stock.warehouse')
         event_obj = self.pool.get('claim.event')
         sale_obj = self.pool.get('sale.order')
@@ -1017,6 +1018,7 @@ class return_claim(osv.osv):
         curr_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        lot_obj = self.pool.get('stock.production.lot')
 
         if context is None:
             context = {}
@@ -1054,6 +1056,24 @@ class return_claim(osv.osv):
         else:
             location_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_stock_id'])[0]['lot_stock_id'][0]
 
+        # Create lines
+        claim_lines_ids = []
+        for x in product_line_data:
+            prod_id = product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0]
+            line_data = {
+                'qty_claim_product_line': x.qty_claim_product_line,
+                'price_unit_claim_product_line': x.price_unit_claim_product_line,
+                'price_currency_claim_product_line': curr_obj.search(cr, uid, [('name', '=', x.price_currency_claim_product_line.name)], context=context)[0],
+                'product_id_claim_product_line': prod_id,
+                'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
+                'type_check': x.type_check,
+                'lot_id_claim_product_line': lot_obj.get_or_create_prodlot(
+                    cr, uid, x.lot_id_claim_product_line.name, x.expiry_date_claim_product_line, prod_id, context=context),
+                'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
+                'src_location_id_claim_product_line': location_id,
+            }
+            claim_lines_ids.append(claim_line_obj.create(cr, uid, line_data, context=context))
+
         claim_data.update({
             'origin_claim': source + "." + claim_info.name,
             'partner_id_return_claim': self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0],
@@ -1066,17 +1086,7 @@ class return_claim(osv.osv):
             'processor_origin': claim_info.processor_origin,
             'creation_date_return_claim': claim_info.creation_date_return_claim,
             'picking_id_return_claim': origin_pick_id,
-            'product_line_ids_return_claim':
-                [(0, 0, {
-                    'qty_claim_product_line': x.qty_claim_product_line,
-                    'price_unit_claim_product_line': x.price_unit_claim_product_line,
-                    'price_currency_claim_product_line': curr_obj.search(cr, uid, [('name', '=', x.price_currency_claim_product_line.name)], context=context)[0],
-                    'product_id_claim_product_line': product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0],
-                    'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
-                    'type_check': x.type_check,
-                    'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
-                    'src_location_id_claim_product_line': location_id,
-                }) for x in product_line_data],
+            'product_line_ids_return_claim': [(6, 0, claim_lines_ids)],
         })
 
         claim_id = self.check_existing_claim(cr, uid, source, claim_data)
