@@ -66066,9 +66066,10 @@ msgstr "N'existe pas dans le IN/OUT sélectionné"
 msgid "Loss"
 msgstr "Perte"
 
-#. module: msf_tools
+#. modules: msf_tools, msf_homere_interface
 #: code:addons/msf_tools/automated_import_job.py:529
 #: code:addons/msf_tools/automated_export_job.py:257
+#: field:hr.payroll.import.confirmation,rejected:0
 #, python-format
 msgid "Rejected"
 msgstr "Rejeté"

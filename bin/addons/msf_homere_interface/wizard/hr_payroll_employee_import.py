@@ -57,6 +57,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
     _columns = {
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
+        'rejected': fields.integer(string="Rejected", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
         'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')],
                                   string="State", required=True, readonly=True),
@@ -608,6 +609,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         created = 0
         updated = 0
         processed = 0
+        rejected = 0
         filename = ""
         registered_keys = {}
         # Delete old errors
@@ -702,7 +704,10 @@ class hr_payroll_employee_import(osv.osv_memory):
         # This is to redirect to Employee Tree View
         context.update({'from': 'employee_import'})
 
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context)
+        rejected = processed - created - updated
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created,
+                                                                                  'updated': updated, 'total': processed,
+                                                                                  'rejected': rejected, 'state': 'employee'}, context)
         return {
             'name': 'Employee Import Confirmation',
             'type': 'ir.actions.act_window',

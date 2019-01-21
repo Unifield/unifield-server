@@ -105,10 +105,11 @@
             <field name="arch" type="xml">
                 <form string="Import Confirmation">
                     <field name="filename" attrs="{'invisible': [('filename', '=', False)]}"/>
-                    <group colspan="4" col="6">
-                        <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
-                        <field name="updated" invisible="context.get('from', False) != 'expat_employee_import'"/> <!-- attrs="{'invisible': ['!', ('updated', '=', False), ('state', 'in', ['none', 'payroll'])]}"/-->
+                    <group colspan="4" col="8">
                         <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
+                        <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
+                        <field name="updated" invisible="context.get('from', False) not in ['expat_employee_import', 'employee_import']"/>
+                        <field name="rejected" invisible="context.get('from', False) != 'employee_import'"/>
                     </group>
                     <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
                         <tree string="Error List">
