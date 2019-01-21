@@ -147,9 +147,9 @@
               <para style="P4">[[ translate('Project Destination Address:')  ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
-              <para style="P3">[[ stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
-              <para style="P2">[[ stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.address_id and stock_picking.address_id.street or stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.address_id and stock_picking.address_id.city or stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.address_id and stock_picking.address_id.name or stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
             </td>
           </tr>
           <tr>
