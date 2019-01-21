@@ -52,6 +52,36 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF12.0
+    def us_5480_correct_partner_fo_default_currency(self, cr, uid, *a, **b):
+        """
+        Sets FO default currency = PO default currency for all external partners where these currencies are different
+        """
+        partner_obj = self.pool.get('res.partner')
+        pricelist_obj = self.pool.get('product.pricelist')
+        partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])])
+        partner_count = 0
+        for partner in partner_obj.browse(cr, uid, partner_ids,
+                                          fields_to_fetch=['property_product_pricelist_purchase',
+                                                           'property_product_pricelist']):
+            if partner.property_product_pricelist_purchase and partner.property_product_pricelist \
+                    and partner.property_product_pricelist_purchase.currency_id.id != partner.property_product_pricelist.currency_id.id:
+                # search for the "Sale" pricelist having the same currency as the "Purchase" pricelist currently used
+                pricelist_dom = [('type', '=', 'sale'),
+                                 ('currency_id', '=', partner.property_product_pricelist_purchase.currency_id.id)]
+                pricelist_ids = pricelist_obj.search(cr, uid, pricelist_dom, limit=1)
+                if pricelist_ids:
+                    sql = """
+                          UPDATE ir_property
+                          SET value_reference = %s
+                          WHERE name = 'property_product_pricelist'
+                          AND res_id = %s;
+                          """
+                    cr.execute(sql, ('product.pricelist,%s' % pricelist_ids[0], 'res.partner,%s' % partner.id))
+                    partner_count += 1
+        self._logger.warn('%s partner(s) modified.' % (partner_count,))
+        return True
+
     # UF11.1
     def us_5559_set_pricelist(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity'):
