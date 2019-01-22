@@ -47037,7 +47037,7 @@ msgstr "Sélection des Produits"
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:242
 #, python-format
-msgid "Database have more than one employee with the unique code of this employee: %s"
+msgid "Database has more than one employee with the unique code of this employee: %s"
 msgstr "La base de données compte plus d'un travailleur ayant le code unique de ce travailleur : %s"
 
 #. module: msf_outgoing
@@ -83236,7 +83236,7 @@ msgstr "Seems that no G/L account was found for this Register Analytic Distribut
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:233
 #, python-format
-msgid "Import file have more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s"
+msgid "Import file has more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s"
 msgstr "Le fichier d'import a plus d'un employé avec la clé de combinaison codeterrain/id_staff(/id_unique) de cet employé: %s "
 
 #. module: msf_doc_import
@@ -103844,3 +103844,16 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:253
+#, python-format
+msgid "Several employees have the same Identification No: "
+msgstr "Plusieurs employés ont le même N° d'identification : "
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:265
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:669
+#, python-format
+msgid "Import File"
+msgstr "Fichier d'Import"

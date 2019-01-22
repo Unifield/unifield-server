@@ -71,6 +71,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
     _defaults = {
         'updated': lambda *a: 0,
         'created': lambda *a: 0,
+        'rejected': lambda *a: 0,
         'total': lambda *a: 0,
         'state': lambda *a: 'none',
         'nberrors': lambda *a: 0,
@@ -233,7 +234,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         if check_key in registered_keys:
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
-                'msg': _("Import file have more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
+                'msg': _("Import file has more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
             })
             return (res, what_changed)
 
@@ -242,14 +243,14 @@ class hr_payroll_employee_import(osv.osv_memory):
         if search_ids and len(search_ids) > 1:
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
-                'msg': _("Database have more than one employee with the unique code of this employee: %s") % (employee_name,)
+                'msg': _("Database has more than one employee with the unique code of this employee: %s") % (employee_name,)
             })
             return (res, what_changed)
 
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
         if staffcode_ids:
-            message = "Several employee have the same ID code: "
+            message = _("Several employees have the same Identification No: ")
             employee_error_list = []
             # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
@@ -257,9 +258,11 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if employee.name == employee_name:
                     continue
                 if what_changed != None:
-                    employee_error_list.append(employee.name)
+                    # duplicate employee in UniField
+                    employee_error_list.append("%s (%s)" % (employee.name, 'UniField'))
             if employee_error_list:
-                message += ' ; '.join([employee_name] + employee_error_list)
+                # duplicate employee in Import File
+                message += ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list)
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
                 return (res, what_changed)
 
@@ -662,7 +665,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             for employee_infos in staff_data:
                 employee_code = employee_infos[0]
                 if employee_code in duplicates:
-                    details.append(','.join([ustr(employee_infos[1]), ustr(employee_infos[2])]))
+                    # add (Import File) after the employee info so that it is clearer for the user that the duplicates are inside the file itself
+                    details.append(','.join([ustr(employee_infos[1]), "%s (%s)" % (ustr(employee_infos[2]), _('Import File'))]))
             res = True
             if not details:
                 created = 0
@@ -681,7 +685,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                     processed += 1
             else:
                 res = False
-                message = _('Several employees have the same unique code: %s.') % (';'.join(details))
+                message = _('Several employees have the same unique code: %s.') % (' ; '.join(details))
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': message})
             # Close Temporary File
             # Delete previous created lines for employee's contracts
