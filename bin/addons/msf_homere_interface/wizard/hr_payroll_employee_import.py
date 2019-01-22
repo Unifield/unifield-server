@@ -269,6 +269,25 @@ class hr_payroll_employee_import(osv.osv_memory):
         res = True
         return (res, what_changed)
 
+    def _check_identification_id_duplication(self, cr, uid, vals, employee_check, what_changed, current_id=None, context=None):
+        """
+        Method used to check if the Identification No to be used for the employee about to be created/edited doesn't
+        already exist for another employee in DB.
+        Returns False if there is a duplication AND we are in the use case where the related and detailed
+        "hr.payroll.employee.import.error" has already been created (but the process wasn't blocked earlier since "what_changed" had a value).
+        Otherwise returns True => the generic create/write checks will then apply (i.e. a generic error msg will be displayed)
+        """
+        if context is None:
+            context = {}
+        employee_obj = self.pool.get('hr.employee')
+        if not employee_check and what_changed and vals.get('identification_id'):
+            employee_dom = [('identification_id', '=', vals['identification_id'])]
+            if current_id:
+                employee_dom.append(('id', '!=', current_id))
+            if employee_obj.search_exist(cr, uid, employee_dom, context=context):
+                return False
+        return True
+
     def read_employee_infos(self, cr, uid, line='', context=None):
         """
         Read each line to extract infos (code, name and surname)
@@ -447,10 +466,14 @@ class hr_payroll_employee_import(osv.osv_memory):
             if not current_contract:
                 vals.update({'active': False})
             if not e_ids:
+                if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, context=context):
+                    return False, created, updated
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
                 if res:
                     created += 1
             else:
+                if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, current_id=e_ids[0], context=context):
+                    return False, created, updated
                 res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
                 if res:
                     updated += 1
