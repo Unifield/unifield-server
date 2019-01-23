@@ -123,6 +123,14 @@ class wizard_pick_import(osv.osv_memory):
         move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
         res_id = wiz.picking_processor_id.id or wiz.validate_processor_id.id
 
+        # wizard moves :: reset wizard lines
+        move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [('wizard_id', '=', res_id)], context=context)
+        self.pool.get(move_proc_model).write(cr, uid, move_proc_ids, {
+            'quantity': 0,
+            'prodlot_id': False,
+            'expiry_date': False,
+        }, context=context)
+
         line_index = 0
         import_data_header = {}
         import_data_lines = {}
@@ -146,6 +154,11 @@ class wizard_pick_import(osv.osv_memory):
             if line_data['qty_picked'] is None:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % xls_line_number)
             line_data = self.normalize_data(cr, uid, line_data)
+            if line_data['qty_picked'] > line_data['qty_to_pick']:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % xls_line_number
+                )
 
             # fields to update on moves are: quantity, prodlot_id, expiry_date
             move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
@@ -155,12 +168,33 @@ class wizard_pick_import(osv.osv_memory):
                 ('quantity', '=', 0),
             ], context=context)
 
-            if move_proc_ids:
+            if not move_proc_ids:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('Line %s: Move with line number %s and ordered qty %s not found') % (xls_line_number, line_data['item'], line_data['qty_to_pick'])
+                )
+                
+            if move_proc_ids and line_data['qty_picked']:
                 move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_ids[0], context=context)
                 to_write = {}
 
-                if line_data['qty_picked']:
-                    to_write['quantity'] = line_data['qty_picked']
+                if line_data['code'] != move_proc.product_id.default_code:
+                    raise osv.except_osv(
+                        _('Error'), 
+                        _('Line %s: Import product code doesn\'t match with the product') % xls_line_number
+                    )
+                if move_proc.product_id.batch_management and not line_data['batch']:
+                    raise osv.except_osv(
+                        _('Error'), 
+                        _('Line %s: Product is batch number mandatory and no batch number is given') % xls_line_number
+                    )
+                if not move_proc.product_id.batch_management and move_proc.product_id.perishable and not line_data['expiry_date']:
+                    raise osv.except_osv(
+                        _('Error'), 
+                        _('Line %s: Product is expiry date mandatory and no expiry date is given') % xls_line_number
+                    )
+
+                to_write['quantity'] = line_data['qty_picked']
 
                 if move_proc.product_id.batch_management and line_data['batch']:
                     prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
@@ -169,6 +203,11 @@ class wizard_pick_import(osv.osv_memory):
                     ], context=context)
                     if prodlot_ids:
                         to_write['prodlot_id'] = prodlot_ids[0]
+                    else:
+                        raise osv.except_osv(
+                        _('Error'), 
+                        _('Line %s: Given batch number doesn\'t exists in database') % xls_line_number
+                    )
                 elif not move_proc.product_id.batch_management and move_proc.product_id.perishable and line_data['expiry_date']:
                     prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
                         ('life_date', '=', line_data['expiry_date']),
@@ -177,6 +216,11 @@ class wizard_pick_import(osv.osv_memory):
                     ], context=context)
                     if prodlot_ids:
                         to_write['prodlot_id'] = prodlot_ids[0]
+                    else:
+                        raise osv.except_osv(
+                            _('Error'), 
+                            _('Line %s: Given expiry date doesn\'t exists in database') % xls_line_number
+                        )
 
                 self.pool.get(move_proc_model).write(cr, uid, [move_proc.id], to_write, context=context)
 
