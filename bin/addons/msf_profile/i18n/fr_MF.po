@@ -103846,3 +103846,45 @@ msgstr "Total d'objets"
 #, python-format
 msgid "Line %s: Column \"Qty Picked\" should contains the quantity to process and cannot be empty, please fill it with \"0\" instead"
 msgstr "Ligne %s: La colonne \"Qté prélevée\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:160
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" cannot be greater than \"Qty to pick\""
+msgstr "Ligne %s: La colonne \"Qté prélevée\" ne peut pas être supérieure à la \"Qté à prélever\""
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:174
+#, python-format
+msgid "Line %s: Move with line number %s and ordered qty %s not found"
+msgstr "Ligne %s: Le mouvement avec le numéro de ligne %s et la quantité commandée %s n'a pas été trouvé"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:184
+#, python-format
+msgid "Line %s: Import product code doesn't match with the product"
+msgstr "Ligne %s: Le code du produit à importé ne correspond pas"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:189
+#, python-format
+msgid "Line %s: Product is batch number mandatory and no batch number is given"
+msgstr "Ligne %s: Le produit doit avoir un numéro de lot et celui-ci n'est pas renseigné"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:194
+#, python-format
+msgid "Line %s: Product is expiry date mandatory and no expiry date is given"
+msgstr "Ligne %s: Le produit doit avoir une date d'expiration et celle-ci n'est pas renseignée"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:209
+#, python-format
+msgid "Line %s: Given batch number doesn't exists in database"
+msgstr "Ligne %s: Le numéro de lot donné n'existe pas en base"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:222
+#, python-format
+msgid "Line %s: Given expiry date doesn't exists in database"
+msgstr "Ligne %s: La date d'expiration donnée n'existe pas en base"
