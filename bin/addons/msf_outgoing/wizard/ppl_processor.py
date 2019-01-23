@@ -157,25 +157,44 @@ class ppl_processor(osv.osv):
             if not (seq[1] >= seq[0]):
                 to_smaller_ids.append(seq[2])
         ok = True
+        import_ppl_errors = ''
         if missing_ids:
-            ppl_move_obj.write(cr, uid, missing_ids, {field: 'missing_1'}, context=context)
+            if ppl_move_obj:
+                ppl_move_obj.write(cr, uid, missing_ids, {field: 'missing_1'}, context=context)
+            else:
+                import_ppl_errors += _('The first From pack must be equal to 1.\n')
             ok = False
 
         if to_smaller_ids:
-            ppl_move_obj.write(cr, uid, to_smaller_ids, {field: 'to_smaller_than_from'}, context=context)
+            if ppl_move_obj:
+                ppl_move_obj.write(cr, uid, to_smaller_ids, {field: 'to_smaller_than_from'}, context=context)
+            else:
+                import_ppl_errors += _('To pack must be greater than From pack on line(s) %s.\n') \
+                                     % (', '.join(['%s' % (x,) for x in to_smaller_ids]))
             ok = False
 
         if overlap_ids:
-            ppl_move_obj.write(cr, uid, overlap_ids, {field: 'overlap'}, context=context)
+            if ppl_move_obj:
+                ppl_move_obj.write(cr, uid, overlap_ids, {field: 'overlap'}, context=context)
+            else:
+                import_ppl_errors += _('The sequence From pack - To Pack of line(s) %s overlaps a previous one.\n') \
+                                     % (', '.join(['%s' % (x,) for x in overlap_ids]))
             ok = False
 
         if gap_ids:
-            ppl_move_obj.write(cr, uid, gap_ids, {field: 'gap'}, context=context)
+            if ppl_move_obj:
+                ppl_move_obj.write(cr, uid, gap_ids, {field: 'gap'}, context=context)
+            else:
+                import_ppl_errors += _('A gap exists with the sequence From pack - To Pack of line(s) %s.\n') \
+                                     % (', '.join(['%s' % (x,) for x in gap_ids]))
             ok = False
 
-        return ok
+        if not ppl_move_obj:
+            return import_ppl_errors
+        else:
+            return ok
 
-    def _check_rounding(self, cr, uid, line_id, uom_obj, num_of_packs, quantity, context=None):
+    def _check_rounding(self, cr, uid, uom_obj, num_of_packs, quantity, context=None):
         if context is None:
             context = {}
 
@@ -201,8 +220,12 @@ class ppl_processor(osv.osv):
 
         rounding_issues = []
         for line in lines:
-            if not self._check_rounding(cr, uid, line.id, line.uom_id, line.num_of_packs, line.quantity, context=context):
-                rounding_issues.append(line.line_number)
+            if context.get('import_in_progress') and context.get('import_ppl_to_create_ship'):
+                if not self._check_rounding(cr, uid, line.get('uom'), line.get('num_of_packs'), line.get('quantity'), context=context):
+                    rounding_issues.append(line.get('line_number'))
+            else:
+                if not self._check_rounding(cr, uid, line.uom_id, line.num_of_packs, line.quantity, context=context):
+                    rounding_issues.append(line.line_number)
         return rounding_issues
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):

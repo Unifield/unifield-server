@@ -121,67 +121,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
         return True
 
-    def check_qty_pp(self, cr, uid, move, from_pack, to_pack, context=False):
-        '''
-        Check quantities per pack integrity with UoM
-        '''
-        if context is None:
-            context = {}
-
-        uom_obj = self.pool.get('product.uom')
-
-        error_msg = ''
-        num_of_packs = to_pack - from_pack + 1 if to_pack else 0
-        move_qty_pp = move.product_qty / num_of_packs if num_of_packs else 0
-        if move.product_uom.rounding == 1:
-            if move.product_qty % int(num_of_packs) != 0:
-                error_msg = _(' The quantity per pack must be an integer for this UoM.')
-        else:
-            rounded_qty_pp = uom_obj._compute_round_up_qty(cr, uid, move.product_uom.id, move_qty_pp, context=context)
-            if abs(move_qty_pp - rounded_qty_pp) < move.product_uom.rounding \
-                    and abs(move_qty_pp - rounded_qty_pp) != 0:
-                error_msg = _(' The quantity per pack must not have more decimals than the UoM\'s rounding.')
-
-        return error_msg
-
-    def _check_from_to_pack_integrity(self, sequences=None, context=None):
-        '''
-        Check if nothing is wrong with from_pack and to_pack
-        '''
-        if context is None:
-            context = {}
-        error_log = ''
-
-        if sequences:
-            # Sort the sequence according to from value
-            sequences = sorted(sequences, key=lambda seq: seq[0])
-
-            # Rule #1, the first from value must be equal to 1
-            if sequences[0][0] != 1:
-                error_log += _('The first From pack must be equal to 1.\n')
-
-            # Go through the list of sequences applying the rules
-            for i in range(len(sequences)):
-                seq = sequences[i]
-                # Rules #2-#3 applies from second element
-                if i > 0:
-                    # Previous sequence
-                    seqb = sequences[i - 1]
-                    # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
-                    if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
-                        error_log += _('The sequence From pack - To Pack of line %s overlaps a previous one.\n') % (seq[2])
-                    # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
-                        if seq[0] < seqb[1] + 1:
-                            error_log += _('The sequence From pack - To Pack of line %s overlaps a previous one.\n') % (seq[2])
-                        if seq[0] > seqb[1] + 1:
-                            error_log += _('A gap exists with the sequence From pack - To Pack of line %s.\n') % (seq[2])
-                # rule #4: to[i] >= from[i]
-                if not (seq[1] >= seq[0]):
-                    error_log += _('To pack must be greater than From pack on line %s.\n') % (seq[2])
-
-        return error_log
-
     def split_move(self, cr, uid, move_id, new_qty=0.00, context=None):
         """
         Split the line according to new parameters
@@ -201,12 +140,14 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
         # Create a copy of the move with the new quantity
         new_move_id = move_obj.copy(cr, uid, move_id, {'product_qty': new_qty}, context=context)
-        move_obj.action_confirm(cr, uid, new_move_id, context=context)
-        move_obj.action_assign(cr, uid, new_move_id, context=context)
 
         # Update the original move
         update_qty = move.product_qty - new_qty
         move_obj.write(cr, uid, move_id, {'product_qty': update_qty}, context=context)
+
+        # Set the new move to available
+        move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+        move_obj.action_assign(cr, uid, [new_move_id])
 
         return new_move_id
 
@@ -216,319 +157,303 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         '''
         # Objects
         wiz_common_import = self.pool.get('wiz.common.import')
-        prod_obj = self.pool.get('product.product')
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        prodlot_obj = self.pool.get('stock.production.lot')
         pack_type_obj = self.pool.get('pack.type')
+        ppl_proc_obj = self.pool.get('ppl.processor')
         import_cell_data_obj = self.pool.get('import.cell.data')
 
         context = context is None and {} or context
         cr = pooler.get_db(dbname).cursor()
 
         # Variables
-        context.update({'import_in_progress': True, 'noraise': True})
+        context.update({'import_in_progress': True, 'import_ppl_to_create_ship': True, 'noraise': True})
         start_time = time.time()
         line_with_error = []
         error_log = ''
         # List of sequences for from_pack and to_pack
         sequences = []
 
-        for wiz_browse in self.browse(cr, uid, ids, context):
-            moves_keys = [(move.id, move.line_number) for move in wiz_browse.picking_id.move_lines]
-            # List of data to update moves
-            updated_data = []
-            try:
-                picking = wiz_browse.picking_id
+        wiz_browse = self.browse(cr, uid, ids[0], context)
+        moves_keys = [(move.id, move.line_number) for move in wiz_browse.picking_id.move_lines]
+        # List of data to update moves
+        updated_data = []
+        try:
+            picking = wiz_browse.picking_id
 
-                complete_lines, lines_to_correct = 0, 0
-                error_list = []
-                error_log = ''
-                message = ''
-                line_num = 0
-                header_index = context['header_index']
+            complete_lines, lines_to_correct = 0, 0
+            error_list = []
+            error_log = ''
+            message = ''
+            line_num = 0
+            header_index = context['header_index']
 
-                file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
-                # iterator on rows
-                rows = file_obj.getRows()
-                # get the lines corresponding to the header data
-                header_data = []
-                for i, row in enumerate(rows):
-                    header_data.append(wiz_common_import.get_line_values(
-                        cr, uid, ids, row, cell_nb=False, error_list=False, line_num=i, context=context))
-                    if i >= 7:
-                        break
-                self._check_main_header_data(header_data, picking, context)
-                # ignore the lines headers
-                current_row = rows.next()
-                if not current_row.cells:
-                    rows.next()
-                line_num = 0
-                total_line_num = len([row for row in file_obj.getRows()])
-                percent_completed = 0
-                # List of lines treated
-                treated_lines = []
-                for i, row in enumerate(rows):
-                    line_num += 1
-                    # default values
-                    to_update = {
-                        'warning_list': [],
-                        'to_correct_ok': False,
-                        'show_msg_ok': False,
-                        'move_id': False,
-                        'ordered_qty': 0.0,
-                        'pack_type': False,
-                    }
-                    line_errors = []
+            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+            # iterator on rows
+            rows = file_obj.getRows()
+            # get the lines corresponding to the header data
+            header_data = []
+            for i, row in enumerate(rows):
+                header_data.append(wiz_common_import.get_line_values(
+                    cr, uid, ids, row, cell_nb=False, error_list=False, line_num=i, context=context))
+                if i >= 7:
+                    break
+            self._check_main_header_data(header_data, picking, context)
+            # ignore the lines headers
+            current_row = rows.next()
+            if not current_row.cells:
+                rows.next()
+            line_num = 0
+            total_line_num = len([row for row in file_obj.getRows()])
+            percent_completed = 0
+            # List of lines treated
+            treated_lines = []
+            for i, row in enumerate(rows):
+                line_num += 1
+                # default values
+                to_update = {
+                    'warning_list': [],
+                    'to_correct_ok': False,
+                    'show_msg_ok': False,
+                    'move_id': False,
+                    'line_number': line_num,
+                    'quantity': 0.0,
+                    'num_of_packs': 0,
+                    'uom': False,
+                    'pack_type': False,
+                }
+                line_errors = []
 
-                    col_count = len(row)
-                    template_col_count = len(header_index.items())
-                    if col_count != template_col_count:
-                        message += _(
-                            """Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (
-                                   line_num, template_col_count, ','.join(ppl_columns_lines_for_import))
-                        line_with_error.append(
-                            wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
-                                                              line_num=line_num, context=context))
+                col_count = len(row)
+                template_col_count = len(header_index.items())
+                if col_count != template_col_count:
+                    message += _(
+                        """Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (
+                               line_num, template_col_count, ','.join(ppl_columns_lines_for_import))
+                    line_with_error.append(
+                        wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
+                                                          line_num=line_num, context=context))
+                    percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
+                    self.write(cr, uid, ids, {'percent_completed': percent_completed})
+                    continue
+                try:
+                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
+                        line_num -= 1
+                        total_line_num -= 1
                         continue
-                    try:
-                        if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
-                            percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
-                            self.write(cr, uid, ids, {'percent_completed': percent_completed})
-                            line_num -= 1
-                            total_line_num -= 1
-                            continue
 
-                        imp_line_num = False
-                        if row.cells[0].data:
-                            if row.cells[0].type != 'int':
-                                line_errors.append(_(' The Line Number has to be an integer.'))
-                            else:
-                                imp_line_num = row.cells[0].data
+                    # Line Number
+                    imp_line_num = False
+                    if row.cells[0].data:
+                        if row.cells[0].type != 'int':
+                            line_errors.append(_(' The Line Number has to be an integer.'))
                         else:
-                            line_errors.append(_(' The Line Number has to be defined.'))
+                            imp_line_num = row.cells[0].data
+                    else:
+                        line_errors.append(_(' The Line Number has to be defined.'))
 
-                        # product default code
-                        product = False
-                        if row.cells[1].data:
-                            product_code = tools.ustr(row.cells[1].data)
-                            product_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
-                            if product_ids:
-                                product = prod_obj.browse(cr, uid, product_ids[0], context=context)
-                            else:
-                                line_errors.append(_(' The Product Code (%s) was not found in the DB.') % (product_code,))
-                        else:
-                            line_errors.append(_(' The Product Code has to be defined.'))
-
-                        # total qty to pack
-                        imp_qty = 0.0
-                        if row.cells[4].data:
-                            try:
-                                imp_qty = float(row.cells[4].data)
-                                to_update.update({'ordered_quantity': imp_qty})
-                            except:
-                                line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
-                        else:
-                            line_errors.append(_(' The Total Qty to Pack has to be defined.'))
-
-                        # batch
-                        imp_batch = False
-                        if product:
-                            if product.batch_management:
-                                if row.cells[5].data:
-                                    batch_name = tools.ustr(row.cells[5].data)
-                                    lot_ids = prodlot_obj.search(cr, uid, [('name', '=', batch_name),
-                                                                           ('product_id', '=', product.id)], context=context)
-                                    if lot_ids:
-                                        imp_batch = prodlot_obj.browse(cr, uid, lot_ids[0], context=context)
-                                    else:
-                                        line_errors.append(_(' The Batch Number (%s) for the Product (%s) was not found in the DB.')
-                                                           % (batch_name, product.default_code))
-                                else:
-                                    line_errors.append(_(' The Batch Number is mandatory for this product.'))
-                            if product.perishable:
-                                if row.cells[6].data:
-                                    # check date format
-                                    cell_expiry_date = import_cell_data_obj.get_expired_date(cr, uid, ids, row, 6, line_errors,
-                                                                                             line_num, context)
-                                    if not cell_expiry_date:
-                                        line_errors.append( _(' The Expiry Date (%s) does not have a good date format.')
-                                                            % (row.cells[6].data))
-                                else:
-                                    line_errors.append(_(' The Expiry Date is mandatory for this product.'))
-
-                        # Check data and for split as well
-                        move = False
+                    # Check move's data
+                    if row.cells[1].data:
                         if imp_line_num:
-                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', wiz_browse.picking_id.id),
-                                                                 ('line_number', '=', imp_line_num)], context=context)
+                            move_domain = [
+                                ('picking_id', '=', wiz_browse.picking_id.id),
+                                ('line_number', '=', imp_line_num),
+                                ('product_id.default_code', '=', row.cells[1].data),
+                            ]
+                            if row.cells[5].data:
+                                move_domain.append(('prodlot_id.name', '=', row.cells[5].data))
+                            if row.cells[6].data:
+                                cell_expiry_date = import_cell_data_obj.\
+                                    get_expired_date(cr, uid, ids, row, 6, line_errors, line_num, context=context)
+                                if not cell_expiry_date:
+                                    line_errors.append(_(' The Expiry Date (%s) does not have a good date format.')
+                                                       % (row.cells[6].data,))
+                                else:
+                                    move_domain.append(('expired_date', '=', cell_expiry_date))
+                            move_ids = move_obj.search(cr, uid, move_domain, context=context)
                             if move_ids:
-                                move = False
-                                for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                    if product and move.product_id.id == product.id:
-                                        if move.prodlot_id:
-                                            if imp_batch and move.prodlot_id.id == imp_batch.id:
-                                                to_update.update({'move_id': move.id})
-                                                break
-                                        elif not imp_batch:
-                                            to_update.update({'move_id': move.id})
-                                            break
-                                if not to_update.get('move_id'):
-                                    line_errors.append(_(' The imported line %s\'s data does not match %s\'s data.')
-                                                       % (imp_line_num, wiz_browse.picking_id.name))
-                            else:
-                                line_errors.append(_(' The Line %s does not exist in %s.')
-                                                   % (imp_line_num, wiz_browse.picking_id.name))
-                            if imp_line_num not in treated_lines:
-                                treated_lines.append(imp_line_num)
-                            else:
-                                if to_update.get('move_id') and (to_update['move_id'], imp_line_num) not in moves_keys:
-                                    new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
-                                    if not new_move_id:
-                                        line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
-                                    to_update.update({'move_id': new_move_id})
-
-                        # from pack and to pack
-                        if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[
-                            12].type == 'int' \
-                                and row.cells[11].data > 0 and row.cells[12].data > 0:
-                            to_update.update({
-                                'from_pack': row.cells[11].data,
-                                'to_pack': row.cells[12].data,
-                            })
-                        elif row.cells[11].data and row.cells[12].data and (
-                                row.cells[11].type != 'int' or row.cells[12].type != 'int'):
-                            line_errors.append(_(' From pack and To pack have to be integers.'))
-                        else:
-                            to_update.update({
-                                'from_pack': 1,
-                                'to_pack': 1,
-                            })
-                            line_errors.append(
-                                _(' From pack and To pack to be defined and over 0, set to 1 by default.'))
-
-                        # weight per pack
-                        if row.cells[13].data and row.cells[13].type in ('int', 'float') and row.cells[13].data > 0:
-                            to_update.update({
-                                'weight': row.cells[13].data,
-                            })
-                        elif row.cells[13].data and row.cells[13].type not in ('int', 'float'):
-                            line_errors.append(_(' Weight per pack has to be an float.'))
-                        else:
-                            line_errors.append(_(' Weight per pack has to be defined and over 0.'))
-
-                        # pack type + width, length & height
-                        if row.cells[15].data:
-                            pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
-                            if pack_type_ids:
-                                pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                                move = move_obj.browse(cr, uid, move_ids[0], fields_to_fetch=['product_id', 'product_uom'], context=context)
                                 to_update.update({
-                                    'pack_type': pack_type
+                                    'move_id': move.id,
+                                    'uom': move.product_uom or move.product_id and move.product_id.uom_id,
                                 })
                             else:
-                                line_errors.append(_(' This Pack Type doesn\'t exists.'))
+                                line_errors.append(_(' The imported line\'s data does not match %s\'s data.')
+                                                   % (wiz_browse.picking_id.name,))
+                    else:
+                        line_errors.append(_(' The Product Code has to be defined.'))
 
-                        # Check quantity per pack
-                        qty_pp_error = self.check_qty_pp(cr, uid, move, to_update['from_pack'], to_update['to_pack'], context=context)
-                        if qty_pp_error:
-                            line_errors.append(qty_pp_error)
+                    # Qties
+                    imp_qty = 0.0
+                    if row.cells[4].data:
+                        try:
+                            imp_qty = float(row.cells[4].data)
+                            to_update.update({'quantity': imp_qty})
+                        except:
+                            line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
+                    else:
+                        line_errors.append(_(' The Total Qty to Pack has to be defined.'))
 
+                    # Check for split line
+                    if imp_line_num not in treated_lines:
+                        treated_lines.append(imp_line_num)
+                    else:
+                        if to_update.get('move_id') and (to_update['move_id'], imp_line_num) in moves_keys:
+                            new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
+                            if not new_move_id:
+                                line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
+                            to_update.update({'move_id': new_move_id})
+
+                    # from pack and to pack
+                    if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[
+                        12].type == 'int' \
+                            and row.cells[11].data > 0 and row.cells[12].data > 0:
                         to_update.update({
-                            'error_list': line_errors,
-                            'to_correct_ok': any(line_errors),
-                            # the lines with to_correct_ok=True will be red
-                            'show_msg_ok': any(to_update['warning_list']),
-                            # the lines with show_msg_ok=True won't change color, it is just info
-                            'text_error': '\n'.join(line_errors + to_update['warning_list']),
+                            'from_pack': row.cells[11].data,
+                            'to_pack': row.cells[12].data,
+                        })
+                    elif row.cells[11].data and row.cells[12].data and (
+                            row.cells[11].type != 'int' or row.cells[12].type != 'int'):
+                        line_errors.append(_(' From pack and To pack have to be integers.'))
+                    else:
+                        to_update.update({
+                            'from_pack': 1,
+                            'to_pack': 1,
+                        })
+                        line_errors.append(
+                            _(' From pack and To pack to be defined and over 0, set to 1 by default.'))
+
+                    # Sequence check and Number of packs
+                    if to_update.get('from_pack') and to_update.get('to_pack'):
+                        sequences.append((to_update['from_pack'], to_update['to_pack'], i + 1))
+                        to_update.update({
+                            'num_of_packs': to_update['to_pack'] - to_update['from_pack'] + 1,
                         })
 
-                        sequences.append((to_update['from_pack'], to_update['to_pack'], i + 1))
+                    # weight per pack
+                    if row.cells[13].data and row.cells[13].type in ('int', 'float') and row.cells[13].data > 0:
+                        to_update.update({
+                            'weight': row.cells[13].data,
+                        })
+                    elif row.cells[13].data and row.cells[13].type not in ('int', 'float'):
+                        line_errors.append(_(' Weight per pack has to be an float.'))
+                    else:
+                        line_errors.append(_(' Weight per pack has to be defined and over 0.'))
 
-                        # update move line on picking
-                        if to_update['error_list']:
-                            error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
-                            lines_to_correct += 1
-                            raise osv.except_osv(_('Error'), ''.join(x for x in to_update['error_list']))
-                        updated_data.append(to_update)
-                        complete_lines += 1
-                        percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
-                    except IndexError:
-                        line_with_error.append(
-                            wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
-                                                              line_num=line_num, context=context))
-                        percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
-                        continue
-                    except osv.except_osv as osv_error:
-                        osv_value = osv_error.value
-                        osv_name = osv_error.name
-                        message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
-                        line_with_error.append(
-                            wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
-                                                              line_num=line_num, context=context))
-                        percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
-                        continue
-                    except AttributeError as e:
-                        error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s')\
-                                     % (line_num, e)
-                        line_with_error.append(
-                            wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
-                                                              line_num=line_num, context=context))
-                        percent_completed = float(line_num) / float(total_line_num - 1) / 100.0
-                        continue
-                    finally:
-                        self.write(cr, uid, ids, {'percent_completed': percent_completed})
-            except Exception as e:
-                error_log += _("An error is occurred. Details : %s") % e
-                continue
-            finally:
-                error_log += ''.join(error_list)
-                if error_log:
+                    # pack type + width, length & height
+                    if row.cells[15].data:
+                        pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', tools.ustr(row.cells[15].data))])
+                        if pack_type_ids:
+                            pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                            to_update.update({
+                                'pack_type': pack_type
+                            })
+                        else:
+                            line_errors.append(_(' This Pack Type doesn\'t exists.'))
+
+                    # Check quantity per pack
+                    if to_update.get('move_id'):
+                        qty_pp_error = ppl_proc_obj.check_qty_pp(cr, uid, [to_update], context=context)
+                        if qty_pp_error:
+                            line_errors.append(_(' The Quantity per Pack is incorrect.'))
+
+                    to_update.update({
+                        'error_list': line_errors,
+                        'to_correct_ok': any(line_errors),
+                        # the lines with to_correct_ok=True will be red
+                        'show_msg_ok': any(to_update['warning_list']),
+                        # the lines with show_msg_ok=True won't change color, it is just info
+                        'text_error': '\n'.join(line_errors + to_update['warning_list']),
+                    })
+
+                    # update move line on picking
+                    if to_update['error_list']:
+                        error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
+                        lines_to_correct += 1
+                        raise osv.except_osv(_('Error'), ''.join(x for x in to_update['error_list']))
+                    updated_data.append(to_update)
+                    complete_lines += 1
+                    percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
+                except IndexError:
+                    line_with_error.append(
+                        wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
+                                                          line_num=line_num, context=context))
+                    percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                     cr.rollback()
-                    error_log = _("Reported errors : \n") + error_log
+                    continue
+                except osv.except_osv as osv_error:
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                    line_with_error.append(
+                        wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
+                                                          line_num=line_num, context=context))
+                    percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
+                    cr.rollback()
+                    continue
+                except AttributeError as e:
+                    error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s')\
+                                 % (line_num, e)
+                    line_with_error.append(
+                        wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
+                                                          line_num=line_num, context=context))
+                    percent_completed = float(line_num) / float(total_line_num - 1) / 100.0
+                    cr.rollback()
+                    continue
+                finally:
+                    self.write(cr, uid, ids, {'percent_completed': percent_completed})
+        except Exception as e:
+            cr.rollback()
+            error_log += _("An error is occurred. Details : %s") % e
+        finally:
+            error_log += ''.join(error_list)
+            if error_log:
+                error_log = _("Reported errors : \n") + error_log
 
-                # checking integrity of from_pack and to_pack
-                from_to_pack_errors = self._check_from_to_pack_integrity(sequences, context=context)
-                if from_to_pack_errors:
-                    from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
+            # checking integrity of from_pack and to_pack
+            from_to_pack_errors = ppl_proc_obj.check_sequences(cr, uid, sequences, False, context=context)
+            if from_to_pack_errors:
+                from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
 
-                if not error_log and not from_to_pack_errors:
-                    for data in updated_data:
-                        if data.get('move_id'):
-                            vals = {
-                                'ordered_quantity': data['ordered_quantity'],
-                                'from_pack': data['from_pack'],
-                                'to_pack': data['to_pack'],
-                                'pack_type': data.get('pack_type') and data['pack_type'].id or False,
-                                'width': data.get('pack_type') and data['pack_type'].width or data.get('width', 0),
-                                'length': data.get('pack_type') and data['pack_type'].length or data.get('length', 0),
-                                'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
-                            }
-                            move_obj.write(cr, uid, data['move_id'], vals, context=context)
-                end_time = time.time()
-                total_time = str(round(end_time - start_time)) + _(' second(s)')
-                final_message = _('''    Importation completed in %s!
+            if not error_log and not from_to_pack_errors:
+                for data in updated_data:
+                    if data.get('move_id'):
+                        vals = {
+                            'ordered_quantity': data['quantity'],
+                            'from_pack': data['from_pack'],
+                            'to_pack': data['to_pack'],
+                            'pack_type': data.get('pack_type') and data['pack_type'].id or False,
+                            'weight': data.get('weight', 0.0),
+                            'width': data.get('pack_type') and data['pack_type'].width or data.get('width', 0),
+                            'length': data.get('pack_type') and data['pack_type'].length or data.get('length', 0),
+                            'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
+                        }
+                        move_obj.write(cr, uid, data['move_id'], vals, context=context)
+            end_time = time.time()
+            total_time = str(round(end_time - start_time)) + _(' second(s)')
+            final_message = _('''    Importation completed in %s!
     # of lines without error : %s of %s lines
     # of lines to correct: %s
     %s
     %s
-
+    
     %s
     ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, from_to_pack_errors, message)
-                wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
-                if line_with_error:
-                    file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids,
-                                                                              line_with_error=line_with_error,
-                                                                              header_index=header_index)
-                    wizard_vals.update(file_to_export)
-                self.write(cr, uid, ids, wizard_vals, context=context)
-                # we reset the state of the PPL to assigned (initial state)
-                pick_obj.write(cr, uid, wiz_browse.picking_id.id, {'state': 'assigned', 'import_in_progress': False},
-                               context)
+            wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
+            if line_with_error:
+                file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids,
+                                                                          line_with_error=line_with_error,
+                                                                          header_index=header_index)
+                wizard_vals.update(file_to_export)
+            self.write(cr, uid, ids, wizard_vals, context=context)
+            # we reset the state of the PPL to assigned (initial state)
+            pick_obj.write(cr, uid, wiz_browse.picking_id.id, {'state': 'assigned', 'import_in_progress': False},
+                           context)
 
-        cr.commit()
-        cr.close(True)
+            cr.commit()
+            cr.close(True)
 
         return True
 

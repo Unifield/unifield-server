@@ -103808,18 +103808,6 @@ msgstr "La Zone Source est inactive"
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:137
-#, python-format
-msgid " The quantity per pack must be an integer for this UoM."
-msgstr " La quantité par paquet doit être un entier pour cette UdM."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:142
-#, python-format
-msgid " The quantity per pack must not have more decimals than the UoM's rounding."
-msgstr " La quantité par paquet ne doit pas avoir plus de décimales que l'arrondi de l'UdM."
-
 #. module: msf_outgoing
 #: view:stock.picking:0
 msgid " Update Packing with import "
@@ -104030,11 +104018,11 @@ msgid " Our Ref (origin) is mandatory."
 msgstr " Notre Ref (origine) est obligatoire."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:157
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:172
 #, python-format
-msgid "To pack must be greater than From pack on line %s.\n"
+msgid "To pack must be greater than From pack on line(s) %s.\n"
 ""
-msgstr "Vers colis doit être plus grand que Du colis %s.\n"
+msgstr "Vers colis doit être plus grand que Du colis pour la/les ligne(s) %s.\n"
 ""
 
 #. module: msf_doc_import
@@ -104119,12 +104107,11 @@ msgstr "\n"
 "La ligne 2 de la colonne 1 doit être nommée \"Date\" dans le fichier."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:148
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:152
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:180
 #, python-format
-msgid "The sequence From pack - To Pack of line %s overlaps a previous one.\n"
+msgid "The sequence From pack - To Pack of line(s) %s overlaps a previous one.\n"
 ""
-msgstr "La séquence Du colis - Vers colis de la ligne %s empiète sur une précédente.\n"
+msgstr "La séquence Du colis - Vers colis sur la/les ligne(s) %s empiète sur une précédente.\n"
 ""
 
 #. module: msf_doc_import
@@ -104138,11 +104125,11 @@ msgid "Cancel"
 msgstr "Annuler"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:154
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:188
 #, python-format
-msgid "A gap exists with the sequence From pack - To Pack of line %s.\n"
+msgid "A gap exists with the sequence From pack - To Pack of line(s) %s.\n"
 ""
-msgstr "Un écart existe avec la séquence Du colis - Vers colis ligne %s.\n"
+msgstr "Un écart existe avec la séquence Du colis - Vers colis sur la/les ligne(s) %s.\n"
 ""
 
 #. module: msf_doc_import
@@ -104167,14 +104154,14 @@ msgid "Update"
 msgstr "Mettre à jour"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:337
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:447
 #, python-format
 msgid "    Importation completed in %s!\n"
 "    # of lines without error : %s of %s lines\n"
 "    # of lines to correct: %s\n"
 "    %s\n"
 "    %s\n"
-"\n"
+"    \n"
 "    %s\n"
 "    "
 msgstr "    Importation terminée en %s!\n"
@@ -104361,8 +104348,8 @@ msgid "\n"
 msgstr "\n"
 "La ligne 7 de la colonne 1 doit être nommée \"Date de Livraison Prévue\" dans le fichier."
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:137
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/ppl_processor.py:165
 #, python-format
 msgid "The first From pack must be equal to 1.\n"
 ""
@@ -104470,46 +104457,16 @@ msgid "Packing information"
 msgstr "Information du Colisage"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:317
-#, python-format
-msgid " The Product Code (%s) was not found in the DB."
-msgstr " Le Code Produit (%s) n'a pas été trouvé dans la BDD."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:342
-#, python-format
-msgid " The Batch Number (%s) for the Product (%s) was not found in the DB."
-msgstr " Le Numéro de Lot (%s) pour le Produit (%s) n'a pas été trouvé dans la BDD."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:345
-#, python-format
-msgid " The Batch Number is mandatory for this product."
-msgstr " Le Numéro de Lot est obligatoire pour ce produit."
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:352
 #, python-format
 msgid " The Expiry Date (%s) does not have a good date format."
 msgstr " La Date d'Expiration (%s) n'a pas un bon format de date."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:355
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:272
 #, python-format
-msgid " The Expiry Date is mandatory for this product."
-msgstr " La Date d'Expiration est obligatoire pour ce produit."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:374
-#, python-format
-msgid " The imported line %s's data does not match %s's data."
-msgstr " Les données de la ligne importée %s ne correspondent pas aux données de %s."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:377
-#, python-format
-msgid " The Line %s does not exist in %s."
-msgstr " La Ligne %s n'existe pas dans %s."
+msgid " The imported line's data does not match %s's data."
+msgstr " Les données de la ligne importée ne correspondent pas aux données de %s."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:385
@@ -104561,3 +104518,9 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:369
+#, python-format
+msgid " The Quantity per Pack is incorrect."
+msgstr " La Quantité par Colis est incorrecte."
