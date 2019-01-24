@@ -59,6 +59,12 @@ from config import config
 from lru import LRU
 from xml.sax.saxutils import escape
 
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
+
 _logger = logging.getLogger('tools')
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
@@ -1794,4 +1800,24 @@ def float_uom_to_str(value, uom_obj):
         return value
     digit = int(abs(math.log10(uom_obj.rounding)))
     return '%.*f' % (digit, value)
+
+class crypt():
+    def __init__(self, password):
+        password = bytes(password)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            iterations=100000,
+            salt=password,
+            backend=default_backend()
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(password))
+        self.Fernet = Fernet(key)
+
+    def encrypt(self, string):
+        return self.Fernet.encrypt(string)
+
+    def decrypt(self, string):
+        return self.Fernet.decrypt(bytes(string))
+
 

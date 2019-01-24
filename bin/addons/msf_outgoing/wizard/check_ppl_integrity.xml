@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		<record id="check_ppl_integrity_form_view" model="ir.ui.view">
+			<field name="name">check.ppl.integrity.form.view</field>
+			<field name="model">check.ppl.integrity</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="PPL integrity">
+                    <field name="ppl_processor_id" invisible="1" />
+                    <group colspan="2">
+                        <html>
+                            <p id="ppl_integrity_message" style="text-align:center; color: red; font-weight: bold; font-size: 1.3em">
+                                <translate>
+                                    WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs
+                                </translate>
+                           </p>
+                        </html>
+                    </group>
+                    <newline/>
+                    <group>
+                        <field name="line_number_with_issue"/>
+                    </group>
+                    <separator/>
+					<button name="cancel" type="object" icon="gtk-cancel" string="Go Back" />
+				    <button name="next" type="object" icon="gtk-jump-to" string="Continue" />
+                </form>
+            </field>
+		</record>
+	</data>
+</openerp>
