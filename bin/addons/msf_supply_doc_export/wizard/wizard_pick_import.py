@@ -150,7 +150,7 @@ class wizard_pick_import(osv.osv_memory):
         if import_data_header['reference'] != wiz.picking_id.name:
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
 
-        for xls_line_number, line_data in import_data_lines.items():
+        for xls_line_number, line_data in sorted(import_data_lines.items()):
             if line_data['qty_picked'] is None:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % xls_line_number)
             line_data = self.normalize_data(cr, uid, line_data)
@@ -160,7 +160,7 @@ class wizard_pick_import(osv.osv_memory):
                     _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % xls_line_number
                 )
 
-            # fields to update on moves are: quantity, prodlot_id, expiry_date
+            # search line in processor wiz
             move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
                 ('wizard_id', '=', res_id),
                 ('line_number', '=', line_data['item']),
@@ -168,13 +168,26 @@ class wizard_pick_import(osv.osv_memory):
                 ('quantity', '=', 0),
             ], context=context)
 
-            if not move_proc_ids:
+            # search line in PICK
+            move_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id', '=', wiz.picking_id.id),
+                ('line_number', '=', line_data['item']),
+                ('product_qty', '=', line_data['qty_to_pick']),
+            ], context=context)
+
+            if not move_proc_ids and not move_ids:
                 raise osv.except_osv(
                     _('Error'), 
                     _('Line %s: Move with line number %s and ordered qty %s not found') % (xls_line_number, line_data['item'], line_data['qty_to_pick'])
                 )
+
+            # if stock move is not "available" then it should be ignored:
+            if move_ids:
+                stock_move = self.pool.get('stock.move').browse(cr, uid, move_ids[0], fields_to_fetch=['state'], context=context)
+                if stock_move.state != 'assigned':
+                    continue
                 
-            if move_proc_ids and line_data['qty_picked']:
+            if move_proc_ids and line_data['qty_picked'] and line_data['qty_to_pick']:
                 move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_ids[0], context=context)
                 to_write = {}
 
