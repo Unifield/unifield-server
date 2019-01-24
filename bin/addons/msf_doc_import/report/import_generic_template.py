@@ -22,7 +22,7 @@
 from report import report_sxw
 from report_webkit.webkit_report import XlsWebKitParser
 from operator import itemgetter
-from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
+from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT, MODEL_DICT
 import tools
 
 
@@ -114,6 +114,8 @@ class report_generic_export_parser(report_sxw.rml_parse):
         size of it.
         '''
         import_export_obj = self.pool.get('msf.import.export')
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            context['lang'] = MODEL_DICT[selection]['lang']
         return import_export_obj._get_headers(self.cr, self.uid, model,
                                               selection=selection, field_list=field_list, rows=rows, context=context)
 
@@ -142,10 +144,13 @@ class report_generic_export_parser(report_sxw.rml_parse):
         rows = []
         chunk_size = 100
         fields = [x.replace('.', '/') for x in fields]
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(data['selection'], {}):
+            new_ctx['lang'] = MODEL_DICT[data['selection']]['lang']
         for i in range(0, len(ids), chunk_size):
             ids_chunk = ids[i:i + chunk_size]
             context['translate_selection_field'] = True
-            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=context)['datas'])
+            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=new_ctx)['datas'])
 
         # sort supplier catalogue line
         if data['model'] == 'supplier.catalogue.line':

@@ -949,4 +949,35 @@ class ir_model_data(osv.osv):
         return True
 ir_model_data()
 
+class ir_model_access_empty(osv.osv):
+    _name = 'ir.model.access.empty'
+    _auto = False
+
+    _columns = {
+        'name': fields.char('Name', size=64),
+        'model_id': fields.many2one('ir.model', 'Object'),
+        'group_id': fields.many2one('res.groups', string='Group'),
+        'perm_read': fields.boolean('Read Access'),
+        'perm_write': fields.boolean('Write Access'),
+        'perm_create': fields.boolean('Create Access'),
+        'perm_unlink': fields.boolean('Delete Access'),
+    }
+
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'ir_model_access_empty')
+        cr.execute("""CREATE OR REPLACE VIEW ir_model_access_empty AS (
+        SELECT model.id as id,
+        '' as name,
+        model.id as model_id,
+        NULL as group_id,
+        'f' as perm_read,
+        'f' as perm_write,
+        'f' as perm_create,
+        'f' as perm_unlink
+        from ir_model model
+        left join ir_model_access ac on ac.model_id = model.id
+        where ac.id is null)""")
+
+ir_model_access_empty()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

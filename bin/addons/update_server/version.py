@@ -272,7 +272,8 @@ class sync_server_user_rights_add_file(osv.osv_memory):
                 error = e.value
             else:
                 error = e
-            wiz.write({'state': 'error', 'message': tools.ustr(error)})
+            msg = self.read(cr, uid, wiz_id, ['message'])['message'] or ''
+            wiz.write({'state': 'error', 'message': "%s\n%s" % (msg, tools.ustr(error))})
         finally:
             cr.rollback()
             cr.commit = cr.commit_org
