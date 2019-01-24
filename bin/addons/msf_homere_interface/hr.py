@@ -205,7 +205,7 @@ class hr_employee(osv.osv):
         return True
 
     _constraints = [
-        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+        (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
     def create(self, cr, uid, vals, context=None):

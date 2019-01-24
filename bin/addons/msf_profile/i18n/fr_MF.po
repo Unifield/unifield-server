@@ -10929,12 +10929,6 @@ msgstr "Zone Stock"
 msgid "Write-Off"
 msgstr "Ajustement"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:653
-#, python-format
-msgid "Several employees have the same unique code: %s."
-msgstr "Several employees have the same unique code: %s."
-
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:135
 #, python-format
@@ -89394,8 +89388,8 @@ msgstr "Ce champ contient l'information relative à la numérotation des lignes 
 #: constraint:hr.employee:0
 #: constraint:hr.employee:0
 #: constraint:hr.employee:0
-msgid "Another employee has the same unique code."
-msgstr "Ce code est utilisé pour un autre employé."
+msgid "Another employee has the same Identification No."
+msgstr "Ce N° d'identification est utilisé pour un autre employé."
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_return_shipment_processor

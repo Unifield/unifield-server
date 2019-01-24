@@ -232,9 +232,9 @@ class hr_payroll_employee_import(osv.osv_memory):
         # => as not already in db
         check_key = missioncode + staff_id + uniq_id
         if check_key in registered_keys:
-            # if check_key is in homere_fields BUT is empty, the related msg has already been created => skip the msg creation part
+            # if check_key is in homere_fields BUT its value is empty, the related msg has already been created => skip the msg creation part
             if check_key not in homere_fields or homere_fields.get(check_key):
-                # if possible list all the duplicates employees
+                # if possible list all the duplicated employees
                 if homere_fields.get(check_key):
                     list_duplicates = ['%s (%s)' % (empl, _('Import File')) for empl in homere_fields[check_key]]
                     # empty the list so that the msg with all employees is displayed only once (and not once per duplicated employee)
@@ -252,11 +252,11 @@ class hr_payroll_employee_import(osv.osv_memory):
         # check duplicates already in db
         search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
         if search_ids and len(search_ids) > 1:
-            emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name_resource'])
+            emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name'])
             # create a list with the employee from the file...
             name_duplicates = ['%s (%s)' % (employee_name, _('Import File'))]
             # ... and the duplicates already in UniField
-            name_duplicates.extend(['%s (UniField)' % emp.name_resource for emp in emp_duplicates if emp.name_resource])
+            name_duplicates.extend(['%s (UniField)' % emp.name for emp in emp_duplicates if emp.name])
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
                 'msg': _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
@@ -274,10 +274,10 @@ class hr_payroll_employee_import(osv.osv_memory):
                 if employee.name == employee_name:
                     continue
                 if what_changed != None:
-                    # duplicate employee in UniField
-                    employee_error_list.append("%s (%s)" % (employee.name, 'UniField'))
+                    # duplicated employees in UniField
+                    employee_error_list.append("%s (UniField)" % (employee.name,))
             if employee_error_list:
-                # duplicate employee in Import File
+                # add the duplicated employee from Import File
                 message = _('Several employees have the same Identification No "%s": %s') % \
                           (staffcode, ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list))
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
@@ -289,7 +289,7 @@ class hr_payroll_employee_import(osv.osv_memory):
     def _check_identification_id_duplication(self, cr, uid, vals, employee_check, what_changed, current_id=None, context=None):
         """
         Method used to check if the Identification No to be used for the employee about to be created/edited doesn't
-        already exist for another employee in DB.
+        already exist for another employee in UniField.
         Returns False if there is a duplication AND we are in the use case where the related and detailed
         "hr.payroll.employee.import.error" has already been created (but the process wasn't blocked earlier since "what_changed" had a value).
         Otherwise returns True => the generic create/write checks will then apply (i.e. a generic error msg will be displayed)
@@ -299,7 +299,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         employee_obj = self.pool.get('hr.employee')
         if not employee_check and what_changed and vals.get('identification_id'):
             employee_dom = [('identification_id', '=', vals['identification_id'])]
-            if current_id:
+            if current_id is not None:
                 employee_dom.append(('id', '!=', current_id))
             if employee_obj.search_exist(cr, uid, employee_dom, context=context):
                 return False
