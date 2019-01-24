@@ -171,45 +171,11 @@ MODEL_DICT = {
         'lang': 'en_MF',
         'model': 'msf_field_access_rights.field_access_rule_line'
     },
-    'button_access_rules_it': {
-        'name': 'IT Button Access Rules',
+    'button_access_rules': {
+        'name': 'Button Access Rules',
         'domain_type': 'non_functionnal',
         'lang': 'en_MF',
         'model': 'msf_button_access_rights.button_access_rule',
-        'domain': [('bar_type', '=', 'IT')],
-        'forced_values': {
-            'bar_type': 'IT',
-        },
-    },
-    'button_access_rules_finance': {
-        'name': 'Finance Button Access Rules',
-        'domain_type': 'non_functionnal',
-        'lang': 'en_MF',
-        'model': 'msf_button_access_rights.button_access_rule',
-        'domain': [('bar_type', '=', 'Finance')],
-        'forced_values': {
-            'bar_type': 'Finance',
-        },
-    },
-    'button_access_rules_supply': {
-        'name': 'Supply Button Access Rules',
-        'domain_type': 'non_functionnal',
-        'lang': 'en_MF',
-        'model': 'msf_button_access_rights.button_access_rule',
-        'domain': [('bar_type', '=', 'Supply')],
-        'forced_values': {
-            'bar_type': 'Supply',
-        },
-    },
-    'button_access_rules_new': {
-        'name': 'New Button Access Rules',
-        'domain_type': 'non_functionnal',
-        'lang': 'en_MF',
-        'model': 'msf_button_access_rights.button_access_rule',
-        'domain': [('bar_type', '=', False)],
-        'forced_values': {
-            'bar_type': False,
-        },
     },
     'window_actions': {
         'name': 'Window Actions',
@@ -704,7 +670,7 @@ MODEL_DATA_DICT = {
             'field.name',
         ],
     },
-    'button_access_rules_it': {
+    'button_access_rules': {
         'header_list': [
             'name',
             'label',
@@ -713,7 +679,9 @@ MODEL_DATA_DICT = {
             'id',
             'group_ids',
             'model_id.model',
-            'view_id.name'
+            'view_id.name',
+            'bar_type',
+            'create_date',
         ],
         'required_field_list': [
             'id',
@@ -723,71 +691,8 @@ MODEL_DATA_DICT = {
             'label',
             'model_id.model',
             'view_id.name',
+            'create_date',
         ],
-    },
-    'button_access_rules_finance': {
-        'header_list': [
-            'name',
-            'label',
-            'active',
-            'comment',
-            'id',
-            'group_ids',
-            'model_id.model',
-            'view_id.name'
-        ],
-        'required_field_list': [
-            'id',
-        ],
-        'ignore_field': [
-            'name',
-            'label',
-            'model_id.model',
-            'view_id.name',
-        ],
-    },
-    'button_access_rules_supply': {
-        'header_list': [
-            'name',
-            'label',
-            'active',
-            'comment',
-            'id',
-            'group_ids',
-            'model_id.model',
-            'view_id.name'
-        ],
-        'required_field_list': [
-            'id',
-        ],
-        'ignore_field': [
-            'name',
-            'label',
-            'model_id.model',
-            'view_id.name',
-        ],
-    },
-    'button_access_rules_new': {
-        'header_list': [
-            'name',
-            'label',
-            'active',
-            'comment',
-            'id',
-            'group_ids',
-            'model_id.model',
-            'view_id.name'
-        ],
-        'ignore_field': [
-            'name',
-            'label',
-            'model_id.model',
-            'view_id.name',
-        ],
-        'required_field_list': [],
-        'hide_download_template': True,
-        'hide_download_3_entries': True,
-        'display_file_import': False,
     },
     'window_actions': {
         'header_list': [

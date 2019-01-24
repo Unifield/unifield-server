@@ -42,6 +42,7 @@ class button_access_rule(osv.osv):
         return res
 
     _columns = {
+        'create_date': fields.date('Creation date', readonly=True),
         'name': fields.char('Name', size=256, required=True),
         'label': fields.char('Label', size=256),
         'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),

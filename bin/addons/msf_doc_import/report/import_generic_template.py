@@ -248,9 +248,19 @@ class report_user_access_export_parser(report_generic_export_parser):
             row_list.append(row)
 
         # build the access right part
-        group_ids = group_obj.search(self.cr, self.uid,
-                                     [('visible_res_groups', '=', 't')], order='name',
-                                     context=context)
+        no_export_groups = [('base', 'group_erp_manager'), ('base', 'group_extended'), ('base', 'group_no_one'), ('sync_common', 'sync_read_group')]
+        ignore_goups = []
+        for module, xmlid in no_export_groups:
+            try:
+                ignore_goups.append(data_obj.get_object_reference(self.cr, self.uid, module, xmlid)[1])
+            except:
+                pass
+        group_dom = [('visible_res_groups', '=', 't')]
+
+        if ignore_goups:
+            group_dom.append(('id', 'not in', ignore_goups))
+
+        group_ids = group_obj.search(self.cr, self.uid, group_dom, order='name', context=context)
         group_read_result = group_obj.read(self.cr, self.uid, group_ids,
                                            ['name', 'level', 'menu_access'], context=context)
         group_dict = dict((x['id'], x) for x in group_read_result)

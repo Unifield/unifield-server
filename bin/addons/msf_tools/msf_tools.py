@@ -956,16 +956,7 @@ class user_rights_tools(osv.osv_memory):
 
                 file_d = z.open(zp_f, 'r')
 
-                if model == 'msf_button_access_rights.button_access_rule':
-                    wiz_key = False
-                    if 'IT_' in zp_f:
-                        wiz_key = 'button_access_rules_it'
-                    elif 'Supply_' in zp_f:
-                        wiz_key = 'button_access_rules_supply'
-                    elif 'Finance_' in zp_f:
-                        wiz_key = 'button_access_rules_finance'
-                else:
-                    wiz_key = import_key[model]
+                wiz_key = import_key[model]
                 wiz = self.pool.get('msf.import.export').create(cr, uid, {'model_list_selection': wiz_key, 'import_file': encodestring(file_d.read())}, context=context)
                 file_d.close()
                 self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
@@ -1003,7 +994,7 @@ class user_rights_tools(osv.osv_memory):
             'ir.actions.act_window': False,
         }
 
-        expected_files = 9
+        expected_files = 7
         z = ZipFile(zfile)
         nb = 0
         for f in z.infolist():
