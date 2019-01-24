@@ -78,7 +78,6 @@ class purchase_order_line_sync(osv.osv):
         'has_pol_been_synched': fields.function(_has_pol_been_synched, type='boolean', method=True, string='Synched ?'),
     }
 
-
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update original PO lines from remote SO lines
@@ -157,6 +156,7 @@ class purchase_order_line_sync(osv.osv):
         if not pol_id: # then create new PO line
             kind = 'new line'
             pol_values['line_number'] = sol_dict['line_number']
+            pol_values['created_by_sync'] = True
             if sol_dict['is_line_split']:
                 sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
                 if not sync_linked_sol:
@@ -203,6 +203,8 @@ class purchase_order_line_sync(osv.osv):
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
             po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            if sol_dict['state'] in ['cancel', 'cancel_r']:
+                pol_values['cancelled_by_sync'] = True
             if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
                 # if the state is less than confirmed we update the PO line
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
@@ -267,6 +269,7 @@ class purchase_order_line_sync(osv.osv):
         }
 
         return self.pool.get('stock.picking').partial_shippped_dpo_updates_in_po(cr, uid, source, out_info, context=context)
+
 
 purchase_order_line_sync()
 

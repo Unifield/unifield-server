@@ -160,7 +160,11 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
 
-        return super(PhysicalInventory, self).create(cr, uid, values, context=context)
+        new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
+
+        if self.search(cr, uid, [('id', '=', new_id), ('location_id.active', '=', False)]):
+            raise osv.except_osv(_('Warning'), _("Location is inactive"))
+        return new_id
 
 
     def copy(self, cr, uid, id_, default=None, context=None):
@@ -752,7 +756,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 if isinstance(quantity, int) and quantity == 0:
                     quantity = '0'
                 try:
-                    quantity = counting_obj.quantity_validate(cr, quantity)
+                    quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
                 except NegativeValueError:
                     add_error(_('Quantity %s is negative') % quantity, row_index, 4)
                     quantity = 0.0
@@ -1203,6 +1207,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
+            if not inv.location_id.active:
+                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
+
         self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
 
@@ -1252,7 +1261,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Batch / Expiry date
         'batch_number': fields.char(_('Batch number'), size=64),
-        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
+        'expiry_date': fields.date(string=_('Expiry date')),
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
         'quantity': fields.char(_('Quantity'), size=15),
@@ -1291,8 +1300,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         return super(PhysicalInventoryCounting, self).create(cr, user, vals, context)
 
-    @staticmethod
-    def quantity_validate(cr, quantity):
+    def quantity_validate(self, cr, uid, quantity, uom_id=False):
         """Return a valide quantity or raise ValueError exception"""
         if quantity:
             float_width, float_prec = dp.get_precision('Product UoM')(cr)
@@ -1301,14 +1309,17 @@ class PhysicalInventoryCounting(osv.osv):
                 raise NegativeValueError()
             if math.isnan(quantity):
                 raise ValueError()
+            if uom_id:
+                float_prec = int(abs(math.log10(self.pool.get('product.uom').read(cr, uid, uom_id, ['rounding'])['rounding'])))
+
             quantity = '%.*f' % (float_prec, quantity)
         return quantity
 
-    def on_change_quantity(self, cr, uid, ids, quantity):
+    def on_change_quantity(self, cr, uid, ids, quantity, uom_id=False):
         """Check and format quantity."""
         if quantity:
             try:
-                quantity = self.quantity_validate(cr, quantity)
+                quantity = self.quantity_validate(cr, uid, quantity, uom_id)
             except NegativeValueError:
                 return {'value': {'quantity': False},
                         'warning': {'title': 'warning', 'message': 'Negative quantity is not permit.'}}
@@ -1409,10 +1420,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
-        'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
+        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom_id'),
         'counted_qty_is_empty': fields.boolean('False qty', readonly=True, help=_('Has field counted_qty been filled or is it empty ? (internal use)')),
-        'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity")),
+        'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity"), related_uom='product_uom_id'),
         'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
 
         # Discrepancy analysis
@@ -1420,10 +1431,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
 
         # Total for product
-        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
+        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
-        'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
+        'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product"), related_uom='product_uom_id'),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
         'ignored': fields.boolean('Ignored', readonly=True),
         'move_id': fields.integer(readonly=True)
