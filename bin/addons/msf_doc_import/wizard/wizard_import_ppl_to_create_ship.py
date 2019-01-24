@@ -175,7 +175,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         sequences = []
 
         wiz_browse = self.browse(cr, uid, ids[0], context)
-        moves_keys = [(move.id, move.line_number) for move in wiz_browse.picking_id.move_lines]
         # List of data to update moves
         updated_data = []
         try:
@@ -254,7 +253,19 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     else:
                         line_errors.append(_(' The Line Number has to be defined.'))
 
+                    # Qties
+                    imp_qty = 0.0
+                    if row.cells[4].data:
+                        try:
+                            imp_qty = float(row.cells[4].data)
+                            to_update.update({'quantity': imp_qty})
+                        except:
+                            line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
+                    else:
+                        line_errors.append(_(' The Total Qty to Pack has to be defined.'))
+
                     # Check move's data
+                    line_type = ''
                     if row.cells[1].data:
                         if imp_line_num:
                             move_domain = [
@@ -272,39 +283,43 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                                        % (row.cells[6].data,))
                                 else:
                                     move_domain.append(('expired_date', '=', cell_expiry_date))
-                            move_ids = move_obj.search(cr, uid, move_domain, context=context)
-                            if move_ids:
-                                move = move_obj.browse(cr, uid, move_ids[0], fields_to_fetch=['product_id', 'product_uom'], context=context)
+                            exact_move_domain = [x for x in move_domain]
+                            exact_move_domain.append(('product_qty', '=', imp_qty))
+                            exact_move_id = move_obj.search(cr, uid, exact_move_domain, limit=1, context=context)
+                            ftf = ['line_number', 'product_id', 'product_qty', 'product_uom']
+                            if exact_move_id:
+                                move = move_obj.browse(cr, uid, exact_move_id[0], fields_to_fetch=ftf, context=context)
                                 to_update.update({
                                     'move_id': move.id,
                                     'uom': move.product_uom or move.product_id and move.product_id.uom_id,
                                 })
+                                treated_lines.append((to_update['move_id'], imp_line_num))
                             else:
-                                line_errors.append(_(' The imported line\'s data does not match %s\'s data.')
-                                                   % (wiz_browse.picking_id.name,))
+                                move_ids = move_obj.search(cr, uid, move_domain, context=context)
+                                for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=ftf, context=context):
+                                    if imp_qty < move.product_qty:
+                                        to_update.update({
+                                            'move_id': move.id,
+                                            'uom': move.product_uom or move.product_id and move.product_id.uom_id,
+                                        })
+                                        if (move.id, move.line_number) in treated_lines:
+                                            line_type = 'split'
+                                        else:
+                                            treated_lines.append((to_update['move_id'], imp_line_num))
+                                        break
                     else:
                         line_errors.append(_(' The Product Code has to be defined.'))
 
-                    # Qties
-                    imp_qty = 0.0
-                    if row.cells[4].data:
-                        try:
-                            imp_qty = float(row.cells[4].data)
-                            to_update.update({'quantity': imp_qty})
-                        except:
-                            line_errors.append(_(' The Total Qty to pack has to be an integer or a float.'))
-                    else:
-                        line_errors.append(_(' The Total Qty to Pack has to be defined.'))
-
                     # Check for split line
-                    if imp_line_num not in treated_lines:
-                        treated_lines.append(imp_line_num)
-                    else:
-                        if to_update.get('move_id') and (to_update['move_id'], imp_line_num) in moves_keys:
+                    if to_update.get('move_id'):
+                        if line_type == 'split':
                             new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
                             if not new_move_id:
                                 line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
                             to_update.update({'move_id': new_move_id})
+                    else:
+                        line_errors.append(_(' The imported line\'s data does not match %s\'s data.')
+                                           % (wiz_browse.picking_id.name,))
 
                     # from pack and to pack
                     if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[

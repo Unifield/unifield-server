@@ -320,11 +320,3 @@ report_sxw.report_sxw(
     parser=picking_ticket,
     header=False,
 )
-
-SpreadsheetReport(
-    'report.pre.packing.excel.export',
-    'stock.picking',
-    'addons/msf_outgoing/report/pre_packing_excel_report_xls.mako',
-    parser=picking_ticket,
-    header=False,
-)
