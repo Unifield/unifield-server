@@ -175,7 +175,7 @@ class wizard_pick_import(osv.osv_memory):
                 ('product_qty', '=', line_data['qty_to_pick']),
             ], context=context)
 
-            if not move_proc_ids and not move_ids:
+            if not move_proc_ids and not move_ids and line_data['qty_to_pick']:
                 raise osv.except_osv(
                     _('Error'), 
                     _('Line %s: Move with line number %s and ordered qty %s not found') % (xls_line_number, line_data['item'], line_data['qty_to_pick'])
