@@ -236,7 +236,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             if check_key not in homere_fields or homere_fields.get(check_key):
                 # if possible list all the duplicates employees
                 if homere_fields.get(check_key):
-                    list_duplicates = ['%s (Import File)' % empl for empl in homere_fields[check_key]]
+                    list_duplicates = ['%s (%s)' % (empl, _('Import File')) for empl in homere_fields[check_key]]
                     # empty the list so that the msg with all employees is displayed only once (and not once per duplicated employee)
                     homere_fields[check_key] = []
                 # if not possible only the current employee name will be displayed
@@ -254,7 +254,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         if search_ids and len(search_ids) > 1:
             emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name_resource'])
             # create a list with the employee from the file...
-            name_duplicates = ['%s (Import File)' % employee_name]
+            name_duplicates = ['%s (%s)' % (employee_name, _('Import File'))]
             # ... and the duplicates already in UniField
             name_duplicates.extend(['%s (UniField)' % emp.name_resource for emp in emp_duplicates if emp.name_resource])
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
@@ -267,7 +267,6 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
         if staffcode_ids:
-            message = _("Several employees have the same Identification No %s: ") % staffcode
             employee_error_list = []
             # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
@@ -279,7 +278,8 @@ class hr_payroll_employee_import(osv.osv_memory):
                     employee_error_list.append("%s (%s)" % (employee.name, 'UniField'))
             if employee_error_list:
                 # duplicate employee in Import File
-                message += ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list)
+                message = _('Several employees have the same Identification No "%s": %s') % \
+                          (staffcode, ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list))
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
                 return (res, what_changed)
 
@@ -703,8 +703,8 @@ class hr_payroll_employee_import(osv.osv_memory):
                     staff_codes.append(code)
                 # store the Homere fields combination for all employees
                 if line.get('nom'):
-                    # no id_unique is replaced by the string "empty"
-                    homere_fields_key = line.get('codeterrain', '') + line.get('id_staff', '') + line.get('id_unique', 'empty')
+                    # "no id_unique" is replaced by the string "empty"
+                    homere_fields_key = "%s%s%s" % (line.get('codeterrain', ''), line.get('id_staff', ''), line.get('id_unique', 'empty'))
                     if homere_fields_key not in homere_fields:
                         homere_fields[homere_fields_key] = []
                     homere_fields[homere_fields_key].append(line['nom'])
@@ -738,7 +738,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 res = False
                 # create a different error line for each employee code being duplicated
                 for emp_code in details:
-                    message = _('Several employees have the same Identification No "%s": %s.') % (emp_code, ' ; '.join(details[emp_code]))
+                    message = _('Several employees have the same Identification No "%s": %s') % (emp_code, ' ; '.join(details[emp_code]))
                     self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': message})
             # Close Temporary File
             # Delete previous created lines for employee's contracts

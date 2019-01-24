@@ -199,7 +199,7 @@ class hr_employee(osv.osv):
                         employee_name = employee.get('name', False)
                         if employee_name and employee_name not in names:
                             names.append(employee_name)
-                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s.') %
+                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s') %
                                          (e.identification_id, ' ; '.join(names)))
                     return False
         return True
