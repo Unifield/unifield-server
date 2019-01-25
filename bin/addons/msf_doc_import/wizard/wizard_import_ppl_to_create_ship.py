@@ -139,7 +139,9 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             return False
 
         # Create a copy of the move with the new quantity
+        context.update({'keepLineNumber': True})
         new_move_id = move_obj.copy(cr, uid, move_id, {'product_qty': new_qty}, context=context)
+        context.pop('keepLineNumber')
 
         # Update the original move
         update_qty = move.product_qty - new_qty
@@ -177,6 +179,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         wiz_browse = self.browse(cr, uid, ids[0], context)
         # List of data to update moves
         updated_data = []
+        # Check if all the qty of each product is treated
+        sum_qty = {}
         try:
             picking = wiz_browse.picking_id
 
@@ -265,10 +269,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         line_errors.append(_(' The Total Qty to Pack has to be defined.'))
 
                     # Check move's data
-                    line_type = ''
                     if row.cells[1].data:
                         if imp_line_num:
                             move_domain = [
+                                ('id', 'not in', treated_lines),
                                 ('picking_id', '=', wiz_browse.picking_id.id),
                                 ('line_number', '=', imp_line_num),
                                 ('product_id.default_code', '=', row.cells[1].data),
@@ -293,31 +297,33 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                     'move_id': move.id,
                                     'uom': move.product_uom or move.product_id and move.product_id.uom_id,
                                 })
-                                treated_lines.append((to_update['move_id'], imp_line_num))
+                                if sum_qty.get(move.product_id.id):
+                                    sum_qty[move.product_id.id] += imp_qty
+                                else:
+                                    sum_qty[move.product_id.id] = imp_qty
+                                treated_lines.append(to_update['move_id'])
                             else:
                                 move_ids = move_obj.search(cr, uid, move_domain, context=context)
                                 for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=ftf, context=context):
                                     if imp_qty < move.product_qty:
-                                        to_update.update({
-                                            'move_id': move.id,
-                                            'uom': move.product_uom or move.product_id and move.product_id.uom_id,
-                                        })
-                                        if (move.id, move.line_number) in treated_lines:
-                                            line_type = 'split'
+                                        if sum_qty.get(move.product_id.id):
+                                            sum_qty[move.product_id.id] += imp_qty
                                         else:
-                                            treated_lines.append((to_update['move_id'], imp_line_num))
+                                            sum_qty[move.product_id.id] = imp_qty
+                                        new_move_id = self.split_move(cr, uid, move.id, imp_qty, context=context)
+                                        if not new_move_id:
+                                            line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
+                                        else:
+                                            to_update.update({
+                                                'move_id': new_move_id,
+                                                'uom': move.product_uom or move.product_id and move.product_id.uom_id,
+                                            })
+                                            treated_lines.append(new_move_id)
                                         break
                     else:
                         line_errors.append(_(' The Product Code has to be defined.'))
 
-                    # Check for split line
-                    if to_update.get('move_id'):
-                        if line_type == 'split':
-                            new_move_id = self.split_move(cr, uid, to_update['move_id'], imp_qty, context=context)
-                            if not new_move_id:
-                                line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
-                            to_update.update({'move_id': new_move_id})
-                    else:
+                    if not to_update.get('move_id'):
                         line_errors.append(_(' The imported line\'s data does not match %s\'s data.')
                                            % (wiz_browse.picking_id.name,))
 
@@ -428,11 +434,25 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 error_log = _("Reported errors : \n") + error_log
 
             # checking integrity of from_pack and to_pack
-            from_to_pack_errors = ppl_proc_obj.check_sequences(cr, uid, sequences, False, context=context)
-            if from_to_pack_errors:
-                from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
+            from_to_pack_errors = False
+            if sequences:
+                from_to_pack_errors = ppl_proc_obj.check_sequences(cr, uid, sequences, False, context=context)
+                if from_to_pack_errors:
+                    from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
 
-            if not error_log and not from_to_pack_errors:
+            # Check qties
+            qty_errors = ''
+            cr.execute('''SELECT p.id, p.default_code, SUM(product_qty) FROM stock_move m, product_product p
+                WHERE m.product_id = p.id AND m.picking_id = %s GROUP BY p.id, p.default_code''', (wiz_browse.picking_id.id,))
+            for prod in cr.fetchall():
+                if sum_qty.get(prod[0]) and sum_qty[prod[0]] < prod[2]:
+                    qty_errors += _(' There is too few Quantities put in the report for %s.') % (prod[1],)
+                if sum_qty.get(prod[0]) and sum_qty[prod[0]] > prod[2]:
+                    qty_errors += _(' There is too much Quantities put in the report for %s.') % (prod[1],)
+            if qty_errors:
+                qty_errors = _('Quantities errors : \n') + qty_errors
+
+            if not error_log and not from_to_pack_errors and not qty_errors:
                 for data in updated_data:
                     if data.get('move_id'):
                         vals = {
@@ -446,16 +466,21 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             'height': data.get('pack_type') and data['pack_type'].height or data.get('height', 0),
                         }
                         move_obj.write(cr, uid, data['move_id'], vals, context=context)
+            if error_log or from_to_pack_errors or qty_errors:
+                cr.rollback()
+            
             end_time = time.time()
             total_time = str(round(end_time - start_time)) + _(' second(s)')
             final_message = _('''    Importation completed in %s!
     # of lines without error : %s of %s lines
     # of lines to correct: %s
-    %s
+    
     %s
     
     %s
-    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, from_to_pack_errors, message)
+    
+    %s
+    ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, qty_errors, from_to_pack_errors)
             wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids,

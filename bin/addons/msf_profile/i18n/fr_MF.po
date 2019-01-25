@@ -104524,3 +104524,23 @@ msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
 #, python-format
 msgid " The Quantity per Pack is incorrect."
 msgstr " La Quantité par Colis est incorrecte."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:455
+#, python-format
+msgid " There is too few Quantities put in the report for %s."
+msgstr " Il n'y a pas assez de Quantités pour le produit %s dans le rapport."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:457
+#, python-format
+msgid " There is too much Quantities put in the report for %s."
+msgstr " Il y a trop de Quantités pour le produit %s dans le rapport."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:459
+#, python-format
+msgid "Quantities errors : \n"
+""
+msgstr "Erreurs sur les quantités : \n"
+""
