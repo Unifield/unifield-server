@@ -1,3 +1,1 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-field_access_rule_group_rules,Field Access Rule Group,model_msf_field_access_rights_field_access_rule,field_access_rule_group,1,1,1,1
-field_access_rule_line_group_rules,Field Access Rule Lines Group,model_msf_field_access_rights_field_access_rule_line,field_access_rule_group,1,1,1,1

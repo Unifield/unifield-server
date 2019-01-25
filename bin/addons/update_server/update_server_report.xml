@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            auto="False"
+            id="report_sync_server_user_rights_download"
+            model="backup.download"
+            name="sync_server.user_rights.download"
+            string="Download UR"
+            menu="False"
+        />
+    </data>
+</openerp>
+

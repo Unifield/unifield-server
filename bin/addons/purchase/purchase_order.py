@@ -38,6 +38,7 @@ from msf_order_date.order_dates import common_create, get_type, common_requested
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
+from sourcing.purchase_order import COMPATS
 
 
 ORDER_TYPES_SELECTION = [
@@ -618,7 +619,7 @@ class purchase_order(osv.osv):
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, add_empty=True),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
@@ -775,7 +776,7 @@ class purchase_order(osv.osv):
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
         'loan_duration': 2,
         'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
@@ -1727,6 +1728,13 @@ class purchase_order(osv.osv):
             v.update({'delivery_requested_date': time.strftime('%Y-%m-%d'), 'delivery_confirmed_date': time.strftime('%Y-%m-%d')})
         else:
             v.update({'delivery_confirmed_date': False})
+
+        if partner and (order_type not in COMPATS or partner['partner_type'] not in COMPATS[order_type]):
+            w.update({
+                'title': _('An error has occurred !'),
+                'message': _('Partner type and order type are incompatible! Please change either order type or partner.'),
+            })
+            v.update({'order_type': 'regular'})
 
         return {'value': v, 'warning': w}
 

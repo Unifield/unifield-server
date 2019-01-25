@@ -231,6 +231,7 @@ class sync_monitor(osv.osv):
         'sequence_number' : fields.integer("Seq",  readonly=True, required=True),
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
+        'user_rights': fields.selection(status_dict.items(), string="User Rights", readonly=True),
         'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
         'data_pull_receive' : fields.selection(status_dict.items(), string="DP receive", readonly=True),
         'data_pull_execute' : fields.selection(status_dict.items(), string="DP execute", readonly=True),

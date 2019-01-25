@@ -34,6 +34,8 @@ class field_access_rule(osv.osv):
 
     _name = "msf_field_access_rights.field_access_rule"
     _description = 'Field Access Rule'
+    _inherit = 'common.import.ur'
+    _auto = True
 
     def _get_all_model_ids(self, cr, uid, model_name):
         def recur_get_model(model, res):
@@ -67,7 +69,7 @@ class field_access_rule(osv.osv):
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
 
         'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True),
-        }
+    }
 
     _defaults = {
         'active': False,

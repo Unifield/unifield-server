@@ -183,7 +183,7 @@ class real_average_consumption(osv.osv):
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}, add_empty=True),
         'details': fields.char(size=86, string='Details', states={'done':[('readonly',True)]}),
         'notes': fields.text('Notes', states={'done':[('readonly',True)]}),
     }
@@ -193,7 +193,7 @@ class real_average_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
     }
 
     _sql_constraints = [
@@ -213,6 +213,14 @@ class real_average_consumption(osv.osv):
 
         if not 'name' in vals:
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
+
+        if 'cons_location_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['cons_location_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Source Location is inactive"))
+
+        if 'activity_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['activity_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Destination Location is inactive"))
 
         return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
@@ -331,6 +339,12 @@ class real_average_consumption(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['cons_location_id', 'activity_id'], context=context):
+            if not x.cons_location_id.active:
+                raise osv.except_osv(_('Warning'), _("Source Location %s is inactive") % (x.cons_location_id.name,))
+            if not x.activity_id.active:
+                raise osv.except_osv(_('Warning'), _("Destination Location %s is inactive") % (x.activity_id.name,))
 
         self.write(cr, uid, ids, {'state':'draft'}, context=context)
 

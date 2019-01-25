@@ -455,6 +455,8 @@ class stock_location(osv.osv):
 
         return False
 
+
+
 stock_location()
 
 
@@ -612,6 +614,27 @@ class stock_picking(osv.osv):
         new_id = super(stock_picking, self).create(cr, user, vals, context)
         return new_id
 
+
+    def _get_location_dest_active_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if there is draft moves on Picking Ticket
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+            res[pick.id] = True
+            for int_move in self.pool.get('stock.move').browse(cr, uid, [x.id for x in pick.move_lines], fields_to_fetch=['location_dest_id'], context=context):
+                if not int_move.location_dest_id.active:
+                    res[pick.id] = False
+                    break
+
+        return res
+
+
     _columns = {
         'name': fields.char('Reference', size=64, select=True),
         'origin': fields.char('Origin', size=512, help="Reference of the document that produced this picking.", select=True),
@@ -657,6 +680,8 @@ class stock_picking(osv.osv):
         'claim': fields.boolean('Claim'),
         'claim_name': fields.char(string='Claim name', size=512),
         'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
+        'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
+        'packing_list': fields.char('Supplier Packing List', size=30),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -723,8 +748,17 @@ class stock_picking(osv.osv):
             'claim_name': '',
             'from_manage_expired': False,
         })
-        picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
+
+        fields_to_read = ['name', 'type']
+
+        if not context.get('keep_prodlot'):
+            fields_to_read += ['move_lines']
+
+        picking_obj = self.read(cr, uid, id, fields_to_read, context=context)
         move_obj = self.pool.get('stock.move')
+
+        if not context.get('keep_prodlot') and picking_obj.get('move_lines') and not context.get('allow_copy'):
+            move_obj._check_locations_active(cr, uid, picking_obj['move_lines'], context=context)
         if ('name' not in default) or (picking_obj['name'] == '/'):
             seq_obj_name =  ''.join(('stock.picking.', picking_obj['type']))
             default['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_obj_name)
@@ -3120,7 +3154,9 @@ class stock_move(osv.osv):
 
         return [move.id for move in complete]
 
+
 stock_move()
+
 
 class stock_inventory(osv.osv):
     _name = "stock.inventory"

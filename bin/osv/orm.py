@@ -595,7 +595,6 @@ class orm_template(object):
     def __export_row(self, cr, uid, row, fields, context=None):
         if context is None:
             context = {}
-
         sync_context = context.get('sync_update_creation')
 
         def check_type(field_type):
@@ -618,7 +617,13 @@ class orm_template(object):
 
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+            is_sync = context.get('sync_update_creation') or context.get('sync_update_creation')
+            data_ids = []
+            dom = [('model', '=', r._table_name), ('res_id', '=', r['id'])]
+            if is_sync:
+                data_ids = model_data.search(cr, uid, dom+[('module', '=', 'sd')])
+            if not data_ids:
+                data_ids = model_data.search(cr, uid, dom)
             if len(data_ids):
                 d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                 if d['module']:
@@ -833,6 +838,14 @@ class orm_template(object):
 
         return processed, rejected, headers
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init',
+                        current_module='', noupdate=False, context=None, filename=None,
+                        display_all_errors=False, has_header=False):
+        if context is None:
+            context = {}
+        context['import_from_web_interface'] = True
+        return self.import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename, display_all_errors=display_all_errors, has_header=has_header)
+
     def import_data(self, cr, uid, fields, datas, mode='init',
                     current_module='', noupdate=False, context=None, filename=None,
                     display_all_errors=False, has_header=False):
@@ -897,7 +910,13 @@ class orm_template(object):
                 obj_model = self.pool.get(model_name)
                 ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
-                    raise ValueError('No record found for %s' % (id,))
+                    if context.get('sync_update_execution'):
+                        newctx = context.copy()
+                        newctx['active_test'] = False
+                        ids = obj_model.name_search(cr, uid, id, operator='=', context=newctx)
+
+                    if not ids:
+                        raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
             return id
 
@@ -1103,6 +1122,7 @@ class orm_template(object):
                     error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                                                           tools.ustr(e) + "\n" +
                                                           tools.ustr(traceback.format_exc())))
+                    cr.rollback()
                     continue
                 else:
                     return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
@@ -1122,15 +1142,8 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
-    def import_data_web(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None,
-                        filename=None, display_all_errors=False, has_header=False):
-        """
-        Import data method called at import from web ONLY (contrary to the import_data method also used for sync msgs).
-        Call import_data by default but can be overridden if needed.
-        """
-        return super(orm, self).import_data(cr, uid, fields, datas, mode=mode, current_module=current_module,
-                                            noupdate=noupdate, context=context, filename=filename,
-                                            display_all_errors=display_all_errors, has_header=has_header)
+    def read_web(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        return self.read(cr, user, ids, fields, context=context, load=load)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
@@ -1398,6 +1411,8 @@ class orm_template(object):
                                                                    context_lang, val)
                             sel2_append((key, val2 or val))
                     sel = sel2 or sel
+                    if getattr(field_col, 'add_empty', None):
+                        res[f]['add_empty'] = getattr(field_col, 'add_empty')
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
@@ -1939,7 +1954,10 @@ class orm_template(object):
         result['fields'] = xfields
 
 
-        result['uom_rounding'] = self.pool.get('product.uom').get_rounding(cr, user)
+        result['uom_rounding'] = {}
+        uom_obj = self.pool.get('product.uom')
+        if uom_obj:
+            result['uom_rounding'] = uom_obj.get_rounding(cr, user)
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
@@ -1960,14 +1978,14 @@ class orm_template(object):
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
                                          'client_print_multi', [(self._name, False)], False,
-                                         context)
+                                         context, view_id=view_id)
             resaction = ir_values_obj.get(cr, user, 'action',
                                           'client_action_multi', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
                                           'client_action_relate', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -2757,13 +2775,15 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        rounding_uom = [self._columns[f].related_uom for f in fields_pre if f in self._columns and getattr(self._columns[f], 'related_uom')]
-        for f in fields_pre + rounding_uom:
+        rounding_uom = set(self._columns[f].related_uom for f in fields_pre if f in self._columns and hasattr(self._columns[f], 'related_uom') and self._columns[f].related_uom)
+        for f in fields_pre + list(rounding_uom):
             if f not in ['id', 'sequence']:
                 if f in rounding_uom:
                     group_operator = fget[f].get('group_operator', 'max')
                 else:
                     group_operator = fget[f].get('group_operator', 'sum')
+                if group_operator == 'no_group':
+                    continue
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
