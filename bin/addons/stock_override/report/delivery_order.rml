@@ -45,6 +45,22 @@
             <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
         </blockTableStyle>
 
+        <blockTableStyle id="NotesInfo">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" />
+            <lineStyle kind="LINEAFTER" colorName="black" />
+            <lineStyle kind="LINEABOVE" colorName="black" />
+        </blockTableStyle>
+
+        <blockTableStyle id="NotesInfoBas">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" />
+            <lineStyle kind="LINEAFTER" colorName="black" />
+            <lineStyle kind="LINEBELOW" colorName="black" />
+        </blockTableStyle>
+
         <blockTableStyle id="LineInfo">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -67,6 +83,7 @@
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
+        <paraStyle name="LNotes" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="5.0" />
         <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="7.0" alignement="LEFT" leading="30" />
     </stylesheet>
@@ -259,6 +276,26 @@
         </blockTable>
 
         </section>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="755.0" style="NotesInfo">
+            <tr>
+                <td>
+                  <para style="LNotes" alignment="LEFT">Notes :</para>
+                  <para style="LNotes" alignment="LEFT">[[ picking.note ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="755.0" style="NotesInfoBas" >
+            <tr>
+                <td>
+                  <para style="LNotes" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
 
         <para style="Header">
             <font color="white"> </font>
