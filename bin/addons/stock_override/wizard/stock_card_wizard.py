@@ -94,7 +94,6 @@ class stock_card_wizard(osv.osv_memory):
         '''
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
-        loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('stock.card.wizard.line')
         pi_line_obj = self.pool.get('physical.inventory.counting')
@@ -115,9 +114,7 @@ class stock_card_wizard(osv.osv_memory):
 
         if location_id:
             context.update({'location': location_id})
-            location_ids = loc_obj.search(cr, uid,
-                                          [('location_id', 'child_of', location_id)],
-                                          context=context)
+            location_ids = [location_id]
 
         # Set the context to compute stock qty at the start date
         context.update({'to_date': card.from_date})
@@ -149,7 +146,6 @@ class stock_card_wizard(osv.osv_memory):
             ('inventory_id.state', 'in', ['confirmed', 'closed'])
         ]
 
-
         if card.from_date:
             domain.append(('date', '>=', card.from_date))
             inv_dom.append(('inventory_id.date_done', '>=', card.from_date))
@@ -174,8 +170,8 @@ class stock_card_wizard(osv.osv_memory):
 
         if location_id:
             domain.extend(['|',
-                           ('location_id', 'child_of', location_id),
-                           ('location_dest_id', 'child_of', location_id)])
+                           ('location_id', '=', location_id),
+                           ('location_dest_id', '=', location_id)])
             inv_dom.append(('location_id', 'child_of', location_id))
             pi_counting_dom.append(('inventory_id.location_id', 'child_of', location_id))
         else:
