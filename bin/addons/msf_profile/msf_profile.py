@@ -63,8 +63,7 @@ class patch_scripts(osv.osv):
         so_id = data_obj.get_object_reference(cr, uid, 'product', 'list0')[1]
 
         c = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        instance_name = c and c.instance_id and c.instance_id.name or ''
-        if instance_name.startswith('OCG'):
+        if c.currency_id and c.currency_id.name =='CHF':
             ch_po_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_purchase')[1]
             ch_so_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_sale')[1]
             to_fix = [(po_id, so_id, ['section']), (ch_po_id, ch_so_id, ['intermission'])]
