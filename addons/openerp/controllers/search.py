@@ -278,11 +278,11 @@ class Search(Form):
             if v and isinstance(v, basestring) and '__' in v:
                 value, operator = v.split('__')
                 v = int(value)
-            update_ctx = expr_eval(c, {'self':v})
+            update_ctx = expr_eval(c, self=v)
             if update_ctx:
                 ctx['set_by_field'] += update_ctx.keys()
-            ctx.update(update_ctx)
 
+            ctx.update(update_ctx)
 
         context = rpc.session.context
         if ctx:
