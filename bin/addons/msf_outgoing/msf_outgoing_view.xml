@@ -235,7 +235,7 @@
 								widget="one2many_list"
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
 							    on_change="onchange_move()"
-                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirm', 'assigned']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirm')])]"
+                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
                                 default_selector="state == 'draft' and '0' or '1'"
 							    >
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
