@@ -23,12 +23,7 @@ from osv import fields, osv
 from tools.translate import _
 from tools import misc
 from tools import config
-import base64
 import os
-from cryptography.fernet import Fernet
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import StringIO
 from tools import webdav
 import zipfile
@@ -38,26 +33,6 @@ from mx import DateTime
 import logging
 import requests
 import time
-
-class crypt():
-    def __init__(self, password):
-        password = bytes(password)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            iterations=100000,
-            salt=password,
-            backend=default_backend()
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-        self.Fernet = Fernet(key)
-
-    def encrypt(self, string):
-        return self.Fernet.encrypt(string)
-
-    def decrypt(self, string):
-        return self.Fernet.decrypt(bytes(string))
-
 
 
 
@@ -512,7 +487,7 @@ class msf_instance_cloud(osv.osv):
             identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
             if not identifier:
                 raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
-            crypt_o = crypt(identifier)
+            crypt_o = misc.crypt(identifier)
             self.write(cr, uid, id, {'cloud_password': crypt_o.encrypt(value)}, context=context)
         return True
 
@@ -525,7 +500,7 @@ class msf_instance_cloud(osv.osv):
         }
         if d['cloud_password'] and d['instance_identifier']:
             try:
-                crypt_o = crypt(d['instance_identifier'])
+                crypt_o = misc.crypt(d['instance_identifier'])
                 ret['password'] = crypt_o.decrypt(d['cloud_password'])
             except:
                 raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
