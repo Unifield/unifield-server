@@ -486,6 +486,7 @@
             <rng:optional><rng:attribute name="get_selection"/></rng:optional>
             <rng:optional><rng:attribute name="accept"/></rng:optional>
             <rng:optional><rng:attribute name="filter_selector"/></rng:optional>
+            <rng:optional><rng:attribute name="default_selector"/></rng:optional>
             <rng:optional><rng:attribute name="o2m_selectable"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
