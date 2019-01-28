@@ -214,6 +214,7 @@ class O2M(TinyInputWidget):
 
                 ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, sort_key_order, current.context)
                 id = ids[0] if ids else None
+                current.id = id
 
         if current and params.source and isinstance(params.source, basestring) and self.name in params.source.split('/'):
             id = current.id
