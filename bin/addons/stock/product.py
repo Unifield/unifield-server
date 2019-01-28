@@ -201,7 +201,7 @@ class product_product(osv.osv):
             if warehouse_id:
                 context['warehouse'] = warehouse_id[0]
 
-        if not context.get('location') and context.get('search_location'):
+        if context.get('search_location'):
             context['location'] = context.get('search_location')
 
         if context.get('warehouse', False):
