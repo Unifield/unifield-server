@@ -46,7 +46,7 @@ class stock_card_wizard(osv.osv_memory):
         ),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
-        'available_stock': fields.float(digits=(16,2), string='Available stock'),
+        'real_stock': fields.float(digits=(16,2), string='Real stock'),
         'card_lines': fields.one2many('stock.card.wizard.line', 'card_id',
                                       string='Card lines'),
     }
@@ -307,7 +307,7 @@ class stock_card_wizard(osv.osv_memory):
                 new_line['balance'] = initial_stock
                 line_obj.create(cr, uid, new_line, context=context)
 
-        self.write(cr, uid, [ids[0]], {'available_stock': initial_stock},
+        self.write(cr, uid, [ids[0]], {'real_stock': initial_stock},
                    context=context)
 
         return {'type': 'ir.actions.act_window',

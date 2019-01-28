@@ -23898,7 +23898,6 @@ msgstr "Lier un utilisateur à un employé"
 
 #. modules: procurement_cycle, threshold_value, stock_override
 #: field:stock.warehouse.order.cycle.line,available_stock:0
-#: field:stock.card.wizard,available_stock:0
 #: field:threshold.value.line,available_stock:0
 msgid "Available stock"
 msgstr "Stock Disponible"
@@ -34772,6 +34771,7 @@ msgstr "Inclure dans le Montant de Base"
 #: field:expiry.quantity.report.line,real_stock:0
 #: field:stock.warehouse.order.cycle.line,real_stock:0
 #: field:threshold.value.line,real_stock:0
+#: field:stock.card.wizard,real_stock:0
 msgid "Real stock"
 msgstr "Stock réel"
 
