@@ -120,7 +120,8 @@ class ListView(TinyView):
                                     force_readonly=screen.force_readonly,
                                     approximation=screen.approximation,
                                     unique_id=screen.unique_id,
-                                    filter_selector=screen.filter_selector)
+                                    filter_selector=screen.filter_selector,
+                                    default_selector=screen.default_selector)
 
         screen.ids = widget.ids
         screen.limit = widget.limit

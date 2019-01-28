@@ -116,7 +116,6 @@ class O2M(TinyInputWidget):
 
         # get params for this field
         current = params.chain_get(self.name)
-
         self.model = attrs['relation']
         self.link = attrs.get('link', '')
         self.onchange = None # override onchange in js code
@@ -149,18 +148,25 @@ class O2M(TinyInputWidget):
 
 
         self.filter_selector = attrs.get('filter_selector', None)
+        self.default_selector = 0
         if self.filter_selector:
             self.filter_selector = eval(self.filter_selector)
-
             # If we have a filter selector, and no domain yet, use the first
             # filter as default
-            if current.domain == None:
+            # _terp_filter_action set means pager action: next, previous ... so domain must be computed again
+            if current.domain == None or params.get('_terp_filter_action'):
                 # Expect filter_selector to be a non-empty list
                 # of (name, domain)
                 assert len(self.filter_selector) > 0
                 assert len(self.filter_selector[0]) == 2
-                default_domain = self.filter_selector[0][1]
-                current.domain = [default_domain]
+                if attrs.get('default_selector'):
+                    try:
+                        self.default_selector = int(attrs.get('default_selector'))
+                    except:
+                        pass
+
+                default_domain = self.filter_selector[self.default_selector][1]
+                current.domain = default_domain
 
 
         if not current.domain:
@@ -266,7 +272,8 @@ class O2M(TinyInputWidget):
                              editable=self.editable, readonly=self.readonly,
                              selectable=selectable, nolinks=self.link, _o2m=1,
                              force_readonly=self.force_readonly,
-                             filter_selector=self.filter_selector)
+                             filter_selector=self.filter_selector,
+                             default_selector=self.default_selector)
 
         self.id = id
         self.ids = ids

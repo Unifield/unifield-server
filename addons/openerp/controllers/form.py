@@ -879,6 +879,9 @@ class Form(SecuredController):
         ids = params.ids or []
         filter_action = params.filter_action
 
+        if not filter_action:
+            params.filter_action = 'PAGER_LIMIT'
+
         if ids and filter_action == 'FIRST':
             o = 0
             id = ids[0]
