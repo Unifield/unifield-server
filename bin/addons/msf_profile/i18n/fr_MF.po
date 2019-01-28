@@ -103843,3 +103843,14 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Show not available lines"
+msgstr "Voir les lignes non disponibles"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Show unprocessed lines"
+msgstr "Voir les lignes non traitées"
+
