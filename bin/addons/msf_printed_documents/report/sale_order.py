@@ -31,6 +31,7 @@ class order(report_sxw.rml_parse):
             'to_time': self.str_to_time,
             'get_from': self.get_from,
             'enumerate': enumerate,
+            'getTotalLines': self.get_total_lines,
         })
         
     def str_to_time(self, time):
@@ -46,6 +47,10 @@ class order(report_sxw.rml_parse):
     def get_from(self, partner_id):
         addr_id = self.pool.get('res.partner').address_get(self.cr, self.uid, partner_id)['default']
         return self.pool.get('res.partner.address').browse(self.cr, self.uid, addr_id).name
+
+    def get_total_lines(self, sale_id):
+        sale_domain = [('order_id', '=', sale_id), ('state', 'not in', ['cancel', 'cancel_r'])]
+        return len(self.pool.get('sale.order.line').search(self.cr, self.uid, sale_domain, context=self.localcontext))
             
 
 report_sxw.report_sxw('report.msf.sale.order', 'sale.order', 'addons/msf_printed_documents/report/sale_order.rml', parser=order, header=False)
