@@ -468,7 +468,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         move_obj.write(cr, uid, data['move_id'], vals, context=context)
             if error_log or from_to_pack_errors or qty_errors:
                 cr.rollback()
-            
+
             end_time = time.time()
             total_time = str(round(end_time - start_time)) + _(' second(s)')
             final_message = _('''    Importation completed in %s!
@@ -573,35 +573,16 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+            res = self.pool.get('ir.actions.act_window').\
+                open_view_from_xmlid(cr, uid, 'msf_outgoing.action_ppl', ['form', 'tree'], context=context)
+            res['res_id'] = picking_id.id
+            return res
 
     def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for wiz_obj in self.browse(cr, uid, ids, context=context):
-            picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+        return self.cancel(cr, uid, ids, context=context)
 
 
 wizard_import_ppl_to_create_ship()
