@@ -91495,15 +91495,24 @@ msgstr "Cette catégorie de commande n'est pas cohérente avec le(s) produit(s) 
 msgid "Kit Creation"
 msgstr "Création d'un Kit "
 
-#. modules: account_override, vertical_integration, board, finance, register_accounting
+#. modules: account_override, vertical_integration, board, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:272
 #: report:addons/board/report/integrity.mako:78
 #: field:cash.request.expense,prop_instance_id:0
 #: field:cash.request.recap.expense,instance_id:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:257
-#: report:addons/register_accounting/report/fully_report_xls.mako:434
 msgid "Prop. Instance"
 msgstr "Instance Prop."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:478
+msgid "Prop. Instance:"
+msgstr "Instance Prop. :"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:530
+msgid "Number of entries:"
+msgstr "Nombre d'entrées :"
 
 #. module: msf_processes
 #: model:process.transition,note:msf_processes.process_transition_suppliervalidcommitment0
@@ -101382,11 +101391,6 @@ msgstr "Type d'Entrée"
 #: report:addons/register_accounting/report/fully_report_xls.mako:552
 msgid "Free Ref"
 msgstr "Réf Libre"
-
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:418
-msgid "REGISTER REPORT"
-msgstr "RAPPORT DE REGISTRE"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:540

@@ -36,6 +36,13 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <Style ss:ID="header_part_side"> <!-- borders on the sides only -->
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
     <Style ss:ID="header_part_center">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
       <Borders>
@@ -54,6 +61,16 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <NumberFormat ss:Format="Standard"/>
+    </Style>
+    <Style ss:ID="header_part_integer">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <NumberFormat ss:Format="#,##0"/>
     </Style>
     <Style ss:ID="column_headers">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
@@ -409,39 +426,6 @@
       </Borders>
     </Style>
   </Styles>
-  <Worksheet ss:Name="Info">
-    <Table>
-      <Column ss:Width="101.1937"/>
-      <Column ss:Width="63.01"/>
-      <Row ss:Height="12.1039">
-        <Cell ss:MergeAcross="3" ss:StyleID="title">
-          <Data ss:Type="String">${_('REGISTER REPORT')|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="12.81">
-        <Cell ss:Index="2"/>
-      </Row>
-      <Row ss:Height="12.1039">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Report Date:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="short_date2" >
-          <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="12.6425">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Prop. Instance')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part_center">
-          <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-        </Cell>
-      </Row>
-    </Table>
-    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-      <DoNotDisplayGridlines/>
-    </WorksheetOptions>
-  </Worksheet>
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Names>
@@ -471,38 +455,6 @@
       </Row>
       <Row ss:Height="14.5134">
       </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Code:')}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.journal_id.code|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Period:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Currency:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Starting balance:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
-        </Cell>
-      </Row>
       <%
       if o.journal_id.type == 'cash':
           closing_bal_title = _('CashBox balance:')
@@ -518,6 +470,28 @@
       %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Report Date:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="short_date2" >
+          <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Starting balance:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_number">
+          <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="12.6425">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Prop. Instance:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_center">
+          <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${closing_bal_title|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
@@ -525,6 +499,13 @@
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Code:')}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.journal_id.code|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${_('Calculated balance:')|x} </Data>
         </Cell>
@@ -534,10 +515,32 @@
       </Row>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Period:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${_('State:')|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${o.state and getSel(o, 'state') or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Currency:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Number of entries:')|x} </Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_integer">
+          <Data ss:Type="Number">${getNumberOfEntries(o)|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
