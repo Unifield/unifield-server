@@ -515,7 +515,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
                 except IndexError, e:
-                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s" % (index+1, len(row), tools.ustr(traceback.format_exc()))))
+                    raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s") % (index+1, len(row), tools.ustr(traceback.format_exc())))
 
         return values, nb_line, error
 
@@ -813,10 +813,10 @@ Nothing has been imported because of %s. See below:
                 if pack_found:
                     self.write(cr, uid, [wiz.id], {'pack_found': True}, context=context)
                 if pack_sequences:
+                    rounding_issues = []
                     uom_ids = uom_obj.search(cr, uid, [])
                     uom_data = dict((x.id, x) for x in uom_obj.browse(cr, uid, uom_ids, fields_to_fetch=['rounding'], context=context))
                     ppl_processor = self.pool.get('ppl.processor')
-                    self.write(cr, uid, wiz.id, {'extra_info': _('There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created') % {'num_pl': len(pack_sequences)}}, context=context)
                     for ppl in pack_sequences:
                         ppl_processor.check_sequences(cr, uid, pack_sequences[ppl], pack_info_obj)
                         for pack_d in pack_sequences[ppl]:
@@ -824,13 +824,22 @@ Nothing has been imported because of %s. See below:
                             if num_of_pack:
                                 for line in data_per_pack.get(pack_d[2], []):
                                     if line[3] and line[2] in uom_data:
-                                        ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3], pack_info_obj)
+                                        if not ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3]):
+                                            rounding_issues.append('Packing List %s, Pack from parcel %s, to parcel %s' % (ppl or '-', pack_d[0], pack_d[1]))
 
                         pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)
                         if pack_errors_ids:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
                                 values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+
+
+                    rounding_text = ""
+                    if rounding_issues:
+                        rounding_text = "\n" + _("WARNING! The packing results in one or more products with decimal quantities per pack, therefore it might not be possible to do a return of packs or to ship only some of this range of packs") + "\n -"
+                        rounding_text += "\n - ".join(rounding_issues)
+
+                    self.write(cr, uid, wiz.id, {'extra_info': _('There are %(num_pl)d Supplier Packing lists in the imported IN: upon confirmation of this screen %(num_pl)d PICK and %(num_pl)d PPL will be created %(rounding_text)s') % {'num_pl': len(pack_sequences), 'rounding_text': rounding_text}}, context=context)
 
 
                 to_del = []

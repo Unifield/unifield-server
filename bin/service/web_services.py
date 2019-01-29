@@ -952,7 +952,7 @@ class report_spool(netsvc.ExportService):
         report_id = self.id
         self.id_protect.release()
         model_obj = pool.get(model)
-        view_name = context.get('_terp_view_name', '')
+        view_name = context.get('_terp_view_name', '') or context.get('_terp_view_name_for_export', '')
         title = '%s_%s' % (view_name, time.strftime('%Y%m%d'))
         self._reports[report_id] = {
             'uid': uid,

@@ -74,8 +74,8 @@
                             </page>
                         </notebook>
                     </group>
-                    <group colspan="9" col="9" name="actions">
-                        <separator string="Actions" colspan="8" />
+                    <group colspan="9" col="10" name="actions">
+                        <separator string="Actions" colspan="9" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
                             />

@@ -649,37 +649,39 @@ class stock_incoming_processor(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wizard = self.browse(cr, uid, ids[0], context=context)
 
         sequence_ok = True
-        for wizard in self.browse(cr, uid, ids, context=context):
-            total_qty = 0
-            sequences = {}
-            for move in wizard.move_ids:
-                total_qty += move.quantity
-                if move.quantity:
-                    sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
-                    num_of_packs = move.to_pack - move.from_pack + 1
-                    if num_of_packs:
-                        sequence_ok = self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, self.pool.get('stock.move.in.processor'), field='sequence_issue', context=False)
-                if move.integrity_status and move.integrity_status != 'empty':
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('Please correct red lines before processing')
-                    )
-
-            if not total_qty:
+        rounding_issues = []
+        total_qty = 0
+        sequences = {}
+        for move in wizard.move_ids:
+            total_qty += move.quantity
+            if move.quantity:
+                sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
+                num_of_packs = move.to_pack - move.from_pack + 1
+                if num_of_packs:
+                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, context=context):
+                        rounding_issues.append(move.line_number)
+            if move.integrity_status and move.integrity_status != 'empty':
                 raise osv.except_osv(
-                    _('Processing Error'),
-                    _("You have to enter the quantities you want to process before processing the move")
+                    _('Error'),
+                    _('Please correct red lines before processing')
                 )
-            if not sequences:
-                return False
-            for pl in sequences:
-                sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
-        if not sequence_ok:
-            return False
 
-        return True
+        if not total_qty:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _("You have to enter the quantities you want to process before processing the move")
+            )
+
+        if not sequences:
+            sequence_ok = False
+            return (rounding_issues, sequence_ok)
+        for pl in sequences:
+            sequence_ok = sequence_ok and self.pool.get('ppl.processor').check_sequences(cr, uid, sequences[pl], self.pool.get('stock.move.in.processor'), field='sequence_issue')
+
+        return (rounding_issues, sequence_ok)
 
 
     def create_pack_family_lines(self, cr, uid, ids, context=None):
@@ -735,7 +737,9 @@ class stock_incoming_processor(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        if not self.check_before_creating_pack_lines(cr, uid, ids, context=context):
+        rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
+
+        if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
             return {
                 'name': _('Products to Process'),
@@ -748,6 +752,33 @@ class stock_incoming_processor(osv.osv):
                 'target': 'new',
                 'context': context,
             }
+
+        if rounding_issues:
+            rounding_issues.sort()
+
+            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                'incoming_processor_id': ids[0],
+                'line_number_with_issue': ', '.join([str(x) for x in rounding_issues]),
+            }, context=context)
+            return {
+                'name': _("PPL integrity"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'check.ppl.integrity',
+                'target': 'new',
+                'res_id': [wiz_check_ppl_id],
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+            }
+
+        return self.do_process_to_ship(cr, uid, ids, context=context)
+
+
+    def do_process_to_ship(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
 
         # delete previous fam if has:
         pack_fam_to_del = self.pool.get('in.family.processor').search(cr, uid, [('wizard_id', 'in', ids)], context=context)
@@ -805,7 +836,7 @@ class stock_incoming_processor(osv.osv):
                     'integrity_status': fam.integrity_status,
                     'packing_list': fam.packing_list,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight', 'packing_list']:
+                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)

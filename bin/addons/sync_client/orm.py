@@ -266,6 +266,7 @@ SELECT res_id, touched
             'supplier.catalogue': [],
             'account.bank.statement': ['line_ids'],
             'res.currency': ['rate_ids'],
+            'product.list': [],
         }
 
         _previous_calls = _previous_calls or []

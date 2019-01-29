@@ -6,7 +6,7 @@ import tools
 
 class finance_sync_query(osv.osv):
     _name = 'finance.sync.query'
-    _description = 'Finance Synced Queries'
+    _description = 'Finance Queries'
     _order = 'model, name, id'
     _auto = False
 

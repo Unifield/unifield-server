@@ -43,7 +43,7 @@
             <field name="model">finance.sync.query</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Finance Synced Queries">
+                <tree string="Finance Queries">
                     <field name="name" />
                     <field name="model" />
                     <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
@@ -56,7 +56,7 @@
         </record>
 
         <record id="finance_sync_query_action" model="ir.actions.act_window">
-            <field name="name">Finance Synced Queries</field>
+            <field name="name">Finance Queries</field>
             <field name="res_model">finance.sync.query</field>
             <field name="view_type">form</field>
             <field name="domain" eval="'[(\'user_id\', \'!=\', '+str(ref('base.user_sync'))+ ')]'" />
