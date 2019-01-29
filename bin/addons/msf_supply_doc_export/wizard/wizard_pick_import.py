@@ -71,7 +71,7 @@ class wizard_pick_import(osv.osv_memory):
     }
 
 
-    def normalize_data(self, cr, uid, data):
+    def normalize_data(self, cr, uid, data, xls_line_number):
         if 'qty_picked' in data: # set to float
             if not data['qty_picked']:
                 data['qty_picked'] = 0.0
@@ -92,6 +92,12 @@ class wizard_pick_import(osv.osv_memory):
             if not data['expiry_date']:
                 data['expiry_date'] = '' 
 
+        if data['qty_picked'] > data['qty_to_pick']:
+            raise osv.except_osv(
+                _('Error'), 
+                _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % xls_line_number
+            )
+
         return data
 
 
@@ -109,31 +115,86 @@ class wizard_pick_import(osv.osv_memory):
             'view_mode': 'form',
             'target': 'new',
             'context': context,
-        }  
+        }
 
 
-    def import_pick_xls(self, cr, uid, ids, context=None):
+    def get_matching_move(self, cr, uid, ids, wizard_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=None):
         if context is None:
             context = {}
 
-        wiz = self.browse(cr, uid, ids[0], context=context)
-        import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
+        # same line_number, product, source location, qty
+        move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
+            ('wizard_id', '=', wizard_id),
+            ('line_number', '=', line_data['item']),
+            ('product_id', '=', product_id),
+            ('location_id', '=', location_id),
+            ('ordered_quantity', '=', line_data['qty_to_pick']),
+            ('quantity', '=', 0),
+        ], context=context)
 
-        res_model = 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor'
-        move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
-        res_id = wiz.picking_processor_id.id or wiz.validate_processor_id.id
+        # same line_number, product, source location, greater qty
+        if not move_proc_ids:
+            move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('line_number', '=', line_data['item']),
+                ('product_id', '=', product_id),
+                ('location_id', '=', location_id),
+                ('ordered_quantity', '>', line_data['qty_to_pick']),
+                ('quantity', '=', 0),
+            ], context=context)
 
-        # wizard moves :: reset wizard lines
-        move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [('wizard_id', '=', res_id)], context=context)
-        self.pool.get(move_proc_model).write(cr, uid, move_proc_ids, {
-            'quantity': 0,
-            'prodlot_id': False,
-            'expiry_date': False,
-        }, context=context)
+        # same line_number, product, source location
+        if not move_proc_ids:
+            move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('line_number', '=', line_data['item']),
+                ('product_id', '=', product_id),
+                ('location_id', '=', location_id),
+                ('quantity', '=', 0),
+            ], context=context)
 
-        line_index = 0
+        if not move_proc_ids: # then create new line
+            move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('line_number', '=', line_data['item']),
+                ('product_id', '=', product_id),
+                ('location_id', '=', location_id),
+            ], context=context)
+            if move_proc_ids:
+                new_move_id = self.pool.get(move_proc_model).copy(cr, uid, move_proc_ids[0], {}, context=context)
+                move_proc_ids = [new_move_id]
+            else:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('Line %s: Matching move not found') % xls_line_number
+                )
+
+        return move_proc_ids[0]
+
+
+    def checks_on_batch(self, cr, uid, ids, move_proc, line_data, xls_line_number, context=None):
+        if context is None:
+            context = {}
+
+        if move_proc.product_id.batch_management and not line_data['batch']:
+            raise osv.except_osv(
+                _('Error'), 
+                _('Line %s: Product is batch number mandatory and no batch number is given') % xls_line_number
+            )
+        if not move_proc.product_id.batch_management and move_proc.product_id.perishable and not line_data['expiry_date']:
+            raise osv.except_osv(
+                _('Error'), 
+                _('Line %s: Product is expiry date mandatory and no expiry date is given') % xls_line_number
+            )
+
+
+    def get_import_data(self, cr, uid, ids, import_file, context=None):
+        if context is None:
+            context = {}
+
         import_data_header = {}
         import_data_lines = {}
+        line_index = 0
         for row in import_file.getRows():
             line_index += 1
             if line_index <= max(XLS_TEMPLATE_HEADER.keys()):
@@ -147,65 +208,77 @@ class wizard_pick_import(osv.osv_memory):
                     i += 1
                 import_data_lines[line_index] = line_data
 
+        return (import_data_header, import_data_lines)
+
+
+    def reset_wizard_lines(self, cr, uid, ids, wizard_id, move_proc_model, context=None):
+        if context is None:
+            context = {}
+        move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [('wizard_id', '=', wizard_id)], context=context)
+        self.pool.get(move_proc_model).write(cr, uid, move_proc_ids, {
+            'quantity': 0,
+            'prodlot_id': False,
+            'expiry_date': False,
+        }, context=context)
+
+
+    def get_product_id(self, cr, uid, ids, line_data, context=None):
+        if context is None:
+            context = {}
+
+        product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line_data['code'])], context=context)
+        if not product_ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('Product with code %s not found in database') % line_data['code']
+            )
+        return product_ids[0]
+
+
+    def get_location_id(self, cr, uid, ids, line_data, context=None):
+        if context is None:
+            context = {}
+
+        location_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', line_data['src_location'])], context=context)
+        if not location_ids:
+            raise osv.except_osv(
+                _('Error'),
+                _('Stock location %s not found in database') % line_data['src_location']
+            )
+        return location_ids[0]
+
+
+    def import_pick_xls(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
+        res_model = 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor'
+        move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
+        res_id = wiz.picking_processor_id.id or wiz.validate_processor_id.id
+        import_data_header, import_data_lines = self.get_import_data(cr, uid, ids, import_file, context=context)
+        
+        self.reset_wizard_lines(cr, uid, ids, res_id, move_proc_model, context=context)
+
         if import_data_header['reference'] != wiz.picking_id.name:
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
 
         for xls_line_number, line_data in sorted(import_data_lines.items()):
             if line_data['qty_picked'] is None:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % xls_line_number)
-            line_data = self.normalize_data(cr, uid, line_data)
-            if line_data['qty_picked'] > line_data['qty_to_pick']:
-                raise osv.except_osv(
-                    _('Error'), 
-                    _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % xls_line_number
-                )
 
-            # search line in processor wiz
-            move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
-                ('wizard_id', '=', res_id),
-                ('line_number', '=', line_data['item']),
-                ('ordered_quantity', '=', line_data['qty_to_pick']),
-                ('quantity', '=', 0),
-            ], context=context)
+            line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
 
-            # search line in PICK
-            move_ids = self.pool.get('stock.move').search(cr, uid, [
-                ('picking_id', '=', wiz.picking_id.id),
-                ('line_number', '=', line_data['item']),
-                ('product_qty', '=', line_data['qty_to_pick']),
-            ], context=context)
+            product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
+            location_id = self.get_location_id(cr, uid, ids, line_data, context=context)
+            move_proc_id = self.get_matching_move(cr, uid, ids, res_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=context)
 
-            if not move_proc_ids and not move_ids and line_data['qty_to_pick']:
-                raise osv.except_osv(
-                    _('Error'), 
-                    _('Line %s: Move with line number %s and ordered qty %s not found') % (xls_line_number, line_data['item'], line_data['qty_to_pick'])
-                )
-
-            # if stock move is not "available" then it should be ignored:
-            if move_ids:
-                stock_move = self.pool.get('stock.move').browse(cr, uid, move_ids[0], fields_to_fetch=['state'], context=context)
-                if stock_move.state != 'assigned':
-                    continue
-                
-            if move_proc_ids and line_data['qty_picked'] and line_data['qty_to_pick']:
-                move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_ids[0], context=context)
+            if line_data['qty_picked'] and line_data['qty_to_pick']:
+                move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_id, context=context)
                 to_write = {}
 
-                if line_data['code'] != move_proc.product_id.default_code:
-                    raise osv.except_osv(
-                        _('Error'), 
-                        _('Line %s: Import product code doesn\'t match with the product') % xls_line_number
-                    )
-                if move_proc.product_id.batch_management and not line_data['batch']:
-                    raise osv.except_osv(
-                        _('Error'), 
-                        _('Line %s: Product is batch number mandatory and no batch number is given') % xls_line_number
-                    )
-                if not move_proc.product_id.batch_management and move_proc.product_id.perishable and not line_data['expiry_date']:
-                    raise osv.except_osv(
-                        _('Error'), 
-                        _('Line %s: Product is expiry date mandatory and no expiry date is given') % xls_line_number
-                    )
+                self.checks_on_batch(cr, uid, ids, move_proc, line_data, xls_line_number, context=context)
 
                 to_write['quantity'] = line_data['qty_picked']
 
