@@ -354,7 +354,7 @@
       <Font ss:Color="#0000ff"/>
     </Style>
     <Style ss:ID="short_date2">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
       <NumberFormat ss:Format="Short Date"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -433,7 +433,7 @@
     </Names>
     <Table>
       <Column ss:Width="93.75"/>
-      <Column ss:Width="60.75" ss:Span="1"/>
+      <Column ss:Width="80.75" ss:Span="1"/>
       <Column ss:Width="132.75"/>
       <Column ss:Width="213.75"/>
       <Column ss:Width="98.25"/>
@@ -487,7 +487,7 @@
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${_('Prop. Instance:')|x}</Data>
         </Cell>
-        <Cell ss:StyleID="header_part_center">
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
         </Cell>
         <Cell ss:StyleID="header_part_side"/>
