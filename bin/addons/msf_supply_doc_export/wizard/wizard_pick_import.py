@@ -122,6 +122,8 @@ class wizard_pick_import(osv.osv_memory):
         if context is None:
             context = {}
 
+        original_line = False # if new line is created (split), then it contains the original line
+
         # same line_number, product, source location, qty
         move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
             ('wizard_id', '=', wizard_id),
@@ -162,7 +164,12 @@ class wizard_pick_import(osv.osv_memory):
             ], context=context)
             if move_proc_ids:
                 new_move_id = self.pool.get(move_proc_model).copy(cr, uid, move_proc_ids[0], {}, context=context)
+                original_line = move_proc_ids[0]
                 move_proc_ids = [new_move_id]
+
+                self.pool.get(move_proc_model).write(cr, uid, [new_move_id], {'ordered_quantity': line_data['qty_to_pick']}, context=context)
+                original_qty = self.pool.get(move_proc_model).browse(cr, uid, original_line).ordered_quantity
+                self.pool.get(move_proc_model).write(cr, uid, [original_line], {'ordered_quantity': original_qty - line_data['qty_to_pick']}, context=context)
             else:
                 raise osv.except_osv(
                     _('Error'), 
@@ -270,11 +277,11 @@ class wizard_pick_import(osv.osv_memory):
 
             line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
 
-            product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
-            location_id = self.get_location_id(cr, uid, ids, line_data, context=context)
-            move_proc_id = self.get_matching_move(cr, uid, ids, res_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=context)
-
             if line_data['qty_picked'] and line_data['qty_to_pick']:
+                product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
+                location_id = self.get_location_id(cr, uid, ids, line_data, context=context)
+                move_proc_id = self.get_matching_move(cr, uid, ids, res_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=context)
+                
                 move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_id, context=context)
                 to_write = {}
 

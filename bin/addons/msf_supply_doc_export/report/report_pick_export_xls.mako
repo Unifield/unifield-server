@@ -171,7 +171,7 @@
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(getStock(m) or 0.00) | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.product_qty or 0.00 | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${0 | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="String">${0 | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
           <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
