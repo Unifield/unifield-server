@@ -253,6 +253,31 @@ class finance_archive(finance_export.finance_archive):
         """
         return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
+    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False):
+        """
+        Formats data:
+        - replaces the Journal ID by the Journal Name in the current language
+        - then calls postprocess_selection_columns on data
+        """
+        changes, context = tuple_params
+        # number of the column containing the journal id
+        col_nbr = 2
+        if context is None or 'lang' not in context:
+            context = {'lang': 'en_MF'}  # English by default
+        pool = pooler.get_pool(cr.dbname)
+        journal_obj = pool.get('account.journal')
+        new_data = []
+        for line in data:
+            tmp_l = list(line)  # convert from tuple to list
+            if tmp_l[col_nbr]:
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
+            tmp_l = tuple(tmp_l)  # restore back the initial format
+            new_data.append(tmp_l)
+        return self.postprocess_selection_columns(cr, uid, new_data, changes, column_deletion=column_deletion)
+
 
 # request & postprocess method used for OCB, OCP, and OCG VI and for Liquidity Balances report
 liquidity_sql = """
@@ -304,10 +329,11 @@ liquidity_sql = """
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, context=None):
+def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).
+    Encodes the journal name to UTF-8 if encode is True.
     """
     # number and name of the column containing the journal id
     col_nbr = 2
@@ -323,17 +349,26 @@ def postprocess_liquidity_balances(self, cr, uid, data, context=None):
         # list
         if isinstance(tmp_l, list):
             if tmp_l[col_nbr]:
-                tmp_l[col_nbr] = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
         # tuple
         elif isinstance(tmp_l, tuple):
             tmp_l = list(tmp_l)
             if tmp_l[col_nbr]:
-                tmp_l[col_nbr] = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
         # dictionary
         elif isinstance(tmp_l, dict):
             if tmp_l[col_name]:
-                tmp_l[col_new_name] = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
+                journal_name = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
+                if encode and type(journal_name) == unicode:
+                    journal_name = journal_name.encode('utf-8')
+                tmp_l[col_new_name] = journal_name
                 del tmp_l[col_name]
         new_data.append(tmp_l)
     return new_data
@@ -444,7 +479,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE e.resource_id = r.id;
                 """,
             'journal': """
-                SELECT i.code, j.code, j.name, j.type, c.name
+                SELECT i.code, j.code, j.id, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
@@ -660,8 +695,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': instance_name + '_' + year + month + '_Journals.csv',
                 'key': 'journal',
                 'query_params': (tuple(instance_ids),),
-                'function': 'postprocess_selection_columns',
-                'fnct_params': [('account.journal', 'type', 3)],
+                'function': 'postprocess_journals',
+                'fnct_params': ([('account.journal', 'type', 3)], context),
             },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],

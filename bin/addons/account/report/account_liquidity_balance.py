@@ -57,7 +57,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                   period.date_stop, tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
-        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
+        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, encode=False, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
         cheque_sql = """

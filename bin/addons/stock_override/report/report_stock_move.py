@@ -83,10 +83,10 @@ class report_stock_move(osv.osv):
         'location_id': fields.many2one('stock.location', 'Source Location', readonly=True, select=True, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Dest. Location', readonly=True, select=True, help="Location where the system will stock the finished products."),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
-        'product_qty': fields.integer('Quantity', readonly=True),
+        'product_qty': fields.float('Quantity', readonly=True, related_uom='product_uom'),
         'categ_id': fields.many2one('product.nomenclature', 'Family', ),
-        'product_qty_in': fields.float('In Qty', readonly=True),
-        'product_qty_out': fields.float('Out Qty', readonly=True),
+        'product_qty_in': fields.float('In Qty', readonly=True, related_uom='product_uom'),
+        'product_qty_out': fields.float('Out Qty', readonly=True, related_uom='product_uom'),
         'value': fields.float('Total Value', required=True),
         'day_diff2': fields.float('Lag (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'day_diff1': fields.float('Planned Lead Time (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
@@ -251,12 +251,11 @@ class report_stock_move(osv.osv):
                     data.update({'product_uom': (uom.id, uom.name)})
 
                 if not product_id and 'product_qty' in data:
-                    data.update({'product_qty': ''})
+                    data.update({'product_qty': '', 'product_uom': False})
                 if not product_id and 'product_qty_in' in data:
-                    data.update({'product_qty_in': ''})
+                    data.update({'product_qty_in': '', 'product_uom': False})
                 if not product_id and 'product_qty_out' in data:
-                    data.update({'product_qty_out': ''})
-
+                    data.update({'product_qty_out': '', 'product_uom': False})
         return res
 
 report_stock_move()

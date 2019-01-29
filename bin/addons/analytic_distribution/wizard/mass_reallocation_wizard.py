@@ -29,6 +29,7 @@ from time import strftime
 from lxml import etree
 import threading
 import pooler
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -193,7 +194,10 @@ class mass_reallocation_wizard(osv.osv_memory):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             first_line = self.pool.get('account.analytic.line').browse(cr, uid, ids)[0]
-            domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
+            if _get_instance_level(self, cr, uid) == 'hq':
+                domain = "[('category', '=', 'FUNDING'), ('type', '!=', 'view')]"
+            else:
+                domain = "[('category', 'in', ['OC', 'FUNDING', 'DEST']), ('type', '!=', 'view')]"
             for free in ['FREE1', 'FREE2']:
                 if first_line.account_id and first_line.account_id.category == free:
                     domain = "[('category', '=', '" + free + "'), ('type', '!=', 'view')]"
@@ -352,6 +356,10 @@ class mass_reallocation_wizard(osv.osv_memory):
             account_field_name = 'account_id'
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
+
+            if _get_instance_level(self, cr, uid) == 'hq' and wiz.account_id.category in ['OC', 'DEST']:
+                raise osv.except_osv(_('Error'), _('At HQ level you can only mass reallocate FP !'))
+
             not_ad_correctable_acc_ids = gl_acc_obj.search(cr, uid, [('is_not_ad_correctable', '=', True)],
                                                            order='NO_ORDER', context=context)
             search_args = [

@@ -198,7 +198,7 @@ class return_pack_shipment_family_processor(osv.osv):
     _name = 'return.pack.shipment.family.processor'
     _inherit = 'shipment.family.processor'
     _description = 'Family to be returned from shipment'
-
+    _order = 'sale_order_id, ppl_id, from_pack, id'
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         """
         Set information on line with pack information
