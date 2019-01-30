@@ -103867,3 +103867,31 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: sync_client
+#: view:sync.client.message_received:0
+msgid "Do you want to set this message as run without execution ?"
+msgstr "Voulez-vous marquer ce message comme Exécuté sans traitement ?"
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+msgid "Do you want to set this update as run without execution ?"
+msgstr "Voulez-vous marquer cette Mise à Jour comme Exécutée sans traitement ?"
+
+#. module: sync_client
+#: field:sync.client.message_received,manually_ran:0
+#: field:sync.client.update_received,manually_ran:0
+msgid "Has been manually tried"
+msgstr "A été essayé manuellement"
+
+#. module: sync_client
+#: field:sync.client.message_received,manually_set_run_date:0
+#: field:sync.client.update_received,manually_set_run_date:0
+msgid "Manually to run Date"
+msgstr "Date de passage manuel à exécuté"
+
+#. module: sync_client
+#: view:sync.client.message_received:0
+#: view:sync.client.update_received:0
+msgid "Run without execution"
+msgstr "Marquer Exécuté sans traitement"
