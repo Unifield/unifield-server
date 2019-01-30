@@ -49,8 +49,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
-            # Cheque Journals to display, in alphabetical order:
-            'getChqJournalCodes': lambda *a: sorted(self.getPendingCheques()['registers']),
+            'getSortedJournals': self.getSortedJournals,
             'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
             'getRevaluationLines': self.getRevaluationLines,
         })
@@ -89,6 +88,14 @@ class report_liquidity_position3(report_sxw.rml_parse):
         if rounding:
             converted_amount = round(converted_amount / rounding) * rounding
         return converted_amount
+
+    def getSortedJournals(self):
+        """
+        Returns the list of the ids of the Cheque Journals to display sorted in alphabetical order of code
+        """
+        journal_obj = self.pool.get('account.journal')
+        journals = journal_obj.browse(self.cr, self.uid, self.getPendingCheques()['registers'].keys(), fields_to_fetch=['code'])
+        return [journal.id for journal in sorted(journals, key=lambda j: j.code)]
 
     def getRegistersByType(self):
         reg_types = {}
@@ -319,9 +326,10 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
             # either create a new entry for this journal, or if it already exists (= there are pending cheques in several
             # periods for this journal) add the amounts to the previous total
-            if journal.code not in pending_cheques['registers']:
-                pending_cheques['registers'][journal.code] = {
+            if journal.id not in pending_cheques['registers']:
+                pending_cheques['registers'][journal.id] = {
                     'instance': reg.instance_id.name,
+                    'journal_code': journal.code,
                     'journal_name': journal.name,
                     'state': self.getRegisterState(reg),
                     'bank_journal_code': journal.bank_journal_id.code,
@@ -331,8 +339,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
                     'amount_func_currency': amount_func_currency,
                 }
             else:
-                pending_cheques['registers'][journal.code]['amount_reg_currency'] += amount_reg_currency
-                pending_cheques['registers'][journal.code]['amount_func_currency'] += amount_func_currency
+                pending_cheques['registers'][journal.id]['amount_reg_currency'] += amount_reg_currency
+                pending_cheques['registers'][journal.id]['amount_func_currency'] += amount_func_currency
 
             # Add amounts to get the total amounts per currency
             if journal.currency.name not in pending_cheques['currency_amounts']:
