@@ -6,6 +6,10 @@
             <field name="method">us_2896_volume_ocbprod</field>
         </record>
 
+        <record id="us_5480_correct_partner_fo_default_currency" model="patch.scripts">
+            <field name="method">us_5480_correct_partner_fo_default_currency</field>
+        </record>
+
         <!-- UF11.1 -->
         <record id="us_5425_reset_amount_currency" model="patch.scripts">
             <field name="method">us_5425_reset_amount_currency</field>
