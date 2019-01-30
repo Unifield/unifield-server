@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF12.0 -->
+        <record id="us_2896_volume_ocbprod" model="patch.scripts">
+            <field name="method">us_2896_volume_ocbprod</field>
+        </record>
+
         <!-- UF11.1 -->
         <record id="us_5425_reset_amount_currency" model="patch.scripts">
             <field name="method">us_5425_reset_amount_currency</field>
@@ -13,6 +18,7 @@
         <record id="us_5559_set_pricelist" model="patch.scripts">
             <field name="method">us_5559_set_pricelist</field>
         </record>
+
         <!-- UF11.0 -->
         <record id="us_5356_reset_ud_prod" model="patch.scripts">
             <field name="method">us_5356_reset_ud_prod</field>
@@ -277,10 +283,6 @@
 
         <record id="uftp_144_patch" model="patch.scripts">
             <field name="method">uftp_144_patch</field>
-        </record>
-
-        <record id="update_volume_patch" model="patch.scripts">
-            <field name="method">update_volume_patch</field>
         </record>
 
         <record id="clean_far_updates" model="patch.scripts">

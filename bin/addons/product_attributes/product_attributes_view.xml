@@ -98,7 +98,6 @@
                             <group colspan="2" col="2">
                                 <separator string="Weights" colspan="2"/>
                                 <field name="volume" attrs="{'readonly':[('type','=','service')]}"/>
-                                <field name="volume_updated" invisible="1" />
                                 <field name="soq_volume" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field name="weight" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field name="soq_weight" attrs="{'readonly':[('type','=','service')]}"/>
