@@ -21,6 +21,29 @@
 
 var form_controller;
 
+function showActionSdref(ev, action_name, model, action_id)
+{
+    if(ev.ctrlKey === true) {
+
+        openobject.http.postJSON('/openerp/form/display_action_sd_ref', {
+            'action_name': action_name,
+            'model': model,
+            'action_id': action_id,
+        }).addCallback(function(obj){
+            if (obj) {
+                alert(
+                    'Name : ' + action_name + '\n' +
+                    'Action sdref: sd.' + obj.sdref + '\n' +
+                    'Action Id: '+ action_id +'\n' +
+                    'Groups: '+ obj.groups +'\n' +
+                    'Model name: ' + model + '\n' +
+                    'Model sdref: sd.'+ obj.model_sdref + '\n'
+                );
+            }
+        });
+        ev.preventDefault();
+    }
+}
 function showBtnSdref(ev, btn_name, btn_model, btn_id, src)
 {
     if(ev.ctrlKey === true) {
