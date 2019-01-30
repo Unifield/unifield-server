@@ -142,9 +142,8 @@ msgstr "Fichier avec des erreurs"
 msgid "Accounts filter"
 msgstr "Accounts filter"
 
-#. modules: analytic_distribution, register_accounting
+#. module: analytic_distribution
 #: field:analytic.distribution.wizard,cash_return_id:0
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Advance Return"
 msgstr "Retour d'avance"
 
@@ -38542,7 +38541,7 @@ msgstr "Serveur - Action"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2951
 #: view:wizard.transfer.with.change:0
-#: report:addons/register_accounting/report/fully_report_xls.mako:601
+#: code:addons/register_accounting/report/report_fully_report.py:72
 #, python-format
 msgid "Transfer with change"
 msgstr "Transfert avec changement de devise"
@@ -43593,7 +43592,7 @@ msgstr "ESC Message 2"
 
 #. modules: register_accounting, analytic_distribution
 #: code:addons/register_accounting/account_bank_statement.py:2843
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
+#: code:addons/register_accounting/report/report_fully_report.py:60
 #: field:analytic.distribution.wizard,direct_invoice_id:0
 #: view:account.bank.statement:0
 #: model:ir.model,name:register_accounting.model_wizard_account_invoice
@@ -50535,7 +50534,8 @@ msgid "Field Order Follow Up per client PDF Export"
 msgstr "Export PDF Suivi Commande Terrain par Client"
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
+#: code:addons/register_accounting/report/report_fully_report.py:58
+#, python-format
 msgid "Direct Payment"
 msgstr "Paiement Direct"
 
@@ -55631,7 +55631,7 @@ msgid "Select the Action Window, Report, Wizard to be executed."
 msgstr "Sélectionner la Fenêtre d'Action, le Rapport, l'Assistant qui doit être exécuté."
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
+#: code:addons/register_accounting/report/report_fully_report.py:78
 msgid "Imported Cheque"
 msgstr "Chèque Importé"
 
@@ -78385,6 +78385,7 @@ msgstr "La date de Création n'est pas dans une période ouverte !"
 #. modules: purchase, register_accounting
 #: view:purchase.order:0
 #: code:addons/register_accounting/account_bank_statement.py:2903
+#: code:addons/register_accounting/report/report_fully_report.py:67
 #: view:wizard.down.payment:0
 #, python-format
 msgid "Down Payment"
@@ -80742,7 +80743,7 @@ msgid "Honduras"
 msgstr "Honduras"
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
+#: code:addons/register_accounting/report/report_fully_report.py:74
 msgid "Transfer"
 msgstr "Transfert"
 
@@ -85928,7 +85929,6 @@ msgstr "Greek / Ελληνικά"
 
 #. module: register_accounting
 #: view:account.invoice:0
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
 msgid "Down Payment"
 msgstr "Acompte"
 
@@ -95083,7 +95083,7 @@ msgid "Customer Invoices And Refunds"
 msgstr "Customer Invoices And Refunds"
 
 #. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
+#: code:addons/register_accounting/report/report_fully_report.py:76
 msgid "Imported Invoice"
 msgstr "Facture Importée"
 
@@ -99314,11 +99314,6 @@ msgstr "Do you manage VAT locally ?"
 #: model:stock.reason.type,name:reason_types_moves.reason_type_scrap
 msgid "Scrap"
 msgstr "Rebut"
-
-#. module: register_accounting
-#: report:addons/register_accounting/report/fully_report_xls.mako:596
-msgid "Cheque Import"
-msgstr "Import de Chèque"
 
 #. module: base
 #: field:ir.actions.server,mobile:0
@@ -103901,3 +103896,15 @@ msgstr "Date de passage manuel à exécuté"
 #: view:sync.client.update_received:0
 msgid "Run without execution"
 msgstr "Marquer Exécuté sans traitement"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_fully_report.py:63
+#, python-format
+msgid "Advance"
+msgstr "Avance"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_fully_report.py:65
+#, python-format
+msgid "Advance Closing"
+msgstr "Clôture d'Avance"
