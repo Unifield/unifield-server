@@ -556,6 +556,8 @@ class account_bank_statement(osv.osv):
         domain = [('statement_id', '=', ids[0])]
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
+        if reg and reg.journal_id.type in ['bank', 'cash', 'cheque']:
+            context.update({'journal_type': reg.journal_id.type})
         return {
             'name': reg and reg.name or 'Register Lines',
             'type': 'ir.actions.act_window',

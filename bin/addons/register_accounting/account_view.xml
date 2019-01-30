@@ -453,6 +453,9 @@
                                     'invisible': [('display_analytic_button', '=', False)]}"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
+                    <field name="invoice_id" invisible="1"/>
+                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="functional_in" invisible="1"/>
                     <field name="functional_out" invisible="1"/>

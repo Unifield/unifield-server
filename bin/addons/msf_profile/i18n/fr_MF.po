@@ -36176,6 +36176,7 @@ msgstr "Erreur d'Intégrité !"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
+#: view:account.bank.statement.line:0
 msgid "Invoice(s) reference(s)"
 msgstr "Facture(s) ouverte(s)"
 
