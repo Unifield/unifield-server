@@ -814,6 +814,10 @@ class Entity(osv.osv):
                 self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid)
             self.install_user_rights(cr, uid, context=context)
             entity.write({'user_rights_state': 'installed'})
+
+        cr.commit()
+        self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+        self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return True
 
     @sync_process('data_pull')
