@@ -124,6 +124,7 @@ class purchase_order_line_sync(osv.osv):
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
         if sol_dict.get('resourced_original_line'):
+            pol_values['set_as_resourced'] = True
             if sol_dict.get('resourced_original_remote_line'):
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
                 # link our resourced PO line with corresponding resourced FO line:

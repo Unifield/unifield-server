@@ -56,6 +56,8 @@ class purchase_order_line(osv.osv):
             if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
                 new_qty = pol.original_line_id.product_qty - pol.product_qty
                 # update the PO line with new qty
+                if new_qty <= 0:
+                    continue
                 self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
 
                 # update IN moves of the original pol:
@@ -95,7 +97,8 @@ class purchase_order_line(osv.osv):
                             self.pool.get('stock.move').action_cancel(cr, uid, out_move_to_cancel, context=context)
 
             elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
-                    pol.original_line_id.linked_sol_id.order_id.procurement_request:
+                    pol.original_line_id.linked_sol_id.order_id.procurement_request and not pol.linked_sol_id and \
+                    self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', pol.original_line_id.id)], limit=1, context=context):
                 # split the sol:
                 split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
                     'sale_line_id': pol.original_line_id.linked_sol_id.id,
@@ -286,8 +289,12 @@ class purchase_order_line(osv.osv):
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
                                                                                                          ad_id.id, {'partner_type': sale_order.partner_type}, context=context)
+                # don't change this values if exists on sol:
+                if pol.linked_sol_id.is_line_split:
+                    sol_values.pop('is_line_split')
+                if pol.linked_sol_id.original_line_id:
+                    sol_values.pop('original_line_id')
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
-
 
         return True
 

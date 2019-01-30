@@ -119,16 +119,6 @@ inv_id = inv_o.create({
 inv_o.action_confirm([inv_id])
 inv_o.action_done([inv_id])
 
-newprod = {
-    'default_code': 'ADAPZCOO1',
-    'name': 'Local Product',
-    'xmlid_code': 'ADAPZCOO1',
-    'type': 'product',
-    'procure_method': 'make_to_order',
-    'standard_price': '0.00935',
-    'international_status': 4,
-}
-
 def get_nom_info(oerp, nom_name):
     nom = oerp.get('product.nomenclature')
     data = {}
@@ -148,6 +138,56 @@ def activate_partner(oerp, partner_name):
     p_ids = oerp.get('res.partner').search([('name', '=', '%s_%s' % (DB_PREFIX, partner_name)), ('active', 'in', ['t', 'f']), ('partner_type', 'in', ['intermission', 'section'])])
     if p_ids:
         oerp.get('res.partner').write(p_ids, {'active': True})
+
+newprods = [
+    {
+        'default_code': 'ALIFCLOC1--',
+        'name': 'CLOCK, ALARM, mechanical',
+        'xmlid_code': 'ALIFCLOC1--',
+        'type': 'product',
+        'procure_method': 'make_to_order',
+        'standard_price': '0.00935',
+        'international_status': 1,
+    },
+    {
+        'default_code': 'ALIFCOFM1E-',
+        'name': 'COFFEE MACHINE, electrical, 220 V, 12 cups',
+        'xmlid_code': 'ALIFCOFM1E-',
+        'type': 'product',
+        'procure_method': 'make_to_order',
+        'standard_price': '0.00935',
+        'international_status': 1,
+    }
+]
+for prod in newprods:
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1' % DB_PREFIX)
+    create_product(oerp, prod)
+    oerp.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
+    oerp.get('sync.client.entity').sync()
+
+loc_ids = oerp.get('stock.location').search([('name', '=', 'LOG')])
+prod_o = oerp.get('product.product')
+p_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
+inv_o = oerp.get('stock.inventory')
+inv_id = inv_o.create({
+    'name': 'inv %s' % time.time(),
+    'inventory_line_id': [(0, 0, {'location_id': loc_ids[0], 'product_id': p_ids[0], 'product_uom': 1, 'product_qty': 10000, 'reason_type_id': 12})],
+})
+inv_o.action_confirm([inv_id])
+inv_o.action_done([inv_id])
+
+newprod = {
+    'default_code': 'ADAPZCOO1',
+    'name': 'Local Product',
+    'xmlid_code': 'ADAPZCOO1',
+    'type': 'product',
+    'procure_method': 'make_to_order',
+    'standard_price': '0.00935',
+    'international_status': 4,
+}
+
+
 
 #### Intermission ####
 dbs = oerp.db.list()
