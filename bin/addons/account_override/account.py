@@ -588,7 +588,8 @@ class account_account(osv.osv):
                     if employee_ids:
                         employee_id = employee_ids[0]
                     else:
-                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                         limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
                         else:
@@ -652,7 +653,8 @@ class account_account(osv.osv):
                 if employee_ids:
                     employee_id = employee_ids[0]
                 else:
-                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                     limit=1, context=context)
                     if partner_ids:
                         partner_id = partner_ids[0]
                     else:
