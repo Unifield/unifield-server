@@ -325,7 +325,7 @@
                         <field name="journal_name"/>
                         <field name="status"/>
                         <field name="period_id"/>
-                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="opening_balance" sum="Total Starting Balance"/>
                         <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
                         <field name="cashbox_balance_booking" sum="Total Cashbox Balance Booking"/>
                         <field name="booking_currency_id"/>
@@ -348,7 +348,7 @@
                         <field name="journal_name"/>
                         <field name="status"/>
                         <field name="period_id"/>
-                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="opening_balance" sum="Total Starting Balance"/>
                         <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
                         <field name="bank_statement_balance_booking" sum="Total Bank Statement Balance Booking"/>
                         <field name="booking_currency_id"/>

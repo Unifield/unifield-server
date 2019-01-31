@@ -572,29 +572,30 @@ class account_analytic_account(osv.osv):
     def check_fp(self, cr, uid, vals, to_update=False, context=None):
         """
         Check that FP have an instance_id
-        Check that the given instance is not section level!
-        If to_update is True and no instance_id is in vals: update vals with the id of the current instance
+        Check that the given instance is not project or section level!
+        If to_update is True and...
+        - either no instance_id is in vals
+        - or at import time out of HQ
+        ...update vals with the id of the current instance
         """
         if context is None:
             context = {}
         if not vals:
             return True
         cat = vals.get('category', False)
+        from_import = context.get('from_import_menu', False) or context.get('from_import_data', False)
         if cat == 'FUNDING':
-            instance_id = vals.get('instance_id', False)  or False
+            instance_id = vals.get('instance_id', False)
             if isinstance(instance_id, (tuple)): # UFTP-2: This is for the case of write (create: only instance_id as int is given)
                 instance_id = instance_id[0]
-            if not instance_id:
-                # check the current instance
-                current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
-                if not current_instance or current_instance.level == 'section':
-                    raise osv.except_osv(_('Error'), _('Proprietary Instance is mandatory for FP accounts!'))
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+            if not instance_id or (from_import and current_instance.level != 'section'):
                 instance_id = current_instance.id
                 if to_update:
                     vals.update({'instance_id': instance_id})
             instance_level = self.pool.get('msf.instance').browse(cr, uid, instance_id).level
-            if instance_level == 'section':
-                raise osv.except_osv(_('Warning'), _('Proprietary Instance for FP accounts should be only COORDO and/or MISSION'))
+            if instance_level in ('project', 'section'):
+                raise osv.except_osv(_('Warning'), _('Funding Pools must have a Coordination Proprietary Instance.'))
         return True
 
 

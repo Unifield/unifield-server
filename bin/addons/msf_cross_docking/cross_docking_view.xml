@@ -89,39 +89,6 @@
             </field>
         </record>
         
-        <!-- Pre-Packing Lists (same feature as delivery order): we add 2 buttons and play with attrs to change the source location -->
-        <record id="view_ppl_cross_docking_form" model="ir.ui.view">
-            <field name="name">ppl.cross.docking</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
-                        <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"  
-                        attrs="{'invisible':['|', '|', '|', ('allocation_setup', '=', 'unallocated'), ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
-                        context="{'from_button': True}"  />
-                        <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"  
-                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', False),'|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
-                        context="{'from_button': True}"  />
-                        <field name="move_cross_docking_ok" invisible='1'/>
-                        <field name="allocation_setup" invisible="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
-                        <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
-                        attrs="{'invisible':['|', '|', '|', ('cross_docking_ok','=', True), ('allocation_setup', '=', 'unallocated'), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
-                        context="{'from_button': True}"  />
-                        <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  
-                        attrs="{'invisible':['|', '|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
-                        context="{'from_button': True}"  />
-                        <field name="cross_docking_ok" invisible='1' />
-                        <field name="allocation_setup" invisible="1" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-         
         <!-- We update the form view of stock.location to display the boolean "cross_docking" for cross_docking location-->
         <record id="view_location_form" model="ir.ui.view">
             <field name="name">stock.location.form</field>

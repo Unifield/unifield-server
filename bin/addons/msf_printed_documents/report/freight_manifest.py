@@ -22,6 +22,8 @@
 import time
 
 from report import report_sxw
+from tools.translate import _
+
 
 class freight_manifest(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -89,6 +91,8 @@ class freight_manifest(report_sxw.rml_parse):
 
             line_ref = line and line.sale_order_id and line.sale_order_id.name or False
             line_pl = line and line.ppl_id and line.ppl_id.name or False
+            if line.packing_list:
+                line_pl = '%s (%s: %s)' % (line_pl, _('Supplier PL'), line.packing_list)
 
             kc = ""
             dg = ""

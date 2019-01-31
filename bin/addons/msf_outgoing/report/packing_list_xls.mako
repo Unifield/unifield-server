@@ -332,12 +332,8 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299388"><Data ss:Type="String">FO Date:</Data></Cell>
-    % if p['ppl'].sale_id and isDate(p['ppl'].sale_id.date_order):
-    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].sale_id.date_order|n}T00:00:00.000</Data></Cell>
-    % else:
-    <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
-    % endif
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299368"><Data ss:Type="String">Supplier Packing List:</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].packing_list or '-')|x}</Data></Cell>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_contact or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_contact or '')|x}</Data></Cell>
@@ -347,9 +343,9 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">Packing date:</Data></Cell>
-    % if p['ppl'].date and isDate(p['ppl'].date[0:10]):
-    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].date[0:10]|n}T00:00:00.000</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299388"><Data ss:Type="String">FO Date:</Data></Cell>
+    % if p['ppl'].sale_id and isDate(p['ppl'].sale_id.date_order):
+    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].sale_id.date_order|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
     % endif
@@ -362,9 +358,9 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">RTS date:</Data></Cell>
-    % if objects[0].shipment_expected_date and isDate(objects[0].shipment_expected_date[0:10]):
-    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${objects[0].shipment_expected_date[0:10]|n}T00:00:00.000</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">Packing date:</Data></Cell>
+    % if p['ppl'].date and isDate(p['ppl'].date[0:10]):
+    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
     % endif
@@ -377,8 +373,12 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">Transport mode:</Data></Cell>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">RTS date:</Data></Cell>
+    % if objects[0].shipment_expected_date and isDate(objects[0].shipment_expected_date[0:10]):
+    <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${objects[0].shipment_expected_date[0:10]|n}T00:00:00.000</Data></Cell>
+    % else:
+    <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
+    % endif 
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].consignee_other or '')|x}</Data></Cell>
@@ -388,8 +388,8 @@
     <Cell ss:StyleID="s107"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
-    <Cell ss:MergeAcross="1" ss:StyleID="m99299468"/>
-    <Cell ss:StyleID="s18"/>
+    <Cell ss:MergeAcross="1" ss:StyleID="m99299448"><Data ss:Type="String">Transport mode:</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(getSel(objects[0], 'transport_type'))|x}</Data></Cell> 
     <Cell ss:StyleID="s17"><Data ss:Type="String">${(objects[0].shipper_other or '')|x}</Data></Cell>
     <Cell ss:StyleID="s18"/>
     <Cell ss:StyleID="s18"/>

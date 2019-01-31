@@ -458,12 +458,15 @@ def common_create(self, cr, uid, data, type, context=None):
             data.update({'est_transport_lead_time': partner.transport_0_lt, })
         # by default delivery requested date is equal to today + supplier lead time - filled for compatibility because requested date is now mandatory
         if not data.get('delivery_requested_date', False):
-            # PO - supplier lead time / SO - customer lead time
-            if type == 'so':
-                requested_date = (datetime.today() + relativedelta(days=partner.customer_lt)).strftime('%Y-%m-%d')
-            if type == 'po':
-                requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
-            data['delivery_requested_date'] = requested_date
+            if not context.get('ir_import_id'):
+                # PO - supplier lead time / SO - customer lead time
+                if type == 'so':
+                    requested_date = (datetime.today() + relativedelta(days=partner.customer_lt)).strftime('%Y-%m-%d')
+                if type == 'po':
+                    requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
+                data['delivery_requested_date'] = requested_date
+            else:
+                data['ready_to_ship_date'] = time.strftime('%Y-%m-%d')
 
     return data
 
@@ -555,7 +558,7 @@ class sale_order(osv.osv):
 
     _columns = {
         'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created.", states={'draft': [('readonly', False)]}),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_requested_date': fields.date(string='Delivery Requested Date'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True),
         'shipment_date': fields.date(string='Shipment Date', readonly=True, help='Date on which picking is created at supplier'),
@@ -800,8 +803,6 @@ class sale_order_line(osv.osv):
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:
                 default['confirmed_delivery_date'] = False
-            if 'date_planned' not in default:
-                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         return super(sale_order_line, self).copy_data(cr, uid, id, default=default, context=context)
 
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):

@@ -187,7 +187,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
     def getOpeningBalance(self, reg_type, cur):
         '''
-        Returns the TOTAL of opening balance for the register type and the currency in parameters
+        Returns the TOTAL of starting balance for the register type and the currency in parameters
         '''
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])

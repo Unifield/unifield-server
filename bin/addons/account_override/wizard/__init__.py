@@ -2,3 +2,4 @@ import account_chart
 import split_invoice
 import import_invoice
 import report_paid_invoices
+import integrity_finance_wizard
