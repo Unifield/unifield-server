@@ -123,6 +123,8 @@ class purchase_order_line_sync(osv.osv):
 
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
+
+        ress_fo = False
         if sol_dict.get('resourced_original_line'):
             pol_values['set_as_resourced'] = True
             if sol_dict.get('resourced_original_remote_line'):
@@ -132,6 +134,7 @@ class purchase_order_line_sync(osv.osv):
                     orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id'], context=context)
                     if orig_po_line.linked_sol_id:
                         resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
+                        ress_fo = orig_po_line.linked_sol_id.order_id.id
                         if resourced_sol_id:
                             pol_values['linked_sol_id'] = resourced_sol_id[0]
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
@@ -198,12 +201,25 @@ class purchase_order_line_sync(osv.osv):
                 move_obj.write(cr, uid, move_ids, ({'purchase_line_id': new_pol}), context=context)
 
             pol_updated = new_pol
+            pol_state = ''
+            #### Create the linked IR/FO line
+            if not pol_values.get('origin') and ress_fo:
+                parent_so_id = ress_fo
+            if pol_values.get('origin'):
+                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', pol_values['origin']),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+            if parent_so_id:
+                self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
+
         else: # regular update
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
             po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
             if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
@@ -212,6 +228,8 @@ class purchase_order_line_sync(osv.osv):
 
         # update PO line state:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
+            if pol_state == 'sourced_n':
+                self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
@@ -221,6 +239,8 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
+        else:
+            print 'IGNORED'
 
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)

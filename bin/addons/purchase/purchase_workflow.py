@@ -51,10 +51,18 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        return True
         for pol in self.browse(cr, uid, ids, context=context):
+            print pol.id
+            print 'pol.is_line_split', pol.is_line_split
+            print 'pol.original_line_id', pol.original_line_id
+            print 'pol.set_as_sourced_n', pol.set_as_sourced_n
+            print 'pol.original_line_id.product_qty', pol.original_line_id.product_qty
+            print 'pol.product_qty', pol.product_qty
             if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
+                print 'AA'
                 new_qty = pol.original_line_id.product_qty - pol.product_qty
+                print new_qty
                 # update the PO line with new qty
                 if new_qty <= 0:
                     continue
@@ -78,6 +86,7 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
 
                 # update qty on linked sale.order.line if has:
+                print 'pol.original_line_id.linked_sol_id', pol.original_line_id.linked_sol_id.id, new_qty
                 if pol.original_line_id.linked_sol_id:
                     self.pool.get('sale.order.line').write(cr, uid, [pol.original_line_id.linked_sol_id.id], {
                         'product_uom_qty': new_qty,
@@ -99,7 +108,8 @@ class purchase_order_line(osv.osv):
             elif pol.is_line_split and pol.original_line_id and pol.original_line_id.linked_sol_id and \
                     pol.original_line_id.linked_sol_id.order_id.procurement_request and not pol.linked_sol_id and \
                     self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', pol.original_line_id.id)], limit=1, context=context):
-                # split the sol:
+                # split the sol
+                print 'BB'
                 split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
                     'sale_line_id': pol.original_line_id.linked_sol_id.id,
                     'original_qty': pol.original_line_id.linked_sol_id.product_uom_qty + pol.product_qty,
@@ -583,7 +593,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
-
+        print 'JJJJJJJJJJ action_validate'
         # checks before validating the line:
         self.check_origin_for_validation(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
@@ -843,7 +853,7 @@ class purchase_order_line(osv.osv):
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 if pol.cancelled_by_sync:
-                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
+                    sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True, 'product_uom_qty': pol.product_qty ,'product_uos_qty': pol.product_qty}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
