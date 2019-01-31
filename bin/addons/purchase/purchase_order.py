@@ -2465,9 +2465,11 @@ class purchase_order(osv.osv):
         # set cross_docking_ok:
         cross_docking_ok = False
         for rfq_line in rfq.order_line:
-            if rfq_line.linked_sol_id and rfq_line.linked_sol_id.order_id.procurement_request and \
-            rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer':
+            if rfq_line.linked_sol_id and not rfq_line.linked_sol_id.order_id.procurement_request or \
+                    (rfq_line.linked_sol_id.order_id.procurement_request and
+                        rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
                 cross_docking_ok = True
+                break
         self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)
 
         # set AD:
