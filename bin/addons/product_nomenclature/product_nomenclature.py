@@ -481,6 +481,7 @@ class product_nomenclature(osv.osv):
 
         'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'), ('optional', 'Optional')], string='Nomenclature type', fnct_search=_search_nomen_type_s),
         'msfid': fields.char('MSFID', size=128, select=True),
+        'status': fields.selection([('valid', 'Valid'), ('archived', 'Archived')], 'Status', required=True),
     }
 
     _defaults = {
@@ -489,6 +490,7 @@ class product_nomenclature(osv.osv):
         'sub_level': lambda *a: '0',
         'sequence': _getDefaultSequence,
         'active': True,
+        'status': 'valid',
     }
 
     _order = "sequence, level, msfid, id"
@@ -849,6 +851,10 @@ class product_product(osv.osv):
             vals['xmlid_code'] = RANDOM_XMLID_CODE_PREFIX + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
 
         sale._setNomenclatureInfo(cr, uid, vals, context)
+
+        if self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_3']).status != 'valid' and\
+                not (context.get('sync_update_creation') or context.get('sync_update_execution')):
+            raise osv.except_osv(_('Error'), _('You can not create a product with an archived Root Nomenclature.'))
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 

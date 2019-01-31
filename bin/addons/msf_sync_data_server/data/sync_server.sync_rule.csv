@@ -109,7 +109,7 @@ msf_sync_data_server.country,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['code'
 msf_sync_data_server.state,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['code', 'country_id/id', 'name']",OC,res.country.state,,State,Valid,,501
 msf_sync_data_server.uom_categories,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],['name'],OC,product.uom.categ,,UoM Categories,Valid,,510
 msf_sync_data_server.uom,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['category_id/id', 'factor', 'factor_inv', 'name', 'rounding', 'uom_type']",OC,product.uom,,UoM,Valid,,511
-msf_sync_data_server.nomenclature,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['level', 'name', 'type', 'msfid', 'sequence']",OC,product.nomenclature,,Nomenclature,Valid,,520
+msf_sync_data_server.nomenclature,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['level', 'name', 'type', 'msfid', 'sequence', 'status']",OC,product.nomenclature,,Nomenclature,Valid,,520
 msf_sync_data_server.nomenclature_tree,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,"[('parent_id', '!=', '')]",['parent_id/id'],OC,product.nomenclature,,Nomenclature Tree,Valid,,521
 msf_sync_data_server.product_category,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,[],"['active', 'donation_expense_account/id', 'family_id/id', 'name', 'property_account_expense_categ/id', 'property_account_income_categ/id', 'property_stock_account_input_categ/id', 'property_stock_account_output_categ/id', 'property_stock_journal/id', 'property_stock_variation/id', 'type', 'msfid']",OC,product.category,,Product Category,Valid,,530
 msf_sync_data_server.product_category_tree,TRUE,TRUE,FALSE,TRUE,bidirectional,Down,"[('parent_id', '!=', '')]",['parent_id/id'],OC,product.category,,Product Category Tree,Valid,,531
@@ -214,7 +214,7 @@ msf_usb_sync_data_server.cp_country,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,
 msf_usb_sync_data_server.cp_state,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],"['code', 'country_id/id', 'name']",USB,res.country.state,,[MASTER] State,Valid,,1601
 msf_usb_sync_data_server.cp_uom_categories,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],['name'],USB,product.uom.categ,,[MASTER] UoM Categories,Valid,,1610
 msf_usb_sync_data_server.cp_uom,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],"['category_id/id', 'factor', 'factor_inv', 'name', 'rounding', 'uom_type']",USB,product.uom,,[MASTER] UoM,Valid,,1611
-msf_usb_sync_data_server.cp_nomenclature,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],"['level', 'name', 'type', 'msfid']",USB,product.nomenclature,,[MASTER] Nomenclature,Valid,,1620
+msf_usb_sync_data_server.cp_nomenclature,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],"['level', 'name', 'type', 'msfid', 'status']",USB,product.nomenclature,,[MASTER] Nomenclature,Valid,,1620
 msf_usb_sync_data_server.cp_nomenclature_tree,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,"[('parent_id', '!=', '')]",['parent_id/id'],USB,product.nomenclature,,[MASTER] Nomenclature Tree,Valid,,1621
 msf_usb_sync_data_server.cp_product_category,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,[],"['active', 'donation_expense_account/id', 'family_id/id', 'name', 'property_account_expense_categ/id', 'property_account_income_categ/id', 'property_stock_account_input_categ/id', 'property_stock_account_output_categ/id', 'property_stock_journal/id', 'property_stock_variation/id', 'type', 'msfid']",USB,product.category,,[MASTER] Product Category,Valid,,1630
 msf_usb_sync_data_server.cp_product_category_tree,TRUE,TRUE,FALSE,TRUE,cp_to_rw,Bidirectional,"[('parent_id', '!=', '')]",['parent_id/id'],USB,product.category,,[MASTER] Product Category Tree,Valid,,1631
