@@ -104520,12 +104520,6 @@ msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:369
-#, python-format
-msgid " The Quantity per Pack is incorrect."
-msgstr " La Quantité par Colis est incorrecte."
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:455
 #, python-format
 msgid " There is too few Quantities put in the report for %s."

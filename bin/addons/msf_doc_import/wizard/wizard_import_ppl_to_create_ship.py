@@ -374,12 +374,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         else:
                             line_errors.append(_(' This Pack Type doesn\'t exists.'))
 
-                    # Check quantity per pack
-                    if to_update.get('move_id'):
-                        qty_pp_error = ppl_proc_obj.check_qty_pp(cr, uid, [to_update], context=context)
-                        if qty_pp_error:
-                            line_errors.append(_(' The Quantity per Pack is incorrect.'))
-
                     to_update.update({
                         'error_list': line_errors,
                         'to_correct_ok': any(line_errors),

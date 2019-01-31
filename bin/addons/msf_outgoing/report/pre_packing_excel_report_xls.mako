@@ -293,11 +293,11 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.dg_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.cs_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number"></Data></Cell>
-                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number"></Data></Cell>
-                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="Number"></Data></Cell>
+                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number">${m.from_pack or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number">${m.to_pack or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="Number">${m.weight or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.pack_type and m.pack_type.name or ''|x}</Data></Cell>
             </Row>
         % endfor
 

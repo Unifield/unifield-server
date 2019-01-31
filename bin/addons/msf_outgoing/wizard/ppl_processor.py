@@ -220,12 +220,8 @@ class ppl_processor(osv.osv):
 
         rounding_issues = []
         for line in lines:
-            if context.get('import_in_progress') and context.get('import_ppl_to_create_ship'):
-                if not self._check_rounding(cr, uid, line.get('uom'), line.get('num_of_packs'), line.get('quantity'), context=context):
-                    rounding_issues.append(line.get('line_number'))
-            else:
-                if not self._check_rounding(cr, uid, line.uom_id, line.num_of_packs, line.quantity, context=context):
-                    rounding_issues.append(line.line_number)
+            if not self._check_rounding(cr, uid, line.uom_id, line.num_of_packs, line.quantity, context=context):
+                rounding_issues.append(line.line_number)
         return rounding_issues
 
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
