@@ -145,6 +145,14 @@ class account_move_line(osv.osv):
                 cheque_number_node)
 
             view['arch'] = etree.tostring(tree)
+        if view_type == 'search':
+            # filter on Cheque Number must appear only when searching for the lines to add in the Import Cheque wizard
+            if context.get('from') != 'wizard_import_cheque':
+                tree = etree.fromstring(view['arch'])
+                element_fields = tree.xpath('.//field[@name="cheque_number"]')
+                for el in element_fields:
+                    el.getparent().remove(el)
+                view['arch'] = etree.tostring(tree)
         return view
 
 account_move_line()
