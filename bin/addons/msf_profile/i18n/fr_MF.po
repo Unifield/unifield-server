@@ -103837,3 +103837,9 @@ msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier
 #: view:check.ppl.integrity:0
 msgid "Go Back"
 msgstr "Précédent"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:660
+#, python-format
+msgid "Partner %s (%s): you can not use %s currency"
+msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"

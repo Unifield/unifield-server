@@ -1954,7 +1954,10 @@ class orm_template(object):
         result['fields'] = xfields
 
 
-        result['uom_rounding'] = self.pool.get('product.uom').get_rounding(cr, user)
+        result['uom_rounding'] = {}
+        uom_obj = self.pool.get('product.uom')
+        if uom_obj:
+            result['uom_rounding'] = uom_obj.get_rounding(cr, user)
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
