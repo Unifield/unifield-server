@@ -201,9 +201,12 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
+                    # if move.id == 278:
+                    #     import pdb; pdb.set_trace()
                     data = {
                         'state': line.state,
                         'state_display': line.state_to_display,
+                        'move_id': move.id, # debug purpose
                     }
                     m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -272,13 +275,13 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'eta': eta and eta.strftime('%Y-%m-%d'),
                                 'transport': move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
                             })
-                        elif (not ppl and not ppl_not_shipped and s_out) or from_stock:
+                        elif (not ppl and not ppl_not_shipped and s_out) or from_stock: # browse_record(stock.move, 279)
                             state = move.state == 'cancel'
                             if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                                 packing = move.picking_id.previous_step_id.name
                                 shipment = move.picking_id.shipment_id.name or '-'
-                                is_shipment_done = move.picking_id.shipment_id.state == 'done'
-                            elif from_stock:
+                                is_shipment_done  = move.picking_id.shipment_id.state == 'done'
+                            elif from_stock: # 278
                                 packing = '-'
                                 shipment = '-'
                                 is_shipment_done = move.picking_id.state == 'done' and move.state != 'cancel'
@@ -429,6 +432,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             elif bo_qty < 0:
                 lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00
 
+            import pprint; pprint.pprint(lines)
             for ln in lines:
                 if only_bo and (ln.get('backordered_qty', 0.00) <= 0.00 or line.state in ('cancel', 'cancel_r')):
                     continue
