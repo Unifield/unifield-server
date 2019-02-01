@@ -1296,7 +1296,6 @@ class procurement_order(osv.osv):
         rfq_obj = self.pool.get('purchase.order')
         rfq_line_obj = self.pool.get('purchase.order.line')
         partner_obj = self.pool.get('res.partner')
-        prsd_obj = self.pool.get('procurement.request.sourcing.document')
 
         if not context:
             context = {}
@@ -1345,14 +1344,6 @@ class procurement_order(osv.osv):
                                                   'order_type': sale_order.order_type,
                                                   'origin': sale_order.name, }, context=context)
 
-            prsd_obj.chk_create(cr, uid, {
-                'order_id': sale_order.id,
-                'sourcing_document_id': rfq_id,
-                'sourcing_document_model': 'purchase.order',
-                'sourcing_document_type': 'rfq',
-                'line_ids': sale_order_line and sale_order_line.id or False,
-            }, context=context)
-
             # add a line to the RfQ
             rfq_line_id = rfq_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                         'comment': sale_order_line.comment,
@@ -1392,7 +1383,6 @@ class procurement_order(osv.osv):
         '''
         tender_obj = self.pool.get('tender')
         tender_line_obj = self.pool.get('tender.line')
-        prsd_obj = self.pool.get('procurement.request.sourcing.document')
         # find the corresponding sale order id for tender
         for proc in self.browse(cr, uid, ids, context=context):
             if proc.tender_id:
@@ -1416,13 +1406,6 @@ class procurement_order(osv.osv):
                                                         'warehouse_id': sale_order.shop_id.warehouse_id.id,
                                                         'requested_date': proc.date_planned,
                                                         }, context=context)
-            prsd_obj.chk_create(cr, uid, {
-                'order_id': sale_order.id,
-                'sourcing_document_id': tender_id,
-                'sourcing_document_model': 'tender',
-                'sourcing_document_type': 'tender',
-                'line_ids': sale_order_line and sale_order_line.id or False,
-            }, context=context)
             # add a line to the tender
             tender_line_id = tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                               'comment': sale_order_line.comment,

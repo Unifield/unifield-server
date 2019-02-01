@@ -126,8 +126,8 @@
                         <page string="Sourcing Documents">
                             <field name="order_ids" nolabel="1" colspan="4">
                                 <tree string="Sourcing Documents">
-                                    <field name="sourcing_document_type" />
-                                    <field name="sourcing_document_name" />
+                                    <field name="linked_model" />
+                                    <field name="linked_name" />
                                     <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
                                 </tree>
                             </field> 

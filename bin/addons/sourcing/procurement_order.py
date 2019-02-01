@@ -373,16 +373,6 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
             pol_id = self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
 
-            if ir_to_link:
-                self.pool.get('procurement.request.sourcing.document').chk_create(
-                    cr, uid, {
-                        'order_id': ir_to_link,
-                        'sourcing_document_model': 'purchase.order',
-                        'sourcing_document_type': 'po',
-                        'sourcing_document_id': purchase_ids[0],
-                        'line_ids': sol and sol.id or False,
-                    }, context=context)
-
             if line:
                 self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO line id:%s (line number: %s) of the PO id:%s (%s)" % (
                     line.id, line.line_number,
@@ -412,16 +402,6 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if order_customer_id:
                 values['dest_partner_ids'] = [(4, order_customer_id)]
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-
-            if ir_to_link:
-                self.pool.get('procurement.request.sourcing.document').chk_create(
-                    cr, uid, {
-                        'order_id': ir_to_link,
-                        'sourcing_document_model': 'purchase.order',
-                        'sourcing_document_type': 'po',
-                        'sourcing_document_id': purchase_id,
-                        'line_ids': sol and sol.id or False,
-                    }, context=context)
 
             if line:
                 self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO id:%s (%s)" % (
