@@ -345,20 +345,17 @@ class users(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        manager_group_id = None
+        root_id = False
         result = dict.fromkeys(ids, False)
         try:
             dataobj = self.pool.get('ir.model.data')
-            dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
-                                                                   'group_erp_manager')
+            dummy, root_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                          'user_root')
         except ValueError:
             # If these groups does not exists anymore
             pass
-        if manager_group_id:
-            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
-            for current_user in read_result:
-                if manager_group_id in current_user['groups_id']:
-                    result[current_user['id']] = True
+        if root_id:
+            result[root_id] = True
         return result
 
     def _search_role(self, cr, uid, obj, name, args, context=None):

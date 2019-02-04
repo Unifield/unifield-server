@@ -788,7 +788,6 @@
                             <p><translate>Please note that users can be added to the white list only if:</translate></p>
                             <ul>
                                 <li><translate>It is done from the HQ</translate></li>
-                                <li><translate>The user is not member of Administration / Access Rights</translate></li>
                                 <li><translate>The user is not already marked as "Synchronizable"</translate></li>
                             </ul>
                         </html>
