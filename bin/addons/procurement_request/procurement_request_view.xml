@@ -124,7 +124,7 @@
                             </group>
                         </page>
                         <page string="Sourcing Documents">
-                            <field name="order_ids" nolabel="1" colspan="4">
+                            <field name="order_ids" nolabel="1" colspan="4" readonly="1">
                                 <tree string="Sourcing Documents">
                                     <field name="linked_model" />
                                     <field name="linked_name" />

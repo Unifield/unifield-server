@@ -212,12 +212,8 @@ msgstr "Line %s. Thirdparty not compatible with account '%s - %s'"
 msgid "Choose the view type"
 msgstr "Choisir un type de vue"
 
-#. modules: purchase_allocation_report, sync_so, procurement_request
+#. modules: purchase_allocation_report, sync_so
 #: view:purchase.order.line.allocation.report:0
-#: selection:procurement.request.sourcing.document,sourcing_document_model:0
-#: selection:procurement.request.sourcing.document,sourcing_document_type:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_model:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_type:0
 #: field:purchase.order.line.to.split,order_id:0
 msgid "Purchase order"
 msgstr "Bon de commande"
@@ -3620,11 +3616,10 @@ msgid "Commitment Date"
 msgstr "Date d'Engagement"
 
 #. modules: specific_rules, procurement_request
-#: field:procurement.request.sourcing.document,sourcing_document_name:0
-#: field:procurement.request.sourcing.document.mem,sourcing_document_name:0
+#: field:procurement.request.sourcing.document,linked_name:0
 #: field:unconsistent.stock.report.line,document_number:0
 msgid "Document name"
-msgstr "Document name"
+msgstr "Nom du Document"
 
 #. module: msf_tools
 #: help:automated.export,ftp_ok:0
@@ -6764,9 +6759,10 @@ msgstr "Quarantaine"
 msgid "From analytic accounts"
 msgstr "Depuis les Comptes Analytiques"
 
-#. module: reason_types_moves, stock_override
+#. module: reason_types_moves, stock_override, procurement_request
 #: model:ir.actions.report.xml,name:stock_override.internal_move
 #: model:stock.reason.type,name:reason_types_moves.reason_type_internal_move
+#: selection:procurement.request.sourcing.document,linked_model:0
 msgid "Internal Move"
 msgstr "Mouvement interne"
 
@@ -14470,7 +14466,7 @@ msgstr "Vérification Actif"
 msgid "Europe/Kaliningrad"
 msgstr "Europe/Kaliningrad"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, procurement_request
 #: model:ir.actions.report.xml,name:msf_outgoing.picking_ticket
 #: model:process.node,name:msf_outgoing.process_node_draft_pick_picking
 #: model:process.process,name:msf_outgoing.process_process_picking0
@@ -14478,6 +14474,7 @@ msgstr "Europe/Kaliningrad"
 #: code:addons/msf_outgoing/msf_outgoing.py:3842
 #: code:addons/msf_outgoing/msf_outgoing.py:4660
 #: view:stock.picking:0
+#: selection:procurement.request.sourcing.document,linked_model:0
 #, python-format
 msgid "Picking Ticket"
 msgstr "Bon de Picking"
@@ -15713,8 +15710,6 @@ msgstr "Fonctions d'export automatisé"
 #: field:user.access.results.users.line,type_user_access_results_line:0
 #: field:process.transition.action,state:0
 #: field:procurement.batch.cron,type:0
-#: field:procurement.request.sourcing.document,sourcing_document_type:0
-#: field:procurement.request.sourcing.document.mem,sourcing_document_type:0
 #: view:product.product:0
 #: field:product.ul,type:0
 #: field:product.asset,type:0
@@ -27123,12 +27118,6 @@ msgstr "Purchase orders which are in cancelled state."
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
 
-#. module: procurement_request
-#: field:procurement.request.sourcing.document,last_date:0
-#: field:procurement.request.sourcing.document.mem,last_date:0
-msgid "Last date"
-msgstr "Last date"
-
 #. modules: sales_followup, sale, purchase_followup
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
@@ -29332,12 +29321,6 @@ msgstr "Pas urgent"
 #: help:purchase.order,date_order:0
 msgid "Date on which this document has been created."
 msgstr "Date a laquelle ce document a été créé"
-
-#. module: procurement_request
-#: field:procurement.request.sourcing.document,sourcing_document_id:0
-#: field:procurement.request.sourcing.document.mem,sourcing_document_id:0
-msgid "Sourcing document ID"
-msgstr "ID du document de Sourcing "
 
 #. module: base
 #: model:ir.ui.menu,name:base.menu_crm_case_job_req_main
@@ -35067,12 +35050,10 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, procurement_request, sale, mission_stock, msf_doc_import, purchase_followup, account_override
+#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
-#: field:procurement.request.sourcing.document,first_date:0
-#: field:procurement.request.sourcing.document.mem,first_date:0
 #: field:sale.order.sourcing.progress,start_date:0
 #: field:sale.followup.multi.wizard,start_date:0
 #: field:sync.client.update_to_send,create_date:0
@@ -39886,7 +39867,7 @@ msgstr "Transbordement - Valeur."
 msgid "RfQs"
 msgstr "DdD"
 
-#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, procurement_request, msf_field_access_rights, msf_button_access_rights,msf_tools
+#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights,msf_tools
 #: field:account.model.line,model_id:0
 #: view:account.subscription:0
 #: field:account.subscription,model_id:0
@@ -39913,8 +39894,6 @@ msgstr "DdD"
 #: field:patch.scripts,model:0
 #: field:automated.export.function,model_id:0
 #: field:automated.import.function,model_id:0
-#: field:procurement.request.sourcing.document,sourcing_document_model:0
-#: field:procurement.request.sourcing.document.mem,sourcing_document_model:0
 #: field:sync.client.log_sale_purchase,model:0
 #: field:sync.client.log_sale_purchase,model_id:0
 msgid "Model"
@@ -44257,9 +44236,7 @@ msgstr "Claim registration during picking process is only available for incoming
 msgid "You should make a choice for the Replenishment repeating !"
 msgstr "Veuillez faire un choix pour la Répétition du Réapprovisionnement !"
 
-#. modules: procurement_request, sales_followup
-#: selection:procurement.request.sourcing.document,sourcing_document_type:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_type:0
+#. modules: sales_followup
 #: field:sale.order.line.followup,outgoing_nb:0
 #: field:sale.order.line.followup,outgoing_status:0
 msgid "Outgoing delivery"
@@ -56452,14 +56429,13 @@ msgstr "Si le champs actif est réglé sur Faux, cela vous permettra de cacher l
 
 #. modules: sale, procurement_request
 #: field:procurement.request.sourcing.document,order_id:0
-#: field:procurement.request.sourcing.document.mem,order_id:0
 #: code:addons/sale/sale_order.py:1040
 #: code:addons/sale/sale_order.py:1265
 #: code:addons/sale/sale_workflow.py:379
 #: code:addons/sale/sale_workflow.py:459
 #, python-format
 msgid "Internal request"
-msgstr "Internal request"
+msgstr "Demande interne"
 
 #. module: product_asset
 #: report:product.asset:0
@@ -69856,7 +69832,7 @@ msgstr "Transitions"
 msgid "Draft statements"
 msgstr "Relevés sous statut brouillon"
 
-#. modules: delivery_mechanism, sales_followup, register_accounting, msf_outgoing, finance, procurement_request, stock_override, consumption_calculation, sync_client, unifield_setup, stock_forecast, order_types, return_claim
+#. modules: delivery_mechanism, sales_followup, register_accounting, msf_outgoing, finance, stock_override, consumption_calculation, sync_client, unifield_setup, stock_forecast, order_types, return_claim
 #: field:real.average.consumption,picking_id:0
 #: field:stock.picking.processing.info,picking_id:0
 #: field:account.invoice,picking_id:0
@@ -69872,8 +69848,6 @@ msgstr "Relevés sous statut brouillon"
 #: field:stock.picking.processor,picking_id:0
 #: field:validate.picking.processor,picking_id:0
 #: field:stock.certificate.valuation,picking_id:0
-#: selection:procurement.request.sourcing.document,sourcing_document_model:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_model:0
 #: field:wizard.account.invoice,picking_id:0
 #: field:product.product,picking_ids:0
 #: view:sale.order.line.followup:0
@@ -72333,12 +72307,6 @@ msgstr "La synchro automatique doit être activée pour pouvoir faire une Mise �
 #: model:res.country,name:base.pr
 msgid "Puerto Rico"
 msgstr "Porto Rico"
-
-#. module: procurement_request
-#: field:procurement.request.sourcing.document,sourcing_lines:0
-#: field:procurement.request.sourcing.document.mem,sourcing_lines:0
-msgid "Sourced lines"
-msgstr "Lignes sourcées"
 
 #. modules: stock_override, stock
 #: view:stock.move:0
@@ -81589,13 +81557,12 @@ msgstr "Personne de Contact - Commande"
 #: model:process.process,name:purchase.process_process_rfq0
 #: model:ir.actions.report.xml,name:purchase_override.report_purchase_msf_quotation
 #: selection:procurement.order,state:0
-#: selection:procurement.request.sourcing.document,sourcing_document_type:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_type:0
 #: selection:multiple.sourcing.wizard,po_cft:0
 #: selection:procurement.order,po_cft:0
 #: selection:sale.order.line,po_cft:0
 #: selection:stock.forecast.line,state:0
 #: view:purchase.order:0
+#: selection:procurement.request.sourcing.document,linked_model:0
 msgid "Request for Quotation"
 msgstr "Demande de Devis"
 
@@ -84185,7 +84152,7 @@ msgstr "Récap Dépenses prévues"
 msgid "L2"
 msgstr "L2"
 
-#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account
+#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account, procurement_request
 #: field:analytic.distribution.wizard,purchase_id:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -84241,6 +84208,7 @@ msgstr "L2"
 #: field:automated.import.files.available,po_id:0
 #: field:account.move.line,purchase_order_id:0
 #: field:account.analytic.line,purchase_order_id:0
+#: selection:procurement.request.sourcing.document,linked_model:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -86883,10 +86851,8 @@ msgstr "Event Information"
 msgid "Read"
 msgstr "Lecture"
 
-#. module: stock_override, procurement_request
+#. module: stock_override
 #: view:change.dest.location:0
-#: selection:procurement.request.sourcing.document,sourcing_document_type:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_type:0
 #: field:change.dest.location,picking_id:0
 msgid "Internal move"
 msgstr "Mouvement Interne"
@@ -98053,10 +98019,6 @@ msgid "If the active field is set to False, it will allow you to hide the accoun
 msgstr "Si le champ actif est sur Faux, cela vous permet de cacher le compte sans le supprimer."
 
 #. modules: sales_followup, tender_flow, procurement, documents_done, sale, stock_forecast, purchase_compare_rfq, sourcing, delete_button, msf_doc_import, useability_dashboard_and_menu, sync_so, procurement_request
-#: selection:procurement.request.sourcing.document,sourcing_document_model:0
-#: selection:procurement.request.sourcing.document,sourcing_document_type:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_model:0
-#: selection:procurement.request.sourcing.document.mem,sourcing_document_type:0
 #: field:expected.sale.order.line,tender_id:0
 #: field:tender.cancel.wizard,tender_id:0
 #: model:ir.model,name:delete_button.model_tender
@@ -98084,6 +98046,7 @@ msgstr "Si le champ actif est sur Faux, cela vous permet de cacher le compte san
 #: view:tender:0
 #: field:tender.line,tender_id:0
 #: view:board.board:0
+#: selection:procurement.request.sourcing.document,linked_model:0
 msgid "Tender"
 msgstr "Appel d'offres"
 
@@ -99698,11 +99661,6 @@ msgstr "button_wait_done - (procurement.order)"
 #: field:resource.calendar.attendance,date_from:0
 msgid "Starting date"
 msgstr "Date Début"
-
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_sourcing_document_mem
-msgid "procurement.request.sourcing.document.mem"
-msgstr "procurement.request.sourcing.document.mem"
 
 #. module: stock
 #: field:stock.move,scrapped:0
@@ -103843,3 +103801,24 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: procurement_request
+#: code:addons/procurement_request/procurement_request.py:134
+#, python-format
+msgid "No model found for this document"
+msgstr "Aucun modèle n'a été trouvé pour ce document"
+
+#. module: procurement_request
+#: field:procurement.request.sourcing.document,linked_model:0
+msgid "Document model"
+msgstr "Modèle du Document"
+
+#. module: procurement_request
+#: field:procurement.request.sourcing.document,linked_id:0
+msgid "Document Id"
+msgstr "Id du Document"
+
+#. module: procurement_request
+#: selection:procurement.request.sourcing.document,linked_model:0
+msgid "Outgoing Delivery"
+msgstr "Livraison Sortante"
