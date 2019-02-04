@@ -623,5 +623,19 @@
             </field>
         </record>
 
+        <!-- To be able to use rfq_ok column in IR's Sourcing Documents -->
+        <record model="ir.ui.view" id="procurement_request.procurement_request_sourcing_document_tree_view">
+            <field name="name">procurement.request.sourcing.document.tree</field>
+            <field name="model">procurement.request.sourcing.document</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sourcing Documents" editable="0">
+                    <field name="linked_model" />
+                    <field name="linked_name" />
+                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
+                </tree>
+            </field>
+        </record>
+
     </data>
 </openerp>
