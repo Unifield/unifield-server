@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+
+        <record id="us_5507_set_synchronize" model="patch.scripts">
+            <field name="method">us_5507_set_synchronize</field>
+        </record>
+
         <!-- UF11.1 -->
         <record id="us_5425_reset_amount_currency" model="patch.scripts">
             <field name="method">us_5425_reset_amount_currency</field>
