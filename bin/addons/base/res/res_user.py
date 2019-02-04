@@ -368,19 +368,18 @@ class users(osv.osv):
             if len(arg) > 2 and arg[0] == 'is_erp_manager':
                 dataobj = self.pool.get('ir.model.data')
 
-                manager_group_id = None
+                root_id = None
                 try:
                     dataobj = self.pool.get('ir.model.data')
-                    dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
-                                                                           'group_erp_manager')
+                    dummy, root_id = dataobj.get_object_reference(cr, 1, 'base', 'user_root')
                 except ValueError:
                     # If these groups does not exists anymore
                     pass
-                if manager_group_id:
+                if root_id:
                     if arg[1] == '=' and arg[2] == False:
-                        res.append(('groups_id', 'not in', manager_group_id))
+                        res.append(('id', '!=', root_id))
                     if arg[1] == '=' and arg[2] == True:
-                        res.append(('groups_id', 'in', manager_group_id))
+                        res.append(('id', '=', root_id))
 
             elif len(arg) > 2 and arg[0] == 'is_sync_config':
                 res_group_obj = self.pool.get('res.groups')
