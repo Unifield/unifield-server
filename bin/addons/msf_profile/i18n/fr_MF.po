@@ -13773,6 +13773,7 @@ msgstr "Obtenir des Marchandises"
 
 #. module: procurement_request
 #: view:sale.order:0
+#: view:procurement.request.sourcing.document:0
 msgid "Sourcing Documents"
 msgstr "Documents de sourcing"
 

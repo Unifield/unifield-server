@@ -27,6 +27,7 @@ from lxml import etree
 import decimal_precision as dp
 import netsvc
 import time
+import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
 
@@ -2148,4 +2149,126 @@ class ir_values(osv.osv):
 
         return new_values
 
+
 ir_values()
+
+
+SOURCE_DOCUMENT_MODELS = [
+    ('', ''),
+    ('po', 'Purchase Order'),
+    ('rfq', 'Request for Quotation'),
+    ('tender', 'Tender'),
+    ('out', 'Outgoing Delivery'),
+    ('pick', 'Picking Ticket'),
+    ('int', 'Internal Move'),
+]
+
+
+class procurement_request_sourcing_document(osv.osv):
+    _name = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _description = 'Sourcing Document'
+    _rec_name = 'order_id'
+    _auto = False
+
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+        'linked_id': fields.integer('Document Id'),
+        'linked_name': fields.char('Document name', size=255),
+        'linked_model': fields.selection(SOURCE_DOCUMENT_MODELS, 'Document model'),
+    }
+
+    def init(self, cr):
+        tools.sql.drop_view_if_exists(cr, 'procurement_request_sourcing_document2')
+
+        cr.execute('''CREATE OR REPLACE view procurement_request_sourcing_document2 AS (
+            SELECT
+                ('x'||md5(''||COALESCE(order_id,0)||COALESCE(linked_id,0)||COALESCE(linked_name,'')))::bit(32)::int AS id,
+                order_id AS order_id,
+                linked_id AS linked_id,
+                linked_name AS linked_name,
+                linked_model AS linked_model
+            FROM (
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, CASE WHEN p.rfq_ok = 't' THEN 'rfq' ELSE 'po' END AS linked_model
+                FROM purchase_order_line pl, purchase_order p, sale_order_line sl
+                WHERE pl.order_id = p.id AND pl.sale_order_line_id = sl.id AND sl.procurement_request = True
+                GROUP BY p.id, sl.order_id
+
+                UNION
+
+                SELECT t.id AS linked_id, sl.order_id AS order_id, t.name AS linked_name, 'tender' AS linked_model
+                FROM tender_line tl, tender t, sale_order_line sl 
+                WHERE tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND sl.procurement_request = True
+                GROUP BY t.id, sl.order_id, t.name
+
+                UNION
+
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 
+                    CASE WHEN p.type = 'out' AND p.subtype = 'standard' THEN 'out' ELSE 'pick' END AS linked_model
+                FROM stock_move m, stock_picking p, sale_order_line sl
+                WHERE m.picking_id = p.id AND m.sale_line_id = sl.id AND sl.procurement_request = True 
+                    AND p.type = 'out' AND p.subtype in ('standard', 'picking')
+                GROUP BY p.id, sl.order_id, p.name
+
+                UNION
+
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 'int' AS linked_model
+                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl
+                WHERE m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.sale_order_line_id = sl.id 
+                    AND sl.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
+                GROUP BY p.id, sl.order_id, p.name
+                ) AS subq
+            )''')
+
+    def go_to_document(self, cr, uid, ids, context=None):
+        """
+        Open the sourcing document in the new tab
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        source_doc = self.browse(cr, uid, ids[0], fields_to_fetch=['linked_id', 'linked_model'], context=context)
+
+        view_id = False
+        if source_doc.linked_model == 'po':
+            source_model = 'purchase.order'
+        elif source_doc.linked_model == 'rfq':
+            context.update({'rfq_ok': True})
+            source_model = 'purchase.order'
+        elif source_doc.linked_model == 'tender':
+            source_model = 'tender'
+        elif source_doc.linked_model == 'out':
+            context.update({'pick_type': 'delivery'})
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1]
+        elif source_doc.linked_model == 'pick':
+            context.update({'pick_type': 'picking_ticket'})
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+        elif source_doc.linked_model == 'int':
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]
+        else:
+            raise osv.except_osv(_('Error'), _('No model found for this document'))
+
+        res = {
+            'type': 'ir.actions.act_window',
+            'res_model': source_model,
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'res_id': source_doc.linked_id,
+            'context': context,
+        }
+
+        if view_id:
+            res['view_id'] = [view_id]
+
+        return res
+
+
+procurement_request_sourcing_document()

@@ -130,7 +130,7 @@
                                     <field name="linked_name" />
                                     <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
                                 </tree>
-                            </field> 
+                            </field>
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
