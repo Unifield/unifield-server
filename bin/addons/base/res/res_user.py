@@ -207,6 +207,8 @@ class groups(osv.osv):
                 new_args = [('level', 'in', ['project', False])]
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
+            if instance_level in ('project', 'coordo'):
+                new_args += [('is_an_admin_profile', '=', False)]
             for arg in args:
                 new_args.append(arg)
 
