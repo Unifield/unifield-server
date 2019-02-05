@@ -265,6 +265,32 @@ class wizard_pick_import(osv.osv_memory):
         return location_ids[0]
 
 
+    def check_matching_qty_per_line_number(self, cr, uid, ids, import_data_lines, wiz, context=None):
+        if context is None:
+            context = {}
+        stock_move_data = {}
+        for stock_move in wiz.picking_id.move_lines:
+            if stock_move_data.get(stock_move.line_number):
+                stock_move_data[stock_move.line_number] += stock_move.product_qty
+            else:
+                stock_move_data[stock_move.line_number] = stock_move.product_qty
+
+        import_data = {}
+        for xls_line_number, line_data in sorted(import_data_lines.items()):
+            line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
+            if import_data.get(line_data['item']):
+                import_data[line_data['item']] += line_data['qty_to_pick']
+            else:
+                import_data[line_data['item']] = line_data['qty_to_pick']
+
+        for ln in import_data.keys():
+            if ln in stock_move_data and import_data[ln] != stock_move_data[ln]:
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen') % ln
+                )
+
+
     def import_pick_xls(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -280,6 +306,8 @@ class wizard_pick_import(osv.osv_memory):
 
         if import_data_header['reference'] != wiz.picking_id.name:
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
+
+        self.check_matching_qty_per_line_number(cr, uid, ids, import_data_lines, wiz, context=context)
 
         for xls_line_number, line_data in sorted(import_data_lines.items()):
             if line_data['qty_picked'] is None:
