@@ -100066,12 +100066,6 @@ msgstr "Family Model IDs"
 msgid "Partial Reconcile Entries"
 msgstr "Lettrage Partiel d'Ecritures"
 
-#. module: base
-#: code:addons/base/res/partner/partner.py:343
-#, python-format
-msgid "Invalid Value"
-msgstr "Valeur incorrecte"
-
 #. module: useability_dashboard_and_menu
 #: model:ir.actions.act_window,help:useability_dashboard_and_menu.action_other_form
 msgid "You see here Other/Manufacturer who can be both Customer and Supplier."
