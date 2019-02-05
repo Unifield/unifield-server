@@ -345,17 +345,20 @@ class users(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        root_id = False
+        manager_group_id = None
         result = dict.fromkeys(ids, False)
         try:
             dataobj = self.pool.get('ir.model.data')
-            dummy, root_id = dataobj.get_object_reference(cr, 1, 'base',
-                                                          'user_root')
+            dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                                   'group_erp_manager')
         except ValueError:
             # If these groups does not exists anymore
             pass
-        if root_id:
-            result[root_id] = True
+        if manager_group_id:
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if manager_group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
         return result
 
     def _search_role(self, cr, uid, obj, name, args, context=None):
@@ -368,18 +371,19 @@ class users(osv.osv):
             if len(arg) > 2 and arg[0] == 'is_erp_manager':
                 dataobj = self.pool.get('ir.model.data')
 
-                root_id = None
+                manager_group_id = None
                 try:
                     dataobj = self.pool.get('ir.model.data')
-                    dummy, root_id = dataobj.get_object_reference(cr, 1, 'base', 'user_root')
+                    dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                                           'group_erp_manager')
                 except ValueError:
                     # If these groups does not exists anymore
                     pass
-                if root_id:
+                if manager_group_id:
                     if arg[1] == '=' and arg[2] == False:
-                        res.append(('id', '!=', root_id))
+                        res.append(('groups_id', 'not in', manager_group_id))
                     if arg[1] == '=' and arg[2] == True:
-                        res.append(('id', '=', root_id))
+                        res.append(('groups_id', 'in', manager_group_id))
 
             elif len(arg) > 2 and arg[0] == 'is_sync_config':
                 res_group_obj = self.pool.get('res.groups')
@@ -601,6 +605,7 @@ class users(osv.osv):
         'force_password_change': False,
         'view': 'simple',
         'is_synchronizable': False,
+        'synchronize': False,
     }
 
     @tools.cache()
