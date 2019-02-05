@@ -227,6 +227,15 @@ class purchase_order_line_sync(osv.osv):
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         # update PO line state:
+        print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
+        cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
+        print cr.fetchall()
+        dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty'])
+
+        all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
+        print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+        print dd
+
         if sol_dict['state'] in ('sourced', 'sourced_v'):
             if pol_state == 'sourced_n':
                 self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
@@ -247,6 +256,15 @@ class purchase_order_line_sync(osv.osv):
         message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, pol_data['order_id'][1], pol_data['line_number'], pol_updated)
         logging.getLogger('------sync.purchase.order.line').info(message)
 
+        print 'IR RESULT'
+        ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
+        print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
+        cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
+        print cr.fetchall()
+
+        all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
+        print 'FINALE PO LINE', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+        print ''
         return message
 
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):

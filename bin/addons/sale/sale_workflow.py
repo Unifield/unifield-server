@@ -143,23 +143,21 @@ class sale_order_line(osv.osv):
         in case of sol set to cancel_r, do we have to create the resourced line ?
         '''
         ## TODO WHEN THIS METHOD IS CALLED (if only by sync: ok to deactivate)
-        return False
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        print 'has_to_create_resourced_line', context
+        if context.get('sync_message_execution'):
+            return False
         sol = self.browse(cr, uid, ids[0], context=context)
         related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
-        print 'kkk', related_pol
         if not related_pol:
             return True
-        print self.pool.get('purchase.order.line').read(cr, uid, related_pol[0], context=context)
-        return False
         related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], context=context)
         if not related_pol.original_line_id:
             return True
-        print 'k'*22, related_pol.original_line_id.block_resourced_line_creation
         return (not related_pol.original_line_id.block_resourced_line_creation)
 
 
@@ -176,7 +174,7 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-            if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
+            if not sol.cancelled_by_sync and self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
                 sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol,

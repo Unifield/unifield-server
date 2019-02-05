@@ -51,7 +51,10 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        print '################ check_and_update_original_line_at_split_cancellation', context
         return True
+        if context.get('sync_update_execution'):
+            return True
         for pol in self.browse(cr, uid, ids, context=context):
             print pol.id
             print 'pol.is_line_split', pol.is_line_split
