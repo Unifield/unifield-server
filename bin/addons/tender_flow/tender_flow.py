@@ -2191,7 +2191,7 @@ class procurement_request_sourcing_document(osv.osv):
             FROM (
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, CASE WHEN p.rfq_ok = 't' THEN 'rfq' ELSE 'po' END AS linked_model
                 FROM purchase_order_line pl, purchase_order p, sale_order_line sl
-                WHERE pl.order_id = p.id AND pl.sale_order_line_id = sl.id AND sl.procurement_request = True
+                WHERE pl.order_id = p.id AND pl.linked_sol_id = sl.id AND sl.procurement_request = True
                 GROUP BY p.id, sl.order_id
 
                 UNION
@@ -2214,7 +2214,7 @@ class procurement_request_sourcing_document(osv.osv):
 
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 'int' AS linked_model
                 FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl
-                WHERE m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.sale_order_line_id = sl.id 
+                WHERE m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id 
                     AND sl.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
                 GROUP BY p.id, sl.order_id, p.name
                 ) AS subq
