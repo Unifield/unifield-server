@@ -321,6 +321,7 @@ class automated_import_job(osv.osv):
             else:
                 prev_job_id = job_id
                 job_id = self.create(cr, uid, {'import_id': import_data.id, 'state': 'in_progress'}, context=context)
+                cr.commit() # keep trace of the job in case of error
             job = self.browse(cr, uid, job_id, context=context)
             started_job_id = False
             md5 = False
@@ -328,7 +329,6 @@ class automated_import_job(osv.osv):
             data64 = None
             filename = False
             oldest_file = False
-
             ftp_connec = None
             sftp = None
             context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
