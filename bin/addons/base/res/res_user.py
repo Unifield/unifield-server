@@ -487,8 +487,8 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
-        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),
         'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
         'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
@@ -777,7 +777,7 @@ class users(osv.osv):
         return encrypted password from the database using uid
         '''
         cr.execute("""SELECT password from res_users
-                      WHERE id=%s AND active""",
+                      WHERE id=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (uid,))
         res = cr.fetchone()
         if res:
@@ -790,7 +790,7 @@ class users(osv.osv):
         '''
         login = tools.ustr(login).lower()
         cr.execute("""SELECT password from res_users
-                      WHERE login=%s AND active""",
+                      WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (login,))
         res = cr.fetchone()
         if res:
@@ -917,7 +917,7 @@ class users(osv.osv):
                 login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND active=%s""",
+                              WHERE login=%s AND active=%s AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                            (login, True))
                 res = cr.fetchone()
                 uid = None
