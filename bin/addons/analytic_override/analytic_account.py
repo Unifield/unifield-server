@@ -420,11 +420,15 @@ class analytic_account(osv.osv):
         if not context.get('sync_update_execution', False):
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            for analytic_account in self.read(cr, uid, ids, ['category', 'name'], context=context):
-                dom = [('category', '=', analytic_account.get('category', '')),
-                       ('name', '=ilike', analytic_account.get('name', '')),
-                       ('id', '!=', analytic_account.get('id'))]
+            for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
+                dom = [('category', '=', analytic_acc.get('category', '')),
+                       ('name', '=ilike', analytic_acc.get('name', '')),
+                       ('id', '!=', analytic_acc.get('id'))]
                 if self.search_exist(cr, uid, dom, context=context):
+                    ir_trans = self.pool.get('ir.translation')
+                    trans_ids = ir_trans.search(cr, uid, [('res_id', 'in', ids), ('name', '=', 'account.analytic.account,name')], context=context)
+                    if trans_ids:
+                        ir_trans.clear_transid(cr, uid, trans_ids, context=context)
                     raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
 
