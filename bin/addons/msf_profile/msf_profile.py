@@ -52,6 +52,17 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_5507_set_synchronize(self, cr, uid, *a, **b):
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+
+        print sync_id
+        cr.execute("update res_users set synchronize='t' where create_uid=%s", (sync_id,))
+        self._logger.warn('Set synchronize on  %s users.' % (cr.rowcount,))
+        return True
+
     # UF11.1
     def us_5559_set_pricelist(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity'):

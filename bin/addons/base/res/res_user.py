@@ -652,10 +652,6 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
-        if not values.get('is_synchronizable', False):
-            # a user which is not synchronizable should not be synchronized
-            values['synchronize'] = False
-
         user_id = super(users, self).create(cr, uid, values, context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
@@ -683,11 +679,6 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
-
-        if 'is_synchronizable' in values and not values.get('is_synchronizable',
-                                                            False):
-            # desactivate synchronize if is_synchronizable is set to False
-            values['synchronize'] = False
 
         old_groups = []
         if values.get('groups_id'):
