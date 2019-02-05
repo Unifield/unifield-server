@@ -118,7 +118,7 @@ class wizard_pick_import(osv.osv_memory):
         }
 
 
-    def get_matching_move(self, cr, uid, ids, wizard_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=None):
+    def get_matching_move(self, cr, uid, ids, wizard_id, move_proc_model, xls_line_number, line_data, product_id, location_id, picking_id, context=None):
         if context is None:
             context = {}
 
@@ -171,10 +171,20 @@ class wizard_pick_import(osv.osv_memory):
                 original_qty = self.pool.get(move_proc_model).browse(cr, uid, original_line).ordered_quantity
                 self.pool.get(move_proc_model).write(cr, uid, [original_line], {'ordered_quantity': original_qty - line_data['qty_to_pick']}, context=context)
             else:
-                raise osv.except_osv(
-                    _('Error'), 
-                    _('Line %s: Matching move not found') % xls_line_number
-                )
+                move_not_available_ids = self.pool.get('stock.move').search(cr, uid, [
+                    ('picking_id', '=', picking_id),
+                    ('line_number', '=', line_data['item']),
+                    ('product_id', '=', product_id),
+                    ('product_qty', '=', line_data['qty_to_pick']),
+                    ('state', '!=', 'assigned'),
+                ], context=context)
+                if move_not_available_ids:
+                    return False
+                else:
+                    raise osv.except_osv(
+                        _('Error'), 
+                        _('Line %s: Matching move not found') % xls_line_number
+                    )
 
         return move_proc_ids[0]
 
@@ -280,7 +290,9 @@ class wizard_pick_import(osv.osv_memory):
             if line_data['qty_picked'] and line_data['qty_to_pick']:
                 product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
                 location_id = self.get_location_id(cr, uid, ids, line_data, context=context)
-                move_proc_id = self.get_matching_move(cr, uid, ids, res_id, move_proc_model, xls_line_number, line_data, product_id, location_id, context=context)
+                move_proc_id = self.get_matching_move(cr, uid, ids, res_id, move_proc_model, xls_line_number, line_data, product_id, location_id, wiz.picking_id.id, context=context)
+                if not move_proc_id:
+                    continue
                 
                 move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_id, context=context)
                 to_write = {}
