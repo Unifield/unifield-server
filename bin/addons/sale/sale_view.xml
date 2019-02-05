@@ -153,8 +153,8 @@
                             <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <group colspan="2" col="3">
                                 <field name="no_line" invisible="1"/>
-                                <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
-                                <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', '|', ('no_line', '=', False), ('state', 'not in', ['draft']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
+                                <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
                             </group>
                             <group colspan="2" col="3">
                                 <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
