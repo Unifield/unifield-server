@@ -171,8 +171,8 @@ class purchase_order(osv.osv):
                 order = self.pool.get('purchase.order').browse(cr, uid, ids[0])
                 partner = self.pool.get('res.partner').browse(cr, uid, part)
                 pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner.partner_type)])
-                pricelist_id = res['value'].pop('pricelist_id')
                 if order.pricelist_id.id not in pricelist_ids:
+                    pricelist_id = res['value'].pop('pricelist_id')
                     res.update({'warning': {'title': 'Warning',
                                         'message': 'The currency used on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
 
