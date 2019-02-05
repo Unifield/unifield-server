@@ -36102,7 +36102,7 @@ msgstr "    - %s :\n"
 msgid "cancel_voucher - (account.voucher)"
 msgstr "cancel_voucher - (account.voucher)"
 
-#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export
+#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, account_mcdb
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
@@ -36133,6 +36133,8 @@ msgstr "cancel_voucher - (account.voucher)"
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
 #: report:addons/register_accounting/report/fully_report_xls.mako:590
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
+#: report:addons/account_mcdb/report/combined_journals_report.mako:273
+#: report:combined.journals.report.pdf:0
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -64018,8 +64020,10 @@ msgstr "Format exécutif 4 7,5 x 10 pouces, 190,5 x 254 mm"
 msgid "The supplier seems to have an incorrect account. Please contact an Accounting Administrator to solve this problem."
 msgstr "Le fournisseur semble avoir un compte incorrect. Veuillez contacter un Administrateur Finance pour résoudre ce problème."
 
-#. module: account_override
+#. modules: account_override, account_mcdb
 #: field:account.move.line,reconcile_txt:0
+#: report:addons/account_mcdb/report/combined_journals_report.mako:270
+#: report:combined.journals.report.pdf:0
 #: report:addons/account_override/report/open_invoices_xls.mako:353
 msgid "Reconcile"
 msgstr "Lettrage"
