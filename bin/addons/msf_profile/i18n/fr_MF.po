@@ -2087,7 +2087,6 @@ msgstr "Liste de Pré-Colisage ou Emballage ne ​​devrait pas être sélectio
 msgid "PPL integrity"
 msgstr "Integrité LPC"
 
-
 #. module: specific_rules
 #: code:addons/specific_rules/stock.py:100
 #, python-format
@@ -33818,7 +33817,7 @@ msgstr "Mise à jour à partir de"
 msgid "5-Common"
 msgstr "5-Commun"
 
-#. modules: account_override, account, analytic_distribution_supply, msf_homere_interface, register_accounting, account_hq_entries, account_corrections, purchase, account_subscription, stock, analytic_distribution, purchase_override
+#. modules: account_override, account, analytic_distribution_supply, msf_homere_interface, register_accounting, account_hq_entries, account_corrections, purchase, account_subscription, stock, analytic_distribution, purchase_override, msf_doc_import
 #: selection:account.account.type,close_method:0
 #: selection:account.installer,charts:0
 #: selection:account.tax,type:0
@@ -33843,6 +33842,7 @@ msgstr "5-Commun"
 #: selection:wizard.advance.line,analytic_distribution_state:0
 #: selection:stock.location,chained_location_type:0
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:326
 msgid "None"
 msgstr "Aucun"
 
@@ -104154,12 +104154,14 @@ msgid "Update"
 msgstr "Mettre à jour"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:447
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:468
 #, python-format
 msgid "    Importation completed in %s!\n"
 "    # of lines without error : %s of %s lines\n"
 "    # of lines to correct: %s\n"
+"    \n"
 "    %s\n"
+"    \n"
 "    %s\n"
 "    \n"
 "    %s\n"
@@ -104167,9 +104169,11 @@ msgid "    Importation completed in %s!\n"
 msgstr "    Importation terminée en %s!\n"
 "    # de lignes sans erreur : %s sur %s lignes\n"
 "    # de lignes à corriger : %s\n"
+"    \n"
 "    %s\n"
+"    \n"
 "    %s\n"
-"\n"
+"    \n"
 "    %s\n"
 "    "
 
@@ -104465,8 +104469,8 @@ msgstr " La Date d'Expiration (%s) n'a pas un bon format de date."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:272
 #, python-format
-msgid " The imported line's data does not match %s's data."
-msgstr " Les données de la ligne importée ne correspondent pas aux données de %s."
+msgid " The imported line's data (Line number: %s, Product: %s, Batch: %s) does not match %s's data."
+msgstr " Les données de la ligne importée (Numéro de Ligne: %s, Produit: %s, Lot: %s) ne correspondent pas aux données de %s."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:385
@@ -104520,21 +104524,17 @@ msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:455
-#, python-format
-msgid " There is too few Quantities put in the report for %s."
-msgstr " Il n'y a pas assez de Quantités pour le produit %s dans le rapport."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:457
-#, python-format
-msgid " There is too much Quantities put in the report for %s."
-msgstr " Il y a trop de Quantités pour le produit %s dans le rapport."
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:459
 #, python-format
 msgid "Quantities errors : \n"
 ""
 msgstr "Erreurs sur les quantités : \n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:442
+#, python-format
+msgid "Line number %s: The imported Quantities for %s don't match with the PPL (%s instead of %s).\n"
+""
+msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas aux données de la Liste de Pré-Colisage (%s à la place de %s).\n"
 ""

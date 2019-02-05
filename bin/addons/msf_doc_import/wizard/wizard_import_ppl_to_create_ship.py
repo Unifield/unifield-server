@@ -287,6 +287,13 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                                        % (row.cells[6].data,))
                                 else:
                                     move_domain.append(('expired_date', '=', cell_expiry_date))
+
+                            # Save qties by line
+                            if sum_qty.get(imp_line_num):
+                                sum_qty[imp_line_num] += imp_qty
+                            else:
+                                sum_qty[imp_line_num] = imp_qty
+
                             exact_move_domain = [x for x in move_domain]
                             exact_move_domain.append(('product_qty', '=', imp_qty))
                             exact_move_id = move_obj.search(cr, uid, exact_move_domain, limit=1, context=context)
@@ -297,19 +304,11 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                     'move_id': move.id,
                                     'uom': move.product_uom or move.product_id and move.product_id.uom_id,
                                 })
-                                if sum_qty.get(move.product_id.id):
-                                    sum_qty[move.product_id.id] += imp_qty
-                                else:
-                                    sum_qty[move.product_id.id] = imp_qty
                                 treated_lines.append(to_update['move_id'])
                             else:
                                 move_ids = move_obj.search(cr, uid, move_domain, context=context)
                                 for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=ftf, context=context):
                                     if imp_qty < move.product_qty:
-                                        if sum_qty.get(move.product_id.id):
-                                            sum_qty[move.product_id.id] += imp_qty
-                                        else:
-                                            sum_qty[move.product_id.id] = imp_qty
                                         new_move_id = self.split_move(cr, uid, move.id, imp_qty, context=context)
                                         if not new_move_id:
                                             line_errors.append(_(' The Line could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'))
@@ -324,8 +323,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         line_errors.append(_(' The Product Code has to be defined.'))
 
                     if not to_update.get('move_id'):
-                        line_errors.append(_(' The imported line\'s data does not match %s\'s data.')
-                                           % (wiz_browse.picking_id.name,))
+                        non = _('None')
+                        line_errors.append(_(' The imported line\'s data (Line number: %s, Product: %s, Batch: %s) does not match %s\'s data.')
+                                           % (imp_line_num or non, row.cells[1].data or non, row.cells[5].data or non,
+                                              wiz_browse.picking_id.name or non))
 
                     # from pack and to pack
                     if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[
@@ -436,13 +437,12 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
             # Check qties
             qty_errors = ''
-            cr.execute('''SELECT p.id, p.default_code, SUM(product_qty) FROM stock_move m, product_product p
-                WHERE m.product_id = p.id AND m.picking_id = %s GROUP BY p.id, p.default_code''', (wiz_browse.picking_id.id,))
+            cr.execute('''SELECT m.line_number, p.default_code, SUM(product_qty) FROM stock_move m, product_product p
+                WHERE m.product_id = p.id AND m.picking_id = %s GROUP BY m.line_number, p.default_code''', (wiz_browse.picking_id.id,))
             for prod in cr.fetchall():
-                if sum_qty.get(prod[0]) and sum_qty[prod[0]] < prod[2]:
-                    qty_errors += _(' There is too few Quantities put in the report for %s.') % (prod[1],)
-                if sum_qty.get(prod[0]) and sum_qty[prod[0]] > prod[2]:
-                    qty_errors += _(' There is too much Quantities put in the report for %s.') % (prod[1],)
+                if sum_qty.get(prod[0]) and sum_qty[prod[0]] != prod[2]:
+                    qty_errors += _('Line number %s: The imported Quantities for %s don\'t match with the PPL (%s instead of %s).\n') \
+                                  % (prod[0], prod[1], sum_qty[prod[0]], prod[2])
             if qty_errors:
                 qty_errors = _('Quantities errors : \n') + qty_errors
 
