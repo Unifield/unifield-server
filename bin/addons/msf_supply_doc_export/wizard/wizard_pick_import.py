@@ -156,6 +156,16 @@ class wizard_pick_import(osv.osv_memory):
             ], context=context)
 
         if not move_proc_ids: # then create new line
+            move_not_available_ids = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id', '=', picking_id),
+                ('line_number', '=', line_data['item']),
+                ('product_id', '=', product_id),
+                ('product_qty', '=', line_data['qty_to_pick']),
+                ('state', '!=', 'assigned'),
+            ], context=context)
+            if move_not_available_ids:
+                return False
+
             move_proc_ids = self.pool.get(move_proc_model).search(cr, uid, [
                 ('wizard_id', '=', wizard_id),
                 ('line_number', '=', line_data['item']),
@@ -171,20 +181,10 @@ class wizard_pick_import(osv.osv_memory):
                 original_qty = self.pool.get(move_proc_model).browse(cr, uid, original_line).ordered_quantity
                 self.pool.get(move_proc_model).write(cr, uid, [original_line], {'ordered_quantity': original_qty - line_data['qty_to_pick']}, context=context)
             else:
-                move_not_available_ids = self.pool.get('stock.move').search(cr, uid, [
-                    ('picking_id', '=', picking_id),
-                    ('line_number', '=', line_data['item']),
-                    ('product_id', '=', product_id),
-                    ('product_qty', '=', line_data['qty_to_pick']),
-                    ('state', '!=', 'assigned'),
-                ], context=context)
-                if move_not_available_ids:
-                    return False
-                else:
-                    raise osv.except_osv(
-                        _('Error'), 
-                        _('Line %s: Matching move not found') % xls_line_number
-                    )
+                raise osv.except_osv(
+                    _('Error'), 
+                    _('Line %s: Matching move not found') % xls_line_number
+                )
 
         return move_proc_ids[0]
 
@@ -268,8 +268,12 @@ class wizard_pick_import(osv.osv_memory):
     def check_matching_qty_per_line_number(self, cr, uid, ids, import_data_lines, wiz, context=None):
         if context is None:
             context = {}
+        ln_with_cancelled = []
         stock_move_data = {}
         for stock_move in wiz.picking_id.move_lines:
+            if stock_move.state in ('cancel', 'done'):
+                ln_with_cancelled.append(stock_move.line_number)
+                continue
             if stock_move_data.get(stock_move.line_number):
                 stock_move_data[stock_move.line_number] += stock_move.product_qty
             else:
@@ -278,6 +282,19 @@ class wizard_pick_import(osv.osv_memory):
         import_data = {}
         for xls_line_number, line_data in sorted(import_data_lines.items()):
             line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
+            
+            if line_data['item'] in ln_with_cancelled: # ignore cancelled/done lines
+                product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
+                closed_move_ids = self.pool.get('stock.move').search(cr, uid, [
+                    ('picking_id', '=', wiz.picking_id.id),
+                    ('line_number', '=', line_data['item']),
+                    ('product_id', '=', product_id),
+                    ('product_qty', '=', line_data['qty_to_pick']),
+                    ('state', 'in', ['cancel', 'done']),
+                ], context=context)
+                if closed_move_ids:
+                    continue
+
             if import_data.get(line_data['item']):
                 import_data[line_data['item']] += line_data['qty_to_pick']
             else:
