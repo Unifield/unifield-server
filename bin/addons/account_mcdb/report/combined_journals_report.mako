@@ -346,7 +346,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${line['reconcile']|x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${getSelValue('account.move', 'state', line['status'])|x}</Data>
+        <Data ss:Type="String">${getSelValue('account.move', 'state', line['status']) or ''|x}</Data>
     </Cell>
 </Row>
 % endfor

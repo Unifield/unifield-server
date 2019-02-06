@@ -204,10 +204,10 @@
           <parawrap style="P4">[[ line['func_currency'] ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P4">[[ line['reconcile'] ]]</parawrap>
+          <parawrap style="P3">[[ line['reconcile'] ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P4">[[ getSelValue('account.move', 'state', line['status']) ]]</parawrap>
+          <parawrap style="P3">[[ getSelValue('account.move', 'state', line['status']) or '' ]]</parawrap>
         </td>
       </tr>
       <!-- TOTAL -->
