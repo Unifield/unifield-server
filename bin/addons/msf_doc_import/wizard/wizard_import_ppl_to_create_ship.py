@@ -150,6 +150,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         # Set the new move to available
         move_obj.action_confirm(cr, uid, [new_move_id], context=context)
         move_obj.action_assign(cr, uid, [new_move_id])
+        move_obj.force_assign(cr, uid, [new_move_id])
 
         return new_move_id
 
