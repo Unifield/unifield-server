@@ -103945,3 +103945,9 @@ msgstr "Plusieurs employés ont la même clé de combinaison codeterrain/id_staf
 #, python-format
 msgid "Several employees have the same Identification No \"%s\": %s"
 msgstr "Plusieurs employés ont le même N° d'identification \"%s\": %s"
+
+#. module: stock
+#: code:addons/stock/wizard/manage_expired_stock.py:64
+#, python-format
+msgid "You cannot have the sourcing location and destination location with the same location."
+msgstr "Vous ne pouvez pas sélectionner un emplacement source et de destination qui soit le même."
