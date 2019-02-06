@@ -52,6 +52,8 @@ OBJ_TO_RECREATE = [
     'hr.payment.method',
     'account.analytic.journal',
     'account.journal',
+    'account.mcdb',
+    'wizard.template',
 ]
 
 
@@ -352,6 +354,13 @@ class update_received(osv.osv,fv_formatter):
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
+    }
+
+    _defaults = {
+        'manually_ran': False,
+        'manually_set_run_date': False,
     }
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
@@ -428,11 +437,17 @@ class update_received(osv.osv,fv_formatter):
         else:
             raise Exception("Unable to unfold unknown packet type: " % packet_type)
 
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
+
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
         except BaseException, e:
             sync_log(self, e)
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True})
         return True
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
@@ -667,6 +682,9 @@ class update_received(osv.osv,fv_formatter):
 
             if obj._name == 'ir.translation':
                 self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
+            elif obj._name == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""

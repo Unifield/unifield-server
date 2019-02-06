@@ -108,6 +108,7 @@ class ir_values(osv.osv):
         'user_id': fields.many2one('res.users', 'User', ondelete='cascade', select=True),
         'company_id': fields.many2one('res.company', 'Company', select=True),
         'sequence': fields.integer('Sequence'),
+        'view_ids': fields.many2many('ir.ui.view', 'actions_view_rel', 'action_id', 'view_id', 'Linked views'),
     }
     _defaults = {
         'key': lambda *a: 'action',
@@ -176,7 +177,7 @@ class ir_values(osv.osv):
             ids_res.append(self.create(cr, uid_access, vals))
         return ids_res
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
         result = []
@@ -187,6 +188,7 @@ class ir_values(osv.osv):
                 res_id=False
 
             where = ['key=%s','model=%s']
+            join = ''
             params = [key, str(m)]
             if key2:
                 where.append('key2=%s')
@@ -207,13 +209,18 @@ class ir_values(osv.osv):
                     where.append('res_id=%s')
                     params.append(res_id)
 
+            if key == 'action' and view_id:
+                join = 'left join actions_view_rel r on r.action_id=ir_values.id'
+                where.append('(view_id is NULL or view_id=%s)')
+                params.append(view_id)
             if key == 'default' and (context.get('sync_update_execution') or context.get('sync_message_execution')):
                 where.append('user_id IS NULL order by sequence,id')
             else:
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
             clause = ' and '.join(where)
-            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)  # not_a_user_entry
+
+            cr.execute('select id,name,value,object,meta, key from ir_values '+ join +' where ' + clause, params)  # not_a_user_entry
             result = cr.fetchall()
             if result:
                 break

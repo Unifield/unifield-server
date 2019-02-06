@@ -5,6 +5,11 @@
             <field name="name">Default Label</field>
         </record>
 
+        <record id="default_label_packing_list" model="ppl.customize.label">
+            <field name="name">Label with Supplier Packing List</field>
+            <field name="packing_list" eval="True" />
+        </record>
+
         <record id="stock_location_packing" model="stock.location">
             <field name="name">Packing</field>
             <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
