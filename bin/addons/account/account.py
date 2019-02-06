@@ -1132,7 +1132,7 @@ class account_move(osv.osv):
             args = []
         ids = []
         if name:
-            ids += self.search(cr, user, [('name','ilike',name)]+args, limit=limit, context=context)
+            ids += self.search(cr, user, [('name', operator, name)]+args, limit=limit, context=context)
 
         if not ids and name and type(name) == int:
             ids += self.search(cr, user, [('id','=',name)]+args, limit=limit, context=context)
