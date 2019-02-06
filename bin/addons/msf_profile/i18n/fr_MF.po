@@ -34806,7 +34806,7 @@ msgstr "Distribution analytique non valide!"
 msgid "IR/FO Order"
 msgstr "IR/FO Order"
 
-#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override
+#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product_nomenclature
 #: selection:account.entries.report,move_line_state:0
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
@@ -34829,6 +34829,7 @@ msgstr "IR/FO Order"
 #: selection:wizard.advance.line,analytic_distribution_state:0
 #: selection:res.currency.table,state:0
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
+#: selection:product.nomenclature,status:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -36091,7 +36092,7 @@ msgstr "    - %s :\n"
 msgid "cancel_voucher - (account.voucher)"
 msgstr "cancel_voucher - (account.voucher)"
 
-#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export
+#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
@@ -36122,6 +36123,7 @@ msgstr "cancel_voucher - (account.voucher)"
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
 #: report:addons/register_accounting/report/fully_report_xls.mako:590
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
+#: field:product.nomenclature,status:0
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -99515,10 +99517,12 @@ msgstr "Comptabilité Analytique"
 msgid "Available Shipped"
 msgstr "Disponible expédié"
 
-#. module: product_attributes
+#. modules: product_attributes, product_nomenclature
 #: selection:product.product,state_ud:0
+#: view:product.nomenclature:0
+#: selection:product.nomenclature,status:0
 msgid "Archived"
-msgstr "Archived"
+msgstr "Archivé"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -103948,3 +103952,9 @@ msgstr "Vous ne pouvez pas sélectionner un emplacement source et de destination
 #: field:update_product,import_name:0
 msgid "Import name"
 msgstr "Nom de l'import"
+
+#. module: product_nomenclature
+#: code:addons/product_nomenclature/product_nomenclature.py:857
+#, python-format
+msgid "You can not create a product with an archived Root Nomenclature."
+msgstr "Vous ne pouvez pas créer un produit avec une Nomenclature Origine archivée."
