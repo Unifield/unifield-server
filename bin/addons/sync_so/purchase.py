@@ -223,8 +223,9 @@ class purchase_order_line_sync(osv.osv):
             pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
-            if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
+            if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) <= confirmed_sequence:
                 # if the state is less than confirmed we update the PO line
+                # todo : added case when line is confirmed, but OUT cancelled in PICK, then we must update the qty on PO
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         # update PO line state:
