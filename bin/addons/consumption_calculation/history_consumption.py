@@ -159,6 +159,8 @@ class product_history_consumption(osv.osv):
             if obj.location_id:
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
             context.update({'location_id': location_ids})
+            if obj.location_dest_id:
+                context.update({'location_dest_id': obj.location_dest_id.id})
 
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
 
@@ -245,18 +247,18 @@ class product_history_consumption(osv.osv):
 
         res = self.browse(cr, uid, ids[0], context=context)
         if res.consumption_type == 'rac':
-            if res.location_dest_id:
-                cr.execute('''
-                SELECT distinct(r.product_id)
-                FROM real_average_consumption_line r, stock_move m
-                WHERE m.id = r.move_id AND m.location_dest_id = %s
-                ''', (res.location_dest_id.id,))
-            else:
-                cr.execute('''
-                SELECT distinct(product_id)
-                FROM real_average_consumption_line
-                WHERE move_id IS NOT NULL
-                ''')
+            # if res.location_dest_id:
+            #     cr.execute('''
+            #     SELECT distinct(r.product_id)
+            #     FROM real_average_consumption_line r, stock_move m
+            #     WHERE r.move_id = m.id and r.move_id IS NOT NULL and m.location_dest_id=%s
+            #     ''', (res.location_dest_id.id,))
+            # else:
+            cr.execute('''
+            SELECT distinct(product_id)
+            FROM real_average_consumption_line
+            WHERE move_id IS NOT NULL
+            ''')
         else:
             cr.execute('''
               SELECT distinct(s.product_id)
