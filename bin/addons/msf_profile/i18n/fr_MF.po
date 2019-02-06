@@ -10928,12 +10928,6 @@ msgstr "Zone Stock"
 msgid "Write-Off"
 msgstr "Ajustement"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:653
-#, python-format
-msgid "Several employees have the same unique code: %s."
-msgstr "Several employees have the same unique code: %s."
-
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/import_commitment_wizard.py:135
 #, python-format
@@ -44265,12 +44259,6 @@ msgstr "Veuillez faire un choix pour la Répétition du Réapprovisionnement !"
 msgid "Outgoing delivery"
 msgstr "Livraison sortante"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/hr.py:178
-#, python-format
-msgid "Some employees have the same unique code: %s"
-msgstr "Certains employés ont le même code unique : %s"
-
 #. module: purchase
 #: help:purchase.order,date_approve:0
 msgid "Date on which purchase order has been approved"
@@ -47033,12 +47021,6 @@ msgstr "TRINIDAD AND TOBAGO DOLLAR"
 #: view:physical.inventory.select.products:0
 msgid "Select Products"
 msgstr "Sélection des Produits"
-
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:242
-#, python-format
-msgid "Database have more than one employee with the unique code of this employee: %s"
-msgstr "La base de données compte plus d'un travailleur ayant le code unique de ce travailleur : %s"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1267
@@ -66067,9 +66049,10 @@ msgstr "N'existe pas dans le IN/OUT sélectionné"
 msgid "Loss"
 msgstr "Perte"
 
-#. module: msf_tools
+#. modules: msf_tools, msf_homere_interface
 #: code:addons/msf_tools/automated_import_job.py:529
 #: code:addons/msf_tools/automated_export_job.py:257
+#: field:hr.payroll.import.confirmation,rejected:0
 #, python-format
 msgid "Rejected"
 msgstr "Rejeté"
@@ -83228,12 +83211,6 @@ msgstr "26e"
 msgid "Seems that no G/L account was found for this Register Analytic Distribution Wizard. Please give one."
 msgstr "Seems that no G/L account was found for this Register Analytic Distribution Wizard. Please give one."
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:233
-#, python-format
-msgid "Import file have more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s"
-msgstr "Le fichier d'import a plus d'un employé avec la clé de combinaison codeterrain/id_staff(/id_unique) de cet employé: %s "
-
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_abstract_wizard_import
 msgid "Generic import wizard"
@@ -89407,8 +89384,8 @@ msgstr "Ce champ contient l'information relative à la numérotation des lignes 
 #: constraint:hr.employee:0
 #: constraint:hr.employee:0
 #: constraint:hr.employee:0
-msgid "Another employee has the same unique code."
-msgstr "Ce code est utilisé pour un autre employé."
+msgid "Another employee has the same Identification No."
+msgstr "Ce N° d'identification est utilisé pour un autre employé."
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_return_shipment_processor
@@ -103946,3 +103923,25 @@ msgstr "Le compte %s - %s ne doit pas être utilisé dans les corrections analyt
 #, python-format
 msgid "The account %s - %s should neither be corrected nor be used in correction lines."
 msgstr "Le compte %s - %s ne doit ni être corrigé ni être utilisé dans les lignes de correction."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:265
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:669
+#, python-format
+msgid "Import File"
+msgstr "Fichier d'Import"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:247
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:262
+#, python-format
+msgid "Several employees have the same combination key codeterrain/id_staff/(id_unique) \"%s / %s / (%s)\": %s"
+msgstr "Plusieurs employés ont la même clé de combinaison codeterrain/id_staff/(id_unique) \"%s / %s / (%s)\": %s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr.py:202
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:281
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:741
+#, python-format
+msgid "Several employees have the same Identification No \"%s\": %s"
+msgstr "Plusieurs employés ont le même N° d'identification \"%s\": %s"

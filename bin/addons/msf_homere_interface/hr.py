@@ -199,12 +199,13 @@ class hr_employee(osv.osv):
                         employee_name = employee.get('name', False)
                         if employee_name and employee_name not in names:
                             names.append(employee_name)
-                    raise osv.except_osv(_('Error'), _('Some employees have the same unique code: %s') % (';'.join(names)))
+                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s') %
+                                         (e.identification_id, ' ; '.join(names)))
                     return False
         return True
 
     _constraints = [
-        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+        (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
     def create(self, cr, uid, vals, context=None):
