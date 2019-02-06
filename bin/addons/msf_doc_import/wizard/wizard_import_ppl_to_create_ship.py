@@ -276,6 +276,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                 ('picking_id', '=', wiz_browse.picking_id.id),
                                 ('line_number', '=', imp_line_num),
                                 ('product_id.default_code', '=', row.cells[1].data),
+                                ('state', '=', 'assigned'),
                             ]
                             if row.cells[5].data:
                                 move_domain.append(('prodlot_id.name', '=', row.cells[5].data))
@@ -438,7 +439,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
             # Check qties
             qty_errors = ''
             cr.execute('''SELECT m.line_number, p.default_code, SUM(product_qty) FROM stock_move m, product_product p
-                WHERE m.product_id = p.id AND m.picking_id = %s GROUP BY m.line_number, p.default_code''', (wiz_browse.picking_id.id,))
+                WHERE m.product_id = p.id AND m.picking_id = %s AND m.state = 'assigned' 
+                GROUP BY m.line_number, p.default_code''', (wiz_browse.picking_id.id,))
             for prod in cr.fetchall():
                 if sum_qty.get(prod[0]) and sum_qty[prod[0]] != prod[2]:
                     qty_errors += _('Line number %s: The imported Quantities for %s don\'t match with the PPL (%s instead of %s).\n') \

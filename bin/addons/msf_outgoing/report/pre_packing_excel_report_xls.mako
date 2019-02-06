@@ -276,6 +276,7 @@
         </Row>
 
         % for m in sorted(pt.move_lines, key=lambda move: move.line_number):
+            % if m.state == 'assigned':
             <Row ss:Height="14.25">
                 <Cell ss:StyleID="line_center_no_digit"><Data ss:Type="Number">${m.line_number|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.product_id and m.product_id.default_code or ''|x}</Data></Cell>
@@ -299,6 +300,7 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.pack_type and m.pack_type.name or ''|x}</Data></Cell>
             </Row>
+            %endif
         % endfor
 
     </Table>
