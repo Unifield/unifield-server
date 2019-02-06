@@ -103941,3 +103941,10 @@ msgstr "Plusieurs employés ont le même N° d'identification \"%s\": %s"
 #, python-format
 msgid "You cannot have the sourcing location and destination location with the same location."
 msgstr "Vous ne pouvez pas sélectionner un emplacement source et de destination qui soit le même."
+
+#. modules: import_data, base
+#: field:res.request,import_name:0
+#: field:import_product,import_name:0
+#: field:update_product,import_name:0
+msgid "Import name"
+msgstr "Nom de l'import"
