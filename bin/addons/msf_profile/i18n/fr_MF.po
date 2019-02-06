@@ -28244,11 +28244,6 @@ msgstr "Date d'Alerte"
 msgid "Goods value :"
 msgstr "Valeur des Marchandises :"
 
-#. module: account_corrections
-#: view:analytic.distribution.wizard:0
-msgid "Correct it"
-msgstr "Correct it"
-
 #. module: msf_cross_docking
 #: field:purchase.order,cross_docking_ok:0
 #: model:stock.location,name:msf_cross_docking.stock_location_cross_docking
@@ -75941,6 +75936,7 @@ msgstr "Transport en bagage à main"
 
 #. module: account_corrections
 #: view:wizard.journal.items.corrections:0
+#: view:analytic.distribution.wizard:0
 msgid "Correct"
 msgstr "Corriger"
 
