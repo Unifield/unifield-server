@@ -2149,6 +2149,7 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
             'from_cancel_out': False,
+            'is_line_split': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
