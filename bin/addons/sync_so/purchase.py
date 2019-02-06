@@ -202,6 +202,7 @@ class purchase_order_line_sync(osv.osv):
 
             pol_updated = new_pol
             pol_state = ''
+            parent_so_id = False
             #### Create the linked IR/FO line
             if not pol_values.get('origin') and ress_fo:
                 parent_so_id = ress_fo
