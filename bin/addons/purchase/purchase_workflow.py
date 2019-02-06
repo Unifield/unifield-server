@@ -440,6 +440,7 @@ class purchase_order_line(osv.osv):
         ftf = ['product_id', 'price_unit', 'product_uom', 'product_qty']
         counterpart_data = {
             'order_type': 'loan',
+            'categ': p_order.categ,
             'origin': p_order.name,
             'loan_id': p_order.id,
             'loan_duration': p_order.loan_duration,
