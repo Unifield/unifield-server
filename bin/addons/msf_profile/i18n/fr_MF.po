@@ -78178,6 +78178,7 @@ msgstr "Valeur totale"
 #: selection:purchase.order,rfq_state:0
 #: view:tender:0
 #: selection:tender,state:0
+#: field:po.follow.up,cancel_ok:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -88234,9 +88235,10 @@ msgstr "Ne créez pas de mvmnt de stock pour cette ligne"
 msgid "Only the '=' operator is allowed."
 msgstr "Seul l'opérateur '=' est autorisé."
 
-#. module: sales_followup
+#. module: sales_followup, msf_supply_doc_export
 #: field:ir.followup.location.wizard,include_notes_ok:0
 #: field:sale.followup.multi.wizard,include_notes_ok:0
+#: field:po.follow.up,include_notes_ok:0
 msgid "Include order lines note (PDF)"
 msgstr "Inclure les notes de la commande de terrain (PDF)"
 
@@ -97774,7 +97776,6 @@ msgid "Search Uninvoiced Lines"
 msgstr "Rechercher Lignes non-facturées"
 
 #. modules: res_currency_functional, financing_contract, msf_tools, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, purchase, msf_audittrail, tender_flow, stock, msf_profile
-#: field:po.follow.up,cancel_ok:0
 #: view:account.addtmpl.wizard:0
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
@@ -103806,7 +103807,7 @@ msgstr "La Zone Source %s est inactive"
 
 #. module: msf_supply_doc_export
 #: field:po.follow.up,pending_only_ok:0
-msgid "Pending order line only"
+msgid "Pending order lines only"
 msgstr "Seulement les lignes de commandes en cours"
 
 #. module: msf_supply_doc_export

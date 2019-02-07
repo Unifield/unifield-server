@@ -27,6 +27,7 @@ from purchase import PURCHASE_ORDER_STATE_SELECTION
 import time
 from datetime import datetime
 
+
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
     _description = 'PO Follow up report wizard'
@@ -43,8 +44,9 @@ class po_follow_up(osv.osv_memory):
         'sourced_ok': fields.boolean('Sourced'),
         'confirmed_ok': fields.boolean('Confirmed'),
         'closed_ok': fields.boolean('Closed'),
-        'cancel_ok': fields.boolean('Cancel'),
-        'pending_only_ok': fields.boolean('Pending order line only'),
+        'cancel_ok': fields.boolean('Cancelled'),
+        'pending_only_ok': fields.boolean('Pending order lines only'),
+        'include_notes_ok': fields.boolean('Include order lines note (PDF)'),
     }
 
     _defaults = {
@@ -97,10 +99,14 @@ class po_follow_up(osv.osv_memory):
         return res
 
 
-    def get_states_str(self, cr, uid, states, context=None):
+    def get_states_str(self, cr, uid, states, pending_only, context=None):
         if context is None:
             context = {}
-        res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
+
+        if pending_only:
+            res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states and key not in ['cancel', 'done']]
+        else:
+            res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
 
         return ', '.join(res).strip(', ')
 
@@ -234,6 +240,7 @@ class po_follow_up(osv.osv_memory):
             'state': '',
             'supplier': '',
             'pending_only_ok': wiz.pending_only_ok,
+            'include_notes_ok': wiz.include_notes_ok,
         }
 
         # PO number
@@ -243,7 +250,9 @@ class po_follow_up(osv.osv_memory):
         # Status
         state_list = self.get_state_list(cr, uid, wiz, context=context)
         domain.append(('state', 'in', state_list))
-        report_parms['state'] = self.get_states_str(cr, uid, state_list, context=context)
+        if wiz.pending_only_ok:
+            domain.append(('state', 'not in', ['done', 'cancel']))
+        report_parms['state'] = self.get_states_str(cr, uid, state_list, wiz.pending_only_ok, context=context)
 
         # Dates
         if wiz.po_date_from:
