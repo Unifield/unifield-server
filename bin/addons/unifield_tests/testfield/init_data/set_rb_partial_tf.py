@@ -101,6 +101,10 @@ if not loc_o.search([('name', '=', ext_name)]):
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
 open_period(oerp, 2018)
 
+it_comp = oerp.get('res.partner').search([('name', '=', 'ITCompany'), ('active', '=', False)])
+if it_comp:
+    oerp.get('res.partner').write(it_comp, {'active': True})
+
 conn_manager = oerp.get('sync.client.sync_server_connection')
 conn_ids = conn_manager.search([])
 conn_manager.disconnect()
