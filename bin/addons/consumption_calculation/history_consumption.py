@@ -147,6 +147,7 @@ class product_history_consumption(osv.osv):
         obj = self.browse(cr, uid, ids[0],
                           fields_to_fetch=['consumption_type',
                                            'location_id',
+                                           'location_dest_id',
                                            'id',
                                            'nomen_manda_0',
                                            'sublist_id'],
@@ -247,18 +248,18 @@ class product_history_consumption(osv.osv):
 
         res = self.browse(cr, uid, ids[0], context=context)
         if res.consumption_type == 'rac':
-            # if res.location_dest_id:
-            #     cr.execute('''
-            #     SELECT distinct(r.product_id)
-            #     FROM real_average_consumption_line r, stock_move m
-            #     WHERE r.move_id = m.id and r.move_id IS NOT NULL and m.location_dest_id=%s
-            #     ''', (res.location_dest_id.id,))
-            # else:
-            cr.execute('''
-            SELECT distinct(product_id)
-            FROM real_average_consumption_line
-            WHERE move_id IS NOT NULL
-            ''')
+            if res.location_dest_id:
+                cr.execute('''
+                SELECT distinct(r.product_id)
+                FROM real_average_consumption_line r, stock_move m
+                WHERE r.move_id = m.id and m.location_dest_id = %s
+                ''', (res.location_dest_id.id,))
+            else:
+                cr.execute('''
+                SELECT distinct(product_id)
+                FROM real_average_consumption_line
+                WHERE move_id IS NOT NULL
+                ''')
         else:
             cr.execute('''
               SELECT distinct(s.product_id)
@@ -571,7 +572,12 @@ class product_product(osv.osv):
                 total_consumption = 0.00
                 for month in context.get('months'):
                     field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
-                    cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
+                    cons_context = {
+                        'from_date': month.get('date_from'),
+                        'to_date': month.get('date_to'),
+                        'location_id': context.get('location_id'),
+                        'location_dest_id': context.get('location_dest_id'),
+                    }
                     consumption = 0.00
                     cons_prod_domain = [('name', '=', field_name),
                                         ('product_id', '=', r['id']),
