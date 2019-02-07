@@ -203,16 +203,17 @@ class purchase_order_line_sync(osv.osv):
             pol_updated = new_pol
             pol_state = ''
             parent_so_id = False
-            #### Create the linked IR/FO line
-            if not pol_values.get('origin') and ress_fo:
-                parent_so_id = ress_fo
-            if pol_values.get('origin'):
-                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
-                    ('name', '=', pol_values['origin']),
-                    ('procurement_request', 'in', ['t', 'f']),
-                ], context=context)
-            if parent_so_id:
-                self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
+            #### Create the linked IR/FO line: execpt when set_as_sourced_n=True (new line added in PO coo, this value already create an IR/FO line when pol is create)
+            if not pol_values['set_as_sourced_n']:
+                if not pol_values.get('origin') and ress_fo:
+                    parent_so_id = ress_fo
+                if pol_values.get('origin'):
+                    parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                        ('name', '=', pol_values['origin']),
+                        ('procurement_request', 'in', ['t', 'f']),
+                    ], context=context)
+                if parent_so_id:
+                    self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
 
         else: # regular update
             pol_updated = pol_id[0]

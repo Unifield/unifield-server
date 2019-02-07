@@ -2877,7 +2877,6 @@ class sale_order_line(osv.osv):
                 'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
 
-
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
