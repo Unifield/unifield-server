@@ -2149,7 +2149,6 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
             'in_name_goods_return': '',
             'from_cancel_out': False,
-            'is_line_split': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
@@ -2189,6 +2188,8 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
+        if context.get('from_button') and 'is_line_split' not in default:
+            default['is_line_split'] = False
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
