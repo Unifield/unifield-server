@@ -22,6 +22,13 @@ def reset_po(oerp):
     if po_ids:
         po_o.write(po_ids, {'delivery_requested_date': '2030-01-01'})
 
+def open_period(op, year):
+    op.get('account.period.create').account_period_create_periods([], {'force_open_year': year})
+    period_ids = op.get('account.period').search([('state', '=', 'created'), ('date_start', '>=', '%s-01-01'%year), ('date_stop', '<=', '%s-12-31'%year), ('special', '=', False)])
+    if period_ids:
+        op.get('account.period').action_open_period(period_ids)
+
+
 oerp = OERP(server=SRV_ADDRESS, protocol='xmlrpc', port=XMLRPC_PORT, timeout=3600, version='6.0')
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_SYNC_SERVER' % DB_PREFIX)
 ids = oerp.get('sync.server.entity').search([])
@@ -30,6 +37,8 @@ oerp.get('sync.server.entity').write(ids, {'user_id': 1})
 
 sync_needed = False
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+open_period(oerp, 2018)
+
 prod_o = oerp.get('product.product')
 if not prod_o.search([('default_code', '=', 'AZAZA')]):
     print 'Create Prod AZAZA'
@@ -90,6 +99,8 @@ if not loc_o.search([('name', '=', ext_name)]):
 
 
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
+open_period(oerp, 2018)
+
 conn_manager = oerp.get('sync.client.sync_server_connection')
 conn_ids = conn_manager.search([])
 conn_manager.disconnect()
