@@ -186,6 +186,13 @@ version()
 class entity(osv.osv):
     _inherit = "sync.client.entity"
 
+    _columns = {
+        'user_rights_name': fields.char('UR Version', size=256),
+        'user_rights_sum': fields.char('UR Sum', size=256),
+        'user_rights_state': fields.selection([('installed', 'Installed'), ('to_install', 'To install')], 'UR State'),
+        'user_rights_data': fields.binary('UR Zip file'),
+    }
+
     def get_upgrade_status(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):

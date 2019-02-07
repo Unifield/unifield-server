@@ -80,7 +80,7 @@ class purchase_order_line_allocation_report(osv.osv):
             string='Product Name',
             store=False,
         ),
-        'product_qty': fields.float(digits=(16,2), string='Qty'),
+        'product_qty': fields.float(digits=(16,2), string='Qty', related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
         'unit_price': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'analytic_id': fields.many2one('analytic.distribution', string='Distribution'),

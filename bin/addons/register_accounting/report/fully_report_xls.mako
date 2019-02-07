@@ -503,12 +503,25 @@
           <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
         </Cell>
       </Row>
+      <%
+      if o.journal_id.type == 'cash':
+          closing_bal_title = _('CashBox balance:')
+          closing_bal = o.balance_end_cash or 0.0
+          calculated_bal = o.msf_calculated_balance or 0.0
+      else:
+          if o.journal_id.type == 'bank':
+              closing_bal_title = _('Bank Statement balance:')
+          else:
+              closing_bal_title = _('Closing balance:')
+          closing_bal = o.balance_end_real or 0.0
+          calculated_bal = o.balance_end or 0.0
+      %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Closing balance:')|x} </Data>
+          <Data ss:Type="String">${closing_bal_title|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.balance_end_real or 0.0|x}</Data>
+          <Data ss:Type="Number">${closing_bal|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -516,7 +529,7 @@
           <Data ss:Type="String">${_('Calculated balance:')|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.balance_end or 0.0|x}</Data>
+          <Data ss:Type="Number">${calculated_bal|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -598,7 +611,7 @@
       <% update_percent(nbloop, tot_line) %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or (line.from_cash_return and line.account_id.type_for_register == 'advance' and _('Advance Return')) or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
+          <Data ss:Type="String">${ getEntryType(line) |x}</Data>
         </Cell>
         % if isDate(line.document_date):
         <Cell ss:StyleID="date">
@@ -638,8 +651,17 @@
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
+        <%
+        third_party = ''
+        if line.partner_id:
+            third_party = line.partner_id.name
+        elif line.employee_id:
+            third_party = line.employee_id.name
+        elif line.transfer_journal_id:
+            third_party = line.transfer_journal_id.code
+        %>
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
+          <Data ss:Type="String">${third_party|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
@@ -739,7 +761,7 @@
     </Row>
 % endfor
 
-<!-- if there are Trade Payable Entries (automatically generated) -->
+<!-- if there are Trade Payable Entries (automatically generated) - until US-3874 -->
 <% partner_move_ids = line.partner_move_ids or False %>
 % if partner_move_ids:
 % for partner_move_id in sorted(partner_move_ids, key=lambda x: x.name):
@@ -874,7 +896,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -943,7 +965,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -1001,7 +1023,7 @@ endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${ana_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -1031,6 +1053,88 @@ endif
         </Cell>
       </Row>
 % endfor
+% endif
+
+<!-- AUTOMATED ENTRIES linked to the register line -->
+<!-- Note: they are booked on accounts without AD -->
+<% partner_move_line_ids = line.partner_move_line_ids or [] %>
+% if partner_move_line_ids:
+    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt):
+        <Row ss:Height="14.5134">
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('Automated Entry')|x}</Data>
+            </Cell>
+            % if isDate(partner_aml.document_date):
+              <Cell ss:StyleID="date">
+                <Data ss:Type="DateTime">${partner_aml.document_date|n}T00:00:00.000</Data>
+              </Cell>
+            % else:
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            % if isDate(partner_aml.date):
+              <Cell ss:StyleID="date">
+                <Data ss:Type="DateTime">${partner_aml.date|n}T00:00:00.000</Data>
+              </Cell>
+            % else:
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            <Cell ss:StyleID="left_bold">
+              <!-- SEQUENCE -->
+              <Data ss:Type="String">${partner_aml.move_id.name|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.name|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.ref or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            % if o.journal_id.type == 'cheque':
+              <Cell ss:StyleID="left_bold">
+                <Data ss:Type="String"></Data>
+              </Cell>
+            % endif
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${"%s %s" % (partner_aml.account_id.code, partner_aml.account_id.name)|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.partner_txt or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="amount_bold">
+              <Data ss:Type="Number">${partner_aml.credit_currency or 0.0}</Data>
+            </Cell>
+            <Cell ss:StyleID="amount_bold">
+              <Data ss:Type="Number">${partner_aml.debit_currency or 0.0}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${_('FALSE')|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.reconcile_id and 'X' or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="left_bold">
+              <Data ss:Type="String">${partner_aml.move_id.state and getSel(partner_aml.move_id, 'state') or ''|x}</Data>
+            </Cell>
+        </Row>
+    % endfor
 % endif
 
 % endfor
@@ -1078,7 +1182,7 @@ endif
             <Data ss:Type="String"></Data>
           </Cell>
         % endif
-        <Cell ss:StyleID="grey_left">
+        <Cell ss:StyleID="grey_left_bold">
           <Data ss:Type="String">${"%s %s" % (aml.account_id.code, aml.account_id.name)|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
@@ -1129,7 +1233,7 @@ endif
             <Data ss:Type="String">${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</Data>
           </Cell>
           <Cell ss:StyleID="${aal_color}_ana_left">
-            <Data ss:Type="String"></Data>
+            <Data ss:Type="String">${manual_aal.partner_txt or ''|x}</Data>
           </Cell>
           <Cell ss:StyleID="${aal_color}_ana_left">
             <Data ss:Type="String"></Data>
@@ -1174,7 +1278,7 @@ endif
           <Data ss:Type="String">${"%s %s" % (free_line.general_account_id.code, free_line.general_account_id.name)|x}</Data>
         </Cell>
         <Cell ss:StyleID="${aal_color}_ana_left">
-          <Data ss:Type="String"></Data>
+          <Data ss:Type="String">${free_line.partner_txt or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${aal_color}_ana_left">
           <Data ss:Type="String"></Data>

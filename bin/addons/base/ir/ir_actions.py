@@ -351,7 +351,10 @@ class act_window(osv.osv):
         res_id = dataobj.browse(cr, uid, data_id, context).res_id
         return self.read(cr, uid, res_id, [], context)
 
-    def open_view_from_xmlid(self, cr, uid, xmlid, views_order,  new_tab=False, context=None):
+    def open_view_from_xmlid(self, cr, uid, xmlid, views_order=None,  new_tab=False, context=None):
+        if views_order is None:
+            views_order = ['tree', 'form']
+
         keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
         module, xmlid = xmlid.split('.', 1)
         action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
