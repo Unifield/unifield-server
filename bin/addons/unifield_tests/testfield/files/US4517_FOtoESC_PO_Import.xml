@@ -107,7 +107,7 @@
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Creation Date</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Supplier Reference</Data></Cell>
@@ -123,7 +123,7 @@
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery Requested Date</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Transport mode</Data></Cell>
@@ -221,10 +221,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.33361000000000002</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-30T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-30T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -247,10 +247,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.33361000000000002</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-08-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-08-01T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -273,10 +273,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.47389999999999999</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-30T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-30T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -299,10 +299,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.47389999999999999</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-08-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-08-01T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -325,10 +325,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.81566000000000005</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-30T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-30T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -351,10 +351,10 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.81566000000000005</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">16/HQ/MW101/FO00001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2015-12-28T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-25T00:00:00.000</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2016-05-30T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-25T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2018-05-30T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>

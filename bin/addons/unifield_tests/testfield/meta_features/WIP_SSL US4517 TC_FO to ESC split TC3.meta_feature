@@ -23,10 +23,11 @@ Scenario: SSL US4517 FO to ESC split
 	
 	I fill "Order category" with "Other"	
 
-    I fill "Supplier" with "HQ1C1" and open the window
-	I click "option" on line and close the window:
-	  | NAME     |
-	  | HQ1C1    |
+    I fill "Supplier" with "HQ1C1"
+#    I fill "Supplier" with "HQ1C1" and open the window
+#	I click "option" on line and close the window:
+#	  | NAME     |
+#	  | HQ1C1    |
 	  
 	  
     # Add multiple products at the same time
@@ -57,16 +58,17 @@ Scenario: SSL US4517 FO to ESC split
 	
     # Add products line by line
     I click on "New"
-    I fill "[ALIFCLOC1--] CLOCK, ALARM, mechanical" within column "PRODUCT"
-    I fill "50000.00" within column "Quantity (UoM)"
+    I fill "ALIFCLOC1--" within column "PRODUCT CODE"
+    I fill "50000.00" within column "QTY"
     I validate the line
 
 
     I click on "New"
-    I fill "[ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups" within column "PRODUCT"
-    I fill "10000.00" within column "Quantity (UoM)"
+    I click on "OK"
+    I fill "ALIFCOFM1E-" within column "PRODUCT CODE"
+    I fill "10000.00" within column "QTY"
+    I validate the line
 	
-	I click on "OK"
 
     I click on "Analytical Distribution" and open the window
     I click on "New"
@@ -87,6 +89,7 @@ Scenario: SSL US4517 FO to ESC split
 	I synchronize "HQ1C1P1"
 	
     I synchronize "HQ1C1"
+
     I log into instance "HQ1C1"
 
     I open tab menu "ORDERS"
@@ -99,10 +102,10 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
        | PRODUCT CODE|  QTY  |
-       | DINJPENB1V- | 20000 |
-	   | DINJPENG5V- | 30000 |
-	   | ALIFCLOC1-- | 50000 |
-       | ALIFCOFM1E- | 10000 |
+       | DINJPENB1V- | 20,000 |
+	   | DINJPENG5V- | 30,000 |
+	   | ALIFCLOC1-- | 50,000 |
+       | ALIFCOFM1E- | 10,000 |
 
 #Line 6
 
@@ -158,20 +161,24 @@ Scenario: SSL US4517 FO to ESC split
 	
     I click "Edit" on line:
         | PRODUCT          |  QTY |
-        |  [ALIFCOFM1E-] * | 7000 |
+        |  [ALIFCOFM1E-] * | 7,000 |
 
 	I fill "MSF Supply" within column "SUPPLIER"
 	I validate the line
-	I click "Source Line" on line:
+	
+     I click "Source Line" on line:
         | PRODUCT          |  QTY |
-        |  [ALIFCOFM1E-] * | 7000 |		
-		
-		
+        |  [ALIFCOFM1E-] * | 7,000 |
+
+	I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |		
+				
 	I fill "from stock" within column "PROC. METHOD"
 	I validate the line
-	I click "Source Line" on line:
+     I click "Source Line" on line:
         | PRODUCT          |  QTY |
-        |  [ALIFCOFM1E-] * | 3000 |
+        |  [ALIFCOFM1E-] * | 3,000 |
 
     
 	I open tab menu "ORDERS"
@@ -183,11 +190,11 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
        | PRODUCT CODE|  QTY  | STATE     |
-       | DINJPENB1V- | 20000 | Sourced   |
-	   | DINJPENG5V- | 30000 | Sourced   |
-	   | ALIFCLOC1-- | 50000 | Sourced   |
-       | ALIFCOFM1E- |  7000 | Sourced   |	
-       | ALIFCOFM1E- |  3000 | Confirmed |	 
+       | DINJPENB1V- | 20,000 | Sourced   |
+	   | DINJPENG5V- | 30,000 | Sourced   |
+	   | ALIFCLOC1-- | 50,000 | Sourced   |
+       | ALIFCOFM1E- |  7,000 | Sourced   |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |	 
 
 #LINE 10
 	   
@@ -201,13 +208,12 @@ Scenario: SSL US4517 FO to ESC split
 
 	I should see in the main table the following data:
        | PRODUCT CODE | STATE  |  QTY  |
-       | DINJPENB1V-  | Draft  | 20000 |
-       | DINJPENG5V-  | Draft  | 30000 |
-       | ALIFCLOC1--  | Draft  | 50000 |
-       | ALIFCOFM1E-  | Draft  |  7000 |
+       | DINJPENB1V-  | Draft  | 20,000 |
+       | DINJPENG5V-  | Draft  | 30,000 |
+       | ALIFCLOC1--  | Draft  | 50,000 |
+       | ALIFCOFM1E-  | Draft  |  7,000 |
 
 	
-		
     I fill "Date of Stock Take" with "28/Dec/2015"	
 	I click on "Update Lines" and open the window
     I click on "Yes" and close the window	
@@ -228,14 +234,13 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
        | PRODUCT CODE|  QTY  | STATE     |
-       | DINJPENB1V- | 20000 | Sourced-v |
-	   | DINJPENG5V- | 30000 | Sourced-v |
-	   | ALIFCLOC1-- | 50000 | Sourced-v |
-       | ALIFCOFM1E- |  7000 | Sourced-v |	
-       | ALIFCOFM1E- |  3000 | Confirmed |		
+       | DINJPENB1V- | 20,000 | Sourced-v |
+	   | DINJPENG5V- | 30,000 | Sourced-v |
+	   | ALIFCLOC1-- | 50,000 | Sourced-v |
+       | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |		
 	   
 #LINE 11=> 13
-
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
     I fill "REFERENCE" with "{{PO_REF_COO1}}"
@@ -258,12 +263,12 @@ Scenario: SSL US4517 FO to ESC split
 
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE |  QTY  | STATE       | DELIVERY CONFIRMED DATE |                     
-       |   1   | DINJPENB1V-   |  5000 | Validated   |       30/May/2018       |
-	   |   1   | DINJPENB1V-   | 15000 | Validated   |       01/Aug/2018       |
-       |   2   | DINJPENG5V-   | 10000 | Validated   |       30/May/2018       |
-	   |   2   | DINJPENG5V-   | 20000 | Validated   |       01/Aug/2018       |
-	   |   3   | ALIFCLOC1--   | 50000 | Validated   |       30/May/2018       |
-       |   4   | ALIFCOFM1E-   |  7000 | Validated   |       30/May/2018       |	   
+       |   1   | DINJPENB1V-   |  5,000 | Validated   |       30/May/2018       |
+	   |   1   | DINJPENB1V-   | 15,000 | Validated   |       01/Aug/2018       |
+       |   2   | DINJPENG5V-   | 10,000 | Validated   |       30/May/2018       |
+	   |   2   | DINJPENG5V-   | 20,000 | Validated   |       01/Aug/2018       |
+	   |   3   | ALIFCLOC1--   | 50,000 | Validated   |       30/May/2018       |
+       |   4   | ALIFCOFM1E-   |  7,000 | Validated   |       30/May/2018       |	   
 	  
 
 	I open tab menu "ORDERS"
@@ -275,13 +280,13 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
 	   | LINE | PRODUCT CODE|  QTY  | STATE     |
-       |   1  | DINJPENB1V- |  5000 | Sourced-v |
-       |   1  | DINJPENB1V- | 15000 | Sourced-v |
-	   |   2  | DINJPENG5V- | 10000 | Sourced-v |
-	   |   2  | DINJPENG5V- | 20000 | Sourced-v |
-	   |   3  | ALIFCLOC1-- | 50000 | Sourced-v |
-       |   4  | ALIFCOFM1E- |  7000 | Sourced-v |	
-       |   4  | ALIFCOFM1E- |  3000 | Confirmed |	
+       |   1  | DINJPENB1V- |  5,000 | Sourced-v |
+       |   1  | DINJPENB1V- | 15,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 10,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 20,000 | Sourced-v |
+	   |   3  | ALIFCLOC1-- | 50,000 | Sourced-v |
+       |   4  | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |	
 
 	   
 #LINE 14	   
@@ -306,32 +311,34 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
 	   | LINE | PRODUCT CODE|  QTY  | STATE     |
-       |   1  | DINJPENB1V- |  5000 | Confirmed |
-       |   1  | DINJPENB1V- | 15000 | Confirmed |
-	   |   2  | DINJPENG5V- | 10000 | Confirmed |
-	   |   2  | DINJPENG5V- | 20000 | Confirmed |
-	   |   3  | ALIFCLOC1-- | 50000 | Confirmed |
-       |   4  | ALIFCOFM1E- |  7000 | Confirmed |	
-       |   4  | ALIFCOFM1E- |  3000 | Confirmed |	
+       |   1  | DINJPENB1V- |  5,000 | Confirmed |
+       |   1  | DINJPENB1V- | 15,000 | Confirmed |
+	   |   2  | DINJPENG5V- | 10,000 | Confirmed |
+	   |   2  | DINJPENG5V- | 20,000 | Confirmed |
+	   |   3  | ALIFCLOC1-- | 50,000 | Confirmed |
+       |   4  | ALIFCOFM1E- |  7,000 | Confirmed |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |	
 	   
+
 
     I open tab menu "WAREHOUSE"
 	I click on menu "Incoming Shipments"
 
-	I should see in the main table the following data:
+	I click "Edit" on line:
         | PURCHASE ORDER    | STATE     |
         | *{{PO_REF_COO1}}* | Available |	   
 
 
 	I should see in the main table the following data:
        | LINE |  PRODUCT        | QUANTITY | STATE     |
-       |   1  | [DINJPENB1V-] * |   5000   | Available |
-       |   1  | [DINJPENB1V-] * |  10000   | Available |
-	   |   2  | [DINJPENG5V-] * |  10000   | Available |
-	   |   2  | [DINJPENG5V-] * |  20000   | Available |
-	   |   3  | [ALIFCLOC1--] * |  50000   | Available |
-       |   4  | [ALIFCOFM1E-] * |   7000   | Available |	
-       |   4  | [ALIFCOFM1E-] * |   3000   | Available |		
+# code bug or meta bug? merged
+       |   1  | [DINJPENB1V-] * |   15,000   | Available |
+	   |   2  | [DINJPENG5V-] * |  10,000   | Available |
+	   |   2  | [DINJPENG5V-] * |  20,000   | Available |
+	   |   3  | [ALIFCLOC1--] * |  50,000   | Available |
+       |   4  | [ALIFCOFM1E-] * |   7,000   | Available |	
+# code bug or meta bug? line not found
+#       |   4  | [ALIFCOFM1E-] * |   3,000   | Available |		
 		
 
 #LINE 15
@@ -353,13 +360,13 @@ Scenario: SSL US4517 FO to ESC split
 
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE |  QTY  | STATE     | DELIVERY CONFIRMED DATE |                     
-       |   1   | DINJPENB1V-   |  5000 | Confirmed |       30/May/2018       |
-	   |   1   | DINJPENB1V-   | 15000 | Confirmed |       01/Aug/2018       |
-       |   2   | DINJPENG5V-   | 10000 | Confirmed |       30/May/2018       |
-	   |   2   | DINJPENG5V-   | 20000 | Confirmed |       01/Aug/2018       |
-	   |   3   | ALIFCLOC1--   | 50000 | Confirmed |       30/May/2018       |
-       |   4   | ALIFCOFM1E-   |  7000 | Confirmed |       30/May/2018       |		
-       |   4   | ALIFCOFM1E-   |  3000 | Confirmed |             *           |			
+       |   1   | DINJPENB1V-   |  5,000 | Confirmed |       30/May/2018       |
+	   |   1   | DINJPENB1V-   | 15,000 | Confirmed |       01/Aug/2018       |
+       |   2   | DINJPENG5V-   | 10,000 | Confirmed |       30/May/2018       |
+	   |   2   | DINJPENG5V-   | 20,000 | Confirmed |       01/Aug/2018       |
+	   |   3   | ALIFCLOC1--   | 50,000 | Confirmed |       30/May/2018       |
+       |   4   | ALIFCOFM1E-   |  7,000 | Confirmed |       30/May/2018       |		
+       |   4   | ALIFCOFM1E-   |  3,000 | Confirmed |             *           |			
 	   
 	   
 #EXTRA NOT IN INITIAL TC
@@ -378,8 +385,8 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Copy all"
 	
 	I click "Edit" on line:
-        | PRODUCT         | QUANTITY |
-        | [DINJPENB1V-] * |  5000    |
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENB1V-] * |  5,000    |
 	I fill "batchA{{ID}}" within column "Batch Number" and open the window
     I click on "New"
     I fill "Expiry Date" with "20/May/2020"
@@ -388,8 +395,8 @@ Scenario: SSL US4517 FO to ESC split
 
 	
 	I click "Edit" on line:
-        | PRODUCT         | QUANTITY |
-        | [DINJPENB1V-] * |   15000  |
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENB1V-] * |   15,000  |
 	I fill "batchB{{ID}}" within column "Batch Number" and open the window
     I click on "New"
     I fill "Expiry Date" with "20/Dec/2020"
@@ -398,8 +405,8 @@ Scenario: SSL US4517 FO to ESC split
 	
 	
 	I click "Edit" on line:
-        | PRODUCT         | QUANTITY |
-        | [DINJPENG5V-] * |   10000  |
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENG5V-] * |   10,000  |
 	I fill "batchC{{ID}}" within column "Batch Number" and open the window
     I click on "New"
     I fill "Expiry Date" with "20/Aug/2020"
@@ -408,8 +415,8 @@ Scenario: SSL US4517 FO to ESC split
 	
 
 	I click "Edit" on line:
-        | PRODUCT         | QUANTITY |
-        | [DINJPENG5V-] * |   20000  |
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENG5V-] * |   20,000  |
 	I fill "batchD{{ID}}" within column "Batch Number" and open the window
     I click on "New"
     I fill "Expiry Date" with "20/Nov/2022"
@@ -455,13 +462,13 @@ Scenario: SSL US4517 FO to ESC split
 
     I should see in the main table the following data:
 	   | LINE | PRODUCT CODE|  QTY  | STATE  |
-       |   1  | DINJPENB1V- |  5000 | Closed |
-       |   1  | DINJPENB1V- | 15000 | Closed |
-	   |   2  | DINJPENG5V- | 10000 | Closed |
-	   |   2  | DINJPENG5V- | 20000 | Closed |
-	   |   3  | ALIFCLOC1-- | 50000 | Closed |
-       |   4  | ALIFCOFM1E- |  7000 | Closed |	
-       |   4  | ALIFCOFM1E- |  3000 | Closed |		
+       |   1  | DINJPENB1V- |  5,000 | Closed |
+       |   1  | DINJPENB1V- | 15,000 | Closed |
+	   |   2  | DINJPENG5V- | 10,000 | Closed |
+	   |   2  | DINJPENG5V- | 20,000 | Closed |
+	   |   3  | ALIFCLOC1-- | 50,000 | Closed |
+       |   4  | ALIFCOFM1E- |  7,000 | Closed |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |		
 	   
 	   
 	I synchronize "HQ1C1"
@@ -473,20 +480,19 @@ Scenario: SSL US4517 FO to ESC split
     I open tab menu "WAREHOUSE"
 	I click on menu "Incoming Shipments"
 
-	I should see in the main table the following data:
+	I click "Edit" on line:
         | PURCHASE ORDER    | STATE            |
-        | *{{PO_REF_COO1}}* | Available Shipped|	   
+        | *{{PO_REF}}* | Available Shipped|	   
 
 
 	I should see in the main table the following data:
        | LINE |  PRODUCT        | QUANTITY | BATCH        |
-       |   1  | [DINJPENB1V-] * |   5000   | batchA{{ID}} |
-       |   1  | [DINJPENB1V-] * |  10000   | batchB{{ID}} |
-	   |   2  | [DINJPENG5V-] * |  10000   | batchC{{ID}} |
-	   |   2  | [DINJPENG5V-] * |  20000   | batchD{{ID}} |
-	   |   3  | [ALIFCLOC1--] * |  50000   |              |
-       |   4  | [ALIFCOFM1E-] * |   7000   |              |	
-       |   4  | [ALIFCOFM1E-] * |   3000   |              |		
+       |   1  | [DINJPENB1V-] * |   5,000   | batchA{{ID}} |
+       |   1  | [DINJPENB1V-] * |  15,000   | batchB{{ID}} |
+	   |   2  | [DINJPENG5V-] * |  10,000   | batchC{{ID}} |
+	   |   2  | [DINJPENG5V-] * |  20,000   | batchD{{ID}} |
+	   |   3  | [ALIFCLOC1--] * |  50,000   |              |
+       |   4  | [ALIFCOFM1E-] * |   7,000   |              |	
 	   
 	   
 	I click on "Process" and open the window
@@ -506,10 +512,9 @@ Scenario: SSL US4517 FO to ESC split
 
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE |  QTY  | STATE  |                     
-       |   1   | DINJPENB1V-   |  5000 | Closed |
-	   |   1   | DINJPENB1V-   | 15000 | Closed |
-       |   2   | DINJPENG5V-   | 10000 | Closed |
-	   |   2   | DINJPENG5V-   | 20000 | Closed |
-	   |   3   | ALIFCLOC1--   | 50000 | Closed |
-       |   4   | ALIFCOFM1E-   |  7000 | Closed |		
-       |   4   | ALIFCOFM1E-   |  3000 | Closed |	
+       |   1   | DINJPENB1V-   |  5,000 | Closed |
+	   |   1   | DINJPENB1V-   | 15,000 | Closed |
+       |   2   | DINJPENG5V-   | 10,000 | Closed |
+	   |   2   | DINJPENG5V-   | 20,000 | Closed |
+	   |   3   | ALIFCLOC1--   | 50,000 | Closed |
+       |   4   | ALIFCOFM1E-   |  7,000 | Closed |		

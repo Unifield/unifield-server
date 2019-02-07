@@ -60,6 +60,11 @@ if p_ids:
     sync_needed = True
     oerp.get('res.partner').write(p_ids, {'active': True})
 
+msf_supply = oerp.get('res.partner').search([('name', '=', 'MSF Supply')])
+if not msf_supply and p_ids:
+    new_id = oerp.get('res.partner').copy(p_ids[0])
+    oerp.get('res.partner').write([new_id], {'name': 'MSF Supply'})
+
 loc_o = oerp.get('stock.location')
 loc_ids = loc_o.search([('name', '=', 'LOG')])
 prod_o = oerp.get('product.product')
