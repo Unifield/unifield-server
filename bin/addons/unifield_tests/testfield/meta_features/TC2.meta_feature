@@ -17,7 +17,6 @@ Scenario: SSL US4517 FO to ESC split
 #LINE 2	
  
     I log into instance "HQ1C1P1"
-
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
     I click on "New"
@@ -663,9 +662,7 @@ Scenario: SSL US4517 FO to ESC split
 		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
         |  8  | ALIFCLOC1--  | Resourced-v | 20,000 |	
 	
-    ## bug TF / code ?
-    ##I should see "Sourced-p" in "Order State"		sara sourced-v TO BE FIXED IN THE CODE	
-    I should see "Validated-p" in "Order State"			
+    I should see "Sourced-p" in "Order State"
 
 	
 #LINE 23
@@ -764,7 +761,6 @@ Scenario: SSL US4517 FO to ESC split
 		| PURCHASE ORDER   |
 		| {{PO_REF_COO1}} |
 
-   I wait
    I click "Cancel" on line and open the window:
         |  PRODUCT                                                                | STATE     | QUANTITY | 
         |[DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial| Available |   2,000  |	
@@ -874,12 +870,11 @@ Scenario: SSL US4517 FO to ESC split
         |  9  | DINJPENG5V-  | Resourced-v |  2,000 |
         |  10 | ALIFCLOC1--  | Resourced-v | 30,000 |
 
-		
+
     I should see "Sourced-p" in "Order State"	
 
 
 #LINE 28
-
     I log into instance "HQ1C1"
 
 
@@ -896,12 +891,13 @@ Scenario: SSL US4517 FO to ESC split
         | ORIGIN           | LINES STATE |
         | {{FO_REFERENCE}} | *vailable*  |	
 	
-	
+    
+       I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE     | QTY    | BATCH NUMBER | 
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available | 10,000 | lotA{{ID}}   |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  5,000 | lotB{{ID}}   |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  8,000 | lotC{{ID}}   |
-        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Available |  3,000 |              |
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Not Available |  3,000 |              |
 	
 	
 	I click on "Create Picking..." and open the window
@@ -941,7 +937,7 @@ Scenario: SSL US4517 FO to ESC split
         |LINE | PRODUCT CODE | STATE  |  QTY   | 
         |  1  | DINJPENB1V-  | Closed | 15,000 |
         |  2  | DINJPENG5V-  | Closed |  8,000 |
-        |  4  | ALIFCOFM1E-  | Closed |  3,000 | 
+       # |  4  | ALIFCOFM1E-  | Closed |  3,000 | 
  
 		
 		
@@ -1032,7 +1028,7 @@ Scenario: SSL US4517 FO to ESC split
     I click on "Analytical Distribution" and open the window
 	I click on "New"
 	I fill "SUP" within column "DESTINATION"
-	I fill "MW120" within column "COST CENTER"
+	I fill "HT101" within column "COST CENTER"
 	I validate the line
 	I click on "Save" and close the window
 	
@@ -1052,7 +1048,7 @@ Scenario: SSL US4517 FO to ESC split
     I should see in the main table the following data:
         |LINE | PRODUCT CODE | STATE       |  QTY   | 
         |  5  | DINJPENB1V-  | Resourced-s |  2,000 |
-        |  5  | DINJPENB1V-  | Resourced-v |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-pv |  3,000 |
         |  6  | DINJPENG5V-  | Resourced-s |  7,000 |	
         |  6  | DINJPENG5V-  | Resourced-s | 13,000 |	
         |  7  | ALIFCOFM1E-  | Resourced-s |  7,000 |
@@ -1115,7 +1111,7 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Analytical Distribution" and open the window
 	I click on "New"
 	I fill "SUP" within column "DESTINATION"
-	I fill "MW120" within column "COST CENTER"
+	I fill "HT101" within column "COST CENTER"
 	I validate the line
 	I click on "Save" and close the window
 	
@@ -1219,7 +1215,7 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Copy all"
 	
 	I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY |
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  2,000   |
 
 	I fill "LotoA{{ID}}" within column "Batch Number" and open the window
@@ -1229,7 +1225,7 @@ Scenario: SSL US4517 FO to ESC split
     I validate the line
 		
 	I click "Edit" on line:
-        | PRODUCT                                                                   |  QUANTITY |
+        | PRODUCT                                                                   |  QUANTITY TO PROCESS |
 	    | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  7,000    |
 
 	I fill "LotoB{{ID}}" within column "Batch Number" and open the window
@@ -1240,7 +1236,7 @@ Scenario: SSL US4517 FO to ESC split
 	
 	
 	I click "Edit" on line:
-        | PRODUCT                                                                   |  QUANTITY |
+        | PRODUCT                                                                   |  QUANTITY TO PROCESS |
 	    | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  2,000    |
 
 	I fill "LotoC{{ID}}" within column "Batch Number" and open the window
@@ -1277,7 +1273,7 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Copy all"
 	
 	I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY |
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  3,000   |
 
 	I fill "LotoD{{ID}}" within column "Batch Number" and open the window
@@ -1312,6 +1308,7 @@ Scenario: SSL US4517 FO to ESC split
         | {{FO_REFERENCE}} | *vailable*  |	
 	
 	
+	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE     | QTY    | BATCH NUMBER | 
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  2,000 | LotoA{{ID}}  |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  7,000 | LotoB{{ID}}  |
@@ -1350,6 +1347,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #LINE 39
 
+    I open tab menu "ORDERS"
     I click on menu "Field Orders"
 	I click "Edit" on line:
         | ORDER REFERENCE    |
@@ -1382,6 +1380,7 @@ Scenario: SSL US4517 FO to ESC split
 
 	I click on "OK, cancel line" and close the window			
 	
+    I set "Show all" on lines filter		
     I should see in the main table the following data:
         |LINE | PRODUCT CODE | STATE     |  QTY   | 
         | 11  | DINJPENG5V-  | Cancelled | 13,000 |	
@@ -1396,7 +1395,6 @@ Scenario: SSL US4517 FO to ESC split
     I log into instance "HQ1C1P1"
 
 #LINE 41
-	
 	
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -1419,9 +1417,11 @@ Scenario: SSL US4517 FO to ESC split
         |  3  | ALIFCLOC1--  | Cancelled-r | 30,000 |	
 		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
  		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
-        |  5  | DINJPENB1V-  | Resourced-c |  5,000 |
-        |  6  | DINJPENG5V-  | Resourced-c | 20,000 |	
-		|  7  | ALIFCOFM1E-  | Resourced-c |  7,000 |	
+        |  5  | DINJPENB1V-  | Resourced-c |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-c |  3,000 |
+        |  6  | DINJPENG5V-  | Resourced-c | 7,000 |	
+        |  6  | DINJPENG5V-  | Cancelled-r | 13,000 |	
+		|  7  | ALIFCOFM1E-  | Cancelled-r |  7,000 |	
         |  8  | ALIFCLOC1--  | Resourced-c | 20,000 |	
         |  9  | DINJPENG5V-  | Resourced-c |  2,000 |
         |  10 | ALIFCLOC1--  | Resourced-c | 30,000 |
@@ -1429,7 +1429,8 @@ Scenario: SSL US4517 FO to ESC split
 		|  12 | ALIFCOFM1E-  | Cancelled   |  7,000 |
 
 		
-    I should see "Confirmed-p" in "Order State"		
+    #I should see "Confirmed-p" in "Order State"		
+    I should see "Confirmed" in "Order State"		
 	
 	
 #LINE 41
@@ -1447,13 +1448,13 @@ Scenario: SSL US4517 FO to ESC split
 
     I click on "Process" and open the window
 	I click on "Copy all"	
+        I click on "Process" and close the window
 	
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY |  BATCH     |  
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |  10,000  | lotA{{ID}} |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   5,000  | lotB{{ID}} |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   8,000  | lotC{{ID}} |
-        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed |   3,000  |            |
 
 
  
@@ -1466,6 +1467,7 @@ Scenario: SSL US4517 FO to ESC split
 
     I click on "Process" and open the window
 	I click on "Copy all"	
+        I click on "Process" and close the window
 	
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY | BATCH      |
