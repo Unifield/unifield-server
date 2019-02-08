@@ -103966,3 +103966,9 @@ msgstr "Nom de l'import"
 #, python-format
 msgid "You can not create a product with an archived Root Nomenclature."
 msgstr "Vous ne pouvez pas créer un produit avec une Nomenclature Origine archivée."
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1558
+#, python-format
+msgid "You cannot source with location 'Stock' if the destination location of the Internal request is LOG or MED"
+msgstr "Vous ne pouvez pas sourcer cette ligne sur l'emplacement 'Stock' si l'emplacement de la Demande Interne est LOG ou MED"
