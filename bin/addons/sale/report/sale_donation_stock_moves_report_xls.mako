@@ -153,7 +153,11 @@
             <Row ss:Height="14.25">
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.default_code|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.property_account_expense and (o.product_id.property_account_expense.code + ' - ' + o.product_id.property_account_expense.name) or ''|x}</Data></Cell>
+                % if o.product_id.property_account_expense:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.property_account_expense.code + ' - ' + o.product_id.property_account_expense.name|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${(o.product_id.categ_id.property_account_expense_categ.code + ' - ' + o.product_id.categ_id.property_account_expense_categ.name) or ''|x}</Data></Cell>
+                % endif
                 % if o.product_id.donation_expense_account.code:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.donation_expense_account.code|x}</Data></Cell>
                 % else:
