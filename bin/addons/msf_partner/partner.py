@@ -677,10 +677,9 @@ class res_partner(osv.osv):
 
         #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
         if context.get('sync_update_execution', False):
-            if 'active' in vals:
-                del vals['active']
-            if 'po_by_project' in vals:
-                del vals['po_by_project']
+            for to_remove in ['active', 'po_by_project', 'manufacturer', 'transporter']:
+                if to_remove in vals:
+                    del vals[to_remove]
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -714,8 +713,9 @@ class res_partner(osv.osv):
         '''
             bo_py_poject field must not trigger an sync update
         '''
-        if touched_fields and 'po_by_project' in touched_fields:
-            touched_fields = [x for x in touched_fields if x!='po_by_project']
+        ignore = ['po_by_project', 'manufacturer', 'transporter']
+        if touched_fields and set(ignore).intersection(touched_fields):
+            touched_fields = [x for x in touched_fields if x not in ignore]
         return super(res_partner, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
     def create(self, cr, uid, vals, context=None):
