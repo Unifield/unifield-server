@@ -124,13 +124,7 @@
                             </group>
                         </page>
                         <page string="Sourcing Documents">
-                            <field name="order_ids" nolabel="1" colspan="4">
-                                <tree string="Sourcing Documents">
-                                    <field name="sourcing_document_type" />
-                                    <field name="sourcing_document_name" />
-                                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
-                                </tree>
-                            </field> 
+                            <field name="order_ids" nolabel="1" colspan="4" readonly="1" />
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
@@ -191,6 +185,19 @@
                         <filter string="Warehouse" icon="terp-stock" domain="[]" context="{'group_by': 'warehouse_id'}" />
                     </group>
                 </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="procurement_request_sourcing_document_tree_view">
+            <field name="name">procurement.request.sourcing.document.tree</field>
+            <field name="model">procurement.request.sourcing.document</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sourcing Documents" editable="0">
+                    <field name="linked_model" />
+                    <field name="linked_name" />
+                    <button type="object" name="go_to_document" string="Open document" icon="terp-gtk-jump-to-ltr" />
+                </tree>
             </field>
         </record>
         

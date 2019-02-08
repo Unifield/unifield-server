@@ -2424,7 +2424,7 @@ class purchase_order(osv.osv):
         generate a po from the selected request for quotation
         '''
         # Objects
-        line_obj = self.pool.get('purchase.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
 
         # Some verifications
         if context is None:
@@ -2435,26 +2435,62 @@ class purchase_order(osv.osv):
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
 
-        # copy the po with rfq_ok set to False
-        data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
-        if not data.get('amount_total', 0.00):
+        rfq =  self.browse(cr, uid, ids[0], context=context)
+        if not rfq.amount_total:
             raise osv.except_osv(
                 _('Error'),
                 _('Generation of PO aborted because no price defined on lines.'),
             )
+
+        # copy the po with rfq_ok set to False
+        if rfq.origin:
+            po_orign = '%s:%s' % (rfq.origin, rfq.name)
+        else:
+            po_orign = rfq.name
         context.update({'generate_po_from_rfq': True})
-        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': po_orign}, context=dict(context,keepOrigin=True))
         context.pop('generate_po_from_rfq')
+
         # Remove lines with 0.00 as unit price
-        no_price_line_ids = line_obj.search(cr, uid, [
+        no_price_line_ids = pol_obj.search(cr, uid, [
             ('order_id', '=', new_po_id),
             ('price_unit', '=', 0.00),
         ], order='NO_ORDER', context=context)
-        line_obj.unlink(cr, uid, no_price_line_ids, context=context)
+        pol_obj.unlink(cr, uid, no_price_line_ids, context=context)
 
-        data = self.read(cr, uid, new_po_id, ['name'], context=context)
+        # set origin:
+        line_ids = pol_obj.search(cr, uid, [('order_id', '=', new_po_id)], context=context)
+        pol_obj.write(cr, uid, line_ids, {'origin': rfq.origin}, context=context)
+
+        # set cross_docking_ok:
+        cross_docking_ok = False
+        for rfq_line in rfq.order_line:
+            if rfq_line.linked_sol_id and not rfq_line.linked_sol_id.order_id.procurement_request or \
+                    (rfq_line.linked_sol_id.order_id.procurement_request and
+                        rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
+                cross_docking_ok = True
+                break
+        self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)
+
+        # set AD:
+        pol_no_ad = pol_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('analytic_distribution_id', '=', False),
+            ('linked_sol_id', '!=', False),
+            ('linked_sol_id.order_id.procurement_request', '=', False),
+        ], order='NO_ORDER', context=context)
+        for pol in pol_obj.browse(cr, uid, pol_no_ad, context=context):
+            dist_sol = pol.linked_sol_id.analytic_distribution_id.id or pol.linked_sol_id.order_id.analytic_distribution_id.id or False
+            if not dist_sol:
+                continue
+            new_dist = self.pool.get('analytic.distribution').copy(cr, uid, dist_sol, {}, context=context)
+            pol_obj.write(cr, uid, [pol.id], {
+                'analytic_distribution_id': new_dist,
+            }, context=context)
+
         # log message describing the previous action
-        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
+        new_po_data = self.read(cr, uid, new_po_id, ['name'], context=context)
+        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.') % new_po_data['name'])
 
         return new_po_id
 
