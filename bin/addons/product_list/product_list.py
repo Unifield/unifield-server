@@ -262,12 +262,8 @@ class product_list_line(osv.osv):
             type='char',
             size=64,
             store={
-                'product.product': (
-                    _get_product, ['default_code'], 10,
-                ),
-                'product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_product, ['default_code'], 10),
+                'product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20)
             },
             write_relate=False,
         ),
@@ -279,12 +275,8 @@ class product_list_line(osv.osv):
             type='char',
             size=128,
             store={
-                'product.product': (
-                    _get_product, ['name'], 10,
-                ),
-                'product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_product, ['name'], 10),
+                'product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20)
             },
             write_relate=False,
         ),
@@ -307,6 +299,7 @@ class product_list_line(osv.osv):
                         _('Warning'),
                         _('This product cannot be added as it already exists in this list.')
                     )
+
         return super(product_list_line, self).write(cr, uid, ids, vals, context=context)
 
 
@@ -355,7 +348,7 @@ class old_product_list_line(osv.osv):
     _inherit = 'product.list.line'
     _order = 'removal_date'
 
-    def _get_product(self, cr, uid, ids, context=None):
+    def _get_old_product(self, cr, uid, ids, context=None):
         opll = self.pool.get('old.product.list.line')
         return opll.search(cr, uid, [('name', 'in', ids)], context=context)
 
@@ -372,13 +365,15 @@ class old_product_list_line(osv.osv):
             type='char',
             size=64,
             store={
-                'product.product': (
-                    _get_product, ['default_code'], 10,
-                ),
-                'old.product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_old_product, ['default_code'], 10),
+                'old.product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20),
             },
+            write_relate=False,
+        ),
+        'desc': fields.related('name', 'name', string='Product Description', readonly=True, type='char', size=128, write_relate=False, store={
+            'product.product': (_get_old_product, ['name'], 10,),
+            'old.product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20),
+        },
         ),
     }
 

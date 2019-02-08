@@ -611,7 +611,7 @@
       <% update_percent(nbloop, tot_line) %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or (line.from_cash_return and line.account_id.type_for_register == 'advance' and _('Advance Return')) or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
+          <Data ss:Type="String">${ getEntryType(line) |x}</Data>
         </Cell>
         % if isDate(line.document_date):
         <Cell ss:StyleID="date">
@@ -651,8 +651,17 @@
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
+        <%
+        third_party = ''
+        if line.partner_id:
+            third_party = line.partner_id.name
+        elif line.employee_id:
+            third_party = line.employee_id.name
+        elif line.transfer_journal_id:
+            third_party = line.transfer_journal_id.code
+        %>
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
+          <Data ss:Type="String">${third_party|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>

@@ -38,7 +38,6 @@ import sys
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
     'name': _('UF Payroll rounding'),
-    'destination_code': 'SUP',
 
     'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
 
@@ -79,10 +78,10 @@ class hr_payroll_import(osv.osv_memory):
         'state': 'simu',
     }
 
-    def _check_on_employee(self, cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context=None):
+    def _check_on_employee(self, cr, uid, third, second_description, debit, credit, account, is_counterpart, context=None):
         """
-        Checks that the employee corresponding to the employee_identification_id exists.
-        Returns the employee id if it exists, else False.
+        Searches for the employee corresponding to data in "Third" or "Secondary description" column.
+        Returns a tuple with the employee Identification No, and the employee id if it exists (else False).
         Raises an error if:
         - the employee doesn't exist and the account is analytic-a-holic
         - the same Identification ID matches several employees
@@ -90,17 +89,29 @@ class hr_payroll_import(osv.osv_memory):
         if context is None:
             context = {}
         employee_obj = self.pool.get('hr.employee')
-        employee_ids = employee_obj.search(cr, uid,
-                                           [('identification_id', '=', employee_identification_id)],
-                                           context=context, order='NO_ORDER')
-        if not employee_ids and account.is_analytic_addicted and not is_counterpart:
-            employee_name = ustr(field[0]).replace(employee_identification_id, '')
-            raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (
-                employee_identification_id, employee_name, debit, credit,))
+        employee_ids = []
+        employee_identification_id = ""
+        if third and third[0]:
+            # the Third column should contain the exact code of the employee
+            employee_identification_id = third[0]
+            employee_ids = employee_obj.search(cr, uid,
+                                               [('identification_id', '=', employee_identification_id)],
+                                               context=context, order='NO_ORDER')
+        # check the Secondary description if no employee found (no matter if the Third column is empty or not)
+        if not employee_ids and second_description and second_description[0]:
+            # Secondary description looks like "John Smith MWNP0001" => extract the employee code MWNP0001
+            employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+            employee_ids = employee_obj.search(cr, uid,
+                                               [('identification_id', '=', employee_identification_id)],
+                                               context=context, order='NO_ORDER')
+        if employee_identification_id and not employee_ids and account.is_analytic_addicted and not is_counterpart:
+            raise osv.except_osv(_('Error'), _('No employee found for this code: %s.\nDEBIT: %s.\nCREDIT: %s.') % (
+                employee_identification_id, debit, credit,))
         if employee_ids and len(employee_ids) > 1:
             raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (
                 employee_identification_id,))
-        return employee_ids and employee_ids[0] or False
+        employee_id = employee_ids and employee_ids[0] or False
+        return employee_identification_id, employee_id
 
     def update_payroll_entries(self, cr, uid,
                                data='', field='', date_format='%d/%m/%Y',
@@ -224,19 +235,15 @@ class hr_payroll_import(osv.osv_memory):
 
         # Check on partner
         employee_identification_id = ''
-        if third and third[0] and not is_payroll_rounding:
-            # If Third Party field is filled, check if it matches either a Supplier or an Employee
-            # (inactive partners are ignored by default)
-            partner_id = partner_obj.search(cr, uid, [('name', '=ilike', third[0])], order='id', limit=1, context=context)
-            partner_id = partner_id and partner_id[0] or False
+        if not is_payroll_rounding:
+            if third and third[0]:
+                # If Third Party field is filled, check if it matches a Supplier (inactive partners are ignored by default)
+                partner_id = partner_obj.search(cr, uid, [('name', '=ilike', third[0])], order='id', limit=1, context=context)
+                partner_id = partner_id and partner_id[0] or False
             if not partner_id:
-                employee_identification_id = ustr(third[0]).split(' ')[-1]
-                employee_id = self._check_on_employee(cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context)
-        elif second_description and second_description[0] and not is_payroll_rounding:
-            # if Third Party is empty, check if Secondary Description field matches an employee
-            employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-            employee_id = self._check_on_employee(cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context)
-
+                # if no partner is found check that either the Third or the Secondary Description column matches an employee
+                employee_identification_id, employee_id = self._check_on_employee(cr, uid, third, second_description,
+                                                                                  debit, credit, account, is_counterpart, context)
         if account.is_analytic_addicted:
             if employee_id:
                 # Create description
@@ -422,18 +429,12 @@ class hr_payroll_import(osv.osv_memory):
         if not account_ids:
             err_account(account_code=account_code)
 
-        # get default AD values
-        # destination: from code
-        dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [
-            ('category', '=', 'DEST'),
-            ('code', '=', UF_SIDE_ROUNDING_LINE['destination_code']),
-        ], context=context)
-        if not dest_ids:
-            msg = _("%s: No default destination found '%s'") % (
-                UF_SIDE_ROUNDING_LINE['name'],
-                UF_SIDE_ROUNDING_LINE['destination_code'],
-            )
-            raise osv.except_osv(_('Error'), msg)
+        # get the default Destination to use
+        acc_fields = ['default_destination_id', 'code', 'name']
+        acc = self.pool.get('account.account').browse(cr, uid, account_ids[0], fields_to_fetch=acc_fields, context=context)
+        if not acc.default_destination_id:
+            raise osv.except_osv(_('Error'), _('The account %s - %s has no Default Destination.') % (acc.code, acc.name))
+        dest = acc.default_destination_id
 
         # cost center: 1st FX gain loss of instance
         instance = self.pool.get('res.users').browse(cr, uid, [uid],
@@ -466,7 +467,7 @@ class hr_payroll_import(osv.osv_memory):
 
             # AD
             'cost_center_id': cc_ids[0],
-            'destination_id': dest_ids[0],
+            'destination_id': dest.id,
             #'funding_pool_id':  # default is PF
         }, context=context)
 
