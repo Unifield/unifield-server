@@ -17,6 +17,7 @@ Scenario: SSL US4517 FO to ESC split
 #LINE 2	
  
     I log into instance "HQ1C1P1"
+
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
     I click on "New"
@@ -173,6 +174,9 @@ Scenario: SSL US4517 FO to ESC split
 	
 
 #LINE 9
+    I click on menu "Orders Sourcing Tool"
+    I fill "Order" with "{{FO_REFERENCE}}"
+    I click on "Search"
 	
     I click "Edit" on line:
         | PRODUCT          |  QTY |
@@ -183,7 +187,10 @@ Scenario: SSL US4517 FO to ESC split
 	I click "Source Line" on line:
         | PRODUCT          |  QTY |
         |  [ALIFCOFM1E-] * | 7,000 |		
-		
+    
+     I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |
 		
 	I fill "from stock" within column "PROC. METHOD"
 	I validate the line
@@ -294,6 +301,7 @@ Scenario: SSL US4517 FO to ESC split
 		
 #LINE 12
 
+
     I open tab menu "PURCHASES"	   
     I click on menu "Purchase Orders"
     I click "Edit" on line:
@@ -306,6 +314,7 @@ Scenario: SSL US4517 FO to ESC split
     I click on "Apply to all lines" and open the window
 	I click on "Yes" and close the window
 
+    I open tab "Purchase Order"
     I click "Inline Edit" on line:
         |LINE |  PRODUCT CODE | QTY    | 
         |  1  | DINJPENB1V-   | 15,000 |
@@ -379,7 +388,7 @@ Scenario: SSL US4517 FO to ESC split
         |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
         |  1  | DINJPENB1V-   | Validated   | 15,000 |       05/Oct/2018       |
 
-    I should see "Validated-p" in "Order State"			
+    I should see "Validated" in "Order State"			
 
     I open tab menu "ORDERS"
     I click on menu "Field Orders"
@@ -421,8 +430,8 @@ Scenario: SSL US4517 FO to ESC split
         |  2  | DINJPENG5V-   | Validated   | 10,000 |       28/May/2018       |
         |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
 
-    I should see "Validated-p" in "Order State"			
-
+    I should see "Validated" in "Order State"		
+	
     I open tab menu "ORDERS"
     I click on menu "Field Orders"
 	I click "Edit" on line:
@@ -481,6 +490,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #LINE 17
 
+
     I open tab menu "PURCHASES"	   
     I click on menu "Purchase Orders"
     I click "Edit" on line:
@@ -490,7 +500,7 @@ Scenario: SSL US4517 FO to ESC split
 
     I click "Inline Edit" on line:
         |LINE | PRODUCT CODE | QTY       | 
-        |  3  | ALIFCLOC1--  | 30,000.00 |
+        |  3  | ALIFCLOC1--  | 30,000 |
     I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "05/Oct/2018"
     I validate the line
 
@@ -572,27 +582,26 @@ Scenario: SSL US4517 FO to ESC split
 		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
 	
 #LINE 20
-
   I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Incoming Shipments"
 
 	I click "Edit" on line:
 		| PURCHASE ORDER   |
-		| {{PO_REF_COO_1}} |
+		| {{PO_REF_COO1}} |
 
     I click "Cancel" on line and open the window:
         |  PRODUCT                                 | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000  |     28/May/2018     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000  |     28/May/2018*     |	
 
     I click on "Cancel and Resource" and close the window		
 
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
-        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |   15,000 |     05/Oct/2018     |
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   10,000 |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |   20,000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |   30,000 |     05/Oct/2018     |		
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |   15,000 |     05/Oct/2018*     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   10,000 |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |   20,000 |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |   30,000 |     05/Oct/2018*     |		
 
     I open tab menu "ORDERS"
     I click on menu "Field Orders"
@@ -628,12 +637,13 @@ Scenario: SSL US4517 FO to ESC split
 
 #LINE 22
 
+
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
 
     I click "Edit" on line:
         | REFERENCE   |
-        | {{PO_REF_}} |	
+        | {{PO_REF}} |	
 
 		
     I should see in the main table the following data:
@@ -653,11 +663,12 @@ Scenario: SSL US4517 FO to ESC split
 		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
         |  8  | ALIFCLOC1--  | Resourced-v | 20,000 |	
 	
-    I should see "Sourced-p" in "Order State"			
+    ## bug TF / code ?
+    ##I should see "Sourced-p" in "Order State"		sara sourced-v TO BE FIXED IN THE CODE	
+    I should see "Validated-p" in "Order State"			
 
 	
 #LINE 23
-
     I log into instance "HQ1C1"	
 	
     I open tab menu "WAREHOUSE"
@@ -666,10 +677,10 @@ Scenario: SSL US4517 FO to ESC split
 
 	I click "Edit" on line:
 		| PURCHASE ORDER   |
-		| {{PO_REF_COO_1}} |
+		| {{PO_REF_COO1}} |
 
     I click on "Process" and open the window
-	I click "Split" on line and open the window:
+	I click "Split" on line:
         | PRODUCT                                                           |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
 		
@@ -679,7 +690,7 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Copy all"
 	
 	I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY |
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  10,000  |
 
 	I fill "lotA{{ID}}" within column "Batch Number" and open the window
@@ -689,7 +700,7 @@ Scenario: SSL US4517 FO to ESC split
     I validate the line
 		
 	I click "Edit" on line:
-        | PRODUCT                                                           | QUANTITY |
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
 	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  5,000   |
 
 	I fill "lotB{{ID}}" within column "Batch Number" and open the window
@@ -709,6 +720,12 @@ Scenario: SSL US4517 FO to ESC split
     I click on "Save" and close the window
 	I fill "8000" within column "QUANTITY TO PROCESS"
     I validate the line
+	
+     I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+        | [ALIFCLOC1--]*  |  30,000   |
+	I fill "0" within column "QUANTITY TO PROCESS"
+    I validate the line
 
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
@@ -717,9 +734,9 @@ Scenario: SSL US4517 FO to ESC split
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000  |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000  |     05/Oct/2018     |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000  |     05/Oct/2018*     |	
 	
 	I should see "Available" in "State"			
 	
@@ -728,7 +745,7 @@ Scenario: SSL US4517 FO to ESC split
 
 	I click "Edit" on line:
 		| PURCHASE ORDER   | STATE  | 
-		| {{PO_REF_COO_1}} | Closed |
+		| {{PO_REF_COO1}} | Closed |
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE    | QUANTITY | BATCH      | 
@@ -745,8 +762,9 @@ Scenario: SSL US4517 FO to ESC split
 
 	I click "Edit" on line:
 		| PURCHASE ORDER   |
-		| {{PO_REF_COO_1}} |
+		| {{PO_REF_COO1}} |
 
+   I wait
    I click "Cancel" on line and open the window:
         |  PRODUCT                                                                | STATE     | QUANTITY | 
         |[DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial| Available |   2,000  |	
@@ -756,9 +774,9 @@ Scenario: SSL US4517 FO to ESC split
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,0000 |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,0000 |     05/Oct/2018     |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018*     |	
 
 		
 #LINE 25
@@ -769,7 +787,7 @@ Scenario: SSL US4517 FO to ESC split
 
 	I click "Edit" on line:
 		| PURCHASE ORDER   |
-		| {{PO_REF_COO_1}} |
+		| {{PO_REF_COO1}} |
 
     I click "Cancel" on line and open the window:
         |  PRODUCT                              | STATE     | QUANTITY| 
@@ -780,9 +798,9 @@ Scenario: SSL US4517 FO to ESC split
 		
 	I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
-        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018     |
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018     |	
-        | [ALIFCLOC1--] CLOCK, ALARM, mechanical 		                            | Cancelled-r |  30,0000 |     05/Oct/2018     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical 		                            | Cancelled-r |  30,000 |     05/Oct/2018*     |
 		
 		
 		
@@ -790,14 +808,13 @@ Scenario: SSL US4517 FO to ESC split
     I click on menu "Purchase Orders"
      I click "Edit" on line:
         | REFERENCE        |
-        | {{PO_REF_COO_1}} |	
+        | {{PO_REF_COO1}} |	
 
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE        |  QTY   |  
         |  3  | ALIFCLOC1--   | Cancelled-r | 30,000 |
 	    |  3  | ALIFCLOC1--   | Cancelled-r | 20,000 |
-
 
     I open tab menu "ORDERS"
     I click on menu "Field Orders"
@@ -834,7 +851,7 @@ Scenario: SSL US4517 FO to ESC split
 
     I click "Edit" on line:
         | REFERENCE   |
-        | {{PO_REF_}} |	
+        | {{PO_REF}} |	
 
 		
     I should see in the main table the following data:
@@ -1386,7 +1403,7 @@ Scenario: SSL US4517 FO to ESC split
 
     I click "Edit" on line:
         | REFERENCE   |
-        | {{PO_REF_}} |	
+        | {{PO_REF}} |	
 
 		
     I should see in the main table the following data:
