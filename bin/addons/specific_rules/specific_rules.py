@@ -2278,6 +2278,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
@@ -2308,6 +2310,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
