@@ -102559,6 +102559,11 @@ msgstr "Le compte %s - %s utilisé pour l'écriture de différence de change n'a
 msgid "Commitment Voucher Number"
 msgstr "Numéro du Bon d'Engagement"
 
+#. module: stock
+#: code:addons/stock/physical_inventory.py:907
+#, python-format
+msgid "Unable to update line #%s product %s: line not found in the discrepancy report"
+msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"=======
 #. module: account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1494
 #, python-format
