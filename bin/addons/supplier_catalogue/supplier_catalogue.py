@@ -269,6 +269,9 @@ class supplier_catalogue(osv.osv):
                                 new_seller.remove(new_seller[i])
                                 has_removed = True
                                 break
+                        # ------------------------------------------- #
+                        # ------ TODO: CHECK DURING INTEGRATION ----- #
+                        # ------------------------------------------- #
                         if vals['active'] and not has_removed:
                             new_seller.append((1, catalogue.partner_id.name))
                         object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
