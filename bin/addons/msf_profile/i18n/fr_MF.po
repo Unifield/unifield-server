@@ -15122,10 +15122,12 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 msgid "Not implemented"
 msgstr "Non mis en œuvre"
 
-#. modules: stock_override, procurement_request
+#. modules: stock_override, procurement_request, msf_outgoing
 #: report:delivery.order:0
 #: report:internal.move:0
 #: report:procurement.request.report:0
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
 msgid "Approved by :"
 msgstr "Approuvé par :"
 
@@ -21596,6 +21598,8 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
 #: field:finance.sync.query,name:0
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -37881,6 +37885,8 @@ msgstr "Sur Plusieurs Documents"
 #: field:stock.frequence,yearly_date_ok:0
 #: view:sync.client.update_to_send:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -47623,6 +47629,8 @@ msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 #: report:delivery.order:0
 #: report:internal.move:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
 msgid "Signature"
 msgstr "Signature"
 
@@ -103843,3 +103851,15 @@ msgstr "Précédent"
 #, python-format
 msgid "Partner %s (%s): you can not use %s currency"
 msgstr "Partenaire %s (%s): vous ne pouvez pas utiliser la devise %s"
+
+#. module: msf_outgoing
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
+msgid "Picked by :"
+msgstr "Prélevé par :"
+
+#. module: msf_outgoing
+#: report:empty.picking.ticket:0
+#: report:picking.ticket:0
+msgid "Validated by :"
+msgstr "Validé par :"
