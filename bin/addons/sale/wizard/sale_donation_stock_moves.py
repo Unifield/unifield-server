@@ -55,7 +55,7 @@ class sale_donation_stock_moves(osv.osv_memory):
         ),
         'nomen_manda_0': fields.many2one(
             'product.nomenclature',
-            'Main Type',
+            'Product Main Type',
         ),
         'move_id': fields.many2one(
             'stock.move',

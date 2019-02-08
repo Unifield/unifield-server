@@ -44885,7 +44885,6 @@ msgstr "Effacer les Identités (ID's)"
 #: field:stock.inventory,nomen_manda_0:0
 #: field:physical.inventory.select.products,nomen_manda_0:0
 #: field:threshold.value,nomen_manda_0:0
-#: field:sale.donation.stock.moves,nomen_manda_0:0
 msgid "Main Type"
 msgstr "Type Principal"
 
@@ -103799,3 +103798,8 @@ msgstr "Valeur Totale Sortante"
 #, python-format
 msgid "The Product (%s) does not have this Nomenclature"
 msgstr "Le Produit (%s) n'a pas cette Nomenclature"
+
+#. module: sale
+#: field:sale.donation.stock.moves,nomen_manda_0:0
+msgid "Product Main Type"
+msgstr "Type Principal du Produit"
