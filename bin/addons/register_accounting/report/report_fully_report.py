@@ -31,6 +31,7 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
+            'getNumberOfEntries': self.getNumberOfEntries,
             'getImportedMoveLines': self.getImportedMoveLines,
             'getEntryType': self.getEntryType,
             'getRegRef': self.getRegRef,
@@ -187,6 +188,15 @@ class report_fully_report(report_sxw.rml_parse):
             self._cache_ana[key] = res
 
         return self._cache_ana[key]
+
+    def getNumberOfEntries(self, o):
+        """
+        Returns the number of register lines booked in the register (o)
+        """
+        db = pooler.get_pool(self.cr.dbname)
+        regline_obj = db.get('account.bank.statement.line')
+        nb_lines = regline_obj.search(self.cr, self.uid, [('statement_id', '=', o.id)], count=True)
+        return nb_lines
 
     def getFreeRef(self, acc_move_line):
         '''
