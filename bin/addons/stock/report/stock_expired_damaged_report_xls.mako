@@ -128,7 +128,7 @@
         ## Reference
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Reason Type
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="115.0" />
         ## Product Main Type
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Product Code

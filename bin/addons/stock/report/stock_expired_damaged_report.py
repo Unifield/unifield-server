@@ -259,7 +259,7 @@ class stock_expired_damaged_parser(report_sxw.rml_parse):
                 price_at_date = x[1]
             res.append({
                 'ref': move.picking_id.name,
-                'reason_type': move.reason_type_id and move.reason_type_id.name or '',
+                'reason_type': move.reason_type_id and move.reason_type_id.complete_name or '',
                 'main_type': move.product_id and move.product_id.nomen_manda_0 and move.product_id.nomen_manda_0.name or '',
                 'product_code': move.product_id and move.product_id.default_code or '',
                 'product_desc': move.product_id and move.product_id.name or '',
