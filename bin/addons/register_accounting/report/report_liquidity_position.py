@@ -208,7 +208,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_obj = pool.get('account.bank.statement')
         if not report_period_id:
             report_period_id = self.period_id
-        reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
+        reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('journal_id', '=', reg.journal_id.id),
                                                                         ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
@@ -303,8 +303,11 @@ class report_liquidity_position3(report_sxw.rml_parse):
         journal_obj = pool.get('account.journal')
         period_obj = pool.get('account.period')
 
-        # get the cheque registers for the selected period and previous ones
-        journal_ids = journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque')])
+        # get the cheque registers for the selected period and previous ones IF the one of the selected period exists
+        journal_ids = []
+        for j_id in journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque')], order='NO_ORDER'):
+            if reg_obj.search_exist(self.cr, self.uid, [('journal_id', '=', j_id), ('period_id', '=', self.period_id)]):
+                journal_ids.append(j_id)
         period_ids = period_obj.search(self.cr, self.uid,
                                        [('date_start', '<=', self.getPeriod().date_start)])
         reg_ids = reg_obj.search(self.cr, self.uid, [('journal_id', 'in', journal_ids),
