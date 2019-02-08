@@ -452,6 +452,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Product">
+                   <filter string="Stock>0"  icon="terp-accessories-archiver" domain="[('postive_qty','=',True)]"/>
                    <filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
                    <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
                    <filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
