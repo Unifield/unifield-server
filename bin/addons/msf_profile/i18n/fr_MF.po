@@ -24901,13 +24901,14 @@ msgstr "Vous ne pouvez pas annuler le lettrage de ces écritures dans cette inst
 msgid "Line created in a further PO, so we have to create it back in the flow"
 msgstr "Line created in a further PO, so we have to create it back in the flow"
 
-#. modules: mission_stock, supplier_catalogue, product, reason_types_moves
+#. modules: mission_stock, supplier_catalogue, product, reason_types_moves, sale
 #: view:stock.mission.report.line:0
 #: view:product.product:0
 #: selection:product.template,type:0
 #: view:supplier.catalogue.line:0
 #: selection:stock.mission.report.line,type:0
 #: selection:stock.move,product_type:0
+#: selection:sale.donation.stock.moves,product_type:0
 msgid "Non-Stockable"
 msgstr "Non Stockable"
 
@@ -26902,13 +26903,14 @@ msgstr "Total Général Fonctionnel"
 msgid "Informs about distribution state."
 msgstr "Informs about distribution state."
 
-#. modules: mission_stock, supplier_catalogue, product, reason_types_moves
+#. modules: mission_stock, supplier_catalogue, product, reason_types_moves, sale
 #: view:stock.mission.report.line:0
 #: view:product.product:0
 #: selection:product.template,type:0
 #: selection:stock.move,product_type:0
 #: view:supplier.catalogue.line:0
 #: selection:stock.mission.report.line,type:0
+#: selection:sale.donation.stock.moves,product_type:0
 msgid "Service with Reception"
 msgstr "Service avec Réception"
 
@@ -44833,7 +44835,7 @@ msgstr "Last date when a shortcut was used"
 msgid "Clear IDs"
 msgstr "Effacer les Identités (ID's)"
 
-#. modules: threshold_value, product_nomenclature, order_nomenclature, consumption_calculation, specific_rules, kit, procurement_auto, procurement_cycle, mission_stock, procurement_report, stock
+#. modules: threshold_value, product_nomenclature, order_nomenclature, consumption_calculation, specific_rules, kit, procurement_auto, procurement_cycle, mission_stock, procurement_report, stock, sale
 #: field:monthly.review.consumption,nomen_manda_0:0
 #: field:product.history.consumption,nomen_manda_0:0
 #: field:real.average.consumption,nomen_manda_0:0
@@ -70107,10 +70109,11 @@ msgstr "Sous-total Fonctionnel "
 msgid "Register line state"
 msgstr "Register line state"
 
-#. module: sales_followup
+#. module: sales_followup, sale
 #: field:ir.followup.location.wizard,order_id:0
 #: field:ir.track.changes.wizard,order_id:0
 #: field:sale.followup.multi.wizard,order_id:0
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:133
 msgid "Order Ref."
 msgstr "Réf Commande"
 
@@ -77426,9 +77429,10 @@ msgid "When new move line is created the state will be 'Draft'.\n"
 msgstr "Quand une nouvelle ligne d'écriture est créée, le statut sera sous 'Brouillon'.\n"
 "* Lorsque tous les paiements sont effectués, il passera sous statut \"Valide\"."
 
-#. module: account_override
+#. module: account_override, sale
 #: field:product.category,donation_expense_account:0
 #: field:product.product,donation_expense_account:0
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:129
 msgid "Donation Account"
 msgstr "Compte de Donation "
 
@@ -81628,10 +81632,11 @@ msgstr "Asia/Bangkok"
 msgid "Picking id"
 msgstr "Picking id"
 
-#. modules: product, reason_types_moves, mission_stock
+#. modules: product, reason_types_moves, mission_stock, sale
 #: selection:product.template,type:0
 #: selection:stock.move,product_type:0
 #: selection:stock.mission.report.line,type:0
+#: selection:sale.donation.stock.moves,product_type:0
 msgid "Stockable Product"
 msgstr "Produit Stockable"
 
@@ -87441,13 +87446,11 @@ msgstr "Si cette case est cochée, la zone est une zone virtuel."
 msgid "Create Menu For Dashboard"
 msgstr "Créer un Menu pour le Tableau de Bord"
 
-#. modules: sale, stock, consumption_calculation
-#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:132
+#. modules: stock, consumption_calculation
 #: field:report.stock.inventory,value:0
 #: field:report.stock.move,value:0
 #: field:product.likely.expire.report.line,total_value:0
 #: report:product.likely.expire.report_pdf:0
-#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:121
 msgid "Total Value"
 msgstr "Valeur Totale"
@@ -94516,8 +94519,9 @@ msgstr "Retour"
 msgid "Log From"
 msgstr "Journal de bord De"
 
-#. module: msf_budget
+#. module: msf_budget, sale
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:745
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:128
 msgid "Account Code"
 msgstr "Code du compte"
 
@@ -103736,6 +103740,27 @@ msgstr "La Zone Source est inactive"
 #, python-format
 msgid "Source Location %s is inactive"
 msgstr "La Zone Source %s est inactive"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:140
+msgid "Total Value IN"
+msgstr "Valeur Totale Entrante"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:141
+msgid "Total Value OUT"
+msgstr "Valeur Totale Sortante"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:118
+#, python-format
+msgid "The Product (%s) does not have this Nomenclature"
+msgstr "Le Produit (%s) n'a pas cette Nomenclature"
+
+#. module: sale
+#: field:sale.donation.stock.moves,nomen_manda_0:0
+msgid "Product Main Type"
+msgstr "Type Principal du Produit"
 
 #. module: account
 #: view:liquidity.balance.wizard:0
