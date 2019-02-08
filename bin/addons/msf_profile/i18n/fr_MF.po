@@ -103895,8 +103895,8 @@ msgstr "Précédent"
 #: model:ir.actions.act_window,name:stock.action_stock_reception_wizard
 #: model:ir.ui.menu,name:stock.menu_stock_reception_wizard
 #: view:stock.reception.wizard:0
-msgid "Stock Reception"
-msgstr "Réception du Stock"
+msgid "Receptions Report"
+msgstr "Rapport des Réceptions"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:212
