@@ -51,7 +51,8 @@ class product_history_consumption(osv.osv):
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
         'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
                                              string='Consumption type'),
-        'location_id': fields.many2one('stock.location', string='Location', domain="[('usage', '=', 'internal')]"),
+        'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
+        'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level', ondelete='set null'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),
@@ -146,6 +147,7 @@ class product_history_consumption(osv.osv):
         obj = self.browse(cr, uid, ids[0],
                           fields_to_fetch=['consumption_type',
                                            'location_id',
+                                           'location_dest_id',
                                            'id',
                                            'nomen_manda_0',
                                            'sublist_id'],
@@ -158,6 +160,8 @@ class product_history_consumption(osv.osv):
             if obj.location_id:
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
             context.update({'location_id': location_ids})
+            if obj.location_dest_id:
+                context.update({'location_dest_id': obj.location_dest_id.id})
 
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
 
@@ -244,11 +248,18 @@ class product_history_consumption(osv.osv):
 
         res = self.browse(cr, uid, ids[0], context=context)
         if res.consumption_type == 'rac':
-            cr.execute('''
-            SELECT distinct(product_id)
-            FROM real_average_consumption_line
-            WHERE move_id IS NOT NULL
-            ''')
+            if res.location_dest_id:
+                cr.execute('''
+                SELECT distinct(r.product_id)
+                FROM real_average_consumption_line r, stock_move m
+                WHERE r.move_id = m.id and m.location_dest_id = %s
+                ''', (res.location_dest_id.id,))
+            else:
+                cr.execute('''
+                SELECT distinct(product_id)
+                FROM real_average_consumption_line
+                WHERE move_id IS NOT NULL
+                ''')
         else:
             cr.execute('''
               SELECT distinct(s.product_id)
@@ -464,7 +475,7 @@ class product_product(osv.osv):
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
-            line_view = """<tree string="Historical consumption">
+            line_view = """<tree string="Historical consumption" hide_new_button="1">
                    <field name="default_code"/>
                    <field name="name" />"""
 
@@ -561,7 +572,12 @@ class product_product(osv.osv):
                 total_consumption = 0.00
                 for month in context.get('months'):
                     field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
-                    cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
+                    cons_context = {
+                        'from_date': month.get('date_from'),
+                        'to_date': month.get('date_to'),
+                        'location_id': context.get('location_id'),
+                        'location_dest_id': context.get('location_dest_id'),
+                    }
                     consumption = 0.00
                     cons_prod_domain = [('name', '=', field_name),
                                         ('product_id', '=', r['id']),
