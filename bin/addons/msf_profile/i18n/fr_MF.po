@@ -13114,10 +13114,11 @@ msgstr "Check order data"
 msgid "button_confirm - (procurement.order)"
 msgstr "button_confirm - (procurement.order)"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock_override
 #: report:packing.list:0
+#: report:delivery.order:0
 msgid "Your Ref.:"
-msgstr "Your Ref.:"
+msgstr "Votre Ref.:"
 
 #. module: purchase
 #: view:purchase.order:0
