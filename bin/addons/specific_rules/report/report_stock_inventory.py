@@ -62,7 +62,7 @@ will be shown.""",
         ),
         'prodlot_id': fields.many2one(
             'stock.production.lot',
-            string='Specific batch',
+            string='Specific Batch number',
         ),
         'product_list_id': fields.many2one(
             'product.list',
@@ -88,7 +88,7 @@ location will be shown.""",
             readonly=True,
         ),
         'display_0': fields.boolean(
-            string='Include products with stock <= 0 with movements'
+            string='Include products with stock <= 0 with movements in the last months'
         ),
         'in_last_x_months': fields.selection(
             IN_LAST_X_MONTHS,

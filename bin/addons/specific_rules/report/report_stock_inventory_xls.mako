@@ -175,7 +175,7 @@
         <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.product_list_id and o.product_list_id.name or ''|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Specific batch')}</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Specific batch number')}</Data></Cell>
         <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name or ''|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">

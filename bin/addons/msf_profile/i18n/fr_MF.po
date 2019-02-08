@@ -85688,11 +85688,8 @@ msgstr "Diviser en lots de production"
 msgid "You have selected February, the 29th as shedule date. For non leap years, the action will be run on March, the 1st !"
 msgstr "Vous avez sélectionné en Février la date du 29 comme date de planning. Pour les années non bisextilles, l'action se fera le 1r Mars.  !"
 
-#. modules: specific_rules, stock_override
-#: field:export.report.stock.inventory,prodlot_id:0
+#. module: specific_rules, stock_override
 #: field:export.report.stock.move,prodlot_id:0
-#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:175
-#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
 msgid "Specific batch"
 msgstr "Lot spécifique"
 
@@ -103847,8 +103844,8 @@ msgstr "Date de Génération du rapport"
 
 #. module: specific_rules
 #: field:export.report.stock.inventory,display_0:0
-msgid "Include products with stock <= 0 with movements"
-msgstr "Inclure les produits avec du stock <= 0 ayant des mouvements"
+msgid "Include products with stock <= 0 with movements in the last months"
+msgstr "Inclure les produits avec du stock <= 0 ayant eu des mouvements durant les derniers mois"
 
 #. module: specific_rules
 #: field:export.report.stock.inventory,in_last_x_months:0
@@ -103866,7 +103863,7 @@ msgstr "Liste de Produits spécifique"
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:191
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:194
 msgid "Including products with stock <= 0 with movements in the last months"
-msgstr "Incluant les les produits avec du stock <= 0 ayant des mouvements durant les derniers mois"
+msgstr "Incluant les les produits avec du stock <= 0 ayant eu des mouvements durant les derniers mois"
 
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
@@ -103940,3 +103937,10 @@ msgstr "Attention! Certains colis contiennent un ou plusieurs produit non entier
 #: view:check.ppl.integrity:0
 msgid "Go Back"
 msgstr "Précédent"
+
+#. module: specific_rules
+#: field:export.report.stock.inventory,prodlot_id:0
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:175
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
+msgid "Specific Batch number"
+msgstr "Numéro de Lot spécifique"

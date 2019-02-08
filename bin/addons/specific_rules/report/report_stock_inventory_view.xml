@@ -55,7 +55,8 @@
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <newline/>
                     <field name="display_0" attrs="{'invisible': ['|', '|', '|', ('product_id', '!=', False), ('product_list_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False)]}" />
-                    <field name="in_last_x_months" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+                    <field name="in_last_x_months" nolabel="1" colspan="2"
+                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
 
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="2">
