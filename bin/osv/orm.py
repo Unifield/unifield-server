@@ -595,7 +595,6 @@ class orm_template(object):
     def __export_row(self, cr, uid, row, fields, context=None):
         if context is None:
             context = {}
-
         sync_context = context.get('sync_update_creation')
 
         def check_type(field_type):
@@ -618,7 +617,13 @@ class orm_template(object):
 
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+            is_sync = context.get('sync_update_creation') or context.get('sync_update_creation')
+            data_ids = []
+            dom = [('model', '=', r._table_name), ('res_id', '=', r['id'])]
+            if is_sync:
+                data_ids = model_data.search(cr, uid, dom+[('module', '=', 'sd')])
+            if not data_ids:
+                data_ids = model_data.search(cr, uid, dom)
             if len(data_ids):
                 d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                 if d['module']:
@@ -833,6 +838,14 @@ class orm_template(object):
 
         return processed, rejected, headers
 
+    def import_data_web(self, cr, uid, fields, datas, mode='init',
+                        current_module='', noupdate=False, context=None, filename=None,
+                        display_all_errors=False, has_header=False):
+        if context is None:
+            context = {}
+        context['import_from_web_interface'] = True
+        return self.import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename, display_all_errors=display_all_errors, has_header=has_header)
+
     def import_data(self, cr, uid, fields, datas, mode='init',
                     current_module='', noupdate=False, context=None, filename=None,
                     display_all_errors=False, has_header=False):
@@ -897,7 +910,13 @@ class orm_template(object):
                 obj_model = self.pool.get(model_name)
                 ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
-                    raise ValueError('No record found for %s' % (id,))
+                    if context.get('sync_update_execution'):
+                        newctx = context.copy()
+                        newctx['active_test'] = False
+                        ids = obj_model.name_search(cr, uid, id, operator='=', context=newctx)
+
+                    if not ids:
+                        raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
             return id
 
@@ -1103,6 +1122,7 @@ class orm_template(object):
                     error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                                                           tools.ustr(e) + "\n" +
                                                           tools.ustr(traceback.format_exc())))
+                    cr.rollback()
                     continue
                 else:
                     return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
@@ -1121,6 +1141,9 @@ class orm_template(object):
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
+
+    def read_web(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+        return self.read(cr, user, ids, fields, context=context, load=load)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
@@ -1309,7 +1332,7 @@ class orm_template(object):
 
     # returns the definition of each field in the object
     # the optional fields parameter can limit the result to some fields
-    def fields_get(self, cr, user, allfields=None, context=None, write_access=True):
+    def fields_get(self, cr, user, allfields=None, context=None, write_access=True, with_uom_rounding=False):
         if context is None:
             context = {}
         res = {}
@@ -1317,6 +1340,7 @@ class orm_template(object):
         for parent in self._inherits:
             res.update(self.pool.get(parent).fields_get(cr, user, allfields, context))
 
+        uom_rounding = False
         if self._columns.keys():
             for f in self._columns.keys():
                 field_col = self._columns[f]
@@ -1348,9 +1372,14 @@ class orm_template(object):
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
                     res[f]['no_write_access'] = True
-                for arg in ('digits', 'invisible', 'filters', 'computation'):
+                for arg in ('digits', 'invisible', 'filters', 'computation', 'related_uom'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
+
+                if with_uom_rounding and res[f].get('related_uom'):
+                    if not uom_rounding:
+                        uom_rounding = self.pool.get('product.uom').get_rounding(cr, 1)
+                    res[f]['uom_rounding'] = uom_rounding
 
                 context_lang = context and context.get('lang', False) or 'en_US'
                 if field_col.string and context_lang != 'en_US':
@@ -1382,6 +1411,8 @@ class orm_template(object):
                                                                    context_lang, val)
                             sel2_append((key, val2 or val))
                     sel = sel2 or sel
+                    if getattr(field_col, 'add_empty', None):
+                        res[f]['add_empty'] = getattr(field_col, 'add_empty')
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
@@ -1922,6 +1953,11 @@ class orm_template(object):
         result['arch'] = xarch
         result['fields'] = xfields
 
+
+        result['uom_rounding'] = {}
+        uom_obj = self.pool.get('product.uom')
+        if uom_obj:
+            result['uom_rounding'] = uom_obj.get_rounding(cr, user)
         if submenu:
             if context and context.get('active_id', False):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
@@ -1942,14 +1978,14 @@ class orm_template(object):
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
                                          'client_print_multi', [(self._name, False)], False,
-                                         context)
+                                         context, view_id=view_id)
             resaction = ir_values_obj.get(cr, user, 'action',
                                           'client_action_multi', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
                                           'client_action_relate', [(self._name, False)], False,
-                                          context)
+                                          context, view_id=view_id)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -2739,9 +2775,15 @@ class orm(orm_template):
         fields_pre = [f for f in float_int_fields if
                       f == self.CONCURRENCY_CHECK_FIELD
                       or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
-        for f in fields_pre:
+        rounding_uom = set(self._columns[f].related_uom for f in fields_pre if f in self._columns and hasattr(self._columns[f], 'related_uom') and self._columns[f].related_uom)
+        for f in fields_pre + list(rounding_uom):
             if f not in ['id', 'sequence']:
-                group_operator = fget[f].get('group_operator', 'sum')
+                if f in rounding_uom:
+                    group_operator = fget[f].get('group_operator', 'max')
+                else:
+                    group_operator = fget[f].get('group_operator', 'sum')
+                if group_operator == 'no_group':
+                    continue
                 if flist:
                     flist += ', '
                 qualified_field = '"%s"."%s"' % (self._table, f)
@@ -3540,7 +3582,7 @@ class orm(orm_template):
     #    return _proxy
 
 
-    def fields_get(self, cr, user, fields=None, context=None):
+    def fields_get(self, cr, user, fields=None, context=None, with_uom_rounding=False):
         """
         Get the description of list of fields
 
@@ -3555,7 +3597,7 @@ class orm(orm_template):
         ira = self.pool.get('ir.model.access')
         write_access = ira.check(cr, user, self._name, 'write', raise_exception=False, context=context) or \
             ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
-        return super(orm, self).fields_get(cr, user, fields, context, write_access)
+        return super(orm, self).fields_get(cr, user, fields, context, write_access, with_uom_rounding=with_uom_rounding)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         if not ids:
@@ -4727,10 +4769,11 @@ class orm(orm_template):
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     translatable = order_column.translate
-                    if translatable:
+                    if translatable and order_column._classic_read:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
-                        end_inner_clause.append('%s."value"' % trans_name)
+                        init_field = '"%s"."%s"' % (self._table, order_field)
+                        order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, self._table, trans_name, self._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
@@ -4742,32 +4785,31 @@ class orm(orm_template):
                     else:
                         continue # ignore non-readable or "non-joinable" fields
 
-                    if isinstance(inner_clause, list):
-                        end_inner_clause.extend(inner_clause)
-                    else:
-                        end_inner_clause.append(inner_clause)
                 elif order_field in self._inherit_fields:
                     parent_obj = self.pool.get(self._inherit_fields[order_field][3])
                     order_column = parent_obj._columns[order_field]
                     translatable = order_column.translate
-                    if translatable:
+                    if translatable and order_column._classic_read:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
-                        end_inner_clause.append('%s."value"' % trans_name)
+
+                        init_field = self._inherits_join_calc(order_field, query)
+                        order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
                             trans_name, parent_obj._table, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
-                    if order_column._classic_read:
+                    elif order_column._classic_read:
                         inner_clause = self._inherits_join_calc(order_field, query)
                     elif order_column._type == 'many2one':
                         inner_clause = self._generate_m2o_order_by(order_field, query)
                     else:
                         continue # ignore non-readable or "non-joinable" fields
-                    if isinstance(inner_clause, list):
-                        end_inner_clause.extend(inner_clause)
-                    else:
-                        end_inner_clause.append(inner_clause)
+
+                if isinstance(inner_clause, list):
+                    end_inner_clause.extend(inner_clause)
+                elif inner_clause:
+                    end_inner_clause.append(inner_clause)
                 if end_inner_clause:
                     if isinstance(end_inner_clause, list):
                         for clause in end_inner_clause:
@@ -4816,7 +4858,7 @@ class orm(orm_template):
             res = cr.fetchall()
             return res[0][0]
         select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
-                                from_clause, where_str, order_by,limit_str, offset_str))
+                                from_clause, where_str, order_by, limit_str, offset_str))
         cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]

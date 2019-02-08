@@ -43,6 +43,7 @@
         'wizard/account_chart.xml',
         'wizard/import_invoice.xml',
         'wizard/split_invoice.xml',
+        'wizard/integrity_finance_wizard_view.xml',
         'attachment_view.xml'
     ],
     'test': [],

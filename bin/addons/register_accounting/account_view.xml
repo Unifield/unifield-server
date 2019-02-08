@@ -27,15 +27,20 @@
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
-                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply"
+                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                    confirm="Are you sure you want to freeze closing balance?"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
-                            <field name="balance_gap"/>
-                            <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
-                            <field name="virtual_id" invisible="1" readonly="1"/>
-                            <field name="closing_balance_frozen" invisible="1"/>
+                            <group col="3" colspan="4">
+                                <field name="balance_gap" colspan="2"/>
+                                <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                                <field name="virtual_id" invisible="1" readonly="1"/>
+                                <field name="closing_balance_frozen" invisible="1"/>
+                                <button name="button_cancel_closing_balance_confirmation" type="object"
+                                        string="Re-open End-of-Month Balance" icon="gtk-undo" colspan="1"
+                                        attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
+                            </group>
                         </group>
                         <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
@@ -342,12 +347,12 @@
                                 <field name="prev_reg_id" invisible="1"/>
                                 <group col="4" colspan="4">
                                     <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
-                                        <tree string = "Opening Balance" editable="bottom">
+                                        <tree string="Starting Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal" sum="Total"/>
                                         </tree>
-                                        <form string = "Opening Balance">
+                                        <form string="Starting Balance">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal"/>
@@ -367,8 +372,11 @@
                                         </form>
                                     </field>
                                     <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
-                                        colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                        confirm="Are you sure you want to freeze closing balance?"/>
+                                    <button name="button_cancel_closing_balance_confirmation" type="object"
+                                            string="Re-open month-end cash count" icon="gtk-undo" colspan="4"
+                                            attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
                             <page string="Responsible">
@@ -382,8 +390,8 @@
                                 <field name="closing_date" select="1" readonly="1"/>
                             </group>
                             <group col="2" colspan="2">
-                                <separator string="Opening Balance" colspan="4"/>
-                                <field name="balance_start" string="Opening Balance" readonly="True"/>
+                                <separator string="Starting Balance" colspan="4"/>
+                                <field name="balance_start" readonly="True"/>
                                 <field name="total_entry_encoding"/>
                                 <field name="msf_calculated_balance"/>
                                 <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
@@ -445,6 +453,9 @@
                                     'invisible': [('display_analytic_button', '=', False)]}"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
+                    <field name="invoice_id" invisible="1"/>
+                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="functional_in" invisible="1"/>
                     <field name="functional_out" invisible="1"/>
@@ -798,6 +809,7 @@
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="currency" readonly="1"/>
+                        <field name="balance_end" string="Calculated Balance" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                         <field name="prev_reg_id" invisible="1"/>

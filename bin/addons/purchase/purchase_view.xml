@@ -625,19 +625,16 @@
                                 <field name="instance_sync_order_ref" attrs="{'required': [('display_sync_ref', '=', True), ('created_by_vi_import', '=', False)], 'invisible': ['|', ('display_sync_ref', '=', False), ('origin', '=', False)]}" domain="[('order_id.name', '=', origin)]"/>
 
 
-                            <separator string="Changes" colspan="4"/>
-                            <group colspan="4" col="12">
-                                <group colspan="6" col="6">
-                                        <field name="original_qty" colspan="1" readonly="1"/>
-                                        <field name="original_price" colspan="1" readonly="1"/>
-                                        <field name="original_uom" colspan="1" readonly="1"/>
-                                        <field name="product_qty" string="Current Qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)" />
-                                        <field name="price_unit" string="Current Price" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
-                                        <field name="original_currency_id" colspan="1" readonly="1"/>
-                                </group>
-                                <group colspan="6" col="2">
-                                    <field name="modification_comment" rowspan="2" widget="text"/>
-                                </group>
+                            <separator string="Changes" colspan="5"/>
+                            <group colspan="5" col="8">
+                                <field name="original_qty" colspan="1" readonly="1"/>
+                                <field name="original_price" colspan="1" readonly="1"/>
+                                <field name="original_uom" colspan="1" readonly="1"/>
+                                <field name="original_product" colspan="2" readonly="1" />
+                                <field name="product_qty" string="Current Qty" colspan="1" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)" />
+                                <field name="price_unit" string="Current Price" colspan="1" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
+                                <field name="original_currency_id" colspan="1" readonly="1"/>
+                                <field name="modification_comment" colspan="2" />
                             </group>
 
                             <field name="vat_ok" invisible="1"/>
@@ -803,7 +800,10 @@
                                     <field name="original_uom" colspan="1" readonly="1"/>
                                     <field name="original_currency_id" colspan="1" readonly="1"/>
                                 </group>
-                                <field name="modification_comment" colspan="2"/>
+                                <group colspan="2">
+                                    <field name="original_product" colspan="2" readonly="1"/>
+                                    <field name="modification_comment" colspan="2"/>
+                                </group>
                             </group>
                             <field name="vat_ok" invisible="1"/>
                             <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
@@ -958,7 +958,7 @@
         <act_window context="{'search_default_partner_id': [active_id]}" id="act_res_partner_2_purchase_order" name="Purchase Orders" groups="purchase.group_purchase_user" res_model="purchase.order" src_model="res.partner"/>
 
         <act_window context="{}"
-                    domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
+                    domain="[('rfq_ok', '=', False), ('product_id', '=', active_id)]"
                     id="purchase.action_purchase_line_product_tree2" name="Purchases"
                     res_model="purchase.order" src_model="product.product" groups=""/>
 
