@@ -1448,16 +1448,18 @@ Scenario: SSL US4517 FO to ESC split
 
     I click on "Process" and open the window
 	I click on "Copy all"	
-        I click on "Process" and close the window
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
 	
-	I should see in the main table the following data:
+     I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY |  BATCH     |  
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |  10,000  | lotA{{ID}} |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   5,000  | lotB{{ID}} |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   8,000  | lotC{{ID}} |
 
 
- 
+	I click on menu "Incoming Shipments"
 	I set new filter "Ship Reference" "contains" "{{SHIPREF_2}}"
 	I click on "Search"
 	I click "Edit" on line:
@@ -1467,9 +1469,11 @@ Scenario: SSL US4517 FO to ESC split
 
     I click on "Process" and open the window
 	I click on "Copy all"	
-        I click on "Process" and close the window
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
 	
-	I should see in the main table the following data:
+    I should see in the main table the following data:
         |  PRODUCT                                                                  | STATE  | QUANTITY | BATCH      |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000  | LotoA{{ID}}|
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000  | LotoB{{ID}}|
