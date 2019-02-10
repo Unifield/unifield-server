@@ -1226,6 +1226,9 @@ function listgridValidation(_list, o2m, record_id, inline) {
     } else{
         if(o2m) {
             if(record_id == undefined || record_id == -1) {
+                if (!jQuery('#'+_list+'_btn_').is(':visible') && !jQuery('#'+_list+'_btn2_').is(':visible')) {
+                    return false;
+                }
                 o2m_obj.create();
             } else {
                 o2m_obj.edit(record_id);

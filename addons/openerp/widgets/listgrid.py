@@ -43,7 +43,8 @@ class List(TinyWidget):
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
               'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
-              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs', 'bothedit' ]
+              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs', 'bothedit',
+              'extra_button']
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -72,6 +73,7 @@ class List(TinyWidget):
     hide_delete_button = False
     hide_edit_button = False
     bothedit = False
+    extra_button = False
 
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
@@ -437,8 +439,11 @@ class List(TinyWidget):
                     visible = eval(attrs['invisible'], {'context':self.context})
                     if visible:
                         continue
-                buttons += [Button(**attrs)]
-                headers.append(("button", len(buttons)))
+                if attrs.get('name') == 'tree_button':
+                    self.extra_button = attrs
+                else:
+                    buttons += [Button(**attrs)]
+                    headers.append(("button", len(buttons)))
             elif node.nodeName == 'separator':
                 headers += [("separator", {'type': 'separator', 'string': '|', 'not_sortable': 1})]
             elif node.nodeName == 'field':
