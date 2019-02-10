@@ -104109,3 +104109,13 @@ msgstr "Validé par :"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
 msgid "Specific Batch number"
 msgstr "Numéro de Lot spécifique"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Show not available lines"
+msgstr "Voir les lignes non disponibles"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Show unprocessed lines"
+msgstr "Voir les lignes non traitées"
