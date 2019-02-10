@@ -15977,9 +15977,11 @@ msgstr "Warning! You cannot delete a synched supplier catalogue line created in 
 msgid "Total Selection"
 msgstr "Total Selection"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, purchase, procurement_request
 #: view:purchase.order.change.currency:0
 #: view:sale.order.change.currency:0
+#: view:sale.order:0
+#: view:purchase.order:0
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
 
@@ -59883,8 +59885,8 @@ msgstr "OPEN ADVANCES"
 #: code:addons/msf_order_date/order_dates.py:693
 #: code:addons/purchase/purchase_order.py:1162
 #, python-format
-msgid "Do you want to update the Requested Date of all order lines ?"
-msgstr "Désirez-vous mettre à jour la Date de Livraison Souhaitée pour toutes les lignes de commande?"
+msgid "Do you want to update the Requested Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Souhaitée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. modules: account, finance
 #: field:account.partner.ledger,tax:0
@@ -74992,8 +74994,8 @@ msgstr "Global"
 #: code:addons/procurement_request/procurement_request.py:542
 #: code:addons/purchase/purchase_order.py:1178
 #, python-format
-msgid "Do you want to update the Date of Stock Take of all order lines ?"
-msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la commande ?"
+msgid "Do you want to update the Date of Stock Take of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. modules: register_accounting, msf_homere_interface, documents_done, consumption_calculation, msf_button_access_rights, mission_stock, msf_doc_import, analytic_distribution, sourcing, sale
 #: field:mass.reallocation.verification.wizard,error_ids:0
@@ -90809,11 +90811,6 @@ msgstr "Sélectionnez la catégorie du produit actuel"
 msgid "Origin ref.:"
 msgstr "Origin ref.:"
 
-#. module: purchase
-#: view:purchase.order:0
-msgid "Apply to all lines"
-msgstr "Appliquer à toutes les lignes"
-
 #. module: sync_client
 #: field:hq.monitor,email:0
 msgid "Destination emails"
@@ -99737,8 +99734,8 @@ msgstr "\n"
 #: code:addons/purchase/purchase_order.py:1170
 #: code:addons/msf_order_date/order_dates.py:701
 #, python-format
-msgid "Do you want to update the Confirmed Delivery Date of all order lines ?"
-msgstr "Désirez-vous mettre à jour la Date de Livraison Confirmée pour toutes les lignes de commande ?"
+msgid "Do you want to update the Confirmed Delivery Date of all/selected Order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Livraison Confirmée sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_outgoing_delivery_processor
@@ -103901,6 +103898,30 @@ msgstr "Valeur totale du rapport généré"
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:124
 msgid "Export Inventory Level all Locations"
 msgstr "Export du Niveau de Stock pour toutes les Zones"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:89
+#, python-format
+msgid "Value to be used"
+msgstr "Valeur à utiliser"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:90
+#, python-format
+msgid "Yes - Selected lines"
+msgstr "Oui - Lignes sélectionnées"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:92
+#, python-format
+msgid "No"
+msgstr "Non"
+
+#. module: msf_order_date
+#: code:addons/msf_order_date/wizard/update_lines.py:91
+#, python-format
+msgid "Yes - All lines"
+msgstr "Oui - Toutes les lignes"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:428

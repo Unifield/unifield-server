@@ -1187,7 +1187,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
@@ -1195,7 +1195,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Confirmed Delivery Date of all/selected Order lines ?'), }
 
     def stock_take_data(self, cr, uid, ids, context=None):
         '''
@@ -1203,7 +1203,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
