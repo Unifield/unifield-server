@@ -301,7 +301,8 @@
                                     </group>
                                     <newline/>
                                 </form>
-                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
+                                    <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <field name="line_number"/>
                                     <field name="default_code"/>
                                     <field name="default_name"/>
