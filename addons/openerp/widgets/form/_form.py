@@ -1030,6 +1030,10 @@ class Form(TinyInputWidget):
                 self.view_fields.append(name)
                 if fields[name].get('type') == 'float' and self.rounding_values and fields[name].get('related_uom') and values.get(fields[name]['related_uom']):
                     fields[name]['rounding_value'] = values.get(fields[name]['related_uom'])
+                if kind == 'one2many' and fields[name].get('filter_selector') and fields[name].get('default_selector'):
+                    ok_selector = expr_eval(fields[name]['default_selector'], values)
+                    if ok_selector:
+                        fields[name]['default_selector'] = ok_selector
                 field = self._make_field_widget(fields[name], values.get(name))
                 views.append(field)
 
