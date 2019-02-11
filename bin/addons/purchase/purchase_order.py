@@ -769,7 +769,7 @@ class purchase_order(osv.osv):
                                                          help='Only used to SEARCH for POs with at least one line in Confirmed or Closed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
-        'from_address': fields.many2one('res.partner.address', string='From Address'),
+        'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
     }
     _defaults = {
         'split_during_sll_mig': False,
