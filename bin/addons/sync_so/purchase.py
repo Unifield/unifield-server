@@ -210,8 +210,10 @@ class purchase_order_line_sync(osv.osv):
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         # update PO line state:
-        if sol_dict['state'] in ('sourced', 'sourced_v'):
+        if sol_dict['state'] == 'sourced':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
+        elif sol_dict['state'] == 'sourced_v':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_v', cr)
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
         elif sol_dict['state'] == 'confirmed':

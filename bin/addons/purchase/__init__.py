@@ -50,6 +50,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('draft_p', 'Draft-p'),
     ('validated', 'Validated'),
     ('validated_p', 'Validated-p'),
+    ('sourced', 'Sourced'),
     ('sourced_p', 'Sourced-p'),
     ('confirmed', 'Confirmed'),
     ('confirmed_p', 'Confirmed-p'),
