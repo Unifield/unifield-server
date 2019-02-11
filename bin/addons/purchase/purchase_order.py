@@ -862,6 +862,11 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
+        if not 'pricelist_id' in vals and vals.get('partner_id'):
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist_purchase.id
+
         # common function for so and po
         vals = common_create(self, cr, uid, vals, type=get_type(self), context=context)
         # fill partner_type vals
@@ -904,6 +909,11 @@ class purchase_order(osv.osv):
             ids = [ids]
         if not 'date_order' in vals:
             vals.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
+
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist_purchase.id
 
         # fill partner_type and zone
         if vals.get('partner_id', False):
