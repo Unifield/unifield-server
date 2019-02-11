@@ -71,6 +71,7 @@ prod_o = oerp.get('product.product')
 p1_ids = prod_o.search([('default_code', '=', 'ADAPCABL1S-')])
 p2_ids = prod_o.search([('default_code', '=', 'ADAPDCDRB--')])
 p3_ids = prod_o.search([('default_code', '=', 'ADAPMEMK1--')])
+p4_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
 inv_o = oerp.get('stock.inventory')
 inv_id = inv_o.create({
     'name': 'inv %s' % time.time(),
@@ -78,6 +79,7 @@ inv_id = inv_o.create({
         (0, 0, {'location_id': loc_ids[0], 'product_id': p1_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
         (0, 0, {'location_id': loc_ids[0], 'product_id': p2_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
         (0, 0, {'location_id': loc_ids[0], 'product_id': p3_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p4_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
     ],
 })
 inv_o.action_confirm([inv_id])

@@ -897,8 +897,8 @@ Scenario: SSL US4517 FO to ESC split
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available | 10,000 | lotA{{ID}}   |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  5,000 | lotB{{ID}}   |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  8,000 | lotC{{ID}}   |
-        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Not Available |  3,000 |              |
-	
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Available |  3,000 |              |
+#IMPORTANT: As mentioned ALIFCOFM1E- should be "Available" (pre-requisite is to have some stock)	
 	
 	I click on "Create Picking..." and open the window
 	I click on "Copy all"
@@ -937,8 +937,8 @@ Scenario: SSL US4517 FO to ESC split
         |LINE | PRODUCT CODE | STATE  |  QTY   | 
         |  1  | DINJPENB1V-  | Closed | 15,000 |
         |  2  | DINJPENG5V-  | Closed |  8,000 |
-       # |  4  | ALIFCOFM1E-  | Closed |  3,000 | 
- 
+        |  4  | ALIFCOFM1E-  | Closed |  3,000 | 
+#see line 901 
 		
 		
 #LINE 29
@@ -1457,6 +1457,8 @@ Scenario: SSL US4517 FO to ESC split
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |  10,000  | lotA{{ID}} |
         | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   5,000  | lotB{{ID}} |
         | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   8,000  | lotC{{ID}} |
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed |   3,000  |            |
+#ADDED: line above re-added (see line 901)
 
 
 	I click on menu "Incoming Shipments"
