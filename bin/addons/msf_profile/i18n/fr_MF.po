@@ -15998,12 +15998,6 @@ msgstr "Total Selection"
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
 
-#. modules:  sale, purchase
-#: view:sale.order:0
-#: view:purchase.order:0
-msgid "Apply to  lines"
-msgstr "Appliquer aux lignes"
-
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:812
 #, python-format
