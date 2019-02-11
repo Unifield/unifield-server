@@ -825,8 +825,10 @@ class stock_picking(osv.osv):
                 if sol_brw.order_id.procurement_request:
                     service_non_stock_ok = True
 
-        # We check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-        if wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
+        if wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
+            values['location_dest_id'] = db_data.get('service_loc')
+            values['cd_from_bo'] = False
+        elif wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
             if db_data.get('setup').allocation_setup == 'unallocated':
                 raise osv.except_osv(
                     _('Error'),
