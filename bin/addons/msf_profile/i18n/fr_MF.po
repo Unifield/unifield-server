@@ -1537,7 +1537,7 @@ msgstr "Configuration d'Allocation de Stock"
 msgid "Partner Form"
 msgstr "Formulaire du Partenaire"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -1559,6 +1559,7 @@ msgstr "Formulaire du Partenaire"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:internal.request.import,in_categ:0
+#: selection:stock.reception.wizard,order_category:0
 msgid "Medical"
 msgstr "Médical"
 
@@ -1900,7 +1901,7 @@ msgstr "Produit - Historique des consommations"
 msgid "Yugoslavia"
 msgstr "Yougoslavie"
 
-#. modules: purchase, tender_flow, reason_types_moves, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types
+#. modules: purchase, tender_flow, reason_types_moves, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types, stock
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.order,order_type:0
@@ -1918,6 +1919,8 @@ msgstr "Yougoslavie"
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
 #: code:addons/purchase/purchase_order.py:46
+#: code:addons/stock/wizard/stock_reception_wizard.py:31
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Donation before expiry"
 msgstr "Donation avant expiration"
@@ -3792,6 +3795,9 @@ msgstr "Vous ne pouvez ajouter aucun nouveau mouvement tout en validant le picki
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:93
 #: field:internal.request.import,imp_categ:0
 #: field:internal.request.import,in_categ:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:204
+#: report:addons/stock/report/stock_reception_report_xls.mako:230
+#: field:stock.reception.wizard,order_category:0
 msgid "Order Category"
 msgstr "Catégorie de Commande"
 
@@ -4879,7 +4885,7 @@ msgstr "Livraison en attente"
 msgid "Month:"
 msgstr "Mois :"
 
-#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import
+#. modules: delivery_mechanism, account, msf_outgoing, stock_override, supplier_catalogue, sale, consumption_calculation, purchase_override, kit, account_override, order_line_number, msf_doc_import, stock
 #: view:account.invoice.line:0
 #: report:allocation.invoices.report:0
 #: field:product.likely.expire.report.item,line_id:0
@@ -4927,6 +4933,7 @@ msgstr "Mois :"
 #: field:supplier.catalogue.line,line_number:0
 #: view:account.invoice:0
 #: field:internal.request.import.line,ir_line_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:236
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -5715,7 +5722,7 @@ msgstr "Raison des Types de Mouvements (accès Admin)"
 msgid "Total Pending Cheques Functional"
 msgstr "Total Chèques en Attente en Devise Fonc."
 
-#. modules: sales_followup, tender_flow, purchase, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types
+#. modules: sales_followup, tender_flow, purchase, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types, stock
 #: code:addons/purchase/purchase_order.py:47
 #: selection:stock.move,order_type:0
 #: selection:purchase.order,order_type:0
@@ -5727,6 +5734,8 @@ msgstr "Total Chèques en Attente en Devise Fonc."
 #: selection:stock.forecast.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: selection:purchase.report,order_type:0
+#: code:addons/stock/wizard/stock_reception_wizard.py:32
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Standard donation"
 msgstr "Donation normale"
@@ -16948,6 +16957,8 @@ msgstr ","
 #: field:stock.location.chained.options,dest_location_id:0
 #: view:manage.expired.stock:0
 #: field:manage.expired.stock,dest_loc_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:216
+#: report:addons/stock/report/stock_reception_report_xls.mako:245
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -24763,7 +24774,7 @@ msgstr "Heure 00->12: %(h12)s"
 msgid "Is resourced ?"
 msgstr "Is resourced ?"
 
-#. modules: purchase, tender_flow, reason_types_moves, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types
+#. modules: purchase, tender_flow, reason_types_moves, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types, stock
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.order,order_type:0
@@ -24781,6 +24792,8 @@ msgstr "Is resourced ?"
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
 #: code:addons/purchase/purchase_order.py:48
+#: code:addons/stock/wizard/stock_reception_wizard.py:33
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Loan"
 msgstr "Prêt"
@@ -26086,7 +26099,7 @@ msgstr "Détermine les restrictions pour le pays."
 msgid "Payment Options"
 msgstr "Options de Paiement"
 
-#. modules: msf_order_date, msf_doc_import, purchase, purchase_override, msf_supply_doc_export
+#. modules: msf_order_date, msf_doc_import, purchase, purchase_override, msf_supply_doc_export, stock
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:235
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:246
 #: code:addons/msf_doc_import/wizard/__init__.py:88
@@ -26102,6 +26115,7 @@ msgstr "Options de Paiement"
 #: field:purchase.order,delivery_requested_date:0
 #: field:purchase.order.line,date_planned:0
 #: field:purchase.order.merged.line,date_planned:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:232
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
@@ -27130,13 +27144,15 @@ msgstr "Purchase orders which are in cancelled state."
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
 
-#. modules: sales_followup, sale, purchase_followup
+
+#. modules: sales_followup, sale, purchase_followup, stock
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
 #: view:ir.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
 #: view:ir.followup.location.wizard:0
 #: view:sale.followup.multi.wizard:0
+#: view:stock.reception.wizard:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -30640,7 +30656,7 @@ msgstr "Sélectionnez ici le type d'évaluation associé à cette ligne de condi
 msgid "Close it"
 msgstr "Close it"
 
-#. modules: purchase, account, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, tender_flow, order_types
+#. modules: purchase, account, sales_followup, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, tender_flow, order_types, stock
 #: selection:account.account,type:0
 #: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
@@ -30660,6 +30676,8 @@ msgstr "Close it"
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
 #: code:addons/purchase/purchase_order.py:45
+#: code:addons/stock/wizard/stock_reception_wizard.py:30
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Regular"
 msgstr "Normal"
@@ -30683,6 +30701,7 @@ msgstr "Gestion Normale d'Entrepôts"
 
 #. module: stock
 #: view:stock.picking:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:247
 msgid "Expected Receipt Date"
 msgstr "Date Prévue de Réception "
 
@@ -31391,6 +31410,7 @@ msgstr "Alloc.Analyt."
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
+#: report:addons/stock/report/stock_reception_report_xls.mako:166
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -38844,6 +38864,7 @@ msgstr "Masculin"
 #: field:internal.request.import,in_currency:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:201
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:204
+#: report:addons/stock/report/stock_reception_report_xls.mako:243
 msgid "Currency"
 msgstr "Devise"
 
@@ -41004,6 +41025,7 @@ msgstr "De confirmé à attribué."
 #: field:internal.request.import.line,in_uom:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:218
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:225
+#: report:addons/stock/report/stock_reception_report_xls.mako:239
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44024,7 +44046,7 @@ msgstr "Signature :"
 msgid "Contains Dangerous goods"
 msgstr "Contient des Produits Dangereux"
 
-#. modules: sales_followup, register_accounting, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, account_override, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, stock_forecast, purchase_allocation_report, procurement_request, kit, purchase_compare_rfq
+#. modules: sales_followup, register_accounting, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, account_override, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, stock_forecast, purchase_allocation_report, procurement_request, kit, purchase_compare_rfq, stock
 #: field:account.invoice.line,product_code:0
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:69
@@ -44090,6 +44112,7 @@ msgstr "Contient des Produits Dangereux"
 #: code:addons/sale/wizard/internal_request_import.py:43
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:214
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:223
+#: report:addons/stock/report/stock_reception_report_xls.mako:237
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -49050,7 +49073,7 @@ msgstr "Intermission Partners"
 msgid "Original Qty for Partial process - only for sync and partial processed line"
 msgstr "Original Qty for Partial process - only for sync and partial processed line"
 
-#. modules: sales_followup, purchase_followup, sale
+#. modules: sales_followup, purchase_followup, sale, stock
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:178
 #: view:po.track.changes.wizard:0
 #: view:sale.donation.stock.moves:0
@@ -49061,6 +49084,7 @@ msgstr "Original Qty for Partial process - only for sync and partial processed l
 #: view:sale.loan.stock.moves:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:223
 #: view:sale.followup.multi.wizard:0
+#: view:stock.reception.wizard:0
 msgid "Request parameters"
 msgstr "Paramètres de la requête"
 
@@ -50202,6 +50226,8 @@ msgstr "Montant total"
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:126
 #: field:sale.donation.stock.moves,partner_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:162
+#: report:addons/stock/report/stock_reception_report_xls.mako:200
+#: field:stock.reception.wizard,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -52269,6 +52295,7 @@ msgstr "Transport management"
 #: field:stock.picking,reason_type_id:0
 #: view:stock.picking:0
 #: field:report.stock.move,reason_type_id:0
+#: field:stock.reception.wizard,reason_type_id:0
 msgid "Reason type"
 msgstr "Type de raison"
 
@@ -53496,7 +53523,7 @@ msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
 msgid "A line must a have a quantity larger than 0.00"
 msgstr "A line must a have a quantity larger than 0.00"
 
-#. modules: sales_followup, tender_flow, purchase, stock_override, stock_forecast, purchase_allocation_report, purchase_followup, order_types
+#. modules: sales_followup, tender_flow, purchase, stock_override, stock_forecast, purchase_allocation_report, purchase_followup, order_types, stock
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.order,order_type:0
@@ -53509,6 +53536,8 @@ msgstr "A line must a have a quantity larger than 0.00"
 #: code:addons/purchase/purchase_order.py:50
 #: view:purchase.report:0
 #: selection:purchase.report,order_type:0
+#: code:addons/stock/wizard/stock_reception_wizard.py:35
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Purchase List"
 msgstr "Liste d'Achats"
@@ -54274,7 +54303,7 @@ msgstr "Pacific/Chatham"
 msgid "Invoice's state is Done"
 msgstr "Facture sous statut \"Terminé\""
 
-#. modules: sales_followup, purchase, stock_override, stock_forecast, purchase_allocation_report, sourcing, purchase_followup, order_types, purchase, tender_flow
+#. modules: sales_followup, purchase, stock_override, stock_forecast, purchase_allocation_report, sourcing, purchase_followup, order_types, purchase, tender_flow, stock
 #: selection:stock.move,order_type:0
 #: selection:purchase.order,order_type:0
 #: selection:purchase.order.line.allocation.report,order_type:0
@@ -54287,9 +54316,11 @@ msgstr "Facture sous statut \"Terminé\""
 #: selection:report.stock.move,order_type:0
 #: code:addons/purchase/purchase_order.py:51
 #: selection:purchase.report,order_type:0
+#: code:addons/stock/wizard/stock_reception_wizard.py:36
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "Direct Purchase Order"
-msgstr "Bon de Commande Directe"
+msgstr "Bon de Commande Direct"
 
 #. module: msf_custom_settings
 #: field:stock.picking,from_so_ok:0
@@ -55498,8 +55529,9 @@ msgstr "Une liste ou une sous-liste ayant le même nom existe déjà dans le sys
 msgid "Ending amount in booking currency"
 msgstr "Montant final en devise d'enregistrement"
 
-#. module: consumption_calculation
+#. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_from:0
+#: field:stock.reception.wizard,start_date:0
 msgid "Date from"
 msgstr "Date à partir de"
 
@@ -57401,7 +57433,7 @@ msgstr "Utiliser Lots Existants"
 msgid "Display destinations?"
 msgstr "Display destinations?"
 
-#. modules: sales_followup, purchase, stock_override, stock_forecast, purchase_allocation_report, purchase_followup, order_types, tender_flow
+#. modules: sales_followup, purchase, stock_override, stock_forecast, purchase_allocation_report, purchase_followup, order_types, tender_flow, stock
 #: selection:stock.move,order_type:0
 #: selection:purchase.order,order_type:0
 #: selection:purchase.order.line.allocation.report,order_type:0
@@ -57411,6 +57443,8 @@ msgstr "Display destinations?"
 #: selection:report.stock.move,order_type:0
 #: code:addons/purchase/purchase_order.py:49
 #: selection:purchase.report,order_type:0
+#: code:addons/stock/wizard/stock_reception_wizard.py:34
+#: selection:stock.reception.wizard,order_type:0
 #, python-format
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
@@ -57421,7 +57455,7 @@ msgstr "Donation en Nature"
 msgid "Other Types"
 msgstr "Autres Types"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -57443,6 +57477,7 @@ msgstr "Autres Types"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:internal.request.import,in_categ:0
+#: selection:stock.reception.wizard,order_category:0
 msgid "Logistic"
 msgstr "Logistique"
 
@@ -62092,6 +62127,7 @@ msgstr "De disponible à brouillon expédi"
 #. module: stock
 #: field:stock.move,date:0
 #: view:stock.picking:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:248
 msgid "Actual Receipt Date"
 msgstr "Date de Réception Réelle"
 
@@ -62400,6 +62436,7 @@ msgstr "Albanie"
 #: field:threshold.value,name:0
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:189
+#: report:addons/stock/report/stock_reception_report_xls.mako:225
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -62950,7 +62987,7 @@ msgstr "Supprimer lignes d'Approvisionnement Automatique"
 msgid "Tel.:"
 msgstr "Tél. :"
 
-#. modules: purchase, tender_flow, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types, msf_supply_doc_export
+#. modules: purchase, tender_flow, stock_override, sale, stock_forecast, purchase_allocation_report, purchase_followup, order_types, msf_supply_doc_export, stock
 #: field:stock.move,order_type:0
 #: view:purchase.order:0
 #: field:purchase.order,order_type:0
@@ -62972,6 +63009,9 @@ msgstr "Tél. :"
 #: field:purchase.report,order_type:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:82
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:162
+#: report:addons/stock/report/stock_reception_report_xls.mako:208
+#: report:addons/stock/report/stock_reception_report_xls.mako:229
+#: field:stock.reception.wizard,order_type:0
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -65640,8 +65680,9 @@ msgstr "Novembre"
 msgid "Example: at 14 net days 2 percents, remaining amount at 30 days end of month."
 msgstr "Exemple : 2% à 14 jours nets, solde à 30 jours fin de mois"
 
-#. module: consumption_calculation
+#. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_to:0
+#: field:stock.reception.wizard,end_date:0
 msgid "Date to"
 msgstr "Date à"
 
@@ -67441,7 +67482,7 @@ msgstr "The nomenclature '%s' is an Unifield internal nomenclature, so you can't
 msgid "'Make to Stock': When needed, take from the stock or wait until re-supplying. 'Make to Order': When needed, purchase or produce for the procurement request."
 msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réapprovisionnement. 'Faire sur commande' : Au besoin, acheter ou produire pour la demande d'acquisition."
 
-#. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override
+#. modules: msf_order_date, msf_doc_import, transport_mgmt, purchase, tender_flow, purchase_override, stock
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
 #: field:sale.order,delivery_confirmed_date:0
 #: field:sale.order.line,confirmed_delivery_date:0
@@ -67458,6 +67499,7 @@ msgstr "Faire sur stock' : Au besoin, prendre dans le stock ou attendre réappro
 #: field:wizard.simu.import.po.line,delivery_confirmed_date:0
 #: field:purchase.order.merged.line,confirmed_delivery_date:0
 #: field:tender.line,delivery_confirmed_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:233
 #, python-format
 msgid "Delivery Confirmed Date"
 msgstr "Date de Livraison Confirmée"
@@ -75943,6 +75985,7 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 #: field:internal.request.import,imp_origin:0
 #: field:internal.request.import,in_origin:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:205
+#: report:addons/stock/report/stock_reception_report_xls.mako:234
 #, python-format
 msgid "Origin"
 msgstr "Origine"
@@ -76726,7 +76769,7 @@ msgstr "Lignes d'Ecritures Analytiques"
 msgid "Kind of Node"
 msgstr "Sorte de Node"
 
-#. modules: product, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, sale, procurement_request
+#. modules: product, stock_override, order_nomenclature, consumption_calculation, product_asset, specific_rules, kit, stock_forecast, supplier_catalogue, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, sale, procurement_request, stock
 #: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:39
 #: field:old.product.list.line,desc:0
 #: field:product.list.line,desc:0
@@ -76788,6 +76831,7 @@ msgstr "Sorte de Node"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:215
 #: field:internal.request.import.line,in_product_desc:0
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:224
+#: report:addons/stock/report/stock_reception_report_xls.mako:238
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -77563,6 +77607,7 @@ msgstr "# de lignes importées"
 #: code:addons/sale/wizard/internal_request_import.py:46
 #: field:internal.request.import.line,imp_cost_price:0
 #: field:internal.request.import.line,in_cost_price:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:242
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -82527,6 +82572,8 @@ msgstr "Update(s) not run left: %d"
 #: view:stock.picking:0
 #: view:stock.move:0
 #: view:report.stock.move:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:196
+#: report:addons/stock/report/stock_reception_report_xls.mako:226
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -82567,6 +82614,7 @@ msgstr "\n"
 #. module: stock
 #: field:report.stock.move,location_dest_id:0
 #: field:stock.picking,location_dest_id:0
+#: field:stock.reception.wizard,location_dest_id:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
 
@@ -84201,7 +84249,7 @@ msgstr "Récap Dépenses prévues"
 msgid "L2"
 msgstr "L2"
 
-#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account, procurement_request
+#. modules: tender_flow, purchase_allocation_report, return_claim, order_line_number, msf_doc_import, analytic_distribution, finance, sales_followup, service_purchasing, purchase_override, specific_rules, base, delete_button, res_currency_functional, msf_cross_docking, purchase, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, msf_audittrail, sync_so, msf_tools, account_override, account, procurement_request, stock
 #: field:analytic.distribution.wizard,purchase_id:0
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
@@ -84258,6 +84306,7 @@ msgstr "L2"
 #: field:account.move.line,purchase_order_id:0
 #: field:account.analytic.line,purchase_order_id:0
 #: selection:procurement.request.sourcing.document,linked_model:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:227
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -87088,6 +87137,7 @@ msgstr "Statistiques Ecritures Analytiques"
 #: view:local.transport.cost.report:0
 #: field:local.transport.cost.report,partner_id:0
 #: field:stock.incoming.processor,claim_partner_id:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:228
 #, python-format
 msgid "Supplier"
 msgstr "Fournisseur"
@@ -90601,6 +90651,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: field:export.report.stock.move,company_id:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:128
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:109
+#: report:addons/stock/report/stock_reception_report_xls.mako:162
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
 
@@ -92039,7 +92090,7 @@ msgstr "Le produit sélectionné est Gestion de Lot."
 msgid "Export search result"
 msgstr "Exporter le résultat de la recherche"
 
-#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation
+#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation, stock
 #: selection:res.partner.address,type:0
 #: field:shipment,carrier_other:0
 #: field:shipment,consignee_other:0
@@ -92068,6 +92119,7 @@ msgstr "Exporter le résultat de la recherche"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:internal.request.import,in_categ:0
+#: selection:stock.reception.wizard,order_category:0
 msgid "Other"
 msgstr "Autre"
 
@@ -101955,6 +102007,7 @@ msgstr "\n"
 
 #. module: stock
 #: field:stock.picking,physical_reception_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:249
 msgid "Physical Reception Date"
 msgstr "Date de Réception Physique"
 
@@ -103234,6 +103287,7 @@ msgstr "Export des Produits Réservés"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:139
+#: report:addons/stock/report/stock_reception_report_xls.mako:177
 msgid "FILTERS"
 msgstr "FILTRES"
 
@@ -104958,3 +105012,68 @@ msgid "Line number %s: The imported Quantities for %s don't match with the PPL (
 ""
 msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas aux données de la Liste de Pré-Colisage (%s à la place de %s).\n"
 ""
+
+#. module: stock
+#: model:ir.actions.act_window,name:stock.action_stock_reception_wizard
+#: model:ir.ui.menu,name:stock.menu_stock_reception_wizard
+#: view:stock.reception.wizard:0
+msgid "Receptions Report"
+msgstr "Rapport des Réceptions"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:212
+#: field:stock.reception.wizard,nomen_manda_0:0
+msgid "Product Main Type"
+msgstr "Type Principal du Produit"
+
+#. module: stock
+#: code:addons/stock/wizard/stock_reception_wizard.py:132
+#: report:addons/stock/report/stock_reception_report_xls.mako:104
+#: model:ir.actions.report.xml,name:stock.report_stock_reception_report_xls
+msgid "Receptions Report"
+msgstr "Rapport des Réceptions"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:159
+msgid "RECEPTIONS REPORT"
+msgstr "RAPPORT DES RÉCEPTIONS"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:180
+msgid "IN date from"
+msgstr "Date IN à partir de"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:188
+msgid "IN date to"
+msgstr "Date IN à"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:231
+msgid "Order Priority"
+msgstr "Priorité de la Commande"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:235
+msgid "Backorder of"
+msgstr "Reliquat de Commande de"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:240
+msgid "Qty Ordered"
+msgstr "Qté Commandée"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:241
+msgid "Qty Received"
+msgstr "Qté Reçue"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:244
+msgid "Total Cost"
+msgstr "Coût Total"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:246
+msgid "Final Destination Location"
+msgstr "Zone Destination Finale"
