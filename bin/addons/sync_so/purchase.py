@@ -231,19 +231,24 @@ class purchase_order_line_sync(osv.osv):
 
         # update PO line state:
         """
-        print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
-        cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
-        print cr.fetchall()
-        dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty'])
+        if debug:
+            print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
+            cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
+            print cr.fetchall()
+            dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty', 'order_id'])
 
-        all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
-        print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
-        print dd
+            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', dd['order_id'][1])])
+            print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+            print dd
         """
         if sol_dict['state'] in ('sourced', 'sourced_v'):
             if pol_state == 'sourced_n':
                 self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
+
+        if sol_dict['state'] == 'sourced':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
+        elif sol_dict['state'] == 'sourced_v':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_v', cr)
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
         elif sol_dict['state'] == 'confirmed':
@@ -252,8 +257,6 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
-        else:
-            print 'IGNORED'
 
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)
@@ -261,16 +264,17 @@ class purchase_order_line_sync(osv.osv):
         logging.getLogger('------sync.purchase.order.line').info(message)
 
         """
-        print 'IR RESULT'
-        ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
-        if ir_l_ids:
-            print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
-            cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
-            print cr.fetchall()
+        if debug:
+            print 'IR RESULT'
+            ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
+            if ir_l_ids:
+                print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
+                cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
+                print cr.fetchall()
 
-        all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
-        print 'FINALE PO LINE', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
-        print ''
+            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
+            print 'FINALE PO LINE', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+            print ''
         """
         return message
 
