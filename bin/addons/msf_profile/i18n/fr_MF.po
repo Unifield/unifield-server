@@ -7093,7 +7093,8 @@ msgstr "Etes-vous sûr de vouloir ouvrir cette facture ?"
 msgid "Sending Goods"
 msgstr "Envoi de Marchandises"
 
-#. module: sale
+#. modules: sale, msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:161
 #: report:msf.report_reception_in:0
 msgid "DG"
 msgstr "MD"
@@ -12711,6 +12712,7 @@ msgid "Table name not found for the given object: %s"
 msgstr "Table name not found for the given object: %s"
 
 #. modules: purchase, tender_flow, purchase_allocation_report, sale, procurement, sourcing, base, order_types, msf_tools, stock, purchase_compare_rfq, purchase_followup, msf_supply_doc_export, procurement_request
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:140
 #: field:ir.cron,priority:0
 #: field:res.request,priority:0
 #: field:res.request.link,priority:0
@@ -24994,6 +24996,7 @@ msgid "Stopped products"
 msgstr "Stopped products"
 
 #. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, stock, reason_types_moves, stock_override, purchase_override, specific_rules, kit, base, msf_tools, sales_followup, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, analytic_distribution, msf_supply_doc_export, consumption_calculation, procurement_request
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:153
 #: field:account.move.line.reconcile.writeoff,comment:0
 #: field:account.commitment,notes:0
 #: field:account.invoice.line,inactive_error:0
@@ -41191,10 +41194,11 @@ msgstr "Ce délai de paiement sera utilisé, au lieu de celui utilisé par défa
 msgid "Button Access Rule"
 msgstr "Button Access Rule"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_supply_doc_export
 #: report:picking.ticket:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
 msgid "Qty to Pick"
-msgstr "Qty to Pick"
+msgstr "Qté à prélever"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:468
@@ -46361,6 +46365,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:180
 #: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:63
 #: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:62
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:158
 #: field:ir.cron,batch_id:0
 #: field:res.request,batch_id:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:142
@@ -46737,7 +46742,8 @@ msgstr "Open the document"
 msgid "You cannot validate the invoice because some related down payments are not hard posted."
 msgstr "Vous ne pouvez pas valider cette facture: certains acomptes connexes ne sont pas comptabilisés définitivement."
 
-#. module: base
+#. module: base, msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:132
 #: field:res.widget,content:0
 msgid "Content"
 msgstr "Contenu"
@@ -58407,6 +58413,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:71
 #: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:64
 #: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:63
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:159
 #: field:stock.production.lot,life_date:0
 #: field:initial.stock.inventory.line,expiry_date:0
 #: field:report.stock.inventory,expired_date:0
@@ -65483,8 +65490,9 @@ msgstr "Lignes de bon d'engagement"
 msgid "Fit"
 msgstr "Fit"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_supply_doc_export
 #: report:picking.ticket:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:154
 msgid "Src. Location"
 msgstr "Zone Src."
 
@@ -68023,10 +68031,11 @@ msgstr "Rapport Commun Audit"
 msgid "BN mandatory"
 msgstr "NL obligatoire"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_supply_doc_export
 #: report:picking.ticket:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:155
 msgid "Qty in stock"
-msgstr "Qty in stock"
+msgstr "Qté en stock"
 
 #. module: stock_override
 #: field:stock.picking,is_esc:0
@@ -68058,7 +68067,8 @@ msgstr "wizard.hq.report.ocg"
 msgid "Sublist"
 msgstr "Sous-Liste"
 
-#. modules: msf_doc_import, msf_outgoing, sale, stock
+#. modules: msf_doc_import, msf_outgoing, sale, stock, msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:160
 #: field:wizard.import.in.line.simulation.screen,kc_check:0
 #: field:create.picking.move.processor,kc_check:0
 #: report:empty.picking.ticket:0
@@ -71874,10 +71884,15 @@ msgstr "Zone Transbordement"
 msgid "You should make a choice for the Yearly configuration"
 msgstr "Veuillez faire un choix pour la Configuration Annuelle !"
 
-#. modules: sale, msf_outgoing
+#. modules: sale, msf_outgoing, msf_supply_doc_export
 #: report:msf.report_reception_in:0
 #: report:picking.ticket:0
 msgid "Changed article"
+msgstr "Article Changé"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:152
+msgid "Changed Article"
 msgstr "Article Changé"
 
 #. module: account_payment
@@ -74568,6 +74583,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_outgoing/report/packing_list.py:90
 #: code:addons/sale/wizard/internal_request_import.py:162
 #: code:addons/sale/wizard/internal_request_import.py:166
+#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
 #: selection:internal.request.import,state:0
 #, python-format, python-format
 msgid "Error"
@@ -76513,8 +76529,9 @@ msgstr "Configuration de l'application des Commandes de terrain"
 msgid "button_confirm_cash - (account.bank.statement)"
 msgstr "button_confirm_cash - (account.bank.statement)"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_supply_doc_export
 #: report:picking.ticket:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:157
 msgid "Qty Picked"
 msgstr "Qté Prélevée"
 
@@ -77135,6 +77152,7 @@ msgstr "Liste des Funding pools associés aux coûts réservés"
 #: field:purchase.order,transport_mode:0
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:124
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:118
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:136
 #, python-format
 msgid "Transport mode"
 msgstr "Mode de transport"
@@ -82966,7 +82984,8 @@ msgstr "Lines to source"
 msgid "Gives the type of the analytic journal. When it needs for a document (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."
 msgstr "Indique le type du journal analytique. Quand des écritures analytiques doivent être créées pour un document (une facture par exemple), OpenERP va rechercher un journal correspondant du même type."
 
-#. modules: purchase, product, product_nomenclature, hr, sale, stock_schedule, procurement_auto, sourcing, base, order_types, procurement_cycle, mission_stock, tender_flow, return_claim, analytic_override, consumption_calculation
+#. modules: purchase, product, product_nomenclature, hr, sale, stock_schedule, procurement_auto, sourcing, base, order_types, procurement_cycle, mission_stock, tender_flow, return_claim, analytic_override, consumption_calculation, msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:117
 #: field:account.analytic.account,category:0
 #: view:ir.module.module:0
 #: field:ir.module.module,category_id:0
@@ -104147,3 +104166,100 @@ msgstr "Voir les lignes non traitées"
 #, python-format
 msgid "Price is too big"
 msgstr "Le prix est trop grand"
+
+#. modules: msf_supply_doc_export, msf_outgoing
+#: view:create.picking.processor:0
+#: view:wizard.pick.import:0
+msgid "Import PICK"
+msgstr "Importer PICK"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Export PICK"
+msgstr "Exporter PICK"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
+#, python-format
+msgid "No PICK selected"
+msgstr "Aucun PICK selectionné"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:138
+#, python-format
+msgid "PICK reference in the import file doesn't match with the current PICK"
+msgstr "La reférence du PICK dans le fichier d'import ne correspond pas au PICK courant"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
+msgid "Qty to Pick"
+msgstr "Qty to Pick"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:112
+msgid "Incoming Ref."
+msgstr "Ref. Livraison"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:122
+msgid "Date colisage"
+msgstr "Packing Date"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:127
+msgid "Total items"
+msgstr "Total d'objets"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:147
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" should contains the quantity to process and cannot be empty, please fill it with \"0\" instead"
+msgstr "Ligne %s: La colonne \"Qté prélevée\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:290
+#, python-format
+msgid "The total quantity of line #%s in the import file doesn't match with the total qty on screen"
+msgstr "La quantité totale de la ligne %s dans le fichier d'import ne correspond pas à la quantité totale d'UniField"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:160
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" cannot be greater than \"Qty to pick\""
+msgstr "Ligne %s: La colonne \"Qté prélevée\" ne peut pas être supérieure à la \"Qté à prélever\""
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:174
+#, python-format
+msgid "Line %s: Move with line number %s and ordered qty %s not found"
+msgstr "Ligne %s: Le mouvement avec le numéro de ligne %s et la quantité commandée %s n'a pas été trouvé"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:184
+#, python-format
+msgid "Line %s: Import product code doesn't match with the product"
+msgstr "Ligne %s: Le code du produit à importé ne correspond pas"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:189
+#, python-format
+msgid "Line %s: Product is batch number mandatory and no batch number is given"
+msgstr "Ligne %s: Le produit doit avoir un numéro de lot et celui-ci n'est pas renseigné"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:194
+#, python-format
+msgid "Line %s: Product is expiry date mandatory and no expiry date is given"
+msgstr "Ligne %s: Le produit doit avoir une date d'expiration et celle-ci n'est pas renseignée"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:209
+#, python-format
+msgid "Line %s: Given batch number doesn't exists in database"
+msgstr "Ligne %s: Le numéro de lot donné n'existe pas en base"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:222
+#, python-format
+msgid "Line %s: Given expiry date doesn't exists in database"
+msgstr "Ligne %s: La date d'expiration donnée n'existe pas en base"

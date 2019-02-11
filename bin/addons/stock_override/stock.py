@@ -788,6 +788,21 @@ You cannot choose this supplier because some destination locations are not avail
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
         return self.action_assign(cr, uid, ids, context=context)
 
+
+    def export_pick(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'pick.export.xls',
+            'datas': {'ids': ids},
+            'context': context,
+        }
+
+
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
         '''
