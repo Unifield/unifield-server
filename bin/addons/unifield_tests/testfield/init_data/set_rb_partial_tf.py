@@ -65,25 +65,6 @@ if not msf_supply and p_ids:
     new_id = oerp.get('res.partner').copy(p_ids[0])
     oerp.get('res.partner').write([new_id], {'name': 'MSF Supply'})
 
-loc_o = oerp.get('stock.location')
-loc_ids = loc_o.search([('name', '=', 'LOG')])
-prod_o = oerp.get('product.product')
-p1_ids = prod_o.search([('default_code', '=', 'ADAPCABL1S-')])
-p2_ids = prod_o.search([('default_code', '=', 'ADAPDCDRB--')])
-p3_ids = prod_o.search([('default_code', '=', 'ADAPMEMK1--')])
-p4_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
-inv_o = oerp.get('stock.inventory')
-inv_id = inv_o.create({
-    'name': 'inv %s' % time.time(),
-    'inventory_line_id': [
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p1_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p2_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p3_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p4_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-    ],
-})
-inv_o.action_confirm([inv_id])
-inv_o.action_done([inv_id])
 
 
 conn_manager = oerp.get('sync.client.sync_server_connection')
@@ -185,6 +166,8 @@ for prod in newprods:
     oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1' % DB_PREFIX)
     create_product(oerp, prod)
     oerp.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+    oerp.get('sync.client.entity').sync()
     oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
     oerp.get('sync.client.entity').sync()
 
@@ -209,6 +192,26 @@ newprod = {
     'international_status': 4,
 }
 
+oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+loc_o = oerp.get('stock.location')
+loc_ids = loc_o.search([('name', '=', 'LOG')])
+prod_o = oerp.get('product.product')
+p1_ids = prod_o.search([('default_code', '=', 'ADAPCABL1S-')])
+p2_ids = prod_o.search([('default_code', '=', 'ADAPDCDRB--')])
+p3_ids = prod_o.search([('default_code', '=', 'ADAPMEMK1--')])
+p4_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
+inv_o = oerp.get('stock.inventory')
+inv_id = inv_o.create({
+    'name': 'inv %s' % time.time(),
+    'inventory_line_id': [
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p1_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p2_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p3_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p4_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+    ],
+})
+inv_o.action_confirm([inv_id])
+inv_o.action_done([inv_id])
 
 
 #### Intermission ####
