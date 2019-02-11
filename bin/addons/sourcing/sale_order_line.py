@@ -2214,6 +2214,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
                 })
+            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id:
+                value['supplier'] = line.product_id.seller_id.id
 
         if l_type == 'make_to_stock':
             if not location_id:
@@ -2225,6 +2227,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'po_cft': False,
                 'related_sourcing_ok': False,
                 'related_sourcing_id': False,
+                'supplier': False,
             })
 
             res = {'value': value, 'warning': message}

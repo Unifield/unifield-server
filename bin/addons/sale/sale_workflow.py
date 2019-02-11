@@ -570,6 +570,12 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
+
+            # US-4576: Set supplier
+            if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
+                    and sol.product_id and sol.product_id.seller_id:
+                to_write['supplier'] = sol.product_id.seller_id.id
+
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
             if sol.order_id.order_type == 'loan':
