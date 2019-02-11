@@ -269,11 +269,8 @@ class supplier_catalogue(osv.osv):
                                 new_seller.remove(new_seller[i])
                                 has_removed = True
                                 break
-                        # ------------------------------------------- #
-                        # ------ TODO: CHECK DURING INTEGRATION ----- #
-                        # ------------------------------------------- #
                         if vals['active'] and not has_removed:
-                            new_seller.append((1, catalogue.partner_id.name))
+                            new_seller.append((0, catalogue.partner_id.name))
                         object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
                         supinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False, False,
                                                    self.pool.get('product.template')._columns['seller_ids'].string,
