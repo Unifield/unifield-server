@@ -635,6 +635,9 @@
 							<field name='ppl_customize_label' required="True" />
 							<field name="description_ppl"  />
 						</group>
+						<group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
+							<button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+						</group>
 
 					</group>
 					<notebook colspan="4">

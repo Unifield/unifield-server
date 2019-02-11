@@ -661,7 +661,7 @@ class stock_incoming_processor(osv.osv):
                 sequences.setdefault(move.packing_list, []).append((move.from_pack, move.to_pack, move.id))
                 num_of_packs = move.to_pack - move.from_pack + 1
                 if num_of_packs:
-                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.id, move.uom_id, num_of_packs, move.quantity, context=context):
+                    if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.uom_id, num_of_packs, move.quantity, context=context):
                         rounding_issues.append(move.line_number)
             if move.integrity_status and move.integrity_status != 'empty':
                 raise osv.except_osv(

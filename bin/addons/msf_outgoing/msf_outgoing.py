@@ -4244,11 +4244,16 @@ class stock_picking(osv.osv):
                     'move_ids': [],
                     'from_pack': line.from_pack,
                     'to_pack': line.to_pack,
+                    'pack_type': line.move_id.pack_type.id,
+                    'length': line.move_id.length,
+                    'width': line.move_id.width,
+                    'height': line.move_id.height,
+                    'weight': line.move_id.weight,
                 })
 
                 families_data[key]['move_ids'].append(line.id)
 
-            for family_data in families_data.values():
+            for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']

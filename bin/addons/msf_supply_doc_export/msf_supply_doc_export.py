@@ -1093,6 +1093,7 @@ class ir_values(osv.osv):
                 if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
                     or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
                     or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
+                    or v[2].get('report_name', False) == 'pre.packing.excel.export' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) \
                     or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
                     or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
                         or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):

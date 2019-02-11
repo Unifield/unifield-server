@@ -86,17 +86,17 @@ class wiz_common_import(osv.osv_memory):
         return header_dict
 
     def check_header_values(self, cr, uid, ids, context, header_index,
-                            real_columns, origin=False):
+                            real_columns, origin=False, ignore_case=False):
         """
         Check that the columns in the header will be taken into account.
         """
         translated_headers = [_(f) for f in real_columns]
         upper_translated_headers = translated_headers
-        if origin == 'FO':
+        if origin == 'FO' or ignore_case:
             upper_translated_headers = [_(f).upper() for f in real_columns]
         for k,v in header_index.items():
             upper_k = k
-            if origin == 'FO':
+            if k and (origin == 'FO' or ignore_case):
                 upper_k = k.upper()
             if upper_k not in upper_translated_headers:
                 if origin:
