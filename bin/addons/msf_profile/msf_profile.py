@@ -52,6 +52,37 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF12.1
+    def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
+        '''
+        Set the correct sale_line_id on moves post SLL that were cancelled after the original line was partially processed
+        '''
+        move_obj = self.pool.get('stock.move')
+        sol_obj = self.pool.get('sale.order.line')
+
+        move_domain = [
+            ('state', '=', 'cancel'),
+            ('type', '=', 'out'),
+            ('picking_id.subtype', '=', 'standard'),
+            ('picking_id.type', '=', 'out'),
+            ('sale_line_id.order_id.procurement_request', '=', True),
+            ('sale_line_id.state', '=', 'done'),
+        ]
+        moves_ids = move_obj.search(cr, uid, move_domain)
+        for move in self.pool.get('stock.move').browse(cr, uid, moves_ids):
+            split_sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', '=', move.sale_line_id.order_id.id),
+                ('id', '!=', move.sale_line_id.id),
+                ('line_number', '=', move.sale_line_id.line_number),
+                ('is_line_split', '=', True),
+                ('state', '=', 'cancel'),
+                ('product_uom_qty', '=', move.product_qty),
+            ])
+            for split_sol in sol_obj.browse(cr, uid, split_sol_ids):
+                move_obj.write(cr, uid, [move.id], {'sale_line_id': split_sol.id})
+
+        return True
+
     # UF12.0
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''

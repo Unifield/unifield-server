@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF12.1 -->
+        <record id="us_5199_fix_cancel_partial_move_sol_id" model="patch.scripts">
+            <field name="method">us_5199_fix_cancel_partial_move_sol_id</field>
+        </record>
+
         <!-- UF12.0 -->
         <record id="us_2896_volume_ocbprod" model="patch.scripts">
             <field name="method">us_2896_volume_ocbprod</field>
