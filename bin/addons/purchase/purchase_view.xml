@@ -305,7 +305,7 @@
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to  lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
                                 <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>

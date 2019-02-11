@@ -90,18 +90,22 @@ class update_lines(osv.osv_memory):
         btn_name_yes_s = _('Yes - Selected lines')
         btn_name_yes = _('Yes - All lines')
         btn_name_no = _('No')
+        has_selection = context.get('button_selected_ids')
+        button_selection = ""
 
         if str(field_name) == 'stock_take':
+            if has_selection:
+                button_selection = '<button name="update_stock_take_date_select" string="%s" type="object" icon="gtk-apply" />' % (btn_name_yes_s, )
             _moves_arch_lst = """
                             <form>
                             <separator colspan="4" string="%s: %s-"/>
                             <field colspan="2" name="stock_take_date" />
                             <group colspan="2" col="3">
-                                <button name="update_stock_take_date_select" string="%s" type="object" icon="gtk-apply" />
+                                %s
                                 <button name="update_stock_take_date" string="%s" type="object" icon="gtk-apply" />
                                 <button special="cancel" string="%s" icon="gtk-cancel"/>
                             </group>
-                            """ % (obj_name, header_name, btn_name_yes_s, btn_name_yes, btn_name_no)
+                            """ % (obj_name, header_name, button_selection, btn_name_yes, btn_name_no)
 
             _moves_fields = result['fields']
             # add field related to picking type only
@@ -109,16 +113,18 @@ class update_lines(osv.osv_memory):
 
             _moves_arch_lst += """</form>"""
         else:
+            if has_selection:
+                button_selection = '<button name="update_delivery_%s_date_select" string="%s" type="object" icon="gtk-apply" />' % (field_name, btn_name_yes_s)
             _moves_arch_lst = """
                             <form>
                             <separator colspan="4" string="%s: %s-"/>
                             <field name="delivery_%s_date" />
                             <group colspan="2" col="3">
-                                <button name="update_delivery_%s_date_select" string="%s" type="object" icon="gtk-apply" />
+                                %s
                                 <button name="update_delivery_%s_date" string="%s" type="object" icon="gtk-apply" />
                                 <button special="cancel" string="%s" icon="gtk-cancel"/>
                             </group>
-                            """ % (obj_name, header_name, field_name, field_name, btn_name_yes_s, field_name, btn_name_yes, btn_name_no)
+                            """ % (obj_name, header_name, field_name, button_selection, field_name, btn_name_yes, btn_name_no)
 
             _moves_fields = result['fields']
             # add field related to picking type only
