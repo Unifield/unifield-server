@@ -104140,3 +104140,10 @@ msgstr "Voir les lignes non disponibles"
 #: view:stock.picking:0
 msgid "Show unprocessed lines"
 msgstr "Voir les lignes non traitées"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:604
+#: constraint:purchase.order.line:0
+#, python-format
+msgid "Price is too big"
+msgstr "Le prix est trop grand"
