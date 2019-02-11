@@ -271,13 +271,18 @@ class Search(Form):
             domains = eval(domains)
 
         ctx = {}
+        ctx['set_by_field'] = []
         for fld_name, src_context in search_context.iteritems():
             c = src_context.get('context', {})
             v = src_context.get('value')
             if v and isinstance(v, basestring) and '__' in v:
                 value, operator = v.split('__')
                 v = int(value)
-            ctx.update(expr_eval(c, {'self':v}))
+            update_ctx = expr_eval(c, self=v)
+            if update_ctx:
+                ctx['set_by_field'] += update_ctx.keys()
+
+            ctx.update(update_ctx)
 
         context = rpc.session.context
         if ctx:
