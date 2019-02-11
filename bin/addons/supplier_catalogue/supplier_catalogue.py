@@ -234,6 +234,7 @@ class supplier_catalogue(osv.osv):
         '''
         if not ids:
             return True
+        ir_model = self.pool.get('ir.model')
         supinfo_obj = self.pool.get('product.supplierinfo')
         price_obj = self.pool.get('pricelist.partnerinfo')
         user_obj = self.pool.get('res.users')
@@ -253,6 +254,26 @@ class supplier_catalogue(osv.osv):
                                              vals.get('currency_id', catalogue.currency_id.id),
                                              vals.get('partner_id', catalogue.partner_id.id),
                                              vals.get('period_to', catalogue.period_to), context=context)
+            # Track Changes
+            if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
+                for line in catalogue.line_ids:
+                    has_removed = False
+                    if line.product_id:
+                        old_seller = []
+                        for seller in line.product_id.seller_ids:
+                            old_seller.append((seller.sequence, seller.name.name))
+                        new_seller = list(old_seller)
+                        for i, seller in enumerate(new_seller):
+                            if catalogue.partner_id.name in seller[1]:
+                                new_seller.remove(new_seller[i])
+                                has_removed = True
+                                break
+                        if vals['active'] and not has_removed:
+                            new_seller.append((0, catalogue.partner_id.name))
+                        object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
+                        supinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False, False,
+                                                   self.pool.get('product.template')._columns['seller_ids'].string,
+                                                   False, new_seller, old_seller, context=context)
 
             current_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
             if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
@@ -370,6 +391,8 @@ class supplier_catalogue(osv.osv):
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
         #line_obj = self.pool.get('supplier.catalogue.line')
+        ir_model = self.pool.get('ir.model')
+        supplinfo_obj = self.pool.get('product.supplierinfo')
 
         #line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
@@ -378,6 +401,23 @@ class supplier_catalogue(osv.osv):
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        # US-3531: Add a Track Changes line to each product in the catalogue
+        catalog = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'line_ids'], context=context)
+        for line in catalog.line_ids:
+            if line.product_id:
+                old_seller = []
+                for seller in line.product_id.seller_ids:
+                    old_seller.append((seller.sequence, seller.name.name))
+                new_seller = list(old_seller)
+                for i, seller in enumerate(new_seller):
+                    if catalog.partner_id.name in seller[1]:
+                        new_seller.remove(new_seller[i])
+                        break
+                object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
+                supplinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False,
+                                             False, self.pool.get('product.template')._columns['seller_ids'].string,
+                                             False, new_seller, old_seller, context=context)
 
         # Update lines
         #line_obj.write(cr, uid, line_ids, {}, context=context)
@@ -392,7 +432,6 @@ class supplier_catalogue(osv.osv):
                                      where catalogue_id = %s)
                         and id not in (select suppinfo_id from
                                     pricelist_partnerinfo ) ''', (ids[0],))
-
 
         return True
 
