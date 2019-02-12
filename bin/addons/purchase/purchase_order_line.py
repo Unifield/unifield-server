@@ -578,6 +578,32 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
+
+    def _check_max_price(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.product_qty > 99999999999:
+                return False
+
+            total = pol.product_qty * pol.price_unit
+            total_int = int(total)
+            total_dec = round(total - total_int, 2)
+
+            nb_digits_allowed = 15
+            if total_dec:
+                nb_digits_allowed -= 3
+
+            if len(str(total_int)) > nb_digits_allowed:
+                return False
+
+        return True
+
+    _constraints = [
+        (_check_max_price, _("Price is too big"), ['price_unit', 'product_qty']),
+    ]
+
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
         for line in lines:

@@ -158,6 +158,7 @@
 					<field name="level" invisible="1" />
 					<field name="category_id" 
 					    attrs="{'invisible': ['|', ('level', '!=', '2'), ('type', '!=', 'mandatory')]}"/>
+					<field name="status" attrs="{'invisible': [('level', '!=', '3')]}"/>
 					<field name="sequence" invisible="1" />
 					<newline />
 				</form>
@@ -251,6 +252,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <search string="Link nomenclature/category">
+					<filter string="Archived" icon="terp-accessories-archiver" domain="[('status','=','archived')]"/>
 		            <field name="msfid" string="Nomenclature MSFID" />
 		            <field name="custom_name" />
 		            <field name="category_id" />

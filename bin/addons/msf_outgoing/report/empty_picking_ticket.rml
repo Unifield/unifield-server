@@ -77,6 +77,15 @@
             <blockSpan start="12,1" stop="12,-1" />
         </blockTableStyle>
 
+        <blockTableStyle id="FooterInfo">
+            <blockAlignment value="CENTER" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" />
+            <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" />
+            <lineStyle kind="LINEAFTER" colorName="#000000" />
+            <lineStyle kind="LINEBELOW" colorName="#000000" />
+        </blockTableStyle>
+
         <blockTableStyle id="LinesValues">
             <blockAlignment value="LEFT" />
             <blockValign value="MIDDLE" />
@@ -115,6 +124,9 @@
         <paraStyle name="LineValue" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="5.0" textColor="blue" />
         <paraStyle name="LineValueBold" fontName="Helvetica-Bold" fontSize="6.0" alignment="CENTER" leading="8.0" textColor="blue" />
         <paraStyle name="LineValueLeft" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="5.0" textColor="blue" />
+
+        <paraStyle name="LFooter" fontName="Helvetica" fontSize="8.0" alignement="LEFT" />
+        <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="8.0" alignement="LEFT" leading="30" />
 
 
     </stylesheet>
@@ -633,11 +645,80 @@
                 <font color="white"> </font>
             </para>
 
-        <blockTable style="NoteTable">
+        <blockTable colWidths="810.0" style="NoteTable">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle">Notes :</para>
                     <para style="HeaderInfosValue">[[ pt.note or '-' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="51.0,253.0,253.0,253.0" style="FooterInfo" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter">Approved by :</para>
+                </td>
+                <td>
+                    <para style="LFooter">Picked by :</para>
+                </td>
+                <td>
+                    <para style="LFooter">Validated by :</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">Name</para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">Date</para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooterEnd">Signature</para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
                 </td>
             </tr>
         </blockTable>

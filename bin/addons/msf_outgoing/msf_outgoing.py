@@ -684,6 +684,17 @@ class shipment(osv.osv):
                     continue
 
                 picking = family.draft_packing_id
+
+                move_ids = self.pool.get('stock.move').search(cr, uid, [
+                    ('picking_id', '=', family.ppl_id.id),
+                    ('from_pack', '=', family.from_pack),
+                    ('to_pack', '=', family.to_pack)
+                ], context=context)
+                for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
+                    if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
+                            move.qty_per_pack % move.product_uom.rounding != 0:
+                        raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
+
                 # Copy the picking object without moves
                 # Creation of moves and update of initial in picking create method
                 sequence = picking.sequence_id
@@ -906,6 +917,9 @@ class shipment(osv.osv):
                             _('Error'),
                             _('All returned lines must be \'Available\'. Please check this and re-try.')
                         )
+                    if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
+                            move.qty_per_pack % move.product_uom.rounding != 0:
+                        raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
                     """
                     Stock moves are not canceled as for PPL return process
                     because this represents a draft packing, meaning some shipment could be canceled and
@@ -1185,6 +1199,10 @@ class shipment(osv.osv):
                             _('Error'),
                             _('One of the returned family is not \'Available\'. Check the state of the pack families and re-try.'),
                         )
+
+                    if (family.from_pack != family.return_from or family.to_pack != family.return_to) \
+                            and move.product_uom.rounding == 1 and move.qty_per_pack % move.product_uom.rounding != 0:
+                        raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
 
                     move_data.setdefault(move.id, {
                         'initial': move.product_qty,
@@ -4226,11 +4244,16 @@ class stock_picking(osv.osv):
                     'move_ids': [],
                     'from_pack': line.from_pack,
                     'to_pack': line.to_pack,
+                    'pack_type': line.move_id.pack_type.id,
+                    'length': line.move_id.length,
+                    'width': line.move_id.width,
+                    'height': line.move_id.height,
+                    'weight': line.move_id.weight,
                 })
 
                 families_data[key]['move_ids'].append(line.id)
 
-            for family_data in families_data.values():
+            for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']

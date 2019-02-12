@@ -1749,7 +1749,7 @@ class product_product(osv.osv):
         for id in ids:
             res[id] = 0.00
             if from_date and to_date:
-                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
+                rac_search_domain = [
                     ('cons_location_id', 'in', location_ids),
                     ('state', '!=', 'cancel'),
                     # All lines with a report started out the period and finished in the period
@@ -1758,7 +1758,10 @@ class product_product(osv.osv):
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
                     '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
-                ])
+                ]
+                if context.get('location_dest_id'):
+                    rac_search_domain.append(('activity_id', '=', context['location_dest_id']))
+                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, rac_search_domain)
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
                 rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)

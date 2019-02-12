@@ -968,6 +968,7 @@ class user_rights_tools(osv.osv_memory):
                         if error:
                             raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
 
+
             if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
                 dom = [('imported_flag', '=', False)]
                 if model == 'ir.model.access':
