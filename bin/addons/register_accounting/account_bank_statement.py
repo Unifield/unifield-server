@@ -556,6 +556,8 @@ class account_bank_statement(osv.osv):
         domain = [('statement_id', '=', ids[0])]
         # Search valid ids
         reg = self.browse(cr, uid, ids[0])
+        if reg and reg.journal_id.type in ['bank', 'cash', 'cheque']:
+            context.update({'journal_type': reg.journal_id.type})
         return {
             'name': reg and reg.name or 'Register Lines',
             'type': 'ir.actions.act_window',
@@ -705,19 +707,21 @@ The starting balance will be proposed automatically and the closing balance is t
             'target': 'current',
         }
 
-    def get_pending_cheque_ids(self, cr, uid, register_ids, account_ids, min_posting_date, context=None):
+    def get_pending_cheque_ids(self, cr, uid, register_ids, account_ids, min_posting_date, aml_ids=None, context=None):
         """
         Returns a list containing the ids of the JIs matching the following criteria:
-        - booked in the register(s) and in the account(s) in parameters
+        - if aml_ids is given: having their ids in this list, else booked in the register(s) and in the account(s) in
+          parameters (note that registers don't exist at HQ level)
         - either not reconciled or reconciled partially or totally with at least one reconciliation leg having a
           posting date later than the min_posting_date in parameter
         """
         if context is None:
             context = {}
         aml_obj = self.pool.get('account.move.line')
-        aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
-                                           ('account_id', 'in', account_ids), ],
-                                 order='date DESC', context=context)
+        if aml_ids is None:
+            aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
+                                               ('account_id', 'in', account_ids), ],
+                                     order='date DESC', context=context)
         aml_list = []
         for aml in aml_obj.browse(cr, uid, aml_ids,
                                   fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):

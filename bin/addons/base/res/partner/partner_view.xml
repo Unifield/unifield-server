@@ -99,7 +99,7 @@
                         <field name="phone"/>
                         <field name="fax"/>
                         <field name="mobile"/>
-                        <field name="email" widget="email"/>
+                        <field name="email"/>
                      </group>
                 </form>
             </field>
@@ -158,7 +158,7 @@
                     <field name="fax"/>
                     <newline/>
                     <field name="mobile"/>
-                    <field name="email" widget="email"/>
+                    <field name="email"/>
                 </form>
             </field>
         </record>
@@ -290,7 +290,7 @@
                                         <field name="phone"/>
                                         <field name="mobile"/>
                                         <field name="fax"/>
-                                        <field name="email" widget="email"/>
+                                        <field name="email"/>
                                      </group>
                                 </form>
                                 <tree string="Partner Contacts">

@@ -359,9 +359,9 @@ class shipment(osv.osv):
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                       ('packed', 'Packed'),
-                                                                                      ('shipped', 'Shipped'),
-                                                                                      ('done', 'Closed'),
-                                                                                      ('delivered', 'Delivered'),
+                                                                                      ('shipped', 'Ready to ship'),
+                                                                                      ('done', 'Dispatched'),
+                                                                                      ('delivered', 'Received'),
                                                                                       ('cancel', 'Cancelled')], string='State', multi='get_vals',
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
@@ -1738,7 +1738,7 @@ class shipment(osv.osv):
             if shipment.state != 'shipped':
                 raise osv.except_osv(
                     _('Error'),
-                    _('The state of the shipment must be \'Shipped\'. Please check it and re-try.')
+                    _('The state of the shipment must be \'Ready to ship\'. Please check it and re-try.')
                 )
             # corresponding packing objects - only the distribution -> customer ones
             # we have to discard picking object with state done, because when we return from shipment
@@ -1796,7 +1796,7 @@ class shipment(osv.osv):
             if shipment.state != 'done':
                 raise osv.except_osv(
                     _('Error'),
-                    _('The shipment must be \'Closed\'. Please check this and re-try')
+                    _('The shipment must be \'Dispatched\'. Please check this and re-try')
                 )
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
@@ -4244,11 +4244,16 @@ class stock_picking(osv.osv):
                     'move_ids': [],
                     'from_pack': line.from_pack,
                     'to_pack': line.to_pack,
+                    'pack_type': line.move_id.pack_type.id,
+                    'length': line.move_id.length,
+                    'width': line.move_id.width,
+                    'height': line.move_id.height,
+                    'weight': line.move_id.weight,
                 })
 
                 families_data[key]['move_ids'].append(line.id)
 
-            for family_data in families_data.values():
+            for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']

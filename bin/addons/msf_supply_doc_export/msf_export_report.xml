@@ -217,5 +217,17 @@
            menu="False"
            />
 
+        <!-- PICK export -->
+        <report
+            id="report_pick_export_xls"
+            string="PICK Excel Export"
+            model="stock.picking"
+            name="pick.export.xls"
+            file="msf_supply_doc_export/report/report_pick_export_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
     </data>
 </openerp>

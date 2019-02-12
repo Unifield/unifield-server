@@ -235,14 +235,12 @@ class analytic_account(osv.osv):
         'for_fx_gain_loss': lambda *a: False,
     }
 
-    def _check_unicity(self, cr, uid, ids, context=None):
+    def _check_code_unicity(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
+        for account in self.read(cr, uid, ids, ['category', 'code'], context=context):
             bad_ids = self.search(cr, uid,
                                   [('category', '=', account.get('category', '')),
-                                   ('|'),
-                                   ('name', '=ilike', account.get('name', '')),
                                    ('code', '=ilike', account.get('code', ''))],
                                   order='NO_ORDER', limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
@@ -291,7 +289,7 @@ class analytic_account(osv.osv):
         return True
 
     _constraints = [
-        (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
+        (_check_code_unicity, 'You cannot have the same code between analytic accounts in the same category!', ['code', 'category']),
         (_check_gain_loss_account_unicity, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
         (_check_gain_loss_account_type, 'You have to use a Normal account type and Cost Center category for FX gain/loss!', ['for_fx_gain_loss']),
         (_check_default_destination, "You can't delete an account which has this destination as default", []),
@@ -390,37 +388,62 @@ class analytic_account(osv.osv):
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
+    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+        """
+        Don't copy translations when duplicating an analytic account, i.e. we will have "name (copy)" in all languages
+        """
+        return True
+
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
+        if context is None:
+            context = {}
         account = self.browse(cr, uid, a_id, context=context)
         if not default:
             default = {}
         default = default.copy()
         name = '%s(copy)' % account['name'] or ''
-        default['code'] = (account['code'] or '') + '(copy)'
+        code = '%s(copy)' % account['code'] or ''
         default['name'] = name
+        default['code'] = code
         default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
-        # code is deleted in copy method in addons
-        new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
-        # UFTP-83: Add name + context (very important) in order the translation to not display wrong element. This is because context is missing (wrong language)
-        self.write(cr, uid, new_id, {'name': name,'code': '%s(copy)' % (account['code'] or '')}, context=context)
-        trans_obj = self.pool.get('ir.translation')
-        trans_ids = trans_obj.search(cr, uid, [('name', '=',
-                                                'account.analytic.account,name'), ('res_id', '=', new_id),],
-                                     order='NO_ORDER')
-        trans_obj.unlink(cr, uid, trans_ids)
-        return new_id
+        default['line_ids'] = []
+        return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
+
+    def _check_name_unicity(self, cr, uid, ids, context=None):
+        """
+        Raises an error if the name chosen is already used by an analytic account of the same category
+        """
+        if context is None:
+            context = {}
+        # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
+        if not context.get('sync_update_execution', False):
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
+                dom = [('category', '=', analytic_acc.get('category', '')),
+                       ('name', '=ilike', analytic_acc.get('name', '')),
+                       ('id', '!=', analytic_acc.get('id'))]
+                if self.search_exist(cr, uid, dom, context=context):
+                    ir_trans = self.pool.get('ir.translation')
+                    trans_ids = ir_trans.search(cr, uid, [('res_id', 'in', ids), ('name', '=', 'account.analytic.account,name')], context=context)
+                    if trans_ids:
+                        ir_trans.clear_transid(cr, uid, trans_ids, context=context)
+                    raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
+        return True
 
     def create(self, cr, uid, vals, context=None):
         """
         Some verifications before analytic account creation
         """
+        if context is None:
+            context = {}
+        # Check that instance_id is filled in for FP
+        if context.get('from_web', False) or context.get('from_import_menu', False):
+            self.check_fp(cr, uid, vals, to_update=True, context=context)
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
-        if context is None:
-            context = {}
-
         # for auto instance creation, fx gain has been stored, need HQ sync + instance sync to get CC
         if context.get('sync_update_execution') and vals.get('code') and vals.get('category') == 'OC':
             param = self.pool.get('ir.config_parameter')
@@ -428,7 +451,9 @@ class analytic_account(osv.osv):
             if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
                 vals['for_fx_gain_loss'] = True
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
-        return super(analytic_account, self).create(cr, uid, vals, context=context)
+        ids = super(analytic_account, self).create(cr, uid, vals, context=context)
+        self._check_name_unicity(cr, uid, ids, context=context)
+        return ids
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -438,47 +463,18 @@ class analytic_account(osv.osv):
             return True
         if context is None:
             context = {}
+        # US-166: Ids needs to always be a list
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
-
-        ###### US-113: I have moved the block that sql updates on the name causing the problem of sync (touched not update). The block is now moved to after the write
-
-        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check
-        new_values = self.read(cr, uid, ids, ['category', 'name', 'code'], context=context)[0]
-        if vals.get('name', False):
-            new_values['name'] = vals.get('name')
-        if vals.get('category', False):
-            new_values['category'] = vals.get('category')
-        if vals.get('code', False):
-            new_values['code'] = vals.get('code')
-
-        ######################################################
-        # US-399: Now perform the check unicity manually!
-        bad_ids = self.search(cr, uid,
-                              [('category', '=', new_values.get('category', '')),
-                               ('|'),
-                               ('name', '=ilike', new_values.get('name', '')),
-                               ('code', '=ilike', new_values.get('code', ''))],
-                              order='NO_ORDER', limit=2)
-        if len(bad_ids) and len(bad_ids) > 1:
-            raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
-        ######################################################
-
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
-        # UFTP-83: Error after duplication, the _constraints is not called with right params. So the _check_unicity gets wrong.
-        if vals.get('name', False):
-            cr.execute('UPDATE account_analytic_account SET name = %s WHERE id IN %s', (vals.get('name'), tuple(ids)))
-        # UFTP-83: Use name as SRC value for translations (to be done after WRITE())
-        if vals.get('name', False):
-            trans_obj = self.pool.get('ir.translation')
-            trans_ids = trans_obj.search(cr, uid, [('name', '=',
-                                                    'account.analytic.account,name'), ('res_id', 'in', ids)],
-                                         order='NO_ORDER')
-            if trans_ids:
-                cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
+        if context.get('from_web', False) or context.get('from_import_menu', False):
+            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
+            if cat_instance:
+                self.check_fp(cr, uid, cat_instance, context=context)
+        self._check_name_unicity(cr, uid, ids, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

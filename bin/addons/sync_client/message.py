@@ -349,6 +349,8 @@ message_to_send()
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
+    _order = 'create_date desc, id desc'
+
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sequence': fields.integer('Sequence', readonly = True),
@@ -361,8 +363,14 @@ class message_received(osv.osv):
         'create_date' :fields.datetime('Receive Date', readonly=True),
         'editable' : fields.boolean("Set editable"),
         'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
+        'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
     }
 
+    _sql_constraints = [
+        ('sync_id_uniq', 'unique(sync_id)', 'Duplicates sync_id'),
+    ]
     _logger = logging.getLogger('sync.client')
 
     def create(self, cr, uid, vals, context=None):
@@ -377,15 +385,22 @@ class message_received(osv.osv):
         return super(message_received, self).create(cr, uid, vals, context=context)
 
     def unfold_package(self, cr, uid, package, context=None):
-        for data in package:
-            self.create(cr, uid, {
-                'identifier' : data['id'],
-                'remote_call' : data['call'],
-                'arguments' : data['args'],
-                'sequence' : data['sequence'],
-                'source' : data['source'] }, context=context)
+        last_seq = False
 
-            entity_obj = self.pool.get( "sync.client.entity")
+        for data in package:
+            # prevent duplicates if previous message_received_by_sync_id has failed
+            if not self.search_exist(cr, uid, [('sync_id', '=', data['sync_id'])], context=context):
+                self.create(cr, uid, {
+                    'identifier' : data['id'],
+                    'remote_call' : data['call'],
+                    'arguments' : data['args'],
+                    'sequence' : data['sequence'],
+                    'source' : data['source'],
+                    'sync_id': data['sync_id']}, context=context)
+            last_seq = data['sequence']
+
+        if last_seq:
+            entity_obj = self.pool.get('sync.client.entity')
             entity = entity_obj.get_entity(cr, uid, context=context)
             entity_obj.write(cr, uid, entity.id, {'message_last' :data['sequence']}, context=context)
 
@@ -402,6 +417,19 @@ class message_received(osv.osv):
             else:
                 res.append(arg)
         return res
+
+    def manual_execute(self, cr, uid, ids, context=None):
+        try:
+            self.execute(cr, uid, ids, context=context)
+        except:
+            raise
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True}, context=context)
+        return True
+
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
 
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
@@ -470,7 +498,6 @@ class message_received(osv.osv):
 
         return len(ids)
 
-    _order = 'create_date desc, id desc'
 
 message_received()
 
