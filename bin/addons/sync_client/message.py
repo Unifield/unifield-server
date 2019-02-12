@@ -368,11 +368,6 @@ class message_received(osv.osv):
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
     }
 
-    _defaults = {
-        'manually_ran': False,
-        'manually_set_run_date': False,
-    }
-
     _sql_constraints = [
         ('sync_id_uniq', 'unique(sync_id)', 'Duplicates sync_id'),
     ]
