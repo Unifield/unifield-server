@@ -123,7 +123,10 @@ class purchase_order_line_sync(osv.osv):
 
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
+
+        ress_fo = False
         if sol_dict.get('resourced_original_line'):
+            pol_values['set_as_resourced'] = True
             if sol_dict.get('resourced_original_remote_line'):
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
                 # link our resourced PO line with corresponding resourced FO line:
@@ -131,6 +134,7 @@ class purchase_order_line_sync(osv.osv):
                     orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id'], context=context)
                     if orig_po_line.linked_sol_id:
                         resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
+                        ress_fo = orig_po_line.linked_sol_id.order_id.id
                         if resourced_sol_id:
                             pol_values['linked_sol_id'] = resourced_sol_id[0]
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
@@ -197,19 +201,50 @@ class purchase_order_line_sync(osv.osv):
                 move_obj.write(cr, uid, move_ids, ({'purchase_line_id': new_pol}), context=context)
 
             pol_updated = new_pol
+            pol_state = ''
+            parent_so_id = False
+            #### Create the linked IR/FO line: execpt when set_as_sourced_n=True (new line added in PO coo, this value already create an IR/FO line when pol is create)
+            if not pol_values['set_as_sourced_n']:
+                if not pol_values.get('origin') and ress_fo:
+                    parent_so_id = ress_fo
+                if pol_values.get('origin'):
+                    parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                        ('name', '=', pol_values['origin']),
+                        ('procurement_request', 'in', ['t', 'f']),
+                    ], context=context)
+                if parent_so_id:
+                    self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
+
         else: # regular update
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
             po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
-            if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
+            if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) <= confirmed_sequence:
                 # if the state is less than confirmed we update the PO line
+                # todo : added case when line is confirmed, but OUT cancelled in PICK, then we must update the qty on PO
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         # update PO line state:
+        """
+        if debug:
+            print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
+            cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
+            print cr.fetchall()
+            dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty', 'order_id'])
+
+            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', dd['order_id'][1])])
+            print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+            print dd
+        """
+        if sol_dict['state'] in ('sourced', 'sourced_v'):
+            if pol_state == 'sourced_n':
+                self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
+
         if sol_dict['state'] == 'sourced':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
         elif sol_dict['state'] == 'sourced_v':
@@ -228,6 +263,19 @@ class purchase_order_line_sync(osv.osv):
         message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, pol_data['order_id'][1], pol_data['line_number'], pol_updated)
         logging.getLogger('------sync.purchase.order.line').info(message)
 
+        """
+        if debug:
+            print 'IR RESULT'
+            ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
+            if ir_l_ids:
+                print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
+                cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
+                print cr.fetchall()
+
+            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
+            print 'FINALE PO LINE', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+            print ''
+        """
         return message
 
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):

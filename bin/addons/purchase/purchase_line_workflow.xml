@@ -96,6 +96,12 @@
                 <field name="sequence" eval="10" />
                 <field name="signal">validated</field>
             </record>
+            <record id="trans_pol_validated_validated" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated"/>
+                <field name="act_to" ref="act_pol_validated"/>
+                <field name="sequence" eval="11" />
+                <field name="signal">validated</field>
+            </record>
         <!-- end validated-n -->
 
         <!-- specific transitions for sourced-XXX -->

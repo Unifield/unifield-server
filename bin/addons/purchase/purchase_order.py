@@ -415,8 +415,19 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
+            po_state_seq = {
+                'draft': 10,
+                'draft_p': 15,
+                'validated': 20,
+                'validated_p': 25,
+                'sourced_p': 30,
+                'confirmed': 35,
+                'confirmed_p': 40,
+                'done': 50
+            }
             if po.empty_po_cancelled:
                 res[po.id] = 'cancel'
             else:
@@ -454,6 +465,12 @@ class purchase_order(osv.osv):
                             # do we have a line further then confirmed in our FO ?
                             if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
                                 res[po.id] = 'confirmed_p'
+                        # PO state must not go back:
+                        if po.push_fo:
+                            # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
+                            po_state_seq['sourced_p'] = 0
+                        if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
+                            res[po.id] = po.state
                 else:
                     res[po.id] = 'draft'
 
