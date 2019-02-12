@@ -107,9 +107,16 @@ class sale_order_line(osv.osv):
 
         # for each line get a new copy:
         for sol in self.browse(cr, uid, ids, context=context):
+            for ad in [sol.analytic_distribution_id, sol.order_id.analytic_distribution_id]:
+                if ad and ad.partner_type != sol.partner_id.partner_type:
+                    self.pool.get('analytic.distribution').write(cr, uid, ad.id, {'partner_type': sol.partner_id.partner_type}, context=context)
+                    cc_ids = [x.id for x in ad.cost_center_lines]
+                    if cc_ids:
+                        self.pool.get('cost.center.distribution.line').write(cr, uid, cc_ids, {'partner_type': sol.partner_id.partner_type}, context=context)
+
             if not sol.analytic_distribution_id and sol.order_id.analytic_distribution_id:
                 self.write(cr, uid, sol.id, {
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {}, context=context),
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {'partner_type': sol.partner_id.partner_type}, context=context),
                 })
 
         return True
@@ -164,13 +171,14 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
-                new_sol_id = self.copy(cr, uid, sol.id, {
+                sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol,
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-                }, context=context)
+                }
+                new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
@@ -546,6 +554,12 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
+            if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate the line without a Location Requestor.'))
+            if not sol.order_id.delivery_requested_date:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate the line without a Requested date.'))
             if not sol.product_uom \
                     or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                 raise osv.except_osv(_('Error'),
@@ -556,12 +570,26 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
+
+            # US-4576: Set supplier
+            if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
+                    and sol.product_id and sol.product_id.seller_id:
+                to_write['supplier'] = sol.product_id.seller_id.id
+
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
             if sol.order_id.order_type == 'loan':
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'
                 to_write['po_cft'] = False
+            if not sol.original_product:
+                to_write['original_product'] = sol.product_id.id
+            if not sol.original_qty:
+                to_write['original_qty'] = sol.product_uom_qty
+            if not sol.original_price:
+                to_write['original_price'] = sol.price_unit
+            if not sol.original_uom:
+                to_write['original_uom'] = sol.product_uom.id
             if not sol.order_id.procurement_request:  # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
@@ -577,11 +605,6 @@ class sale_order_line(osv.osv):
                     to_write['type'] = 'make_to_stock'
 
             elif sol.order_id.procurement_request:  # in case of IR
-                to_write['original_product'] = sol.product_id.id
-                to_write['original_qty'] = sol.product_uom_qty
-                to_write['original_price'] = sol.price_unit
-                to_write['original_uom'] = sol.product_uom.id
-
                 self.check_product_or_nomenclature(cr, uid, ids, context=context)
 
             if to_write:
@@ -611,7 +634,6 @@ class sale_order_line(osv.osv):
 
         return True
 
-
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         Workflow method called when SO line is getting the cancel state
@@ -623,18 +645,23 @@ class sale_order_line(osv.osv):
 
         self.check_out_moves_to_cancel(cr, uid, ids, context=context)
 
+        initial_fo_states = dict((x.id, x.order_id.state) for x in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context))
         context.update({'no_check_line': True})
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        vals = {'state': 'cancel'}
+        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context)
+        if so_line and (so_line[0].order_id.fo_created_by_po_sync or so_line[0].state != 'draft'):
+            vals.update({'cancelled_by_sync': True})
+        self.write(cr, uid, ids, vals, context=context)
         context.pop('no_check_line')
 
         # generate sync message:
         return_info = {}
-        for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
-                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not (initial_fo_states[sol.id] == 'draft' and not sol.order_id.fo_created_by_po_sync): # draft push FO
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
-
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
@@ -649,7 +676,11 @@ class sale_order_line(osv.osv):
         resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
 
         context.update({'no_check_line': True})
-        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        vals = {'state': 'cancel_r'}
+        so_line = self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context)
+        if so_line and (so_line[0].order_id.fo_created_by_po_sync or so_line[0].state != 'draft'):
+            vals.update({'cancelled_by_sync': True})
+        self.write(cr, uid, ids, vals, context=context)
         context.pop('no_check_line')
 
         # generate sync message for original FO line:
@@ -686,6 +717,12 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for so in self.browse(cr, uid, ids, context=context):
+            if so.procurement_request and not so.location_requestor_id:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate \'%s\' without a Location Requestor.') % (so.name))
+            if not so.delivery_requested_date:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate \'%s\' without a Requested date.') % (so.name))
             for sol_id in [sol.id for sol in so.order_line]:
                 wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
 

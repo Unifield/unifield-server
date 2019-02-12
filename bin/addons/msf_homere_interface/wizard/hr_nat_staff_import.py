@@ -77,22 +77,6 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Employee code already used by: %s %s') % (e_data[0].get('name') or '', e_data[0].get('identification_id') or '',))
         # Update other fields
         vals.update({'employee_type': 'local', 'active': True,})
-#        # Search job
-#        if vals.get('job', False):
-#            job_ids = self.pool.get('hr.job').search(cr, uid, [('name', '=', vals.get('job'))])
-#            if job_ids:
-#                vals.update({'job_id': job_ids[0]})
-#            else:
-#                job_id = self.pool.get('hr.job').create(cr, uid, {'name': vals.get('job')})
-#                vals.update({'job_id': job_id})
-#        del(vals['job'])
-        # Search default nat staff destination
-        try:
-            ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
-        except ValueError:
-            ns_id = False
-        if ns_id:
-            vals.update({'destination_id': ns_id})
         return vals, employee_id
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -153,15 +137,15 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                 context.update({'employee_import_wizard_ids': wiz.id})
 
             context.update({'message': ' '})
-            
+
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
             view_id = view_id and view_id[1] or False
-            
+
             # This is to redirect to Employee Tree View
             context.update({'from': 'nat_staff_import'})
-            
+
             res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee', 'filename': wiz.filename or False,}, context=context)
-            
+
             return {
                 'name': 'National staff employee import confirmation',
                 'type': 'ir.actions.act_window',

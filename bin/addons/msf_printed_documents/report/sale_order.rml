@@ -182,7 +182,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total Lines : [[ len(objects[0].order_line) ]]</para>
+                    <para style="TextInformation">Total Lines : [[ getTotalLines(objects[0].id) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>

@@ -22,6 +22,7 @@
 					<field name="destination_address" />
 					<field name="weight" />
 					<field name="specific_information" />
+                    <field name="packing_list" />
 				</tree>
 			</field>
 		</record>
@@ -43,6 +44,7 @@
 							<field name="destination_address" />
 							<field name="weight" />
 							<field name="specific_information" />
+                            <field name="packing_list" />
 						</page>
 						<page string="Notes">
 							<field name="notes" nolabel="True" />
@@ -142,7 +144,6 @@
 		parent="stock.menu_product_in_config_stock"/>
 		<!-- Changed name to 'Picking Tickets' -->
 		<record id="view_picking_ticket_tree" model="ir.ui.view">
-
 			<field name="name">picking.ticket.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
@@ -152,14 +153,16 @@
                     string="Picking Tickets" hide_new_button="1">
 					<field name="name" />
 					<field name="partner_id2" />
-					<field name="backorder_id" />
+					<field name="backorder_id" string="ORIGINAL PICK" />
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
+					<field name="packing_list"/>
+                    <field name="order_category" string="Order\nCategory"/>
 					<field name="incoming_id" />
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
-					<field name="min_date" string="Expected Pick Date" />
+					<field name="min_date" string="Expected\nPick Date" />
                     <field name="state"/>
                     <field name="line_state" />
 					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
@@ -200,15 +203,17 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
-							<field name="backorder_id" readonly="1" />
+							<field name="backorder_id" readonly="1" string="Original PICK" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
-							<field name="incoming_id" readonly="True" />
+                            <field name="order_category" />
+                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
@@ -219,8 +224,10 @@
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" readonly="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+							<field name="incoming_id" readonly="True" />
 						</group>
 					</group>
+
 					<notebook colspan="4">
 						<page string="Products">
 							<field name="from_wkf" invisible="1"/>
@@ -230,6 +237,8 @@
 								widget="one2many_list"
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
 							    on_change="onchange_move()"
+                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
+                                default_selector="state == 'draft' and '0' or '1'"
 							    >
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
 								colors="red: inactive_product==True">
@@ -396,6 +405,8 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+                        <field name="packing_list" />
+                        <field name="order_category" />
                         <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
@@ -412,6 +423,8 @@
 						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
 						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
 						<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+                         <separator orientation="vertical" />
 						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
 						<separator orientation="vertical" />
 						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
@@ -554,9 +567,11 @@
 					<field name="partner_id2"/>
 					<field name="backorder_id" />
 					<field name="origin"/>
+                    <field name="packing_list" />
+                    <field name="order_category" string="Order\nCategory"/>
 					<field name="reason_type_id" />
 					<field name="date"/>
-					<field name="min_date" string="Expected Pack Date" />
+					<field name="min_date" string="Expected\nPack Date" />
 					<field name="state"/>
 					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 				</tree>
@@ -597,10 +612,12 @@
 							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
 								   domain="[('partner_id', '=', partner_id2)]"
 							/>
+                            <field name="order_category" />
 							<field name="invoice_state" invisible="1" />
 							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
@@ -618,6 +635,9 @@
 							<field name='ppl_customize_label' required="True" />
 							<field name="description_ppl"  />
 						</group>
+						<group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
+							<button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+						</group>
 
 					</group>
 					<notebook colspan="4">
@@ -625,18 +645,16 @@
 							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
 								default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  
 								attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" 
-								filter_selector="[('Hide returned', ('ppl_returned_ok', '=', False)), ('Show all', '')]">
+								filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]">
 								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
-									<field name="product_uos" />
 									<field name="asset_id" />
 									<field name="prodlot_id" string="Batch Number" />
 									<field name="expired_date" />
-									<field name="kc_dg" />
 									<field name="location_id" string="Src. Loc" />
 									<field name="location_dest_id" string="Dest. Loc" />
 									<field name="qty_per_pack" />
@@ -757,6 +775,8 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+						<field name="packing_list" />
+                        <field name="order_category" />
 						<field name="reason_type_id" widget="selection" />
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
 						<field name="date" />
@@ -767,6 +787,8 @@
 						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
 						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
 						<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+                        <separator orientation="vertical" />
 						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
 						<separator orientation="vertical" />
 						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
@@ -1262,15 +1284,16 @@
 									<field name="fake_state" invisible="True" />
 									<field name="sale_order_id"/>
 									<field name="ppl_id" />
+                                    <field name="packing_list" />
                                     <field name="description_ppl" />
 									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
 									<field name="from_pack"/>
 									<field name="to_pack"/>
 									<field name="num_of_packs" />
 									<field name="pack_type"/>
-									<field name="total_volume" />
-									<field name="weight"/>
-									<field name="total_weight" />
+									<field name="total_volume" string="Total\nVolume[dm³]"/>
+									<field name="weight" string="Weight\nP.P.[KG]"/>
+									<field name="total_weight" string="Total\nWeight[KG]"/>
 									<field name="amount" />
 									<field name="total_amount" />
 									<field name="currency_id" />
@@ -1316,6 +1339,7 @@
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
 								<field name="is_company" invisible="1" />
+								<field name="num_of_packs" invisible="1" />
                                 <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" context="{'from_button': True}" />
 								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" icon="gtk-cancel" />
@@ -1323,9 +1347,9 @@
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" />
+                                        attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|', '|', ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
+                                        attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
@@ -1416,6 +1440,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
                         <field name="picking_ids" />
+                        <field name="packing_list" />
                         <field name="date" widget="date" />
                         <newline/>
                         <field name="shipment_expected_date" widget="date" />

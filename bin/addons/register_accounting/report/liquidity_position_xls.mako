@@ -327,7 +327,7 @@
           <Data ss:Type="String">${_('Period')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Opening Balance in register currency')|x}</Data>
+          <Data ss:Type="String">${_('Starting Balance in register currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Calculated Balance in register currency')|x}</Data>
@@ -499,14 +499,13 @@
       </Row>
 
       <% pending_cheques = getPendingCheques() %>
-      % for journal in getChqJournalCodes():
+      % for journal in getSortedJournals():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ pending_cheques['registers'][journal]['instance'] |x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <!-- journal code -->
-          <Data ss:Type="String">${ journal|x }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['journal_code']|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ pending_cheques['registers'][journal]['journal_name']|x }</Data>

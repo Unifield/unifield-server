@@ -25,9 +25,12 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools import flatten
+from lxml import etree
+
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
+    _inherit = 'finance.query.method'
     _rec_name = 'description'
 
     _columns = {
@@ -42,6 +45,7 @@ class account_mcdb(osv.osv):
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
         'document_code': fields.char(string='Sequence number', size=255),
+        'include_related_entries': fields.boolean('Related entries', help='Entries related to the Sequence numbers set'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'fiscalyear_id': fields.many2one('account.fiscalyear', string='Fiscal Year'),
@@ -157,6 +161,39 @@ class account_mcdb(osv.osv):
     }
 
     _order = 'user, description, id'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if  context is None:
+            context = {}
+        view = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('from_query') and view_type == 'form':
+            form = etree.fromstring(view['arch'])
+            fields = form.xpath('//group[@name="wizard_template"]')
+            for field in fields:
+                field.set('invisible', "1")
+            fields = form.xpath('//group[@name="wizard_hq_query"]')
+            for field in fields:
+                field.set('invisible', "0")
+            view['arch'] = etree.tostring(form)
+
+        if context.get('from', '') != 'combined.line' and 'document_code' in view['fields']:
+            view['fields']['document_code']['string'] = _('Sequence numbers')
+            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma.')
+        return view
+
+
+    def name_get(self, cr, uid, ids, context=None):
+        if not len(ids):
+            return []
+        reads = self.read(cr, uid, ids, ['description','hq_template'], context=context)
+        res = []
+        for record in reads:
+            name = record['description']
+            if record['hq_template']:
+                name = '%s (SYNC)' % (name,)
+
+            res.append((record['id'], name))
+        return res
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -430,15 +467,30 @@ class account_mcdb(osv.osv):
                         context['selector_display_cheque_number'] = True
             # DOCUMENT CODE fields
             if wiz.document_code and wiz.document_code != '':
+                document_code = wiz.document_code
                 document_code_field = 'move_id.name'
+                # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
+                # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
+                document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
-                    domain.append('|')
-                    domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('entry_sequence', 'ilike', '%s' % wiz.document_code))
+                    if context.get('from', '') == 'combined.line':
+                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
+                        domain.append(('entry_sequence', 'ilike', document_code))
+                    else:
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
+                        domain.append(('entry_sequence', 'in', document_codes))
                 else:
-                    domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
+                    if context.get('from', '') == 'combined.line':
+                        domain.append((document_code_field, 'ilike', document_code))
+                    else:
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append((document_code_field, 'in', document_codes))
+                if document_codes and wiz.include_related_entries:
+                    # note: the domain has no impact on the related entries to be displayed
+                    context.update({'related_entries': document_codes})
+
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -594,6 +646,12 @@ class account_mcdb(osv.osv):
 
             context['target_filename_prefix'] = name
 
+            # add the related entries at the end if needed
+            if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+                entry_ids = self.pool.get(res_model).search(cr, uid, domain, order='NO_ORDER', context=context) or []
+                related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+                domain = [('id', 'in', list(set(entry_ids + related_entry_ids)))]
+
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
@@ -604,6 +662,7 @@ class account_mcdb(osv.osv):
                 'search_view_id': search_view_id,
                 'domain': domain,
                 'context': context,
+                'keep_open': 1,
                 'target': 'current',
             }
         return False
@@ -632,39 +691,7 @@ class account_mcdb(osv.osv):
         # Clear all fields if necessary
         if all_fields:
             res_id = self.create(cr, uid, {'model': res_model}, context=context)
-        # Update context
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-        })
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        elif res_model == 'combined.line':
-            name = _('Selector - Combined Journals Report')
-            view_name = 'account_mcdb_combined_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',  # to display the menu on the right
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def _button_add(self, cr, uid, ids, obj=False, field=False, args=None, context=None):
         """
@@ -683,44 +710,13 @@ class account_mcdb(osv.osv):
             'active_id': ids[0],
             'active_ids': ids,
         })
-        res_id = ids[0]
         # Do search
         if obj and field:
             # Search all elements
             element_ids = self.pool.get(obj).search(cr, uid, args)
             if element_ids:
                 self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
-        # Search model
-        wiz = self.browse(cr, uid, res_id)
-        res_model = wiz and wiz.model or False
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        elif res_model == 'combined.line':
-            name = _('Selector - Combined Journals Report')
-            view_name = 'account_mcdb_combined_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',  # to display the menu on the right
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def button_journal_clear(self, cr, uid, ids, context=None):
         """
@@ -1193,7 +1189,8 @@ class account_mcdb(osv.osv):
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
         """
         Returns a String corresponding to the domain in parameter:
-        criteria separated with ";" and followed by ":" for the value
+        criteria separated with ";" and followed by ":" for the value.
+        Adds "Related entries: True" if related_entries stored in context.
         """
         if context is None:
             context = {}
@@ -1247,6 +1244,9 @@ class account_mcdb(osv.osv):
                         value, operator = self._get_data_from_field(cr, uid, second_obj_field, dom[2], operator, context)
                 if title and operator and value:
                     dom_selections.append("%s%s %s" % (title, operator, value))
+        if context.get('related_entries', []):
+            related_entries_str = "%s: %s" % (_("Related entries"), _("True"))
+            dom_selections.append(related_entries_str)
         return ' ; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):
@@ -1272,6 +1272,10 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             result_ids = aal_obj.search(cr, uid, domain, context=context, limit=limit)
             target_filename = 'Analytic Selector'
+        # add the related entries if needed
+        if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+            related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+            result_ids = list(set(result_ids + related_entry_ids))
         output_currency_id = False
         if selector.display_in_output_currency:
             output_currency_id = selector.display_in_output_currency.id
@@ -1282,7 +1286,10 @@ class account_mcdb(osv.osv):
         data['output_currency_id'] = output_currency_id
         data['target_filename'] = target_filename
         data['header'] = header
-        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        context['keep_open'] = 1
+        a = export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        a['datas']['keep_open'] = 1
+        return a
 
     def load_mcdb_template(self, cr, buid, ids, context=None):
         """
@@ -1363,6 +1370,11 @@ class account_mcdb(osv.osv):
         if not copied_id:
             raise osv.except_osv(_('Error'), _('You have to load the template first.'))
         self._format_data(data)
+
+        for field_to_clean in ('hq_template', 'synced'):
+            if field_to_clean in data:
+                del data[field_to_clean]
+
         return self.write(cr, uid, copied_id, data, context=context)
 
     def save_mcdb_template(self, cr, buid, ids, context=None):
@@ -1470,6 +1482,13 @@ class account_mcdb(osv.osv):
         """
         return self.combined_export(cr, uid, ids, format='pdf', context=context)
 
+
+    def save_query(self, cr, buid, ids, context=None):
+        """
+        Save the values of the selector from HQ query
+        """
+        self.edit_mcdb_template(cr, buid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -74,6 +74,18 @@
             menu="True"
          />
 
+        <report
+            id="internal_request_export"
+            string="Export to IR Excel template"
+            model="sale.order"
+            name="internal_request_export"
+            file="msf_supply_doc_export/report/internal_request_export_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
     <!-- TENDER -->
         <report
             id="report_tender_xls"
@@ -205,5 +217,17 @@
            menu="False"
            />
 
+        <!-- PICK export -->
+        <report
+            id="report_pick_export_xls"
+            string="PICK Excel Export"
+            model="stock.picking"
+            name="pick.export.xls"
+            file="msf_supply_doc_export/report/report_pick_export_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
     </data>
 </openerp>

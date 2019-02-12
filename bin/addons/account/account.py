@@ -317,6 +317,20 @@ class account_account(osv.osv):
         'child_consol_ids': fields.many2many('account.account', 'account_account_consol_rel', 'child_id', 'parent_id', 'Consolidated Children'),
         'child_id': fields.function(_get_child_ids, method=True, type='many2many', relation="account.account", string="Child Accounts"),
         'reconcile': fields.boolean('Reconcile', help="Check this if the user is allowed to reconcile entries in this account."),
+        'reconciliation_debit_account_id': fields.many2one('account.account', 'Default Debit Account for Reconciliation',
+                                                           domain=[('type', '!=', 'view'),
+                                                                   ('type_for_register', '!=', 'donation'),
+                                                                   '|',
+                                                                   ('user_type_code', '=', 'income'),
+                                                                   '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # exclude Extra-accounting expenses
+                                                                   ]),
+        'reconciliation_credit_account_id': fields.many2one('account.account', 'Default Credit Account for Reconciliation',
+                                                            domain=[('type', '!=', 'view'),
+                                                                    ('type_for_register', '!=', 'donation'),
+                                                                    '|',
+                                                                    ('user_type_code', '=', 'income'),
+                                                                    '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # exclude Extra-accounting expenses
+                                                                    ]),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
                                     'account_id', 'tax_id', 'Default Taxes'),
@@ -1118,12 +1132,12 @@ class account_move(osv.osv):
             args = []
         ids = []
         if name:
-            ids += self.search(cr, user, [('name','ilike',name)]+args, limit=limit, context=context)
+            ids += self.search(cr, user, [('name', operator, name)]+args, limit=limit, context=context)
 
         if not ids and name and type(name) == int:
             ids += self.search(cr, user, [('id','=',name)]+args, limit=limit, context=context)
 
-        if not ids:
+        if not ids and args:
             ids += self.search(cr, user, args, limit=limit, context=context)
 
         return self.name_get(cr, user, ids, context=context)
@@ -2451,6 +2465,30 @@ class account_subscription(osv.osv):
         self.compute(cr, uid, ids, context=context)
         return True
 
+    def get_dates_to_create(self, cr, uid, subscription_id, context=None):
+        """
+        Return the list of dates for which new Subscription Lines have to be created (i.e. don't exist yet) for the Subscription in param
+        """
+        if context is None:
+            context = {}
+        sub = self.browse(cr, uid, subscription_id, context=context)
+        ds = sub.date_start
+        date_list = []
+        # get all the dates for which a subscription line has to be created
+        for i in range(sub.period_total):
+            date_list.append(ds)
+            if sub.period_type == 'day':
+                ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(days=sub.period_nbr)).strftime('%Y-%m-%d')
+            if sub.period_type == 'month':
+                ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(months=sub.period_nbr)).strftime('%Y-%m-%d')
+            if sub.period_type == 'year':
+                ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(years=sub.period_nbr)).strftime('%Y-%m-%d')
+        # remove the dates from already existing subscription lines
+        existing_sub_lines = sub.lines_id or []
+        existing_dates = [l.date for l in existing_sub_lines]
+        dates_to_create = [d for d in date_list if d not in existing_dates]
+        return dates_to_create
+
     def compute(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -2462,21 +2500,8 @@ class account_subscription(osv.osv):
                     _('Warning !'),
                     _("Compute cancelled. Please review analytic allocation for lines with expense or income accounts.")
                 )
-            ds = sub.date_start
-            date_list = []
-            # get all the dates for which a subscription line has to be created
-            for i in range(sub.period_total):
-                date_list.append(ds)
-                if sub.period_type=='day':
-                    ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(days=sub.period_nbr)).strftime('%Y-%m-%d')
-                if sub.period_type=='month':
-                    ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(months=sub.period_nbr)).strftime('%Y-%m-%d')
-                if sub.period_type=='year':
-                    ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(years=sub.period_nbr)).strftime('%Y-%m-%d')
             # create the subscription lines if they don't exist yet
-            existing_sub_lines = sub.lines_id or []
-            existing_dates = [l.date for l in existing_sub_lines]
-            dates_to_create = [d for d in date_list if d not in existing_dates]
+            dates_to_create = self.get_dates_to_create(cr, uid, sub.id, context=context)
             for date_sub in dates_to_create:
                 self.pool.get('account.subscription.line').create(cr, uid, {
                     'date': date_sub,

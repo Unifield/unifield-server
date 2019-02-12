@@ -109,8 +109,13 @@ class product_supplier(osv.osv):
             log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
             log = log_seq.get_id(code_or_id='id')
 
+        if name == 'seller_ids' and context.get('real_user'):
+            user_id = self.pool.get('res.users').browse(cr, uid, context['real_user'], fields_to_fetch=['id'], context=context).id
+        else:
+            user_id = uid
+
         vals = {
-            'user_id': uid,
+            'user_id': user_id,
             'method': 'write',
             'name': name,
             'object_id': object_id,
@@ -150,8 +155,8 @@ class product_supplier(osv.osv):
                                     'Supplier sequence', vals['sequence'],
                                     supplier.sequence, context=context)
 
-        res = super(product_supplier, self).write(cr, uid, ids, vals,
-                                                  context=context)
+        res = super(product_supplier, self).write(cr, uid, ids, vals, context=context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1015,7 +1020,7 @@ class audittrail_log_line(osv.osv):
         'new_value': fields.text("New Value"),
         'field_description': fields.char('Field Description', size=64),
         'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
-        'other_column': fields.char(size=64, string='Other information'),
+        'other_column': fields.char(size=64, string='Sequence', select=1),
         'sub_obj_name': fields.char(size=64, string='Order line'),
         # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
         'rule_id': fields.many2one('audittrail.rule', string='Rule'),

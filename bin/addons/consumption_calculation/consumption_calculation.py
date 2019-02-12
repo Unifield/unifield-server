@@ -183,7 +183,9 @@ class real_average_consumption(osv.osv):
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}, add_empty=True),
+        'details': fields.char(size=86, string='Details', states={'done':[('readonly',True)]}),
+        'notes': fields.text('Notes', states={'done':[('readonly',True)]}),
     }
 
     _defaults = {
@@ -191,7 +193,7 @@ class real_average_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
-        'categ': lambda *a: 'other',
+        'categ': lambda *a: False,
     }
 
     _sql_constraints = [
@@ -211,6 +213,14 @@ class real_average_consumption(osv.osv):
 
         if not 'name' in vals:
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
+
+        if 'cons_location_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['cons_location_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Source Location is inactive"))
+
+        if 'activity_id' in vals:
+            if self.pool.get('stock.location').search(cr, uid, [('id', '=', vals['activity_id']), ('active', '=', False)], context=context):
+                raise osv.except_osv(_('Warning'), _("Destination Location is inactive"))
 
         return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
@@ -329,6 +339,12 @@ class real_average_consumption(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['cons_location_id', 'activity_id'], context=context):
+            if not x.cons_location_id.active:
+                raise osv.except_osv(_('Warning'), _("Source Location %s is inactive") % (x.cons_location_id.name,))
+            if not x.activity_id.active:
+                raise osv.except_osv(_('Warning'), _("Destination Location %s is inactive") % (x.activity_id.name,))
 
         self.write(cr, uid, ids, {'state':'draft'}, context=context)
 
@@ -829,8 +845,8 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
-        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
+        'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
+        'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
         'asset_check': fields.function(_get_checks_all, method=True, string='Asset Check', type='boolean', readonly=True, multi="m"),
@@ -1733,7 +1749,7 @@ class product_product(osv.osv):
         for id in ids:
             res[id] = 0.00
             if from_date and to_date:
-                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
+                rac_search_domain = [
                     ('cons_location_id', 'in', location_ids),
                     ('state', '!=', 'cancel'),
                     # All lines with a report started out the period and finished in the period
@@ -1742,7 +1758,10 @@ class product_product(osv.osv):
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
                     '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
-                ])
+                ]
+                if context.get('location_dest_id'):
+                    rac_search_domain.append(('activity_id', '=', context['location_dest_id']))
+                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, rac_search_domain)
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
                 rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)

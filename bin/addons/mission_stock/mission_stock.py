@@ -188,6 +188,7 @@ msr_in_progress()
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
+    _order = 'full_view desc, name'
 
     logger = logging.getLogger('MSR')
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
@@ -911,12 +912,15 @@ class stock_mission_report(osv.osv):
                                                   ('central_location_ok', '=', False)], context=context)
         cu_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')], context=context)
         secondary_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+        secondary_location_ids = []
         if secondary_location_id:
             secondary_location_id = secondary_location_id[1]
-        secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
+            secondary_location_ids = location_obj.search(cr, uid, [('location_id', 'child_of', secondary_location_id)], context=context)
 
-        cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
-        central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
+        if cu_loc:
+            cu_loc = location_obj.search(cr, uid, [('location_id', 'child_of', cu_loc)], context=context)
+        if central_loc:
+            central_loc = location_obj.search(cr, uid, [('location_id', 'child_of', central_loc)], context=context)
 
         # Check if the instance is a coordination or a project
         coordo_id = False
@@ -1485,25 +1489,25 @@ class stock_mission_report_line(osv.osv):
         'state_ud': fields.char(size=128, string='UniData status'),
         'international_status_code': fields.char(size=128, string='Product Creator'),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
-        'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
+        'internal_qty': fields.float(digits=(16,2), string='Instance Stock', related_uom='uom_id'),
         'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
         #'internal_val': fields.float(digits=(16,2), string='Instance Stock Val.'),
-        'stock_qty': fields.float(digits=(16,2), string='Stock Qty.'),
+        'stock_qty': fields.float(digits=(16,2), string='Stock Qty.', related_uom='uom_id'),
         'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
-        'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.'),
+        'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.', related_uom='uom_id'),
         'central_val': fields.float(digits=(16,2), string='Unallocated Stock Val.'),
         'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock',
-                                  store={'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['stock_qty', 'central_qty'], 10),}),
-        'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
+                                  store={'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['stock_qty', 'central_qty'], 10),}, related_uom='uom_id'),
+        'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.', related_uom='uom_id'),
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
-        'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
+        'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.', related_uom='uom_id'),
         'secondary_val': fields.float(digits=(16,2), string='Secondary Stock Val.'),
-        'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.'),
+        'cu_qty': fields.float(digits=(16,2), string='Internal Cons. Unit Qty.', related_uom='uom_id'),
         'cu_val': fields.float(digits=(16,2), string='Internal Cons. Unit Val.'),
-        'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.'),
+        'in_pipe_qty': fields.float(digits=(16,2), string='In Pipe Qty.', related_uom='uom_id'),
         'in_pipe_val': fields.float(digits=(16,2), string='In Pipe Val.'),
-        'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.'),
-        'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.'),
+        'in_pipe_coor_qty': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
+        'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
         'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Noves'),
@@ -1576,14 +1580,6 @@ class stock_mission_report_line(osv.osv):
                           msf_instance i
                        ON m.instance_id = i.id
                      WHERE m.full_view = False
-                       AND (l.internal_qty != 0.00
-                       OR l.stock_qty != 0.00
-                       OR l.central_qty != 0.00
-                       OR l.cross_qty != 0.00
-                       OR l.secondary_qty != 0.00
-                       OR l.cu_qty != 0.00
-                       OR l.in_pipe_qty != 0.00
-                       OR l.in_pipe_coor_qty != 0.00)
                        AND i.state != 'inactive'
                      GROUP BY l.product_id, t.standard_price'''
 
