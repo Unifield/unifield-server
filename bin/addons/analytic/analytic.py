@@ -193,13 +193,6 @@ class account_analytic_account(osv.osv):
         (check_currency, 'Error! The currency has to be the same as the currency of the selected company', ['currency_id', 'company_id']),
     ]
 
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        default['code'] = False
-        default['line_ids'] = []
-        return super(account_analytic_account, self).copy(cr, uid, id, default, context=context)
-
     def on_change_company(self, cr, uid, id, company_id):
         if not company_id:
             return {}

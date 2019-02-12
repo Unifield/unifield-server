@@ -769,7 +769,7 @@ class purchase_order(osv.osv):
                                                          help='Only used to SEARCH for POs with at least one line in Confirmed or Closed state'),
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
-        'from_address': fields.many2one('res.partner.address', string='From Address'),
+        'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -862,6 +862,11 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
+        if not 'pricelist_id' in vals and vals.get('partner_id'):
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist_purchase.id
+
         # common function for so and po
         vals = common_create(self, cr, uid, vals, type=get_type(self), context=context)
         # fill partner_type vals
@@ -904,6 +909,11 @@ class purchase_order(osv.osv):
             ids = [ids]
         if not 'date_order' in vals:
             vals.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
+
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist_purchase.id
 
         # fill partner_type and zone
         if vals.get('partner_id', False):
@@ -1187,7 +1197,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
@@ -1195,7 +1205,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Confirmed Delivery Date of all/selected Order lines ?'), }
 
     def stock_take_data(self, cr, uid, ids, context=None):
         '''
@@ -1203,7 +1213,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -2424,7 +2434,7 @@ class purchase_order(osv.osv):
         generate a po from the selected request for quotation
         '''
         # Objects
-        line_obj = self.pool.get('purchase.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
 
         # Some verifications
         if context is None:
@@ -2435,26 +2445,62 @@ class purchase_order(osv.osv):
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
 
-        # copy the po with rfq_ok set to False
-        data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
-        if not data.get('amount_total', 0.00):
+        rfq =  self.browse(cr, uid, ids[0], context=context)
+        if not rfq.amount_total:
             raise osv.except_osv(
                 _('Error'),
                 _('Generation of PO aborted because no price defined on lines.'),
             )
+
+        # copy the po with rfq_ok set to False
+        if rfq.origin:
+            po_orign = '%s:%s' % (rfq.origin, rfq.name)
+        else:
+            po_orign = rfq.name
         context.update({'generate_po_from_rfq': True})
-        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': po_orign}, context=dict(context,keepOrigin=True))
         context.pop('generate_po_from_rfq')
+
         # Remove lines with 0.00 as unit price
-        no_price_line_ids = line_obj.search(cr, uid, [
+        no_price_line_ids = pol_obj.search(cr, uid, [
             ('order_id', '=', new_po_id),
             ('price_unit', '=', 0.00),
         ], order='NO_ORDER', context=context)
-        line_obj.unlink(cr, uid, no_price_line_ids, context=context)
+        pol_obj.unlink(cr, uid, no_price_line_ids, context=context)
 
-        data = self.read(cr, uid, new_po_id, ['name'], context=context)
+        # set origin:
+        line_ids = pol_obj.search(cr, uid, [('order_id', '=', new_po_id)], context=context)
+        pol_obj.write(cr, uid, line_ids, {'origin': rfq.origin}, context=context)
+
+        # set cross_docking_ok:
+        cross_docking_ok = False
+        for rfq_line in rfq.order_line:
+            if rfq_line.linked_sol_id and not rfq_line.linked_sol_id.order_id.procurement_request or \
+                    (rfq_line.linked_sol_id.order_id.procurement_request and
+                        rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
+                cross_docking_ok = True
+                break
+        self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)
+
+        # set AD:
+        pol_no_ad = pol_obj.search(cr, uid, [
+            ('order_id', '=', new_po_id),
+            ('analytic_distribution_id', '=', False),
+            ('linked_sol_id', '!=', False),
+            ('linked_sol_id.order_id.procurement_request', '=', False),
+        ], order='NO_ORDER', context=context)
+        for pol in pol_obj.browse(cr, uid, pol_no_ad, context=context):
+            dist_sol = pol.linked_sol_id.analytic_distribution_id.id or pol.linked_sol_id.order_id.analytic_distribution_id.id or False
+            if not dist_sol:
+                continue
+            new_dist = self.pool.get('analytic.distribution').copy(cr, uid, dist_sol, {}, context=context)
+            pol_obj.write(cr, uid, [pol.id], {
+                'analytic_distribution_id': new_dist,
+            }, context=context)
+
         # log message describing the previous action
-        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
+        new_po_data = self.read(cr, uid, new_po_id, ['name'], context=context)
+        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.') % new_po_data['name'])
 
         return new_po_id
 
