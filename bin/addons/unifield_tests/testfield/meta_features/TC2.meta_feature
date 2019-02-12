@@ -80,7 +80,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #LINE 3	
 	
-    I click on "Validate lines"
+    I click on "Validate document"
 	I should see "Validated" in "Order State"
 
     I store "Order Reference" in "PO_REF"
@@ -108,7 +108,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #Line 6
 
-    I click on "Validate lines"
+    I click on "Validate document"
 	I should see "Validated" in "State"
 
     I store "Order Reference" in "FO_REFERENCE"
@@ -231,7 +231,7 @@ Scenario: SSL US4517 FO to ESC split
        | ALIFCOFM1E-  | Draft  |  7,000 |
 
 		
-    I click on "Validate lines"	   
+    I click on "Validate document"	   
 	I should see "Validated" in "Order State"
 	
 	I store "Order Reference" in "PO_REF_COO1"		
@@ -543,7 +543,7 @@ Scenario: SSL US4517 FO to ESC split
         | SOURCE DOCUMENT    | SUPPLIER     |
         | *{{FO_REFERENCE}}* | Local Market |
 
-    I click on "Confirm lines"	
+    I click on "Confirm document"	
 
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
@@ -1032,7 +1032,7 @@ Scenario: SSL US4517 FO to ESC split
 	I validate the line
 	I click on "Save" and close the window
 	
-	I click on "Validate lines"		
+	I click on "Validate document"		
 		
 		
     I should see "Validated" in "Order State"		
@@ -1115,7 +1115,7 @@ Scenario: SSL US4517 FO to ESC split
 	I validate the line
 	I click on "Save" and close the window
 	
-	I click on "Validate lines"
+	I click on "Validate document"
 	
     I should see "Validated" in "Order State"	
 
@@ -1176,7 +1176,7 @@ Scenario: SSL US4517 FO to ESC split
     I click on "Apply to lines@2" and open the window
 	I click on "Yes - All lines" and close the window
   
-	I click on "Confirm lines"		
+	I click on "Confirm document"		
 	I should see "Confirmed" in "Order State"  
 	
 	

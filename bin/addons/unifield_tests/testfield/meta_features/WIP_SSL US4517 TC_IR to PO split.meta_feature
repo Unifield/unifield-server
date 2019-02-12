@@ -65,7 +65,7 @@ Scenario: SSL US4517 PO split from IR
 	
     I validate the line
 
-    I click on "Validate Lines"
+    I click on "Validate document"
 	
     I store "Order Reference" in "IR_REFERENCE"
 	
@@ -233,7 +233,7 @@ Scenario: SSL US4517 PO split from IR
 	I validate the line
 	I click on "Save" and close the window
 	
-	I click on "Validate lines"
+	I click on "Validate document"
   
 	I should see in the main table the following data:
         |LINE |  PRODUCT CODE |STATE      | QTY       | 
@@ -484,7 +484,7 @@ Scenario: SSL US4517 PO split from IR
         | SOURCE DOCUMENT    | SUPPLIER     |
         | *{{IR_REFERENCE}}* | Local Market |
 
-    I click on "Confirm lines"	
+    I click on "Confirm document"	
 
     I set "Show all" on lines filter	
 	I should see in the main table the following data:
@@ -961,7 +961,7 @@ Scenario: SSL US4517 PO split from IR
 	I validate the line
 	I click on "Save" and close the window
 	
-	I click on "Validate lines"
+	I click on "Validate document"
 	
 	I open tab menu "ORDERS"
     I click on menu "Internal Requests"
@@ -1032,7 +1032,7 @@ Scenario: SSL US4517 PO split from IR
 	I validate the line
 	I click on "Save" and close the window
 	
-	I click on "Validate lines"
+	I click on "Validate document"
 	
     I should see "Validated" in "Order State"		
 
@@ -1092,7 +1092,7 @@ Scenario: SSL US4517 PO split from IR
     I click on "Apply to lines@2" and open the window
 	I click on "Yes - All lines" and close the window
   
-	I click on "Confirm lines"		
+	I click on "Confirm document"		
 	I should see "Confirmed" in "Order State"   
 	
 	

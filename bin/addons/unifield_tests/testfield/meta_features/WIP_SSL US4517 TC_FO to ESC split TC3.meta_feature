@@ -80,7 +80,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #LINE 3	
 	
-    I click on "Validate lines"
+    I click on "Validate document"
 	I should see "Validated" in "Order State"
 
     I store "Order Reference" in "PO_REF"
@@ -109,7 +109,7 @@ Scenario: SSL US4517 FO to ESC split
 
 #Line 6
 
-    I click on "Validate lines"
+    I click on "Validate document"
 	I should see "Validated" in "State"
 
     I store "Order Reference" in "FO_REFERENCE"
@@ -218,7 +218,7 @@ Scenario: SSL US4517 FO to ESC split
 	I click on "Apply to lines" and open the window
     I click on "Yes - All lines" and close the window	
 		
-    I click on "Validate lines"	   
+    I click on "Validate document"	   
 	I should see "Validated" in "Order State"
 	
 	I store "Order Reference" in "PO_REF_COO1"		
@@ -298,7 +298,7 @@ Scenario: SSL US4517 FO to ESC split
         | REFERENCE       |
         | {{PO_REF_COO1}} |	
 		
-	I click on "Confirm lines"		
+	I click on "Confirm document"		
 	
 	I should see "Confirmed" in "Order State"
 	
