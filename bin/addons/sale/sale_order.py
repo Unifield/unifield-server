@@ -824,6 +824,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if not obj['procurement_request']:
                     self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist.id
+
         for order in self.browse(cr, uid, ids, context=context):
             if order.yml_module_name == 'sale':
                 continue
@@ -848,6 +853,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        if not 'pricelist_id' in vals and vals.get('partner_id'):
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist.id
 
         if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
@@ -1874,14 +1884,25 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
+        def get_linked_pol(sol_id):
+            '''
+            @return PO line (browse_record) linked to the given SO line or None
+            '''
+            linked_pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+            linked_pol = None
+            if linked_pol_id:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol_id[0], fields_to_fetch=['state'], context=context)
+            return linked_pol
+
         res = {}
         for sol in self.browse(cr, uid, ids, context=context):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if sol.resourced_original_line and sol.state != 'done':
+            if (sol.resourced_original_line or (sol.is_line_split and sol.original_line_id and sol.original_line_id.resourced_original_line)) and sol.state not in ('done', 'cancel', 'cancel_r'):
                 if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
-                    if sol.state in ('sourced_v', 'sourced_n'):
+                    linked_pol = get_linked_pol(sol.id)
+                    if sol.state == 'sourced_v' or (sol.state == 'sourced_n' and linked_pol and linked_pol.state != 'draft'):
                         res[sol.id] = 'Resourced-pv'
                     elif sol.state == 'sourced_sy':
                         res[sol.id] = 'Resourced-sy'
@@ -2188,6 +2209,8 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
+        if context.get('from_button') and 'is_line_split' not in default:
+            default['is_line_split'] = False
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
@@ -2866,7 +2889,6 @@ class sale_order_line(osv.osv):
                 'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
 
-
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
@@ -3111,8 +3133,6 @@ class sale_order_sourcing_progress(osv.osv):
         """
         order_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
-        src_doc_obj = self.pool.get('procurement.request.sourcing.document')
-        src_doc_mem = self.pool.get('procurement.request.sourcing.document.mem')
 
         if context is None:
             context = {}
@@ -3133,11 +3153,6 @@ class sale_order_sourcing_progress(osv.osv):
         ''', (tuple(order_ids),))
         min_date, max_date = cr.fetchone()
 
-        # All documents that source the FO/IR lines
-        src_doc_ids = src_doc_obj.search(cr, uid, [
-            ('order_id', 'in', order_ids),
-        ], context=context)
-
         # Number of lines in the FO
         nb_all_lines = sol_obj.search(cr, uid, [
             ('order_id', 'in', order_ids),
@@ -3146,54 +3161,8 @@ class sale_order_sourcing_progress(osv.osv):
         mem_fsl_nb = 0
         mem_ool_nb = 0
 
-        mem_sol_ids = []
-        src_doc_mem_ids = src_doc_mem.search(cr, uid, [
-            ('order_id', 'in', order_ids),
-        ], context=context)
-        for mem_doc in src_doc_mem.browse(cr, uid, src_doc_mem_ids, context=context):
-            for l in mem_doc.sourcing_lines:
-                if l.id not in mem_sol_ids:
-                    mem_sol_ids.append(l.id)
-                    if l.type == 'make_to_stock':
-                        mem_fsl_nb += 1
-                    elif l.type == 'make_to_order':
-                        mem_ool_nb += 1
-
-        # Get number of sourced lines by type (MTS or MTO)
-        res = []
-        if src_doc_ids:
-            where_sql = ''
-            where_params = [tuple(src_doc_ids)]
-            if mem_sol_ids:
-                where_sql = ' AND sol.id NOT IN %s'
-                where_params.append(tuple(mem_sol_ids))
-            sql = '''
-                SELECT count(*) AS nb_line, sol.type AS type
-                FROM sale_order_line sol
-                    LEFT JOIN sale_line_sourcing_doc_rel slsdr
-                    ON slsdr.sale_line_id = sol.id
-                WHERE
-                    slsdr.document_id IN %%s
-                    %s
-                GROUP BY sol.type
-            ''' % where_sql # not_a_user_entry
-            cr.execute(sql, where_params)
-            res = cr.dictfetchall()
-
-        for r in res:
-            if r.get('type') == 'make_to_stock':
-                mem_fsl_nb += r.get('nb_line', 0)
-            elif r.get('type') == 'make_to_order':
-                mem_ool_nb += r.get('nb_line', 0)
-
         # Build message by sourcing document
         sourcing = ''
-        for src_doc in src_doc_obj.browse(cr, uid, src_doc_ids, context=context):
-            sourcing += _('%s line%s sourced on %s.\n') % (
-                len(src_doc.sourcing_lines),
-                len(src_doc.sourcing_lines) > 1 and 's' or '',
-                src_doc.sourcing_document_name,
-            )
 
         fsl_nb = 0
         ool_nb = 0

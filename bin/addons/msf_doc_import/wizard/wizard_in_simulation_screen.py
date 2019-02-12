@@ -824,7 +824,7 @@ Nothing has been imported because of %s. See below:
                             if num_of_pack:
                                 for line in data_per_pack.get(pack_d[2], []):
                                     if line[3] and line[2] in uom_data:
-                                        if not ppl_processor._check_rounding(cr, uid, pack_d[2], uom_data.get(line[2]), num_of_pack, line[3]):
+                                        if not ppl_processor._check_rounding(cr, uid, uom_data.get(line[2]), num_of_pack, line[3]):
                                             rounding_issues.append('Packing List %s, Pack from parcel %s, to parcel %s' % (ppl or '-', pack_d[0], pack_d[1]))
 
                         pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences[ppl]]), ('integrity_status', '!=', 'empty')], context=context)

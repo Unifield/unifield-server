@@ -598,36 +598,6 @@ class account_analytic_account(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Funding Pools must have a Coordination Proprietary Instance.'))
         return True
 
-    def create(self, cr, uid, vals, context=None):
-        """
-        Check FPs
-        """
-        if context is None:
-            context = {}
-        # Check that instance_id is filled in for FP
-        if context.get('from_web', False) or context.get('from_import_menu', False):
-            self.check_fp(cr, uid, vals, to_update=True, context=context)
-        return super(account_analytic_account, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Check FPs
-        """
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-
-        # US-166: Ids needs to be always a list
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = super(account_analytic_account, self).write(cr, uid, ids, vals, context=context)
-        if context.get('from_web', False) or context.get('from_import_menu', False):
-            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
-            if cat_instance:
-                self.check_fp(cr, uid, cat_instance, context=context)
-        return res
 
 account_analytic_account()
 

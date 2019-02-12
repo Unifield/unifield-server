@@ -191,12 +191,12 @@
                                 <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
-                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
-                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             </group>
@@ -212,7 +212,7 @@
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line)"
-                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
+                                filter_selector="[('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all', []), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
@@ -301,11 +301,11 @@
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
                                     <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
-                                    <button colspan="1" name="update_date" string="Apply to all lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
                                 <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
@@ -399,10 +399,10 @@
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel" icon="gtk-cancel"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
-                        <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward"/>
-                        <button name="confirm_lines" states="validated,validated_p" string="Confirm lines" icon="gtk-go-forward" type="object"/>
+                        <button name="validate_lines" states="draft,draft_p" string="Validate document" type="object" icon="gtk-go-forward" help="all the lines will be Validated where this status change is feasible" />
+                        <button name="confirm_lines" states="validated,validated_p" string="Confirm document" icon="gtk-go-forward" type="object" help="all the lines will be Confirmed where this status change is feasible" />
                     </group>
                 </form>
             </field>

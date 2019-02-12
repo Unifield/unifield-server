@@ -147,6 +147,8 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context.get('sync_message_execution'):
+            return False
         sol = self.browse(cr, uid, ids[0], context=context)
         related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
         if not related_pol:
@@ -170,7 +172,7 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-            if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
+            if not sol.cancelled_by_sync and self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
                 sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol,
@@ -570,6 +572,12 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
+
+            # US-4576: Set supplier
+            if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
+                    and sol.product_id and sol.product_id.seller_id:
+                to_write['supplier'] = sol.product_id.seller_id.id
+
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
             if sol.order_id.order_type == 'loan':

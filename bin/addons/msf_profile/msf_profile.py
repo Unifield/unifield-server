@@ -92,6 +92,15 @@ class patch_scripts(osv.osv):
             self._logger.warn('Trigger sync updates on %d products' % (cr.rowcount,))
         return True
 
+    def us_5507_set_synchronize(self, cr, uid, *a, **b):
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("update res_users set synchronize='t' where create_uid=%s", (sync_id,))
+        self._logger.warn('Set synchronize on  %s users.' % (cr.rowcount,))
+        return True
+
     def us_5480_correct_partner_fo_default_currency(self, cr, uid, *a, **b):
         """
         Sets FO default currency = PO default currency for all external partners where these currencies are different
