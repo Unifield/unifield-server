@@ -105208,3 +105208,43 @@ msgstr "Prêt à être Expédié"
 #: selection:shipment,state:0
 msgid "Dispatched"
 msgstr "Envoyé"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Validated where this status change is feasible"
+msgstr "Toutes les lignes seront validées si leur status le permet"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Cancelled where this status change is feasible"
+msgstr "Toutes les lignes seront annulées si leur status le permet"
+
+#. modules: purchase, sale
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "all the lines will be Confirmed where this status change is feasible"
+msgstr "Toutes les lignes seront confirmées si leur status le permet"
+
+#. modules: purchase, sale
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Confirm document"
+msgstr "Confirmer le document"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Cancel document"
+msgstr "Annuler le document"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Validate document"
+msgstr "Valider le document"

@@ -120,8 +120,8 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
-                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel document" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" help="all the lines will be Cancelled where this status change is feasible" />
+                                <button name="validate_ir_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" help="all the lines will be Validated where this status change is feasible" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
