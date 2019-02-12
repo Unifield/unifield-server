@@ -26,6 +26,8 @@ from mx.DateTime import RelativeDateTime, today, DateFrom, Age
 from datetime import date, timedelta, datetime
 
 import time
+import tools
+
 
 class expiry_quantity_report(osv.osv_memory):
     _name = 'expiry.quantity.report'
@@ -240,7 +242,7 @@ class product_likely_expire_report(osv.osv):
             if r['consumption_from'] and r['consumption_to']:
                 d_from = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_from'])
                 d_to = date_obj.get_date_formatted(cr, uid, datetime=r['consumption_to'])
-                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0]) + ' (' + d_from + ' - ' + d_to + ')'
+                res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0]) + tools.ustr(' (' + d_from + ' - ' + d_to + ')')
             else:
                 res[r['id']] = _([label for val, label in CONSUMPTION_TYPE if val == r['consumption_type']][0])
 

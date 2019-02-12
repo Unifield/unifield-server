@@ -199,7 +199,7 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(toUstr(formatLang(il.expired_date, date=True)) or '')}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
