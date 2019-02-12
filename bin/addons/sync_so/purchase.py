@@ -121,13 +121,19 @@ class purchase_order_line_sync(osv.osv):
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
 
+        # search the PO line to update:
+        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
+        if not pol_id and sol_dict.get('sync_linked_pol'):
+            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
+            pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
+
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
 
         ress_fo = False
         if sol_dict.get('resourced_original_line'):
             pol_values['set_as_resourced'] = True
-            if sol_dict.get('resourced_original_remote_line'):
+            if sol_dict.get('resourced_original_remote_line') and not pol_id:
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
                 # link our resourced PO line with corresponding resourced FO line:
                 if pol_values['resourced_original_line']:
@@ -148,11 +154,6 @@ class purchase_order_line_sync(osv.osv):
                     pol_values['link_so_id'] = orig_line.link_so_id.id
                     self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
 
-        # search the PO line to update:
-        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
-        if not pol_id and sol_dict.get('sync_linked_pol'):
-            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
-            pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
 
         # update PO line:
         kind = ""
@@ -231,6 +232,7 @@ class purchase_order_line_sync(osv.osv):
 
         # update PO line state:
         """
+        debug = True
         if debug:
             print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
             cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
@@ -238,8 +240,9 @@ class purchase_order_line_sync(osv.osv):
             dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty', 'order_id'])
 
             all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', dd['order_id'][1])])
-            print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
+            print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty', 'linked_sol_id'])
             print dd
+            print 'pol_state', pol_state
         """
         if sol_dict['state'] in ('sourced', 'sourced_v'):
             if pol_state == 'sourced_n':
@@ -266,7 +269,7 @@ class purchase_order_line_sync(osv.osv):
         """
         if debug:
             print 'IR RESULT'
-            ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
+            ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 2)])
             if ir_l_ids:
                 print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
                 cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
