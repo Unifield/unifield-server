@@ -33,7 +33,7 @@ class split_move_processor(osv.osv_memory):
     _columns = {
         'processor_line_id': fields.integer(string='ID of the processor line', required=True),
         'processor_type': fields.char(size=256, string='Model of the processor line', required=True),
-        'quantity': fields.float('Quantity', digits_compute=dp.get_precision('Product UOM')),
+        'quantity': fields.float('Quantity', digits_compute=dp.get_precision('Product UOM'), related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
     }
 

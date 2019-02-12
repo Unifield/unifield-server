@@ -92,24 +92,27 @@ class hq_report_ocg(report_sxw.report_sxw):
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      currency.name]]
 
-    def _get_liquidity_balances(self, cr, instance_ids, period, period_yyyymm):
+    def _get_liquidity_balances(self, cr, uid, instance_ids, period, period_yyyymm, context=None):
         """
         Returns the content of the Liquidity Balances Report as a list of lists
         """
+        if context is None:
+            context = {}
         reg_types = ('cash', 'bank', 'cheque')
         liquidity_balance_header = ['Instance',
                                     'Code',
                                     'Name',
                                     'Period',
-                                    'Opening balance',
+                                    'Starting balance',
                                     'Calculated balance',
                                     'Closing balance',
                                     'Currency']
         liquidity_sql = hq_report_ocb.liquidity_sql
-        liquidity_params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.id, reg_types,
-                            period.date_stop, tuple(instance_ids))
+        liquidity_params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.date_start,
+                            period.date_stop, reg_types, period.date_stop, tuple(instance_ids))
         cr.execute(liquidity_sql, liquidity_params)
         liquidity_balance_lines = [list(lbl) for lbl in cr.fetchall()]
+        liquidity_balance_lines = hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, liquidity_balance_lines, context=context)
         return [liquidity_balance_header] + liquidity_balance_lines
 
     def _get_account_balances(self, cr, instance_ids, period, period_yyyymm):
@@ -120,7 +123,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                               'Account',
                               'Account Name',
                               'Period',
-                              'Opening balance',
+                              'Starting balance',
                               'Calculated balance',
                               'Closing balance',
                               'Booking Currency']
@@ -132,6 +135,8 @@ class hq_report_ocg(report_sxw.report_sxw):
         return [acc_balance_header] + acc_balance_lines
 
     def create(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
         pool = pooler.get_pool(cr.dbname)
         # Create the header
         first_header = ['Proprietary Instance',
@@ -362,8 +367,8 @@ class hq_report_ocg(report_sxw.report_sxw):
 
         second_report = [second_header] + second_result_lines
 
-        liquidity_report = self._get_liquidity_balances(cr, data['form'].get('instance_ids', False),
-                                                        period, period_yyyymm)
+        liquidity_report = self._get_liquidity_balances(cr, uid, data['form'].get('instance_ids', False),
+                                                        period, period_yyyymm, context=context)
         liquidity_share = 0.05  # 5% of the process
         self.shared_update_percent(cr, uid, pool, [bg_id],
                                    share=liquidity_share, finished=True,

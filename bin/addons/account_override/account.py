@@ -494,37 +494,34 @@ class account_account(osv.osv):
                 'has_partner_type_section' in vals and not vals['has_partner_type_section']:
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
-    def _check_reconcile_status(self, cr, uid, vals, account_id=None, context=None):
+    def _check_reconcile_status(self, cr, uid, account_id, context=None):
         """
-        Prevent an account from being set as reconcilable if it is included in the yearly move to 0.
+        Prevents an account:
+        - from being set as reconcilable if it is included in the yearly move to 0
+        - from NOT being set as reconcilable if it is included in revaluation (except for liquidity accounts)
         """
         if context is None:
             context = {}
-        reconcile = False
-        include_in_yearly_move = False
-        account = False
-        # if one of the fields to check isn't in vals, use its current value if it exists
-        if 'reconcile' in vals:
-            reconcile = vals['reconcile']
-        elif account_id is not None:
-            account = self.browse(cr, uid, account_id,
-                                  fields_to_fetch=['reconcile', 'include_in_yearly_move'], context=context)
+        if account_id:
+            account_fields = ['reconcile', 'include_in_yearly_move', 'currency_revaluation', 'type']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
             reconcile = account.reconcile
-        if 'include_in_yearly_move' in vals:
-            include_in_yearly_move = vals['include_in_yearly_move']
-        elif account_id is not None:
-            account = account or self.browse(cr, uid, account_id,
-                                             fields_to_fetch=['include_in_yearly_move'], context=context)
             include_in_yearly_move = account.include_in_yearly_move
-        if reconcile and include_in_yearly_move:
-            raise osv.except_osv(_('Warning !'),
-                                 _("An account can't be both reconcilable and included in the yearly move to 0."))
+            currency_revaluation = account.currency_revaluation
+            is_liquidity = account.type == 'liquidity'
+            if reconcile and include_in_yearly_move:
+                raise osv.except_osv(_('Warning !'),
+                                     _("An account can't be both reconcilable and included in the yearly move to 0."))
+            elif not reconcile and currency_revaluation and not is_liquidity:
+                raise osv.except_osv(_('Warning !'),
+                                     _('An account set as "Included in revaluation" must be set as "Reconcile".'))
 
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
-        self._check_reconcile_status(cr, uid, vals, context=context)
-        return super(account_account, self).create(cr, uid, vals, context=context)
+        account_id = super(account_account, self).create(cr, uid, vals, context=context)
+        self._check_reconcile_status(cr, uid, account_id, context=context)
+        return account_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -535,9 +532,16 @@ class account_account(osv.osv):
             context = {}
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        # remove user_type from vals if it hasn't been modified to avoid the recomputation on JI Account Type (due to store feature)
+        res = True
+        for acc in self.browse(cr, uid, ids, fields_to_fetch=['user_type'], context=context):
+            newvals = vals.copy()
+            if newvals.get('user_type') and newvals['user_type'] == acc.user_type.id:
+                del newvals['user_type']
+            res = res and super(account_account, self).write(cr, uid, [acc.id], newvals, context=context)
         for account_id in ids:
-            self._check_reconcile_status(cr, uid, vals, account_id=account_id, context=context)
-        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+            self._check_reconcile_status(cr, uid, account_id, context=context)
+        return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -572,6 +576,7 @@ class account_account(osv.osv):
                 # existing partner
                 emp_obj = self.pool.get('hr.employee')
                 partner_obj = self.pool.get('res.partner')
+                journal_obj = self.pool.get('account.journal')
                 if partner_type:
                     pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
                         else (partner_type._name, partner_type.id, )
@@ -585,15 +590,18 @@ class account_account(osv.osv):
                     elif pt_model == 'res.partner':
                         partner_id = pt_id
                 elif partner_txt:
-                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                  order='NO_ORDER', limit=1, context=context)
+                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
                     if employee_ids:
                         employee_id = employee_ids[0]
                     else:
-                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                         order='NO_ORDER', limit=1, context=context)
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                         limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
+                        else:
+                            transfer_journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
+                            if transfer_journal_ids:
+                                transfer_journal_id = transfer_journal_ids[0]
                 if employee_id:
                     tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
                     # note: allowed for employees with no type
@@ -628,24 +636,55 @@ class account_account(osv.osv):
             raise osv.except_osv(_('Error'), error_msg)
 
     def check_type_for_specific_treatment(self, cr, uid, account_ids, partner_id=False, employee_id=False,
-                                          journal_id=False, context=None):
+                                          journal_id=False, partner_txt=False, currency_id=False, context=None):
         """
         Checks if the Third parties and accounts in parameter are compatible regarding the "Type for specific treatment"
-        of the accounts (raises an error if not)
+        of the accounts (raises an error if not).
+        Note that the currency_id is the one of the entry to be checked and is used ONLY for the checks on
+        transfer journals (if a currency is given).
         """
         if isinstance(account_ids, (int, long)):
             account_ids = [account_ids]
         if context is None:
             context = {}
         acc_obj = self.pool.get('account.account')
+        employee_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+        journal_obj = self.pool.get('account.journal')
         not_compatible_ids = []
         for acc_id in acc_obj.browse(cr, uid, account_ids, fields_to_fetch=['type_for_register'], context=context):
+            # get the right Third Party if a partner_txt only has been given
+            if partner_txt and not partner_id and not employee_id and not journal_id:
+                employee_ids = employee_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                if employee_ids:
+                    employee_id = employee_ids[0]
+                else:
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                     limit=1, context=context)
+                    if partner_ids:
+                        partner_id = partner_ids[0]
+                    else:
+                        journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
+                        if journal_ids:
+                            journal_id = journal_ids[0]
+                # if there is a partner_txt but no related Third Party found:
+                # ignore the check if "ignore_non_existing_tp" is in context (e.g. when validating HQ entries)
+                if not partner_id and not employee_id and not journal_id and context.get('ignore_non_existing_tp', False):
+                    continue
             acc_type = acc_id.type_for_register
-            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
             advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
             dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
             payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
-            if transfer_not_ok or advance_not_ok or dp_not_ok or payroll_not_ok:
+            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
+            if currency_id and journal_id and not transfer_not_ok:
+                # check the journal type and currency
+                journal = journal_obj.browse(cr, uid, journal_id, fields_to_fetch=['type', 'currency'], context=context)
+                is_liquidity = journal and journal.type in ['cash', 'bank', 'cheque'] and journal.currency
+                if acc_type == 'transfer_same' and (not is_liquidity or journal.currency.id != currency_id):
+                    transfer_not_ok = True
+                elif acc_type == 'transfer' and (not is_liquidity or journal.currency.id == currency_id):
+                    transfer_not_ok = True
+            if advance_not_ok or dp_not_ok or payroll_not_ok or transfer_not_ok:
                 not_compatible_ids.append(acc_id.id)
         if not_compatible_ids:
             self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
@@ -682,7 +721,7 @@ class account_account(osv.osv):
                 allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
                                                                         transfer_journal_id, partner_id, from_vals, context)
                 if not allowed_partner_field:
-                    res[r.id] = True  # allowed with no specific field
+                    res[r.id] = True  # allowed with no specific field (e.g. don't block validation of HQ entries with non-existing 3d Party)
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
         # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
@@ -808,7 +847,7 @@ class account_move(osv.osv):
                                      domain="[('state', '=', 'draft')]", hide_default_menu=True),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
-                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]",
+                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra']), ('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \

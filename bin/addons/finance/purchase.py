@@ -63,5 +63,20 @@ class purchase_order(osv.osv):
             res.update({'value': v})
         return res
 
+    def check_close_cv(self, cr, uid, po_id, context=None):
+        """
+        If all lines of the PO in parameter have been invoiced and none of these invoices is still in Draft state,
+        the Commitment Vouchers linked to the PO will be closed (i.e. line amounts and total set to 0.00 and state set to Done)
+        """
+        if context is None:
+            context = {}
+        if po_id:
+            po = self.browse(cr, uid, po_id, fields_to_fetch=['order_type', 'state', 'invoice_ids'], context=context)
+            po_states = ['done']
+            if po.order_type == 'direct':  # DPO use case: CV and SI are both created at DPO confirmation
+                po_states = ['confirmed', 'confirmed_p', 'done']
+            if po.state in po_states and all(x.state != 'draft' for x in po.invoice_ids):
+                self._finish_commitment(cr, uid, [po.id], context=context)
+
 purchase_order()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

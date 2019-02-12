@@ -15,7 +15,13 @@
                     <field name="account_id"
                         domain="[('restricted_area', '=', 'correction_wizard')]"
                         attrs="{'readonly': [('is_account_correctible', '=', False)]}"
+                        on_change="onchange_correction_line_account_id(account_id, partner_type)"
                     />
+                    <field name="partner_txt_only" invisible="1"/>
+                    <field name="partner_type_mandatory" invisible="1"/>
+                    <field name="partner_type"
+                           attrs="{'required': [('partner_type_mandatory', '=', True)],
+                                   'readonly': ['|', ('partner_txt_only', '=', True), ('is_account_correctible', '=', False)]}"/>
                     <button name="button_analytic_distribution" type="object"
                             icon="terp-stock_symbol-selection" string="Ana. Distri."
                             attrs="{'invisible': [('is_analytic_target', '=', False)]}" />
@@ -77,7 +83,7 @@
                         <group colspan="4" attrs="{'invisible': [('state', '!=', 'correction')]}">
                             <label string="" colspan="2"/>
                             <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
-                            <button name="button_confirm" string="Correct it" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                            <button name="button_confirm" string="Correct" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </xpath>
                 </data>

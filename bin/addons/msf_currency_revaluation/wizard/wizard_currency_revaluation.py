@@ -257,9 +257,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if not revaluation_account:
             raise osv.except_osv(_('Settings Error!'),
                                  _('Revaluation account is not set in company settings'))
-        if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
-            raise osv.except_osv(_('Settings Error!'),
-                                 _('The default revaluation account must have a default destination SUP'))
         # Entry period
         # Posting date
         res['posting_date'] = False
@@ -520,8 +517,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # if the account has a 'expense' or 'income' type
         distribution_id = False
         if revaluation_account.user_type.code in ['expense', 'income']:
-            destination_id = model_data_obj.get_object_reference(
-                cr, uid, 'analytic_distribution', 'analytic_account_destination_support')[1]
+            if not revaluation_account.default_destination_id:
+                raise osv.except_osv(_('Settings Error!'), _('The default revaluation account "%s - %s" must have '
+                                                             'a default destination.') % (revaluation_account.code, revaluation_account.name))
+            destination_id = revaluation_account.default_destination_id.id
 
             # UFTP-189: Show warning message when the fx gain/loss is missing to select (before it was fix for me)
             cc_list = account_ana_obj.search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
