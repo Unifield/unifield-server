@@ -175,7 +175,7 @@ class sale_order_line(osv.osv):
             if not sol.cancelled_by_sync and self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
                 sol_vals = {
                     'resourced_original_line': sol.id,
-                    'resourced_original_remote_line': sol.sync_linked_pol,
+                    'resourced_original_remote_line': sol.sync_linked_pol or ( sol.original_line_id and sol.original_line_id.sync_linked_pol) or False,
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
