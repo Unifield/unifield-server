@@ -170,6 +170,12 @@
             <field name="sequence" eval="20" />
             <field name="signal">confirmed</field>
         </record>
+        <record id="trans_pol_confirmed_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_pol_confirmed"/>
+            <field name="act_to" ref="act_pol_confirmed"/>
+            <field name="sequence" eval="25" />
+            <field name="signal">confirmed</field>
+        </record>
         <record id="trans_pol_confirmed_done" model="workflow.transition">
             <field name="act_from" ref="act_pol_confirmed"/>
             <field name="act_to" ref="act_pol_done"/>
