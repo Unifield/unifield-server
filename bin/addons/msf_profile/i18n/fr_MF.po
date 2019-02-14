@@ -35091,7 +35091,7 @@ msgstr "Imprimer Donation"
 msgid "Shipment Date:"
 msgstr "Shipment Date:"
 
-#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override
+#. modules: sales_followup, sync_client, sale, mission_stock, msf_doc_import, purchase_followup, account_override, stock
 #: field:msr_in_progress,start_date:0
 #: field:abstract.wizard.import,start_date:0
 #: field:wizard.import.batch,start_date:0
@@ -35103,6 +35103,7 @@ msgstr "Shipment Date:"
 #: field:sale.loan.stock.moves,start_date:0
 #: field:ir.track.changes.wizard,start_date:0
 #: field:integrity.finance.wizard,date_from:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:178
 msgid "Start date"
 msgstr "Date de début"
 
@@ -44544,7 +44545,7 @@ msgstr "Réinitialiser l'exécution"
 msgid "Reordering Mode"
 msgstr "Mode de Réapprovisionnement"
 
-#. modules: msf_doc_import, sale, sales_followups, account_override
+#. modules: msf_doc_import, sale, sales_followups, account_override, stock
 #: field:abstract.wizard.import,end_date:0
 #: field:wizard.import.batch,end_date:0
 #: field:sale.donation.stock.moves,end_date:0
@@ -44552,6 +44553,7 @@ msgstr "Mode de Réapprovisionnement"
 #: field:ir.followup.location.wizard,end_date:0
 #: field:sale.followup.multi.wizard,end_date:0
 #: field:integrity.finance.wizard,date_to:0
+#: report:addons/stock/report/stock_expired_damaged_report_xls.mako:186
 msgid "End date"
 msgstr "Date de fin"
 
@@ -105196,7 +105198,8 @@ msgid "\n"
 "                                    "
 msgstr "\n"
 "                                    Votre fichier est prêt. Vous pouvez le télécharger depuis la barre à droite (Pièces Jointes).\n"
-"                                    "
+"
+
 #. module: msf_outgoing
 #: view:shipment:0
 #: selection:shipment,state:0
