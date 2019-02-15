@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from mx import DateTime
+from datetime import datetime
 
 import base64
 
@@ -88,9 +90,16 @@ class wizard_pick_import(osv.osv_memory):
             if not data['batch']:
                 data['batch'] = ''
 
-        if 'expiry_date' in data: #  set to str
+        if 'expiry_date' in data:
             if not data['expiry_date']:
                 data['expiry_date'] = ''
+            else:
+                try:
+                    data['expiry_date'] = datetime(data['expiry_date'].year, data['expiry_date'].month, data['expiry_date'].day)
+                except:
+                    raise osv.except_osv(
+                        _('Error'), _('Line %s: Column "Expiry Date" must be a date') % xls_line_number
+                    )
 
         if data['qty_picked'] > data['qty_to_pick']:
             raise osv.except_osv(
@@ -346,18 +355,24 @@ class wizard_pick_import(osv.osv_memory):
 
                 to_write['quantity'] = line_data['qty_picked']
 
-                if move_proc.product_id.batch_management and line_data['batch']:
-                    prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
-                        ('product_id', '=', move_proc.product_id.id),
-                        ('name', '=', line_data['batch']),
-                    ], context=context)
-                    if prodlot_ids:
-                        to_write['prodlot_id'] = prodlot_ids[0]
+                if move_proc.product_id.batch_management:
+                    if line_data['batch'] and line_data['expiry_date']:
+                        prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
+                            ('product_id', '=', move_proc.product_id.id),
+                            ('name', '=', line_data['batch']),
+                            ('life_date', '=', line_data['expiry_date']),
+                        ], context=context)
+                        if prodlot_ids:
+                            to_write['prodlot_id'] = prodlot_ids[0]
+                        else:
+                            raise osv.except_osv(
+                                _('Error'),
+                                _('Line %s: Given batch number with this expiry date doesn\'t exists in database') % xls_line_number
+                            )
                     else:
-                        raise osv.except_osv(
-                            _('Error'),
-                            _('Line %s: Given batch number doesn\'t exists in database') % xls_line_number
-                        )
+                        raise osv.except_osv(_('Error'),
+                                             _('Line %s: Product %s must have a batch number and an expiry date')
+                                             % (xls_line_number, line_data['code']))
                 elif not move_proc.product_id.batch_management and move_proc.product_id.perishable and line_data['expiry_date']:
                     prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
                         ('life_date', '=', line_data['expiry_date']),
