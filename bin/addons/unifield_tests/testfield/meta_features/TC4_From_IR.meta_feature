@@ -16,7 +16,7 @@ Scenario: SLL US4517 IR > FO to ESC split TC4
 #LINE 0
 
     I log into instance "HQ1C1P1"
-"""
+
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
     I click on "New"
@@ -1489,16 +1489,6 @@ Scenario: SLL US4517 IR > FO to ESC split TC4
 
 #LINE 41
 
-"""
-I save value "19/jfb-wip_HQ1/HT101/FO00008" in "FO_REFERENCE"
-I save value "19/IR00008" in "IR_REFERENCE"
-I save value "19/jfb-wip_HQ1/HT111/PO00008" in "PO_REF"
-I save value "19/jfb-wip_HQ1/HT101/PO00010" in "PO_REF_COO1"
-I save value "19/jfb-wip_HQ1/HT101/PO00012" in "PO_REF_COO_2"
-I save value "19/jfb-wip_HQ1/HT101/PO00011" in "PO_REF_COO_3"
-I save value "SHIP/00004-01" in "SHIPREF_1"
-I save value "SHIP/00005-01" in "SHIPREF_2"
-	
 	
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
