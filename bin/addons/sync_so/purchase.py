@@ -257,7 +257,11 @@ class purchase_order_line_sync(osv.osv):
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
         elif sol_dict['state'] == 'confirmed':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+            if pol_state == 'confirmed':
+                # pol already confirmed: just update the linked IR line but do no recreate IN
+                self.update_fo_lines(cr, uid, [pol_updated], context=context)
+            else:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
