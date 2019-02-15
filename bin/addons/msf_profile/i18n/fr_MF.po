@@ -16726,18 +16726,6 @@ msgstr "Montant sous la Devise de la Société"
 msgid "Selected Origin must contain at least one stock move."
 msgstr "L'Origine sélectionnée doit  contenir au minimum un mouvement de stock"
 
-#. modules: sales_followup, msf_doc_import, msf_supply_doc_export
-#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:136
-#: field:wizard.import.po.simulation.screen,imp_ready_to_ship_date:0
-#: field:wizard.import.po.simulation.screen,in_ready_to_ship_date:0
-#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:122
-#: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:296
-#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:297
-#: report:ir.follow.up.location.report_pdf:0
-#: report:sales.follow.up.multi.report_pdf:0
-msgid "RTS Date"
-msgstr "RTS Date"
-
 #. module: base
 #: field:ir.actions.server,trigger_name:0
 msgid "Trigger Name"
@@ -29502,9 +29490,10 @@ msgstr "No analytic journal items found for the given journal items."
 msgid "Available for internal picking ?"
 msgstr "Disponible pour picking interne ?"
 
-#. modules: msf_doc_import, sale
+#. modules: msf_doc_import, sale, msf_supply_doc_export
 #: field:wizard.import.po.simulation.screen.line,imp_origin:0
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:172
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:107
 msgid "Origin Ref."
 msgstr "Ref. de l'Origine"
 
@@ -41237,7 +41226,7 @@ msgstr "Button Access Rule"
 #: report:picking.ticket:0
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
 msgid "Qty to Pick"
-msgstr "Qté à prélever"
+msgstr "Qté à Prélever"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:468
@@ -62375,7 +62364,7 @@ msgstr "Réf. Fournisseur"
 msgid "Albania"
 msgstr "Albanie"
 
-#. modules: financing_contract, account_hq_entries, account_override, mission_stock, procurement_cycle, msf_accrual, finance, return_claim, account_mcdb, stock_override, stock_forecast, msf_doc_import, stock, product, account_payment, msf_homere_interface, consumption_calculation, register_accounting, specific_rules, kit, base, procurement_report, threshold_value, account_corrections, account, msf_outgoing, product_attributes, procurement_auto, documents_done, procurement, purchase
+#. modules: financing_contract, account_hq_entries, account_override, mission_stock, procurement_cycle, msf_accrual, finance, return_claim, account_mcdb, stock_override, stock_forecast, msf_doc_import, stock, product, account_payment, msf_homere_interface, consumption_calculation, register_accounting, specific_rules, kit, base, procurement_report, threshold_value, account_corrections, account, msf_outgoing, product_attributes, procurement_auto, documents_done, procurement, purchase, msf_supply_doc_export
 #: view:account.analytic.line:0
 #: field:account.bank.statement.line,ref:0
 #: field:account.entries.report,ref:0
@@ -62456,6 +62445,7 @@ msgstr "Albanie"
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:189
 #: report:addons/stock/report/stock_reception_report_xls.mako:225
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:215
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:93
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -68098,9 +68088,8 @@ msgstr "Rapport Commun Audit"
 msgid "BN mandatory"
 msgstr "NL obligatoire"
 
-#. modules: msf_outgoing, msf_supply_doc_export
+#. modules: msf_outgoing
 #: report:picking.ticket:0
-#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:155
 msgid "Qty in stock"
 msgstr "Qté en stock"
 
@@ -97645,8 +97634,9 @@ msgstr "In - brouillon"
 msgid "New value"
 msgstr "Nouvelle valeur"
 
-#. module: product_asset
+#. module: product_asset, msf_supply_doc_export
 #: report:product.asset:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
 msgid "To:"
 msgstr "Vers:"
 
@@ -98089,6 +98079,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:integrity.finance.wizard:0
 #: view:stock.move.cancel.wizard:0
 #: view:stock.picking.cancel.wizard:0
+#: view:wizard.pick.import:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -104220,9 +104211,10 @@ msgstr " Ce Type de Colis n'existe pas."
 msgid "Import Pack Lines from Excel sheet to create a Shipment"
 msgstr "Import des Lignes de Colisage depuis Excel pour créer une Expédition"
 
-#. modules: msf_doc_import, msf_outgoing
+#. modules: msf_doc_import, msf_outgoing, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:72
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:122
 #, python-format
 msgid "Packing Date"
 msgstr "Date de Colisage"
@@ -104273,7 +104265,16 @@ msgid "From pack - To pack sequences errors : \n"
 msgstr "Erreurs des séquences Du colis - Vers colis : \n"
 ""
 
-#. modules: msf_doc_import, msf_outgoing
+#. modules: msf_doc_import, msf_outgoing, sales_followup, msf_supply_doc_export
+#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:136
+#: field:wizard.import.po.simulation.screen,imp_ready_to_ship_date:0
+#: field:wizard.import.po.simulation.screen,in_ready_to_ship_date:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:144
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:127
+#: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:296
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:300
+#: report:ir.follow.up.location.report_pdf:0
+#: report:sales.follow.up.multi.report_pdf:0
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:73
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:233
 #, python-format
@@ -104490,11 +104491,6 @@ msgid "Total Qty to pack"
 msgstr "Qté Totale à emballer"
 
 #. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:253
-msgid "Item"
-msgstr "Article"
-
-#. module: msf_outgoing
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:263
 msgid "Qty Packed"
 msgstr "Qté Emballée"
@@ -104639,8 +104635,9 @@ msgstr "Type de Colis"
 msgid "Total Qty to pack"
 msgstr "Qté Totale à emballer"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, msf_supply_doc_export
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:253
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
 msgid "Item"
 msgstr "Article"
 
@@ -104951,19 +104948,9 @@ msgid "PICK reference in the import file doesn't match with the current PICK"
 msgstr "La reférence du PICK dans le fichier d'import ne correspond pas au PICK courant"
 
 #. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
-msgid "Qty to Pick"
-msgstr "Qty to Pick"
-
-#. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:112
 msgid "Incoming Ref."
 msgstr "Ref. Livraison"
-
-#. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:122
-msgid "Date colisage"
-msgstr "Packing Date"
 
 #. module: msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:127
@@ -105015,8 +105002,8 @@ msgstr "Ligne %s: Le produit doit avoir une date d'expiration et celle-ci n'est 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:209
 #, python-format
-msgid "Line %s: Given batch number doesn't exists in database"
-msgstr "Ligne %s: Le numéro de lot donné n'existe pas en base"
+msgid "Line %s: Given batch number with this expiry date doesn't exists in database"
+msgstr "Ligne %s: Le numéro de lot avec cette date d'expiration n'existe pas en base"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:222
@@ -105251,3 +105238,35 @@ msgstr "Annuler le document"
 #: view:sale.order:0
 msgid "Validate document"
 msgstr "Valider le document"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:374
+#, python-format
+msgid "Line %s: Product %s must have a batch number and an expiry date"
+msgstr "Ligne %s: Le Produit %s doit avoir un numéro de lot et une date d'expiration"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:101
+#, python-format
+msgid "Line %s: Column \"Expiry Date\" must be a date"
+msgstr "Ligne %s: La Colonne \"Date d'Expiration\" doit être une date"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:103
+msgid "FO Ref."
+msgstr "Ref. FO"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:155
+msgid "Qty in Stock"
+msgstr "Qté en Stock"
+
+#. module: msf_supply_doc_export
+#: view:wizard.pick.import:0
+msgid "PICK import"
+msgstr "Import de PICK"
+
+#. module: msf_supply_doc_export
+#: field:wizard.pick.import,import_file:0
+msgid "PICK import file"
+msgstr "Fichier d'import de PICK"
