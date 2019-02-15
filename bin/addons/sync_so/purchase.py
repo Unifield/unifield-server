@@ -207,8 +207,8 @@ class purchase_order_line_sync(osv.osv):
             pol_updated = new_pol
             pol_state = ''
             parent_so_id = False
-            #### Create the linked IR/FO line: execpt when set_as_sourced_n=True (new line added in PO coo, this value already create an IR/FO line when pol is create)
-            if True or not pol_values['set_as_sourced_n']:
+            #### Create the linked IR/FO line: except when set_as_validated_n=True (new line added in PO coo, this value already creates an IR/FO line when pol is create)
+            if not pol_values.get('set_as_validated_n'):
                 if not pol_values.get('origin') and ress_fo:
                     parent_so_id = ress_fo
                 if pol_values.get('origin'):
@@ -262,7 +262,8 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
-
+        elif debug:
+            print 'DONT TRIGGGER'
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)
         message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, pol_data['order_id'][1], pol_data['line_number'], pol_updated)
