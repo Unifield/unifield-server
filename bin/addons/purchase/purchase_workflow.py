@@ -476,14 +476,15 @@ class purchase_order_line(osv.osv):
 
         # add line to parent SO if needed:
         for pol in self.browse(cr, uid, ids, context=context):
-            parent_so_id = self.pool.get('sale.order').search(cr, uid, [
-                ('name', '=', pol.origin),
-                ('procurement_request', 'in', ['t', 'f']),
-            ], context=context)
-            if parent_so_id:
-                new_sol_id = self.create_sol_from_pol(cr, uid, [pol.id], parent_so_id, context=context)
-                # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
-                self.pool.get('sale.order.line').write(cr, uid, new_sol_id, {'set_as_sourced_n': True}, context=context)
+            if not pol.created_by_sync:
+                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', pol.origin),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+                if parent_so_id:
+                    new_sol_id = self.create_sol_from_pol(cr, uid, [pol.id], parent_so_id, context=context)
+                    # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
+                    self.pool.get('sale.order.line').write(cr, uid, new_sol_id, {'set_as_sourced_n': True}, context=context)
 
         return True
 
