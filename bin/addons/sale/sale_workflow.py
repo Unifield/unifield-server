@@ -149,11 +149,10 @@ class sale_order_line(osv.osv):
 
         if context.get('sync_message_execution'):
             return False
-        sol = self.browse(cr, uid, ids[0], context=context)
-        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', ids[0])], context=context)
         if not related_pol:
             return True
-        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], context=context)
+        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], fields_to_fetch=['original_line_id'], context=context)
         if not related_pol.original_line_id:
             return True
         return (not related_pol.original_line_id.block_resourced_line_creation)
@@ -173,7 +172,6 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             if not sol.cancelled_by_sync and self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
-                print self.read(cr, uid, sol.id)
                 sol_vals = {
                     'resourced_original_line': sol.id,
                     'resourced_original_remote_line': sol.sync_linked_pol or ( sol.original_line_id and sol.original_line_id.sync_linked_pol) or sol.resourced_original_remote_line or False,
