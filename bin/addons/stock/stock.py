@@ -2428,12 +2428,11 @@ class stock_move(osv.osv):
         @return: List of values
         """
         todo = []
-        for move in self.read(cr, uid, ids, ['state', 'already_confirmed']):
-            if not move['already_confirmed']:
-                self.action_confirm(cr, uid, [move['id']])
-            if move['state'] in ('confirmed', 'waiting'):
-                todo.append(move['id'])
-        print 'TODO', todo
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['state', 'already_confirmed']):
+            if not move.already_confirmed:
+                self.action_confirm(cr, uid, [move.id])
+            if move.state in ('confirmed', 'waiting'):
+                todo.append(move.id)
         res = self.check_assign(cr, uid, todo)
         return res
 
@@ -2469,7 +2468,6 @@ class stock_move(osv.osv):
         @return: No. of moves done
         """
         done = []
-        notdone = []
         move_to_assign = []
         count = 0
         pickings = {}
@@ -2483,7 +2481,8 @@ class stock_move(osv.osv):
                         done.append(move.id)
                     else:
                         move_to_assign.append(move.id)
-                pickings[move.picking_id.id] = 1
+                pickings.setdefault(move.picking_id.id, 0)
+                pickings[move.picking_id.id] += 1
                 continue
             if move.state in ('confirmed', 'waiting'):
                 bn_needed =  move.product_id.perishable
@@ -2491,18 +2490,19 @@ class stock_move(osv.osv):
                 res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
-                        done.append(move.id)
+                        state = 'done'
                     else:
-                        move_to_assign.append(move.id)
+                        state = 'assigned'
 
-                    pickings[move.picking_id.id] = 1
+                    pickings.setdefault(move.picking_id.id, 0)
+                    pickings[move.picking_id.id] += 1
                     r = res.pop(0)
                     prodlot_id = None
                     expired_date = None
                     if bn_needed:
                         prodlot_id = r[3] or None
                         expired_date = r[2] or None
-                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, move.id))
+                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, state=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, state, move.id))
                     while res:
                         r = res.pop(0)
                         prodlot_id = False
@@ -2510,27 +2510,26 @@ class stock_move(osv.osv):
                         if bn_needed and r[1]:
                             prodlot_id = r[3]
                             expired_date = r[2]
-                        move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date})
                         if r[1]:
                             if r[1] == move.location_dest_id.id:
-                                done.append(move_id)
+                                state = 'done'
                             else:
-                                move_to_assign.append(move_id)
+                                state = 'assigned'
                         else:
-                            notdone.append(move_id)
+                            state = 'confirmed'
+
+                        self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date, 'state': state})
 
         if done:
             self.write(cr, uid, done, {'state': 'done'})
         if move_to_assign:
             self.write(cr, uid, move_to_assign, {'state': 'assigned'})
-        if notdone:
-            self.write(cr, uid, notdone, {'state': 'confirmed'})
 
-        count = len(done+move_to_assign)
-        if count:
-            for pick_id in pickings:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+        count = 0
+        for pick_id in pickings:
+            count += pickings[pick_id]
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
         return count
 
     def setlast_tracking(self, cr, uid, ids, context=None):
