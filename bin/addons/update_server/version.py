@@ -156,6 +156,10 @@ class sync_manager(osv.osv):
 
     @sync_server.sync_server.check_validated
     def get_next_revisions(self, cr, uid, entity, rev_sum, context=None):
+        disabled_obj = self.pool.get('sync.server.disabled')
+        if disabled_obj and not disabled_obj.is_sync_active(cr, 1, context):
+            data = disabled_obj.get_data(cr, 1, context)
+            return (False, 'The Sync Server is down for maintenance. Sync is disabled until %s Geneva time.' % data['to_date'])
         return (True, self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_sum))
 
     @sync_server.sync_server.check_validated
