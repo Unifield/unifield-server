@@ -2414,3 +2414,10 @@ img.no_image {
     background: rgba(184, 222, 130, .6);
     white-space: pre-line;
 }
+
+.wizard-view-log { /* --- for view log button on popups --- */
+    color: #F0EEEE;
+    display: block;
+    overflow: hidden;
+    position: -48px -80px;
+}
