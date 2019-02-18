@@ -533,7 +533,7 @@ class import_data(osv.osv_memory):
                 'act_to': uid,
                 'body': summary,
             }
-            if self._name == 'import_product' and obj.get('import_name'):
+            if self._name in ('import_product', 'update_product') and obj.get('import_name'):
                 req_data['import_name'] = obj.get('import_name')
             req_id = request_obj.create(cr, uid, req_data)
             if req_id:

@@ -158,6 +158,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % if analytic_axis() not in ('f1', 'f2'):
+        <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % endif
     <Cell ss:StyleID="ssCell" >
        <Data ss:Type="String">${ current_inst_code() |x}</Data>
     </Cell>
@@ -171,6 +174,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % if analytic_axis() not in ('f1', 'f2'):
+        <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
+    % endif
     <Cell ss:StyleID="ssCellBold" ss:MergeAcross="2">
        <Data ss:Type="String">${_('COMBINED JOURNALS REPORT')}</Data>
     </Cell>
