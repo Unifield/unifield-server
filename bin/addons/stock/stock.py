@@ -2584,6 +2584,11 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, fields_to_fetch=['sale_line_id'], context=context):
             if move.sale_line_id:
                 wf_service.trg_write(uid, 'sale.order.line', move.sale_line_id.id, cr)
+            if context.get('partial_moves_cancel_to_new_sol') and context['partial_moves_cancel_to_new_sol'][move.id]:
+                self.write(cr, uid, move.id, {'sale_line_id': context['partial_moves_cancel_to_new_sol'][move.id]}, context=context)
+
+        if context.get('partial_moves_cancel_to_new_sol'):
+            context.pop('partial_moves_cancel_to_new_sol')
 
         if not context.get('call_unlink',False):
             picking_to_write = []

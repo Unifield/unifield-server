@@ -5300,7 +5300,7 @@ class stock_move(osv.osv):
                         has_linked_pol = self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
                         if has_linked_pol:
                             context['sol_done_instead_of_cancel'] = True
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, cancel_move=move.id, context=context)
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
