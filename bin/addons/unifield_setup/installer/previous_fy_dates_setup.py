@@ -39,9 +39,9 @@ class previous_fy_dates_setup(osv.osv_memory):
         """
         if context is None:
             context = {}
-        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(previous_fy_dates_setup, self).default_get(cr, uid, fields, context=context)
-        res['previous_fy_dates_allowed'] = setup_id.previous_fy_dates_allowed
+        res['previous_fy_dates_allowed'] = setup.previous_fy_dates_allowed
         return res
 
     def execute(self, cr, uid, ids, context=None):
@@ -54,8 +54,9 @@ class previous_fy_dates_setup(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists.'))
         payload = self.browse(cr, uid, ids[0], fields_to_fetch=['previous_fy_dates_allowed'], context=context)
         setup_obj = self.pool.get('unifield.setup.configuration')
-        setup_id = setup_obj.get_config(cr, uid)
-        setup_obj.write(cr, uid, [setup_id.id], {'previous_fy_dates_allowed': payload.previous_fy_dates_allowed}, context=context)
+        setup = setup_obj.get_config(cr, uid)
+        if setup:
+            setup_obj.write(cr, uid, [setup.id], {'previous_fy_dates_allowed': payload.previous_fy_dates_allowed}, context=context)
 
 
 previous_fy_dates_setup()

@@ -899,7 +899,7 @@ class finance_tools(osv.osv):
 
         # if the system doesn't allow doc dates from previous FY, check that this condition is met
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        if setup and not setup.previous_fy_dates_allowed:
+        if not setup or not setup.previous_fy_dates_allowed:
             # 01/01/FY <= document date <= 31/12/FY
             posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
             check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
