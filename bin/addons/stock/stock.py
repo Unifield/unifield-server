@@ -2491,8 +2491,10 @@ class stock_move(osv.osv):
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
                         state = 'done'
+                        done.append(move.id)
                     else:
                         state = 'assigned'
+                        move_to_assign.append(move.id)
 
                     pickings.setdefault(move.picking_id.id, 0)
                     pickings[move.picking_id.id] += 1
