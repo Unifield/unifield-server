@@ -78,6 +78,22 @@ class purchase_order_line_sync(osv.osv):
         'has_pol_been_synched': fields.function(_has_pol_been_synched, type='boolean', method=True, string='Synched ?'),
     }
 
+
+    def update_linked_in(self, cr, uid, pol_line, new_qty, context=None):
+        # po line already confirmed, but qty changed => update IN / SYS-INt
+        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned')]
+        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+        if linked_in_move:
+            self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+            # update SYS-INT if has:
+            domain = [('linked_incoming_move', '=', linked_in_move[0]), ('type', '=', 'internal')]
+            sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+            if sys_int_move:
+                self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+            return True
+
+        return False
+
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update original PO lines from remote SO lines
@@ -232,7 +248,7 @@ class purchase_order_line_sync(osv.osv):
             kind = 'update'
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
-            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state', 'product_qty'], context=context)
             pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
@@ -240,7 +256,12 @@ class purchase_order_line_sync(osv.osv):
                 # if the state is less than confirmed we update the PO line
                 if debug:
                     logger.info("Write pol id: %s, values: %s" % (pol_to_update, pol_values))
+                check_in = False
+                if po_line.state == 'confirmed' and 'product_qty' in pol_values and pol_values['product_qty'] != po_line.product_qty:
+                    check_in = True
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+                if check_in:
+                    self.update_linked_in(cr, uid, pol_to_update, pol_values['product_qty'], context=context)
 
         if debug:
             logger.info("%s pol_id: %s, sol state: %s" % (kind, pol_updated, sol_dict['state']))
