@@ -871,6 +871,8 @@ class finance_tools(osv.osv):
                             show_date=False, custom_msg=False, context=None):
         """
         Checks that posting date >= document date
+        Depending on the config made in the Reconfigure Wizard, can also check that the document date is included
+        in the same FY as the related posting date.
 
         :type document_date: orm date
         :type posting_date: orm date

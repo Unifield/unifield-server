@@ -1,7 +1,7 @@
 <openerp>
     <data>
         <record id="view_previous_fy_dates_setup" model="ir.ui.view">
-            <field name="name">Rights Configuration of Document Dates</field>
+            <field name="name">Allow previous Fiscal Year dates</field>
             <field name="model">previous.fy.dates.setup</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="base.res_config_view_base"/>
@@ -11,7 +11,7 @@
                         <attribute name="string">Allow previous Fiscal Year dates</attribute>
                     </form>
                     <xpath expr="//label[@string='description']" position="attributes">
-                        <attribute name="string">Determines whether document dates from previous Fiscal Year are allowed.</attribute>
+                        <attribute name="string">Determines whether document dates and posting dates can be on different Fiscal Years.</attribute>
                     </xpath>
                     <xpath expr='//separator[@string="title"]' position='attributes'>
                         <attribute name='string'>Allow document dates on previous Fiscal Year</attribute>
@@ -30,7 +30,7 @@
         </record>
 
         <record id="action_previous_fy_dates_setup" model="ir.actions.act_window">
-            <field name="name">Rights Configuration of Document Dates</field>
+            <field name="name">Allow previous Fiscal Year dates</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">previous.fy.dates.setup</field>
             <field name="view_id" ref="view_previous_fy_dates_setup"/>

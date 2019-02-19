@@ -30,7 +30,7 @@ class previous_fy_dates_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates from previous Fiscal Year?'),
+        'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -48,8 +48,10 @@ class previous_fy_dates_setup(osv.osv_memory):
         """
         Fills in the previous_fy_dates_allowed field and activate/de-activate the allowing of Doc dates booked in previous FY
         """
-        if isinstance(ids, list) and len(ids) != 1:
-            raise osv.except_osv(_('Error'), _('Only one object should be retrieved from the form. Please contact an administrator if the problem persists.'))
+        if context is None:
+            context = {}
+        if not isinstance(ids, list) or len(ids) != 1:
+            raise osv.except_osv(_('Error'), _('An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists.'))
         payload = self.browse(cr, uid, ids[0], fields_to_fetch=['previous_fy_dates_allowed'], context=context)
         setup_obj = self.pool.get('unifield.setup.configuration')
         setup_id = setup_obj.get_config(cr, uid)
