@@ -59,6 +59,7 @@ class unifield_setup_configuration(osv.osv):
         'payroll_ok': fields.boolean(string='System manages payrolls ?'),
         'import_commitments': fields.boolean(string='Manage commitments corresponding to international order through specific import ?'),
         'vat_ok': fields.boolean(string='System manages VAT locally ?'),
+        'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates from previous Fiscal Year?'),
     }
 
     _defaults = {
@@ -73,6 +74,7 @@ class unifield_setup_configuration(osv.osv):
         'payroll_ok': lambda *a: True,
         'import_commitments': lambda *a: True,
         'vat_ok': lambda *a: True,
+        'previous_fy_dates_allowed': lambda *a: False,
     }
 
     _constraints = [

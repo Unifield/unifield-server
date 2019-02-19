@@ -895,6 +895,20 @@ class finance_tools(osv.osv):
                         'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
 
+        # if the system doesn't allow doc dates from previous FY, check that this condition is met
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup and not setup.previous_fy_dates_allowed:
+            # 01/01/FY <= document date <= 31/12/FY
+            posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+            check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+            check_range_end = self.get_orm_date(31, 12, year=posting_date_obj.year)
+            if not (check_range_start <= document_date <= check_range_end):
+                if show_date:
+                    msg = _('Document date (%s) should be in posting date FY') % (document_date, )
+                else:
+                    msg = _('Document date should be in posting date FY')
+                raise osv.except_osv(_('Error'), msg)
+
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)
         return math.trunc(stepper * amount) / stepper

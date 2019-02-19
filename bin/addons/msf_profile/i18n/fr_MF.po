@@ -105270,3 +105270,47 @@ msgstr "Import de PICK"
 #: field:wizard.pick.import,import_file:0
 msgid "PICK import file"
 msgstr "Fichier d'import de PICK"
+
+#. module: unifield_setup
+#: field:previous.fy.dates.setup,previous_fy_dates_allowed:0
+#: field:unifield.setup.configuration,previous_fy_dates_allowed:0
+msgid "Does the system allow document dates from previous Fiscal Year?"
+msgstr "Le système autorise-t-il les dates de l'Exercice Comptable précédent pour les dates des documents ?"
+
+#. module: unifield_setup
+#: code:addons/unifield_setup/installer/previous_fy_dates_setup.py:52
+#, python-format
+msgid "Only one object should be retrieved from the form. Please contact an administrator if the problem persists."
+msgstr "Seul un objet devrait être récupéré depuis le formulaire. Veuillez contacter un administrateur si le problème persiste."
+
+#. module: unifield_setup
+#: model:ir.actions.act_window,name:unifield_setup.action_previous_fy_dates_setup
+msgid "Rights Configuration of Document Dates"
+msgstr "Configuration des Droits sur les Dates des Documents"
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+msgid "Allow previous Fiscal Year dates"
+msgstr "Autoriser les dates de l'Exercice Comptable précédent"
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+msgid "Allow document dates on previous Fiscal Year"
+msgstr "Autoriser les dates des documents sur l'Exercice Comptable précédent"
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+msgid "Determines whether document dates from previous Fiscal Year are allowed."
+msgstr "Détermine si les dates des documents enregistrées sur l'Exercice Comptable précédent sont autorisées."
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:909
+#, python-format
+msgid "Document date should be in posting date FY"
+msgstr "La date du document doit être dans le même exercice comptable que la date de comptabilisation"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:907
+#, python-format
+msgid "Document date (%s) should be in posting date FY"
+msgstr "La date du document (%s) doit être dans le même exercice comptable que la date de comptabilisation"

@@ -59,6 +59,7 @@
         "installer/payroll_view.xml",
         "installer/commitment_import_view.xml",
         "installer/vat_setup_view.xml",
+        "installer/previous_fy_dates_setup_view.xml",
         # Security and access rights
         "security/ir.model.access.csv",
         "view/product_view.xml",

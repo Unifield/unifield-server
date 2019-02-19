@@ -1,0 +1,48 @@
+<openerp>
+    <data>
+        <record id="view_previous_fy_dates_setup" model="ir.ui.view">
+            <field name="name">Rights Configuration of Document Dates</field>
+            <field name="model">previous.fy.dates.setup</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.res_config_view_base"/>
+            <field name="arch" type="xml">
+                <data>
+                    <form position="attributes">
+                        <attribute name="string">Allow previous Fiscal Year dates</attribute>
+                    </form>
+                    <xpath expr="//label[@string='description']" position="attributes">
+                        <attribute name="string">Determines whether document dates from previous Fiscal Year are allowed.</attribute>
+                    </xpath>
+                    <xpath expr='//separator[@string="title"]' position='attributes'>
+                        <attribute name='string'>Allow document dates on previous Fiscal Year</attribute>
+                    </xpath>
+                    <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                        <attribute name='rowspan'>25</attribute>
+                        <attribute name='string'></attribute>
+                    </xpath>
+                    <group string="res_config_contents" position="replace">
+                        <group colspan="5">
+                            <field name="previous_fy_dates_allowed"/>
+                        </group>
+                    </group>
+                </data>
+            </field>
+        </record>
+
+        <record id="action_previous_fy_dates_setup" model="ir.actions.act_window">
+            <field name="name">Rights Configuration of Document Dates</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">previous.fy.dates.setup</field>
+            <field name="view_id" ref="view_previous_fy_dates_setup"/>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="previous_fy_dates_setup_todo" model="ir.actions.todo">
+            <field name="action_id" ref="action_previous_fy_dates_setup"/>
+            <field name="sequence">30</field>
+            <field name="restart">always</field>
+        </record>
+    </data>
+</openerp>
