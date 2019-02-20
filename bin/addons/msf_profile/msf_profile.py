@@ -53,6 +53,23 @@ class patch_scripts(osv.osv):
     }
 
     # UF12.0
+    def us_4594_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template 
+            SET name = regexp_replace(name, E'[\\n\\r\\t]+', '', 'g' ) 
+            WHERE name LIKE chr(10) || '%';
+            """)
+        cr.execute("""
+            UPDATE ir_translation 
+            SET src = regexp_replace(src, E'[\\n\\r\\t]+', '', 'g' ) 
+            WHERE name = 'product.template,name' AND src LIKE chr(10) || '%';
+            """)
+
+        return True
+
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

@@ -2,6 +2,10 @@
 <openerp>
     <data>
         <!-- UF12.0 -->
+        <record id="us_4594_rename_products_with_new_lines" model="patch.scripts">
+            <field name="method">us_4594_rename_products_with_new_lines</field>
+        </record>
+
         <record id="us_2896_volume_ocbprod" model="patch.scripts">
             <field name="method">us_2896_volume_ocbprod</field>
         </record>
