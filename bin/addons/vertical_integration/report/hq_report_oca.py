@@ -170,10 +170,6 @@ class hq_report_oca(report_sxw.report_sxw):
                          'Field Activity']
 
         period = period_obj.browse(cr, uid, data['form']['period_id'], context=context)
-        tm = strptime(period.date_start, '%Y-%m-%d')
-        year = str(tm.tm_year)
-        month = '%02d' % tm.tm_mon
-        period_yyyymm = "{0}{1}".format(year, month)
 
         # list the journal types for which the rate used will always be 1
         # i.e. REVAL, Curr. Adjustment, and Accrual
@@ -475,8 +471,10 @@ class hq_report_oca(report_sxw.report_sxw):
         mission_code = ''
         if parent_instance:
             mission_code = "%s0" % parent_instance.code[:2]
-        period_number = period and period.number or ''
-        prefix = '%s_%sP%s_' % (mission_code, period_yyyymm, period_number)
+        tm = strptime(period.date_start, '%Y-%m-%d')
+        year = str(tm.tm_year)
+        period_number = period and period.number and '%02d' % period.number or ''
+        prefix = '%s_%sP%s_' % (mission_code, year, period_number)
 
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
