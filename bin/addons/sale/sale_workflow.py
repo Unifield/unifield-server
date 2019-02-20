@@ -439,9 +439,6 @@ class sale_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for sol in self.browse(cr, uid, ids, context=context):
-            if not sol.stock_take_date and sol.order_id.stock_take_date:
-                self.write(cr, uid, sol.id, {'stock_take_date': sol.order_id.stock_take_date}, context=context)
-
             linked_dpo_line = self.pool.get('purchase.order.line').search(cr, uid, [
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
@@ -578,8 +575,6 @@ class sale_order_line(osv.osv):
                     and sol.product_id and sol.product_id.seller_id:
                 to_write['supplier'] = sol.product_id.seller_id.id
 
-            if not sol.stock_take_date and sol.order_id.stock_take_date:
-                to_write['stock_take_date'] = sol.order_id.stock_take_date
             if sol.order_id.order_type == 'loan':
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'
