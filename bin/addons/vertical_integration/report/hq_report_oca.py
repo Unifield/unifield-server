@@ -73,7 +73,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 return mapping.mapping_value
         return "0"
 
-    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info, context=None):
+    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info, field_activity, context=None):
         if context is None:
             context = {}
         pool = pooler.get_pool(cr.dbname)
@@ -113,7 +113,8 @@ class hq_report_oca(report_sxw.report_sxw):
                      "",
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
-                     currency.name]]
+                     currency.name,
+                     field_activity]]
 
     def create(self, cr, uid, ids, data, context=None):
         if context is None:
@@ -184,6 +185,7 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines_debit = {}
         # Get department code filled in through the country code mapping
         department_info = ""
+        field_activity = ""  # always empty
         parent_instance = False
         if len(data['form']['instance_ids']) > 0:
             parent_instance = inst_obj.browse(cr, uid, data['form']['instance_ids'][0], context=context)
@@ -305,7 +307,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                                [department_info] + [formatted_data[11]] +
                                                                                [formatted_data[13]] + [employee_id] +
                                                                                [exchange_rate] + booking_amounts +
-                                                                               formatted_data[16:17])
+                                                                               formatted_data[16:17] + [field_activity])
                 else:
                     translated_account_code = self.translate_account(cr, uid, pool, account, context=context)
                     if (translated_account_code, currency.id) not in account_lines_debit:
@@ -370,7 +372,6 @@ class hq_report_oca(report_sxw.report_sxw):
             # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
             if analytic_line.journal_id.type not in ['inkind', 'extra']:
                 cost_center = formatted_data[11]  # Note: format is: P + the 4 digits from the right of the UniField CC
-                field_activity = ""  # always empty
                 # data for the "Employee Id" column
                 employee_id = ''
                 if analytic_line.move_id and analytic_line.move_id.employee_id and analytic_line.move_id.employee_id.employee_type == 'ex':  # expat staff
@@ -453,11 +454,8 @@ class hq_report_oca(report_sxw.report_sxw):
 
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
             # for entries "shrunk for HQ export"
-            subtotal_lines = self.create_subtotal(cr, uid, key,
-                                                  account_lines_debit[key],
-                                                  counterpart_date,
-                                                  period_name,
-                                                  department_info, context=context)
+            subtotal_lines = self.create_subtotal(cr, uid, key, account_lines_debit[key], counterpart_date, period_name,
+                                                  department_info, field_activity, context=context)
             if subtotal_lines:
                 second_result_lines += subtotal_lines
 
@@ -479,11 +477,13 @@ class hq_report_oca(report_sxw.report_sxw):
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
-        writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL)
+        # use double quotes only for entries containing double quote or comma
+        writer = csv.writer(first_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
         for line in first_report:
             writer.writerow(map(self._enc, line))
         first_fileobj.close()
-        writer = csv.writer(second_fileobj, quoting=csv.QUOTE_ALL)
+        # use double quotes only for entries containing double quote or comma
+        writer = csv.writer(second_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
         for line in second_report:
             writer.writerow(map(self._enc, line))
         second_fileobj.close()
