@@ -79,9 +79,9 @@ class purchase_order_line_sync(osv.osv):
     }
 
 
-    def update_linked_in(self, cr, uid, pol_line, new_qty, context=None):
+    def update_linked_in(self, cr, uid, pol_line, orig_qty, new_qty, context=None):
         # po line already confirmed, but qty changed => update IN / SYS-INt
-        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned')]
+        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned'), ('product_qty', '=', orig_qty)]
         linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
         if linked_in_move:
             self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
@@ -261,7 +261,7 @@ class purchase_order_line_sync(osv.osv):
                     check_in = True
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
                 if check_in:
-                    self.update_linked_in(cr, uid, pol_to_update, pol_values['product_qty'], context=context)
+                    self.update_linked_in(cr, uid, pol_to_update, orig_qty=po_line.product_qty, new_qty=pol_values['product_qty'], context=context)
 
         if debug:
             logger.info("%s pol_id: %s, sol state: %s" % (kind, pol_updated, sol_dict['state']))
