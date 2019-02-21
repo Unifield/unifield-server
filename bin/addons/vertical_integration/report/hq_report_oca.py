@@ -342,8 +342,7 @@ class hq_report_oca(report_sxw.report_sxw):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
-            # format CC as : P + the 4 digits from the right
-            cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code and "P%s" % analytic_line.cost_center_id.code[-4:] or ""
+            cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
             aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For the first report:
@@ -371,7 +370,8 @@ class hq_report_oca(report_sxw.report_sxw):
 
             # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
             if analytic_line.journal_id.type not in ['inkind', 'extra']:
-                cost_center = formatted_data[11]  # Note: format is: P + the 4 digits from the right of the UniField CC
+                # format CC as: P + the 4 digits from the right
+                cost_center = formatted_data[11] and "P%s" % formatted_data[11][-4:] or ""
                 # data for the "Employee Id" column
                 employee_id = ''
                 if analytic_line.move_id and analytic_line.move_id.employee_id and analytic_line.move_id.employee_id.employee_type == 'ex':  # expat staff
@@ -477,8 +477,7 @@ class hq_report_oca(report_sxw.report_sxw):
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
-        # use double quotes only for entries containing double quote or comma
-        writer = csv.writer(first_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
+        writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL, delimiter=",")
         for line in first_report:
             writer.writerow(map(self._enc, line))
         first_fileobj.close()
