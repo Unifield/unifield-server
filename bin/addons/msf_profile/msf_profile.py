@@ -53,19 +53,19 @@ class patch_scripts(osv.osv):
     }
 
     # UF12.0
-    def us_4594_rename_products_with_new_lines(self, cr, uid, *a, **b):
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
         """
         Remove the "new line character" from the description of products and their translation
         """
         cr.execute("""
-            UPDATE product_template 
-            SET name = regexp_replace(name, E'[\\n\\r\\t]+', '', 'g' ) 
-            WHERE name LIKE chr(10) || '%';
+            UPDATE product_template
+            SET name = regexp_replace(name, '^[\\s]', '', 'g' )
+            WHERE name ~ '^\\s.*';
             """)
         cr.execute("""
-            UPDATE ir_translation 
-            SET src = regexp_replace(src, E'[\\n\\r\\t]+', '', 'g' ) 
-            WHERE name = 'product.template,name' AND src LIKE chr(10) || '%';
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^[\\s]', '', 'g' ), value = regexp_replace(value, '^[\\s]', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
             """)
 
         return True
