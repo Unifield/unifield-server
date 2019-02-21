@@ -53,6 +53,16 @@ class patch_scripts(osv.osv):
     }
 
     # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
