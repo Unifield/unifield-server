@@ -6,6 +6,10 @@
             <field name="method">us_5724_set_previous_fy_dates_allowed</field>
         </record>
 
+        <record id="us_5746_rename_products_with_new_lines" model="patch.scripts">
+            <field name="method">us_5746_rename_products_with_new_lines</field>
+        </record>
+
         <record id="us_2896_volume_ocbprod" model="patch.scripts">
             <field name="method">us_2896_volume_ocbprod</field>
         </record>

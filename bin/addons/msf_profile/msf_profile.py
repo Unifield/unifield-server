@@ -63,6 +63,24 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
         return True
 
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
