@@ -477,11 +477,12 @@ class hq_report_oca(report_sxw.report_sxw):
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
+        # for Raw data file: use double quotes for all entries
         writer = csv.writer(first_fileobj, quoting=csv.QUOTE_ALL, delimiter=",")
         for line in first_report:
             writer.writerow(map(self._enc, line))
         first_fileobj.close()
-        # use double quotes only for entries containing double quote or comma
+        # for formatted data file: use double quotes only for entries containing double quote or comma
         writer = csv.writer(second_fileobj, quoting=csv.QUOTE_MINIMAL, delimiter=",")
         for line in second_report:
             writer.writerow(map(self._enc, line))
