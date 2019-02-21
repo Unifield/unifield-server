@@ -2986,6 +2986,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -3018,6 +3022,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],
