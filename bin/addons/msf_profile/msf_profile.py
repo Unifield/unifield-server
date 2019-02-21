@@ -59,14 +59,16 @@ class patch_scripts(osv.osv):
         """
         cr.execute("""
             UPDATE product_template
-            SET name = regexp_replace(name, '^[\\s]', '', 'g' )
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
             WHERE name ~ '^\\s.*';
             """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
         cr.execute("""
             UPDATE ir_translation
-            SET src = regexp_replace(src, '^[\\s]', '', 'g' ), value = regexp_replace(value, '^[\\s]', '', 'g' )
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
             WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
             """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
 
         return True
 
