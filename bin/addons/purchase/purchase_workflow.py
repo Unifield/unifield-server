@@ -225,6 +225,15 @@ class purchase_order_line(osv.osv):
                     sol_values.pop('is_line_split')
                 if pol.linked_sol_id.original_line_id:
                     sol_values.pop('original_line_id')
+                if pol.linked_sol_id.state == 'confirmed' and 'product_uom_qty' in sol_values and sol_values['product_uom_qty'] != pol.linked_sol_id.product_uom_qty:
+                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('sale_line_id', '=', pol.linked_sol_id.id),
+                        ('type', '=', 'out'),
+                        ('state', 'in', ['assigned', 'confirmed']),
+                        ('product_qty', '=',  pol.linked_sol_id.product_uom_qty)
+                    ], context=context)
+                    if linked_out_moves:
+                        self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
                 if from_cancel:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line

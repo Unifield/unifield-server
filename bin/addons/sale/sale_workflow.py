@@ -405,20 +405,38 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        stock_move_obj = self.pool.get('stock.move')
         pick_to_check = set()
-        for sol in self.browse(cr, uid, ids, context=context):
+
+
+        for sol in ids:
+            #self.browse(cr, uid, ids, fields_to_fetch=['state', 'line_number', 'product_uom_qty', 'order_id'], context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
-                ('sale_line_id', '=', sol.id),
+                ('sale_line_id', '=', sol),
                 ('type', '=', 'out'),
                 ('state', 'in', ['assigned', 'confirmed']),
             ], context=context)
 
             if out_moves_to_cancel:
                 context.update({'not_resource_move': out_moves_to_cancel})
-                self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+                stock_move_obj.action_cancel(cr, uid, out_moves_to_cancel, context=context)
                 context.pop('not_resource_move')
-                for move in self.pool.get('stock.move').browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
+                for move in stock_move_obj.browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
                     pick_to_check.add(move.picking_id.id)
+            """
+            elif sol.state == 'confirmed':
+                move_to_decrement = stock_move_obj.search(cr, uid, [
+                        ('line_number', '=', sol.line_number),
+                        ('picking_id.sale_id', '=', sol.order_id.id),
+                        ('type', '=', 'out'),
+                        ('state', 'in', ['assigned', 'confirmed']),
+                        ('product_qty', '<=', sol.product_uom_qty),
+                    ], context=context)
+                print 'HHHHHHHH', move_to_decrement
+                if move_to_decrement:
+                    move_data = stock_move_obj.read(cr, uid, move_to_decrement[0], ['product_qty'], context=context)
+                    stock_move_obj.write(cr, uid, move_to_decrement[0], {'product_qty': move_data['product_qty'] - sol.product_uom_qty, 'product_uos_qty':  move_data['product_qty'] - sol.product_uom_qty}, context=context)
+            """
 
         # maybe the stock picking needs to be closed/cancelled :
         for pick in list(pick_to_check):
