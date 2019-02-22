@@ -176,7 +176,7 @@
           % if move.expired_date and isDate(move.expired_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
           % else:
-            <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
           % endif
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or '' | x}</Data></Cell>
