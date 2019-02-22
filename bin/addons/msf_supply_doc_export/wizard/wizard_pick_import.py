@@ -23,7 +23,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from mx import DateTime
 from datetime import datetime
 
 import base64
