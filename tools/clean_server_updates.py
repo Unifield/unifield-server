@@ -12,9 +12,9 @@ cr.execute("select id from sync_server_entity where name in ('HQ_OCA', 'OCG_HQ',
 hq_ids = tuple([x[0] for x in cr.fetchall()])
 cr.execute('ANALYZE')
 
-assert len(hq_ids) == 3
+assert len(hq_ids) == 4
 
-cr.execute("select min(last_sequence) from sync_server_entity where state != 'invalidated'")
+cr.execute("select min(last_sequence) from sync_server_entity where state != 'invalidated' and last_sequence!=0")
 min_seq = cr.fetchone()[0] - 1
 
 print "Min seq", min_seq
