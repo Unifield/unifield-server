@@ -8,7 +8,7 @@ ct = {'keep2': {}, 'delete': {}, 'single': {}}
 
 
 # get id of HQ instances
-cr.execute("select id from sync_server_entity where name in ('HQ_OCA', 'OCG_HQ', 'OCBHQ')")
+cr.execute("select id from sync_server_entity where name in ('HQ_OCA', 'OCG_HQ', 'OCBHQ', 'OCP_HQ')")
 hq_ids = tuple([x[0] for x in cr.fetchall()])
 cr.execute('ANALYZE')
 
