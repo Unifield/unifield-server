@@ -105002,13 +105002,13 @@ msgstr "Ligne %s: Le produit doit avoir une date d'expiration et celle-ci n'est 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:209
 #, python-format
-msgid "Line %s: Given batch number with this expiry date doesn't exists in database"
+msgid "Line %s: The given batch number with this expiry date doesn't exist in database"
 msgstr "Ligne %s: Le numéro de lot avec cette date d'expiration n'existe pas en base"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:222
 #, python-format
-msgid "Line %s: Given expiry date doesn't exists in database"
+msgid "Line %s: The given expiry date doesn't exist in database"
 msgstr "Ligne %s: La date d'expiration donnée n'existe pas en base"
 
 #. module: msf_doc_import
@@ -105310,3 +105310,21 @@ msgstr "La date du document doit être dans le même exercice comptable que la d
 #, python-format
 msgid "Document date (%s) should be in posting date FY"
 msgstr "La date du document (%s) doit être dans le même exercice comptable que la date de comptabilisation"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:84
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté prélevée\" doit être un nombre"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:95
+#, python-format
+msgid "Line %s: Column \"Qty to Pick\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:346
+#, python-format
+msgid "File line %s: Column \"Item\" must be an integer"
+msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
