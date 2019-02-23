@@ -1904,8 +1904,9 @@ class sale_order_line(osv.osv):
                     linked_pol = get_linked_pol(sol.id)
                     if sol.state == 'sourced_v' or (sol.state == 'sourced_n' and linked_pol and linked_pol.state != 'draft'):
                         res[sol.id] = 'Resourced-pv'
-                    elif sol.state == 'sourced_sy':
-                        res[sol.id] = 'Resourced-sy'
+                    #elif sol.state == 'sourced_sy':
+                    #    res[sol.id] = 'Resourced-sy'
+                    # debatable
                     else:
                         res[sol.id] = 'Resourced-s'
                 elif sol.state.startswith('confirmed'):
