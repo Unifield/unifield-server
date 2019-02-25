@@ -2465,8 +2465,7 @@ class sale_order_line(osv.osv):
 
         return True
 
-
-    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, context=None):
+    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, cancel_move=None, context=None):
         '''
         cancel partially a SO line: create a split and cancel the split
         '''
@@ -2495,10 +2494,10 @@ class sale_order_line(osv.osv):
                 self.pool.get('sale.order.line').write(cr, uid, [new_line_id], {'from_cancel_out': True}, context=context)
             context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
+            if cancel_move:
+                self.pool.get('stock.move').write(cr, uid, [cancel_move], {'sale_line_id': new_line_id}, context=context)
 
         return True
-
-
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -2517,7 +2516,7 @@ class sale_order_line(osv.osv):
 
         return True
 
-    def update_or_cancel_line(self, cr, uid, line, qty_diff, resource=False, context=None):
+    def update_or_cancel_line(self, cr, uid, line, qty_diff, resource=False, cancel_move=None, context=None):
         '''
         Update the quantity of the IR/FO line with the qty_diff - Update also
         the quantity in procurement attached to the IR/Fo line.
@@ -2550,7 +2549,7 @@ class sale_order_line(osv.osv):
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
-            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, cancel_move=cancel_move, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
