@@ -62807,12 +62807,13 @@ msgstr "Vous ne pouvez pas supprimer le model '%s' !"
 msgid "Virgin Islands (British)"
 msgstr "Iles Vierges (Britanniques)"
 
-#. modules: msf_doc_import, kit, sale
+#. modules: msf_doc_import, kit, sale, msf_supply_doc_export
 #: code:addons/kit/wizard/kit_mass_import.py:210
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:527
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:540
 #: code:addons/sale/wizard/internal_request_import.py:162
 #: code:addons/sale/wizard/internal_request_import.py:222
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:330
 #, python-format
 msgid "No file to import"
 msgstr "Aucun fichier à importer"

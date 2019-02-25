@@ -69,7 +69,7 @@ class wizard_pick_import(osv.osv_memory):
         'picking_id': fields.many2one('stock.picking', string="PICK ref", required=True),
         'picking_processor_id': fields.many2one('create.picking.processor', string="PICK processor ref"),
         'validate_processor_id': fields.many2one('validate.picking.processor', string="PICK processor ref"),
-        'import_file': fields.binary('PICK import file'),
+        'import_file': fields.binary('PICK import file', required=True),
     }
 
     def normalize_data(self, cr, uid, data):
@@ -326,6 +326,8 @@ class wizard_pick_import(osv.osv_memory):
             context = {}
 
         wiz = self.browse(cr, uid, ids[0], context=context)
+        if not wiz.import_file:
+            raise osv.except_osv(_('Error'), _('No file to import'))
         import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
         res_model = 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor'
         move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
