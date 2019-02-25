@@ -215,6 +215,18 @@ location will be shown.""",
 
         return True
 
+    def onchange_product_list(self, cr, uid, ids, product_list_id):
+        """
+        Change the product when change the prodlot
+        """
+        if product_list_id:
+            return {
+                'value': {
+                    'display_0': False,
+                    'in_last_x_months': False,
+                },
+            }
+
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
         Change the product when change the prodlot
