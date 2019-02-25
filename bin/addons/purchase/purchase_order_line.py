@@ -175,9 +175,10 @@ class purchase_order_line(osv.osv):
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
                         res[pol.id] = 'Resourced-pv'
-                    elif pol.state == 'sourced_sy':
-                        res[pol.id] = 'Resourced-sy'
+                    #elif pol.state == 'sourced_sy':
+                    #    res[pol.id] = 'Resourced-sy'
                     else:
+                        # debatable
                         res[pol.id] = 'Resourced-s'
                 elif pol.state.startswith('confirmed'):
                     res[pol.id] = 'Resourced-c'

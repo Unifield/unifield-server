@@ -225,6 +225,15 @@ class purchase_order_line(osv.osv):
                     sol_values.pop('is_line_split')
                 if pol.linked_sol_id.original_line_id:
                     sol_values.pop('original_line_id')
+                if pol.linked_sol_id.state == 'confirmed' and 'product_uom_qty' in sol_values and sol_values['product_uom_qty'] != pol.linked_sol_id.product_uom_qty:
+                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('sale_line_id', '=', pol.linked_sol_id.id),
+                        ('type', '=', 'out'),
+                        ('state', 'in', ['assigned', 'confirmed']),
+                        ('product_qty', '=',  pol.linked_sol_id.product_uom_qty)
+                    ], context=context)
+                    if linked_out_moves:
+                        self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
                 if from_cancel:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line
@@ -312,6 +321,7 @@ class purchase_order_line(osv.osv):
             if pol.resourced_original_line:
                 # pol resourced, set orginal line on new line
                 sol_values['resourced_original_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.id or False
+                sol_values['resourced_original_remote_line'] = pol.resourced_original_line.linked_sol_id and pol.resourced_original_line.linked_sol_id.sync_linked_pol or False
             # if PO line has an analytic distribution, we copy it
             ad_id = pol.analytic_distribution_id or pol.order_id.analytic_distribution_id
             if ad_id and not sale_order.procurement_request:
@@ -320,7 +330,6 @@ class purchase_order_line(osv.osv):
                     copy(cr, uid, ad_id.id, {'partner_type': sale_order.partner_type},
                          context=context)
                 })
-
             # create FO line:
             sol_values.update(self.get_split_info(cr, uid, pol, context))
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
@@ -476,14 +485,15 @@ class purchase_order_line(osv.osv):
 
         # add line to parent SO if needed:
         for pol in self.browse(cr, uid, ids, context=context):
-            parent_so_id = self.pool.get('sale.order').search(cr, uid, [
-                ('name', '=', pol.origin),
-                ('procurement_request', 'in', ['t', 'f']),
-            ], context=context)
-            if parent_so_id:
-                new_sol_id = self.create_sol_from_pol(cr, uid, [pol.id], parent_so_id, context=context)
-                # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
-                self.pool.get('sale.order.line').write(cr, uid, new_sol_id, {'set_as_sourced_n': True}, context=context)
+            if not pol.created_by_sync:
+                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', pol.origin),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+                if parent_so_id:
+                    new_sol_id = self.create_sol_from_pol(cr, uid, [pol.id], parent_so_id, context=context)
+                    # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
+                    self.pool.get('sale.order.line').write(cr, uid, new_sol_id, {'set_as_sourced_n': True}, context=context)
 
         return True
 

@@ -266,13 +266,6 @@ class message_to_send(osv.osv):
 
         generated_ids = []
         for id in obj_ids:
-            # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
-            if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
-                if len(args[id][0].get('order_line')) == 0:
-                    self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
-                    ignored_ids.append(id)
-                    continue
-
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:

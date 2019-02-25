@@ -1146,18 +1146,7 @@ class stock_picking(osv.osv):
                                 'product_uos_qty': out_move.product_qty - uom_partial_qty,
                             }
                             # search for sol that match with the updated move:
-                            sol_to_relink = self.pool.get('sale.order.line').search(cr, uid, [
-                                ('order_id', '=', out_move.sale_line_id.order_id.id),
-                                ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
-                                ('line_number', '=', out_move.sale_line_id.line_number),
-                                ('order_id', '=', out_move.picking_id.sale_id.id),
-                            ], context=context)
-                            if sol_to_relink:
-                                move_values.update({'sale_line_id': sol_to_relink[0],})
                             move_obj.write(cr, uid, [out_move.id], move_values, context=context)
-                            if sol_to_relink:
-                                if self.pool.get('sale.order.line').browse(cr, uid, sol_to_relink[0], context=context).state.startswith('cancel'):
-                                    move_obj.action_cancel(cr, uid, [out_move.id], context=context)
                             processed_out_moves.append(new_out_move_id)
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
 

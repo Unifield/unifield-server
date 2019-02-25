@@ -45,6 +45,7 @@
         'data/alert_email.xml',
         'data/audittrail_sync_server.yml',
         'data/automated_import_sync_groups.xml',
+        'sync_disabled_view.xml',
     ],
     'demo_xml': [
     ],
