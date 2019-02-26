@@ -656,6 +656,7 @@ class orm_template(object):
                 r = row
                 i = 0
                 while i < len(f):
+                    digits = 2
                     if f[i] == '.id':
                         r = r['id']
                     elif f[i] == 'id':
@@ -684,6 +685,8 @@ class orm_template(object):
                             cols = obj._columns[f[i]]
                         elif f[i] in obj._inherit_fields.keys():
                             cols = selection_field(obj._inherits)
+                        if cols and hasattr(cols, 'digits') and cols.digits:
+                            digits = cols.digits[1]
                         if cols and cols._type == 'selection' and not sync_context:
                             # if requested, translate the fields.selection values
                             translated_selection = False
@@ -764,7 +767,13 @@ class orm_template(object):
                             r = self.pool.get(r._table_name).name_get(cr, uid, [r.id], context=context)
                             r = r and r[0] and r[0][1] or ''
 
-                    data[fpos] = tools.ustr(r or '')
+                    if isinstance(r, (int, long)):
+                        data[fpos] = '%d' % r
+                    elif isinstance(r, float):
+                        fmt = '%.'+str(digits)+'f'
+                        data[fpos] = fmt % r
+                    else:
+                        data[fpos] = tools.ustr(r or '')
         return [data] + lines
 
     def export_data(self, cr, uid, ids, fields_to_export, context=None):
@@ -1022,11 +1031,17 @@ class orm_template(object):
                     res = [(6,0,res)]
 
                 elif field_type == 'integer':
-                    res = value and int(value) or 0
+                    if not value or isinstance(value, basestring):
+                        res = value and int(value) or 0
+                    else:
+                        res = value
                 elif field_type == 'boolean':
                     res = value and value.lower() not in ('0', 'false', 'off') or False
                 elif field_type == 'float':
-                    res = value and float(value.replace(',','.')) or 0.0
+                    if not value or isinstance(value, basestring):
+                        res = value and float(value.replace(',','.')) or 0.0
+                    else:
+                        res = value
                 elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
                         if value in [tools.ustr(key), tools.ustr(val)] or \
