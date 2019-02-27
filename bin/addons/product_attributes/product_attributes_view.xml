@@ -120,14 +120,23 @@
                                 </group>
                             </group>
 
-                            <group colspan="2" col="2" name="quality">
-                                <separator string="Quality" colspan="2"/>
-                                <field name="perishable"/>
-                                <field name="batch_management" on_change="onchange_batch_management(batch_management)" />
-                                <separator string="UOM" colspan="2"/>
-                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" />
-                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" />
-                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" />
+                            <group colspan="2" col="3" name="quality">
+                                <field name="uf_create_date" invisible="1"/>
+                                <separator string="Quality" colspan="3"/>
+                                <field name="perishable" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                <group colspan="1" col="1">
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', True)]}" context="{'needed_perishable': True}" />
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', False)]}" context="{'needed_perishable': False}" />
+                                </group>
+                                <field name="batch_management" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                <group colspan="1" col="1">
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', True)]}" context="{'needed_batch_mngmt': True}" />
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', False)]}" context="{'needed_batch_mngmt': False}" />
+                                </group>
+                                <separator string="UOM" colspan="3"/>
+                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" colspan="3" />
+                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
+                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
                             </group>
                         </page>
                         <page string="Specific info">
@@ -820,6 +829,28 @@
               </form>
            </field>
        </record>
+
+        <record id="change_bn_ed_mandatory_wizard" model="ir.ui.view">
+            <field name="name">change.bn.ed.mandatory.wizard</field>
+            <field name="model">change.bn.ed.mandatory.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Batch Number / Expiry Date flags change">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px; font-weight: normal"><translate>
+                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>
+                                <span style="font-weight: bold">Please ensure the product is no longer in use in this mission before changing the attributes.</span><br/><br/>
+                                <span style="font-weight: bold">If you continue, products or transactions may be blocked.</span><br/><br/>
+                                Do you still want to continue ?
+                            </translate></h3>
+                        </html>
+                    </group>
+                    <newline />
+                    <button name="yes_change_bn_ed_mandatory" string="Yes" type="object" icon="terp-check" colspan="1" />
+                    <button name="no_change_bn_ed_mandatory" string="No" type="object" icon="gtk-cancel" colspan="1" />
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>
