@@ -586,14 +586,14 @@ class purchase_order_line(osv.osv):
             context = {}
 
         for pol in self.browse(cr, uid, ids, context=context):
-            if pol.product_qty > 99999999999:
+            if pol.product_qty >= 10**26:
                 return False
 
             total = pol.product_qty * pol.price_unit
             total_int = int(total)
             total_dec = round(total - total_int, 2)
 
-            nb_digits_allowed = 15
+            nb_digits_allowed = 27
             if total_dec:
                 nb_digits_allowed -= 3
 
@@ -603,7 +603,7 @@ class purchase_order_line(osv.osv):
         return True
 
     _constraints = [
-        (_check_max_price, _("Price is too big"), ['price_unit', 'product_qty']),
+        (_check_max_price, _("Total amount is too high, please check figures for Unit price and Qty are correct"), ['price_unit', 'product_qty']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):

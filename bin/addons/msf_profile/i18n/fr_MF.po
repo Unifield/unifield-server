@@ -104914,8 +104914,8 @@ msgstr "Voir les lignes non traitées"
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
 #, python-format
-msgid "Price is too big"
-msgstr "Le prix est trop grand"
+msgid "Total amount is too high, please check figures for Unit price and Qty are correct"
+msgstr "Le montant total est trop élevé, veuillez vérifier que le prix unitaire et la quantité sont corrects"
 
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:create.picking.processor:0
