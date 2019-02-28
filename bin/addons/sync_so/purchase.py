@@ -208,13 +208,17 @@ class purchase_order_line_sync(osv.osv):
 
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
-            pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
+            pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') and not sol_dict.get('is_line_split') else False
+            if pol_values['set_as_sourced_n']:
+                raise
             new_pol = self.create(cr, uid, pol_values, context=context)
             if debug:
                 logger.info("create pol id: %s, values: %s" % (new_pol, pol_values))
 
             # if original pol has already been confirmed (and so has linked IN moves), then we re-attach moves to the right new split pol:
             if sol_dict['is_line_split']:
+                #if not pol_values.get('set_as_sourced_n'):
+
                 linked_in_moves = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in')], context=context)
                 if len(linked_in_moves) > 1:
                     for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
