@@ -21,6 +21,7 @@
 
 
 from osv import osv, fields
+from tools.translate import _
 
 
 def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, args, context=None):
@@ -107,6 +108,12 @@ class purchase_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_qty', qty) >= self._max_qty or result.get('value', {}).get('product_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_amount:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
                            partner_id, date_order=False, fiscal_position=False, date_planned=False,
                            name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
@@ -114,10 +121,13 @@ class purchase_order_line(osv.osv):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
+
         if not context:
             context = {}
 
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
+            if qty >= self._max_qty or qty*price_unit >= self._max_amount:
+                return {'warning': {'title': '', 'message': _(self._max_msg)}}
             return {}
 
         prod_context = context.copy()
@@ -142,6 +152,7 @@ class purchase_order_line(osv.osv):
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
 
+        self.check_digits(cr, uid, result, context=context)
         return result
 
     def _relatedFields(self, cr, uid, vals, context=None):

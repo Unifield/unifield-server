@@ -57,6 +57,7 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "name desc"
 
+
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj=self.pool.get('res.currency')
@@ -634,8 +635,8 @@ class purchase_order(osv.osv):
 
     def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
         res = {}
-        max_qty = 10**16
-        max_amount = 10**13 # dot + decimal1 + decimal2
+        max_qty = self.pool.get('purchase.order.line')._max_qty
+        max_amount = self.pool.get('purchase.order.line')._max_amount
 
         for id in ids:
             res[id] = ''
@@ -648,7 +649,6 @@ class purchase_order(osv.osv):
         for x in cr.fetchall():
             res[x[1]] += ' #%s' % x[0]
 
-        print res
         return res
 
 
