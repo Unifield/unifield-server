@@ -1043,9 +1043,137 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             'getRunParmsRML': self.getRunParmsRML,
         })
 
+
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
 
 
+class supplier_performance_report_parser(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(supplier_performance_report_parser, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'parseDateXls': self._parse_date_xls,
+            'getLines': self.get_lines,
+        })
+
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
+
+    def _parse_date_xls(self, dt_str, is_datetime=True):
+        if not dt_str or dt_str == 'False':
+            return ''
+        if is_datetime:
+            dt_str = dt_str[0:10] if len(dt_str) >= 10 else ''
+        if dt_str:
+            dt_str += 'T00:00:00.000'
+        return dt_str
+
+    def get_lines(self, wizard):
+        move_obj = self.pool.get('stock.move')
+        accil_obj = self.pool.get('account.invoice.line')
+        cat_obj = self.pool.get('supplier.catalogue')
+        curr_obj = self.pool.get('res.currency')
+        lines = []
+
+        for pol in self.pool.get('purchase.order.line').browse(self.cr, self.uid, wizard.pol_ids, context=self.localcontext):
+            currency = pol.order_id.pricelist_id.currency_id
+            # Move and Pick
+            move_domain = [('type', '=', 'in'), ('purchase_line_id', '=', pol.id)]
+            in_move = False
+            in_move_ids = move_obj.search(self.cr, self.uid, move_domain, limit=1, context=self.localcontext)
+            if in_move_ids:
+                in_move = move_obj.browse(self.cr, self.uid, in_move_ids[0], context=self.localcontext)
+            # Supplier Invoice / account.invoice.line
+            accil_domain = [('order_line_id', '=', pol.id), ('invoice_id.type', '=', 'in_invoice'),
+                            ('invoice_id.is_direct_invoice', '=', False), ('invoice_id.is_inkind_donation', '=', False),
+                            ('invoice_id.is_debit_note', '=', False), ('invoice_id.is_intermission', '=', False)]
+            accil = False
+            accil_ids = accil_obj.search(self.cr, self.uid, accil_domain, limit=1, context=self.localcontext)
+            if accil_ids:
+                accil = accil_obj.browse(self.cr, self.uid, accil_ids[0], context=self.localcontext)
+            # Catalogue
+            cat_unit_price = 0.00
+            func_cat_unit_price = 0.00
+            if pol.product_id and pol.product_id.seller_ids:
+                catalogue = False
+                for seller in pol.product_id.seller_ids:
+                    if seller.catalogue_id:
+                        catalogue = seller.catalogue_id
+                        break
+                if catalogue:
+                    cat_unit_price = cat_obj.browse(self.cr, self.uid, catalogue.id, fields_to_fetch=['unit_price'],
+                                                    context=self.localcontext).unit_price
+                    func_cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id,
+                                                                 wizard.company_currency_id.id, cat_unit_price,
+                                                                 round=False, context=self.localcontext), 2)
+
+            # Different unit prices
+            in_unit_price = in_move and in_move.price_unit or 0.00
+            si_unit_price = accil and accil.price_unit or ''
+            func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, currency.id, wizard.company_currency_id.id,
+                                                         pol.price_unit, round=False, context=self.localcontext), 2)
+            func_in_unit_price = in_unit_price and round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
+                                                                          wizard.company_currency_id.id, in_unit_price,
+                                                                          round=False, context=self.localcontext), 2) or 0.00
+            func_si_unit_price = si_unit_price and round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
+                                                                          wizard.company_currency_id.id, si_unit_price,
+                                                                          round=False, context=self.localcontext), 2) or ''
+
+            lines.append({
+                'supplier': pol.partner_id.name,
+                'po_ref': pol.order_id.name,
+                'in_ref': in_move and in_move.picking_id.name or '',
+                'si_ref': accil and (accil.invoice_id.number or accil.invoice_id.name) or '',
+                'line_number': pol.line_number,
+                'p_code': pol.product_id and pol.product_id.default_code or pol.comment or '',
+                'p_desc': pol.product_id and pol.product_id.name or '',
+                'state': pol.state,
+                'qty_ordered': pol.product_qty,
+                'qty_received': in_move and in_move.state == 'assigned' and in_move.product_qty or 0,
+                'currency': currency.name,
+                'cat_unit_price': cat_unit_price,
+                'po_unit_price': pol.price_unit,
+                'in_unit_price': in_unit_price,
+                'si_unit_price': si_unit_price,
+                'discrep_in_po': in_move and in_unit_price - pol.price_unit or '',
+                'discrep_si_po': accil and si_unit_price - pol.price_unit or '',
+                'func_cat_unit_price': func_cat_unit_price,
+                'func_po_unit_price': func_pol_unit_price,
+                'func_in_unit_price': func_in_unit_price,
+                'func_si_unit_price': func_si_unit_price,
+                'func_discrep_in_po': in_move and func_in_unit_price - func_pol_unit_price or '',
+                'func_discrep_si_po': accil and func_si_unit_price - func_pol_unit_price or '',
+                'po_crea_date': pol.create_date,
+                'po_vali_date': pol.validation_date,
+                'po_conf_date': pol.confirmation_date,
+                'po_rdd': pol.order_id.delivery_requested_date,
+                'po_cdd': pol.confirmed_delivery_date,
+                'in_receipt_date': in_move and in_move.picking_id.physical_reception_date,
+                
+            })
+
+        return lines
+
+
+class supplier_performance_report_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+                 header='external', store=False):
+        super(supplier_performance_report_xls, self).__init__(name, table,
+                                                              rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(supplier_performance_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+
+supplier_performance_report_xls(
+    'report.supplier.performance.report_xls',
+    'supplier.performance.wizard',
+    'msf_supply_doc_export/report/supplier_performance_report_xls.mako',
+    parser=supplier_performance_report_parser,
+    header=False
+)
 
 
 class ir_values(osv.osv):

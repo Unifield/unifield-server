@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="supplier_performance_wizard_form_view" model="ir.ui.view">
+            <field name="name">supplier.performance.wizard.form.view</field>
+            <field name="model">supplier.performance.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Supplier Performance">
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="date_from" />
+                    <field name="date_to" />
+                    <field name="partner_id" domain="[('active', '=', 't'), ('supplier', '=', 't')]" />
+                    <separator colspan="4" string="Supplier Type" />
+                    <group colspan="4" col="8">
+                        <field name="partner_type_internal" />
+                        <field name="partner_type_section" />
+                        <field name="partner_type_external" />
+                        <field name="partner_type_esc" />
+                        <field name="partner_type_intermission" />
+                    </group>
+                    <separator colspan="4" string="Purchase Order Type" />
+                    <group colspan="4" col="8">
+                        <field name="po_type_regular" />
+                        <field name="po_type_donation_exp" />
+                        <field name="po_type_donation_st" />
+                        <field name="po_type_loan" />
+                        <field name="po_type_in_kind" />
+                        <field name="po_type_purchase_list" />
+                        <field name="po_type_direct" />
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_supplier_performance_wizard" model="ir.actions.act_window">
+            <field name="name">Supplier Performance</field>
+            <field name="res_model">supplier.performance.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_supplier_performance_wizard"
+            action="action_supplier_performance_wizard"
+            parent="base.next_id_73"
+            sequence="5"
+            />
+
+    </data>
+</openerp>
