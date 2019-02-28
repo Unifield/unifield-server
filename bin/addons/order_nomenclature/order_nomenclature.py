@@ -111,6 +111,8 @@ class purchase_order_line(osv.osv):
     def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
         if result.get('value', {}).get('product_qty', qty) >= self._max_qty or result.get('value', {}).get('product_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_amount:
             result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
             result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
         return True
 
