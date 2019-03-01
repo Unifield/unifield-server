@@ -1433,7 +1433,7 @@ class purchase_order_line(osv.osv):
             pol_to_update = [pol.id]
             if pol.linked_sol_id:
                 pol_to_update += [new_po_line]
-            self.update_fo_lines(cr, uid, pol_to_update, context=context, from_cancel=True)
+            self.update_fo_lines(cr, uid, pol_to_update, context=context, qty_updated=True)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'

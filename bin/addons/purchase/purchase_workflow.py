@@ -90,7 +90,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, from_cancel=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -239,7 +239,7 @@ class purchase_order_line(osv.osv):
                     if linked_out_moves:
                         self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
-                if from_cancel:
+                if qty_updated:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line
                     rule_obj = self.pool.get('sync.client.message_rule')
                     rule_obj._manual_create_sync_message(cr, uid, 'sale.order.line', pol.linked_sol_id.id, {},

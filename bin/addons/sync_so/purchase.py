@@ -278,8 +278,10 @@ class purchase_order_line_sync(osv.osv):
 
         # Wkf action:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
-            if pol_state == 'sourced_n':
+            if pol_state in 'sourced_n':
                 self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
+            elif pol_state in ('sourced_sy', 'sourced_v'):
+                self.update_fo_lines(cr, uid, [pol_updated], context=context)
 
         if sol_dict['state'] == 'sourced':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)

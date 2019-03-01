@@ -120,7 +120,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 wf_service.trg_validate(uid, 'purchase.order.line', new_line_id, 'validated', cr)
 
             if split.purchase_line_id.state in ['draft', 'validated', 'validated_n'] and split.purchase_line_id.linked_sol_id:
-                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [split.purchase_line_id.id, new_line_id], context=context)
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [split.purchase_line_id.id, new_line_id], qty_updated=True, context=context)
 
                 new_sol = self.pool.get('purchase.order.line').browse(cr, uid, new_line_id, fields_to_fetch=['linked_sol_id'], context=context).linked_sol_id.id
                 if new_sol and split.purchase_line_id.state != 'draft':
