@@ -124,10 +124,10 @@ class supplier_performance_wizard(osv.osv_memory):
             ]
 
             if wizard.date_from:
-                pol_domain.append(('date', '>=', wizard.date_from))
+                pol_domain.append(('create_date', '>=', wizard.date_from))
 
             if wizard.date_to:
-                pol_domain.append(('date', '<=', wizard.date_to))
+                pol_domain.append(('create_date', '<=', wizard.date_to))
 
             if wizard.partner_id:
                 pol_domain.append(('partner_id', '=', wizard.partner_id.id))
@@ -140,7 +140,7 @@ class supplier_performance_wizard(osv.osv_memory):
             if order_types:
                 pol_domain.append(('order_id.order_type', 'in', order_types))
 
-            pol_ids = pol_obj.search(cr, uid, pol_domain, context=context)
+            pol_ids = pol_obj.search(cr, uid, pol_domain, order='order_id desc, line_number asc', context=context)
 
             if not pol_ids:
                 raise osv.except_osv(

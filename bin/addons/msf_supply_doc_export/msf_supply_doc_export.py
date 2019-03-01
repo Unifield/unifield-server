@@ -1055,6 +1055,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             'getLines': self.get_lines,
         })
 
+        self._order_iterator = 0
+        self._nb_orders = 0
         if context.get('background_id'):
             self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
         else:
@@ -1069,12 +1071,22 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             dt_str += 'T00:00:00.000'
         return dt_str
 
+    def get_diff_date_days(self, date1, date2):
+        if not (self.isDate(date1) or self.isDate(date2)) or not (self.isDateTime(date1) or self.isDateTime(date2)):
+            return '-'
+        date1 = datetime.strptime(date1[0:10], '%Y-%m-%d')
+        date2 = datetime.strptime(date2[0:10], '%Y-%m-%d')
+
+        return (date2 - date1).days
+
     def get_lines(self, wizard):
         move_obj = self.pool.get('stock.move')
         accil_obj = self.pool.get('account.invoice.line')
-        cat_obj = self.pool.get('supplier.catalogue')
+        catl_obj = self.pool.get('supplier.catalogue.line')
         curr_obj = self.pool.get('res.currency')
         lines = []
+
+        self._nb_orders = len(wizard.pol_ids)
 
         for pol in self.pool.get('purchase.order.line').browse(self.cr, self.uid, wizard.pol_ids, context=self.localcontext):
             currency = pol.order_id.pricelist_id.currency_id
@@ -1093,8 +1105,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             if accil_ids:
                 accil = accil_obj.browse(self.cr, self.uid, accil_ids[0], context=self.localcontext)
             # Catalogue
-            cat_unit_price = 0.00
-            func_cat_unit_price = 0.00
+            cat_unit_price = '-'
+            func_cat_unit_price = '-'
             if pol.product_id and pol.product_id.seller_ids:
                 catalogue = False
                 for seller in pol.product_id.seller_ids:
@@ -1102,56 +1114,82 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                         catalogue = seller.catalogue_id
                         break
                 if catalogue:
-                    cat_unit_price = cat_obj.browse(self.cr, self.uid, catalogue.id, fields_to_fetch=['unit_price'],
-                                                    context=self.localcontext).unit_price
-                    func_cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id,
-                                                                 wizard.company_currency_id.id, cat_unit_price,
-                                                                 round=False, context=self.localcontext), 2)
+                    cat_line_domain = [('product_id', '=', pol.product_id.id), ('catalogue_id', '=', catalogue.id)]
+                    cat_line_ids = catl_obj.search(self.cr, self.uid, cat_line_domain, limit=1, context=self.localcontext)
+                    if cat_line_ids:
+                        cat_unit_price = catl_obj.browse(self.cr, self.uid, cat_line_ids[0], fields_to_fetch=['unit_price'],
+                                                         context=self.localcontext).unit_price
+                        func_cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id,
+                                                                     wizard.company_currency_id.id, cat_unit_price,
+                                                                     round=False, context=self.localcontext), 2)
 
             # Different unit prices
-            in_unit_price = in_move and in_move.price_unit or 0.00
-            si_unit_price = accil and accil.price_unit or ''
+            in_unit_price = in_move and in_move.price_unit or '-'
+            si_unit_price = accil and accil.price_unit or '-'
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, currency.id, wizard.company_currency_id.id,
                                                          pol.price_unit, round=False, context=self.localcontext), 2)
-            func_in_unit_price = in_unit_price and round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
-                                                                          wizard.company_currency_id.id, in_unit_price,
-                                                                          round=False, context=self.localcontext), 2) or 0.00
-            func_si_unit_price = si_unit_price and round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
-                                                                          wizard.company_currency_id.id, si_unit_price,
-                                                                          round=False, context=self.localcontext), 2) or ''
+            func_in_unit_price = in_move and round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
+                                                                    wizard.company_currency_id.id, in_unit_price,
+                                                                    round=False, context=self.localcontext), 2) or '-'
+            func_si_unit_price = accil and round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
+                                                                  wizard.company_currency_id.id, si_unit_price,
+                                                                  round=False, context=self.localcontext), 2) or '-'
+
+            # Discrepancies
+            discrep_in_po = '-'
+            if in_unit_price != '-':
+                discrep_in_po = in_unit_price - pol.price_unit
+            discrep_si_po = '-'
+            if si_unit_price != '-':
+                discrep_si_po = si_unit_price - pol.price_unit
+            func_discrep_in_po = '-'
+            if func_in_unit_price != '-':
+                func_discrep_in_po = func_in_unit_price - func_pol_unit_price
+            func_discrep_si_po = '-'
+            if func_si_unit_price != '-':
+                func_discrep_si_po = func_si_unit_price - func_pol_unit_price
+
+            # Actual Supplier Lead Time
+            act_sup_lt = in_move and self.get_diff_date_days(pol.validation_date,
+                                                             in_move.picking_id.physical_reception_date) or '-'
+            discrep_lt_act_theo = '-'
+            if act_sup_lt != '-':
+                discrep_lt_act_theo = act_sup_lt - pol.partner_id.supplier_lt
 
             lines.append({
-                'supplier': pol.partner_id.name,
-                'po_ref': pol.order_id.name,
+                'pol': pol,
                 'in_ref': in_move and in_move.picking_id.name or '',
                 'si_ref': accil and (accil.invoice_id.number or accil.invoice_id.name) or '',
-                'line_number': pol.line_number,
-                'p_code': pol.product_id and pol.product_id.default_code or pol.comment or '',
-                'p_desc': pol.product_id and pol.product_id.name or '',
-                'state': pol.state,
-                'qty_ordered': pol.product_qty,
-                'qty_received': in_move and in_move.state == 'assigned' and in_move.product_qty or 0,
+                'qty_received': in_move and in_move.product_qty or 0,
                 'currency': currency.name,
                 'cat_unit_price': cat_unit_price,
-                'po_unit_price': pol.price_unit,
                 'in_unit_price': in_unit_price,
                 'si_unit_price': si_unit_price,
-                'discrep_in_po': in_move and in_unit_price - pol.price_unit or '',
-                'discrep_si_po': accil and si_unit_price - pol.price_unit or '',
+                'discrep_in_po': discrep_in_po,
+                'discrep_si_po': discrep_si_po,
                 'func_cat_unit_price': func_cat_unit_price,
                 'func_po_unit_price': func_pol_unit_price,
                 'func_in_unit_price': func_in_unit_price,
                 'func_si_unit_price': func_si_unit_price,
-                'func_discrep_in_po': in_move and func_in_unit_price - func_pol_unit_price or '',
-                'func_discrep_si_po': accil and func_si_unit_price - func_pol_unit_price or '',
-                'po_crea_date': pol.create_date,
-                'po_vali_date': pol.validation_date,
-                'po_conf_date': pol.confirmation_date,
-                'po_rdd': pol.order_id.delivery_requested_date,
-                'po_cdd': pol.confirmed_delivery_date,
-                'in_receipt_date': in_move and in_move.picking_id.physical_reception_date,
-                
+                'func_discrep_in_po': func_discrep_in_po,
+                'func_discrep_si_po': func_discrep_si_po,
+                'in_receipt_date': in_move and in_move.picking_id.physical_reception_date or '-',
+                'days_crea_vali': self.get_diff_date_days(pol.create_date, pol.validation_date),
+                'days_crea_conf': self.get_diff_date_days(pol.create_date, pol.confirmation_date),
+                'days_cdd_receipt': in_move and self.get_diff_date_days(pol.confirmed_delivery_date,
+                                                                        in_move.picking_id.physical_reception_date) or '-',
+                'days_rdd_receipt': in_move and self.get_diff_date_days(pol.order_id.delivery_requested_date,
+                                                                        in_move.picking_id.physical_reception_date) or '-',
+                'days_crea_receipt': in_move and self.get_diff_date_days(pol.create_date,
+                                                                         in_move.picking_id.physical_reception_date) or '-',
+                'days_vali_receipt': act_sup_lt,
+                'discrep_lt_act_theo': discrep_lt_act_theo,
             })
+
+            self._order_iterator += 1
+            if self.back_browse:
+                percent = float(self._order_iterator) / float(self._nb_orders)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
         return lines
 
