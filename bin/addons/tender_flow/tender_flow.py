@@ -2166,6 +2166,7 @@ SOURCE_DOCUMENT_MODELS = [
 
 class procurement_request_sourcing_document(osv.osv):
     _name = 'procurement.request.sourcing.document'
+    _inherit = 'procurement.request.sourcing.document'
     _table = 'procurement_request_sourcing_document2'
     _description = 'Sourcing Document'
     _rec_name = 'order_id'
