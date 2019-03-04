@@ -1072,7 +1072,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         return dt_str
 
     def get_diff_date_days(self, date1, date2):
-        if not (self.isDate(date1) or self.isDate(date2)) or not (self.isDateTime(date1) or self.isDateTime(date2)):
+        if not (self.isDate(date1) or self.isDateTime(date1)) or not (self.isDate(date2) or self.isDateTime(date2)):
             return '-'
         date1 = datetime.strptime(date1[0:10], '%Y-%m-%d')
         date2 = datetime.strptime(date2[0:10], '%Y-%m-%d')
@@ -1124,35 +1124,42 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                                                                      round=False, context=self.localcontext), 2)
 
             # Different unit prices
-            in_unit_price = in_move and in_move.price_unit or '-'
-            si_unit_price = accil and accil.price_unit or '-'
+            in_unit_price, func_in_unit_price = '-', '-'
+            if in_move:
+                in_unit_price = in_move.price_unit or 0.00
+                func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
+                                                            wizard.company_currency_id.id, in_unit_price,
+                                                            round=False, context=self.localcontext), 2)
+            si_unit_price, func_si_unit_price = '-', '-'
+            if accil:
+                si_unit_price = accil.price_unit or 0.00
+                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
+                                                            wizard.company_currency_id.id, si_unit_price,
+                                                            round=False, context=self.localcontext), 2)
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, currency.id, wizard.company_currency_id.id,
                                                          pol.price_unit, round=False, context=self.localcontext), 2)
-            func_in_unit_price = in_move and round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
-                                                                    wizard.company_currency_id.id, in_unit_price,
-                                                                    round=False, context=self.localcontext), 2) or '-'
-            func_si_unit_price = accil and round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
-                                                                  wizard.company_currency_id.id, si_unit_price,
-                                                                  round=False, context=self.localcontext), 2) or '-'
 
             # Discrepancies
-            discrep_in_po = '-'
+            discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
             if in_unit_price != '-':
                 discrep_in_po = in_unit_price - pol.price_unit
-            discrep_si_po = '-'
             if si_unit_price != '-':
                 discrep_si_po = si_unit_price - pol.price_unit
-            func_discrep_in_po = '-'
             if func_in_unit_price != '-':
                 func_discrep_in_po = func_in_unit_price - func_pol_unit_price
-            func_discrep_si_po = '-'
             if func_si_unit_price != '-':
                 func_discrep_si_po = func_si_unit_price - func_pol_unit_price
 
-            # Actual Supplier Lead Time
-            act_sup_lt = in_move and self.get_diff_date_days(pol.validation_date,
-                                                             in_move.picking_id.physical_reception_date) or '-'
-            discrep_lt_act_theo = '-'
+            # Dates comparison and Actual Supplier Lead Time
+            days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'
+            if in_move:
+                days_cdd_receipt = self.get_diff_date_days(pol.confirmed_delivery_date,
+                                                           in_move.picking_id.physical_reception_date)
+                days_rdd_receipt = self.get_diff_date_days(pol.order_id.delivery_requested_date,
+                                                           in_move.picking_id.physical_reception_date)
+                days_crea_receipt = self.get_diff_date_days(pol.create_date, in_move.picking_id.physical_reception_date)
+                act_sup_lt = self.get_diff_date_days(pol.validation_date, in_move.picking_id.physical_reception_date)
+
             if act_sup_lt != '-':
                 discrep_lt_act_theo = act_sup_lt - pol.partner_id.supplier_lt
 
@@ -1176,12 +1183,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'in_receipt_date': in_move and in_move.picking_id.physical_reception_date or '-',
                 'days_crea_vali': self.get_diff_date_days(pol.create_date, pol.validation_date),
                 'days_crea_conf': self.get_diff_date_days(pol.create_date, pol.confirmation_date),
-                'days_cdd_receipt': in_move and self.get_diff_date_days(pol.confirmed_delivery_date,
-                                                                        in_move.picking_id.physical_reception_date) or '-',
-                'days_rdd_receipt': in_move and self.get_diff_date_days(pol.order_id.delivery_requested_date,
-                                                                        in_move.picking_id.physical_reception_date) or '-',
-                'days_crea_receipt': in_move and self.get_diff_date_days(pol.create_date,
-                                                                         in_move.picking_id.physical_reception_date) or '-',
+                'days_cdd_receipt': days_cdd_receipt,
+                'days_rdd_receipt': days_rdd_receipt,
+                'days_crea_receipt': days_crea_receipt,
                 'days_vali_receipt': act_sup_lt,
                 'discrep_lt_act_theo': discrep_lt_act_theo,
             })

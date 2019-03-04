@@ -104,13 +104,13 @@
 <ss:Worksheet ss:Name="${_('Supplier Performance Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Supplier
-        <Column ss:AutoFitWidth="1" ss:Width="120.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="130.0" />
         ## PO Reference
-        <Column ss:AutoFitWidth="1" ss:Width="120.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## IN Reference
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## SI Reference
-        <Column ss:AutoFitWidth="1" ss:Width="120.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="130.0" />
         ## Line number
         <Column ss:AutoFitWidth="1" ss:Width="55.0" />
         ## Product Code
@@ -197,15 +197,15 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Supplier Type')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.pt_text or ''|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Purchase Order Type')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.ot_text or ''|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('From')|x}</Data></Cell>
-            % if isDateTime(r.date_from):
+            % if isDate(r.date_from):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.date_from)|n}</Data></Cell>
             % else:
             <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
@@ -213,7 +213,7 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('To')|x}</Data></Cell>
-            % if isDateTime(r.date_to):
+            % if isDate(r.date_to):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.date_to)|n}</Data></Cell>
             % else:
             <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
@@ -280,62 +280,62 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].product_id and line['pol'].product_id.default_code or line['pol'].comment or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].product_id and line['pol'].product_id.name|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(line['pol'], 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['pol'].product_qty|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_received']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['pol'].product_qty or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_received'] or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['currency']|x}</Data></Cell>
 
                 ## Normal Prices
                 % if line['cat_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['cat_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['cat_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['pol'].price_unit|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['pol'].price_unit or 0|x}</Data></Cell>
                 % if line['in_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['in_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['in_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['si_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['si_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['discrep_in_po'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_in_po']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_in_po'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['discrep_si_po'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_si_po']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['discrep_si_po'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
 
                 ## Functional Prices
                 % if line['func_cat_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_cat_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_cat_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_po_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_po_unit_price'] or 0|x}</Data></Cell>
                 % if line['func_in_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_in_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_in_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['func_si_unit_price'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_unit_price']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_si_unit_price'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['func_discrep_in_po'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_in_po']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_in_po'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['func_discrep_si_po'] != '-':
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_si_po']|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['func_discrep_si_po'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
@@ -373,31 +373,39 @@
                 % endif
 
                 ## Days
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_vali']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_conf']|x}</Data></Cell>
+                % if line['days_crea_vali'] != '-':
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_vali'] or 0|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
+                % if line['days_crea_conf'] != '-':
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_conf'] or 0|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 % if line['days_cdd_receipt'] != '-':
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_cdd_receipt']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_cdd_receipt'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['days_rdd_receipt'] != '-':
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_rdd_receipt']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_rdd_receipt'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['days_crea_receipt'] != '-':
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_receipt']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_crea_receipt'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if line['days_vali_receipt'] != '-':
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_vali_receipt']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['days_vali_receipt'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['pol'].partner_id.supplier_lt|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['pol'].partner_id.supplier_lt or 0|x}</Data></Cell>
                 % if line['discrep_lt_act_theo'] != '-':
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['discrep_lt_act_theo']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['discrep_lt_act_theo'] or 0|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif

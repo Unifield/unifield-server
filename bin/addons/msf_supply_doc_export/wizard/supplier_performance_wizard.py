@@ -20,13 +20,26 @@
 ##############################################################################
 
 import time
-import threading
 
-from report import report_sxw
 from osv import fields, osv
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-from service.web_services import report_spool
+
+PARTNER_TYPE = {
+    'internal': _('Internal'),
+    'section': _('Inter-section'),
+    'external': _('External'),
+    'esc': _('ESC'),
+    'intermission': _('Intermission'),
+}
+ORDER_TYPES_SELECTION = {
+    'regular': _('Regular'),
+    'donation_exp': _('Donation before expiry'),
+    'donation_st': _('Standard donation'),
+    'loan': _('Loan'),
+    'in_kind': _('In Kind Donation'),
+    'purchase_list': _('Purchase List'),
+    'direct': _('Direct Purchase Order'),
+}
 
 
 class supplier_performance_wizard(osv.osv_memory):
@@ -40,11 +53,13 @@ class supplier_performance_wizard(osv.osv_memory):
         'date_from': fields.date(string='From'),
         'date_to': fields.date(string='To'),
         'partner_id': fields.many2one('res.partner', string='Specific Supplier'),
+        'pt_text': fields.text(string='Partner Types Text', readonly=True),
         'partner_type_internal': fields.boolean(string='Internal'),
         'partner_type_section': fields.boolean(string='Inter-section'),
         'partner_type_external': fields.boolean(string='External'),
         'partner_type_esc': fields.boolean(string='ESC'),
         'partner_type_intermission': fields.boolean(string='Intermission'),
+        'ot_text': fields.text(string='Order Types Text', readonly=True),
         'po_type_regular': fields.boolean(string='Regular'),
         'po_type_donation_exp': fields.boolean(string='Donation before expiry'),
         'po_type_donation_st': fields.boolean(string='Standard donation'),
@@ -80,7 +95,7 @@ class supplier_performance_wizard(osv.osv_memory):
         if wizard.partner_type_intermission:
             partner_types.append('intermission')
 
-        return partner_types
+        return partner_types, ', '.join(PARTNER_TYPE[pt] for pt in partner_types)
 
     def _get_order_types(self, cr, uid, wizard):
         '''
@@ -103,7 +118,7 @@ class supplier_performance_wizard(osv.osv_memory):
         if wizard.po_type_direct:
             order_types.append('direct')
 
-        return order_types
+        return order_types, ', '.join(ORDER_TYPES_SELECTION[ot] for ot in order_types)
 
     def get_values(self, cr, uid, ids, context=None):
         '''
@@ -118,6 +133,7 @@ class supplier_performance_wizard(osv.osv_memory):
         pol_obj = self.pool.get('purchase.order.line')
 
         for wizard in self.browse(cr, uid, ids, context=context):
+            vals = {}
             pol_domain = [
                 ('state', 'in', ['done', 'cancel', 'cancel_r']),
                 ('partner_id.supplier', '=', True),
@@ -132,23 +148,27 @@ class supplier_performance_wizard(osv.osv_memory):
             if wizard.partner_id:
                 pol_domain.append(('partner_id', '=', wizard.partner_id.id))
 
-            partner_types = self._get_partner_types(cr, uid, wizard)
+            partner_types, pt_text = self._get_partner_types(cr, uid, wizard)
             if partner_types:
                 pol_domain.append(('partner_id.partner_type', 'in', partner_types))
+                vals.update({'pt_text': pt_text})
 
-            order_types = self._get_order_types(cr, uid, wizard)
+            order_types, ot_text = self._get_order_types(cr, uid, wizard)
             if order_types:
                 pol_domain.append(('order_id.order_type', 'in', order_types))
+                vals.update({'ot_text': ot_text})
 
-            pol_ids = pol_obj.search(cr, uid, pol_domain, order='order_id desc, line_number asc', context=context)
+            vals.update({
+                'pol_ids': pol_obj.search(cr, uid, pol_domain, order='order_id desc, line_number asc', context=context)
+            })
 
-            if not pol_ids:
+            if not vals.get('pol_ids'):
                 raise osv.except_osv(
                     _('Error'),
                     _('No data found with these parameters'),
                 )
 
-            self.write(cr, uid, [wizard.id], {'pol_ids': pol_ids}, context=context)
+            self.write(cr, uid, [wizard.id], vals, context=context)
 
         return True
 
