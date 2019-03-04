@@ -104,8 +104,14 @@
                         <field name="requested_date_in_past" invisible="1"/>
                         <field name="update_in_progress" invisible="1" readonly="1"/>
                         <field name="is_validated_and_synced" invisible="1"/>
+                        <field name="msg_big_qty" invisible="1"/>
                         <group colspan="6">
                             <html>
+                                <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>
+                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
+                                    </translate>
+                                </p>
                                 <p id="view_order_requested_in_past" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>
                                         WARNING: The requested date of this purchase order is in the past.
@@ -125,6 +131,11 @@
                                     <br/>
                                 </p>
                                 <script language="javascript">
+                                    var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
+                                    if (is_big_amount) {
+                                        $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
+                                        $('#big_amount').show();
+                                    }
                                     var is_in_past = $('#requested_date_in_past').val();
                                     if (is_in_past == "1") {
                                         msg_dom = $('#view_order_requested_in_past');

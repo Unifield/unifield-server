@@ -18,6 +18,11 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
+    _max_digits = 15
+    _max_qty = 10**(_max_digits+1)
+    _max_amount = 10**(_max_digits-3)
+    _max_msg = _('The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
+
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the system configuration VAT management is set to True
@@ -585,25 +590,27 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
+        msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
+        error = []
         for pol in self.browse(cr, uid, ids, context=context):
-            if pol.product_qty > 99999999999:
-                return False
+            max_digits = 27
+            if pol.product_qty >= 10**(max_digits-2):
+                error.append('%s #%s' % (pol.order_id.name, pol.line_number))
+            else:
+                total_int = int(pol.product_qty * pol.price_unit)
 
-            total = pol.product_qty * pol.price_unit
-            total_int = int(total)
-            total_dec = round(total - total_int, 2)
+                nb_digits_allowed = max_digits - 2
 
-            nb_digits_allowed = 15
-            if total_dec:
-                nb_digits_allowed -= 3
+                if len(str(total_int)) > nb_digits_allowed:
+                    error.append('%s #%s' % (pol.order_id.name, pol.line_number))
 
-            if len(str(total_int)) > nb_digits_allowed:
-                return False
+        if error:
+            raise osv.except_osv(_('Error'), '%s: %s' % (msg, ' ,'.join(error)))
 
         return True
 
     _constraints = [
-        (_check_max_price, _("Price is too big"), ['price_unit', 'product_qty']),
+        (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1666,12 +1673,14 @@ class purchase_order_line(osv.osv):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
+
         res = {'value': {}}
 
         if context is None:
             context = {}
 
         if not product_id or not product_uom or not product_qty:
+            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1695,6 +1704,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
+        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):

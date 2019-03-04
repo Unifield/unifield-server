@@ -57,6 +57,7 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "name desc"
 
+
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj=self.pool.get('res.currency')
@@ -632,6 +633,25 @@ class purchase_order(osv.osv):
             po_ids.add(pol.order_id.id)
         return [('id', operator, list(po_ids))]
 
+    def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        max_qty = self.pool.get('purchase.order.line')._max_qty
+        max_amount = self.pool.get('purchase.order.line')._max_amount
+
+        for id in ids:
+            res[id] = ''
+
+        cr.execute('''select line_number, order_id from purchase_order_line
+            where
+                order_id in %s
+                and ( product_qty >= %s or product_qty*price_unit >= %s)
+            ''', (tuple(ids), max_qty, max_amount))
+        for x in cr.fetchall():
+            res[x[1]] += ' #%s' % x[0]
+
+        return res
+
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -787,6 +807,7 @@ class purchase_order(osv.osv):
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
         'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
+        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 15digtis total amounts', method=1),
     }
     _defaults = {
         'split_during_sll_mig': False,
