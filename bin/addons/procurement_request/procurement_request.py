@@ -718,7 +718,11 @@ class procurement_request_sourcing_document(osv.osv):
     """ Backward compatibility: do not change object's sdref """
 
     _name = 'procurement.request.sourcing.document'
-    _columns = {}
+    _table = 'procurement_request_sourcing_document2'
+    _auto = False
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+    }
 
 procurement_request_sourcing_document()
 
