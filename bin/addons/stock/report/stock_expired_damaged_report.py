@@ -247,14 +247,16 @@ class stock_expired_damaged_parser(report_sxw.rml_parse):
         res = []
 
         for move in move_obj.browse(self.cr, self.uid, self.datas['moves_ids'], context=self.localcontext):
-            price_at_date = False
-            self.cr.execute("""SELECT distinct on (product_id) product_id, new_standard_price
+            prod_price = False
+            self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
             FROM standard_price_track_changes
-            WHERE product_id = %s AND change_date <= %s
-            ORDER BY product_id, change_date desc
+            WHERE product_id = %s AND change_date >= %s
+            ORDER BY product_id, change_date asc
             """, (move.product_id.id, move.date))
             for x in self.cr.fetchall():
-                price_at_date = x[1]
+                prod_price = x[1]
+            if not prod_price:
+                prod_price = move.product_id.standard_price or move.price_unit
             res.append({
                 'ref': move.picking_id.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.complete_name or '',
@@ -265,11 +267,10 @@ class stock_expired_damaged_parser(report_sxw.rml_parse):
                 'qty': move.product_qty,
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'exp_date': move.expired_date,
-                'unit_price': price_at_date or move.price_unit,
+                'unit_price': prod_price,
                 'currency': move.price_currency_id and move.price_currency_id.name or
                 move.product_id.currency_id and move.product_id.currency_id.name or '',
-                'total_price': price_at_date and move.product_qty * price_at_date or
-                move.product_qty * move.price_unit,
+                'total_price': move.product_qty * prod_price,
                 'src_loc': move.location_id and move.location_id.name or '',
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
                 'crea_date': move.picking_id.date,
