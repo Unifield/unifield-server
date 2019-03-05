@@ -132,6 +132,19 @@ class financing_contract_contract(osv.osv):
         return self._check_grant_amount_proxy(cr, uid, ids,
                                               'contract_open', context=context)
 
+    def contract_reopen_proxy(self, cr, uid, ids, context=None):
+        """
+        Sets the contract state from Soft-Closed BACK to Open (no check needed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            if contract.get('state', '') == 'soft_closed':
+                self.write(cr, uid, contract['id'], {'state': 'open'}, context=context)
+        return True
+
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
             'state': 'open',
@@ -628,6 +641,8 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
 
@@ -716,6 +731,26 @@ class financing_contract_contract(osv.osv):
 
         return res
 
+    def change_contract_state(self, cr, uid, ids, signal, context=None):
+        """
+        Changes the contract state:
+        - from Draft to Open (signal contract_open)
+        - from Open to Soft-closed (signal contract_soft_closed)
+        - from Soft-closed to Hard-closed (signal contract_hard_closed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            state = contract.get('state', '')
+            if state == 'draft' and signal == 'contract_open':
+                self.contract_open(cr, uid, contract['id'])
+            elif state == 'open' and signal == 'contract_soft_closed':
+                self.contract_soft_closed(cr, uid, contract['id'])
+            elif state == 'soft_closed' and signal == 'contract_hard_closed':
+                self.contract_hard_closed(cr, uid, contract['id'])
+
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -723,9 +758,7 @@ class financing_contract_contract(osv.osv):
                                                 context=context)
         if check_action:
             return check_action
-        wf_service = netsvc.LocalService("workflow")
-        for id in ids:
-            wf_service.trg_validate(uid, self._name, id, signal, cr)
+        self.change_contract_state(cr, uid, ids, signal, context=context)
         return True
 
     def _check_grant_amount(self, cr, uid, ids, signal, context=None):

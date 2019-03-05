@@ -42,14 +42,13 @@ class wizard_financing_contract_contract_warning(osv.osv_memory):
     }
 
     def btn_close(self, cr, uid, ids, context=None):
+        contract_obj = self.pool.get('financing.contract.contract')
         signal = context.get('financing_contract_warning', {}).get(
             'signal', False)
         res_id = context.get('financing_contract_warning', {}).get(
             'res_id', False)
         if signal and res_id:
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'financing.contract.contract', res_id,
-                signal, cr)
+            contract_obj.change_contract_state(cr, uid, res_id, signal, context=context)
         return {
             'type': 'ir.actions.act_window_close', 'context': context,
         }
