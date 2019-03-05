@@ -105318,3 +105318,9 @@ msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
 #, python-format
 msgid "File line %s: Column \"Item\" must be an integer"
 msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:183
+#, python-format
+msgid "The Cost Center \"%s\" (or its parent) must be \"targeted\" to a Proprietary Instance."
+msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propriétaire \"cible\"."
