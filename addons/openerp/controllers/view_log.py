@@ -61,6 +61,12 @@ class View_Log(SecuredController):
                 values['xmlid_code'] = xmlid[0]['xmlid_code']
                 fields.append(('xmlid_code', _('UniData xmlid_code')))
 
+            if rpc.session.uid == 1:
+                model_ids = rpc.session.execute('object', 'execute', 'ir.model', 'search', [('model', '=', model)])
+                if model_ids:
+                    fields.insert(7, ('model_sdref', 'Model Sdref'))
+                    values['model_sdref'] = 'sd.%s' % rpc.session.execute('object', 'execute', 'ir.model', 'get_sd_ref', model_ids[0])
+
         return {'values':values, 'fields': fields}
 
 # vim: ts=4 sts=4 sw=4 si et

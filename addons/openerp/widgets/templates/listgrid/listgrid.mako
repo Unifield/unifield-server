@@ -216,6 +216,18 @@ if (auto_field && auto_field.val()){
                                                 onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create">
                                                     ${_('New')}
                                             </button>
+
+                                            % if extra_button:
+                                                <button title="${extra_button.get('string')}" id="${name}_btn2_"
+                                                    % if extra_button.get('attrs'):
+                                                    attrs="${extra_button.get('attrs')}"
+                                                    % endif
+                                                    onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create"
+                                                    oncontextmenu="showBtnSdref(event, 'tree_button', 'None', '0', '${name}');"
+                                                    >
+                                                        ${extra_button.get('string')}
+                                                </button>
+                                            % endif
                                            % endif
                                         % else:
                                             % if not dashboard and not hide_new_button:
@@ -268,8 +280,10 @@ if (auto_field && auto_field.val()){
                                                 onchange="new ListView('${name}').update_filter()" 
                                                 onload="new ListView('${name}').update_filter()">
                                     </div>
+                                    <% i = 0 %>
                                     % for filtername, domain in filter_selector:
-                                        <option domain="${domain}">${filtername}</option>
+                                        <option domain="${domain}" ${i == default_selector and 'selected="selected"' or ""}>${filtername}</option>
+                                        <% i += 1 %>
                                     % endfor
                                 </td>
                                 % endif 

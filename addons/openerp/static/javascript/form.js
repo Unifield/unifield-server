@@ -21,6 +21,29 @@
 
 var form_controller;
 
+function showActionSdref(ev, action_name, model, action_id)
+{
+    if(ev.ctrlKey === true) {
+
+        openobject.http.postJSON('/openerp/form/display_action_sd_ref', {
+            'action_name': action_name,
+            'model': model,
+            'action_id': action_id,
+        }).addCallback(function(obj){
+            if (obj) {
+                alert(
+                    'Name : ' + action_name + '\n' +
+                    'Action sdref: sd.' + obj.sdref + '\n' +
+                    'Action Id: '+ action_id +'\n' +
+                    'Groups: '+ obj.groups +'\n' +
+                    'Model name: ' + model + '\n' +
+                    'Model sdref: sd.'+ obj.model_sdref + '\n'
+                );
+            }
+        });
+        ev.preventDefault();
+    }
+}
 function showBtnSdref(ev, btn_name, btn_model, btn_id, src)
 {
     if(ev.ctrlKey === true) {
@@ -391,11 +414,18 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         return;
     }
 
+    // to be able to get selected lines ids
+    s_ids = [];
+    if (jQuery('[id="order_line"]').length > 0) {
+        s_ids = ListView('order_line').getSelectedRecords();
+    }
+
     var params = {
         '_terp_button/name': name,
         '_terp_button/btype': btype,
         '_terp_button/model': model,
-        '_terp_button/id': id
+        '_terp_button/id': id,
+        '_terp_button/selected_ids': s_ids
     };
 
     // if works as expected can be extended to other buttons

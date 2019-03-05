@@ -299,15 +299,15 @@ MochiKit.Base.update(ListView.prototype, {
 
         // TODO : in the future, if needed, properly add the domain to the
         // existing domain list to be able to support multiple filters ?
-        var new_domains = "["+selected_filter_domain+"]";
+        var new_domains = selected_filter_domain;
 
         // If we don't need to update anything, return immediately...
         if (new_domains == terp_domains.value)
         {
             return;
         }
-        
-        terp_domains.value = "["+selected_filter_domain+"]";
+
+        terp_domains.value = selected_filter_domain;
 
         if(this.ids.length) {
             this.reload();
@@ -1115,7 +1115,7 @@ MochiKit.Base.update(ListView.prototype, {
                 if ((filter) && (terp_domains.value))
                 {
                     $(filter).find('option').each(function(index, element) {
-                        if ("["+element.getAttribute('domain')+"]" == terp_domains.value)
+                        if (element.getAttribute('domain') == terp_domains.value)
                         {
                             filter.selectedIndex = index;
                         }
@@ -1226,6 +1226,11 @@ function listgridValidation(_list, o2m, record_id, inline) {
     } else{
         if(o2m) {
             if(record_id == undefined || record_id == -1) {
+                b1 = jQuery('[id="' + _list + '_btn_"]')
+                b2 = jQuery('[id="' + _list + '_btn2_"]')
+                if ((b1 || b2) && !b1.is(':visible') && !b2.is(':visible')) {
+                    return false;
+                }
                 o2m_obj.create();
             } else {
                 o2m_obj.edit(record_id);

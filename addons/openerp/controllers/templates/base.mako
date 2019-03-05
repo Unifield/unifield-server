@@ -8,12 +8,12 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.textarea.js"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=11.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=12.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=7.0"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=11.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=12.0"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=7.0"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=7.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=12.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/o2m.js?v=10.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/binary.js"></script>
     <script type="text/javascript" src="/openerp/static/jscal/calendar.js"></script>

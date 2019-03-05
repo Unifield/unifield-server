@@ -38,13 +38,14 @@ from dateutil.relativedelta import relativedelta
 
 import rpc
 
-def expr_eval(string, context=None):
+def expr_eval(string, context=None, self=None):
     context = dict(context or {},
                    uid=rpc.session.uid,
                    current_date=time.strftime('%Y-%m-%d'),
                    time=time,
                    datetime=datetime,
                    relativedelta=relativedelta)
+    context['self'] = self
     if isinstance(string, basestring):
         try:
             value = eval(string.strip(), context)
