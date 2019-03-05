@@ -1080,41 +1080,50 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         return (date2 - date1).days
 
     def get_lines(self, wizard):
-        move_obj = self.pool.get('stock.move')
-        accil_obj = self.pool.get('account.invoice.line')
+        supl_info_obj = self.pool.get('product.supplierinfo')
         catl_obj = self.pool.get('supplier.catalogue.line')
         curr_obj = self.pool.get('res.currency')
         lines = []
 
         self._nb_orders = len(wizard.pol_ids)
 
-        for pol in self.pool.get('purchase.order.line').browse(self.cr, self.uid, wizard.pol_ids, context=self.localcontext):
-            currency = pol.order_id.pricelist_id.currency_id
-            # Move and Pick
-            move_domain = [('type', '=', 'in'), ('purchase_line_id', '=', pol.id)]
-            in_move = False
-            in_move_ids = move_obj.search(self.cr, self.uid, move_domain, limit=1, context=self.localcontext)
-            if in_move_ids:
-                in_move = move_obj.browse(self.cr, self.uid, in_move_ids[0], context=self.localcontext)
-            # Supplier Invoice / account.invoice.line
-            accil_domain = [('order_line_id', '=', pol.id), ('invoice_id.type', '=', 'in_invoice'),
-                            ('invoice_id.is_direct_invoice', '=', False), ('invoice_id.is_inkind_donation', '=', False),
-                            ('invoice_id.is_debit_note', '=', False), ('invoice_id.is_intermission', '=', False)]
-            accil = False
-            accil_ids = accil_obj.search(self.cr, self.uid, accil_domain, limit=1, context=self.localcontext)
-            if accil_ids:
-                accil = accil_obj.browse(self.cr, self.uid, accil_ids[0], context=self.localcontext)
+        self.cr.execute('''
+            SELECT pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
+                pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name, 
+                p.delivery_requested_date, pp.default_code, pt.name, rp.name, rp.supplier_lt, c.id, c.name, m.id, 
+                m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, al.id, al.price_unit, 
+                a.number, a.name, c3.id
+            FROM purchase_order_line pl
+                LEFT JOIN purchase_order p ON p.id = pl.order_id
+                LEFT JOIN product_product pp ON pp.id = pl.product_id
+                LEFT JOIN res_partner rp ON rp.id = pl.partner_id
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN product_pricelist pr ON pr.id = p.pricelist_id
+                LEFT JOIN res_currency c ON c.id = pr.currency_id
+                LEFT JOIN stock_move m ON m.purchase_line_id = pl.id AND m.type = 'in'
+                LEFT JOIN stock_picking sp ON sp.id = m.picking_id
+                LEFT JOIN res_currency c2 ON c2.id = m.price_currency_id
+                LEFT JOIN account_invoice a ON a.picking_id = sp.id AND a.type = 'in_invoice' 
+                    AND a.is_direct_invoice = 'f' AND a.is_inkind_donation = 'f' AND a.is_debit_note = 'f' 
+                    AND a.is_intermission = 'f'
+                LEFT JOIN account_invoice_line al ON al.invoice_id = a.id AND al.order_line_id = pl.id
+                LEFT JOIN res_currency c3 ON c3.id = a.currency_id
+            WHERE pl.id IN %s 
+            ORDER BY p.id DESC, pl.line_number ASC
+        ''' % (tuple(wizard.pol_ids),))
+
+        for line in self.cr.fetchall():
             # Catalogue
             cat_unit_price = '-'
             func_cat_unit_price = '-'
-            if pol.product_id and pol.product_id.seller_ids:
-                catalogue = False
-                for seller in pol.product_id.seller_ids:
-                    if seller.catalogue_id:
-                        catalogue = seller.catalogue_id
-                        break
-                if catalogue:
-                    cat_line_domain = [('product_id', '=', pol.product_id.id), ('catalogue_id', '=', catalogue.id)]
+            if line[1]:
+                supl_info_domain = [('product_id', '=', line[1]), ('active', '=', True), ('catalogue_id', '!=', False)]
+                supl_info_ids = supl_info_obj.search(self.cr, self.uid, supl_info_domain, limit=1,
+                                                     order='sequence asc', context=self.localcontext)
+                if supl_info_ids:
+                    catalogue = supl_info_obj.browse(self.cr, self.uid, supl_info_ids[0],
+                                                     fields_to_fetch=['catalogue_id'], context=self.localcontext).catalogue_id
+                    cat_line_domain = [('product_id', '=', line[1]), ('catalogue_id', '=', catalogue.id)]
                     cat_line_ids = catl_obj.search(self.cr, self.uid, cat_line_domain, limit=1, context=self.localcontext)
                     if cat_line_ids:
                         cat_unit_price = catl_obj.browse(self.cr, self.uid, cat_line_ids[0], fields_to_fetch=['unit_price'],
@@ -1125,26 +1134,24 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
 
             # Different unit prices
             in_unit_price, func_in_unit_price = '-', '-'
-            if in_move:
-                in_unit_price = in_move.price_unit or 0.00
-                func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, in_move.price_currency_id.id,
-                                                            wizard.company_currency_id.id, in_unit_price,
-                                                            round=False, context=self.localcontext), 2)
+            if line[19]:
+                in_unit_price = line[20] or 0.00
+                func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, line[24], wizard.company_currency_id.id,
+                                                            in_unit_price, round=False, context=self.localcontext), 2)
             si_unit_price, func_si_unit_price = '-', '-'
-            if accil:
-                si_unit_price = accil.price_unit or 0.00
-                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, accil.invoice_id.currency_id.id,
-                                                            wizard.company_currency_id.id, si_unit_price,
-                                                            round=False, context=self.localcontext), 2)
-            func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, currency.id, wizard.company_currency_id.id,
-                                                         pol.price_unit, round=False, context=self.localcontext), 2)
+            if line[25]:
+                si_unit_price = line[26] or 0.00
+                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, line[29], wizard.company_currency_id.id,
+                                                            si_unit_price, round=False, context=self.localcontext), 2)
+            func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,
+                                                         line[4], round=False, context=self.localcontext), 2)
 
             # Discrepancies
             discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
             if in_unit_price != '-':
-                discrep_in_po = in_unit_price - pol.price_unit
+                discrep_in_po = in_unit_price - line[4]
             if si_unit_price != '-':
-                discrep_si_po = si_unit_price - pol.price_unit
+                discrep_si_po = si_unit_price - line[4]
             if func_in_unit_price != '-':
                 func_discrep_in_po = func_in_unit_price - func_pol_unit_price
             if func_si_unit_price != '-':
@@ -1152,24 +1159,29 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
 
             # Dates comparison and Actual Supplier Lead Time
             days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'
-            if in_move:
-                days_cdd_receipt = self.get_diff_date_days(pol.confirmed_delivery_date,
-                                                           in_move.picking_id.physical_reception_date)
-                days_rdd_receipt = self.get_diff_date_days(pol.order_id.delivery_requested_date,
-                                                           in_move.picking_id.physical_reception_date)
-                days_crea_receipt = self.get_diff_date_days(pol.create_date, in_move.picking_id.physical_reception_date)
-                act_sup_lt = self.get_diff_date_days(pol.validation_date, in_move.picking_id.physical_reception_date)
+            if line[18]:
+                days_cdd_receipt = self.get_diff_date_days(line[9], line[23])
+                days_rdd_receipt = self.get_diff_date_days(line[12], line[23])
+                days_crea_receipt = self.get_diff_date_days(line[6], line[23])
+                act_sup_lt = self.get_diff_date_days(line[7], line[23])
 
             if act_sup_lt != '-':
-                discrep_lt_act_theo = act_sup_lt - pol.partner_id.supplier_lt
+                discrep_lt_act_theo = act_sup_lt - line[16]
 
             lines.append({
-                'pol': pol,
-                'in_ref': in_move and in_move.picking_id.name or '',
-                'si_ref': accil and (accil.invoice_id.number or accil.invoice_id.name) or '',
-                'qty_received': in_move and in_move.product_qty or 0,
-                'currency': currency.name,
+                'partner_name': line[15],
+                'po_name': line[11],
+                'in_ref': line[22] or '',
+                'si_ref': line[27] or line[28] or '',
+                'line_number': line[2],
+                'p_code': line[13],
+                'p_name': line[14],
+                'state': line[5],
+                'qty_ordered': line[3],
+                'qty_received': line[21] or 0,
+                'currency': line[18],
                 'cat_unit_price': cat_unit_price,
+                'po_unit_price': line[4],
                 'in_unit_price': in_unit_price,
                 'si_unit_price': si_unit_price,
                 'discrep_in_po': discrep_in_po,
@@ -1180,13 +1192,19 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'func_si_unit_price': func_si_unit_price,
                 'func_discrep_in_po': func_discrep_in_po,
                 'func_discrep_si_po': func_discrep_si_po,
-                'in_receipt_date': in_move and in_move.picking_id.physical_reception_date or '-',
-                'days_crea_vali': self.get_diff_date_days(pol.create_date, pol.validation_date),
-                'days_crea_conf': self.get_diff_date_days(pol.create_date, pol.confirmation_date),
+                'po_crea_date': line[6],
+                'po_vali_date': line[7],
+                'po_conf_date': line[8],
+                'po_rdd': line[12],
+                'po_cdd': line[9],
+                'in_receipt_date': line[23],
+                'days_crea_vali': self.get_diff_date_days(line[6], line[7]),
+                'days_crea_conf': self.get_diff_date_days(line[6], line[8]),
                 'days_cdd_receipt': days_cdd_receipt,
                 'days_rdd_receipt': days_rdd_receipt,
                 'days_crea_receipt': days_crea_receipt,
                 'days_vali_receipt': act_sup_lt,
+                'partner_lt': line[16],
                 'discrep_lt_act_theo': discrep_lt_act_theo,
             })
 

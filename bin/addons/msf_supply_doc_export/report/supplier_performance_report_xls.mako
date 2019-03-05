@@ -272,15 +272,15 @@
 
         % for line in getLines(r):
             <Row ss:Height="12.0">
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].partner_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].order_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['partner_name']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['po_name']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['in_ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['si_ref']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['pol'].line_number|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].product_id and line['pol'].product_id.default_code or line['pol'].comment or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['pol'].product_id and line['pol'].product_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(line['pol'], 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['pol'].product_qty or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['line_number']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['p_code'] or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['p_name']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSelValue('purchase.order.line', 'state', line['state'])|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_ordered'] or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line['qty_received'] or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${line['currency']|x}</Data></Cell>
 
@@ -290,7 +290,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['pol'].price_unit or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['po_unit_price'] or 0|x}</Data></Cell>
                 % if line['in_unit_price'] != '-':
                 <Cell ss:StyleID="line_right_nb"><Data ss:Type="Number">${line['in_unit_price'] or 0|x}</Data></Cell>
                 % else:
@@ -341,28 +341,28 @@
                 % endif
 
                 ## Dates
-                % if line['pol'].create_date and isDateTime(line['pol'].create_date):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['pol'].create_date)|n}</Data></Cell>
+                % if line['po_crea_date'] and isDateTime(line['po_crea_date']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_crea_date'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['pol'].validation_date and isDate(line['pol'].validation_date):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['pol'].validation_date)|n}</Data></Cell>
+                % if line['po_vali_date'] and isDate(line['po_vali_date']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_vali_date'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['pol'].confirmation_date and isDate(line['pol'].confirmation_date):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['pol'].confirmation_date)|n}</Data></Cell>
+                % if line['po_conf_date'] and isDate(line['po_conf_date']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_conf_date'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['pol'].order_id.delivery_requested_date and isDate(line['pol'].order_id.delivery_requested_date):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['pol'].order_id.delivery_requested_date)|n}</Data></Cell>
+                % if line['po_rdd'] and isDate(line['po_rdd']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_rdd'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                % if line['pol'].confirmed_delivery_date and isDate(line['pol'].confirmed_delivery_date):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['pol'].confirmed_delivery_date)|n}</Data></Cell>
+                % if line['po_cdd'] and isDate(line['po_cdd']):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line['po_cdd'])|n}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
@@ -403,7 +403,7 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['pol'].partner_id.supplier_lt or 0|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['partner_lt'] or 0|x}</Data></Cell>
                 % if line['discrep_lt_act_theo'] != '-':
                 <Cell ss:StyleID="line_center"><Data ss:Type="Number">${line['discrep_lt_act_theo'] or 0|x}</Data></Cell>
                 % else:
