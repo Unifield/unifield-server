@@ -34830,7 +34830,7 @@ msgstr "Distribution analytique non valide!"
 msgid "IR/FO Order"
 msgstr "IR/FO Order"
 
-#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product_nomenclature
+#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override
 #: selection:account.entries.report,move_line_state:0
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
@@ -34853,7 +34853,6 @@ msgstr "IR/FO Order"
 #: selection:wizard.advance.line,analytic_distribution_state:0
 #: selection:res.currency.table,state:0
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
-#: selection:product.nomenclature,status:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -99635,10 +99634,8 @@ msgstr "Comptabilité Analytique"
 msgid "Available Shipped"
 msgstr "Disponible expédié"
 
-#. modules: product_attributes, product_nomenclature
+#. module: product_attributes
 #: selection:product.product,state_ud:0
-#: view:product.nomenclature:0
-#: selection:product.nomenclature,status:0
 msgid "Archived"
 msgstr "Archivé"
 
@@ -104910,12 +104907,13 @@ msgstr "Voir les lignes non disponibles"
 msgid "Show unprocessed lines"
 msgstr "Voir les lignes non traitées"
 
-#. module: purchase
+#. modules: purchase, order_nomenclature
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
+#: constraint:purchase.order.merged.line:0
 #, python-format
-msgid "Price is too big"
-msgstr "Le prix est trop grand"
+msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
+msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
 
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:create.picking.processor:0
@@ -105321,3 +105319,19 @@ msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
 #, python-format
 msgid "File line %s: Column \"Item\" must be an integer"
 msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:24
+#, python-format
+msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
+msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
+
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "\n"
+"                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
+"                                    "
+msgstr "\n"
+"                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
+"                                    "

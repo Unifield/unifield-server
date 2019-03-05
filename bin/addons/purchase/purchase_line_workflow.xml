@@ -144,6 +144,12 @@
                 <field name="sequence" eval="30" />
                 <field name="condition">set_as_sourced_n == True</field>
             </record>
+            <record id="trans_pol_draft_sourced_sy" model="workflow.transition">
+                <field name="act_from" ref="act_pol_draft"/>
+                <field name="act_to" ref="act_pol_sourced_sy"/>
+                <field name="sequence" eval="35" />
+                <field name="signal">sourced_sy</field>
+            </record>
             <record id="trans_pol_sourced_n_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_n"/>
                 <field name="act_to" ref="act_pol_confirmed"/>
