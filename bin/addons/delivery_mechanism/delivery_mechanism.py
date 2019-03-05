@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 from order_types.stock import check_rw_warning
 import logging
+import decimal_precision as dp
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -155,7 +156,7 @@ class stock_move(osv.osv):
         'line_number': fields.integer(string='Line', required=True),
         'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
         'in_out_updated': fields.boolean(string='IN update OUT'),
-        'original_qty_partial': fields.integer(string='Original Qty for Partial process - only for sync and partial processed line', required=False),
+        'original_qty_partial': fields.float(string='Original Qty for Partial process - only for sync and partial processed line', required=False, digits_compute=dp.get_precision('Product UoM')),
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
     _defaults = {

@@ -48,7 +48,8 @@
                     <separator colspan="4" string="Advanced filters" />
                     <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" domain="[('type', '=', 'product')]" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
-                    <field name="product_list_id" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
+                    <field name="product_list_id" on_change="onchange_product_list(product_list_id)"
+                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <field name="prodlot_id"
                            on_change="onchange_prodlot(prodlot_id)"
                            domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
@@ -56,7 +57,7 @@
                     <newline/>
                     <field name="display_0" attrs="{'invisible': ['|', '|', '|', ('product_id', '!=', False), ('product_list_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False)]}" />
                     <field name="in_last_x_months" nolabel="1" colspan="2"
-                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': ['|', '|', '|', '|', ('product_id', '!=', False), ('product_list_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False), ('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
 
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="2">
