@@ -2299,6 +2299,7 @@ class account_bank_statement_line(osv.osv):
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
+        context.update({'from_regline_posting': True})
 
         # low level lock to prevent double posting
         cr.execute('select id from account_bank_statement_line where id in %s for update', (tuple(ids),))
