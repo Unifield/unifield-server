@@ -839,8 +839,8 @@
                         <html>
                             <h3 style="text-align: center; margin: 10px; font-weight: normal"><translate>
                                 This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>
-                                <span style="font-weight: bold">Please ensure the product is no longer in use in this mission before changing the attributes.</span><br/><br/>
-                                <span style="font-weight: bold">If you continue, products or transactions may be blocked.</span><br/><br/>
+                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>
+                                If you continue, products or transactions may be blocked.<br/><br/>
                                 Do you still want to continue ?
                             </translate></h3>
                         </html>
