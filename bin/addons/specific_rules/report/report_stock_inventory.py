@@ -215,6 +215,18 @@ location will be shown.""",
 
         return True
 
+    def onchange_product_list(self, cr, uid, ids, product_list_id):
+        """
+        Change the product when change the prodlot
+        """
+        if product_list_id:
+            return {
+                'value': {
+                    'display_0': False,
+                    'in_last_x_months': False,
+                },
+            }
+
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
         Change the product when change the prodlot
@@ -391,12 +403,12 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
         cost_price_at_date = {}
         if report.stock_level_date and product_ids_to_fetch:
-            self.cr.execute("""select distinct on (product_id) product_id, new_standard_price
+            self.cr.execute("""select distinct on (product_id) product_id, old_standard_price
                 from standard_price_track_changes
                 where
                     product_id in %s and
-                    create_date <= %s
-                order by product_id, create_date desc""", (tuple(product_ids_to_fetch), values['stock_level_date']))
+                    create_date >= %s
+                order by product_id, create_date asc""", (tuple(product_ids_to_fetch), values['stock_level_date']))
 
             for x in self.cr.fetchall():
                 cost_price_at_date[x[0]] = x[1]

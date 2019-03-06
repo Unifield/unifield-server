@@ -34835,7 +34835,7 @@ msgstr "Distribution analytique non valide!"
 msgid "IR/FO Order"
 msgstr "IR/FO Order"
 
-#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product_nomenclature
+#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override
 #: selection:account.entries.report,move_line_state:0
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
@@ -34858,7 +34858,6 @@ msgstr "IR/FO Order"
 #: selection:wizard.advance.line,analytic_distribution_state:0
 #: selection:res.currency.table,state:0
 #: selection:purchase.order.merged.line,analytic_distribution_state:0
-#: selection:product.nomenclature,status:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -62812,12 +62811,13 @@ msgstr "Vous ne pouvez pas supprimer le model '%s' !"
 msgid "Virgin Islands (British)"
 msgstr "Iles Vierges (Britanniques)"
 
-#. modules: msf_doc_import, kit, sale
+#. modules: msf_doc_import, kit, sale, msf_supply_doc_export
 #: code:addons/kit/wizard/kit_mass_import.py:210
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:527
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:540
 #: code:addons/sale/wizard/internal_request_import.py:162
 #: code:addons/sale/wizard/internal_request_import.py:222
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:330
 #, python-format
 msgid "No file to import"
 msgstr "Aucun fichier à importer"
@@ -74711,14 +74711,12 @@ msgstr "Jours pour Valider"
 msgid "Lets you install various tools to simplify and enhance OpenERP's report creation."
 msgstr "Vous permet d'installer différents outils destinés à simplifier et à améliorer la création de rapports sous OpenERP."
 
-#. modules: msf_audittrail, account_mcdb, specific_rules
+#. modules: msf_audittrail, account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1056
 #: code:addons/account_mcdb/account_mcdb.py:1059
 #: code:addons/account_mcdb/account_mcdb.py:1066
 #: code:addons/account_mcdb/account_mcdb.py:1069
 #: code:addons/msf_audittrail/audittrail.py:1091
-#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
-#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
 #, python-format
 msgid "False"
 msgstr "Faux"
@@ -99641,10 +99639,8 @@ msgstr "Comptabilité Analytique"
 msgid "Available Shipped"
 msgstr "Disponible expédié"
 
-#. modules: product_attributes, product_nomenclature
+#. module: product_attributes
 #: selection:product.product,state_ud:0
-#: view:product.nomenclature:0
-#: selection:product.nomenclature,status:0
 msgid "Archived"
 msgstr "Archivé"
 
@@ -102664,7 +102660,8 @@ msgstr "Numéro du Bon d'Engagement"
 #: code:addons/stock/physical_inventory.py:907
 #, python-format
 msgid "Unable to update line #%s product %s: line not found in the discrepancy report"
-msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"=======
+msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"
+
 #. module: account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1494
 #, python-format
@@ -103973,14 +103970,8 @@ msgstr "Incluant les les produits avec du stock <= 0 ayant eu des mouvements dur
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
-msgid "True ("
-msgstr "Vrai ("
-
-#. module: specific_rules
-#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
-#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
-msgid " months)"
-msgstr " mois)"
+msgid " months"
+msgstr " mois"
 
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:188
@@ -104922,12 +104913,13 @@ msgstr "Voir les lignes non disponibles"
 msgid "Show unprocessed lines"
 msgstr "Voir les lignes non traitées"
 
-#. module: purchase
+#. modules: purchase, order_nomenclature
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
+#: constraint:purchase.order.merged.line:0
 #, python-format
-msgid "Price is too big"
-msgstr "Le prix est trop grand"
+msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
+msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
 
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:create.picking.processor:0
@@ -105007,13 +104999,13 @@ msgstr "Ligne %s: Le produit doit avoir une date d'expiration et celle-ci n'est 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:209
 #, python-format
-msgid "Line %s: Given batch number with this expiry date doesn't exists in database"
+msgid "Line %s: The given batch number with this expiry date doesn't exist in database"
 msgstr "Ligne %s: Le numéro de lot avec cette date d'expiration n'existe pas en base"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:222
 #, python-format
-msgid "Line %s: Given expiry date doesn't exists in database"
+msgid "Line %s: The given expiry date doesn't exist in database"
 msgstr "Ligne %s: La date d'expiration donnée n'existe pas en base"
 
 #. module: msf_doc_import
@@ -105275,6 +105267,79 @@ msgstr "Import de PICK"
 #: field:wizard.pick.import,import_file:0
 msgid "PICK import file"
 msgstr "Fichier d'import de PICK"
+
+#. module: unifield_setup
+#: field:previous.fy.dates.setup,previous_fy_dates_allowed:0
+#: field:unifield.setup.configuration,previous_fy_dates_allowed:0
+msgid "Does the system allow document dates on previous Fiscal Year?"
+msgstr "Le système autorise-t-il les dates des documents sur l'Exercice Comptable précédent ?"
+
+#. module: unifield_setup
+#: code:addons/unifield_setup/installer/previous_fy_dates_setup.py:52
+#, python-format
+msgid "An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists."
+msgstr "Une erreur est survenue avec l'élément récupéré depuis le formulaire. Veuillez contacter un administrateur si le problème persiste."
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+#: model:ir.actions.act_window,name:unifield_setup.action_previous_fy_dates_setup
+msgid "Allow previous Fiscal Year dates"
+msgstr "Autoriser les dates de l'Exercice Comptable précédent"
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+msgid "Allow document dates on previous Fiscal Year"
+msgstr "Autoriser les dates des documents sur l'Exercice Comptable précédent"
+
+#. module: unifield_setup
+#: view:previous.fy.dates.setup:0
+msgid "Determines whether document dates and posting dates can be on different Fiscal Years."
+msgstr "Détermine si les dates des documents et les dates de comptabilisation peuvent être sur des Exercices Comptables différents."
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:909
+#, python-format
+msgid "Document date should be in posting date FY"
+msgstr "La date du document doit être dans le même exercice comptable que la date de comptabilisation"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:907
+#, python-format
+msgid "Document date (%s) should be in posting date FY"
+msgstr "La date du document (%s) doit être dans le même exercice comptable que la date de comptabilisation"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:84
+#, python-format
+msgid "Line %s: Column \"Qty Picked\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté prélevée\" doit être un nombre"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:95
+#, python-format
+msgid "Line %s: Column \"Qty to Pick\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:346
+#, python-format
+msgid "File line %s: Column \"Item\" must be an integer"
+msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:24
+#, python-format
+msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
+msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "\n"
+"                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
+"                                    "
+msgstr "\n"
+"                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
+"                                    "
 
 #. module: product_attributes
 #: view:change.bn.ed.mandatory.wizard:0

@@ -714,5 +714,16 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
+class procurement_request_sourcing_document(osv.osv):
+    """ Backward compatibility: do not change object's sdref """
+
+    _name = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _auto = False
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+    }
+
+procurement_request_sourcing_document()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
