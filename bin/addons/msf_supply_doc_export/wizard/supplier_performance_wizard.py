@@ -24,23 +24,6 @@ import time
 from osv import fields, osv
 from tools.translate import _
 
-PARTNER_TYPE = {
-    'internal': _('Internal'),
-    'section': _('Inter-section'),
-    'external': _('External'),
-    'esc': _('ESC'),
-    'intermission': _('Intermission'),
-}
-ORDER_TYPES_SELECTION = {
-    'regular': _('Regular'),
-    'donation_exp': _('Donation before expiry'),
-    'donation_st': _('Standard donation'),
-    'loan': _('Loan'),
-    'in_kind': _('In Kind Donation'),
-    'purchase_list': _('Purchase List'),
-    'direct': _('Direct Purchase Order'),
-}
-
 
 class supplier_performance_wizard(osv.osv_memory):
     _name = 'supplier.performance.wizard'
@@ -78,10 +61,20 @@ class supplier_performance_wizard(osv.osv_memory):
         'company_currency_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
 
-    def _get_partner_types(self, cr, uid, wizard):
+    def _get_partner_types(self, cr, uid, wizard, context=None):
         '''
         Return a list of Partner Types
         '''
+        if context is None:
+            context = {}
+
+        PARTNER_TYPES_SELECTION = {
+            'internal': _('Internal'),
+            'section': _('Inter-section'),
+            'external': _('External'),
+            'esc': _('ESC'),
+            'intermission': _('Intermission'),
+        }
         partner_types = []
 
         if wizard.partner_type_internal:
@@ -95,12 +88,24 @@ class supplier_performance_wizard(osv.osv_memory):
         if wizard.partner_type_intermission:
             partner_types.append('intermission')
 
-        return partner_types, ', '.join(PARTNER_TYPE[pt] for pt in partner_types)
+        return partner_types, ', '.join(PARTNER_TYPES_SELECTION[pt] for pt in partner_types)
 
-    def _get_order_types(self, cr, uid, wizard):
+    def _get_order_types(self, cr, uid, wizard, context=None):
         '''
         Return a list of PO Order Types
         '''
+        if context is None:
+            context = {}
+
+        ORDER_TYPES_SELECTION = {
+            'regular': _('Regular'),
+            'donation_exp': _('Donation before expiry'),
+            'donation_st': _('Standard donation'),
+            'loan': _('Loan'),
+            'in_kind': _('In Kind Donation'),
+            'purchase_list': _('Purchase List'),
+            'direct': _('Direct Purchase Order'),
+        }
         order_types = []
 
         if wizard.po_type_regular:
@@ -148,12 +153,12 @@ class supplier_performance_wizard(osv.osv_memory):
             if wizard.partner_id:
                 pol_domain.append(('partner_id', '=', wizard.partner_id.id))
 
-            partner_types, pt_text = self._get_partner_types(cr, uid, wizard)
+            partner_types, pt_text = self._get_partner_types(cr, uid, wizard, context=context)
             if partner_types:
                 pol_domain.append(('partner_id.partner_type', 'in', partner_types))
                 vals.update({'pt_text': pt_text})
 
-            order_types, ot_text = self._get_order_types(cr, uid, wizard)
+            order_types, ot_text = self._get_order_types(cr, uid, wizard, context=context)
             if order_types:
                 pol_domain.append(('order_id.order_type', 'in', order_types))
                 vals.update({'ot_text': ot_text})

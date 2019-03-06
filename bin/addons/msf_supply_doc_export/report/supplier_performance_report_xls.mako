@@ -166,21 +166,21 @@
         ## Days to confirm
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Delay b/w actual delivery and CDD (days)
-        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Delay b/w actual delivery and RDD (days)
-        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Internal Lead Time (days PO creation to reception)
-        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Actual Supplier Lead Time (days PO validation to reception)
-        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Configured Supplier Lead Time
         <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## Discrepancy b/w actual Lead Time and Supplier Lead Time
-        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
 
         ## WORKSHEET HEADER
         <Row>
-            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('DB/Instance Name')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('DB/Instance name')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.company_id and r.company_id.name or ''|x}</Data></Cell>
         </Row>
         <Row>
@@ -192,7 +192,7 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Supplier Name')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${_('Supplier name')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${r.partner_id and r.partner_id.name or ''|x}</Data></Cell>
         </Row>
         <Row>

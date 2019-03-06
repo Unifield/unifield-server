@@ -1090,14 +1090,15 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         self.cr.execute('''
             SELECT pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
                 pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name, 
-                p.delivery_requested_date, pp.default_code, pt.name, rp.name, rp.supplier_lt, c.id, c.name, m.id, 
-                m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, al.id, al.price_unit, 
+                p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id, 
+                c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, al.id, al.price_unit, 
                 a.number, a.name, c3.id
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
                 LEFT JOIN res_partner rp ON rp.id = pl.partner_id
                 LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN ir_translation tr ON tr.res_id = pt.id AND tr.name = 'product.template,name' AND tr.lang = %s
                 LEFT JOIN product_pricelist pr ON pr.id = p.pricelist_id
                 LEFT JOIN res_currency c ON c.id = pr.currency_id
                 LEFT JOIN stock_move m ON m.purchase_line_id = pl.id AND m.type = 'in'
@@ -1110,7 +1111,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 LEFT JOIN res_currency c3 ON c3.id = a.currency_id
             WHERE pl.id IN %s 
             ORDER BY p.id DESC, pl.line_number ASC
-        ''' % (tuple(wizard.pol_ids),))
+        ''', (self.localcontext.get('lang', 'en_MF'), tuple(wizard.pol_ids)))
 
         for line in self.cr.fetchall():
             # Catalogue
