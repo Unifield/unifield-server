@@ -1787,7 +1787,7 @@ class product_attributes(osv.osv):
         if not ids:
             return True
 
-        product = self.browse(cr, uid, ids[0], context=context)
+        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management'], context=context)
         vals = {}
 
         if context.get('needed_batch_mngmt') is not None:
@@ -1799,16 +1799,38 @@ class product_attributes(osv.osv):
             context.pop('needed_perishable')
 
         in_use_stock = product.qty_available > 0 or False
+        if not in_use_stock:  # Check stock IN - stock OUT
+            cr.execute("""
+                SELECT (SELECT SUM(m.product_qty) FROM stock_move m, stock_location l 
+                    WHERE l.id = m.location_dest_id AND m.product_id = %s AND m.state = 'done'
+                        AND l.usage NOT IN ('customer', 'supplier', 'inventory')
+                    GROUP BY m.product_id)
+                -
+                    (SELECT SUM(m.product_qty) FROM stock_move m, stock_location l 
+                    WHERE l.id = m.location_id AND m.product_id = %s AND m.state = 'done'
+                        AND l.usage NOT IN ('customer', 'supplier', 'inventory')
+                    GROUP BY m.product_id)
+            """, (product.id, product.id))
+            for prod in cr.fetchall():
+                if prod[0] > 0:
+                    in_use_stock = True
+                    break
+        # Check for Available INs and for Available Moves of Picking Tickets with 0 qty and Processed Line State
         if not in_use_stock:
             cr.execute("""
-                SELECT m.id FROM stock_move m, stock_picking p, stock_incoming_processor ip
-                WHERE m.picking_id = p.id AND p.id = ip.picking_id AND m.product_id = %s AND m.product_qty > 0
-                    AND p.type = 'in' AND p.subtype = 'standard'
-                    AND (p.state = 'shipped' OR (p.state = 'assigned' AND ip.draft = 't'))
-                """, (product.id,))
+                SELECT m.id FROM stock_move m, stock_picking p 
+                LEFT JOIN stock_incoming_processor ip ON p.id = ip.picking_id
+                WHERE m.picking_id = p.id AND m.product_id = %s 
+                    AND (
+                        (m.product_qty > 0 AND p.type = 'in' AND p.subtype = 'standard' 
+                            AND (p.state = 'shipped' OR (ip.draft = 't' AND p.state = 'assigned'))) 
+                        OR (m.state = 'assigned' AND m.product_qty = 0 AND p.type = 'out' AND p.line_state = 'processed')
+                    )
+                LIMIT 1
+            """, (product.id,))
             if cr.rowcount:
                 in_use_stock = True
-        if not in_use_stock:
+        if not in_use_stock:  # Check for Stock Mission Report
             srml_domain = [
                 ('product_id', '=', product.id),
                 '|', '|', '|', '|', '|', '|', '|', '|',
@@ -2142,6 +2164,9 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
     def no_change_bn_ed_mandatory(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        if context.get('prod_data'):
+            context.pop('prod_data')
 
         return {'type': 'ir.actions.act_window_close'}
 
