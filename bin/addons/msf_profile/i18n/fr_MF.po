@@ -104907,12 +104907,13 @@ msgstr "Voir les lignes non disponibles"
 msgid "Show unprocessed lines"
 msgstr "Voir les lignes non traitées"
 
-#. module: purchase
+#. modules: purchase, order_nomenclature
 #: code:addons/purchase/purchase_order_line.py:604
 #: constraint:purchase.order.line:0
+#: constraint:purchase.order.merged.line:0
 #, python-format
-msgid "Price is too big"
-msgstr "Le prix est trop grand"
+msgid "The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"
+msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
 
 #. modules: msf_supply_doc_export, msf_outgoing
 #: view:create.picking.processor:0
@@ -105336,3 +105337,19 @@ msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le syst�
 #, python-format
 msgid "The Cost Center %s used in the HQ entry \"%s\" is inactive."
 msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif."
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:24
+#, python-format
+msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
+msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
+
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "\n"
+"                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
+"                                    "
+msgstr "\n"
+"                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
+"                                    "

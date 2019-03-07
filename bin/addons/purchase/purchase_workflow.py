@@ -90,7 +90,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, from_cancel=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -188,9 +188,10 @@ class purchase_order_line(osv.osv):
                 sol_values.update({
                     'order_id': so_id,
                     'date_planned': pol.date_planned,
-                    'set_as_sourced_n': True,
                 })
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
+                if not sol_values.get('is_line_split'):
+                    sol_values['set_as_sourced_n'] = True
                 # update analytic distribution if PO line has one
                 if ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
@@ -208,6 +209,7 @@ class purchase_order_line(osv.osv):
                 # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
                 # the right OUT move (moves are already splits at this level):
                 if sol_values['is_line_split']:
+                    netsvc.LocalService('workflow').trg_validate(uid, 'sale.order.line', new_sol, 'sourced', cr)
                     linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
                         ('sale_line_id', '=', sol_values['original_line_id']),
                         ('type', '=', 'out')],
@@ -216,6 +218,7 @@ class purchase_order_line(osv.osv):
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
                             if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
                                 self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
+
             else:  # update FO line
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
                     sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
@@ -235,7 +238,7 @@ class purchase_order_line(osv.osv):
                     if linked_out_moves:
                         self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
-                if from_cancel:
+                if qty_updated:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line
                     rule_obj = self.pool.get('sync.client.message_rule')
                     rule_obj._manual_create_sync_message(cr, uid, 'sale.order.line', pol.linked_sol_id.id, {},
