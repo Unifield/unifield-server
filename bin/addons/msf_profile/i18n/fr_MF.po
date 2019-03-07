@@ -105328,8 +105328,8 @@ msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propri
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:510
 #, python-format
-msgid "Cost Center not found for the HQ entry \"%s\"."
-msgstr "Centre de Coût non trouvé pour l'entrée Siège \"%s\"."
+msgid "The Cost Center of the HQ entry \"%s\" doesn't exist in the system."
+msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le système."
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:516

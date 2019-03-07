@@ -507,8 +507,8 @@ class hq_entries(osv.osv):
         if context.get('sync_update_execution'):
             for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=['cost_center_id', 'date', 'name'], context=context):
                 if not hq_entry.cost_center_id:
-                    raise osv.except_osv(_('Warning'), _('Cost Center not found for the HQ entry "%s".') % hq_entry.name)
-                elif hq_entry.date:
+                    raise osv.except_osv(_('Warning'), _('The Cost Center of the HQ entry "%s" doesn\'t exist in the system.') % hq_entry.name)
+                elif hq_entry.date:  # posting date
                     hq_date = hq_entry.date
                     cc_date_start = hq_entry.cost_center_id.date_start
                     cc_date_end = hq_entry.cost_center_id.date or False
