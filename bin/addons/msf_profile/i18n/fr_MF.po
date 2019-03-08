@@ -105352,4 +105352,4 @@ msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique 
 #: code:addons/account_override/account.py:532
 #, python-format
 msgid "At least one Journal Item using the Account \"%s - %s\" has a Posting Date outside the activation dates selected."
-msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte Analytique %s a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
