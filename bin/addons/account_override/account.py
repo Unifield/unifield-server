@@ -516,6 +516,22 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Warning !'),
                                      _('An account set as "Included in revaluation" must be set as "Reconcile".'))
 
+    def _check_existing_entries(self, cr, uid, account_id, context=None):
+        """
+        Displays a log (visible on top of the page) in case some JI booked on the account_id have a posting date
+        outside the account activation time interval
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        if account_id and not context.get('sync_update_execution'):
+            account_fields = ['activation_date', 'inactivation_date', 'code', 'name']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
+            aml_dom = [('account_id', '=', account.id), '|', ('date', '<', account.activation_date), ('date', '>=', account.inactivation_date)]
+            if aml_obj.search_exist(cr, uid, aml_dom, context=context):
+                self.log(cr, uid, account_id, _('At least one Journal Item using the Account "%s - %s" has a Posting Date '
+                                                'outside the activation dates selected.') % (account.code, account.name))
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
@@ -541,6 +557,7 @@ class account_account(osv.osv):
             res = res and super(account_account, self).write(cr, uid, [acc.id], newvals, context=context)
         for account_id in ids:
             self._check_reconcile_status(cr, uid, account_id, context=context)
+            self._check_existing_entries(cr, uid, account_id, context=context)
         return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

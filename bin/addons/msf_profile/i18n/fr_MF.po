@@ -105335,3 +105335,21 @@ msgid "\n"
 msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:460
+#, python-format
+msgid "At least one Analytic Journal Item using the Analytic Account %s has a Document Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique %s a une Date de Document en dehors des dates d'activation sélectionnées."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:466
+#, python-format
+msgid "At least one Analytic Journal Item using the Analytic Account %s has a Posting Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique %s a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+
+#. module: account_override
+#: code:addons/account_override/account.py:532
+#, python-format
+msgid "At least one Journal Item using the Account \"%s - %s\" has a Posting Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte Analytique %s a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
