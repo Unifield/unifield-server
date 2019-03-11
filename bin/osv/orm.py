@@ -2707,7 +2707,7 @@ class orm(orm_template):
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, having=''):
         """
         Get the list of records in list view grouped by the given ``groupby`` fields
 
@@ -2797,7 +2797,13 @@ class orm(orm_template):
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
+
+        having_cond = ''
+        if having and hasattr(self, '_get_read_group_having'):
+            having_cond = ' HAVING (%s) ' % self._get_read_group_having(cr, uid, having, context=context)
+
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str + having_cond, where_clause_params)  # not_a_user_entry
+
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():

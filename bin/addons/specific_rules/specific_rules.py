@@ -19,7 +19,6 @@
 ##############################################################################
 
 from mx import DateTime
-import operator
 import time
 
 from osv import osv, fields
@@ -2332,6 +2331,11 @@ CREATE OR REPLACE view report_stock_inventory AS (
         context['with_expiry'] = 1
         return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 
+    def _get_read_group_having(self, cr, uid, having_dom, context=None):
+        # take care of sql injection: so having_dom string is not safe if coming from xmlrpc
+        if having_dom and having_dom in RSI_TOTAL_FILTER_OPERATOR:
+            return 'sum(product_qty) %s 0 OR sum(product_qty*COALESCE(prodlot_id,1)) %s 0' % (having_dom, having_dom)
+
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''
         UF-1546: This method is to remove the lines that have quantity = 0 from the list view
@@ -2354,22 +2358,22 @@ CREATE OR REPLACE view report_stock_inventory AS (
             if product_qty_found_tuple:
                 domain.remove(product_qty_found_tuple)
 
-        res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
 
         # UTP-582: product qty filter (default with != 0.0)
-        if not product_qty_tuple:
-            product_qty_tuple = ('product_qty', '!=', 0.0)
-        product_qty_op_fct = False
-        if product_qty_tuple[1] in RSI_TOTAL_FILTER_OPERATOR:
-            # valid operator found
-            product_qty_op_fct = getattr(operator, RSI_TOTAL_FILTER_OPERATOR[product_qty_tuple[1]])
-        if not product_qty_op_fct:
-            product_qty_tuple = ('product_qty', '!=', 0.0)
-            product_qty_op_fct = getattr(operator, 'ne')
 
-        if self._name == 'report.stock.inventory' and res:
-            return [data for data in res if product_qty_op_fct(data.get(product_qty_tuple[0], 10), product_qty_tuple[2])]
-        return res
+        operator = ''
+
+        if self._name == 'report.stock.inventory':
+            if not product_qty_tuple:
+                product_qty_tuple = ('product_qty', '!=', 0.0)
+
+            if product_qty_tuple[1] in RSI_TOTAL_FILTER_OPERATOR:
+                operator = product_qty_tuple[1]
+            if not operator:
+                operator = '!='
+
+
+        return super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, having=operator)
 
 report_stock_inventory()
 
