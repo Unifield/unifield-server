@@ -147,15 +147,27 @@
 </Row>
 <Row ss:AutoFitHeight="1">
    <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Report run date</Data></Cell>
-   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['run_date'] or '' |x}</Data></Cell>
+   % if getRunParms()['run_date'] and isDate(getRunParms()['run_date']):
+   <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['run_date']|n}T00:00:00.000</Data></Cell>
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
 </Row>
 <Row ss:AutoFitHeight="1">
    <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date from</Data></Cell>
-   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_from'] or ''|x}</Data></Cell>
+   % if getRunParms()['date_from'] and isDate(getRunParms()['date_from']):
+   <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['date_from']|n}T00:00:00.000</Data></Cell>
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
 </Row>
 <Row ss:AutoFitHeight="1">
    <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date to</Data></Cell>
-   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_thru'] or '' |x}</Data></Cell>
+   % if getRunParms()['date_thru'] and isDate(getRunParms()['date_thru']):
+   <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['date_thru']|n}T00:00:00.000</Data></Cell>
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
 </Row>
 
     <Row ss:AutoFitHeight="1" > 
@@ -183,9 +195,21 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['currency'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_currency'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_func_currency'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['delivery_requested_date'])|x}</Data></Cell>
-      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+      % if line['order_created'] and isDate(line['order_created']):
+      <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      % if line['delivery_requested_date'] and isDate(line['delivery_requested_date']):
+      <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      % if line['order_confirmed_date'] and isDate(line['order_confirmed_date']):
+      <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>

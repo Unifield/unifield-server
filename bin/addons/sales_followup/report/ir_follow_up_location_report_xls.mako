@@ -108,7 +108,7 @@
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
         <NumberFormat ss:Format="Short Date" />
-        <Font ss:Color="#0000FF" />
+        <Font ss:Size="8" ss:Color="#0000FF" />
     </Style>
 
     <Style ss:ID="line_left_grey">
@@ -158,7 +158,7 @@
     <Style ss:ID="short_date_grey">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
         <NumberFormat ss:Format="Short Date" />
-        <Font ss:Color="#747474" />
+        <Font ss:Size="8" ss:Color="#747474" />
     </Style>
 </Styles>
 
@@ -314,8 +314,16 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
+                    % if o.date_order and isDate(o.date_order):
+                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if o.delivery_requested_date and isDate(o.delivery_requested_date):
+                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
@@ -334,8 +342,16 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">-</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
+                    % if line.get('cdd') and isDate(line['cdd']):
+                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if line.get('rts') and isDate(line['rts']):
+                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
+                    % endif
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.location_requestor_id.name|x}</Data></Cell>
@@ -344,8 +360,16 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
+                    % if o.date_order and isDate(o.date_order):
+                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if o.delivery_requested_date and isDate(o.delivery_requested_date):
+                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
@@ -368,8 +392,16 @@
                     % else:
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                     % endif
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
+                    % if line.get('cdd') and isDate(line['cdd']):
+                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if line.get('rts') and isDate(line['rts']):
+                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
                 % endif
             </Row>
             % endfor
