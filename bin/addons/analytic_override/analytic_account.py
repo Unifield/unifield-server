@@ -460,7 +460,7 @@ class analytic_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('At least one Analytic Journal Item using the Analytic Account %s '
                                                    'has a Document Date outside the activation dates selected.') % (analytic_acc.code))
             if not context.get('sync_update_execution'):
-                aal_dom_cc_dest = ['|', ('cost_center_id', '=', analytic_account_id),  ('destination_id', '=', analytic_account_id),
+                aal_dom_cc_dest = ['|', ('cost_center_id', '=', analytic_account_id), ('destination_id', '=', analytic_account_id),
                                    '|', ('date', '<', analytic_acc.date_start), ('date', '>=', analytic_acc.date)]
                 if aal_obj.search_exist(cr, uid, aal_dom_cc_dest, context=context):
                     self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
