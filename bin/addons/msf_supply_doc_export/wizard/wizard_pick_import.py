@@ -60,6 +60,7 @@ XLS_TEMPLATE_LINE_HEADER = [
     'cs',
 ]
 
+
 class wizard_pick_import(osv.osv_memory):
     _name = 'wizard.pick.import'
     _description = 'PICK import wizard'
@@ -68,24 +69,33 @@ class wizard_pick_import(osv.osv_memory):
         'picking_id': fields.many2one('stock.picking', string="PICK ref", required=True),
         'picking_processor_id': fields.many2one('create.picking.processor', string="PICK processor ref"),
         'validate_processor_id': fields.many2one('validate.picking.processor', string="PICK processor ref"),
-        'import_file': fields.binary('PICK import file'),
+        'import_file': fields.binary('PICK import file', required=True),
     }
 
-
-    def normalize_data(self, cr, uid, data, xls_line_number):
-        if 'qty_picked' in data: # set to float
+    def normalize_data(self, cr, uid, data):
+        if 'qty_picked' in data:  # set to float
             if not data['qty_picked']:
                 data['qty_picked'] = 0.0
             if isinstance(data['qty_picked'], (str,unicode)):
-                data['qty_picked'] = float(data['qty_picked'])
+                try:
+                    data['qty_picked'] = float(data['qty_picked'])
+                except:
+                    raise osv.except_osv(
+                        _('Error'), _('Line %s: Column "Qty Picked" must be a number') % data['item']
+                    )
 
-        if 'qty_to_pick' in data: # set to float
+        if 'qty_to_pick' in data:  # set to float
             if not data['qty_to_pick']:
                 data['qty_to_pick'] = 0.0
             if isinstance(data['qty_to_pick'], (str,unicode)):
-                data['qty_to_pick'] = float(data['qty_to_pick'])
+                try:
+                    data['qty_to_pick'] = float(data['qty_to_pick'])
+                except:
+                    raise osv.except_osv(
+                        _('Error'), _('Line %s: Column "Qty to Pick" must be a number') % data['item']
+                    )
 
-        if 'batch' in data: #  set to str
+        if 'batch' in data:  # set to str
             if not data['batch']:
                 data['batch'] = ''
 
@@ -97,17 +107,16 @@ class wizard_pick_import(osv.osv_memory):
                     data['expiry_date'] = datetime(data['expiry_date'].year, data['expiry_date'].month, data['expiry_date'].day)
                 except:
                     raise osv.except_osv(
-                        _('Error'), _('Line %s: Column "Expiry Date" must be a date') % xls_line_number
+                        _('Error'), _('Line %s: Column "Expiry Date" must be a date') % data['item']
                     )
 
         if data['qty_picked'] > data['qty_to_pick']:
             raise osv.except_osv(
                 _('Error'),
-                _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % xls_line_number
+                _('Line %s: Column "Qty Picked" cannot be greater than "Qty to pick"') % data['item']
             )
 
         return data
-
 
     def cancel(self, cr, uid, ids, context=None):
         if context is None:
@@ -124,7 +133,6 @@ class wizard_pick_import(osv.osv_memory):
             'target': 'new',
             'context': context,
         }
-
 
     def get_matching_move(self, cr, uid, ids, wizard_id, move_proc_model, xls_line_number, line_data, product_id, location_id, picking_id, context=None):
         if context is None:
@@ -191,27 +199,25 @@ class wizard_pick_import(osv.osv_memory):
             else:
                 raise osv.except_osv(
                     _('Error'),
-                    _('Line %s: Matching move not found') % xls_line_number
+                    _('Line %s: Matching move not found') % line_data['item']
                 )
 
         return move_proc_ids[0]
 
-
-    def checks_on_batch(self, cr, uid, ids, move_proc, line_data, xls_line_number, context=None):
+    def checks_on_batch(self, cr, uid, ids, move_proc, line_data, context=None):
         if context is None:
             context = {}
 
         if move_proc.product_id.batch_management and not line_data['batch']:
             raise osv.except_osv(
                 _('Error'),
-                _('Line %s: Product is batch number mandatory and no batch number is given') % xls_line_number
+                _('Line %s: Product is batch number mandatory and no batch number is given') % line_data['item']
             )
         if not move_proc.product_id.batch_management and move_proc.product_id.perishable and not line_data['expiry_date']:
             raise osv.except_osv(
                 _('Error'),
-                _('Line %s: Product is expiry date mandatory and no expiry date is given') % xls_line_number
+                _('Line %s: Product is expiry date mandatory and no expiry date is given') % line_data['item']
             )
-
 
     def get_import_data(self, cr, uid, ids, import_file, context=None):
         if context is None:
@@ -289,7 +295,7 @@ class wizard_pick_import(osv.osv_memory):
 
         import_data = {}
         for xls_line_number, line_data in sorted(import_data_lines.items()):
-            line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
+            line_data = self.normalize_data(cr, uid, line_data)
 
             if line_data['item'] in ln_with_cancelled: # ignore cancelled/done lines
                 product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
@@ -315,12 +321,13 @@ class wizard_pick_import(osv.osv_memory):
                     _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen') % ln
                 )
 
-
     def import_pick_xls(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
 
         wiz = self.browse(cr, uid, ids[0], context=context)
+        if not wiz.import_file:
+            raise osv.except_osv(_('Error'), _('No file to import'))
         import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
         res_model = 'create.picking.processor' if wiz.picking_processor_id else 'validate.picking.processor'
         move_proc_model = 'create.picking.move.processor' if wiz.picking_processor_id else 'validate.move.processor'
@@ -335,10 +342,15 @@ class wizard_pick_import(osv.osv_memory):
         self.check_matching_qty_per_line_number(cr, uid, ids, import_data_lines, wiz, context=context)
 
         for xls_line_number, line_data in sorted(import_data_lines.items()):
-            if line_data['qty_picked'] is None:
-                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % xls_line_number)
+            try:
+                line_data['item'] = int(line_data['item'])
+            except:
+                raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
 
-            line_data = self.normalize_data(cr, uid, line_data, xls_line_number)
+            if line_data['qty_picked'] is None:
+                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty Picked" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+
+            line_data = self.normalize_data(cr, uid, line_data)
 
             if line_data['qty_picked'] and line_data['qty_to_pick']:
                 product_id = self.get_product_id(cr, uid, ids, line_data, context=context)
@@ -350,7 +362,7 @@ class wizard_pick_import(osv.osv_memory):
                 move_proc = self.pool.get(move_proc_model).browse(cr, uid, move_proc_id, context=context)
                 to_write = {}
 
-                self.checks_on_batch(cr, uid, ids, move_proc, line_data, xls_line_number, context=context)
+                self.checks_on_batch(cr, uid, ids, move_proc, line_data, context=context)
 
                 to_write['quantity'] = line_data['qty_picked']
 
@@ -366,12 +378,12 @@ class wizard_pick_import(osv.osv_memory):
                         else:
                             raise osv.except_osv(
                                 _('Error'),
-                                _('Line %s: Given batch number with this expiry date doesn\'t exists in database') % xls_line_number
+                                _('Line %s: The given batch number with this expiry date doesn\'t exist in database') % line_data['item']
                             )
                     else:
                         raise osv.except_osv(_('Error'),
                                              _('Line %s: Product %s must have a batch number and an expiry date')
-                                             % (xls_line_number, line_data['code']))
+                                             % (line_data['item'], line_data['code']))
                 elif not move_proc.product_id.batch_management and move_proc.product_id.perishable and line_data['expiry_date']:
                     prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
                         ('life_date', '=', line_data['expiry_date']),
@@ -383,7 +395,7 @@ class wizard_pick_import(osv.osv_memory):
                     else:
                         raise osv.except_osv(
                             _('Error'),
-                            _('Line %s: Given expiry date doesn\'t exists in database') % xls_line_number
+                            _('Line %s: The given expiry date doesn\'t exist in database') % line_data['item']
                         )
 
                 self.pool.get(move_proc_model).write(cr, uid, [move_proc.id], to_write, context=context)
