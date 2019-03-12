@@ -1070,7 +1070,6 @@ class account_invoice(osv.osv):
                 if 'seqnums' in argdict:
                     context['seqnums'] = argdict['seqnums']
 
-            context.update({'from_invoice_move_creation': True})
             move_id = self.pool.get('account.move').create(cr, uid, move, context=context)
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move

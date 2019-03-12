@@ -1108,7 +1108,7 @@ class account_move_line(osv.osv):
                     move_obj.validate(cr, uid, [line.move_id.id], context)
                     if todo_date:
                         move_obj.write(cr, uid, [line.move_id.id], {'date': todo_date}, context=context)
-        self._check_on_big_amounts(cr, uid, ids, context=context)
+        self._check_on_ji_big_amounts(cr, uid, ids, context=context)
         return result
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, raise_hq_closed=True, *args, **kargs):
@@ -1162,10 +1162,11 @@ class account_move_line(osv.osv):
                 done[t] = True
         return True
 
-    def _check_on_big_amounts(self, cr, uid, ids, context=None):
+    def _check_on_ji_big_amounts(self, cr, uid, ids, context=None):
         """
-        Prevents booking amounts having more than 10 digits before the comma, i.e. amounts starting from 10 billions
-        The goal is to avoid loosing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        Prevents booking amounts having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
         Checks are done only on user manual actions.
         """
         if context is None:
@@ -1173,13 +1174,12 @@ class account_move_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         too_big_amount = 10**10
-        if context.get('from_web_menu') or context.get('from_je_import') or context.get('from_regline_posting') \
-                or context.get('from_invoice_move_creation'):
+        if context.get('from_web_menu') or context.get('from_je_import'):
             aml_fields = ['debit_currency', 'credit_currency', 'amount_currency', 'name']
             for aml in self.browse(cr, uid, ids, fields_to_fetch=aml_fields, context=context):
                 booking_amount = aml.debit_currency or aml.credit_currency or aml.amount_currency or 0.0
                 if abs(booking_amount) >= too_big_amount:
-                    raise osv.except_osv(_('Error'), _('The amount of the line %s is more than 10 digits.') % aml.name or '')
+                    raise osv.except_osv(_('Error'), _('The amount of the line "%s" is more than 10 digits.') % aml.name)
 
     def create(self, cr, uid, vals, context=None, check=True):
         account_obj = self.pool.get('account.account')
@@ -1355,7 +1355,7 @@ class account_move_line(osv.osv):
                 move_obj.write(cr, uid, [vals['move_id']], {'date': vals.get('date')}, context)
             if journal.entry_posted and tmp:
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
-        self._check_on_big_amounts(cr, uid, result, context=context)
+        self._check_on_ji_big_amounts(cr, uid, result, context=context)
         return result
 
     def get_related_entry_ids(self, cr, uid, ids=False, entry_seqs=None, context=None):

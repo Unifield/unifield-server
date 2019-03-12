@@ -105336,8 +105336,15 @@ msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
 
-#. module: account
+#. modules: account_override, account
 #: code:addons/account/account_move_line.py:1182
+#: code:addons/account_override/invoice.py:1730
 #, python-format
-msgid "The amount of the line %s is more than 10 digits."
-msgstr "Le montant de la ligne %s est sur plus de 10 chiffres."
+msgid "The amount of the line \"%s\" is more than 10 digits."
+msgstr "Le montant de la ligne \"%s\" est sur plus de 10 chiffres."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2069
+#, python-format
+msgid "The amount of the register line \"%s\" is more than 10 digits."
+msgstr "Le montant de la ligne de registre \"%s\" est sur plus de 10 chiffres."
