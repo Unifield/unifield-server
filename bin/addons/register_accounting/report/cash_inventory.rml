@@ -83,7 +83,7 @@
       <para style="text"><b>Cashbox</b></para>
       <blockTable colWidths="30mm,30mm,30mm,30mm,30mm,30mm" style="table_reconciliation_balance">
         <tr>
-          <td><para style="center"><b>Opening balance</b></para></td>
+          <td><para style="center"><b>Starting balance</b></para></td>
           <td></td>
           <td></td>
           <td><para style="center"><b>Closing balance</b></para></td>
@@ -134,7 +134,7 @@
       <blockTable colWidths="90mm, 90mm" style="table_reconciliation">
         <tr>
           <td>
-            <para>Opening balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Starting balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Cash Transaction: <b>[[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Calculated Balance: <b>[[ o.msf_calculated_balance and o.msf_calculated_balance or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Unrecorded Advances: <b>[[ o.open_advance_amount and o.open_advance_amount or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>

@@ -342,6 +342,10 @@ class so_po_common(osv.osv_memory):
             if price_list:
                 price_list = self.pool.get('product.pricelist').find_sd_ref(cr, uid, xmlid_to_sdref(price_list['id']), context=context)
 
+        currency_id = False
+        if header_info.get('currency_id'):
+            currency_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(header_info['currency_id']['id']), context=context)
+
         # at the end, if there is no price list, just use the one from the partner
         if not price_list:
             price_list = self.get_price_list_id(cr, uid, partner_id, context)
@@ -352,7 +356,7 @@ class so_po_common(osv.osv_memory):
         header_result['partner_shipping_id'] = address_id
         header_result['partner_invoice_id'] = address_id
         header_result['pricelist_id'] = price_list
-
+        header_result['currency_id'] = currency_id
         return header_result
 
     def get_product_id(self, cr, uid, data, default_code=False, context=None):

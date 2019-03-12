@@ -107,7 +107,7 @@ class account_move_line(osv.osv):
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="output_currency"),
         'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="output_currency"),
         'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False,
-            multi="output_currency"),
+                                           multi="output_currency"),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -127,7 +127,7 @@ class account_move_line(osv.osv):
             view['arch'] = etree.tostring(tree)
 
         if view_type == 'tree' and \
-            context.get('selector_display_cheque_number', False):
+                context.get('selector_display_cheque_number', False):
             # BKLG-7: cheque_number used in G/L selector: display it
             view['fields']['cheque_number'] = {
                 'type': 'char',
@@ -142,9 +142,17 @@ class account_move_line(osv.osv):
             # insert it after entry sequence
             es_node = tree.find('.//field[@name="move_id"]')
             tree.insert(es_node.getparent().index(es_node) + 1,
-                cheque_number_node)
+                        cheque_number_node)
 
             view['arch'] = etree.tostring(tree)
+        if view_type == 'search':
+            # filter on Cheque Number must appear only when searching for the lines to add in the Import Cheque wizard
+            if context.get('from') != 'wizard_import_cheque':
+                tree = etree.fromstring(view['arch'])
+                element_fields = tree.xpath('.//field[@name="cheque_number"]')
+                for el in element_fields:
+                    el.getparent().remove(el)
+                view['arch'] = etree.tostring(tree)
         return view
 
 account_move_line()

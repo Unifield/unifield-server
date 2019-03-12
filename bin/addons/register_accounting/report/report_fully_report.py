@@ -22,6 +22,8 @@
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import pooler
+from tools.translate import _
+
 
 class report_fully_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -29,7 +31,9 @@ class report_fully_report(report_sxw.rml_parse):
         self.localcontext.update({
             'getMoveLines': self.getMoveLines,
             'getAnalyticLines': self.getAnalyticLines,
+            'getNumberOfEntries': self.getNumberOfEntries,
             'getImportedMoveLines': self.getImportedMoveLines,
+            'getEntryType': self.getEntryType,
             'getRegRef': self.getRegRef,
             'getFreeRef': self.getFreeRef,
             'getDownPaymentReversals': self.getDownPaymentReversals,
@@ -47,6 +51,31 @@ class report_fully_report(report_sxw.rml_parse):
         bk_id = self.localcontext.get('background_id')
         if bk_id:
             self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.9, max(0.1,nbloop/float(tot)))})
+
+    def getEntryType(self, line):
+        """
+        Returns the Entry Type to be displayed in the Full Report for the current line
+        """
+        entry_type = _('Direct Payment')  # by default
+        if line.direct_invoice:
+            entry_type = _('Direct Invoice')
+        elif line.from_cash_return and line.account_id.type_for_register == 'advance':
+            if line.amount_in:
+                entry_type = _('Advance Closing')
+            else:
+                entry_type = _('Advance')
+        elif line.is_down_payment:
+            entry_type = _('Down Payment')
+        elif line.transfer_journal_id:
+            if line.is_transfer_with_change:
+                entry_type = _('Transfer with change')
+            else:
+                entry_type = _('Transfer')
+        elif line.imported_invoice_line_ids:
+            entry_type = _('Imported Invoice')
+        elif line.from_import_cheque_id:
+            entry_type = _('Imported Cheque')
+        return entry_type
 
     def getRegRef(self, reg_line):
         if reg_line.direct_invoice_move_id:
@@ -160,6 +189,15 @@ class report_fully_report(report_sxw.rml_parse):
 
         return self._cache_ana[key]
 
+    def getNumberOfEntries(self, o):
+        """
+        Returns the number of register lines booked in the register (o)
+        """
+        db = pooler.get_pool(self.cr.dbname)
+        regline_obj = db.get('account.bank.statement.line')
+        nb_lines = regline_obj.search(self.cr, self.uid, [('statement_id', '=', o.id)], count=True)
+        return nb_lines
+
     def getFreeRef(self, acc_move_line):
         '''
         Return the "manual" invoice reference associated with the account move line if it exists
@@ -237,10 +275,10 @@ class report_fully_report(report_sxw.rml_parse):
         db = pooler.get_pool(self.cr.dbname)
         aji_obj = db.get('account.analytic.line')
         aji_ids = aji_obj.search(self.cr, self.uid, [('move_id', '=', aml.id), ('free_account', '=', free)])
-        ajis = aji_obj.browse(self.cr, self.uid, aji_ids, context={'lang': self.localcontext.get('lang')})
-        return [aji for aji in ajis]
+        # add the correction lines if any
+        return self.getAnalyticLines(aji_ids)
 
-    def getManualFreeLines(self, aml, free=False):
+    def getManualFreeLines(self, aml):
         """
         Returns of list of Free1/Free2 Lines linked to the manual JI in parameter
         """

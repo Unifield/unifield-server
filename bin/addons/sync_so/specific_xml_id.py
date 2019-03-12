@@ -7,7 +7,7 @@ Created on 15 mai 2012
 from osv import osv
 from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
-
+import time
 
 # Note:
 #
@@ -199,7 +199,9 @@ class account_target_costcenter(osv.osv):
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
         if 'instance_id' in vals:
@@ -209,6 +211,27 @@ class account_target_costcenter(osv.osv):
                 # "touch" cost center if instance is active (to sync to new targets)
                 self.pool.get('account.analytic.account').synchronize(cr, uid, [vals['cost_center_id']], context=context)
         return res_id
+
+    def unlink(self, cr, uid, ids, context=None):
+        ''' target CC deletion: set the inactivation date on CC '''
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context.get('sync_update_execution'):
+            to_inactivate = []
+            now = time.strftime('%Y-%m-%d')
+            current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
+            search_target = self.search(cr, uid, [('id', 'in', ids), ('instance_id', '=', current_instance_id)], context=context)
+            for cc in self.browse(cr, uid, search_target, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
+                if cc.cost_center_id and (not cc.cost_center_id.date or cc.cost_center_id.date > now):
+                    to_inactivate.append(cc.cost_center_id.id)
+            if to_inactivate:
+                self.pool.get('account.analytic.account').write(cr, uid, to_inactivate, {'date': now}, context=context)
+
+        return super(account_target_costcenter, self).unlink(cr, uid, ids, context)
 
 account_target_costcenter()
 

@@ -207,6 +207,8 @@ class groups(osv.osv):
                 new_args = [('level', 'in', ['project', False])]
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
+            if instance_level in ('project', 'coordo'):
+                new_args += [('is_an_admin_profile', '=', False)]
             for arg in args:
                 new_args.append(arg)
 
@@ -485,8 +487,8 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
-        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),
         'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
         'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
@@ -603,6 +605,7 @@ class users(osv.osv):
         'force_password_change': False,
         'view': 'simple',
         'is_synchronizable': False,
+        'synchronize': False,
     }
 
     @tools.cache()
@@ -649,10 +652,6 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
-        if not values.get('is_synchronizable', False):
-            # a user which is not synchronizable should not be synchronized
-            values['synchronize'] = False
-
         user_id = super(users, self).create(cr, uid, values, context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
@@ -680,11 +679,6 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
-
-        if 'is_synchronizable' in values and not values.get('is_synchronizable',
-                                                            False):
-            # desactivate synchronize if is_synchronizable is set to False
-            values['synchronize'] = False
 
         old_groups = []
         if values.get('groups_id'):
@@ -783,7 +777,7 @@ class users(osv.osv):
         return encrypted password from the database using uid
         '''
         cr.execute("""SELECT password from res_users
-                      WHERE id=%s AND active""",
+                      WHERE id=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (uid,))
         res = cr.fetchone()
         if res:
@@ -796,7 +790,7 @@ class users(osv.osv):
         '''
         login = tools.ustr(login).lower()
         cr.execute("""SELECT password from res_users
-                      WHERE login=%s AND active""",
+                      WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (login,))
         res = cr.fetchone()
         if res:
@@ -923,7 +917,7 @@ class users(osv.osv):
                 login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND active=%s""",
+                              WHERE login=%s AND active=%s AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                            (login, True))
                 res = cr.fetchone()
                 uid = None
@@ -979,10 +973,10 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         new_values = values
         if context.get('user_white_list', False):
             # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context

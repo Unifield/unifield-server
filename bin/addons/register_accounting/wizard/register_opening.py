@@ -31,8 +31,8 @@ class wizard_register_opening_confirmation(osv.osv_memory):
 
     def _get_opening_balance(self, cr, uid, ids, name, arg, context=None):
         """
-        Returns a dict with key = id of the wizard, and value = amount of the opening balance of the related register
-        The Opening Balance is:
+        Returns a dict with key = id of the wizard, and value = amount of the starting balance of the related register
+        The Starting Balance is:
         - equal to the value of "balance_start" for Bank Registers
         - based on the Cashbox lines for Cash Registers
         - always equal to 0.00 for Cheque Registers
@@ -60,13 +60,13 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context=context)
 
     _columns = {
-        'confirm_opening_balance': fields.boolean(string='Do you want to open the register with the following opening balance?',
+        'confirm_opening_balance': fields.boolean(string='Do you want to open the register with the following starting balance?',
                                                   required=False),
         'register_id': fields.many2one('account.bank.statement', 'Register', required=True, readonly=True),
         'register_type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
                                         selection=_get_journal_type, readonly=True),
         'opening_balance': fields.function(_get_opening_balance, method=True, type='float', readonly=True,
-                                           string='Opening Balance'),
+                                           string='Starting Balance'),
         'confirm_opening_period': fields.boolean(string='Do you want to open the register on the following period?',
                                                  required=False),
         'opening_period': fields.related('register_id', 'period_id', string='Opening Period', type='many2one',

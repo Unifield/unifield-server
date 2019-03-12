@@ -28,6 +28,14 @@
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
         </blockTableStyle>
+		
+		<blockTableStyle id="HeaderInfos2">
+            <blockAlignment value="LEFT" />
+			<blockValign value="MIDDLE" />
+			<blockLeading length="0" />
+			<blockBottomPadding length="0" />
+			<blockTopPadding length="0" />
+        </blockTableStyle>
 
         <blockTableStyle id="NoPackTable">
             <blockAlignment value="CENTER" />
@@ -109,28 +117,69 @@
                 </para>
 
                 <!-- Shipment header values -->
-                <blockTable colWidths="80.0,170.0,140.0,145.0,140.0,145.0" style="HeaderInfos">
+                <blockTable colWidths="250.0,140.0,145.0,140.0,145.0" style="HeaderInfos">
                     <tr>
-                        <td>
-                            <para style="HeaderInfosTitle">Your Ref.:</para>
-                            <para style="HeaderInfosTitle">Our Ref.:</para>
-                            <para style="HeaderInfosTitle">FO Date:</para>
-                            <para style="HeaderInfosTitle">Packing date:</para>
-                            <para style="HeaderInfosTitle">RTS date:</para>
-                            <para style="HeaderInfosTitle">Transport mode:</para>
-                            <para style="HeaderInfosTitle"><font color="white"> </font></para>
-                            <para style="HeaderInfosTitle"><font color="blue"> </font></para>
+						<td>
+							<blockTable colWidths="100.0,150.0" style="HeaderInfos2">
+								<tr>
+									<td>
+		                       			<para style="HeaderInfosTitle">Your Ref.:</para>
+									</td>
+									<td>
+                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</parawrap>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">Our Ref.:</para>
+									</td>
+									<td>
+                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</parawrap>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">Supplier Packing List:</para>
+									</td>
+									<td>
+                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].packing_list or '-' ]]</parawrap>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">FO Date:</para>
+									</td>
+									<td>
+                            			<para style="HeaderInfosValue">[[ p['ppl'].sale_id and formatLang(p['ppl'].sale_id.date_order, date=True) or '-' ]]</para>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">Packing date:</para>
+									</td>
+									<td>
+                            			<para style="HeaderInfosValue">[[ formatLang(p['ppl'].date[0:10], date=True) ]]</para>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">RTS date:</para>
+									</td>
+									<td>
+                            			<para style="HeaderInfosValue">[[ formatLang(objects[0].shipment_expected_date[0:10], date=True) ]]</para>
+									</td>
+								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">Transport mode:</para>
+									</td>
+									<td>
+                            			<para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
+									</td>
+								</tr>
+							</blockTable>
                         </td>
                         <td>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.name or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.date_order or '-' ]]</para>
-                            <para style="HeaderInfosValue">[[ formatLang(p['ppl'].date[0:10], date=True) ]]</para>
-                            <para style="HeaderInfosValue">[[ formatLang(objects[0].shipment_expected_date[0:10], date=True) ]]</para>
-                            <para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
-                        </td>
-                        <td>
-                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Shipper:</para>
                             <para style="HeaderInfosValue">[[ objects[0].shipper_name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ objects[0].shipper_contact or '' ]]</para>
@@ -139,7 +188,6 @@
                             <para style="HeaderInfosValue">[[ objects[0].shipper_other or '' ]]</para>
                         </td>
                         <td>
-                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Consignee:</para>
                             <para style="HeaderInfosValue">[[ objects[0].consignee_name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ objects[0].consignee_address or '' ]]</para>
@@ -147,7 +195,6 @@
                             <para style="HeaderInfosValue">[[ objects[0].consignee_other or '' ]]</para>
                         </td>
                         <td>
-                            <para style="HeaderInfosTitle"><br /></para>
                             <para style="HeaderInfosTitle">Dispatch:</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_id.name or '' ]]</para>
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.name or '' ]]</para>
@@ -158,7 +205,6 @@
                             <para style="HeaderInfosValue">[[ p['ppl'].sale_id and (p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile) or '' ]]</para>
                         </td>
                         <td>
-                            <para style="HeaderInfosTitle"> </para>
                             <para style="HeaderInfosTitle">Invoice to:</para>
                             <para style="HeaderInfosValue"></para>
                         </td>

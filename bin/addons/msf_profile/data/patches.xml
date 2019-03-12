@@ -1,11 +1,61 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF12.0 -->
+        <record id="us_5724_set_previous_fy_dates_allowed" model="patch.scripts">
+            <field name="method">us_5724_set_previous_fy_dates_allowed</field>
+        </record>
 
-        <!-- UF1A.0 -->
+        <record id="us_5746_rename_products_with_new_lines" model="patch.scripts">
+            <field name="method">us_5746_rename_products_with_new_lines</field>
+        </record>
+
+        <record id="us_2896_volume_ocbprod" model="patch.scripts">
+            <field name="method">us_2896_volume_ocbprod</field>
+        </record>
+
+        <record id="us_5480_correct_partner_fo_default_currency" model="patch.scripts">
+            <field name="method">us_5480_correct_partner_fo_default_currency</field>
+        </record>
+
+        <record id="us_5507_set_synchronize" model="patch.scripts">
+            <field name="method">us_5507_set_synchronize</field>
+        </record>
+
+        <!-- UF11.1 -->
+        <record id="us_5425_reset_amount_currency" model="patch.scripts">
+            <field name="method">us_5425_reset_amount_currency</field>
+        </record>
+
+        <record id="us_5398_reset_ud_cost_price" model="patch.scripts">
+            <field name="method">us_5398_reset_ud_cost_price</field>
+        </record>
+
+        <record id="us_5559_set_pricelist" model="patch.scripts">
+            <field name="method">us_5559_set_pricelist</field>
+        </record>
+
+        <!-- UF11.0 -->
+        <record id="us_5356_reset_ud_prod" model="patch.scripts">
+            <field name="method">us_5356_reset_ud_prod</field>
+        </record>
+
+        <record id="us_4541_stock_mission_recompute_cu_qty" model="patch.scripts">
+            <field name="method">us_4541_stock_mission_recompute_cu_qty</field>
+        </record>
+
         <record id="us_4996_bck_beforepatch" model="patch.scripts">
             <field name="method">us_4996_bck_beforepatch</field>
         </record>
+
+        <record id="testfield_missing_updates_on_sync" model="patch.scripts">
+            <field name="method">testfield_missing_updates_on_sync</field>
+        </record>
+
+        <record id="us_4375_build_xmlid_admin_acl" model="patch.scripts">
+            <field name="method">us_4375_build_xmlid_admin_acl</field>
+        </record>
+
         <!-- UF10.0 -->
         <record id="us_3427_update_third_parties_in_gl_selector" model="patch.scripts">
             <field name="method">us_3427_update_third_parties_in_gl_selector</field>
@@ -249,10 +299,6 @@
 
         <record id="uftp_144_patch" model="patch.scripts">
             <field name="method">uftp_144_patch</field>
-        </record>
-
-        <record id="update_volume_patch" model="patch.scripts">
-            <field name="method">update_volume_patch</field>
         </record>
 
         <record id="clean_far_updates" model="patch.scripts">
