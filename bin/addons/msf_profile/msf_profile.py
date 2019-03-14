@@ -52,6 +52,56 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+
+    # UF12.1
+    def us_5785_set_ocg_price_001(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG') and \
+            '_KE1_' not in instance.instance and \
+            '_UA1_' not in instance.instance and \
+            '_MX1_' not in instance.instance and \
+                '_LB1_' not in instance.instance:
+            cr.execute("""select p.id, tmpl.id from
+                product_template tmpl, product_product p
+                where
+                    p.product_tmpl_id = tmpl.id and
+                    p.default_code in ('DORACHLP4T-','DORAPARA1T-','DORAPYRZ5T-','DVACVBCG3SD','DVACVMEA2SD','DVACVPOL13DR','DVACVYEF2SD','EDIMULSE2--','EEMDMONE1--','SDDCBAGP06-','SDRECOMN7N-','SSDTMALP251') and
+                    standard_price=0
+                """)
+            prod = cr.fetchall()
+            if prod:
+                cr.execute('update product_template set standard_price=0.01, list_price=0.01 where id in %s', (tuple([x[1] for x in prod]), ))
+                self._logger.warn('Change price to 0.01 on %d products' % (cr.rowcount,))
+                for prod_i in prod:
+                    cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
+                            """,  (prod_i[0], ))
+                if instance.level == 'section' and instance.code == 'CH':
+                    cr.execute('''update ir_model_data set touched='[''default_code'']' where model='product.product' and res_id %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
+                    self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
+
+        return True
+
+
     # UF12.0
     def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
         """
@@ -1752,22 +1802,6 @@ class patch_scripts(osv.osv):
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
-    def launch_patch_scripts(self, cr, uid, *a, **b):
-        ps_obj = self.pool.get('patch.scripts')
-        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
-        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
-            method = ps['method']
-            model_obj = self.pool.get(ps['model'])
-            try:
-                getattr(model_obj, method)(cr, uid, *a, **b)
-                self.write(cr, uid, [ps['id']], {'run': True})
-            except Exception as e:
-                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
-                self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
 
     def us_1421_lower_login(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
