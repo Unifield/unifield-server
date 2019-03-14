@@ -1174,7 +1174,7 @@ class account_move_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         too_big_amount = 10**10
-        if context.get('from_web_menu') or context.get('from_je_import'):
+        if context.get('from_web_menu') or context.get('from_je_import') or context.get('from_invoice_move_creation'):
             aml_fields = ['debit_currency', 'credit_currency', 'amount_currency', 'name']
             for aml in self.browse(cr, uid, ids, fields_to_fetch=aml_fields, context=context):
                 booking_amount = aml.debit_currency or aml.credit_currency or aml.amount_currency or 0.0
