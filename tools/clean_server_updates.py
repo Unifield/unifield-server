@@ -26,7 +26,7 @@ ct['inactive_rules'] = cr.rowcount
 # delete update: delete previous updates
 cr.execute("""select source, sdref, max(sequence), model from sync_server_update
 where source in %s and
-model in ('ir.translation', 'ir.model.access', 'msf_field_access_rights.field_access_rule_line', 'ir.rule', 'supplier.catalogue.line', 'product.list.line') and
+model in ('ir.translation', 'msf_field_access_rights.field_access_rule_line', 'ir.rule', 'supplier.catalogue.line', 'product.list.line') and
 is_deleted='t' and
 sequence < %s
 group by source, sdref, model""", (hq_ids, min_seq))
@@ -57,7 +57,7 @@ for x in cr.fetchall():
 # multiple updates, keep only the last update as we know these xmlids are not used in other sync updates
 cr.execute("""select source, sdref, max(sequence), model from sync_server_update where 
 source in %s and
-model in ('ir.translation', 'ir.model.access', 'msf_field_access_rights.field_access_rule_line', 'ir.rule', 'supplier.catalogue.line', 'product.list.line') and
+model in ('ir.translation', 'msf_field_access_rights.field_access_rule_line', 'ir.rule', 'supplier.catalogue.line', 'product.list.line') and
 is_deleted='f' and
 sequence < %s
 group by source, sdref, source, model
