@@ -1722,12 +1722,15 @@ class account_invoice_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         too_big_amount = 10**10
-        inv_line_fields = ['quantity', 'price_unit', 'discount', 'price_subtotal', 'name']
+        inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
         for inv_line in self.browse(cr, uid, ids, fields_to_fetch=inv_line_fields, context=context):
             # check amounts entered manually (cf. huge amounts could cause decimal.InvalidOperation), and the total to be used in JI
-            if abs(inv_line.quantity or 0.0) >= too_big_amount or abs(inv_line.price_unit or 0.0) >= too_big_amount \
-                    or abs(inv_line.discount or 0.0) >= too_big_amount or abs(inv_line.price_subtotal or 0.0) >= too_big_amount:
-                raise osv.except_osv(_('Error'), _('The amount of the line "%s" is more than 10 digits.') % inv_line.name)
+            qty = inv_line.quantity or 0.0
+            pu = inv_line.price_unit or 0.0
+            discount = inv_line.discount or 0.0
+            subtotal = self._amount_line(cr, uid, [inv_line.id], 'price_subtotal', None, context)[inv_line.id]
+            if abs(qty) >= too_big_amount or abs(pu) >= too_big_amount or abs(discount) >= too_big_amount or abs(subtotal) >= too_big_amount:
+                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits.') % inv_line.name)
 
     def create(self, cr, uid, vals, context=None):
         """
