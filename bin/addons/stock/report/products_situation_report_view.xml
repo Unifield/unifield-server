@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="products_situation_report_view" model="ir.ui.view">
+            <field name="name">products.situation.report.view</field>
+            <field name="model">products.situation.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Products Situation Report" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1">
+                    <separator colspan="4" string="Product" />
+                    <group colspan="4" col="4">
+                        <field name="p_code" />
+                        <field name="p_desc" />
+                    </group>
+                    <field name="product_list_id" />
+                    <separator colspan="4" string="Nomenclature" />
+                    <group colspan="4" col="8">
+                        <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"
+                               on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_1" domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_2" domain="[('level', '=', '2'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                        <field name="nomen_manda_3" domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
+                    </group>
+                    <separator colspan="4" string="Parameters" />
+                    <group colspan="4" col="4">
+                        <field name="heat_sensitive_item" widget="selection" />
+                        <field name="sterilized" />
+                        <field name="single_use" />
+                        <field name="controlled_substance" />
+                        <field name="dangerous_goods" />
+                        <newline/>
+                        <field name="perishable" />
+                        <field name="batch_management" />
+                    </group>
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" domain="[('usage', 'in', ['internal', 'customer'])]" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_products_situation_report" model="ir.actions.act_window">
+            <field name="name">Products Situation Report</field>
+            <field name="res_model">products.situation.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <menuitem
+            id="menu_products_situation_report"
+            action="action_products_situation_report"
+            parent="stock.next_id_61"
+            sequence="11"
+            />
+
+        <report
+            id="report_products_situation_report_xls"
+            name="products.situation.report_xls"
+            model="products.situation.report"
+            string="Products Situation Report"
+            file="stock/report/products_situation_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+    </data>
+</openerp>

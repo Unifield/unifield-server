@@ -3711,7 +3711,7 @@ msgstr "msf.budget.tools"
 msgid "You cannot validate a PO line with 0.0 as price unit !"
 msgstr "You cannot validate a PO line with 0.0 as price unit !"
 
-#. modules: mission_stock, product_attributes, consumption_calculation, procurement_report
+#. modules: mission_stock, product_attributes, consumption_calculation, procurement_report, stock
 #: field:monthly.review.consumption.line,amc:0
 #: field:stock.mission.report.line,product_amc:0
 #: field:auto.supply.rules.report,amc:0
@@ -3722,6 +3722,7 @@ msgstr "You cannot validate a PO line with 0.0 as price unit !"
 #: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:41
 #: selection:product.history.consumption.product,cons_type:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:69
+#: report:addons/stock/report/products_situation_report_xls.mako:226
 #, python-format
 msgid "AMC"
 msgstr "CMM"
@@ -3927,6 +3928,7 @@ msgstr "America/Catamarca"
 #: report:procurement.request.report:0
 #: selection:product.price.type,field:0
 #: selection:product.pricelist.item,base:0
+#: report:addons/stock/report/products_situation_report_xls.mako:219
 #, python-format
 msgid "Cost Price"
 msgstr "Prix Coûtant"
@@ -6155,6 +6157,7 @@ msgstr "Description"
 #: field:report.stock.move,categ_id:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_2:0
+#: field:products.situation.report,nomen_manda_2:0
 msgid "Family"
 msgstr "Famille"
 
@@ -7377,10 +7380,11 @@ msgstr "Export PDF Suivi Commande Terrain"
 msgid "Lines must have a quantity larger than 0.00"
 msgstr "Lines must have a quantity larger than 0.00"
 
-#. modules: return_claim, specific_rules, sourcing
+#. modules: return_claim, specific_rules, sourcing, stock
 #: field:claim.product.line,hidden_stock_available_claim_product_line:0
 #: field:stock.production.lot,stock_virtual:0
 #: field:sale.order.line,available_stock:0
+#: report:addons/stock/report/products_situation_report_xls.mako:225
 msgid "Available Stock"
 msgstr "Stock Disponible"
 
@@ -9080,8 +9084,9 @@ msgstr "Dimanche"
 msgid "Products Quantity"
 msgstr "Quantité de Produits"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "! - Requires national export license"
 msgstr "! - Requires national export license"
 
@@ -10927,6 +10932,7 @@ msgstr " Code: %s"
 #: field:product.product,location_id:0
 #: view:stock.location:0
 #: view:stock.location:0
+#: field:products.situation.report,location_id:0
 msgid "Stock Location"
 msgstr "Zone Stock"
 
@@ -16856,7 +16862,7 @@ msgstr "Réf Packing:"
 msgid "%s update%s"
 msgstr "%s update%s"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, stock
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
@@ -16903,6 +16909,11 @@ msgstr "%s update%s"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: selection:products.situation.report,dangerous_goods:0
+#: selection:products.situation.report,single_use:0
+#: selection:products.situation.report,sterilized:0
+#: selection:products.situation.report,perishable:0
+#: selection:products.situation.report,batch_management:0
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -17752,7 +17763,7 @@ msgstr "Only added lines"
 msgid "Create Access"
 msgstr "Créer l'Accès "
 
-#. modules: account, base, procurement_request, account_override
+#. modules: account, base, procurement_request, account_override, stock
 #: view:account.common.report:0
 #: view:ir.actions.act_window:0
 #: model:ir.actions.act_window,name:base.actions_ir_filters_view
@@ -17761,6 +17772,7 @@ msgstr "Créer l'Accès "
 #: model:ir.ui.menu,name:base.menu_ir_filters
 #: view:sale.order:0
 #: view:integrity.finance.wizard:0
+#: report:addons/stock/report/products_situation_report_xls.mako:151
 msgid "Filters"
 msgstr "Filtres"
 
@@ -18038,8 +18050,9 @@ msgstr "Pas de partenaire défini sur la ligne d'écriture"
 msgid "The record exists in database?"
 msgstr "The record exists in database?"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: field:product.product,single_use:0
+#: field:products.situation.report,single_use:0
 msgid "Single Use"
 msgstr "Utilisation unique"
 
@@ -25277,6 +25290,11 @@ msgstr "Europe/Bucharest"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: selection:products.situation.report,dangerous_goods:0
+#: selection:products.situation.report,single_use:0
+#: selection:products.situation.report,sterilized:0
+#: selection:products.situation.report,perishable:0
+#: selection:products.situation.report,batch_management:0
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -26805,6 +26823,7 @@ msgstr "Picking Connexe"
 #: code:addons/sale/wizard/sale_loan_stock_moves.py:123
 #: code:addons/sales_followup/wizard/sale_followup_multi_wizard.py:178
 #: code:addons/stock/wizard/reserved_products_wizard.py:178
+#: code:addons/stock/report/products_situation_report.py:172
 #, python-format
 msgid "No data found with these parameters"
 msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
@@ -27144,6 +27163,7 @@ msgstr "Code Applicable (si type=code)"
 #: view:ir.followup.location.wizard:0
 #: view:sale.followup.multi.wizard:0
 #: view:stock.reception.wizard:0
+#: view:products.situation.report:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -31407,6 +31427,8 @@ msgstr "Alloc.Analyt."
 #: report:addons/stock/report/stock_reception_report_xls.mako:166
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:170
 #: field:stock.expired.damaged.report,name:0
+#: report:addons/stock/report/products_situation_report_xls.mako:140
+#: field:products.situation.report,report_date:0
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -38441,8 +38463,9 @@ msgstr "Prévisions Niveaux de Stock (Liste)"
 msgid "Japanese / 日本語"
 msgstr "Japanese / 日本語"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: field:product.product,controlled_substance:0
+#: field:products.situation.report,controlled_substance:0
 msgid "Controlled substance"
 msgstr "Substance contrôlée"
 
@@ -41027,6 +41050,7 @@ msgstr "De confirmé à attribué."
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:225
 #: report:addons/stock/report/stock_reception_report_xls.mako:239
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:220
+#: report:addons/stock/report/products_situation_report_xls.mako:218
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -41184,10 +41208,11 @@ msgstr "Vous ne pouvez pas avoir de fournisseur inactif! Veuillez enlever: %s"
 msgid "Falkland Islands"
 msgstr "Îles Malouines"
 
-#. modules: product_attributes, kit
+#. modules: product_attributes, kit, stock
 #: field:composition.kit,composition_batch_check:0
 #: field:kit.creation,batch_check_kit_creation:0
 #: field:product.product,batch_management:0
+#: field:products.situation.report,batch_management:0
 msgid "Batch Number Mandatory"
 msgstr "Numéro de Lot Obligatoire"
 
@@ -43799,10 +43824,11 @@ msgstr "Domaine des comptes"
 msgid "The new Draft Shipment %s has been created."
 msgstr "Les nouveaux %s d'expédition en mode brouillon ont été créés."
 
-#. modules: mission_stock, product_attributes, msf_tools
+#. modules: mission_stock, product_attributes, msf_tools, stock
 #: field:stock.mission.report.line,international_status_code:0
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:82
 #: field:product.product,international_status:0
+#: report:addons/stock/report/products_situation_report_xls.mako:220
 msgid "Product Creator"
 msgstr "Créateur produit"
 
@@ -44919,6 +44945,7 @@ msgstr "Effacer les Identités (ID's)"
 #: field:stock.inventory,nomen_manda_0:0
 #: field:physical.inventory.select.products,nomen_manda_0:0
 #: field:threshold.value,nomen_manda_0:0
+#: field:products.situation.report,nomen_manda_0:0
 msgid "Main Type"
 msgstr "Type Principal"
 
@@ -45695,6 +45722,7 @@ msgstr "Malayalam / മലയാളം"
 #: field:stock.location,stock_virtual_specific:0
 #: field:stock.location,stock_virtual:0
 #: selection:product.price.type,field:0
+#: report:addons/stock/report/products_situation_report_xls.mako:224
 msgid "Virtual Stock"
 msgstr "Stock Virtuel"
 
@@ -48840,7 +48868,7 @@ msgstr "Avec les écart"
 msgid "B/S Move to 0 accounts"
 msgstr "Comptes de bilan à 0"
 
-#. modules: product_attributes, consumption_calculation, procurement_report, mission_stock
+#. modules: product_attributes, consumption_calculation, procurement_report, mission_stock, stock
 #: field:monthly.review.consumption.line,fmc:0
 #: field:wizard.export.fmc,fmc_id:0
 #: field:wizard.export.rac,rac_id:0
@@ -48853,6 +48881,7 @@ msgstr "Comptes de bilan à 0"
 #: selection:product.history.consumption.product,cons_type:0
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:70
 #: field:stock.mission.report.line,product_consumption:0
+#: report:addons/stock/report/products_situation_report_xls.mako:227
 #, python-format
 msgid "FMC"
 msgstr "PCM"
@@ -54627,11 +54656,14 @@ msgstr "La Zone est manquante.\n"
 msgid "Nb treated lines"
 msgstr "Nb lignes traitées"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,dangerous_goods:0
 #: selection:product.product,short_shelf_life:0
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
+#: selection:products.situation.report,dangerous_goods:0
+#: selection:products.situation.report,single_use:0
+#: selection:products.situation.report,sterilized:0
 msgid "tbd"
 msgstr "tbd"
 
@@ -56116,8 +56148,9 @@ msgstr "Zone - Utilisation"
 msgid "Advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button."
 msgstr "Le montant de l'avance (%s) ne correspond pas avec le montant que vous avez justifié (%s). Veuillez d'abord corriger. Puis cliquez sur le bouton Calculer."
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "N2 - Narcotic 2"
 msgstr "N2 - Narcotic 2"
 
@@ -57805,6 +57838,7 @@ msgstr "Solde de clôture basé sur la Caisse"
 #: field:physical.inventory.select.products,nomen_manda_3:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_3:0
+#: field:products.situation.report,nomen_manda_3:0
 msgid "Root"
 msgstr "Origine"
 
@@ -57926,8 +57960,9 @@ msgstr "Consommation Interne - Qté Unitaire"
 msgid "FX rates by currency table"
 msgstr "FX rates by currency table"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: field:product.product,sterilized:0
+#: field:products.situation.report,sterilized:0
 msgid "Sterile"
 msgstr "Stérile"
 
@@ -59675,7 +59710,7 @@ msgstr "Le temps entre 2 réapprovisionnements. Sera utilisé pour calculer la q
 msgid "Scrap"
 msgstr "Rebuts"
 
-#. modules: supplier_catalogue, procurement, base, procurement_report, msf_config_locations
+#. modules: supplier_catalogue, procurement, base, procurement_report, msf_config_locations, stock
 #: view:ir.property:0
 #: model:ir.ui.menu,name:base.next_id_15
 #: view:stock.remove.location.wizard:0
@@ -59683,6 +59718,7 @@ msgstr "Rebuts"
 #: view:procurement.orderpoint.compute:0
 #: view:procurement.batch.cron:0
 #: view:supplier.historical.catalogue:0
+#: view:products.situation.report:0
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -63513,8 +63549,9 @@ msgstr "Rechercher Commande d'Assemblage de Kit"
 msgid "You cannot remove the 'Temporary' international status because it's a system value"
 msgstr "You cannot remove the 'Temporary' international status because it's a system value"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "Y - Kit or module with controlled substance"
 msgstr "Y - Kit ou module avec substance controlée"
 
@@ -64627,6 +64664,7 @@ msgstr "Ligne d'Info sur Fournisseur Connexe"
 #. modules: stock, msf_doc_import
 #: field:physical.inventory.select.products,product_list:0
 #: field:msf.import.export,product_list_id:0
+#: field:products.situation.report,product_list_id:0
 msgid "Product List"
 msgstr "Liste de Produits"
 
@@ -64780,8 +64818,9 @@ msgstr "Transitions du Plan de Travail"
 msgid "Net Loss"
 msgstr "Perte nette"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "N1 - Narcotic 1"
 msgstr "N1 - Narcotic 1"
 
@@ -65426,6 +65465,7 @@ msgstr "Zone - Stock"
 #: field:reserved.products.wizard,location_id:0
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:120
 #: view:stock.reserved.products:0
+#: view:products.situation.report:0
 msgid "Location"
 msgstr "Zone"
 
@@ -68199,8 +68239,9 @@ msgstr "Instance selection"
 msgid "Please give a transfer journal!"
 msgstr "SVP renseignez le journal de transfert !"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "DP - Drug Precursor"
 msgstr "DP - Drug Precursor"
 
@@ -68436,6 +68477,7 @@ msgstr "Devise %s non trouvée."
 #: view:stock.production.lot:0
 #: field:stock.location,stock_real:0
 #: field:stock.production.lot,stock_available:0
+#: report:addons/stock/report/products_situation_report_xls.mako:223
 msgid "Real Stock"
 msgstr "Stock Réel"
 
@@ -83968,6 +84010,7 @@ msgstr "SFTP connection succeeded"
 #: field:reserved.products.wizard,product_id:0
 #: field:internal.request.import.line,imp_product_id:0
 #: field:internal.request.import.line,in_product_id:0
+#: view:products.situation.report:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -86302,8 +86345,9 @@ msgstr "Précision d'arrondissement"
 msgid "Export Inventory Level (All Locations)"
 msgstr "Export Inventory Level (All Locations)"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "P3 - Psychotrop 3"
 msgstr "P3 - Psychotrop 3"
 
@@ -87758,8 +87802,9 @@ msgstr "Returns Packs from Shipment"
 msgid "Month 03"
 msgstr "Month 03"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "P1 - Psychotrop 1"
 msgstr "P1 - Psychotrop 1"
 
@@ -91842,8 +91887,9 @@ msgstr "Suède"
 msgid "Supplier Refund"
 msgstr "Remboursement Fournisseur"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "CS / NP - Controlled Substance / Narcotic / Psychotropic"
 msgstr "CS / NP - Controlled Substance / Narcotic / Psychotropic"
 
@@ -93915,6 +93961,7 @@ msgstr "Statuts Exercice Comptable"
 #: view:purchase.order:0
 #: field:tender,creation_date:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:229
+#: report:addons/stock/report/products_situation_report_xls.mako:221
 msgid "Creation Date"
 msgstr "Date de Création"
 
@@ -95264,6 +95311,7 @@ msgstr "Posting date wrong format for date: %s: %s"
 #: field:physical.inventory.select.products,nomen_manda_1:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_1:0
+#: field:products.situation.report,nomen_manda_1:0
 msgid "Group"
 msgstr "Groupe"
 
@@ -95864,9 +95912,10 @@ msgstr "Ligne %s du fichier Excel : Cette ligne est obligatoire et doit comporte
 msgid "This ISO code is the name of po files to use for translations"
 msgstr "Ce code ISO est le nom des fichiers po utilisés pour les traductions"
 
-#. module: product_attributes, purchase
+#. module: product_attributes, purchase, stock
 #: field:product.product,heat_sensitive_item:0
 #: field:purchase.order.line,heat_sensitive_item:0
+#: field:products.situation.report,heat_sensitive_item:
 msgid "Temperature sensitive item"
 msgstr "Article sensible à la température"
 
@@ -97513,10 +97562,11 @@ msgstr "Catégorie du Produit"
 msgid "Error: The default UOM and the Supplier Product UOM must be in the same category."
 msgstr "Erreur : l'UdM par défaut et l'UdM du Fournisseur de Produit doivent appartenir à la même catégorie."
 
-#. modules: product_attributes, kit
+#. modules: product_attributes, kit, stock
 #: field:composition.kit,composition_expiry_check:0
 #: field:kit.creation,expiry_check_kit_creation:0
 #: field:product.product,perishable:0
+#: field:products.situation.report,perishable:0
 msgid "Expiry Date Mandatory"
 msgstr "Date d'Expiration Obligatoire"
 
@@ -98526,6 +98576,7 @@ msgstr "Revalorisation du coût des produits"
 #. modules: product_attributes, stock
 #: field:product.product,dangerous_goods:0
 #: field:physical.inventory.select.products,dg:0
+#: field:products.situation.report,dangerous_goods:0
 msgid "Dangerous goods"
 msgstr "Produits dangereux"
 
@@ -100499,8 +100550,9 @@ msgstr "Counterpart?"
 msgid "State of lines"
 msgstr "State of lines"
 
-#. module: product_attributes
+#. module: product_attributes, stock
 #: selection:product.product,controlled_substance:0
+#: selection:products.situation.report,controlled_substance:0
 msgid "P4 - Psychotrop 4"
 msgstr "P4 - Psychotrop 4"
 
@@ -105335,3 +105387,101 @@ msgid "\n"
 msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
+
+#. module: stock
+#: code:addons/stock/report/products_situation_report.py:193
+#: report:addons/stock/report/products_situation_report_xls.mako:108
+#: report:addons/stock/report/products_situation_report_xls.mako:137
+#: model:ir.actions.act_window,name:stock.action_products_situation_report
+#: model:ir.actions.report.xml,name:stock.report_products_situation_report_xls
+#: model:ir.ui.menu,name:stock.menu_products_situation_report
+#: view:products.situation.report:0
+#, python-format
+msgid "Products Situation Report"
+msgstr "Rapport de Situation des Produits"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:154
+msgid "Product Code:"
+msgstr "Code Produit:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:161
+msgid "Product Description:"
+msgstr "Description Produit:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:168
+msgid "Main Type:"
+msgstr "Type Principal:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:175
+msgid "Group:"
+msgstr "Groupe:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:182
+msgid "Family:"
+msgstr "Famille:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:189
+msgid "Root:"
+msgstr "Origine:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:196
+msgid "List:"
+msgstr "Liste:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:157
+msgid "Temperature sensitive item:"
+msgstr "Article sensible à la température:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:164
+msgid "Sterile:"
+msgstr "Stérile:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:171
+msgid "Single Use:"
+msgstr "Utilisation unique:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:178
+msgid "Controlled substance:"
+msgstr "Substance contrôlée:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:185
+msgid "Dangerous goods:"
+msgstr "Produits dangereux:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:192
+msgid "Expiry Date Mandatory:"
+msgstr "Date d'Expiration Obligatoire:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:199
+msgid "Batch Number Mandatory:"
+msgstr "Numéro de Lot Obligatoire:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:206
+msgid "Specified Stock Location:"
+msgstr "Zone de Stock Spécifique:"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:222
+msgid "Modification Date"
+msgstr "Date de Modification"
+
+#. module: stock
+#: code:addons/stock/report/products_situation_report.py:121
+#, python-format
+msgid "You must use at least one of the following filters: Code, Description, Product List, Nomenclature"
+msgstr "Vous devez utiliser au moins un de ces filtres: Code, Description, Liste de Produits, Nomenclature"
