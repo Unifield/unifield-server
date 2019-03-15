@@ -209,7 +209,7 @@ class account_bank_statement(osv.osv):
         st_line = account_bank_statement_line_obj.browse(cr, uid, st_line_id, context=context)
         st = st_line.statement_id
 
-        context.update({'date': st_line.date})
+        context.update({'date': st_line.document_date})
 
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,

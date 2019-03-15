@@ -193,7 +193,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         else:
             from_currency_id = move.price_currency_id.id
 
-        context = {'date': move.date}
+        context = {'date': move.document_date}
         to_currency_id = self.user_company['currency_id'].id
 
         if from_currency_id == to_currency_id:
