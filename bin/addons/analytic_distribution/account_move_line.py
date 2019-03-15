@@ -192,7 +192,7 @@ class account_move_line(osv.osv):
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
-                        context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
+                        context.update({'date': obj_line.get('source_date', False) or obj_line.get('document_date', False)})
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
                         dl_total_amount_rounded += anal_amount_rounded

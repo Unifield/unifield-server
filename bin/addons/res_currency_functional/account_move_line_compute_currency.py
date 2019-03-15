@@ -497,8 +497,8 @@ class account_move_line_compute_currency(osv.osv):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
-            if move_line.date:
-                ctx['date'] = move_line.date
+            if move_line.document_date:
+                ctx['date'] = move_line.document_date
             # source_date is more important than date
             if move_line.source_date:
                 ctx['date'] = move_line.source_date
@@ -566,8 +566,8 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
-        if vals.get('date', date):
-            ctxcurr['date'] = vals.get('date', date)
+        if vals.get('document_date', date):
+            ctxcurr['date'] = vals.get('document_date', date)
         if vals.get('source_date', source_date):
             ctxcurr['date'] = vals.get('source_date', source_date)
 
@@ -621,7 +621,7 @@ class account_move_line_compute_currency(osv.osv):
 
         if not 'date' in vals:
             if vals.get('move_id'):
-                date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
+                date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['document_date'])['document_date']
             else:
                 logger = netsvc.Logger()
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
@@ -680,7 +680,7 @@ class account_move_line_compute_currency(osv.osv):
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
-            date = vals.get('date', line.date)
+            date = vals.get('document_date', line.document_date)
             source_date = vals.get('source_date', line.source_date)
             # Add currency on line
             if context.get('from_web_menu', False):
