@@ -29,8 +29,8 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
         res = {}
-        if 'date' in context:
-            date = context['date']
+        if 'currency_date' in context:
+            date = context['currency_date']
         else:
             date = time.strftime('%Y-%m-%d')
         date = date or time.strftime('%Y-%m-%d')
@@ -95,7 +95,7 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
-            date = context.get('date', time.strftime('%Y-%m-%d'))
+            date = context.get('currency_date,', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
                 currency_name = from_currency['name']
             else:

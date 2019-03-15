@@ -38,7 +38,7 @@ class msf_accrual_line(osv.osv):
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            date_context = {'date': accrual_line.date}
+            date_context = {'currency_date': accrual_line.date}
             res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
                                                                           uid,
                                                                           accrual_line.currency_id.id,

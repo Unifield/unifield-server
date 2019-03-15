@@ -240,11 +240,11 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(company_currency.encode('utf-8') or '')
                 else:
                     #output debit/credit
-                    context['date'] = al.source_date or al.date  # uftp-361 [FIX] reversal line: source_date or posting_date
+                    context['currency_date'] = al.source_date or al.date  # uftp-361 [FIX] reversal line: source_date or posting_date
                     if al.is_reversal == True:
-                        context.update({'date': al.document_date})
+                        context.update({'currency_date': al.document_date})
                     if al.last_corrected_id:
-                        context.update({'date': al.document_date})
+                        context.update({'currency_date': al.document_date})
                     amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
                     csv_line.append(amount or 0.0)
                     #output currency

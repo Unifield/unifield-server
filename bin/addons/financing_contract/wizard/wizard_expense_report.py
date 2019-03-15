@@ -68,7 +68,7 @@ class wizard_expense_report(osv.osv_memory):
         amount_currency_sum = 0.0
         currency_table = None
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.document_date,
+            date_context = {'currency_date': analytic_line.document_date,
                             'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
             amount = self.pool.get('res.currency').compute(cr,
                                                            uid,

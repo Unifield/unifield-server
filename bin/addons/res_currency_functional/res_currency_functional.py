@@ -45,8 +45,8 @@ class res_currency_functional(osv.osv):
         if context is None:
             context = {}
         res = {}
-        if 'date' in context:
-            date = context['date']
+        if 'currency_date' in context:
+            date = context['currency_date']
         else:
             date = time.strftime('%Y-%m-%d')
         date = date or time.strftime('%Y-%m-%d')

@@ -35,7 +35,7 @@ class res_currency(osv.osv):
             context = {}
         if 'revaluation' in context:
             if from_currency['rate'] == 0.0:
-                date = context.get('date', time.strftime('%Y-%m-%d'))
+                date = context.get('currency_date', time.strftime('%Y-%m-%d'))
                 raise osv.except_osv(_('Error'),
                                      _('No rate found \n'
                                        'for the currency: %s \n'

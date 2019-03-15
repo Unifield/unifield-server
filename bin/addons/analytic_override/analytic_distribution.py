@@ -203,7 +203,7 @@ class analytic_distribution1(osv.osv):
             # create lines
             for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
-                    context.update({'date': source_date or date}) # for amount computing
+                    context.update({'currency_date': source_date or date}) # for amount computing
                     anal_amount = (distrib_line.percentage * amount) / 100
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,

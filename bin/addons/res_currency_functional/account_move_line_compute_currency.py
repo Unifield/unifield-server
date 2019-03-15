@@ -567,9 +567,9 @@ class account_move_line_compute_currency(osv.osv):
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
         if vals.get('date', date):
-            ctxcurr['date'] = vals.get('date', date)
+            ctxcurr['currency_date'] = vals.get('date', date)
         if vals.get('source_date', source_date):
-            ctxcurr['date'] = vals.get('source_date', source_date)
+            ctxcurr['currency_date'] = vals.get('source_date', source_date)
 
         if 'currency_table_id' in context:
             ctxcurr['currency_table_id'] = context['currency_table_id']
