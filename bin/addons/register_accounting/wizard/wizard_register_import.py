@@ -181,7 +181,7 @@ class wizard_register_import(osv.osv_memory):
                         'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': date,
-                        'source_date': date,
+                        'source_date': l.get('document_date', False),
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cost_center_id, })

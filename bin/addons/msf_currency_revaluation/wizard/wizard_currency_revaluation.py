@@ -983,7 +983,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'name': line_obj.join_without_redundancy(line.name, 'REV'),
                 'reversal_line_id': line.id,
                 'account_id': line.account_id.id,
-                'source_date': line.date,
+                'source_date': line.document_date,
                 'reversal': True,
                 'reference': line.move_id and line.move_id.name or '',
                 'ref': line.move_id and line.move_id.name or '',

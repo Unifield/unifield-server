@@ -312,7 +312,7 @@ class account_analytic_line(osv.osv):
     def reverse(self, cr, uid, ids, posting_date=None, context=None):
         """
         Reverse an analytic line:
-         - keep date as source_date
+         - keep document date as source_date
          - mark this line as reversal
         """
         if context is None:
@@ -338,7 +338,7 @@ class account_analytic_line(osv.osv):
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
                 'date': posting_date,
-                'source_date': al.source_date or al.date,
+                'source_date': al.source_date or al.document_date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,

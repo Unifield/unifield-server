@@ -184,7 +184,7 @@ class analytic_distribution1(osv.osv):
         res = []
         vals = {
             'name': name,
-            'date': source_date or date,
+            'date': source_date or document_date,
             'document_date': document_date,
             'ref': ref or False,
             'journal_id': journal_id,
@@ -203,7 +203,7 @@ class analytic_distribution1(osv.osv):
             # create lines
             for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
-                    context.update({'date': source_date or date}) # for amount computing
+                    context.update({'date': source_date or document_date}) # for amount computing
                     anal_amount = (distrib_line.percentage * amount) / 100
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,
@@ -274,7 +274,7 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
-            ctx = {'date': source_date or date}
+            ctx = {'date': source_date or document_date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             # US-945: deduce real period id from date
@@ -293,7 +293,7 @@ class distribution_line(osv.osv):
                 'date': date,
                 # UFTP-361: source_date or source date from line or from line posting date if any
                 # for rev line must be the source date of the move line: posting date of reversed line
-                'source_date': source_date or move_line.source_date or move_line.date,
+                'source_date': source_date or move_line.source_date or move_line.document_date,
                 'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,

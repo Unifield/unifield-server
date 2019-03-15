@@ -237,7 +237,7 @@ class account_move_line(osv.osv):
                             'currency_id': analytic_currency_id,
                             'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                             'document_date': obj_line.get('document_date', False),
-                            'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                            'source_date': obj_line.get('source_date', False) or obj_line.get('document_date', False),  # UFTP-361 source_date from date if not any (posting date)
                             'real_period_id': obj_line['period_id'] and obj_line['period_id'][0] or False,  # US-945/2
                         }
                         # Update values if we come from a funding pool

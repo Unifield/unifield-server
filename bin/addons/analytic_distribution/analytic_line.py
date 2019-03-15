@@ -320,7 +320,7 @@ class analytic_line(osv.osv):
                     vals = {
                         fieldname: account_id,
                         'date': aline.date,
-                        'source_date': aline.source_date or aline.date,
+                        'source_date': aline.source_date or aline.document_date,
                     }
                     self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
@@ -370,7 +370,7 @@ class analytic_line(osv.osv):
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': corr_j,
+                                                                                              'source_date': aline.source_date or aline.document_date, 'journal_id': corr_j,
                                                                                               'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated

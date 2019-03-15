@@ -1605,7 +1605,7 @@ class account_bank_statement_line(osv.osv):
                         'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': values.get('date', False),
-                        'source_date': values.get('date', False),
+                        'source_date': values.get('document_date', False),
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})

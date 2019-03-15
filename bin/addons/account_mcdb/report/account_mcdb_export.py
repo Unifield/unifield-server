@@ -240,7 +240,7 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(company_currency.encode('utf-8') or '')
                 else:
                     #output debit/credit
-                    context['date'] = al.source_date or al.date  # uftp-361 [FIX] reversal line: source_date or posting_date
+                    context['date'] = al.source_date or al.document_date  # reversal line: source_date or document_date
                     if al.is_reversal == True:
                         context.update({'date': al.document_date})
                     if al.last_corrected_id:

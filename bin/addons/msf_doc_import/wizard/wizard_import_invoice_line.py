@@ -245,7 +245,7 @@ class wizard_import_invoice_line(osv.osv_memory):
                                 'currency_id': invoice.currency_id.id,
                                 'percentage': 100.0,
                                 'date': invoice.date_invoice,
-                                'source_date': invoice.date_invoice,
+                                'source_date': invoice.document_date,
                                 'destination_id': r_destination,
                             }
                             common_vals.update({'analytic_id': r_cc})

@@ -593,7 +593,7 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['credit_currency'] = 0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        elif (vals.get('date') or vals.get('source_date')) and (credit_currency or debit_currency):
+        elif (vals.get('document_date') or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = debit_currency - credit_currency

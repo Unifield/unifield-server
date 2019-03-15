@@ -150,7 +150,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         wizard = self.browse(cr, uid, wizard_id)
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
-        orig_date = ml.source_date or ml.date
+        orig_date = ml.source_date or ml.document_date
         orig_document_date = ml.document_date
 
         jtype = 'correction'

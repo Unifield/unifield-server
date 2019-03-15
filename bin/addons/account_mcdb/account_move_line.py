@@ -86,7 +86,7 @@ class account_move_line(osv.osv):
             res[ml.id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
+            context.update({'date': ml.source_date or ml.document_date or strftime('%Y-%m-%d')})
             # Now call the common method to calculate the output values
             if currency_id == company_currency_id:
                 res[ml.id].update({'output_amount': ml.debit - ml.credit, 'output_amount_debit': ml.debit, 'output_amount_credit': ml.credit})

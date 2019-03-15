@@ -110,7 +110,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'currency_id': c_id,
                             'percentage': 100.0,
                             'date': l.date,
-                            'source_date': l.date,
+                            'source_date': l.document_date,
                             'destination_id': l.destination_id.id,
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})

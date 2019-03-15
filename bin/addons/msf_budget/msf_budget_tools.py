@@ -299,7 +299,7 @@ class msf_budget_tools(osv.osv):
         # parse each line and add it to the right array
         analytic_line_count = 0
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.source_date or analytic_line.date,
+            date_context = {'date': analytic_line.source_date or analytic_line.document_date,
                             'currency_table_id': currency_table}
             actual_amount = self.pool.get('res.currency').compute(cr,
                                                                   uid,

@@ -58,7 +58,7 @@ class account_analytic_line(osv.osv):
             res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
+            context.update({'date': ml.source_date or ml.document_date or strftime('%Y-%m-%d')})
             mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
             res[ml.id]['output_amount'] = mnt or 0.0
             if mnt < 0.0:

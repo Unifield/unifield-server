@@ -258,7 +258,7 @@ class hr_payroll_validation(osv.osv_memory):
                             'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                             'percentage': 100.0,
                             'date': line.get('date', False) or current_date,
-                            'source_date': line.get('date', False) or current_date,
+                            'source_date': line.get('document_date', False) or current_date,
                             'destination_id': dest_id,
                         }
                         common_vals.update({'analytic_id': cc_id, })
