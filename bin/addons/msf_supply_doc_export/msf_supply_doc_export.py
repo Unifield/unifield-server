@@ -1088,11 +1088,12 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         self._nb_orders = len(wizard.pol_ids)
 
         self.cr.execute('''
-            SELECT pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
+            SELECT DISTINCT ON (p.id, pl.line_number, m.id, al.id) 
+                pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
                 pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name, 
                 p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id, 
                 c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, al.id, al.price_unit, 
-                a.number, a.name, c3.id
+                a.number, a.name, c3.id, rp.id
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
@@ -1110,7 +1111,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 LEFT JOIN account_invoice_line al ON al.invoice_id = a.id AND al.order_line_id = pl.id
                 LEFT JOIN res_currency c3 ON c3.id = a.currency_id
             WHERE pl.id IN %s 
-            ORDER BY p.id DESC, pl.line_number ASC
+            ORDER BY p.id DESC, pl.line_number ASC, m.id ASC, al.id ASC
         ''', (self.localcontext.get('lang', 'en_MF'), tuple(wizard.pol_ids)))
 
         for line in self.cr.fetchall():
@@ -1118,7 +1119,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             cat_unit_price = '-'
             func_cat_unit_price = '-'
             if line[1]:
-                supl_info_domain = [('product_id', '=', line[1]), ('active', '=', True), ('catalogue_id', '!=', False)]
+                supl_info_domain = [('product_id', '=', line[1]), ('active', '=', True), ('catalogue_id', '!=', False),
+                                    ('catalogue_id.partner_id', '=', line[30]), ('catalogue_id.currency_id', '=', line[17])]
                 supl_info_ids = supl_info_obj.search(self.cr, self.uid, supl_info_domain, limit=1,
                                                      order='sequence asc', context=self.localcontext)
                 if supl_info_ids:
@@ -1127,10 +1129,12 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                     cat_line_domain = [('product_id', '=', line[1]), ('catalogue_id', '=', catalogue.id)]
                     cat_line_ids = catl_obj.search(self.cr, self.uid, cat_line_domain, limit=1, context=self.localcontext)
                     if cat_line_ids:
-                        cat_unit_price = catl_obj.browse(self.cr, self.uid, cat_line_ids[0], fields_to_fetch=['unit_price'],
-                                                         context=self.localcontext).unit_price
+                        cat_unit_price_raw = catl_obj.browse(self.cr, self.uid, cat_line_ids[0], fields_to_fetch=['unit_price'],
+                                                             context=self.localcontext).unit_price
+                        cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id, line[17],
+                                                                cat_unit_price_raw, round=False, context=self.localcontext), 2)
                         func_cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id,
-                                                                     wizard.company_currency_id.id, cat_unit_price,
+                                                                     wizard.company_currency_id.id, cat_unit_price_raw,
                                                                      round=False, context=self.localcontext), 2)
 
             # Different unit prices
