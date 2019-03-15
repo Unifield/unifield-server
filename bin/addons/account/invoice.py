@@ -776,7 +776,7 @@ class account_invoice(osv.osv):
                     'date': inv['date_invoice'],
                     'account_id': il['account_analytic_id'],
                     'unit_amount': il['quantity'],
-                    'amount': cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, il['price'], context={'date': inv.date_invoice}) * sign,
+                    'amount': cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, il['price'], context={'date': inv.document_date}) * sign,
                     'product_id': il['product_id'],
                     'product_uom_id': il['uos_id'],
                     'general_account_id': il['account_id'],
