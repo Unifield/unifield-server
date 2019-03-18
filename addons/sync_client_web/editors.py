@@ -48,9 +48,9 @@ function UpdateDiv()
         }
     });
 }
-
+%if rpc.session.uid:
 jQuery(document).ready(function() {
     UpdateDiv();
 });
-
+%endif
 </script>''' + output[form_insertion_point:]

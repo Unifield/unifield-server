@@ -4,9 +4,9 @@
 
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.waitbox.js"></script>
     <script type="text/javascript">
-        $(document).ready(function(){
-            interval = setInterval(function()
-            {
+
+
+            var progess_fct = function(){
                 $.ajax({
                     type: 'get',
                     dataType: "json",
@@ -15,7 +15,6 @@
 
                         if (data){
                             if (data.error){
-                                clearInterval(interval);
                                 var $error_tbl = jQuery('<table class="errorbox">');
                                 $error_tbl.append('<tr><td style="padding: 4px 2px;" width="10%"><img src="/openerp/static/images/warning.png"></td><td class="error_message_content">' + data.error + '</td></tr>');
                                 $error_tbl.append('<tr><td style="padding: 0 8px 5px 0; vertical-align:top;" align="right" colspan="2"><a class="button-a" id="error_btn" onclick="$error_tbl.dialog(\'close\');">OK</a></td></tr>');
@@ -36,18 +35,24 @@
                             $("div.progressbar").css({"width":(data.progress*100).toPrecision(3)+'%'});
                             $("div.my_state").text(data.state);
                             if (data.state === 'done') {
-                                clearInterval(interval);
                                 $("#login-button").css({'display': 'inline'})
                             };
                             if (data.monitor_status) {
                                 $("div.my_monitor_status").text(data.monitor_status);
                             };
                         }
+                        if (!data || ( !data.error && data.state != 'done')) {
+                            setTimeout(progess_fct, 3000);
+                        }
                     },
                     error: function (xhr, status, error) {
+                        setTimeout(progess_fct, 3000)
                     }
                 });
-            }, 3000)
+            }
+
+        $(document).ready(function(){
+            setTimeout(progess_fct, 15000)
         });
     </script>
 
