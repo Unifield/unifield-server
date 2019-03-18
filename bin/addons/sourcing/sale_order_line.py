@@ -250,6 +250,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'display_confirm_button': line.state == 'validated',
                 'sale_order_in_progress': line.order_id.sourcing_trace_ok,
                 'sale_order_state': self._get_sale_order_state(cr, uid, line.order_id, context=context),
+                'supplier_type': line.supplier and line.supplier.partner_type or False,
+                'supplier_split_po': line.supplier and line.supplier.split_po or False,
             }
             res[line.id] = values
 
@@ -524,6 +526,24 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             method=True,
             string='RTS',
             type='date',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'supplier_type': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier Type',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'supplier_split_po': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier can Split POs',
+            type='char',
             readonly=True,
             store=False,
             multi='line_info',
@@ -2293,6 +2313,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             result['value'].update({
                 'related_sourcing_id': False,
                 'related_sourcing_ok': False,
+                'supplier_type': False,
+                'supplier_split_po': False,
             })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
@@ -2318,6 +2340,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         result['value'].update({
             'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
             'related_sourcing_ok': related_sourcing_ok,
+            'supplier_type': partner and partner.partner_type or False,
+            'supplier_split_po': partner and partner.split_po or False,
         })
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False

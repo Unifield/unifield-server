@@ -52,8 +52,11 @@
 					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
                         attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="related_sourcing_ok" invisible="1" />
+                    <field name="supplier_type" invisible="1" />
+                    <field name="supplier_split_po" invisible="1" />
                     <field name="related_sourcing_id"
-                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
+                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])],
+						'required': [('supplier', '!=', False), ('supplier_type', '=', 'esc'), ('supplier_split_po', '=', 'yes')]}" />
                     <field name="location_id" 
                         widget="selection"
                         on_change="onChangeLocation(location_id, product_id, rts, order_id)"
