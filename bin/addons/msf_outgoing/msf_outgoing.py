@@ -5410,7 +5410,7 @@ class pack_family_memory(osv.osv):
         for pack in pack_obj:
             res_id = pack['draft_packing_id'][0]
             return {
-                'name': 'Change description',
+                'name': _('Change description'),
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [res and res[1] or False],

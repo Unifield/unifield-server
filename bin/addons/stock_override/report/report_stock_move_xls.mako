@@ -110,7 +110,7 @@
     <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Destination
     <Column ss:AutoFitWidth="1" ss:Width="150" />
-    # Reason Code
+    # Reason Type
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Document Ref
     <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -118,11 +118,11 @@
 % for o in objects:
 
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">DB/instance name</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('DB/instance name')|x}</Data></Cell>
         <Cell ss:MergeAcross="2" ss:StyleID="poheader"><Data ss:Type="String">${o.company_id.name or ''|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Generated on</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('Generated on')|x}</Data></Cell>
         % if o.name and isDateTime(o.name):
             <Cell ss:MergeAcross="2" ss:StyleID="poheader_short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
         % else:
@@ -141,7 +141,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('OUT')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Source')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Destination')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reason Code')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reason Type')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Document Ref.')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Stock Move Date')|x}</Data></Cell>
     </Row>

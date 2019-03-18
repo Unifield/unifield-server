@@ -104,7 +104,7 @@
      <NumberFormat ss:Format="Short Date"/>
     </Style>
 </Styles>
-<ss:Worksheet ss:Name="Expiry report">
+<ss:Worksheet ss:Name="${_('Expiry report')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
 <%
 cols_count = 10
@@ -122,23 +122,23 @@ now = time.strftime('%Y-%m-%d')
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 ## header
 <Row>
-<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Report date :</Data></Cell>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Report date')|x} :</Data></Cell>
 <Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${toDate()|x}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Location :</Data></Cell>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Location')|x} :</Data></Cell>
 <Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${(objects[0].location_id and objects[0].location_id.name or '')|x}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Period of&#10;calculation :</Data></Cell>
-<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${objects[0].week_nb} week${objects[0].week_nb > 1 and 's' or ''}</Data></Cell>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Period of calculation')|x} :</Data></Cell>
+<Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${objects[0].week_nb} ${_('week')}${objects[0].week_nb > 1 and 's' or ''}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Limit date :</Data></Cell>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Limit date')|x} :</Data></Cell>
 <Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${toDate(objects[0].date_to)|x}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">Currency :</Data></Cell>
+<Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Currency')|x} :</Data></Cell>
 <Cell ss:StyleID="ssCell" ss:MergeAcross="8"><Data ss:Type="String">${getCurrency()|x}</Data></Cell>
 </Row>
 <Row>
@@ -148,19 +148,19 @@ now = time.strftime('%Y-%m-%d')
 </Row>
 ## products/batches already expired
 <Row>
-<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">Products/batches already expired</Data></Cell>
+<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">${_('Products/batches already expired')|x}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">DESCRIPTION</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Expiry Date</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('CODE')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('DESCRIPTION')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Stock')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Exp. Qty')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Unit Cost')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Exp. Value')|x}</Data></Cell>
 </Row>
 % for l in sorted(objects[0].line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date)):
 % if l.expiry_date < now:
@@ -191,7 +191,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${_('TOTAL')|x}</Data></Cell>
 <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'expired'))}</Data></Cell>
 </Row>
 ## products/batches to expire
@@ -201,19 +201,19 @@ now = time.strftime('%Y-%m-%d')
 % endfor
 </Row>
 <Row>
-<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">Products/batches to expire</Data></Cell>
+<Cell ss:StyleID="headerLeft" ss:MergeAcross="9"><Data ss:Type="String">${_('Products/batches to expire')|x}</Data></Cell>
 </Row>
 <Row>
-<Cell ss:StyleID="header"><Data ss:Type="String">CODE</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">DESCRIPTION</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Expiry Date</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
-<Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('CODE')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('DESCRIPTION')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Stock')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Exp. Qty')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Unit Cost')|x}</Data></Cell>
+<Cell ss:StyleID="headerRight"><Data ss:Type="String">${_('Exp. Value')|x}</Data></Cell>
 </Row>
 % for l in sorted(objects[0].line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date)):
 % if l.expiry_date >= now:
@@ -240,7 +240,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${_('TOTAL')|x}</Data></Cell>
 <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'expiry'))}</Data></Cell>
 </Row>
 ## ALL TOTAL
@@ -258,7 +258,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
 <Cell ss:StyleID="ssCell"></Cell>
-<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">ALL TOTAL</Data></Cell>
+<Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${_('ALL TOTAL')|x}</Data></Cell>
 <Cell ss:StyleID="ssCellRightBold"><Data ss:Type="String">${formatLang(getTotal(objects[0], 'all'))}</Data></Cell>
 </Row>
 </Table>

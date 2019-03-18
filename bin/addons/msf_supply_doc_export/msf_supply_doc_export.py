@@ -576,24 +576,24 @@ class po_follow_up_mixin(object):
     def getHeaderLine(self,obj):
         ''' format the header line for each PO object '''
         po_header = []
-        po_header.append('Order ref: ' + obj.name)
-        po_header.append('Status: ' + self._get_states().get(obj.state, ''))
-        po_header.append('Created: ' + obj.date_order)
-        po_header.append('Confirmed delivery date: ' + obj.delivery_confirmed_date)
-        po_header.append('Nb items: ' + str(len(obj.order_line)))
-        po_header.append('Estimated amount: ' + str(obj.amount_total))
+        po_header.append(_('Order ref: %s') % obj.name)
+        po_header.append(_('Status: %s') % self._get_states().get(obj.state, ''))
+        po_header.append(_('Created: %s') % obj.date_order)
+        po_header.append(_('Confirmed delivery date: %s') % obj.delivery_confirmed_date)
+        po_header.append(_('Nb items: %s') % len(obj.order_line))
+        po_header.append(_('Estimated amount: ') % obj.amount_total)
         return po_header
 
     def getHeaderLine2(self,obj):
         ''' format the header line for each PO object '''
         po_header = {}
-        po_header['ref'] = 'Order ref: ' + obj.name
-        po_header['status'] = 'Status: ' + self._get_states().get(obj.state, '')
-        po_header['created'] = 'Created: ' + obj.date_order
-        po_header['deldate'] = 'Confirmed delivery date: ' + obj.delivery_confirmed_date
-        po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
-        po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
-        line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount']
+        po_header['ref'] = _('Order ref: %s') % obj.name
+        po_header['status'] = _('Status: %s') % self._get_states().get(obj.state, '')
+        po_header['created'] = _('Created: %s') % obj.date_order
+        po_header['deldate'] = _('Confirmed delivery date: %s') % obj.delivery_confirmed_date
+        po_header['items'] = _('Nb items: %s') %  str(len(obj.order_line))
+        po_header['amount'] = _('Estimated amount: %s') % str(obj.amount_total)
+        line = '%s%s%s%s%s%s' % (po_header['ref'], po_header['status'], po_header['created'], po_header['deldate'], po_header['items'], po_header['amount'])
         return line
 
     def getRunParms(self):
@@ -970,31 +970,31 @@ class po_follow_up_mixin(object):
 
     def getPOLineHeaders(self):
         return [
-            'Order Reference',
-            'Supplier',
-            'Order Type',
-            'Line',
-            'Product Code',
-            'Product Description',
-            'Qty ordered',
-            'UoM',
-            'Qty received',
-            'IN Reference',
-            'Qty backorder',
-            'PO Unit Price (Currency)',
-            'IN unit price (Currency)',
-            'Currency',
-            'Total value received (Currency)',
-            'Total value received (Functional Currency)',
-            'Created',
-            'Delivery Requested Date',
-            'Delivery Confirmed Date',
-            'PO Line Status',
-            'PO Document Status',
-            'Customer',
-            'Customer Reference',
-            'Source Document',
-            'Supplier Reference',
+            _('Order Reference'),
+            _('Supplier'),
+            _('Order Type'),
+            _('Line'),
+            _('Product Code'),
+            _('Product Description'),
+            _('Qty ordered'),
+            _('UoM'),
+            _('Qty received'),
+            _('IN Reference'),
+            _('Qty backorder'),
+            _('PO Unit Price (Currency)'),
+            _('IN unit price (Currency)'),
+            _('Currency'),
+            _('Total value received (Currency)'),
+            _('Total value received (Functional Currency)'),
+            _('Created'),
+            _('Delivery Requested Date'),
+            _('Delivery Confirmed Date'),
+            _('PO Line Status'),
+            _('PO Document Status'),
+            _('Customer'),
+            _('Customer Reference'),
+            _('Source Document'),
+            _('Supplier Reference'),
         ]
 
 

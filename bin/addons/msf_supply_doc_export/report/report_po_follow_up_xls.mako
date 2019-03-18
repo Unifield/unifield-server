@@ -146,15 +146,15 @@
     <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Report run date</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Report run date')|x}</Data></Cell>
    <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['run_date'] or '' |x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date from</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('PO date from')|x}</Data></Cell>
    <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_from'] or ''|x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date to</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('PO date to')|x}</Data></Cell>
    <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['date_thru'] or '' |x}</Data></Cell>
 </Row>
 

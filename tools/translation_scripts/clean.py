@@ -11,9 +11,6 @@ new_term = True
 
 def main():
 
-    if len(sys.argv) != 2 or not sys.argv[1]:
-        print "Usage: clean.py file.po"
-        sys.exit(-1)
 
     # Load the PO file
     pofile = sys.argv[1]
