@@ -498,10 +498,10 @@ class account_move_line_compute_currency(osv.osv):
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
             if move_line.date:
-                ctx['date'] = move_line.date
+                ctx['currency_date'] = move_line.date
             # source_date is more important than date
             if move_line.source_date:
-                ctx['date'] = move_line.source_date
+                ctx['currency_date'] = move_line.source_date
 
             if move_line.period_id.state != 'done' and not move_line.period_id.is_system:
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:

@@ -1234,7 +1234,7 @@ class account_move_line(osv.osv):
                 vals['currency_id'] = account.currency_id.id
                 ctx = {}
                 if 'date' in vals:
-                    ctx['date'] = vals['date']
+                    ctx['currency_date'] = vals['date']
                 vals['amount_currency'] = cur_obj.compute(cr, uid, account.company_id.currency_id.id,
                                                           account.currency_id.id, vals.get('debit', 0.0)-vals.get('credit', 0.0), context=ctx)
         if not ok:

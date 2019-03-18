@@ -36,7 +36,7 @@ class account_analytic_line_compute_currency(osv.osv):
         for analytic_line in self.browse(cr, uid, ids):
             amount = None
             if analytic_line.amount_currency and analytic_line.currency_id:
-                context.update({'curency_date': analytic_line.source_date or analytic_line.date})
+                context.update({'currency_date': analytic_line.source_date or analytic_line.date})
                 company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 amount = self.pool.get('res.currency').compute(cr, uid, analytic_line.currency_id.id, company_currency, 
                     analytic_line.amount_currency,round=False, context=context)

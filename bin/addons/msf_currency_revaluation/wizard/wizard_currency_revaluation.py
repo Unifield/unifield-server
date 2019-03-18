@@ -394,7 +394,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Compute unrealized gain loss
         ctx_rate = context.copy()
-        ctx_rate['date'] = revaluation_date
+        ctx_rate['currency_date'] = revaluation_date
         user_obj = self.pool.get('res.users')
         cp_currency_id = user_obj.browse(cr, uid, uid,
                                          context=context).company_id.currency_id.id

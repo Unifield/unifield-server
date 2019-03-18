@@ -274,7 +274,7 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
-            ctx = {'date': source_date or date}
+            ctx = {'currency_date': source_date or date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             # US-945: deduce real period id from date

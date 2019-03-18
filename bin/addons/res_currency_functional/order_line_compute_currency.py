@@ -75,7 +75,7 @@ class sale_order_compute_currency(osv.osv):
             # for the currency rate
             ctx = {}
             if order.date_confirm:
-                ctx['date'] = order.date_confirm
+                ctx['currency_date'] = order.date_confirm
             try:
                 res[order.id] = {
                     'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,

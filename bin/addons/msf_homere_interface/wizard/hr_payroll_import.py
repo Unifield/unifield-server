@@ -375,7 +375,7 @@ class hr_payroll_import(osv.osv_memory):
         if eur_ids[0] != currency_id:
             # booking <> EUR
             new_ctx = context is not None and context.copy() or {}
-            new_ctx['date'] = posting_date
+            new_ctx['currency_date'] = posting_date
             eur_amount = self.pool.get('res.currency').compute(cr, uid,
                                                                currency_id, eur_ids[0], gap_amount, round=True,
                                                                context=new_ctx)

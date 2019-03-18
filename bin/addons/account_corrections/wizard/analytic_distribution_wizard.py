@@ -438,7 +438,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_override:
             # update the ana line
             to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            ctx = {'date': orig_date}
+            ctx = {'currency_date': orig_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
@@ -566,7 +566,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line in to_override:
                 # update the ana line
                 to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name, line.distribution_line_id.id)), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-                ctx = {'date': orig_date}
+                ctx = {'currency_date': orig_date}
                 amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
                 amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
                 self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {

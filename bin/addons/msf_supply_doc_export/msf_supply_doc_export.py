@@ -664,15 +664,15 @@ class po_follow_up_mixin(object):
         context = {}
         exchange_rate = 0.0
         if pol.closed_date:
-            context.update({'date': pol.closed_date})
+            context.update({'currency_date': pol.closed_date})
         elif pol.confirmation_date:
-            context.update({'date': pol.confirmation_date})
+            context.update({'currency_date': pol.confirmation_date})
         elif pol.validation_date:
-            context.update({'date': pol.validation_date})
+            context.update({'currency_date': pol.validation_date})
         elif pol.create_date: # could be null, because not mandatory in DB
-            context.update({'date': pol.create_date})
+            context.update({'currency_date': pol.create_date})
         else:
-            context.update({'date': datetime.now().strftime('%Y-%m-%d')})
+            context.update({'currency_date': datetime.now().strftime('%Y-%m-%d')})
 
         currency_from = pol.order_id.pricelist_id.currency_id
         currency_to = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, context=context).company_id.currency_id
