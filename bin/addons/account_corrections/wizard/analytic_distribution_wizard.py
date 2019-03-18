@@ -488,7 +488,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # US-676 greater amount update to fix (deduce) rounding gap
                 # we read the aji created for distri then fix it
                 aji_rec = aal_obj.read(cr, uid, [greater_amount['aji_id']],
-                                       ['amount_currency', 'currency_id', 'source_date', 'date'], context=context)[0]
+                                       ['amount_currency', 'currency_id', 'source_date', 'document_date'], context=context)[0]
                 if aji_rec:
                     fix_aji_old_amount = aji_rec['amount_currency']
                     fix_aji_currency_id = aji_rec['currency_id'] \
@@ -509,7 +509,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         if aji_rec['source_date']:
                             new_context['date'] = aji_rec['source_date']
                         else:
-                            new_context['date'] = aji_rec['date']
+                            new_context['date'] = aji_rec['document_date']
                         aji_fix_vals['amount'] = \
                             self.pool.get('res.currency').compute(cr, uid,
                                                                   fix_aji_currency_id, company_currency_id,
