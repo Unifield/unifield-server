@@ -62,7 +62,7 @@ class wizard_transfer_with_change(osv.osv_memory):
 #                     transfer_type = 'from'
                 vals.update({'absl_amount': abs(absl.amount)})
                 if absl.transfer_journal_id and absl.currency_id:
-                    context.update({'date': absl.date})
+                    context.update({'currency_date': absl.date})
                     converted_amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id,
                         abs(absl.amount), round=False, context=context)
                     if converted_amount:

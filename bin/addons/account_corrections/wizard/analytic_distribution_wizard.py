@@ -507,9 +507,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if fix_aji_currency_id:
                         new_context = context.copy()
                         if aji_rec['source_date']:
-                            new_context['date'] = aji_rec['source_date']
+                            new_context['currency_date'] = aji_rec['source_date']
                         else:
-                            new_context['date'] = aji_rec['date']
+                            new_context['currency_date'] = aji_rec['date']
                         aji_fix_vals['amount'] = \
                             self.pool.get('res.currency').compute(cr, uid,
                                                                   fix_aji_currency_id, company_currency_id,

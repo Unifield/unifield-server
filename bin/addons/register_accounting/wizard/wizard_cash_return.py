@@ -486,7 +486,7 @@ class wizard_cash_return(osv.osv_memory):
         # Case where currency is different from company currency
         if currency_id != register.company_id.currency_id.id:
             currency_obj = self.pool.get('res.currency')
-            context['date'] = curr_date
+            context['currency_date'] = curr_date
             new_amount = 0.0
             if debit > 0:
                 amount_currency = debit
