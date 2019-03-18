@@ -30,8 +30,8 @@ class account_bank_statement_line_compute_currency(osv.osv):
         res = {}
         for statement_line in self.browse(cr, uid, ids):
             ctx = {}
-            if statement_line.date:
-                ctx['date'] = statement_line.date
+            if statement_line.document_date:
+                ctx['date'] = statement_line.document_date
             try:
                 res[statement_line.id] = {
                     'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,

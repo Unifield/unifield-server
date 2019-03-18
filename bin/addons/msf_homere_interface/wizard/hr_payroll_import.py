@@ -359,7 +359,7 @@ class hr_payroll_import(osv.osv_memory):
         return pwd.decode('base64')
 
     def _uf_side_rounding_line_check_gap(self, cr, uid,
-                                         currency_id, currency_code, posting_date, gap_amount, context=None):
+                                         currency_id, currency_code, document_date, gap_amount, context=None):
         """
         US-201 check balance gap no more than 1 EUR
         """
@@ -375,7 +375,7 @@ class hr_payroll_import(osv.osv_memory):
         if eur_ids[0] != currency_id:
             # booking <> EUR
             new_ctx = context is not None and context.copy() or {}
-            new_ctx['date'] = posting_date
+            new_ctx['date'] = document_date
             eur_amount = self.pool.get('res.currency').compute(cr, uid,
                                                                currency_id, eur_ids[0], gap_amount, round=True,
                                                                context=new_ctx)
@@ -577,7 +577,7 @@ class hr_payroll_import(osv.osv_memory):
                         self._uf_side_rounding_line_check_gap(cr, uid,
                                                               header_vals['currency_id'],
                                                               header_vals['currency_code'],
-                                                              header_vals['date'],
+                                                              header_vals['document_date'],
                                                               res_amount_rounded,
                                                               context=context)
 
