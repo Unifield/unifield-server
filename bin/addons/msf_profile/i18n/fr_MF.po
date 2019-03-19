@@ -598,7 +598,7 @@ msgstr "Tiers requis - Paie"
 #: report:addons/consumption_calculation/report/expiry_report.mako:161
 #: report:addons/consumption_calculation/report/expiry_report.mako:214
 msgid "Exp. Qty"
-msgstr "Quantités Expirées"
+msgstr "Qtés. Exp."
 
 #. module: stock
 #: model:ir.actions.server,name:stock.action_partial_move_server
@@ -38129,7 +38129,7 @@ msgstr "Oct"
 #: report:addons/consumption_calculation/report/expiry_report.mako:162
 #: report:addons/consumption_calculation/report/expiry_report.mako:215
 msgid "Unit Cost"
-msgstr "Coût Unitaire"
+msgstr "Prix Unitaire"
 
 #. module: account_period_closing_level
 #: view:account.period.create:0
@@ -104536,76 +104536,11 @@ msgstr " La référence de Colisage dans le fichier ne correspond pas à celle d
 msgid "Please select a file with the same model as the PPL Excel Export"
 msgstr "Veuillez sélectionner un fichier avec le même modèle que l'Export Excel du pré-colisage"
 
-#. modules: msf_doc_import, msf_outgoing
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:191
-#: view:shipment:0
-#, python-format
-msgid "Shipper"
-msgstr "Expéditeur"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:282
-#, python-format
-msgid "Line %s:"
-msgstr "Ligne %s:"
-
-#. module: msf_outgoing
-#: model:ir.actions.report.xml,name:msf_outgoing.pre_packing_excel_export
-msgid "Pre-Packing Excel Export"
-msgstr "Export Excel du pré-colisage"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:266
-#: report:empty.picking.ticket:0
-msgid "Weight per pack (kg)"
-msgstr "Poids par colis (kg)"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:268
-msgid "Pack Type"
-msgstr "Type de Colis"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:257
-msgid "Total Qty to pack"
-msgstr "Qté Totale à emballer"
-
 #. module: msf_outgoing, msf_supply_doc_export
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:253
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
 msgid "Item"
 msgstr "Article"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:263
-msgid "Qty Packed"
-msgstr "Qté Emballée"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:264
-msgid "From pack"
-msgstr "Du colis"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:258
-msgid "Batch #"
-msgstr "Numéro de Lot"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:265
-msgid "To pack"
-msgstr "Vers colis"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:267
-msgid "Size (w x l x h) (cm)"
-msgstr "Taille (lar x lon x h) (cm)"
-
-#. module: msf_outgoing
-#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:259
-msgid "Expiry Date #"
-msgstr "Date d'Expiration"
 
 #. module: msf_outgoing
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:243
