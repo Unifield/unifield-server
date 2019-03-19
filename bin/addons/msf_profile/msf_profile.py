@@ -88,7 +88,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Change price to 0.01 on %d products: %s' % (cr.rowcount,', '.join([x[2] for x in prod])))
                 for prod_i in prod:
                     cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
-                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
+                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'Patch US-5785')
                             """,  (prod_i[0], ))
                 if instance.level == 'section' and instance.code == 'CH':
                     cr.execute('''update ir_model_data set touched='[''default_code'']' where model='product.product' and res_id %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
