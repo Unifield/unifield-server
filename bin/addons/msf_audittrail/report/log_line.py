@@ -50,17 +50,12 @@ class log_line(report_sxw.rml_parse):
     def _get_lines(self, order):
         model = order._name
         lines = self.pool.get('audittrail.log.line').search(self.cr, self.uid, [('object_id', '=', model), ('res_id', '=', order.id)])
-        return self.pool.get('audittrail.log.line').browse(self.cr, self.uid, lines)
+        return self.pool.get('audittrail.log.line').browse(self.cr, self.uid, lines, context=self.localcontext)
 
     def _get_method(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field], context=self.localcontext)
         res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+        return res
 
 
 report_sxw.report_sxw('report.msf.log.line', 'audittrail.log.line', 'addons/msf_audittrail/report/log_line.rml', parser=log_line, header="internal landscape")
