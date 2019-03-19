@@ -35,6 +35,7 @@ import pooler
 from . import SALE_ORDER_STATE_SELECTION
 from . import SALE_ORDER_SPLIT_SELECTION
 from . import SALE_ORDER_LINE_STATE_SELECTION
+from . import SALE_ORDER_LINE_DISPLAY_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 
@@ -119,7 +120,6 @@ class sale_order(osv.osv):
             'picking_ids': [],
             'date_confirm': False,
         })
-
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -356,9 +356,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if new_state_txt and old_state_txt:
                 break
             if new_state == st[0]:
-                new_state_txt = st[1]
+                new_state_txt = _(st[1])
             if old_state == st[0]:
-                old_state_txt = st[1]
+                old_state_txt = _(st[1])
 
         vals = {
             'user_id': uid,
@@ -370,7 +370,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'fct_res_id': False,
             'sub_obj_name': '',
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'field_description': _('Order state'),
+            'field_id': fld_ids[0],
+            'field_description': 'Order state',
             'trans_field_description': _('Order state'),
             'new_value': new_state,
             'new_value_text': new_state_txt or new_state,
@@ -1899,22 +1900,22 @@ class sale_order_line(osv.osv):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
             if (sol.resourced_original_line or (sol.is_line_split and sol.original_line_id and sol.original_line_id.resourced_original_line)) and sol.state not in ('done', 'cancel', 'cancel_r'):
                 if sol.state.startswith('validated'):
-                    res[sol.id] = 'Resourced-v'
+                    res[sol.id] = 'resourced_v'
                 elif sol.state.startswith('sourced'):
                     linked_pol = get_linked_pol(sol.id)
                     if sol.state == 'sourced_v' or (sol.state == 'sourced_n' and linked_pol and linked_pol.state != 'draft'):
-                        res[sol.id] = 'Resourced-pv'
+                        res[sol.id] = 'resourced_pv'
                     #elif sol.state == 'sourced_sy':
                     #    res[sol.id] = 'Resourced-sy'
                     # debatable
                     else:
-                        res[sol.id] = 'Resourced-s'
+                        res[sol.id] = 'resourced_s'
                 elif sol.state.startswith('confirmed'):
-                    res[sol.id] = 'Resourced-c'
+                    res[sol.id] = 'resourced_c'
                 else: # draft + unexpected PO line state:
-                    res[sol.id] = 'Resourced-d'
+                    res[sol.id] = 'resourced_d'
             else: # state_to_display == state
-                res[sol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, sol, 'state', context=context)
+                res[sol.id] = sol.state
 
         return res
 
@@ -2003,7 +2004,7 @@ class sale_order_line(osv.osv):
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
             \n* The \'Done\' state is set when the sales order line has been picked. \
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
-        'state_to_display': fields.function(_get_state_to_display, method=True, type='text', string='State', readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, method=True, type='selection', selection=SALE_ORDER_LINE_DISPLAY_STATE_SELECTION, string='State', readonly=True,
                                             help='* The \'Draft\' state is set when the related sales order in draft state. \
             \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
             \n* The \'Exception\' state is set when the related sales order is set as exception. \

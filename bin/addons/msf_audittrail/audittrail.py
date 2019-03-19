@@ -870,15 +870,19 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
+            obj_to_log = line.fct_object_id or line.object_id
+
+            # translate value of fields.selection
+            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order') and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
             if line.method == 'create':
                 res[line.id]['old_value_fct'] = False
-            elif not line.old_value_text:
-                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.fct_object_id or line.object_id, context=context)
+            elif to_compute or not line.old_value_text:
+                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, obj_to_log, context=context)
             else:
                 res[line.id]['old_value_fct'] = line.old_value_text
 
-            if not line.new_value_text:
-                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
+            if to_compute or not line.new_value_text:
+                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, obj_to_log, context=context)
             else:
                 res[line.id]['new_value_fct'] = line.new_value_text
 
@@ -1135,16 +1139,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'selection':
             res = False
             if values:
-                translation_obj = self.pool.get('ir.translation')
                 fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
-                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
+                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
-                    name = '%s,%s' % (fct_object, field['name'])
-                    # Search translation
-                    res_tr_ids = translation_obj.search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
-                    if res_tr_ids:
-                        res = translation_obj.read(cr, uid, res_tr_ids, ['value'])[0]['value']
                 else:
                     res = values
             return res

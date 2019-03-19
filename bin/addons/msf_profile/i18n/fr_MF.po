@@ -2604,7 +2604,7 @@ msgstr "Importer des articles du Kit Théorique"
 #: help:stock.move.processor,ssl_check:0
 #: help:validate.move.processor,ssl_check:0
 msgid "Ticked if the product is a Short Shelf Life product"
-msgstr "Ticked if the product is a Short Shelf Life product"
+msgstr "Coché si le produit est à durée de conservation limitée"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:898
@@ -8766,6 +8766,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: field:outgoing.delivery.processor,draft:0
 #: selection:internal.request.import,state:0
 #: selection:wizard.import.ppl.to.create.ship,state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9054,6 +9056,8 @@ msgstr "! - Nécessite une licence d'exportation nationale"
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Cancelled-r"
 msgstr "Annulée-r"
 
@@ -10516,6 +10520,8 @@ msgstr "Clôture Annuelle"
 #: selection:international.transport.cost.report,order_state:0
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
 #, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
@@ -20739,6 +20745,7 @@ msgstr "Bad document"
 #: field:wizard.import.in.line.simulation.screen,error_msg:0
 #: field:wizard.import.po.simulation.screen.line,error_msg:0
 #: field:internal.request.import.line,error_msg:0
+#: field:internal.request.import.error.line,line_message:0
 msgid "Error message"
 msgstr "Message d'erreur"
 
@@ -24450,6 +24457,7 @@ msgstr "Numéro de Lot"
 #: selection:sale.report,state:0
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Validated-p"
 msgstr "Validé-p"
 
@@ -26291,8 +26299,9 @@ msgstr "Solde de clôture gelé?"
 msgid "Account Tax Code"
 msgstr "Code Comptable Taxe"
 
-#. module: product_attributes
+#. module: product_attributes, sale
 #: field:product.deactivation.error,error_lines:0
+#: field:internal.request.import,error_line_ids:0
 msgid "Error lines"
 msgstr "Error lines"
 
@@ -27947,16 +27956,20 @@ msgstr "  valorisation : pourcentage"
 msgid "Add Event"
 msgstr "Ajouter Événement"
 
-#. modules: product, base, product_attributes
+#. module: base
 #: selection:ir.actions.act_window,view_type:0
 #: selection:ir.actions.act_window.view,view_mode:0
 #: view:ir.ui.view:0
 #: selection:ir.ui.view,type:0
 #: selection:wizard.ir.model.menu.create.line,view_type:0
+msgid "Form"
+msgstr "Formulaire"
+
+#. modules: product, product_attributes
 #: view:product.product:0
 #: field:product.product,form_value:0
 msgid "Form"
-msgstr "Formulaire"
+msgstr "Forme"
 
 #. module: sales_followup
 #: model:ir.actions.act_window,name:sales_followup.action_sale_followup_multi_wizard
@@ -30185,12 +30198,14 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, purchase
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
 #: selection:sale.order.leave.close,order_state:0
 #: field:ir.followup.location.wizard,closed_ok:0
 #: selection:sale.order.line,sale_order_state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -32729,6 +32744,7 @@ msgstr "Montant final en devise fonctionnelle "
 #. modules: purchase, purchase_override
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
+#: selection:purchase.order.line,state_to_display:0
 msgid "Validated-n"
 msgstr "Validé-n"
 
@@ -38708,7 +38724,7 @@ msgstr "Ref. Produit"
 #. module: product_attributes
 #: field:product.product,is_ssl:0
 msgid "Is Short Shelf Life ?"
-msgstr "Is Short Shelf Life ?"
+msgstr "Est à durée de conservation limitée ?"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:389
@@ -39228,7 +39244,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override
+#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -39253,6 +39269,8 @@ msgstr "Is inactive for destination given in context"
 #: code:addons/product_attributes/product_attributes.py:908
 #: field:product.product,uf_create_date:0
 #: field:purchase.order.merged.line,create_date:0
+#: field:internal.request.import,in_creation_date:0
+#: field:purchase.order.line,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -44520,7 +44538,7 @@ msgstr "Mode de Réapprovisionnement"
 msgid "End date"
 msgstr "Date de fin"
 
-#. modules: stock_forecast, product_attributes, msf_doc_import, msf_supply_doc_export, purchase_override
+#. modules: stock_forecast, product_attributes, msf_doc_import, msf_supply_doc_export, purchase_override, purchase
 #: view:product.justification.code:0
 #: field:product.justification.code,code:0
 #: field:product.product,justification_code_id:0
@@ -44530,6 +44548,7 @@ msgstr "Date de fin"
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:79
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:78
 #: field:purchase.order.merged.line,justification_code_id:0
+#: field:purchase.order.line,justification_code_id:0
 #, python-format
 msgid "Justification Code"
 msgstr "Justification - Code"
@@ -45071,6 +45090,8 @@ msgstr "Sync order line DB ID"
 #: selection:stock.forecast.line,state:0
 #: selection:sync.client.child_entity,state:0
 #: selection:documents.done.wizard,display_state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -48717,6 +48738,8 @@ msgstr "Facture Client"
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Sourced-v"
 msgstr "Sourcé-v"
 
@@ -53996,6 +54019,7 @@ msgstr "Vous ne pouvez pas importer d'écritures de paie.Veuillez d'abord valide
 #: selection:sale.report,state:0
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Sourced-p"
 msgstr "Sourcé-p"
 
@@ -56931,6 +56955,7 @@ msgstr "Fonctionnalité"
 #: selection:sale.report,state:0
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Confirmed-p"
 msgstr "Confirmé-p"
 
@@ -60868,6 +60893,10 @@ msgstr "Avancement"
 #: code:addons/msf_tools/msf_tools.py:941
 #: code:addons/msf_tools/msf_tools.py:986
 #: code:addons/msf_tools/msf_tools.py:990
+#: code:addons/sale/sale_workflow.py:559
+#: code:addons/sale/sale_workflow.py:562
+#: code:addons/sale/sale_workflow.py:720
+#: code:addons/sale/sale_workflow.py:723
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -65406,7 +65435,7 @@ msgstr "Lignes de bon d'engagement"
 #: view:product.product:0
 #: field:product.product,fit_value:0
 msgid "Fit"
-msgstr "Fit"
+msgstr "Intégration"
 
 #. modules: msf_outgoing, msf_supply_doc_export
 #: report:picking.ticket:0
@@ -65481,6 +65510,7 @@ msgstr "Gestion des Suivis"
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:221
 #: code:addons/msf_tools/automated_import_job.py:499
 #: code:addons/sale/wizard/internal_request_import.py:42
+#: field:internal.request.import.error.line,line_number:0
 #, python-format
 msgid "Line number"
 msgstr "Numéro de ligne"
@@ -72856,6 +72886,8 @@ msgstr "America/Lima"
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Sourced-n"
 msgstr "Sourcé-n"
 
@@ -78080,6 +78112,8 @@ msgstr "Valeur totale"
 #: selection:purchase.order,rfq_state:0
 #: view:tender:0
 #: selection:tender,state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -79963,6 +79997,10 @@ msgstr "Ligne %s. Aucune destination précisée !"
 #: field:sale.followup.multi.wizard,sourced_ok:0
 #: view:sale.order.line:0
 #: selection:sale.order.line,sale_order_state:0
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order,state:0
+#: selection:purchase.order.line,order_state_purchase_order_line:0
+#: selection:purchase.order.line,po_state_stored:0
 #, python-format
 msgid "Sourced"
 msgstr "Sourcé"
@@ -83775,6 +83813,7 @@ msgstr "SFTP connection succeeded"
 #: field:reserved.products.wizard,product_id:0
 #: field:internal.request.import.line,imp_product_id:0
 #: field:internal.request.import.line,in_product_id:0
+#: field:internal.request.import.line,in_product:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -87347,6 +87386,7 @@ msgstr "Créer un Menu pour le Tableau de Bord"
 #: report:product.likely.expire.report_pdf:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:121
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:231
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 msgid "Total Value"
 msgstr "Valeur Totale"
 
@@ -87405,9 +87445,10 @@ msgstr "Symbole Devise, à utiliser lors de l'impression des montants"
 msgid "Display analytic periods?"
 msgstr "Display analytic periods?"
 
-#. module: sale, purchase_override
+#. module: sale, purchase_override, purchase
 #: field:sale.order,date_confirm:0
 #: field:purchase.order.merged.line,confirmation_date:0
+#: field:purchase.order.line,confirmation_date:0
 msgid "Confirmation Date"
 msgstr "Date de Confirmation"
 
@@ -90019,6 +90060,7 @@ msgstr "La date de fin de validité de ce catalogue est postérieure à la date 
 
 #. modules: msf_doc_import, sale
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:636
+#: code:addons/sale/wizard/internal_request_import.py:386
 #, python-format
 msgid "Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns"
 msgstr "Ligne %s du fichier importé : les informations de l'en-tête doivent être sur au moins %s colonnes. La ligne %s comporte %s colonnes"
@@ -93693,6 +93735,7 @@ msgstr "Statuts Exercice Comptable"
 #: view:purchase.order:0
 #: field:tender,creation_date:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:229
+#: field:internal.request.import,imp_creation_date:0
 msgid "Creation Date"
 msgstr "Date de Création"
 
@@ -95676,6 +95719,8 @@ msgstr "NUM LIGNE"
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Sourced-sy"
 msgstr "Sourcé-sy"
 
@@ -97027,6 +97072,7 @@ msgstr "Page :"
 #: selection:sale.order.line,sale_order_state:0
 #: selection:stock.forecast.line,state:0
 #: selection:po.follow.up,state:0
+#: selection:sale.order.line,state_to_display:0
 msgid "Draft-p"
 msgstr "Brouillon-p"
 
@@ -98673,9 +98719,10 @@ msgstr "Asia/Kuala_Lumpur"
 msgid "Pack"
 msgstr "Colis"
 
-#. modules: sales_followup, procurement_request
+#. modules: sales_followup, procurement_request, sale
 #: view:sale.order:0
 #: field:sale.order.followup,requested_date:0
+#: field:internal.request.import,in_requested_date:0
 msgid "Requested date"
 msgstr "Date souhaitée"
 
@@ -102153,6 +102200,7 @@ msgstr "D.A"
 #. modules: purchase, sale
 #: view:purchase.order.line:0
 #: view:sale.order.line:0
+#: view:sale.order:0
 msgid "Changes"
 msgstr "Modifications"
 
@@ -102817,9 +102865,10 @@ msgstr "Poids\\nP.C.[KG]"
 msgid "Total\\nWeight[KG]"
 msgstr "Poids\\nTotal[KG]"
 
-#. module: msf_doc_import
+#. module: msf_doc_import, purchase
 #: code:addons/msf_doc_import/sale_order.py:257
 #: code:addons/msf_doc_import/tender.py:288
+#: code:addons/purchase/purchase_order_line.py:835
 #, python-format
 msgid "You have to select a product UOM in the same category than the purchase UOM of the product"
 msgstr "Vous devez sélectionner une UdM du produit dans la même catégorie que l'unité de mesure de l'achat du produit"
@@ -105544,13 +105593,15 @@ msgstr "Valeur totale reçue (Devis Fonct.)"
 msgid "Report run date"
 msgstr "Date génération"
 
-#. module: purchase_override
+#. module: purchase_override, purchase
 #: field:purchase.order.merged.line,closed_date:0
+#: field:purchase.order.line,closed_date:0
 msgid "Closed Date"
 msgstr "Date de Clôture"
 
-#. module: purchase_override
+#. module: purchase_override, purchase
 #: field:purchase.order.merged.line,validation_date:0
+#: field:purchase.order.line,validation_date:0
 msgid "Validation Date"
 msgstr "Date de Validation"
 
@@ -105772,3 +105823,67 @@ msgstr "*25 - Doit être conservé en dessous de 25°C (mais pas nécessairement
 msgid "*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch"
 msgstr "*25F - Doit être conservé en dessous de 25°C et ne doit pas être refrigéré: vérifier la FreezeWatch"
 
+#. module: sale
+#: view:sale.order:0
+msgid "Add Line"
+msgstr "Ajouter une ligne"
+
+#. module: sale
+#: field:internal.request.import.error.line,data_summary:0
+msgid "Line's data summary"
+msgstr "Résumé des données ds lignes"
+
+#. module: sale
+#: report:msf.freight_manifest:0
+msgid "Our ref"
+msgstr "Notre ref"
+
+#. module: sale, purchase
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
+msgid "Resourced-c"
+msgstr "Resourcée-c"
+
+#. module: sale, purchase
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
+msgid "Resourced-d"
+msgstr "Resourcée-d"
+
+#. module: sale, purchase
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
+msgid "Resourced-pv"
+msgstr "Resourcée-pv"
+
+#. module: sale, purchase
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
+msgid "Resourced-s"
+msgstr "Resourcée-s"
+
+#. module: sale, purchase
+#: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,state_to_display:0
+msgid "Resourced-v"
+msgstr "Resourcée-v"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:1664
+#, python-format
+msgid "Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport."
+msgstr "Produit à durée de conservation limitée, veuillez vérifier la pertinence de la quantité, de la fréquence et du mode de transport."
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:527
+#, python-format
+msgid "These lines cannot be validated as line source document information is missing: \n"
+" - %s"
+msgstr "Ces lignes ne peuvent être Validées car l'information de la source de la ligne est manquante: \n"
+" - %s"
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:525
+#, python-format
+msgid "This cannot be validated as line source document information is missing: %s"
+msgstr "Cette ligne ne peut être Validée car l'information de la source de la ligne est manquante: %s"
