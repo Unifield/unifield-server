@@ -24,6 +24,7 @@ from osv import fields
 from mx.DateTime import DateFrom, RelativeDateTime
 from lxml import etree
 from tools.translate import _
+from tools.misc import to_xml
 import logging
 
 import time
@@ -475,9 +476,9 @@ class product_product(osv.osv):
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
-            line_view = """<tree string="Historical consumption" hide_new_button="1">
+            line_view = """<tree string="%s" hide_new_button="1">
                    <field name="default_code"/>
-                   <field name="name" />"""
+                   <field name="name" />""" % (to_xml(_('Historical consumption')),)
 
             if context.get('amc', False):
                 line_view += """<field name="average" />"""
@@ -539,7 +540,7 @@ class product_product(osv.osv):
                 res.update({'average': {'digits': (16,2),
                                         'selectable': True,
                                         'type': 'float',
-                                        'string': '%s %s' % (_('Av.'), _(context.get('amc','AMC')))}})
+                                        'string': _('Av. %s') % _(context.get('amc','AMC'))}})
 
         return res
 

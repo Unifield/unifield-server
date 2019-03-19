@@ -1149,8 +1149,9 @@ msgstr "America/Campo_Grande"
 msgid "If the active field is set to False, it will allow you to hide the pricelist without removing it."
 msgstr "Décocher le champ \"Actif\" si réglé sur Faux, cela vous permettra de cacher la liste de prix sans la supprimer."
 
-#. module: product_attributes
+#. module: product_attributes, msf_tools
 #: field:product.product,standard_ok:0
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:82
 msgid "Standardization Level"
 msgstr "Standardization Level"
 
@@ -5922,7 +5923,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation
+#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation, specific_rules
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -6041,6 +6042,8 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:430
 #: code:addons/consumption_calculation/weekly_forecast_report.py:505
 #: report:addons/stock_override/report/stock_card_report_xls.mako:142
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:93
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:80
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8499,6 +8502,7 @@ msgstr "Générer les écarts"
 #: field:internal.request.import.line,imp_qty:0
 #: field:internal.request.import.line,in_qty:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:216
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:98
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -13167,6 +13171,7 @@ msgstr "Importation Unique"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:204
+#: code:addons/msf_tools/automated_export.py:197
 #, python-format
 msgid "Unable to connect with given login and password"
 msgstr "Impossible de se connecter avec le login/mot de passe donné"
@@ -15154,7 +15159,7 @@ msgstr "Assistant de correction de lignes d'écritures comptables"
 #. module: msf_doc_import
 #: view:real.average.consumption.line:0
 msgid "Real average consumption line to delete"
-msgstr "Real average consumption line to delete"
+msgstr "Ligne de Consommation moyenne réelle à supprimer"
 
 #. modules: purchase, purchase_override
 #: field:purchase.order.merged.line,po_partner_type_stored:0
@@ -18931,6 +18936,8 @@ msgstr "Vue du Journal"
 
 #. module: consumption_calculation
 #: model:ir.ui.menu,name:consumption_calculation.menu_product_history_consumption
+#: code:addons/consumption_calculation/history_consumption.py:481
+#, python-format
 msgid "Historical consumption"
 msgstr "Historique des Consommations"
 
@@ -22415,8 +22422,8 @@ msgstr "Historique des consommations"
 # module: consumption_calculation
 #: code:addons/consumption_calculation/history_consumption.py:707
 #, python-format
-msgid "Av."
-msgstr "Moy."
+msgid "Av. %s"
+msgstr "%s Moy."
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.qa
@@ -24944,8 +24951,9 @@ msgstr "Lignes d'Ecriture"
 
 #. module: msf_tools
 #: model:ir.actions.report.xml,name:msf_tools.report_stopped_products_xls
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:57
 msgid "Stopped products"
-msgstr "Stopped products"
+msgstr "Produits Stoppés"
 
 #. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, stock, reason_types_moves, stock_override, purchase_override, specific_rules, kit, base, msf_tools, sales_followup, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, analytic_distribution, msf_supply_doc_export, consumption_calculation, procurement_request
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:153
@@ -27078,7 +27086,6 @@ msgstr "Purchase orders which are in cancelled state."
 #: view:account.tax.template:0
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
-
 
 #. modules: sales_followup, sale, purchase_followup, stock
 #: view:po.track.changes.wizard:0
@@ -30259,8 +30266,9 @@ msgstr "TENGE DU KAZAKHSTAN"
 
 #. module: specific_rules
 #: model:ir.actions.report.xml,name:specific_rules.report_unconsistent_stock_xls
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:68
 msgid "Unconsistent stock"
-msgstr "Unconsistent stock"
+msgstr "Incohérences stock"
 
 #. modules: financing_contract, reason_types_moves, consumption_calculation, procurement_report, product_attributes
 #: field:product.likely.expire.report,consumption_type:0
@@ -35405,7 +35413,7 @@ msgstr "3-Important"
 msgid "Michigan"
 msgstr "Michigan"
 
-#. modules: financing_contract, account_override, product_attributes, res_currency_tables, stock_override, analytic, purchase_followup, msf_supply_doc_export, stock, product, reason_types_moves, msf_homere_interface, msf_instance, base, msf_tools, msf_budget, sales_followup, account, msf_outgoing, resource, sale, analytic_distribution
+#. modules: financing_contract, account_override, product_attributes, res_currency_tables, stock_override, analytic, purchase_followup, msf_supply_doc_export, stock, product, reason_types_moves, msf_homere_interface, msf_instance, base, msf_tools, msf_budget, sales_followup, account, msf_outgoing, resource, sale, analytic_distribution, specific_rules
 #: field:account.account,code:0
 #: report:account.account.balance:0
 #: field:account.account.template,code:0
@@ -35466,6 +35474,8 @@ msgstr "Michigan"
 #: report:stock.card.report:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:429
 #: report:addons/stock_override/report/stock_card_report_xls.mako:132
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:92
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:79
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -42540,7 +42550,7 @@ msgstr "Répartition par devises"
 #. module: procurement_cycle
 #: field:stock.warehouse.order.cycle.line,qty_to_order:0
 msgid "Qty. to order"
-msgstr "Qty. to order"
+msgstr "Qté à commander"
 
 #. module: sale
 #: field:sale.order.line,created_by_rfq_line:0
@@ -43765,6 +43775,7 @@ msgstr "Les nouveaux %s d'expédition en mode brouillon ont été créés."
 #: field:stock.mission.report.line,international_status_code:0
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:82
 #: field:product.product,international_status:0
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:81
 msgid "Product Creator"
 msgstr "Créateur produit"
 
@@ -65282,6 +65293,7 @@ msgstr "Zone - Stock"
 #: report:addons/stock_override/report/stock_card_report_xls.mako:122
 #: report:tracking.move.report:0
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:140
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:99
 msgid "Location"
 msgstr "Zone"
 
@@ -69802,6 +69814,7 @@ msgstr "No date at the first day of this month."
 #: field:unconsistent.stock.report.line,prodlot_name:0
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_bn:0
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:96
 msgid "BN"
 msgstr "NL"
 
@@ -81460,7 +81473,7 @@ msgstr "Demande de Devis"
 msgid "You cannot validate this document in the given period: %s because it's not open. Change the date of the document or open the period."
 msgstr "You cannot validate this document in the given period: %s because it's not open. Change the date of the document or open the period."
 
-#. modules: delivery_mechanism, sales_followup
+#. modules: delivery_mechanism, sales_followup, specific_rules
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1378
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1446
 #: code:addons/sales_followup/sale_followup.py:399
@@ -81469,6 +81482,8 @@ msgstr "You cannot validate this document in the given period: %s because it's n
 #: code:addons/sales_followup/sale_followup.py:425
 #: code:addons/sales_followup/sale_followup.py:454
 #: code:addons/sales_followup/sale_followup.py:489
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:192
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:195
 #, python-format
 msgid "N/A"
 msgstr "N/A"
@@ -88020,6 +88035,7 @@ msgstr "Commande de Terrain - brouillo"
 #. modules: msf_tools, product_attributes
 #: field:product.product,state_ud:0
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:84
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:83
 msgid "Unidata Status"
 msgstr "Statut UniData"
 
@@ -97310,6 +97326,7 @@ msgstr "An error occurs during the reading of the file. Please contact an admini
 #: field:unconsistent.stock.report.line,expiry_date:0
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_ed:0
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:97
 msgid "ED"
 msgstr "EXP"
 
@@ -102395,7 +102412,8 @@ msgstr "Numéro du Bon d'Engagement"
 #: code:addons/stock/physical_inventory.py:907
 #, python-format
 msgid "Unable to update line #%s product %s: line not found in the discrepancy report"
-msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"=======
+msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"
+
 #. module: account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1494
 #, python-format
@@ -102546,9 +102564,10 @@ msgstr "Centre de Coût \"%s\" non trouvé."
 msgid "Account/Destination \"%s\" not found."
 msgstr "Association Compte/Destination \"%s\" non trouvée."
 
-#. module: stock
+#. module: stock, specific_rules
 #: code:addons/stock/wizard/physical_inventory_select_products.py:10
 #: code:addons/stock/wizard/physical_inventory_select_products.py:11
+#: code:addons/specific_rules/report/report_stock_inventory.py:36
 #, python-format
 msgid "%s months"
 msgstr "%s mois"
@@ -103828,13 +103847,14 @@ msgstr "Sélection Instance"
 msgid "All loc"
 msgstr "Toutes zones"
 
-#. module: mission_stock
+#. module: mission_stock, msf_tools
 #: code:addons/mission_stock/mission_stock.py:54
 #: code:addons/mission_stock/mission_stock.py:68
 #: code:addons/mission_stock/mission_stock.py:81
 #: code:addons/mission_stock/mission_stock.py:96
 #: code:addons/mission_stock/mission_stock.py:517
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:99
 #, python-format
 msgid "Instance stock"
 msgstr "Stock de l'Instance"
@@ -103878,8 +103898,9 @@ msgstr "Fichier CSV Stock de Mission fichier"
 msgid "Number of"
 msgstr "Nombre de"
 
-#. module: consumption_calculation
+#. module: consumption_calculation, msf_tools
 #: code:addons/consumption_calculation/weekly_forecast_report.py:510
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:100
 #, python-format
 msgid "Pipeline Qty"
 msgstr "Qté en attente"
@@ -104132,7 +104153,7 @@ msgstr "Date de Colisage"
 msgid "\n"
 "The line 1 of the column 7 must be named \"Consignee\" in the file."
 msgstr "\n"
-"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier.
+"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:113
@@ -104894,7 +104915,6 @@ msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas
 msgid "Receptions Report"
 msgstr "Rapport des Réceptions"
 
-
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:126
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:163
@@ -105045,7 +105065,7 @@ msgid "\n"
 "                                    "
 msgstr "\n"
 "                                    Votre fichier est prêt. Vous pouvez le télécharger depuis la barre à droite (Pièces Jointes).\n"
-"
+""
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -105194,7 +105214,6 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 #, python-format
 msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
-
 
 #. module: purchase
 #: view:purchase.order:0
@@ -105651,3 +105670,40 @@ msgstr "Une fois généré le rapport sera disponible dans le menu Entrepôt / G
 #: view:export.report.stock.inventory:0
 msgid "Your export inventory level demand will be treated quickly."
 msgstr "Le rapport est en cours de génération."
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:94
+msgid "BN-management"
+msgstr "Géré par Numéro de Lot"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:100
+msgid "Document number"
+msgstr "Numéro du Document"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:95
+msgid "ED-management"
+msgstr "Géré par date d'exp."
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:175
+#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
+msgid "Specific batch number"
+msgstr "Numéro de lot spécifique"
+
+#. module: msf_tools
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:97
+msgid "Instance/Mission"
+msgstr "Instnace/Mission"
+
+#. module: msf_tools
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:73
+msgid "There is no stopped products to report"
+msgstr "Il n'y a aucun produit stoppé"
+
+#. module: msf_tools
+#: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
+msgid "Unifield Status"
+msgstr "Satut Unifield"
+
