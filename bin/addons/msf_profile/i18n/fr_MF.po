@@ -316,11 +316,12 @@ msgstr "Filtres par défaut"
 msgid "Instance code / Place of payment"
 msgstr "Code de l'Instance / Lieu du paiement"
 
-#. modules: account, register_accounting, account_mcdb
+#. modules: account, register_accounting, account_mcdb, sale
 #: selection:account.period,state:0
 #: selection:account.fiscalyear.state,state:0
 #: selection:account.period.state,state:0
 #: selection:account.direct.invoice.wizard,state:0
+#: code:addons/sale/report/sale_loan_stock_moves_report.py:92
 msgid "Open"
 msgstr "Ouverte"
 
@@ -30206,6 +30207,9 @@ msgstr "Certificat attaché ?"
 #: selection:sale.order.line,sale_order_state:0
 #: selection:sale.order.line,state_to_display:0
 #: selection:purchase.order.line,state_to_display:0
+#: code:addons/sale/report/sale_loan_stock_moves_report.py:119
+#: code:addons/sale/report/sale_loan_stock_moves_report.py:140
+#: code:addons/sale/report/sale_loan_stock_moves_report.py:142
 msgid "Closed"
 msgstr "Fermé"
 
@@ -55614,11 +55618,13 @@ msgstr "Erreur de contrainte lors de la Composition Kit."
 msgid "Australia/South"
 msgstr "Australia/South"
 
-#. module: sale
+#. module: sale, sale
+#.  sale
 #: model:ir.actions.act_window,name:sale.action_sale_loan_stock_moves
 #: model:ir.actions.report.xml,name:sale.report_sale_loan_stock_moves_xls
 #: model:ir.ui.menu,name:sale.menu_sale_loan_stock_moves
 #: view:sale.loan.stock.moves:0
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:121
 msgid "Loan Report"
 msgstr "Rapport des Prêts"
 
