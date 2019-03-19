@@ -116,6 +116,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         if not isinstance(order_id, int):
             order_id = order_id.id
 
+        line_state_display_dict = dict(self.pool.get('sale.order.line').fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
         for line in self._get_order_line(order_id):
             if not grouped:
                 keys = []
@@ -138,7 +139,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             data = {
                 'state': line.state,
-                'state_display': line.state_to_display,
+                'state_display': line_state_display_dict.get(line.state_to_display),
             }
 
             for move in line.move_ids:

@@ -92690,7 +92690,7 @@ msgstr "Exécuter manuellement"
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:100
 #, python-format
 msgid "No Purchase Orders match the specified criteria."
-msgstr "No Purchase Orders match the specified criteria."
+msgstr "Aucune commande ne correspond aux critères."
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0

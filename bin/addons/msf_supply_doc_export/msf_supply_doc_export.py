@@ -735,6 +735,11 @@ class po_follow_up_mixin(object):
         get_sel = self.pool.get('ir.model.fields').get_selection
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         report_lines = []
+
+        line_state_dict = dict(pol_obj.fields_get(self.cr, self.uid, ['state'], context=self.localcontext).get('state', {}).get('selection', []))
+        line_state_display_dict = dict(pol_obj.fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
+        doc_state_dict = dict(po_obj.fields_get(self.cr, self.uid, ['state'], context=self.localcontext).get('state', {}).get('selection', []))
+
         order = po_obj.browse(self.cr, self.uid, po_id)
         for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(line)
@@ -760,9 +765,9 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': self.format_date(line.confirmed_delivery_date),
                     'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
-                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
-                    'state': line.state_to_display or '',
-                    'order_status': self._get_states().get(order.state, ''),
+                    'line_status': line_state_dict.get(line.state) or '',
+                    'state': line_state_display_dict.get(line.state_to_display) or '',
+                    'order_status': doc_state_dict.get(order.state) or '',
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
                     'description': line.product_id.name or '',
@@ -798,8 +803,8 @@ class po_follow_up_mixin(object):
                     'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
-                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
-                    'state': line.state_to_display or '',
+                    'line_status': first_line and line_state_dict.get(line.state) or '',
+                    'state': line_state_display_dict.get(line.state_to_display) or '',
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
                     'description': line.product_id.name or '',
@@ -845,8 +850,8 @@ class po_follow_up_mixin(object):
                     'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
-                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
-                    'state': line.state_to_display or '',
+                    'line_status': first_line and line_state_dict.get(line.state) or '',
+                    'state': line_state_display_dict.get(line.state_to_display) or '',
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
                     'description': line.product_id.name or '',
@@ -892,8 +897,8 @@ class po_follow_up_mixin(object):
                     'delivery_requested_date': self.format_date(line.date_planned),
                     'raw_state': line.state,
                     'order_status': self._get_states().get(order.state, ''),
-                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
-                    'state': line.state_to_display or '',
+                    'line_status': line_state_dict.get(line.state) or '',
+                    'state': line_state_display_dict.get(line.state_to_display) or '',
                     'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',

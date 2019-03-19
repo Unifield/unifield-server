@@ -252,7 +252,7 @@
         % for line in getLines(r):
             <Row ss:Height="11.25">
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.order_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.state|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(line, 'state_to_display')|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_no_digits"><Data ss:Type="Number">${line.line_number|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.product_id.default_code or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.name|x}</Data></Cell>
