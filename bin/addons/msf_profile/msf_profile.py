@@ -75,22 +75,17 @@ class patch_scripts(osv.osv):
         if not instance:
             return True
 
-        if instance.instance.startswith('OCG') and \
-            '_KE1_' not in instance.instance and \
-            '_UA1_' not in instance.instance and \
-            '_MX1_' not in instance.instance and \
-                '_LB1_' not in instance.instance:
+        if instance.instance.startswith('OCG'):
             cr.execute("""select p.id, tmpl.id from
-                product_template tmpl, product_product p
+                product_template tmpl, product_product p, p.default_code
                 where
                     p.product_tmpl_id = tmpl.id and
-                    p.default_code in ('DORACHLP4T-','DORAPARA1T-','DORAPYRZ5T-','DVACVBCG3SD','DVACVMEA2SD','DVACVPOL13DR','DVACVYEF2SD','EDIMULSE2--','EEMDMONE1--','SDDCBAGP06-','SDRECOMN7N-','SSDTMALP251') and
                     standard_price=0
                 """)
             prod = cr.fetchall()
             if prod:
                 cr.execute('update product_template set standard_price=0.01, list_price=0.01 where id in %s', (tuple([x[1] for x in prod]), ))
-                self._logger.warn('Change price to 0.01 on %d products' % (cr.rowcount,))
+                self._logger.warn('Change price to 0.01 on %d products: %s' % (cr.rowcount,', '.join([x[2] for x in prod])))
                 for prod_i in prod:
                     cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
                             (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
