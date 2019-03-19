@@ -180,7 +180,7 @@ msgstr "Vous ne pouvez pas supprimer ou rendre inactif le groupe Administration 
 #: selection:wizard.import.po.simulation.screen.line,type_change:0
 #: selection:wizard.simu.import.po.line,change_type:0
 msgid "Del"
-msgstr "Del"
+msgstr "Suppr"
 
 #. module: base
 #: selection:ir.ui.view,type:0
@@ -13576,7 +13576,7 @@ msgstr "Please fix issue on red lines before confirm the inventory."
 #: selection:wizard.import.po.simulation.screen.line,type_change:0
 #: selection:wizard.simu.import.po.line,change_type:0
 msgid "New"
-msgstr "New"
+msgstr "Nouveau"
 
 #. modules: msf_doc_import, msf_supply_doc_export
 #: code:addons/msf_doc_import/wizard/__init__.py:34

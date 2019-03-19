@@ -1209,14 +1209,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 delete_line_numbers.add(x['in_line_number'])
 
         res = {}
+        chg_dict = dict(self.fields_get(cr, uid, ['type_change'], context=context).get('type_change', {}).get('selection', []))
         for line in self.browse(cr, uid, ids, context=context):
             chg = ''
             if line.type_change in ('warning', 'del', 'ignore'):
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             elif line.chg_text:
                 chg = line.chg_text
             elif line.type_change:
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             res[line.id] = {'in_product_id': False,
                             'in_nomen': False,
                             'in_comment': False,
@@ -1280,7 +1281,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     res[line.id]['in_uom'] = line.imp_uom.id
 
             if line.type_change in ('warning', 'del', 'ignore'):
-                res[line.id]['chg_text'] = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                res[line.id]['chg_text'] = chg_dict.get(line.type_change) or ''
 
         return res
 
