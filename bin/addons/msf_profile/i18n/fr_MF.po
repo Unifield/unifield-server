@@ -105707,3 +105707,68 @@ msgstr "Il n'y a aucun produit stoppé"
 msgid "Unifield Status"
 msgstr "Satut Unifield"
 
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_1
+msgid "* - Keep Cool: used for a kit or article containing cold chain module or item(s)"
+msgstr "* - Conserver au frais: utilisé pour un kit ou produit ayant un module ou un article de chaîne de froid"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_2
+msgid "*0 - Problem if any window blue"
+msgstr "*0 - Problème si une fenêtre est bleue"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_3
+msgid "*0F - Problem if any window blue or Freeze-tag = ALARM"
+msgstr "*0F - Problème si une fenêtre est bleue ou le Tag- fraîcheur = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_4
+msgid "*A - Problem if A, B, C and/or D blue = ALARM"
+msgstr "*A - Problème si  A, B, C et/ou D bleu = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_5
+msgid "*AF - Problem if A, B, C and/or D blue or Freeze-tag = ALARM"
+msgstr "*AF - Problème si A, B, C et/ou D bleu ou Tag- fraîcheur = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_7
+msgid "*BF - Problem if B, C and/or D blue or Freeze-tag = ALARM"
+msgstr "*BF - Problème si B, C et/ou D bleu ou Tag- fraîcheur = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_6
+msgid "*B - Problem if B, C and/or D blue = ALARM"
+msgstr "*B - Problème si B, C et/ou D bleu = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_8
+msgid "*C - Problem if C and D blue"
+msgstr "*C - Problème si C et D bleu"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_9
+msgid "*CF - Problem if C and/or D blue or Freeze-tag = ALARM"
+msgstr "*CF - Problème si C et/ou D bleu ou Tag- fraîcheur = ALARME"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_10
+msgid "*D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)"
+msgstr "*D - Entreposage et transport à -25°C (conserver au congélateur, transport avec neige carbonique)"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_11
+msgid "*F - Cannot be frozen: check FreezeWatch"
+msgstr "*F - Ne doit pas être refrigéré: vérifier la FreezeWatch"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_12
+msgid "*25 - Must be kept below 25°C (but not necesseraly in cold chain)"
+msgstr "*25 - Doit être conservé en dessous de 25°C (mais pas nécessairement en chaîne de froid)"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_13
+msgid "*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch"
+msgstr "*25F - Doit être conservé en dessous de 25°C et ne doit pas être refrigéré: vérifier la FreezeWatch"
+
