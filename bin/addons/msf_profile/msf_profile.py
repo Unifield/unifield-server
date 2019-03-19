@@ -76,8 +76,8 @@ class patch_scripts(osv.osv):
             return True
 
         if instance.instance.startswith('OCG'):
-            cr.execute("""select p.id, tmpl.id from
-                product_template tmpl, product_product p, p.default_code
+            cr.execute("""select p.id, tmpl.id, p.default_code from
+                product_template tmpl, product_product p
                 where
                     p.product_tmpl_id = tmpl.id and
                     standard_price=0
