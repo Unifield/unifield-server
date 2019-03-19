@@ -86287,6 +86287,7 @@ msgstr "Please define a valid analytic distribution for the recurring model '%s'
 #: model:ir.actions.report.xml,name:sale.report_sale_donation_stock_moves_xls
 #: model:ir.ui.menu,name:sale.menu_sale_donation_stock_moves
 #: view:sale.donation.stock.moves:0
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:87
 msgid "Donation Report"
 msgstr "Rapport des Dons"
 
