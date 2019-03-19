@@ -84357,7 +84357,7 @@ msgstr "Le système n'a pas trouvé d'\"id_staff\" pour le travailleur %s !"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:819
 #, python-format
 msgid "The line must have either the line number or the external ref. set"
-msgstr "La ligne doit au mins avoir le numéro de ligne ou la ref. externe"
+msgstr "La ligne doit au minimum avoir le numéro de ligne ou la ref. externe"
 
 #. modules: stock, mission_stock
 #: field:stock.mission.report.line.location,location_name:0

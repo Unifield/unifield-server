@@ -835,8 +835,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if not line_number and not ext_ref:
                         not_ok = True
                         err1 = _('The line must have either the line number or the external ref. set')
-                        err = _('Line %s of the file: %s') % (x, err1)
-                        values_line_errors.append(err)
                         file_line_error.append(err1)
 
                     if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
@@ -1036,9 +1034,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if err_msg:
                         for err in err_msg:
                             if line_n:
-                                err = 'Line %s of the PO: %s' % (line_n, err)
+                                err = _('Line %s of the PO: %s') % (line_n, err)
                             else:
-                                err = 'Line %s of the file: %s' % (po_line, err)
+                                err = _('Line %s of the file: %s') % (po_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
