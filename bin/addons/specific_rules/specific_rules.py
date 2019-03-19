@@ -50,11 +50,11 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             if sol.product_id:
                 if sol.product_id.kc_txt:
-                    result[sol.id] += sol.product_id.is_kc and 'KC' or 'KC ?'
+                    result[sol.id] += sol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
                 if sol.product_id.dg_txt:
                     if result[sol.id]:
                         result[sol.id] += ' / '
-                    result[sol.id] += sol.product_id.is_dg and 'DG' or 'DG ?'
+                    result[sol.id] += sol.product_id.is_dg and _('DG') or '%s ?' % _('DG')
 
         return result
 
@@ -141,11 +141,11 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.product_id:
                 if pol.product_id.kc_txt:
-                    result[pol.id] += pol.product_id.is_kc and 'KC' or 'KC ?'
+                    result[pol.id] += pol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
                 if pol.product_id.dg_txt:
                     if result[pol.id]:
                         result[pol.id] += ' / '
-                    result[pol.id] += pol.product_id.is_dg and 'DG' or 'DG ?'
+                    result[pol.id] += pol.product_id.is_dg and _('DG') or '%s ?' % _('DG')
 
         return result
 
@@ -660,11 +660,11 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
                 if move.product_id.kc_txt:
-                    result[move.id] += move.product_id.is_kc and 'KC' or 'KC ?'
+                    result[move.id] += move.product_id.is_kc and _('KC') or '%s ?'%_('KC')
                 if move.product_id.dg_txt:
                     if result[move.id]:
                         result[move.id] += ' / '
-                    result[move.id] += move.product_id.is_dg and 'DG' or 'DG ?'
+                    result[move.id] += move.product_id.is_dg and _('DG') or '%s ?'%_('DG')
 
         return result
 

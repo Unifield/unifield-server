@@ -112,6 +112,7 @@ class product_heat_sensitive(osv.osv):
             string='Name',
             size=256,
             required=True,
+            translate=1,
         ),
         'active': fields.boolean(
             string='Active',
@@ -172,7 +173,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
     }
 
     def unlink(self, cr, uid, ids, context=None):

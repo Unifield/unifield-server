@@ -88,7 +88,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="PO Follow Up">
+<ss:Worksheet ss:Name="${_('PO Follow Up')}">
 ## definition of the columns' size
 <% nb_of_columns = 21 %>
 <Table x:FullColumns="1" x:FullRows="1">
