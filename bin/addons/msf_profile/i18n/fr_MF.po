@@ -19197,7 +19197,7 @@ msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
 #. module: stock
 #: field:report.stock.move,product_qty_out:0
 msgid "Out Qty"
-msgstr "Qté OUT"
+msgstr "Qté Sortante"
 
 #. modules: msf_supply_doc_export, account, msf_tools, account_mcdb
 #: field:output.currency.for.export,export_format:0
@@ -21079,7 +21079,7 @@ msgstr "done - (payment.order)"
 #. module: stock
 #: field:report.stock.move,product_qty_in:0
 msgid "In Qty"
-msgstr "Qté IN"
+msgstr "Qté Entrante"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
