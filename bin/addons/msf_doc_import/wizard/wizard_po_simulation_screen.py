@@ -1008,7 +1008,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the PO: %s' % (file_line[2], err)
+                            err = _('Line %s of the PO: %s') % (file_line[2], err)
                             values_line_errors.append(err)
 
 

@@ -32594,7 +32594,7 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1386
 #, python-format
 msgid "UoM not found in database"
-msgstr "UdM non trouvé dans la base de données"
+msgstr "UdM non trouvée dans la base de données"
 
 #. module: product_attributes
 #: field:product.product,new_code:0
@@ -67550,7 +67550,7 @@ msgstr "Info projet"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1448
 #, python-format
 msgid "UoM not found in database."
-msgstr "UdM non trouvé dans la base de données."
+msgstr "UdM non trouvée dans la base de données."
 
 #. module: sourcing
 #: model:ir.actions.act_window,name:sourcing.action_compute_schedulers_sourcing
