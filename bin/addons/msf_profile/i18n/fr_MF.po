@@ -25628,6 +25628,7 @@ msgstr "Mettre à jour ou créer ?"
 
 #. module: purchase
 #: field:purchase.order,customer_ref:0
+#: field:purchase.order,short_customer_ref:0
 msgid "Customer Ref."
 msgstr "Ref. Client"
 
@@ -68889,6 +68890,7 @@ msgstr "XmlRPC retry"
 
 #. module: sale
 #: field:sale.order,client_order_ref:0
+#: field:sale.order,short_client_ref:0
 msgid "Customer Reference"
 msgstr "Référence Client"
 
@@ -98713,6 +98715,7 @@ msgstr "Les retours de prélèvements ne sont possibles que si le statut du pré
 #. modules: purchase, purchase_followup
 #: field:purchase.order,partner_ref:0
 #: field:purchase.order.followup,supplier_ref:0
+#: field:purchase.order,short_partner_ref:0
 msgid "Supplier Reference"
 msgstr "Références Fournisseur"
 

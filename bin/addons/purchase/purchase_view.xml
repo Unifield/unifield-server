@@ -159,7 +159,8 @@
                         <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <newline/>
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
-                        <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                        <field name="partner_ref" invisible="1"/>
+                        <field name="short_partner_ref" on_change="onchange_short_partner_ref(short_partner_ref)" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <field name="shipped_rate" invisible="True"/>
                         <field name="push_fo" invisible="1"/>
@@ -198,16 +199,18 @@
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" readonly="1" widget="char"/>
                                 <field name="internal_type" string="Zone"/>
-                                <field name="customer_ref" widget="char"/>
+                                <field name="customer_ref" invisible="1"/>
+                                <field name="short_customer_ref" widget="char"/>
                                 <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="dest_partner_names"/>
+                                <group colspan="2" col="3">
+                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
                                     <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
-                                </group>
-                                <group colspan="2" col="3">
-                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             </group>
@@ -504,11 +507,11 @@
                     <field name="priority"/>
                     <field name="categ"/>
                     <field name="date_order"/>
-                    <field name="partner_ref"/>
+                    <field name="short_partner_ref"/>
                     <field name="partner_id" string="Supplier"/>
                     <field name="delivery_requested_date"/>
                     <field name="origin"/>
-                    <field name="customer_ref"/>
+                    <field name="short_customer_ref"/>
                     <field name="dest_partner_names"/>
                     <field name="line_count"/>
                     <field name="shipped_rate" widget="progressbar"/>

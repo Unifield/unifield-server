@@ -521,7 +521,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the number of line(s) for the SO
@@ -542,7 +541,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _get_short_client_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a shortened version of Customer Reference, with only the Order Reference
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
+        ref_by_order = {}
+        for so in self.browse(cr, uid, ids, fields_to_fetch=['client_order_ref'], context=context):
+            ref_by_order[so.id] = so.client_order_ref and so.client_order_ref.split('.')[-1] or ''
+
+        return ref_by_order
 
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
@@ -602,6 +612,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'company_id': fields.related('shop_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True),
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
+        'short_client_ref': fields.function(_get_short_client_ref, method=True, string='Customer Reference', type='char', size=64, store=False),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),

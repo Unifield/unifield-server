@@ -312,7 +312,7 @@
             <Row ss:Height="11.25">
                 %if line.get('state', '') in ['cancel', 'cancel_r']:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
@@ -351,7 +351,7 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
