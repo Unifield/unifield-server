@@ -42659,11 +42659,16 @@ msgstr "Contrat - Code/Nom:"
 #: view:wizard.register.import:0
 #: view:sale.order.followup:0
 #: view:product.product:0
-#: model:ir.ui.menu,name:sync_client.update_menu
 #: view:sync.client.update_entity:0
 #: view:stock.expired.damaged.report:0
 msgid "Update"
 msgstr "Mettre à jour"
+
+#. modules: sync_client
+#: model:ir.ui.menu,name:sync_client.update_menu
+msgid "Update"
+msgstr "Mises à jour"
+
 
 #. module: product_asset
 #: field:product.asset,receipt_place:0
@@ -105829,3 +105834,33 @@ msgstr "Ces lignes ne peuvent être Validées car l'information de la source de 
 #, python-format
 msgid "This cannot be validated as line source document information is missing: %s"
 msgstr "Cette ligne ne peut être Validée car l'information de la source de la ligne est manquante: %s"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1331
+#, python-format
+msgid "Aborting..."
+msgstr "En cours d'arrêt..."
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1339
+#, python-format
+msgid "Connected"
+msgstr "Connecté"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1337
+#, python-format
+msgid "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s"
+msgstr "Dernière Sync: %s à %s, Màj non exec: %s, Msg non exec: %s"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1327
+#, python-format
+msgid "Not Connected"
+msgstr "Non connecté"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1332
+#, python-format
+msgid "Syncing..."
+msgstr "En cours..."
