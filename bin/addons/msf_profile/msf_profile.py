@@ -91,7 +91,7 @@ class patch_scripts(osv.osv):
                             (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'Patch US-5785')
                             """,  (prod_i[0], ))
                 if instance.level == 'section' and instance.code == 'CH':
-                    cr.execute('''update ir_model_data set touched='[''default_code'']' where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
+                    cr.execute('''update ir_model_data set touched='[''default_code'']', last_modification=NOW() where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
                     self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
 
         return True
