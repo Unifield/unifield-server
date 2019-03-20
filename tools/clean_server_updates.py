@@ -2,7 +2,7 @@ import psycopg2
 import time
 
 start_time = time.time()
-db_conn = psycopg2.connect("dbname=uf8-0rc3_SYNC_SERVER_LIGHT_WITH_MASTER_1")
+db_conn = psycopg2.connect("dbname=SYNC_SERVER_CPT2")
 cr = db_conn.cursor()
 ct = {'keep2': {}, 'delete': {}, 'single': {}}
 
@@ -72,13 +72,13 @@ for x in cr.fetchall():
 #cr.execute("""delete from sync_server_update u
 #where u.rule_id in
 #  (select id from sync_server_sync_rule where master_data='f')
-#and u.create_date < now() - interval '18 months'
-#""")
+#  and u.create_date < now() - interval '18 months' and sequence < %s
+#  """, (min_seq,))
 #ct['month18'] = cr.rowcount
 
 # delete orphean "pulled by" records
-#cr.execute("delete from sync_server_entity_rel where id in (select r.id from sync_server_entity_rel r left join sync_server_update u on u.id=r.update_id where u.id is null)")
-#ct['pulled_by'] = cr.rowcount
+cr.execute("delete from sync_server_entity_rel where id in (select r.id from sync_server_entity_rel r left join sync_server_update u on u.id=r.update_id where u.id is null)")
+ct['pulled_by'] = cr.rowcount
 print ct
 
 #print '****** rollback'
