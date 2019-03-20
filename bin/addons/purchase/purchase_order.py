@@ -57,6 +57,7 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "name desc"
 
+
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj=self.pool.get('res.currency')
@@ -415,8 +416,19 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
+            po_state_seq = {
+                'draft': 10,
+                'draft_p': 15,
+                'validated': 20,
+                'validated_p': 25,
+                'sourced_p': 30,
+                'confirmed': 35,
+                'confirmed_p': 40,
+                'done': 50
+            }
             if po.empty_po_cancelled:
                 res[po.id] = 'cancel'
             else:
@@ -454,6 +466,12 @@ class purchase_order(osv.osv):
                             # do we have a line further then confirmed in our FO ?
                             if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
                                 res[po.id] = 'confirmed_p'
+                        # PO state must not go back:
+                        if po.push_fo:
+                            # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
+                            po_state_seq['sourced_p'] = 0
+                        if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
+                            res[po.id] = po.state
                 else:
                     res[po.id] = 'draft'
 
@@ -615,6 +633,25 @@ class purchase_order(osv.osv):
             po_ids.add(pol.order_id.id)
         return [('id', operator, list(po_ids))]
 
+    def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        max_qty = self.pool.get('purchase.order.line')._max_qty
+        max_amount = self.pool.get('purchase.order.line')._max_amount
+
+        for id in ids:
+            res[id] = ''
+
+        cr.execute('''select line_number, order_id from purchase_order_line
+            where
+                order_id in %s
+                and ( product_qty >= %s or product_qty*price_unit >= %s)
+            ''', (tuple(ids), max_qty, max_amount))
+        for x in cr.fetchall():
+            res[x[1]] += ' #%s' % x[0]
+
+        return res
+
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -770,6 +807,7 @@ class purchase_order(osv.osv):
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
         'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
+        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 15digtis total amounts', method=1),
     }
     _defaults = {
         'split_during_sll_mig': False,

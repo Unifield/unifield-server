@@ -53,6 +53,34 @@ class patch_scripts(osv.osv):
     }
 
     # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
@@ -2986,6 +3014,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -3018,6 +3050,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],

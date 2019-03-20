@@ -18,6 +18,11 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
+    _max_digits = 15
+    _max_qty = 10**(_max_digits+1)
+    _max_amount = 10**(_max_digits-3)
+    _max_msg = _('The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
+
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the system configuration VAT management is set to True
@@ -169,15 +174,16 @@ class purchase_order_line(osv.osv):
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if pol.resourced_original_line and pol.state != 'done':
+            if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
                     res[pol.id] = 'Resourced-v'
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
                         res[pol.id] = 'Resourced-pv'
-                    elif pol.state == 'sourced_sy':
-                        res[pol.id] = 'Resourced-sy'
+                    #elif pol.state == 'sourced_sy':
+                    #    res[pol.id] = 'Resourced-sy'
                     else:
+                        # debatable
                         res[pol.id] = 'Resourced-s'
                 elif pol.state.startswith('confirmed'):
                     res[pol.id] = 'Resourced-c'
@@ -431,6 +437,7 @@ class purchase_order_line(osv.osv):
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
+        'set_as_resourced': fields.boolean(string='Force resourced state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
@@ -583,25 +590,27 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
+        msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
+        error = []
         for pol in self.browse(cr, uid, ids, context=context):
-            if pol.product_qty > 99999999999:
-                return False
+            max_digits = 27
+            if pol.product_qty >= 10**(max_digits-2):
+                error.append('%s #%s' % (pol.order_id.name, pol.line_number))
+            else:
+                total_int = int(pol.product_qty * pol.price_unit)
 
-            total = pol.product_qty * pol.price_unit
-            total_int = int(total)
-            total_dec = round(total - total_int, 2)
+                nb_digits_allowed = max_digits - 2
 
-            nb_digits_allowed = 15
-            if total_dec:
-                nb_digits_allowed -= 3
+                if len(str(total_int)) > nb_digits_allowed:
+                    error.append('%s #%s' % (pol.order_id.name, pol.line_number))
 
-            if len(str(total_int)) > nb_digits_allowed:
-                return False
+        if error:
+            raise osv.except_osv(_('Error'), '%s: %s' % (msg, ' ,'.join(error)))
 
         return True
 
     _constraints = [
-        (_check_max_price, _("Price is too big"), ['price_unit', 'product_qty']),
+        (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1082,7 +1091,7 @@ class purchase_order_line(osv.osv):
 
         # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the
         # line as non-really validated. It avoids the PO to go back in draft state.
-        if order.state.startswith('validated'):
+        if order.state.startswith('validated') and not vals.get('is_line_split', False):
             vals.update({'set_as_validated_n': True})
 
         # Update the name attribute if a product is selected
@@ -1429,9 +1438,9 @@ class purchase_order_line(osv.osv):
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
             pol_to_update = [pol.id]
-            if pol.linked_sol_id and not pol.linked_sol_id.order_id.procurement_request:
+            if pol.linked_sol_id:
                 pol_to_update += [new_po_line]
-            self.update_fo_lines(cr, uid, pol_to_update, context=context)
+            self.update_fo_lines(cr, uid, pol_to_update, context=context, qty_updated=True)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'
@@ -1664,12 +1673,14 @@ class purchase_order_line(osv.osv):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
+
         res = {'value': {}}
 
         if context is None:
             context = {}
 
         if not product_id or not product_uom or not product_qty:
+            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1693,6 +1704,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
+        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
