@@ -56,7 +56,7 @@ class donation_certificate(report_sxw.rml_parse):
                 'item': move.line_number,
                 'p_code': move.product_id and move.product_id.default_code or '',
                 'p_desc': move.product_id and move.product_id.name or '',
-                'qty_and_uom': tools.ustr(round(move.product_qty, 0)) + (move.product_uom and ' ' + move.product_uom.name or ''),
+                'qty_and_uom': '%s %s' % (round(move.product_qty, 0), move.product_uom and move.product_uom.name or ''),
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'exp_date': move.prodlot_id and move.prodlot_id.life_date or move.expired_date or '',
                 'currency': move.price_currency_id.name,
