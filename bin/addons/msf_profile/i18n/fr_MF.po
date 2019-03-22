@@ -62166,6 +62166,13 @@ msgstr "Veuillez entrer quelques mouvements de stock avant de changer la localis
 msgid "Not able to connect to FTP server at location %s"
 msgstr "Impossible de se connecter au serveur FTP à l'adresse %s"
 
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:192
+#: code:addons/msf_tools/automated_import.py:199
+#, python-format
+msgid "Not able to connect to SFTP server at location %s"
+msgstr "Impossible de se connecter au serveur SFTP à l'adresse %s"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:397
 #, python-format

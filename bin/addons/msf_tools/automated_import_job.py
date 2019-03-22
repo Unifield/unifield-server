@@ -359,10 +359,20 @@ class automated_import_job(osv.osv):
             ftp_connec = None
             sftp = None
             context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
-            if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
-                ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
-            elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
-                sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+            try:
+                if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
+                    ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
+                elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
+                    sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+            except Exception, e:
+                if job.id:
+                    if isinstance(e, osv.except_osv):
+                        msg = e.value
+                    else:
+                        msg = e
+                    self.write(cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
+                    cr.commit()
+                raise
 
             try:
                 for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', 'ftp_report_ok')]:
