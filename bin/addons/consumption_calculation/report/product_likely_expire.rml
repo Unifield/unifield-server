@@ -51,7 +51,6 @@
 
     <story>
 
-    [[ setLang('en_US') ]]
 
         <blockTable colWidths="310.0,132.0,310.0" style="TitleTable">
             <tr>
