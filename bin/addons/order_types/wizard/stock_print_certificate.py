@@ -66,9 +66,12 @@ class stock_print_certificate(osv.osv_memory):
                         'report_name': 'order.type.gift.certificate',
                         'datas': datas}
             else:
-                return {'type': 'ir.actions.report.xml',
-                        'report_name': 'order.type.donation.certificate',
-                        'datas': datas}
+                return {
+                    'type': 'ir.actions.report.xml',
+                    'report_name': 'order.type.donation.certificate',
+                    'datas': datas,
+                    'context': context,
+                }
             
         return True
     
