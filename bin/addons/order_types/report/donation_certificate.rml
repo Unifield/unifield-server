@@ -76,7 +76,6 @@
 
     <story>
         <para style="Standard">[[ repeatIn(objects,'o') ]]</para>
-        <para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>
         <para style="Standard">
             <font color="white"> </font>
         </para>
@@ -110,7 +109,13 @@
                 </td>
                 <td>
                     <para style="TextInformationWarning">
-                        The undersigned parties declare that the following listed items, with an approximate value of <b>[[ '%s' % (getTotalValue(o) or 0) ]]</b> [[ '%s' % (o.company_id.currency_id.currency_name) ]], are donated by Médecins Sans Frontières, without any exchange of currency.
+                        <section>
+                            The undersigned parties declare that the following listed items, with an approximate value of
+                        </section>
+                        <b>[[ '%s' % (getTotalValue(o) or 0) ]]</b> [[ '%s' % (o.company_id.currency_id.currency_name) ]]
+                        <section>
+                            , are donated by Médecins Sans Frontières, without any exchange of currency.
+                        </section>
                     </para>
                     <para style="TextInformationWarning">
                         Médecins Sans Frontières will bear no responsibility with regard to legal claims or claims for damage, injury, disability or death caused by the items donated or their use.

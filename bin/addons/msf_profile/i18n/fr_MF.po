@@ -97643,6 +97643,7 @@ msgstr "Nouvelle valeur"
 #: report:product.asset:0
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
 #: report:certificate.free.gift:0
+#: report:order.type.donation.certificate:0
 msgid "To:"
 msgstr "Vers:"
 
@@ -105358,6 +105359,11 @@ msgstr "De:"
 #: report:order.type.donation.certificate:0
 msgid "The undersigned parties declare that the following listed items, with an approximate value of"
 msgstr "Les parties, ci-contre nommées, déclarent que la liste suivante des marchandises, d'une valeur approximative de"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid ", are donated by Médecins Sans Frontières, without any exchange of currency."
+msgstr ", est donnée par Médecins Sans Frontières à titre gracieux."
 
 #. module: order_types
 #: report:order.type.donation.certificate:0
