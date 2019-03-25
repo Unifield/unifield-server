@@ -192,7 +192,7 @@
     </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Including products with stock <= 0 with movements in the last months')|x}</Data></Cell>
-        <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.display_0 and _('True (') + o.in_last_x_months + _(' months)') or _('False')|x}</Data></Cell>
+        <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${o.display_0 and o.in_last_x_months + _(' months') or _('N/A')|x}</Data></Cell>
     </Row>
 
    <%  total_value, nb_items, lines = getLines() %>

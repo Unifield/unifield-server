@@ -358,10 +358,6 @@ class update_received(osv.osv,fv_formatter):
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
     }
 
-    _defaults = {
-        'manually_ran': False,
-        'manually_set_run_date': False,
-    }
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 

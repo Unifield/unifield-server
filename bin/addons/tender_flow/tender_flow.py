@@ -2166,6 +2166,7 @@ SOURCE_DOCUMENT_MODELS = [
 
 class procurement_request_sourcing_document(osv.osv):
     _name = 'procurement.request.sourcing.document'
+    _inherit = 'procurement.request.sourcing.document'
     _table = 'procurement_request_sourcing_document2'
     _description = 'Sourcing Document'
     _rec_name = 'order_id'
@@ -2190,32 +2191,32 @@ class procurement_request_sourcing_document(osv.osv):
                 linked_model AS linked_model
             FROM (
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, CASE WHEN p.rfq_ok = 't' THEN 'rfq' ELSE 'po' END AS linked_model
-                FROM purchase_order_line pl, purchase_order p, sale_order_line sl
-                WHERE pl.order_id = p.id AND pl.linked_sol_id = sl.id AND sl.procurement_request = True
+                FROM purchase_order_line pl, purchase_order p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND pl.order_id = p.id AND pl.linked_sol_id = sl.id AND so.procurement_request = True
                 GROUP BY p.id, sl.order_id
 
                 UNION
 
                 SELECT t.id AS linked_id, sl.order_id AS order_id, t.name AS linked_name, 'tender' AS linked_model
-                FROM tender_line tl, tender t, sale_order_line sl 
-                WHERE tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND sl.procurement_request = True
+                FROM tender_line tl, tender t, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND so.procurement_request = True
                 GROUP BY t.id, sl.order_id, t.name
 
                 UNION
 
-                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name,
                     CASE WHEN p.type = 'out' AND p.subtype = 'standard' THEN 'out' ELSE 'pick' END AS linked_model
-                FROM stock_move m, stock_picking p, sale_order_line sl
-                WHERE m.picking_id = p.id AND m.sale_line_id = sl.id AND sl.procurement_request = True 
+                FROM stock_move m, stock_picking p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.sale_line_id = sl.id AND so.procurement_request = True
                     AND p.type = 'out' AND p.subtype in ('standard', 'picking')
                 GROUP BY p.id, sl.order_id, p.name
 
                 UNION
 
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 'int' AS linked_model
-                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl
-                WHERE m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id 
-                    AND sl.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
+                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id
+                    AND so.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
                 GROUP BY p.id, sl.order_id, p.name
                 ) AS subq
             )''')
