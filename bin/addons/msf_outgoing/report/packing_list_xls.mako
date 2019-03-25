@@ -415,7 +415,7 @@
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
-    <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s17"><Data ss:Type="String">${(p['ppl'].sale_id and p['ppl'].sale_id.partner_shipping_id and (p['ppl'].sale_id.partner_shipping_id.phone or p['ppl'].sale_id.partner_shipping_id.mobile) or '')|x}</Data></Cell>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s125"/>
     <Cell ss:StyleID="s118"/>
