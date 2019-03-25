@@ -105724,7 +105724,7 @@ msgstr "Il n'y a aucun produit stoppé"
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
 msgid "Unifield Status"
-msgstr "Satut Unifield"
+msgstr "Statut Unifield"
 
 #. module: product_attributes
 #: model:product.cold_chain,name:product_attributes.cold_1
