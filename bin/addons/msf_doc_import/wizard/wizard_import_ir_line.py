@@ -116,13 +116,11 @@ class wizard_import_ir_line(osv.osv_memory):
                                                                    currency_index, order_currency_code)
             except Exception as e:
                 lines_to_correct = -1
-                msg = "An error occurred when the system was checking the "\
-                      "currency value of data. Error raised: %s" % str(e)
+                msg = _("An error occurred when the system was checking the currency value of data. Error raised: %s") % str(e)
                 error_list.append(msg)
             if lines_to_correct > 0:
-                msg = "You can not import this file because it contains" \
-                    " line(s) with currency not of the order currency (%s)" % (
-                        order_currency_code, )
+                msg = _("You can not import this file because it contains line(s) with currency not of the order currency (%s)") % (
+                    order_currency_code, )
                 error_list.append(msg)
 
             if not error_list:
