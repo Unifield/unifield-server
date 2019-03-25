@@ -74708,8 +74708,9 @@ msgstr "Pacific/Kwajalein"
 #: view:purchase.order.confirm.wizard:0
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:wizard.import.ppl.to.create.ship:0
 msgid "Close window"
-msgstr "Ferme la fenêtre"
+msgstr "Fermer la fenêtre"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:968
@@ -104307,11 +104308,6 @@ msgid "There is %s lines in the file and %s lines in %s. Please import the same 
 ""
 msgstr "Il y a %s lignes dans le fichier et %s lignes dans %s. Veuillez importer le même nombre de lignes.\n"
 ""
-
-#. module: msf_doc_import
-#: view:wizard.import.ppl.to.create.ship:0
-msgid "Close window"
-msgstr "Fermer la fenêtre"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:83
