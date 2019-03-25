@@ -103,17 +103,19 @@ class product_supplier(osv.osv):
             ('model', '=', 'product.template'),
             ('res_id', '=', res_id),
         ]
-
+        field_id = False
         log_sequence = audit_seq_obj.search(cr, uid, domain)
         if log_sequence:
             log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
             log = log_seq.get_id(code_or_id='id')
 
-        if name == 'seller_ids' and context.get('real_user'):
-            user_id = self.pool.get('res.users').browse(cr, uid, context['real_user'], fields_to_fetch=['id'], context=context).id
-        else:
-            user_id = uid
-
+        user_id = uid
+        if name == 'seller_ids':
+            field_id = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.template'), ('name', '=', 'seller_ids')], limit=1, context=context)
+            if field_id:
+                field_id = field_id[0]
+            if context.get('real_user'):
+                user_id = context['real_user']
         vals = {
             'user_id': user_id,
             'method': 'write',
@@ -122,6 +124,7 @@ class product_supplier(osv.osv):
             'res_id': res_id,
             'fct_object_id': fct_object_id,
             'fct_res_id': fct_res_id,
+            'field_id': field_id or False,
             'sub_obj_name': sub_obj_name,
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'field_description': field_description,
@@ -906,11 +909,12 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, fields_to_fetch=['field_id', 'object_id', 'fct_object_id', 'res_id', 'name', 'field_description'], context=context):
             res[line.id] = False
-
             # Translation of field name
             if line.field_id:
-                field_name = '%s,%s' % (line.object_id.model, line.field_id.name)
-                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                field_name = ['%s,%s' % (line.object_id.model, line.field_id.name)]
+                if line.object_id.model == 'product.template':
+                    field_name.append('product.product,%s' % (line.field_id.name))
+                tr_ids = tr_obj.search(cr, uid, [('name', 'in', field_name),
                                                  ('lang', '=', lang),
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
