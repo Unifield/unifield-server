@@ -35,6 +35,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         super(ir_follow_up_location_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
             'getLines': self._get_lines,
@@ -51,6 +52,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
         else:
             self.back_browse = None
+
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
     def _get_orders(self, report, only_bo=False):
         orders = []

@@ -1004,6 +1004,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
         super(parser_po_follow_up_xls, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'getHeaderLine': self.getHeaderLine,
             'getHeaderLine2': self.getHeaderLine2,
             'getReportHeaderLine1': self.getReportHeaderLine1,
@@ -1015,7 +1016,8 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getLineStyle': self.getLineStyle,
         })
 
-
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
 
 class po_follow_up_report_xls(SpreadsheetReport):

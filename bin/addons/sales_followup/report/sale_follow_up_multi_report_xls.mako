@@ -105,8 +105,24 @@
         </Borders>
         <Font ss:Size="8" ss:Color="#0000FF"/>
     </Style>
+    <Style ss:ID="line_left_date_fr">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <NumberFormat ss:Format="Short Date" />
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#0000FF"/>
+    </Style>
 
     <Style ss:ID="short_date">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
+        <NumberFormat ss:Format="dd\-mmm\-yyyy" />
+        <Font ss:Size="8" ss:Color="#0000FF" />
+    </Style>
+    <Style ss:ID="short_date_fr">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
         <NumberFormat ss:Format="Short Date" />
         <Font ss:Size="8" ss:Color="#0000FF" />
@@ -146,7 +162,7 @@
     </Style>
     <Style ss:ID="line_left_date_grey">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="Short Date" />
+        <NumberFormat ss:Format="dd\-mmm\-yyyy" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -155,11 +171,16 @@
         </Borders>
         <Font ss:Size="8" ss:Color="#747474"/>
     </Style>
-
-    <Style ss:ID="short_date_grey">
-        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
+    <Style ss:ID="line_left_date_grey_fr">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="Short Date" />
-        <Font ss:Size="8" ss:Color="#747474" />
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#747474"/>
     </Style>
 </Styles>
 
@@ -237,7 +258,11 @@
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date start:')|x}</Data></Cell>
             % if isDate(r.start_date):
-            <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.start_date|n}T00:00:00.000</Data></Cell>
+                % if getLang() == 'fr_MF':
+                <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.start_date|n}T00:00:00.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.start_date|n}T00:00:00.000</Data></Cell>
+                % endif
             % else:
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
@@ -248,7 +273,11 @@
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date end:')|x}</Data></Cell>
             % if isDate(r.end_date):
-            <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.end_date|n}T00:00:00.000</Data></Cell>
+                % if getLang() == 'fr_MF':
+                <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.end_date|n}T00:00:00.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.end_date|n}T00:00:00.000</Data></Cell>
+                % endif
             % else:
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
@@ -259,7 +288,11 @@
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date of the request:')|x}</Data></Cell>
             % if r.report_date and isDateTime(r.report_date):
-            <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.report_date[0:10]|n}T${r.report_date[11:19]|n}.000</Data></Cell>
+                % if getLang() == 'fr_MF':
+                <Cell ss:StyleID="short_date_fr" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.report_date[0:10]|n}T${r.report_date[11:19]|n}.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.report_date[0:10]|n}T${r.report_date[11:19]|n}.000</Data></Cell>
+                % endif
             % else:
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             % endif
@@ -318,12 +351,20 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
-                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if o.delivery_requested_date and isDate(o.delivery_requested_date):
-                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
@@ -351,17 +392,29 @@
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
                     % if line.get('cdd') and isDate(line['cdd']):
-                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if line.get('eta') and isDate(line['eta']):
-                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if line.get('rts') and isDate(line['rts']):
-                    <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
@@ -373,12 +426,20 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
-                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if o.delivery_requested_date and isDate(o.delivery_requested_date):
-                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
@@ -414,17 +475,29 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
                     % endif
                     % if line.get('cdd') and isDate(line['cdd']):
-                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if line.get('eta') and isDate(line['eta']):
-                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['eta']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
                     % if line.get('rts') and isDate(line['rts']):
-                    <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % if getLang() == 'fr_MF':
+                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % else:
+                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['rts']|n}T00:00:00.000</Data></Cell>
+                        % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
