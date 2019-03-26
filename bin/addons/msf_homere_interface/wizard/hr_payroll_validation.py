@@ -213,7 +213,8 @@ class hr_payroll_validation(osv.osv_memory):
             # create one JE per currency (note that the JE currency_id depends on the currency of its lines)
             am_by_curr = {}
             for curr in currency_list:
-                move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
+                move_vals_copy = move_vals.copy()  # avoids using the same Sequence for the different moves
+                move_id = self.pool.get('account.move').create(cr, uid, move_vals_copy, context=context)
                 am_by_curr[curr] = move_id
 
             # Create lines into this move
