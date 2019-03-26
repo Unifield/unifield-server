@@ -214,9 +214,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             is_shipment_done = move.picking_id.state == 'done'
                             packing = '-'
                         if not grouped:
-                            key = (packing, False, move.product_uom.name)
+                            key = (packing, s_out and shipment or False, move.product_uom.name)
                         else:
-                            key = (packing, False, move.product_uom.name, line.line_number)
+                            key = (packing, s_out and shipment or False, move.product_uom.name, line.line_number)
                         if not only_bo:
                             data.update({
                                 'packing': packing,
