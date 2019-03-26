@@ -598,7 +598,8 @@ class hr_payroll_import(osv.osv_memory):
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
                                 ('state', '=', 'draft'),
-                                ('name', '=', 'Payroll rounding')
+                                ('name', '=', 'Payroll rounding'),
+                                ('currency_id', '=', header_vals['currency_id']),
                             ])
                         if not pr_ids:
                             # no SAGA BALANCE rounding line in file
