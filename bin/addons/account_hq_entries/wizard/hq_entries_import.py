@@ -178,6 +178,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
             if cc_id:
+                # check that the CC or its parent is targeted to an instance
+                if not hq_obj.get_target_id(cr, uid, cc_id, context=context):
+                    raise osv.except_osv(_('Error'), _('The Cost Center "%s" (or its parent) must be "targeted" to a Proprietary Instance.') % (cost_center,))
                 aa_check_ids.append(cc_id)
 
         vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id, 'free_1_id': free1_id, 'free_2_id': free2_id,})

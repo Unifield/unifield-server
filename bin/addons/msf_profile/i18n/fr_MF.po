@@ -20463,12 +20463,6 @@ msgstr "Propriétés des Comptes Client"
 msgid "Selected Version is for a different product."
 msgstr "Version Sélectionnée est pour un produit différent."
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:98
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: account
 #: model:process.transition,name:account.process_transition_confirmstatementfromdraft0
 msgid "Confirm statement"
@@ -105319,6 +105313,24 @@ msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
 #, python-format
 msgid "File line %s: Column \"Item\" must be an integer"
 msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:183
+#, python-format
+msgid "The Cost Center \"%s\" (or its parent) must be \"targeted\" to a Proprietary Instance."
+msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propriétaire \"cible\"."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:510
+#, python-format
+msgid "The Cost Center of the HQ entry \"%s\" doesn't exist in the system."
+msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le système."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:516
+#, python-format
+msgid "The Cost Center %s used in the HQ entry \"%s\" is inactive."
+msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif."
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:24
