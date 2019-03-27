@@ -385,26 +385,26 @@ class purchase_order(osv.osv):
 
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Return the number of line(s) for the PO
+        Return the number of non-cancelled line(s) for the PO
         '''
-        pol_obj = self.pool.get('purchase.order.line')
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}.fromkeys(ids, 0)
-        line_number_by_order = {}
+        res = {}
+        for po_id in ids:
+            res[po_id] = 0
 
-        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids),  ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
-        for l in pol_obj.read(cr, uid, lines, ['order_id', 'line_number'], context=context):
-            line_number_by_order.setdefault(l['order_id'][0], set())
-            line_number_by_order[l['order_id'][0]].add(l['line_number'])
-
-        for po_id, ln in line_number_by_order.iteritems():
-            res[po_id] = len(ln)
+        cr.execute("""
+            SELECT order_id, COUNT(*) FROM purchase_order_line 
+            WHERE order_id IN %s AND state NOT IN ('cancel', 'cancel_r') GROUP BY order_id
+        """, (tuple(ids),))
+        for po in cr.fetchall():
+            res[po[0]] = po[1]
 
         return res
-
 
     def _get_less_advanced_pol_state(self, cr, uid, ids, field_name, arg, context=None):
         """

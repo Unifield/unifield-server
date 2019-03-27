@@ -521,28 +521,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Return the number of line(s) for the SO
+        Return the number of non-cancelled line(s) for the SO
         '''
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}.fromkeys(ids, 0)
-        line_number_by_order = {}
+        res = {}
+        for so_id in ids:
+            res[so_id] = 0
 
-        lines = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
-        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number'], context=context):
-            line_number_by_order.setdefault(l['order_id'][0], set())
-            line_number_by_order[l['order_id'][0]].add(l['line_number'])
-
-        for so_id, ln in line_number_by_order.iteritems():
-            res[so_id] = len(ln)
+        cr.execute("""
+            SELECT order_id, COUNT(*) FROM sale_order_line 
+            WHERE order_id IN %s AND state NOT IN ('cancel', 'cancel_r') GROUP BY order_id
+        """, (tuple(ids),))
+        for so in cr.fetchall():
+            res[so[0]] = so[1]
 
         return res
-
-
 
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
