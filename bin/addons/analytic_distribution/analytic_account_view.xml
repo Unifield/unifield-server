@@ -111,6 +111,17 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Cost Centers" attrs="{'invisible': [('category', '!=', 'DEST')]}">
+                            <field name="allow_all_cc" colspan="4" on_change="on_change_allow_all_cc(allow_all_cc, dest_cc_ids)"/>
+                            <button name="button_dest_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
+                            <separator/>
+                            <field name="dest_cc_ids" nolabel="1" colspan="4" on_change="on_change_dest_cc_ids(dest_cc_ids)">
+                                <tree string="Cost Centers">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
                     </page>
                 </data>
             </field>

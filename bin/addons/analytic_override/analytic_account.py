@@ -228,11 +228,16 @@ class analytic_account(osv.osv):
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'intermission_restricted': fields.function(_get_fake, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
         'balance': fields.function(_debit_credit_bal_qtty, method=True, type='float', string='Balance', digits_compute=dp.get_precision('Account'), multi='debit_credit_bal_qtty'),
+        'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
+                                        'destination_id', 'cost_center_id', string='Cost Centers',
+                                        domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
+        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
     }
 
     _defaults ={
         'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
+        'allow_all_cc': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -302,6 +307,30 @@ class analytic_account(osv.osv):
         parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
         res['value']['parent_id'] = parent
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
+        return res
+
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, dest_cc_ids, context=None):
+        """
+        If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
+        informs him that he has to remove the CC first
+        """
+        res = {}
+        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # i.e. [(6, 0, [1, 2])]
+            warning = {
+                'title': _('Warning!'),
+                'message': _('Please remove the Cost Centers selected before ticking this box.')
+            }
+            res['warning'] = warning
+            res['value'] = {'allow_all_cc': False, }
+        return res
+
+    def on_change_dest_cc_ids(self, cr, uid, ids, dest_cc_ids, context=None):
+        """
+        If at least a CC is selected, unticks the box "Allow all Cost Centers"
+        """
+        res = {}
+        if dest_cc_ids and dest_cc_ids[0][2]:  # i.e. [(6, 0, [1, 2])]
+            res['value'] = {'allow_all_cc': False, }
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -565,6 +594,13 @@ class analytic_account(osv.osv):
 
     def button_cc_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
+        return True
+
+    def button_dest_cc_clear(self, cr, uid, ids, context=None):
+        """
+        Removes all Cost Centers selected in the Destination view
+        """
+        self.write(cr, uid, ids, {'dest_cc_ids': [(6, 0, [])]}, context=context)
         return True
 
     def button_dest_clear(self, cr, uid, ids, context=None):
