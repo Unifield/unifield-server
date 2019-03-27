@@ -11,6 +11,7 @@
                 <tree string="" editable="top">
                     <field name="is_percentage_amount_touched" invisible="1" />
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]"
+                           string="Cost Center"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
