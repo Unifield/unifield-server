@@ -30,6 +30,7 @@
     "update_xml" : [
         'msf_export_report.xml',
         'wizard/po_follow_up_view.xml',
+        'wizard/wizard_pick_import.xml',
         'po_follow_up_menu.xml',
         'report/po_follow_up_report.xml',
     ],
