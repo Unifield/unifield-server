@@ -10,8 +10,9 @@
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
                     <field name="is_percentage_amount_touched" invisible="1" />
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]" string="Cost Center" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
@@ -25,9 +26,13 @@
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
                     <field name="is_percentage_amount_touched" invisible="1" />
-                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
-                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
+                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="analytic_id"
+                           domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]"
+                           string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
