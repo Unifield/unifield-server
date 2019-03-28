@@ -2104,17 +2104,16 @@ class purchase_order(osv.osv):
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
         else:
             sol = pol.linked_sol_id
-            if sol:
-                if sol.order_id and not sol.order_id.procurement_request:
-                    # source a FO line => go to Cross Dock (set at PO header)
-                    pass
-                elif pol.product_id.type == 'service_recep':
-                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                elif pol.product_id.type == 'consu':
-                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                elif sol.order_id and sol.order_id.location_requestor_id.usage != 'customer':
-                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-
+            if sol and sol.order_id and not sol.order_id.procurement_request:
+                # source a FO line => go to Cross Dock (set at PO header)
+                pass
+            elif pol.product_id.type == 'service_recep':
+                dest = self.pool.get('stock.location').get_service_location(cr, uid)
+            elif pol.product_id.type == 'consu':
+                dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            elif sol and sol.order_id and sol.order_id.location_requestor_id.usage != 'customer':
+                dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+            # please also check in delivery_mechanism/delivery_mechanism.py _get_values_from_line to set location_dest_id
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
             'product_id': pol.product_id.id,
@@ -2146,6 +2145,7 @@ class purchase_order(osv.osv):
         ]
 
         return move_obj.create(cr, uid, values, context=ctx)
+
 
 
     def create_new_int_line(self, cr, uid, internal_id, pol, incoming_move_id=False, context=None):
