@@ -47622,6 +47622,12 @@ msgstr "Base imposable différente !\n"
 msgid "Posting of the Journal Entry. This may take a while..."
 msgstr "Comptabilisation de l'Ecriture Comptable. Cela peut prendre un certain temps..."
 
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:307
+#, python-format
+msgid "Posting of the Journal Entries. This may take a while..."
+msgstr "Comptabilisation des Ecritures Comptables. Cela peut prendre un certain temps..."
+
 #. module: account
 #: model:process.transition,note:account.process_transition_statemententries0
 msgid "Manual or automatic creation of payment entries according to the statements"
@@ -105335,3 +105341,25 @@ msgid "\n"
 msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:580
+#, python-format
+msgid "Line %s: %s\n"
+""
+msgstr "Ligne %s : %s\n"
+""
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:585
+#, python-format
+msgid "%sFile %s:\n"
+"%s"
+msgstr "%sFichier %s :\n"
+"%s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:574
+#, python-format
+msgid "Several files contain lines with the currency %s. Please use one file per currency."
+msgstr "Plusieurs fichiers contiennent des lignes avec la devise %s. Veuillez utiliser un fichier par devise."
