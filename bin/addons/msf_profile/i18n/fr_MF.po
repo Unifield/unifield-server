@@ -20463,12 +20463,6 @@ msgstr "Propriétés des Comptes Client"
 msgid "Selected Version is for a different product."
 msgstr "Version Sélectionnée est pour un produit différent."
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:98
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: account
 #: model:process.transition,name:account.process_transition_confirmstatementfromdraft0
 msgid "Confirm statement"
