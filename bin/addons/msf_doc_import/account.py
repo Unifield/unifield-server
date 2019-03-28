@@ -194,6 +194,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
             # Check wizard data
+            ad_obj = self.pool.get('analytic.distribution')
             period_obj = self.pool.get('account.period')
             period_ctx = context.copy()
             period_ctx['extend_december'] = True
@@ -484,6 +485,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                         if r_destination not in [d.id for d in account.destination_ids]:
                             errors.append(_('Line %s. The destination %s is not compatible with the account %s.') %
                                           (current_line_num, line[cols['Destination']], line[cols['G/L Account']]))
+                            continue
+                        if not ad_obj.check_dest_cc_compatibility(cr, uid, r_destination, r_cc, context=context):
+                            errors.append(_('Line %s. The Cost Center %s is not compatible with the Destination %s.') %
+                                          (current_line_num, line[cols['Cost Centre']], line[cols['Destination']]))
                             continue
                         # if the Fund. Pool used is NOT "PF" check the compatibility with the (account, dest) and the CC
                         if r_fp != msf_fp_id:
