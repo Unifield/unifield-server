@@ -1768,7 +1768,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type == 'loan':
+            if pol.order_id.order_type in ['loan', 'in_kind']:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
