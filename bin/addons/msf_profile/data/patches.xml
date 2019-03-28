@@ -407,6 +407,9 @@
             <field name="method">us_5199_fix_cancel_partial_move_sol_id</field>
         </record>
 
+        <record id="us_5667_remove_contract_workflow" model="patch.scripts">
+            <field name="method">us_5667_remove_contract_workflow</field>
+        </record>
 
     </data>
 </openerp>

@@ -128,7 +128,37 @@ class patch_scripts(osv.osv):
                 if instance.level == 'section' and instance.code == 'CH':
                     cr.execute('''update ir_model_data set touched='[''default_code'']', last_modification=NOW() where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
                     self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
+        return True
 
+    def us_5667_remove_contract_workflow(self, cr, uid, *a, **b):
+        """
+        Deletes the workflow related to Financing Contracts (not used anymore)
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE signal IN ('contract_open', 'contract_soft_closed', 'contract_hard_closed', 'contract_reopen')
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
         return True
 
     # UF12.0
