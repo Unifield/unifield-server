@@ -26,6 +26,22 @@ class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
     _inherit = 'analytic.distribution'
 
+    def check_dest_cc_compatibility(self, cr, uid, destination_id, cost_center_id, context=None):
+        """
+        Checks the compatibility between the Destination and the Cost Center (cf CC tab in the Destination form).
+        Returns False is they aren't compatible.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if destination_id and cost_center_id:
+            dest = analytic_acc_obj.browse(cr, uid, destination_id, fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_ids'], context=context)
+            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category'], context=context)
+            if dest and cc and dest.category == 'DEST' and cc.category == 'OC' and not dest.allow_all_cc and \
+                    cc.id not in [c.id for c in dest.dest_cc_ids]:
+                return False
+        return True
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None):
         """
         Return distribution state
@@ -51,16 +67,22 @@ class analytic_distribution(osv.osv):
         except ValueError:
             fp_id = 0
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
-        # Check Cost Center lines with destination/account link
+        # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
             if cc_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
+            if not self.check_dest_cc_compatibility(cr, uid, cc_line.destination_id.id,
+                                                    cc_line.analytic_id and cc_line.analytic_id.id or False, context=context):
+                return 'invalid'
         # Check Funding pool lines regarding:
         # - destination / account
+        # - destination / cost center
         # - If analytic account is MSF Private funds
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
             if fp_line.destination_id.id not in account.get('destination_ids', []):
+                return 'invalid'
+            if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
