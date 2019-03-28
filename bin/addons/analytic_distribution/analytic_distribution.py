@@ -118,6 +118,9 @@ class analytic_distribution(osv.osv):
         # Check that destination is compatible with account
         if destination_id not in [x.id for x in account.destination_ids]:
             return 'invalid', _('Destination not compatible with account')
+        # Check that Destination and Cost Center are compatible
+        if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
+            return 'invalid', _('Cost Center not compatible with destination')
         if not is_private_fund:
             # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
             if cost_center_id not in [x.id for x in fp.cost_center_ids]:
