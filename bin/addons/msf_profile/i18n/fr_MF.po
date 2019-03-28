@@ -39517,7 +39517,7 @@ msgstr "There is one revision available."
 #. module: msf_budget
 #: view:wizard.budget.import.finish:0
 msgid "The budget has been correctly uploaded."
-msgstr "Le budget n'a pas été correctement téléchargé."
+msgstr "Le budget a été correctement téléchargé."
 
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, sale, base, base_report_designer, msf_button_access_rights
 #: view:account.installer:0
