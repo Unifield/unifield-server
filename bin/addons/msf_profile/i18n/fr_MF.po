@@ -105363,3 +105363,9 @@ msgstr "%sFichier %s :\n"
 #, python-format
 msgid "Several files contain lines with the currency %s. Please use one file per currency."
 msgstr "Plusieurs fichiers contiennent des lignes avec la devise %s. Veuillez utiliser un fichier par devise."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:183
+#, python-format
+msgid "The Cost Center \"%s\" (or its parent) must be \"targeted\" to a Proprietary Instance."
+msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propriétaire \"cible\"."
