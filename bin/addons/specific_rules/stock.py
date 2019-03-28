@@ -103,13 +103,8 @@ class initial_stock_inventory(osv.osv):
                     # if no production lot, we create a new one
                     prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', inventory_line.prodlot_name),
                                                                ('type', '=', 'standard'),
-                                                               ('product_id', '=', inventory_line.product_id.id)], context=context)
-                    if prodlot_ids:
-                        # Prevent creation of two batch with the same name/product but different expiry date
-                        prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0])
-                        if prodlot.life_date != inventory_line.expiry_date:
-                            life_date = self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=prodlot.life_date)
-                            raise osv.except_osv(_('Error'), _('The batch number \'%s\' is already in the system but its expiry date is %s') % (prodlot.name, life_date))
+                                                               ('product_id', '=', inventory_line.product_id.id),
+                                                               ('life_date', '=', inventory_line.expiry_date)], context=context)
                     prodlot_id = prodlot_ids and prodlot_ids[0] or False
                     # no prodlot, create a new one
                     if not prodlot_ids:

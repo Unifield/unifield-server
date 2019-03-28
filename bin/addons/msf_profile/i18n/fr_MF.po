@@ -42080,13 +42080,6 @@ msgstr "Lignes de compte rendu"
 msgid "Translation Value"
 msgstr "Valeur de la traduction"
 
-#. module: specific_rules
-#: code:addons/specific_rules/stock.py:112
-#: code:addons/specific_rules/stock.py:300
-#, python-format
-msgid "The batch number '%s' is already in the system but its expiry date is %s"
-msgstr "Le numéro de lot '%s' est déjà dans le système mais sa date d'expiration est %s"
-
 #. module: sync_so
 #: code:addons/sync_so/picking_rw.py:80
 #, python-format
