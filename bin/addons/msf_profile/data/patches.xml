@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF12.1 -->
+        <record id="us_5199_fix_cancel_partial_move_sol_id" model="patch.scripts">
+            <field name="method">us_5199_fix_cancel_partial_move_sol_id</field>
+        </record>
+
         <!-- UF12.0 -->
         <record id="us_5724_set_previous_fy_dates_allowed" model="patch.scripts">
             <field name="method">us_5724_set_previous_fy_dates_allowed</field>
