@@ -351,7 +351,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             job_id = job_obj.create(cr, uid, params, context=context)
             self.infolog(cr, uid, _('%s :: New import job created') % self.read(cr, uid, import_id, ['name'])['name'])
             cr.commit()
-            res = job_obj.process_import(cr, uid, [job_id], context=context)
+            res = job_obj.process_import(cr, uid, import_id, job_id, context=context)
             cr.commit()
 
         return res

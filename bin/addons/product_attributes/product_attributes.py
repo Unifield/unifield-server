@@ -1840,7 +1840,7 @@ class product_template(osv.osv):
             help="The volume in dm3.",
         ),
         'volume_updated': fields.boolean(
-            string='Volume updated',
+            string='Volume updated (deprecated)',
             readonly=True,
         ),
         'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
@@ -1851,29 +1851,6 @@ class product_template(osv.osv):
         'volume_updated': False,
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Update the volume from dm³ to m³ if the volume was not
-        yet updated.
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param ids: List of ID of product.template to update
-        :param vals: Values to apply on list of ID
-        :param context: Context of the call
-        :return: super write() method.
-        """
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if 'volume' in vals and not vals.get('volume_updated', False):
-            del vals['volume']
-
-        return super(product_template, self).write(cr, uid, ids, vals, context=context)
 
 product_template()
 

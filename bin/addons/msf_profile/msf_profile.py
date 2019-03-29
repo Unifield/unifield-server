@@ -52,7 +52,123 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
+    def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
+        ''' OCBHQ: volume has not been converted to dm3 on instances '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.name == 'OCBHQ':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''volume'']' where module='sd' and name in ('product_TVECZTF0058','product_TVECZTF0051','product_TVECZBE0175','product_TVEAZTF0086','product_TVEAZTF0057','product_STRYZ597044S','product_STRYZ597004S','product_STRYZ596001S','product_STRYZ33625100','product_STRYZ33625080','product_SCTDZBE0102','product_SCTDZBE0090','product_PTOOZBE0502','product_PTOOPLIE01E','product_PSAFZBE0109','product_PSAFZBE0076','product_PPAIZBE0010','product_PIDEZTF0073','product_PHYGZBE0022','product_PELEZBE1287','product_PELEZBE1279','product_PCOOZTF0014','product_PCOOZBE0039','product_PCOOZBE0038','product_PCOMZBE0518','product_L028AIDG01E','product_KADMZBE0031','product_EPHYCRUT1C-','product_EMEQBOTP01-','product_ELAEZTF0809','product_ELAEZBE0941','product_ELAEZBE0898','product_EHOEZBE1052','product_EHOEZBE0907','product_EDIMZBE0103','product_EDIMZBE0102','product_EDIMZBE0101','product_EDIMZBE0099','product_EDIMZBE0061','product_EANEZTF0081','product_EANEZTF0079','product_EANEZBE0167','product_DEXTZBE0031','product_ALIFZTF0029','product_ADAPZBE0460','product_41400-35031')''')
+            self._logger.warn('Trigger sync updates on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5507_set_synchronize(self, cr, uid, *a, **b):
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("update res_users set synchronize='t' where create_uid=%s", (sync_id,))
+        self._logger.warn('Set synchronize on  %s users.' % (cr.rowcount,))
+        return True
+
+    def us_5480_correct_partner_fo_default_currency(self, cr, uid, *a, **b):
+        """
+        Sets FO default currency = PO default currency for all external partners where these currencies are different
+        """
+        partner_obj = self.pool.get('res.partner')
+        pricelist_obj = self.pool.get('product.pricelist')
+        partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])])
+        partner_count = 0
+        sync = 0
+        for partner in partner_obj.browse(cr, uid, partner_ids,
+                                          fields_to_fetch=['property_product_pricelist_purchase',
+                                                           'property_product_pricelist',
+                                                           'locally_created']):
+            if partner.property_product_pricelist_purchase and partner.property_product_pricelist \
+                    and partner.property_product_pricelist_purchase.currency_id.id != partner.property_product_pricelist.currency_id.id:
+                # search for the "Sale" pricelist having the same currency as the "Purchase" pricelist currently used
+                pricelist_dom = [('type', '=', 'sale'),
+                                 ('currency_id', '=', partner.property_product_pricelist_purchase.currency_id.id)]
+                pricelist_ids = pricelist_obj.search(cr, uid, pricelist_dom, limit=1)
+                if pricelist_ids:
+                    sql = """
+                          UPDATE ir_property
+                          SET value_reference = %s
+                          WHERE name = 'property_product_pricelist'
+                          AND res_id = %s;
+                          """
+                    cr.execute(sql, ('product.pricelist,%s' % pricelist_ids[0], 'res.partner,%s' % partner.id))
+                    if partner.locally_created:
+                        cr.execute("update ir_model_data set last_modification=NOW(), touched='[''property_product_pricelist'']' where model='res.partner' and module='sd' and res_id = %s", (partner.id,))
+                        sync += 1
+                    partner_count += 1
+        self._logger.warn('FO default currency modified for %s partner(s), %s sync generated' % (partner_count, sync))
+        return True
+
     # UF11.1
+    def us_5559_set_pricelist(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # new instance nothing to fix
+            return True
+
+        data_obj = self.pool.get('ir.model.data')
+        po_id = data_obj.get_object_reference(cr, uid, 'purchase', 'list0')[1]
+        so_id = data_obj.get_object_reference(cr, uid, 'product', 'list0')[1]
+
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if c.currency_id and c.currency_id.name =='CHF':
+            ch_po_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_purchase')[1]
+            ch_so_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_sale')[1]
+            to_fix = [(po_id, so_id, ['section']), (ch_po_id, ch_so_id, ['intermission'])]
+        else:
+            to_fix = [(po_id, so_id, ['section', 'intermission'])]
+
+        partner = self.pool.get('res.partner')
+
+
+        for pl_po_id, pl_so_id, domain in to_fix:
+            partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', domain)])
+
+
+            if partner_ids:
+                po_pricelist = 'product.pricelist,%s' % pl_po_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist_purchase' and value_reference!=%s and res_id in %s''', (po_pricelist, po_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('PO Currency changed on %d partners' % (cr.rowcount,))
+
+
+                so_pricelist = 'product.pricelist,%s' % pl_so_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist' and value_reference!=%s and res_id in %s''', (so_pricelist, so_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('FO Currency changed on %d partners' % (cr.rowcount,))
+
+        return True
+
     def us_5425_reset_amount_currency(self, cr, uid, *a, **b):
         """
         Sets to zero the JI "amount_currency" which wrongly have a value
@@ -2076,35 +2192,6 @@ class patch_scripts(osv.osv):
                 where module='sd' and model='msf_button_access_rights.button_access_rule'
             ''')
 
-    def update_volume_patch(self, cr, uid, *a, **b):
-        """
-        Update the volume from dm³ to m³ for OCB databases
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param a: Unnamed parameters
-        :param b: Named parameters
-        :return: True
-        """
-        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance:
-            while instance.level != 'section':
-                if not instance.parent_id:
-                    break
-                instance = instance.parent_id
-
-        if instance and instance.name != 'OCBHQ':
-            cr.execute("""
-                UPDATE product_template
-                SET volume_updated = True
-                WHERE volume_updated = False
-            """)
-        else:
-            cr.execute("""
-                UPDATE product_template
-                SET volume = volume*1000,
-                    volume_updated = True
-                WHERE volume_updated = False
-            """)
 
     def us_750_patch(self, cr, uid, *a, **b):
         """
@@ -2927,6 +3014,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -2959,6 +3050,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],

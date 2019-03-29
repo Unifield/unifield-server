@@ -79,6 +79,8 @@ class split_sale_order_line_wizard(osv.osv_memory):
                     'product_uom_qty': split.new_line_qty,
                     'original_line_id': split.sale_line_id.id,
                     'sync_linked_pol': False,
+                    'resourced_original_line': split.sale_line_id.resourced_original_line and split.sale_line_id.resourced_original_line.id or False,
+                    'resourced_original_remote_line': split.sale_line_id.resourced_original_remote_line,
                 }
                 # following new sequencing policy, we check if resequencing occur (behavior 1).
                 # if not (behavior 2), the split line keeps the same line number as original line

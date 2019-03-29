@@ -871,6 +871,8 @@ class finance_tools(osv.osv):
                             show_date=False, custom_msg=False, context=None):
         """
         Checks that posting date >= document date
+        Depending on the config made in the Reconfigure Wizard, can also check that the document date is included
+        in the same FY as the related posting date.
 
         :type document_date: orm date
         :type posting_date: orm date
@@ -894,6 +896,20 @@ class finance_tools(osv.osv):
                     msg = _(
                         'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
+
+        # if the system doesn't allow doc dates from previous FY, check that this condition is met
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if not setup or not setup.previous_fy_dates_allowed:
+            # 01/01/FY <= document date <= 31/12/FY
+            posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+            check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+            check_range_end = self.get_orm_date(31, 12, year=posting_date_obj.year)
+            if not (check_range_start <= document_date <= check_range_end):
+                if show_date:
+                    msg = _('Document date (%s) should be in posting date FY') % (document_date, )
+                else:
+                    msg = _('Document date should be in posting date FY')
+                raise osv.except_osv(_('Error'), msg)
 
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)
@@ -967,6 +983,7 @@ class user_rights_tools(osv.osv_memory):
                         error = [x[0] for x in cr.fetchall()]
                         if error:
                             raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
+
 
             if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
                 dom = [('imported_flag', '=', False)]
