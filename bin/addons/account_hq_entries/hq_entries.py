@@ -496,9 +496,31 @@ class hq_entries(osv.osv):
         # If destination given, search if given
         return res
 
+    def _check_cc(self, cr, uid, ids, context=None):
+        """
+        At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=['cost_center_id', 'date', 'name'], context=context):
+                if not hq_entry.cost_center_id:
+                    raise osv.except_osv(_('Warning'), _('The Cost Center of the HQ entry "%s" doesn\'t exist in the system.') % hq_entry.name)
+                elif hq_entry.date:  # posting date
+                    hq_date = hq_entry.date
+                    cc_date_start = hq_entry.cost_center_id.date_start
+                    cc_date_end = hq_entry.cost_center_id.date or False
+                    if (hq_date < cc_date_start) or (cc_date_end and hq_date >= cc_date_end):
+                        raise osv.except_osv(_('Warning'), _('The Cost Center %s used in the HQ entry "%s" is inactive.') %
+                                             (hq_entry.cost_center_id.code or '', hq_entry.name))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         new_id = super(hq_entries, self).create(cr, uid, vals, context)
         self._check_active_account(cr, uid, [new_id], context=context)
+        self._check_cc(cr, uid, [new_id], context=context)
         return new_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -531,6 +553,7 @@ class hq_entries(osv.osv):
         self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
         res = super(hq_entries, self).write(cr, uid, ids, vals, context)
         self._check_active_account(cr, uid, ids, context=context)
+        self._check_cc(cr, uid, ids, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

@@ -20463,12 +20463,6 @@ msgstr "Propriétés des Comptes Client"
 msgid "Selected Version is for a different product."
 msgstr "Version Sélectionnée est pour un produit différent."
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:98
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: account
 #: model:process.transition,name:account.process_transition_confirmstatementfromdraft0
 msgid "Confirm statement"
@@ -39517,7 +39511,7 @@ msgstr "There is one revision available."
 #. module: msf_budget
 #: view:wizard.budget.import.finish:0
 msgid "The budget has been correctly uploaded."
-msgstr "Le budget n'a pas été correctement téléchargé."
+msgstr "Le budget a été correctement téléchargé."
 
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, sale, base, base_report_designer, msf_button_access_rights
 #: view:account.installer:0
@@ -47621,6 +47615,12 @@ msgstr "Base imposable différente !\n"
 #, python-format
 msgid "Posting of the Journal Entry. This may take a while..."
 msgstr "Comptabilisation de l'Ecriture Comptable. Cela peut prendre un certain temps..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:307
+#, python-format
+msgid "Posting of the Journal Entries. This may take a while..."
+msgstr "Comptabilisation des Ecritures Comptables. Cela peut prendre un certain temps..."
 
 #. module: account
 #: model:process.transition,note:account.process_transition_statemententries0
@@ -105335,3 +105335,43 @@ msgid "\n"
 msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:580
+#, python-format
+msgid "Line %s: %s\n"
+""
+msgstr "Ligne %s : %s\n"
+""
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:585
+#, python-format
+msgid "%sFile %s:\n"
+"%s"
+msgstr "%sFichier %s :\n"
+"%s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:574
+#, python-format
+msgid "Several files contain lines with the currency %s. Please use one file per currency."
+msgstr "Plusieurs fichiers contiennent des lignes avec la devise %s. Veuillez utiliser un fichier par devise."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:183
+#, python-format
+msgid "The Cost Center \"%s\" (or its parent) must be \"targeted\" to a Proprietary Instance."
+msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propriétaire \"cible\"."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:510
+#, python-format
+msgid "The Cost Center of the HQ entry \"%s\" doesn't exist in the system."
+msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le système."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:516
+#, python-format
+msgid "The Cost Center %s used in the HQ entry \"%s\" is inactive."
+msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif."
