@@ -453,7 +453,7 @@ class Database(BaseController):
                     return
 
             protocol = 'http'
-            if config.get('instance', 'sync_protocol') == 'xmlrpcs':
+            if config.get('instance', 'sync_protocol') in ('gzipxmlrpcs', 'xmlrpcs'):
                 protocol = 'https'
             server_rpc = rpc.RPCSession(config.get('instance', 'sync_host'), config.get('instance', 'sync_port'), protocol=protocol)
             uid = server_rpc.login(config.get('instance', 'sync_server'), config.get('instance', 'sync_user'), config.get('instance', 'sync_pwd'))

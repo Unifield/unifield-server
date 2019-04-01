@@ -1794,3 +1794,28 @@ msgstr "enregistrement(s) sélectionné(s)"
 #, python-format
 msgid "You haven't recently used a keyboard shortcut. You can see what shortcuts are available on this screen by holding SHIFT + CTRL."
 msgstr "Vous n'avez pas utilisé de raccourci clavier récemment. Vous pouvez voir quels raccourcis sont disponibles sur cet écran en utilisant CTRL + SHIFT."
+
+#: controllers/templates/downloadbg.mako:77
+#, python-format
+msgid "Report generation in progress"
+msgstr "Génération du rapport en cours"
+
+#: controllers/templates/downloadbg.mako:85
+#, python-format
+msgid "All the data have been collected. The report is now under rendering (this can take some time one big reports). A button to download it will be displayed soon..."
+msgstr "Toutes les données ont été traitées. Le rapport va être mise en forme, un bouton pour le télécharger va bientôt être disponible."
+
+#: controllers/templates/downloadbg.mako:88
+#, python-format
+msgid "A button to download the report will be displayed when finished."
+msgstr "Un bouton pour télécharger le rapport sera affiché à la fin de la génération."
+
+#: controllers/templates/downloadbg.mako:90
+#, python-format
+msgid "Name of the requested report: "
+msgstr "Nom du rapport demandé: "
+
+#: controllers/templates/downloadbg.mako:99
+#, python-format
+msgid "Download report"
+msgstr "Télécharger le rapport"

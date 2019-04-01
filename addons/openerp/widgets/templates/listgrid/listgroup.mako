@@ -87,7 +87,7 @@ import itertools
                                     % else:
                                         % if grp_row.get(field):
                                             % if field_attrs.get('type') == 'many2one':
-                                                ${grp_row.get(field)[-1]}
+                                                ${isinstance(grp_row.get(field), (int, long)) and " " or grp_row.get(field)[-1]}
                                             % elif field_attrs.get('type') == 'selection':
                                                 ${[fld_select[1] for fld_select in field_attrs['selection'] if fld_select[0] == grp_row[field]][0]}
                                             % else:
