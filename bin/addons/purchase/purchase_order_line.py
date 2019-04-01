@@ -1718,7 +1718,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         sol_ids = set()
-        for pol in self.browse(cr, uid, ids, context=context):
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
             if pol.linked_sol_id:
                 sol_ids.add(pol.linked_sol_id.id)
 
