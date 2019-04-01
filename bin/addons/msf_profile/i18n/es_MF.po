@@ -44707,12 +44707,6 @@ msgstr "Se puede alquilar"
 msgid "Text Error"
 msgstr "Error de texto"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:448
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: service_purchasing
 #: code:addons/service_purchasing/service_purchasing.py:244
 #, python-format

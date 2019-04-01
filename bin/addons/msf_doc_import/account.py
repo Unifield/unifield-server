@@ -32,7 +32,7 @@ import threading
 import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
-from spreadsheet_xml import UNIT_SEPARATOR
+from spreadsheet_xml import SPECIAL_CHAR
 import re
 
 class msf_doc_import_accounting(osv.osv_memory):
@@ -154,13 +154,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                 return True
         return False
 
-    def _format_unit_separator(self, line):
+    def _format_special_char(self, line):
         """
-        Replaces back the arbitrary string used for the unit separator with the corresponding hexadecimal code
+        Replaces back the arbitrary strings used for the special characters with their corresponding hexadecimal codes
         """
         for i in range(len(line)):
-            if line[i] and isinstance(line[i], basestring) and UNIT_SEPARATOR in line[i]:
-                line[i] = re.sub('%s_([0-9][0-9]{0,1})' % UNIT_SEPARATOR, lambda a: chr(int(a.group(1))), line[i])
+            if line[i] and isinstance(line[i], basestring) and SPECIAL_CHAR in line[i]:
+                line[i] = re.sub('%s_([0-9][0-9]{0,1})' % SPECIAL_CHAR, lambda a: chr(int(a.group(1))), line[i])
         return line
 
     def _import(self, dbname, uid, ids, context=None):
@@ -274,7 +274,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not self._check_has_data(line):
                         continue
 
-                    self._format_unit_separator(line)
+                    self._format_special_char(line)
 
                     # Check document date
                     if not line[cols['Document Date']]:

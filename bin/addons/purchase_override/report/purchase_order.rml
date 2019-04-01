@@ -622,10 +622,10 @@
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</para>
+                        <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</parawrap>
                     </td>
                     <td>
-                         <para style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</para>
+                         <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</parawrap>
                     </td>
                 </tr>
             </blockTable>

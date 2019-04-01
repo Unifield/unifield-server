@@ -5,7 +5,7 @@ from mx import DateTime
 from tools.translate import _
 from osv import osv
 import csv
-from . import UNIT_SEPARATOR
+from . import SPECIAL_CHAR
 import fileinput
 import re
 
@@ -134,9 +134,9 @@ class SpreadsheetXML(SpreadsheetTools):
         try:
             if xmlfile:
                 if context.get('from_je_import', False):
-                    # replace any invaline xml 1.0 &#x; where x<=32 by a special code
+                    # replace any invalid xml 1.0 &#x; where x<32 by a special code
                     for line in fileinput.input(xmlfile, inplace=1):
-                        print re.sub('&#([0-9]|[0-2][0-9]|3[012]);', '%s_\\1' % UNIT_SEPARATOR, line)
+                        print re.sub('&#([0-9]|[0-2][0-9]|3[01]);', '%s_\\1' % SPECIAL_CHAR, line)
 
                 self.xmlobj = etree.parse(xmlfile)
             else:

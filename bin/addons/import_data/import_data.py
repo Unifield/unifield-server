@@ -527,12 +527,15 @@ class import_data(osv.osv_memory):
     Find in attachment the rejected lines'''%(nb_error)
 
             request_obj = self.pool.get('res.request')
-            req_id = request_obj.create(cr, uid,
-                                        {'name': "%s %s"%(import_type, objname,),
-                                         'act_from': uid,
-                                         'act_to': uid,
-                                         'body': summary,
-                                         })
+            req_data = {
+                'name': "%s %s"%(import_type, objname,),
+                'act_from': uid,
+                'act_to': uid,
+                'body': summary,
+            }
+            if self._name in ('import_product', 'update_product') and obj.get('import_name'):
+                req_data['import_name'] = obj.get('import_name')
+            req_id = request_obj.create(cr, uid, req_data)
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
                 request_obj.request_close(cr, uid, [req_id])
@@ -572,6 +575,10 @@ import_data()
 class import_product(osv.osv_memory):
     _name = 'import_product'
     _inherit = 'import_data'
+
+    _columns = {
+        'import_name': fields.char('Import name', size=512),
+    }
 
     _defaults = {
         'object': lambda *a: 'product.product',
