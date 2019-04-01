@@ -116,8 +116,13 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
             for key, val in rec.items():
                 if isinstance(val, float):
                     rounding_digit = digit
-                    if rounding_values and fields.get(key, {}).get('related_uom') and rec.get(fields.get(key, {}).get('related_uom')) in rounding_values:
-                        rounding_digit = int(abs(math.log10(rounding_values[rec[fields[key]['related_uom']]])))
+                    if rounding_values and fields.get(key, {}).get('related_uom'):
+                        if isinstance(rec.get(fields.get(key, {}).get('related_uom')), tuple) and rec.get(fields.get(key, {}).get('related_uom')):
+                            uom_id = rec.get(fields.get(key, {}).get('related_uom'))[0]
+                        else:
+                            uom_id = rec.get(fields.get(key, {}).get('related_uom'))
+                        if uom_id in rounding_values:
+                            rounding_digit = int(abs(math.log10(rounding_values[uom_id])))
                     rec[key] = format.format_decimal(val or 0.0, rounding_digit, computation=computation)
 
             for grp_by in group_by:
