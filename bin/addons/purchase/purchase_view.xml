@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <menuitem icon="terp-purchase" id="base.menu_purchase_root" name="Purchases" sequence="3" groups="group_purchase_manager,group_purchase_user" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png"/>
+        <menuitem icon="terp-purchase" id="base.menu_purchase_root" name="Purchases" sequence="3" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png"/>
         <menuitem id="menu_procurement_management" name="Purchase Management" parent="base.menu_purchase_root" sequence="1"/>
-        <menuitem id="menu_purchase_config_purchase" name="Configuration" groups="group_purchase_manager" parent="base.menu_purchase_root" sequence="100"/>
+        <menuitem id="menu_purchase_config_purchase" name="Configuration" parent="base.menu_purchase_root" sequence="100"/>
         <menuitem id="menu_purchase_config_pricelist" name="Pricelists" parent="menu_purchase_config_purchase" sequence="50"/>
         <menuitem action="product.product_pricelist_action" id="menu_product_pricelist_action_purhase" parent="menu_purchase_config_pricelist" sequence="20"/>
         <menuitem action="product.product_pricelist_action2" id="menu_product_pricelist_action2_purchase" parent="menu_purchase_config_pricelist" sequence="10"/>
-        <menuitem action="product.product_pricelist_type_action" id="menu_purchase_product_pricelist_type" parent="menu_purchase_config_pricelist" sequence="2" groups="base.group_extended"/>
+        <menuitem action="product.product_pricelist_type_action" id="menu_purchase_product_pricelist_type" parent="menu_purchase_config_pricelist" sequence="2" />
         <menuitem id="menu_product_in_config_purchase" name="Product" parent="menu_purchase_config_purchase" sequence="30"/>
         <menuitem action="product.product_category_action_form" id="menu_product_category_config_purchase" parent="purchase.menu_product_in_config_purchase" sequence="10"/>
         <menuitem id="menu_purchase_unit_measure_purchase" name="Units of Measure" parent="purchase.menu_product_in_config_purchase" sequence="20"/>
@@ -45,7 +45,7 @@
 
         <!--Inventory control-->
         <menuitem id="menu_procurement_management_inventory" name="Receive Products" parent="base.menu_purchase_root" sequence="4"/>
-        <menuitem action="stock.action_picking_tree4" id="menu_action_picking_tree4" parent="menu_procurement_management_inventory" name="Incoming Shipments" sequence="9" groups="base.group_extended"/>
+        <menuitem action="stock.action_picking_tree4" id="menu_action_picking_tree4" parent="menu_procurement_management_inventory" name="Incoming Shipments" sequence="9" />
         <menuitem action="stock.action_reception_picking_move" id="menu_action_picking_tree_in_move" parent="menu_procurement_management_inventory" sequence="11"/>
 
         <!--Invoice control-->
@@ -364,8 +364,12 @@
                             </field>
                         </page>
                         <page string="Notes">
+                            <group colspan="4" col="6">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
                             <field name="auto_exported_ok" readonly="1"/>
+                            <field name="can_be_auto_exported" invisible="1" />
+                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': [('can_be_auto_exported', '!=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
+                            </group>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
                             <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}"/>
