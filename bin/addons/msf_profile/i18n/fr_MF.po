@@ -90153,11 +90153,6 @@ msgstr "Cash Reconciliation"
 msgid "Date on which this document has been created"
 msgstr "Date à laquelle ce document a été créé"
 
-#. module: msf_profile
-#: field:user.access.results,user_ids_user_access_results:0
-msgid "Users Info"
-msgstr "Infos sur utilisateurs"
-
 #. modules: register_accounting, base
 #: selection:ir.model.fields,ttype:0
 #: selection:wizard.invoice.date,state:0
