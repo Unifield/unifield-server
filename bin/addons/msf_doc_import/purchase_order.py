@@ -273,8 +273,8 @@ class purchase_order(osv.osv):
                     rejected.append( (key, values[key]) )
         else:
             values = self.pool.get('wizard.import.po.simulation.screen').get_values_from_xml(cr, uid, base64.encodestring(file_content), context=context)
-            header = [x.replace('_', ' ').title() for x in values.get(21)]
-            for key in sorted([k for k in values.keys() if k > 21]):
+            header = [x.replace('_', ' ').title() for x in values.get(23)]
+            for key in sorted([k for k in values.keys() if k > 23]):
                 if import_success:
                     processed.append( (key, values[key]) )
                 else:
