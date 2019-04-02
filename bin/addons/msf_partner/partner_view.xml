@@ -207,7 +207,7 @@
                                         <field name="phone"/>
                                         <field name="mobile"/>
                                         <field name="fax"/>
-                                        <field name="email" widget="email"/>
+                                        <field name="email"/>
                                      </group>
                                     <group colspan="4" col="6">
                                         <separator string="Contact Name" colspan="6" />

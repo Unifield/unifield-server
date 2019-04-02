@@ -36,6 +36,13 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <Style ss:ID="header_part_side"> <!-- borders on the sides only -->
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
     <Style ss:ID="header_part_center">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
       <Borders>
@@ -54,6 +61,16 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <NumberFormat ss:Format="Standard"/>
+    </Style>
+    <Style ss:ID="header_part_integer">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <NumberFormat ss:Format="#,##0"/>
     </Style>
     <Style ss:ID="column_headers">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
@@ -337,7 +354,7 @@
       <Font ss:Color="#0000ff"/>
     </Style>
     <Style ss:ID="short_date2">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
       <NumberFormat ss:Format="Short Date"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -409,39 +426,6 @@
       </Borders>
     </Style>
   </Styles>
-  <Worksheet ss:Name="Info">
-    <Table>
-      <Column ss:Width="101.1937"/>
-      <Column ss:Width="63.01"/>
-      <Row ss:Height="12.1039">
-        <Cell ss:MergeAcross="3" ss:StyleID="title">
-          <Data ss:Type="String">${_('REGISTER REPORT')|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="12.81">
-        <Cell ss:Index="2"/>
-      </Row>
-      <Row ss:Height="12.1039">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Report Date:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="short_date2" >
-          <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="12.6425">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Prop. Instance')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part_center">
-          <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-        </Cell>
-      </Row>
-    </Table>
-    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-      <DoNotDisplayGridlines/>
-    </WorksheetOptions>
-  </Worksheet>
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Names>
@@ -449,7 +433,7 @@
     </Names>
     <Table>
       <Column ss:Width="93.75"/>
-      <Column ss:Width="60.75" ss:Span="1"/>
+      <Column ss:Width="80.75" ss:Span="1"/>
       <Column ss:Width="132.75"/>
       <Column ss:Width="213.75"/>
       <Column ss:Width="98.25"/>
@@ -471,38 +455,6 @@
       </Row>
       <Row ss:Height="14.5134">
       </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Code:')}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.journal_id.code|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Period:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Currency:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
-        </Cell>
-      </Row>
-      <Row ss:Height="14.5134">
-        <Cell ss:StyleID="header_part">
-          <Data ss:Type="String">${_('Starting balance:')|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="header_part_number">
-          <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
-        </Cell>
-      </Row>
       <%
       if o.journal_id.type == 'cash':
           closing_bal_title = _('CashBox balance:')
@@ -518,6 +470,28 @@
       %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Report Date:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="short_date2" >
+          <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Starting balance:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_number">
+          <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="12.6425">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Prop. Instance:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${closing_bal_title|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part_number">
@@ -525,6 +499,13 @@
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Code:')}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.journal_id.code|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${_('Calculated balance:')|x} </Data>
         </Cell>
@@ -534,10 +515,32 @@
       </Row>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Period:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${_('State:')|x} </Data>
         </Cell>
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">${o.state and getSel(o, 'state') or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Currency:')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_side"/>
+        <Cell ss:StyleID="header_part">
+          <Data ss:Type="String">${_('Number of entries:')|x} </Data>
+        </Cell>
+        <Cell ss:StyleID="header_part_integer">
+          <Data ss:Type="Number">${getNumberOfEntries(o)|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -611,7 +614,7 @@
       <% update_percent(nbloop, tot_line) %>
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or (line.from_cash_return and line.account_id.type_for_register == 'advance' and _('Advance Return')) or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
+          <Data ss:Type="String">${ getEntryType(line) |x}</Data>
         </Cell>
         % if isDate(line.document_date):
         <Cell ss:StyleID="date">
@@ -651,8 +654,17 @@
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.account_id.code + ' ' + line.account_id.name|x}</Data>
         </Cell>
+        <%
+        third_party = ''
+        if line.partner_id:
+            third_party = line.partner_id.name
+        elif line.employee_id:
+            third_party = line.employee_id.name
+        elif line.transfer_journal_id:
+            third_party = line.transfer_journal_id.code
+        %>
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
+          <Data ss:Type="String">${third_party|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>

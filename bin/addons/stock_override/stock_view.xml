@@ -481,7 +481,7 @@
                                 <field name="from_manage_expired" invisible="1" />
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}"/>
-                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
+                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', 'in', ['done', 'cancel', 'import']), '&amp;', ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="expired_assign" states="confirmed,assigned" string="Check Expired Products' Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'assigned']), ('from_manage_expired', '=', False)]}" />
                                 <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': [('from_manage_expired', '=', True)]}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />

@@ -83,7 +83,7 @@
                         <group colspan="4" attrs="{'invisible': [('state', '!=', 'correction')]}">
                             <label string="" colspan="2"/>
                             <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
-                            <button name="button_confirm" string="Correct it" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                            <button name="button_confirm" string="Correct" type="object" icon="gtk-edit" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </xpath>
                 </data>

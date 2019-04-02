@@ -53,6 +53,15 @@
                 header="False"
                 rml="addons/msf_outgoing/report/empty_picking_ticket.rml"
                 string="Pre-Packing List" />
+
+        <report id="pre_packing_excel_export"
+                name="pre.packing.excel.export"
+                model="stock.picking"
+                string="Pre-Packing Excel Export"
+                file="msf_outgoing/report/pre_packing_excel_report_xls.mako"
+                report_type="webkit"
+                header="False"
+                auto="False" />
                 
         <report auto="False" 
                 id="labels" 
