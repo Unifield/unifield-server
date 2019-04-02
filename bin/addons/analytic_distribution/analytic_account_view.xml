@@ -132,6 +132,7 @@
                 <tree string="Destinations by accounts" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="funding_pool_id"/>
                     <field name="account_id" />
+                    <field name="destination_id"/>
                 </tree>
             </field>
         </record>
@@ -292,8 +293,18 @@
             <field name="priority" eval="16"/>
             <field name="arch" type="xml">
                 <search>
-                    <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
-                    <field name="account_id" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
+                    <group>
+                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
+                        <field name="account_id" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Funding Pool" icon="terp-folder-blue" domain="[]" context="{'group_by':'funding_pool_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="G/L account" icon="terp-folder-orange" domain="[]" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Destination" icon="terp-folder-violet" domain="[]" context="{'group_by':'destination_id'}"/>
+                    </group>
                 </search>
             </field>
         </record>
