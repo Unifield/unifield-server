@@ -32,7 +32,7 @@ class NegativeValueError(ValueError):
 class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
-    _order = "ref desc, date desc"
+    _order = "id desc, date desc"
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -107,7 +107,7 @@ class PhysicalInventory(osv.osv):
 
 
     _columns = {
-        'ref': fields.char('Reference', size=64, readonly=True),
+        'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False),
