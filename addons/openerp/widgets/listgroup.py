@@ -49,7 +49,7 @@ def parse(group_by, hiddens, headers, group_level, groups):
             if group_by[grp].count('group_') > 1:
                 group_by[grp] = 'group_' + group_by[grp].split("group_")[-1]
             else:
-                group_by[grp] = group_by[grp].split("group_")[-1]
+                group_by[grp] = str(group_by[grp].split("group_")[-1])
 
     for grp_by in groups:
         for hidden in hiddens:
@@ -201,7 +201,8 @@ class ListGroup(List):
         self.group_by_ctx = kw.get('group_by_ctx', [])
 
         if not isinstance(self.group_by_ctx, list):
-            self.group_by_ctx = [self.group_by_ctx]
+            self.group_by_ctx = [self.group_by_ctx.split(',')]
+
 
         fields = view['fields']
         self.grp_records = []
@@ -215,6 +216,7 @@ class ListGroup(List):
             selectable=self.selectable)
 
         if self.group_by_ctx:
+            self.group_by_ctx = self.group_by_ctx[0].split(',')
             self.context['group_by'] = self.group_by_ctx
         else:
             self.group_by_ctx = self.context.get('group_by', [])
@@ -299,6 +301,12 @@ class MultipleGroup(List):
             self.group_by_ctx = [self.group_by_ctx]
 
         fields = view['fields']
+
+        if groups:
+            newgroup = []
+            for g in groups:
+                newgroup.append(str(g))
+            groups = newgroup
 
         self.grp_records = []
         super(MultipleGroup, self).__init__(
