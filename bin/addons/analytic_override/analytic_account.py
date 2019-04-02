@@ -607,5 +607,30 @@ class analytic_account(osv.osv):
         self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
         return True
 
+    def get_destinations_by_accounts(self, cr, uid, ids, context=None):
+        """
+        Returns a view with the Destinations by accounts (for the FP selected if any, otherwise for all the FP)
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        active_ids = context.get('active_ids', [])
+        if active_ids:
+            analytic_acc_category = self.browse(cr, uid, active_ids[0], fields_to_fetch=['category'], context=context).category or ''
+            if analytic_acc_category == 'FUNDING':
+                context.update({'search_default_funding_pool_id': active_ids[0]})
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'analytic_distribution', 'view_account_destination_summary_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Destinations by accounts'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.destination.summary',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'target': 'current',
+        }
+
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

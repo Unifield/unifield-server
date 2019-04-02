@@ -97,9 +97,6 @@
                             <separator/>
                             <field name="tuple_destination_account_ids" nolabel="1" context="{'dest_in_use':tuple_destination_account_ids}"/>
                         </page>
-                        <page string="Destinations by accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <field name="tuple_destination_summary" nolabel="1" readonly="1"/>
-                        </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
                             <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]" context="{'destination_id': record_id}">
                                 <tree string="Expenses accounts list" colors="red:inactivated_for_dest">
@@ -132,7 +129,8 @@
             <field name="model">account.destination.summary</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Destinations by accounts">
+                <tree string="Destinations by accounts" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                    <field name="funding_pool_id"/>
                     <field name="account_id" />
                 </tree>
             </field>
@@ -284,6 +282,36 @@
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
             <field name="domain">[]</field>
             <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True, 'display_disabled': 1}</field>
+        </record>
+
+        <!-- Destinations by accounts Search view -->
+        <record id="view_account_destination_summary_search" model="ir.ui.view">
+            <field name="name">account.destination.summary.search</field>
+            <field name="model">account.destination.summary</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
+                    <field name="account_id" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Destinations by accounts Menu entry -->
+        <record id="action_analytic_acc_dest_summary" model="ir.actions.server">
+            <field name="name">Destinations by accounts</field>
+            <field name="model_id" ref="model_account_analytic_account"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_destinations_by_accounts(context=context)</field>
+        </record>
+        <record id="ir_destinations_by_accounts_search" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.analytic.account</field>
+            <field name="name">destinations_by_accounts</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_acc_dest_summary" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="110"/>
         </record>
 
         <menuitem action="action_account_analytic_account_form"
