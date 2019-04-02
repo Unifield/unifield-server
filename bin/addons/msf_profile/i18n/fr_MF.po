@@ -105378,3 +105378,9 @@ msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le syst�
 #, python-format
 msgid "The Cost Center %s used in the HQ entry \"%s\" is inactive."
 msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:635
+#, python-format
+msgid "In a PICK from scratch, your are not allowed to choose this type of partner."
+msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à choisir ce type de partenaire."
