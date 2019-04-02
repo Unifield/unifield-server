@@ -66716,6 +66716,7 @@ msgstr "Payer la facture"
 #: report:voucher.print:0
 #: selection:account.analytic.line,move_state:0
 #: selection:msf.accrual.line,state:0
+#: selection:integrity.finance.wizard,move_state:0
 #: view:msf.accrual.line:0
 msgid "Posted"
 msgstr "Comptabilisé"
@@ -68158,8 +68159,9 @@ msgstr "Réf de Commande:"
 msgid "Ireland"
 msgstr "Irlande"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account_override
 #: field:account.mcdb,document_state:0
+#: field:integrity.finance.wizard,move_state:0
 #: code:addons/account_mcdb/account_mcdb.py:1108
 #, python-format
 msgid "Entry Status"
@@ -68323,6 +68325,7 @@ msgstr "Devise d'impression:"
 #: view:account.move.line:0
 #: selection:account.analytic.line,move_state:0
 #: selection:account.move.line,move_state:0
+#: selection:integrity.finance.wizard,move_state:0
 msgid "Unposted"
 msgstr "Non comptabilisé"
 
