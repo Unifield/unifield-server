@@ -901,7 +901,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 cc_cache = {}
                 # Line 22: AD
-                if values.get(22):
+                if values.get(22) and len(values[22]) > 1:
                     errors, ad_info = self.check_ad(cr, uid, values[22][1:], wiz.order_id.analytic_distribution_id, cc_cache=cc_cache, context=context)
                     if errors:
                         values_header_errors.append(_('Line 22 of the file: Analytical Distribution ignored: \n - %s') % (" - \n".join(errors)))
