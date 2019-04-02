@@ -628,42 +628,50 @@ class kit_creation(osv.osv):
 
                     if data[product_id]['object'].perishable: # perishable for perishable or batch management
                         # the product is batch management we use the FEFO list
-                        for loc in res['fefo']:
+                        for expired_date in res.get('fefo', []):
+                            if not needed_qty:
+                                break
                             # we ignore the batch that are outdated
-                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
                             if datetime.strptime(expired_date, "%Y-%m-%d") < datetime.today():
                                 continue
-                            # as long all needed are not fulfilled
-                            if needed_qty > 0.0:
-                                # we treat the available qty from FEFO list corresponding to needed quantity
-                                if loc['qty'] > needed_qty:
-                                    # we have everything !
-                                    selected_qty = needed_qty
-                                    needed_qty = 0.0
-                                else:
-                                    # we take all available
-                                    selected_qty = loc['qty']
-                                    needed_qty -= selected_qty
-                                # stock move values
-                                values = {'kit_creation_id_stock_move': obj.id,
-                                          'name': data[product_id]['object'].name,
-                                          'picking_id': obj.internal_picking_id_kit_creation.id,
-                                          'product_uom': uom_id,
-                                          'product_id': product_id,
-                                          'date_expected': context['common']['date'],
-                                          'date': context['common']['date'],
-                                          'product_qty': selected_qty,
-                                          'prodlot_id': loc['prodlot_id'],
-                                          'location_id': loc['location_id'],
-                                          'location_dest_id': context['common']['kitting_id'],
-                                          'state': 'assigned', # available
-                                          'reason_type_id': context['common']['reason_type_id'],
-                                          'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                          'original_from_process_stock_move': original_flag,
-                                          }
-                                move_obj.create(cr, uid, values, context=context)
-                                # we reset original move flag
-                                original_flag = False
+
+                            for prod_id in res[expired_date]:
+                                if not needed_qty:
+                                    break
+                                for loc_id in res[expired_date][prod_id]:
+                                    if not needed_qty:
+                                        break
+                                    # as long all needed are not fulfilled
+                                    if needed_qty > 0.0:
+                                        # we treat the available qty from FEFO list corresponding to needed quantity
+                                        if res[expired_date][prod_id][loc_id]['total'] > needed_qty:
+                                            # we have everything !
+                                            selected_qty = needed_qty
+                                            needed_qty = 0.0
+                                        else:
+                                            # we take all available
+                                            selected_qty = res[expired_date][prod_id][loc_id]['total']
+                                            needed_qty -= selected_qty
+                                        # stock move values
+                                        values = {'kit_creation_id_stock_move': obj.id,
+                                                  'name': data[product_id]['object'].name,
+                                                  'picking_id': obj.internal_picking_id_kit_creation.id,
+                                                  'product_uom': uom_id,
+                                                  'product_id': product_id,
+                                                  'date_expected': context['common']['date'],
+                                                  'date': context['common']['date'],
+                                                  'product_qty': selected_qty,
+                                                  'prodlot_id': prod_id,
+                                                  'location_id': loc_id,
+                                                  'location_dest_id': context['common']['kitting_id'],
+                                                  'state': 'assigned', # available
+                                                  'reason_type_id': context['common']['reason_type_id'],
+                                                  'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                                  'original_from_process_stock_move': original_flag,
+                                                  }
+                                        move_obj.create(cr, uid, values, context=context)
+                                        # we reset original move flag
+                                        original_flag = False
                         if needed_qty:
                             values = {'kit_creation_id_stock_move': obj.id,
                                       'name': data[product_id]['object'].name,
@@ -674,7 +682,7 @@ class kit_creation(osv.osv):
                                       'date': context['common']['date'],
                                       'product_qty': needed_qty,
                                       'prodlot_id': False,
-                                      'location_id': loc['location_id'],
+                                      'location_id': default_location_id,
                                       'location_dest_id': context['common']['kitting_id'],
                                       'state': 'confirmed', # not available
                                       'reason_type_id': context['common']['reason_type_id'],
@@ -687,18 +695,18 @@ class kit_creation(osv.osv):
 
                     else:
                         # the product is not batch management, we use locations in id order
-                        for loc in sorted(res.keys()):
-                            if isinstance(loc, int) and res[loc]['total'] > 0.0:
+                        for loc in sorted(res.get(None, {}).get(None, [])):
+                            if isinstance(loc, int) and res[None][None][loc]['total'] > 0.0:
                                 # as long all needed are not fulfilled
                                 if needed_qty > 0.0:
                                     # we treat the available qty from locations corresponding to needed quantity
-                                    if res[loc]['total'] > needed_qty:
+                                    if res[None][None][loc]['total'] > needed_qty:
                                         # we have everything !
                                         selected_qty = needed_qty
                                         needed_qty = 0.0
                                     else:
                                         # we take all available
-                                        selected_qty = res[loc]['total']
+                                        selected_qty = res[None][None][loc]['total']
                                         needed_qty -= selected_qty
                                     # stock move values
                                     values = {'kit_creation_id_stock_move': obj.id,
@@ -1391,51 +1399,6 @@ class stock_move(osv.osv):
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
-
-    def check_assign_lot(self, cr, uid, ids, context=None):
-        """
-        check the assignation of stock move taking into account lot and FEFO rule
-        """
-        # treated move ids
-        done = []
-        count = 0
-        pickings = {}
-        if context is None:
-            context = {}
-        for move in self.browse(cr, uid, ids, context=context):
-            if self._hook_check_assign(cr, uid, move=move):
-                #            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
-                if move.state in ('confirmed', 'waiting'):
-                    done.append(move.id)
-                pickings[move.picking_id.id] = 1
-                continue
-            if move.state in ('confirmed', 'waiting'):
-                # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
-                if res:
-                    #_product_available_test depends on the next status for correct functioning
-                    #the test does not work correctly if the same product occurs multiple times
-                    #in the same order. This is e.g. the case when using the button 'split in two' of
-                    #the stock outgoing form
-                    self.write(cr, uid, [move.id], {'state':'assigned'})
-                    done.append(move.id)
-                    pickings[move.picking_id.id] = 1
-                    r = res.pop(0)
-                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
-
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
-
-        if count:
-            for pick_id in pickings:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-        return count
 
     def unlink(self, cr, uid, ids, context=None, force=False):
         '''

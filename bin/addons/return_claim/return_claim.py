@@ -2212,11 +2212,14 @@ class claim_product_line(osv.osv):
         uom_id = uom_id or product_obj.uom_id.id
         res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
         if prodlot_id:
-            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
-            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
+            qty = 0
+            for x in res.get('fefo'):
+                if res.get(x, {}).get(prodlot_id, {}).get(location_id):
+                    qty = res[x][prodlot_id][location_id].get('total')
+                    break
         else:
             # otherwise we take total according to the location
-            qty = res[location_id]['total']
+            qty = res.get(None, {}).get(None, {}).get(location_id, {}).get('total', 0)
         # update the result
         result.setdefault('value', {}).update({'qty_claim_product_line': qty,
                                                'uom_id_claim_product_line': uom_id,
@@ -2355,11 +2358,15 @@ class claim_product_line(osv.osv):
             prodlot_id = obj.lot_id_claim_product_line.id
             # if the product has a production lot and the production lot exist in the specified location, we take corresponding stock
             available_qty = 0.0
-            if prodlot_id and prodlot_id in data[location_id]:
-                available_qty = data[location_id][prodlot_id]['total']
+
+            if prodlot_id:
+                for x in data.get('fefo'):
+                    if data.get(x, {}).data(prodlot_id, {}).data(location_id):
+                        available_qty = data[x][prodlot_id][location_id].get('total')
+                        break
             else:
-                # otherwise we take the total quantity for the selected location - no lot for this product
-                available_qty = data[location_id]['total']
+                # otherwise we take total according to the location
+                available_qty = data.get(None, {}).get(None, {}).get(location_id, {}).get('total', 0)
             result[obj.id].update({'hidden_stock_available_claim_product_line': available_qty})
 
         return result
