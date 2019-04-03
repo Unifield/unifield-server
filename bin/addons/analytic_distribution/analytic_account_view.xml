@@ -312,6 +312,23 @@
             </field>
         </record>
 
+        <!-- Destinations by accounts Form view -->
+        <record id="vview_account_destination_summary_form" model="ir.ui.view">
+            <field name="name">account.destination.summary.form</field>
+            <field name="model">account.destination.summary</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16"/>
+            <field name="arch" type="xml">
+                <!-- this form must be read-only: acc/dest links must be created in the Destination tab of the FP -->
+                <form noteditable="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="funding_pool_id"/>
+                    <newline/>
+                    <field name="account_id"/>
+                    <field name="destination_id"/>
+                </form>
+            </field>
+        </record>
+
         <!-- Destinations by accounts Menu entry -->
         <record id="action_analytic_acc_dest_summary" model="ir.actions.server">
             <field name="name">Destinations by accounts</field>
