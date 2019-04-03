@@ -2487,7 +2487,10 @@ class stock_move(osv.osv):
             if move.state in ('confirmed', 'waiting'):
                 bn_needed =  move.product_id.perishable
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True)
+                prod_lot = False
+                if bn_needed and move.prodlot_id:
+                    prod_lot = move.prodlot_id.id
+                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
                         state = 'done'

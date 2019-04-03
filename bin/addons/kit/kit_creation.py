@@ -561,7 +561,6 @@ class kit_creation(osv.osv):
             default_location_id = obj.default_location_src_id_kit_creation.id
             # Check availability of manual moves
             create_move_ids = move_manual
-
             # delete stock moves
             move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
             # create consolidated stock moves
@@ -590,7 +589,7 @@ class kit_creation(osv.osv):
             if create_move_ids:
                 ctx = context.copy()
                 ctx['compute_child'] = obj.consider_child_locations_kit_creation
-                move_obj.check_assign(cr, uid,create_move_ids, context=ctx)
+                self.pool.get('stock.picking').action_assign(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx)
 
         return True
 
@@ -1262,23 +1261,6 @@ class stock_move(osv.osv):
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
-
-    def unlink(self, cr, uid, ids, context=None, force=False):
-        '''
-        override the function so we prevent deletion of original_from_process_stock_move stock.moves
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.original_from_process_stock_move and not context.get('call_unlink', False):
-                raise osv.except_osv(_('Warning !'), _('Original Stock Move cannot be deleted.'))
-
-        return super(stock_move, self).unlink(cr, uid, ids, context=context,
-                                              force=force)
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
