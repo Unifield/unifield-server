@@ -2208,6 +2208,8 @@ class claim_product_line(osv.osv):
         ctx = context.copy()
         if uom_id:
             ctx['uom'] = uom_id
+        if prodlot_id:
+            ctx['prodlot_id'] = prodlot_id
         ctx['location'] = location_id
         product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
         # uom from product is taken by default if needed
@@ -2350,7 +2352,6 @@ class claim_product_line(osv.osv):
             if obj.lot_id_claim_product_line:
                 ctx['prodlot_id'] = obj.lot_id_claim_product_line.id
             prod = self.pool.get('product.product').browse(cr, uid, obj.product_id_claim_product_line.id, fields_to_fetch=['qty_allocable'], context=ctx)
-
             result[obj.id].update({'hidden_stock_available_claim_product_line': prod.qty_allocable})
 
         return result
