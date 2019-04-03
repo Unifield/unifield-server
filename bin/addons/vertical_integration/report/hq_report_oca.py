@@ -258,13 +258,15 @@ class hq_report_oca(report_sxw.report_sxw):
                     employee_id = ''
                     if move_line.employee_id and move_line.employee_id.employee_type == 'ex':  # expat staff
                         employee_id = move_line.employee_id.identification_id or ''
-                    # data for the columns: Exchange rate, Booking Debit, Booking Credit
-                    booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
+                    # data for the columns: Exchange rate, Booking Debit, Booking Credit, Booking Currency
                     exchange_rate = 0
+                    booking_amounts = [round(move_line.debit_currency, 2), round(move_line.credit_currency, 2)]
+                    booking_curr = formatted_data[16:17]
                     if move_line.journal_id.type in no_rate_journal_types:
                         # use 1 as exchange rate and display the functional values in the "booking" columns
                         exchange_rate = 1
                         booking_amounts = [round(move_line.debit, 2), round(move_line.credit, 2)]
+                        booking_curr = formatted_data[19:20]
                     # automatic corrections
                     elif move_line.journal_id.type == 'correction' and (move_line.corrected_line_id or move_line.reversal_line_id):
                         # If there are several levels of correction use the last one
@@ -307,7 +309,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                                [department_info] + [formatted_data[11]] +
                                                                                [formatted_data[13]] + [employee_id] +
                                                                                [exchange_rate] + booking_amounts +
-                                                                               formatted_data[16:17] + [field_activity])
+                                                                               booking_curr + [field_activity])
                 else:
                     translated_account_code = self.translate_account(cr, uid, pool, account, context=context)
                     if (translated_account_code, currency.id) not in account_lines_debit:
@@ -377,15 +379,17 @@ class hq_report_oca(report_sxw.report_sxw):
                 if analytic_line.move_id and analytic_line.move_id.employee_id and analytic_line.move_id.employee_id.employee_type == 'ex':  # expat staff
                     employee_id = analytic_line.move_id.employee_id.identification_id or ''
 
-                # data for the columns: Exchange rate, Booking Debit, Booking Credit
+                # data for the columns: Exchange rate, Booking Debit, Booking Credit, Booking Currency
+                exchange_rate = 0
                 booking_amounts = [analytic_line.amount_currency > 0 and "0.00" or round(-analytic_line.amount_currency, 2),
                                    analytic_line.amount_currency > 0 and round(analytic_line.amount_currency, 2) or "0.00"]
-                exchange_rate = 0
+                booking_curr = formatted_data[16:17]
                 if analytic_line.journal_id.type in no_rate_analytic_journal_types:
                     # use 1 as exchange rate and display the functional values in the "booking" columns
                     exchange_rate = 1
                     booking_amounts = [analytic_line.amount > 0 and "0.00" or round(-analytic_line.amount, 2),
                                        analytic_line.amount > 0 and round(analytic_line.amount, 2) or "0.00"]
+                    booking_curr = formatted_data[19:20]
                 # automatic corrections
                 elif analytic_line.journal_id.type == 'correction' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
                     # If there are several levels of correction use the last one
@@ -428,7 +432,7 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                            [department_info] + [cost_center] +
                                                                            [formatted_data[13]] + [employee_id] +
                                                                            [exchange_rate] + booking_amounts +
-                                                                           formatted_data[16:17] + [field_activity])
+                                                                           booking_curr + [field_activity])
 
             analytic_line_count += 1
             if analytic_line_count % 30 == 0:
