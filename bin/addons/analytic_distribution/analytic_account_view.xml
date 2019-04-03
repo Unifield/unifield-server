@@ -313,7 +313,7 @@
         </record>
 
         <!-- Destinations by accounts Form view -->
-        <record id="vview_account_destination_summary_form" model="ir.ui.view">
+        <record id="view_account_destination_summary_form" model="ir.ui.view">
             <field name="name">account.destination.summary.form</field>
             <field name="model">account.destination.summary</field>
             <field name="type">form</field>
