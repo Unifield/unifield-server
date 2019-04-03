@@ -298,12 +298,15 @@
                         <field name="account_id" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
                     </group>
                     <newline/>
-                    <group expand="0" string="Group By...">
-                        <filter string="Funding Pool" icon="terp-folder-blue" domain="[]" context="{'group_by':'funding_pool_id'}"/>
+                    <group expand="1" string="Group By...">
+                        <filter string="Funding Pool" name="group_funding_pool_id"
+                                icon="terp-folder-blue" domain="[]" context="{'group_by':'funding_pool_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="G/L account" icon="terp-folder-orange" domain="[]" context="{'group_by':'account_id'}"/>
+                        <filter string="G/L account" name="group_account_id"
+                                icon="terp-folder-orange" domain="[]" context="{'group_by':'account_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Destination" icon="terp-folder-violet" domain="[]" context="{'group_by':'destination_id'}"/>
+                        <filter string="Destination" name="group_destination_id"
+                                icon="terp-folder-violet" domain="[]" context="{'group_by':'destination_id'}"/>
                     </group>
                 </search>
             </field>
