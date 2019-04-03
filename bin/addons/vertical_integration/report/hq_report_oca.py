@@ -73,19 +73,27 @@ class hq_report_oca(report_sxw.report_sxw):
                 return mapping.mapping_value
         return "0"
 
-    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info, field_activity, context=None):
+    def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period, department_info, field_activity, context=None):
         if context is None:
             context = {}
         pool = pooler.get_pool(cr.dbname)
         curr_obj = pool.get('res.currency')
+        rate_obj = pool.get('res.currency.rate')
         # method to create subtotal + counterpart line
+        period_code = period.code or ""
         if len(line_key) > 1 and line_debit != 0.0:
             currency = curr_obj.browse(cr, uid, line_key[1], context=context)
+            # rate at the first day of the selected period
+            rate = 0
+            rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', period.date_start)],
+                                       order='name DESC', limit=1, context=context)
+            if rate_ids:
+                rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
             # Description for the line
             if line_key[0] == "1000 0000":
-                description = "Mvts_BANK_" + period_name + "_" + currency.name
+                description = "Mvts_BANK_" + period_code + "_" + currency.name
             elif line_key[0] == "1000 0001":
-                description = "Mvts_CASH_" + period_name + "_" + currency.name
+                description = "Mvts_CASH_" + period_code + "_" + currency.name
             else:
                 mapping_obj = pool.get('account.export.mapping')
                 account_values = ""
@@ -94,7 +102,7 @@ class hq_report_oca(report_sxw.report_sxw):
                     if account_values != "":
                         account_values += "-"
                     account_values += mapping.account_id.code
-                description = "Mvts_" + account_values + period_name + "_" + currency.name
+                description = "Mvts_" + account_values + period_code + "_" + currency.name
 
             return [["",
                      "",
@@ -103,14 +111,14 @@ class hq_report_oca(report_sxw.report_sxw):
                      "",
                      counterpart_date,
                      counterpart_date,
-                     period_name,
+                     period_code,
                      line_key[0],
                      "",
                      department_info,
                      "",
                      "",
                      "",
-                     "",
+                     rate,
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      currency.name,
@@ -450,7 +458,6 @@ class hq_report_oca(report_sxw.report_sxw):
 
         counterpart_date = period and period.date_stop and \
             datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
-        period_name = period and period.code or ""
 
         # regroup second report lines
         for key in sorted(main_lines.iterkeys(), key=lambda tuple: tuple[0]):
@@ -458,7 +465,7 @@ class hq_report_oca(report_sxw.report_sxw):
 
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
             # for entries "shrunk for HQ export"
-            subtotal_lines = self.create_subtotal(cr, uid, key, account_lines_debit[key], counterpart_date, period_name,
+            subtotal_lines = self.create_subtotal(cr, uid, key, account_lines_debit[key], counterpart_date, period,
                                                   department_info, field_activity, context=context)
             if subtotal_lines:
                 second_result_lines += subtotal_lines
