@@ -9,13 +9,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
+                    <field name="move_state"/>
+                    <field name="fiscalyear_id" on_change="onchange_fiscalyear_id(fiscalyear_id)"/>
                     <field name="instance_ids" domain="[('instance_to_display_ids', '=', True)]">
                         <tree noteditable="1">
                             <field name="code"/>
                             <field name="name"/>
                         </tree>
                     </field>
-                    <field name="fiscalyear_id" on_change="onchange_fiscalyear_id(fiscalyear_id)"/>
                     <notebook tabpos="up" colspan="4">
                         <page string="Filters" name="filters">
                             <field name="filter" on_change="onchange_filter(filter)" colspan="4"/>

@@ -623,11 +623,14 @@ class substitute_item(osv.osv_memory):
         # we check for the available qty (in:done, out: assigned, done) - consider_child_locations=False
         res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
         if prodlot_id:
-            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
-            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
+            qty = 0
+            for x in res.get('fefo'):
+                if res.get(x, {}).get(prodlot_id, {}).get(location_id):
+                    qty = res[x][prodlot_id][location_id].get('total')
+                    break
         else:
             # otherwise we take total according to the location
-            qty = res[location_id]['total']
+            qty = res.get(None, {}).get(None, {}).get(location_id, {}).get('total', 0)
         # update the result
         result.setdefault('value', {}).update({'qty_substitute_item': qty,
                                                'uom_id_substitute_item': uom_id,
