@@ -2203,23 +2203,16 @@ class claim_product_line(osv.osv):
             result.setdefault('value', {}).update({'qty_claim_product_line': 0.0, 'hidden_stock_available_claim_product_line': 0.0})
             return result
 
-        # objects
-        loc_obj = self.pool.get('stock.location')
         prod_obj = self.pool.get('product.product')
         # corresponding product object
-        product_obj = prod_obj.browse(cr, uid, product_id, context=context)
+        ctx = context.copy()
+        if uom_id:
+            ctx['uom'] = uom_id
+        ctx['location'] = location_id
+        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
         # uom from product is taken by default if needed
         uom_id = uom_id or product_obj.uom_id.id
-        res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
-        if prodlot_id:
-            qty = 0
-            for x in res.get('fefo'):
-                if res.get(x, {}).get(prodlot_id, {}).get(location_id):
-                    qty = res[x][prodlot_id][location_id].get('total')
-                    break
-        else:
-            # otherwise we take total according to the location
-            qty = res.get(None, {}).get(None, {}).get(location_id, {}).get('total', 0)
+        qty = product_obj.qty_allocable
         # update the result
         result.setdefault('value', {}).update({'qty_claim_product_line': qty,
                                                'uom_id_claim_product_line': uom_id,
@@ -2331,8 +2324,6 @@ class claim_product_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        loc_obj = self.pool.get('stock.location')
         # results
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -2352,22 +2343,15 @@ class claim_product_line(osv.osv):
             kit_check = obj.product_id_claim_product_line.type == 'product' and obj.product_id_claim_product_line.subtype == 'kit'
             result[obj.id].update({'hidden_kit_claim_product_line': kit_check})
             # product availability
-            data = loc_obj.compute_availability(cr, uid, ids=obj.src_location_id_claim_product_line.id, consider_child_locations=False, product_id=obj.product_id_claim_product_line.id, uom_id=obj.uom_id_claim_product_line.id, context=context)
-            # if we get a production lot, we take the available quantity corresponding to this lot
-            location_id = obj.src_location_id_claim_product_line.id
-            prodlot_id = obj.lot_id_claim_product_line.id
-            # if the product has a production lot and the production lot exist in the specified location, we take corresponding stock
-            available_qty = 0.0
+            ctx = context.copy()
+            ctx['uom'] = obj.uom_id_claim_product_line.id
+            ctx['location'] = obj.src_location_id_claim_product_line.id
+            ctx['compute_child'] = False
+            if obj.lot_id_claim_product_line:
+                ctx['prodlot_id'] = obj.lot_id_claim_product_line.id
+            prod = self.pool.get('product.product').browse(cr, uid, obj.product_id_claim_product_line.id, fields_to_fetch=['qty_allocable'], context=ctx)
 
-            if prodlot_id:
-                for x in data.get('fefo'):
-                    if data.get(x, {}).data(prodlot_id, {}).data(location_id):
-                        available_qty = data[x][prodlot_id][location_id].get('total')
-                        break
-            else:
-                # otherwise we take total according to the location
-                available_qty = data.get(None, {}).get(None, {}).get(location_id, {}).get('total', 0)
-            result[obj.id].update({'hidden_stock_available_claim_product_line': available_qty})
+            result[obj.id].update({'hidden_stock_available_claim_product_line': prod.qty_allocable})
 
         return result
 

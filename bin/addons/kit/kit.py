@@ -1394,13 +1394,11 @@ class stock_location(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        loc_obj = self.pool.get('stock.location')
         # do we want the child location
         stock_context = dict(context, compute_child=consider_child_locations)
+        stock_context['uom'] = uom_id
         # we check for the available qty (in:done, out: assigned, done)
-        res = loc_obj._product_reserve_lot(cr, uid, ids, product_id, uom_id, context=stock_context, lock=True)
-        #print res
-        return res
+        return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
     def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False):
         """
