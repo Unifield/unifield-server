@@ -110,7 +110,7 @@ class PhysicalInventory(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'responsible': fields.char('Responsible', size=128, required=False),
+        'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
