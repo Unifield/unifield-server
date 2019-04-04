@@ -302,12 +302,19 @@ product will be shown.""",
         'expiry_date': fields.date(
             string='Specific expiry date',
         ),
-        'location_id': fields.many2one(
+        'location_ids': fields.many2many(
             'stock.location',
-            string='Specific location',
-            help="""If a location is choosen, only stock moves that comes
-from/to this location will be shown.""",
+            'report_stock_move_location_rel',
+            'report_id',
+            'location_id',
+            string='Specific location(s)',
+            help="If a location is choosen, only stock moves that comes from/to this location will be shown.",
         ),
+        'product_list_id': fields.many2one(
+            'product.list',
+            string='Specific product list',
+        ),
+        'only_standard_loc': fields.boolean('Only display standard stock location(s)'),
         'date_from': fields.date(
             string='From',
         ),
@@ -337,7 +344,8 @@ from/to this location will be shown.""",
         'state': 'draft',
         'company_id': lambda s, cr, uid, c: s.pool.get('res.company').\
         _company_default_get(
-            cr, uid, 'export.report.stock.move', context=c)
+            cr, uid, 'export.report.stock.move', context=c),
+        'only_standard_loc': True,
     }
 
     def update(self, cr, uid, ids, context=None):
@@ -383,16 +391,14 @@ from/to this location will be shown.""",
             if rt_ids:
                 domain.append(('reason_type_id', 'in', rt_ids))
 
-            if report.location_id:
-                domain.extend([
-                    '|',
-                    ('location_id', '=', report.location_id.id),
-                    ('location_dest_id', '=', report.location_id.id),
-                ])
+            loc_ids = [l.id for l in report.location_ids]
+            if loc_ids:
+                domain.extend(['|', ('location_id', 'in', loc_ids), ('location_dest_id', 'in', loc_ids)])
+                context['location_id'] = loc_ids
 
             context['domain'] = domain
 
-            rsm_ids = rsm_obj.search(cr, uid, domain, order='date', context=context)
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -454,9 +460,9 @@ from/to this location will be shown.""",
             time.sleep(0.5)
         attachment = self.pool.get('ir.attachment')
         attachment.create(new_cr, uid, {
-            'name': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'Move analysis',
+            'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'datas_fname': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'description': 'IN & OUT Report',
             'res_model': 'export.report.stock.move',
             'res_id': ids[0],
             'datas': file_res.get('result'),
@@ -470,8 +476,7 @@ from/to this location will be shown.""",
 
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
-        Select the good product and the good expiry date according to
-        selected batch number.
+        Change the product when change the prodlot
         """
         if not prodlot_id:
             return {
@@ -481,8 +486,8 @@ from/to this location will be shown.""",
                 },
             }
 
-        prodlot = self.pool.get('stock.production.lot')\
-            .browse(cr, uid, prodlot_id)
+        prodlot = self.pool.get('stock.production.lot'). \
+            browse(cr, uid, prodlot_id)
         return {
             'value': {
                 'product_id': prodlot.product_id.id,
@@ -530,10 +535,10 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLines': self.getLines,
-            'dateFormatdmY': self.date_format_dmY,
         })
 
     def getLines(self):
+        prod_obj = self.pool.get('product.product')
         res = []
         company_id = self.pool.get('res.users').browse(
             self.cr, self.uid, self.uid).company_id.partner_id.id
@@ -550,45 +555,38 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.datas['moves'],
             context=self.localcontext
         ):
-            move_vals = {
+            ctx = self.localcontext.copy()
+            ctx.update({
+                'date': move.picking_id and move.picking_id.date_done or move.date,
+            })
+            prod_stock = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
+            prod_stock_bn = 0
+            if move.prodlot_id:
+                ctx_bn = self.localcontext.copy()
+                ctx_bn.update({
+                    'prodlot_id': move.prodlot_id.id or False,
+                })
+                prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx_bn)['qty_available']
+
+            res.append({
                 'product_code': move.product_id.default_code,
                 'product_name': move.product_id.name,
                 'uom': move.product_uom.name,
+                'date_done': move.picking_id and move.picking_id.date_done or move.date or False,
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
-                'qty_in': 0.00,
-                'qty_out': 0.00,
+                'qty': move.product_qty,
+                'unit_price': move.price_unit,
+                'move_value': move.product_qty * move.price_unit,
+                'prod_stock_bn': move.prodlot_id and prod_stock_bn or prod_stock,
+                'prod_stock': prod_stock,
                 'source': get_src_dest(move, 'location_id'),
                 'destination': get_src_dest(move, 'location_dest_id'),
-                'reason_code': move.reason_type_id and move.reason_type_id.name or '',
+                'reason_type': move.reason_type_id and move.reason_type_id.complete_name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or move.name or '',
-                'date_done': move.picking_id and move.picking_id.date_done or move.date or False,
-            }
-            if move.type in ('in', 'out') and (
-                move.location_id.usage in ['customer', 'supplier'] or
-                    move.location_dest_id.usage in ['customer', 'supplier']):
-                if move.type == 'in':
-                    move_vals['qty_in'] = move.product_qty
-                else:
-                    move_vals['qty_out'] = move.product_qty
-                res.append(move_vals)
-            else:
-                move_vals_in = move_vals.copy()
-                move_vals_out = move_vals.copy()
-                move_vals_in.update({
-                    'qty_in': move.product_qty,
-                    'qty_out': 0.00,
-                })
-                move_vals_out.update({
-                    'qty_in': 0.00,
-                    'qty_out': move.product_qty,
-                })
-                res.append(move_vals_in)
-                res.append(move_vals_out)
-        return res
+            })
 
-    def date_format_dmY(self, date):
-        return datetime.strftime(datetime.strptime(date[:10], '%Y-%m-%d'), '%d-%m-%Y')
+        return res
 
 
 class report_stock_move_xls(SpreadsheetReport):
@@ -599,5 +597,6 @@ class report_stock_move_xls(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
         return (a[0], 'xls')
+
 
 report_stock_move_xls('report.stock.move.xls', 'export.report.stock.move', 'addons/stock_override/report/report_stock_move_xls.mako', parser=parser_report_stock_move_xls, header='internal')

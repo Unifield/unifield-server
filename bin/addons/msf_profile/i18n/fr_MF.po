@@ -18940,8 +18940,8 @@ msgstr "Asia/Atyrau"
 #: model:ir.actions.act_window,name:stock_override.export_report_stock_move_action
 #: model:ir.actions.report.xml,name:stock_override.report_stock_move_xls
 #: model:ir.ui.menu,name:stock_override.export_report_stock_move_menu
-msgid "Export Moves Analysis"
-msgstr "Export d'Analyse des Mouvements"
+msgid "IN & OUT Report"
+msgstr "Rapport sur IN & OUT"
 
 #. module: product
 #: help:product.supplierinfo,product_uom:0
@@ -34340,11 +34340,15 @@ msgstr "Commandes"
 
 #. modules: specific_rules, stock_override
 #: field:export.report.stock.inventory,location_id:0
-#: field:export.report.stock.move,location_id:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:187
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:190
 msgid "Specific location"
 msgstr "Zone spéciale"
+
+#. modules: stock_override
+#: field:export.report.stock.move,location_id:0
+msgid "Specific location(s)"
+msgstr "Zone(s) spéciale(s)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:453
@@ -70676,8 +70680,8 @@ msgstr "Fonction Objet"
 
 #. module: stock_override
 #: view:export.report.stock.move:0
-msgid "Export Moves Analysis"
-msgstr "Export de l'Analyse des Mouvements"
+msgid "IN & OUT Report"
+msgstr "Rapport sur IN & OUT"
 
 #. module: transport_mgmt
 #: field:product.product,transport_ok:0
