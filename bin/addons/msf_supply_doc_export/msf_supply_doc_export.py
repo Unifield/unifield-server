@@ -27,6 +27,8 @@ from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from purchase import PURCHASE_ORDER_STATE_SELECTION
 from datetime import datetime
+from osv import osv
+from tools.translate import _
 
 import pooler
 import time
@@ -1042,3 +1044,33 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
+
+class ir_values(osv.osv):
+    """
+    we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
+    """
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
+
+        if key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if context.get('composition_type')=='theoretical' and v[2].get('report_name', False) in ('composition.kit.xls', 'kit.report'):
+                    if v[2].get('report_name', False) == 'kit.report':
+                        v[2]['name'] = _('Theoretical Kit')
+                    new_act.append(v)
+                elif context.get('composition_type')=='real' and v[2].get('report_name', False) in ('real.composition.kit.xls', 'kit.report'):
+                    if v[2].get('report_name', False) == 'kit.report':
+                        v[2]['name'] = _('Kit Composition')
+                    new_act.append(v)
+            values = new_act
+
+        return values
+
+ir_values()

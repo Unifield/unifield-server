@@ -552,6 +552,11 @@ class audittrail_rule(osv.osv):
                 # disable Track changes link
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
 
+            elif thisrule.object_id.model == 'stock.picking':
+                # TC only on IN
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
+
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),
                              ('res_model', '=', val['res_model']),
