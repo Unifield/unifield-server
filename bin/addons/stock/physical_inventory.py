@@ -110,7 +110,7 @@ class PhysicalInventory(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'responsible': fields.char('Responsible', size=128, required=False),
+        'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
@@ -1410,7 +1410,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
-        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True, write_relate=False, store=True),
+        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),
