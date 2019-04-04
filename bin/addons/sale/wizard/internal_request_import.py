@@ -27,6 +27,7 @@ import base64
 import time
 import datetime
 import logging
+import tools
 
 from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -35,14 +36,12 @@ from tools.translate import _
 
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
-ORDER_PRIORITY_BY_VALUE = dict((_(y), x) for x, y in ORDER_PRIORITY)
-ORDER_CATEGORY_BY_VALUE = dict((_(y), x) for x, y in ORDER_CATEGORY)
 LINES_COLUMNS = [
-    (0, _('Line number'), 'mandatory', ('order_id', '!=', False)),
+    (0, _('Line number'), 'optionnal'),
     (1, _('Product Code'), 'optionnal'),
     (2, _('Product Description'), 'optionnal'),
     (3, _('Quantity'), 'mandatory'),
-    (4, _('Cost Price'), 'optionnal'),
+    (4, _('Unit Price'), 'optionnal'),
     (5, _('UoM'), 'mandatory'),
     (6, _('Currency'), 'optionnal'),
     (7, _('Comment'), 'optionnal'),
@@ -113,6 +112,7 @@ class internal_request_import(osv.osv):
         'in_ref': fields.char(string='Order Reference', size=64, readonly=True),
         'in_categ': fields.char(string='Order Category', size=64, readonly=True),
         'in_priority': fields.char(string='Priority', size=64, readonly=True),
+        'in_creation_date': fields.char(string='Creation date', size=64, readonly=True),
         'in_requested_date': fields.char(string='Requested date', size=64, readonly=True),
         'in_requestor': fields.char(string='Requestor', size=64, readonly=True),
         'in_loc_requestor': fields.char(string='Location Requestor', size=64, readonly=True),
@@ -121,6 +121,7 @@ class internal_request_import(osv.osv):
         # # Imported IR info
         'imp_categ': fields.selection(ORDER_CATEGORY, string='Order Category', readonly=True),
         'imp_priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
+        'imp_creation_date': fields.date(string='Creation Date', readonly=True),
         'imp_requested_date': fields.date(string='Requested Date', readonly=True),
         'imp_requestor': fields.char(size=128, string='Requestor', readonly=True),
         'imp_loc_requestor': fields.many2one('stock.location', string='Location Requestor', readonly=True),
@@ -228,7 +229,7 @@ class internal_request_import(osv.osv):
 
         ctx = context.copy()
         ctx.update({'procurement_request': True, 'ir_import_id': False})
-        for wiz in self.read(cr, uid, ids, ['order_id', 'message', 'error_line_ids'], context=context):
+        for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
             if wiz['order_id']:
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['form', 'tree'], context=ctx)
                 res['res_id'] = wiz['order_id'][0]
@@ -306,6 +307,10 @@ class internal_request_import(osv.osv):
         Import the file and fill the data in simulation screen
         '''
         cr = pooler.get_db(dbname).cursor()
+        ir_obj = self.pool.get('sale.order').fields_get(cr, uid, ['priority', 'categ'], context=context)
+        ORDER_PRIORITY_BY_VALUE = dict([(y, x) for x, y in ir_obj.get('priority', {}).get('selection', [])])
+        ORDER_CATEGORY_BY_VALUE = dict([(y, x) for x, y in ir_obj.get('categ', {}).get('selection', [])])
+
         try:
             ir_imp_l_obj = self.pool.get('internal.request.import.line')
             err_line_obj = self.pool.get('internal.request.import.error.line')
@@ -344,6 +349,7 @@ class internal_request_import(osv.osv):
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
+                l_date_format = ['%d-%m-%Y', '%d.%m.%Y']
                 blocked = False
                 message = ''
                 ir_order = ir_imp.order_id
@@ -371,7 +377,7 @@ class internal_request_import(osv.osv):
 
                 if len(values.get(first_line_index, [])) < nb_file_lines_columns:
                     error_msg = _('Line %s of the Excel file: This line is mandatory and must have at least %s columns. The values on this line must be the name of the field for IR lines.') \
-                                % (first_line_index, nb_file_lines_columns)
+                        % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
                 for x in xrange(first_line_index, len(values)+1):
@@ -406,6 +412,7 @@ class internal_request_import(osv.osv):
                     'in_ref': values.get(2, [])[1],
                     'in_categ': values.get(4, [])[1],
                     'in_priority': values.get(5, [])[1],
+                    'in_creation_date': values.get(6, [])[1],
                     'in_requested_date': values.get(7, [])[1],
                     'in_requestor': values.get(8, [])[1],
                     'in_loc_requestor': values.get(9, [])[1],
@@ -418,7 +425,7 @@ class internal_request_import(osv.osv):
                         if not values.get(2, [])[1] or ir_order.name != values.get(2, [])[1]:
                             blocked = True
                             msg_val = _('Order Reference: IR Order Reference \'%s\' is not correct.') % \
-                                      (values.get(2, [])[1],)
+                                (values.get(2, [])[1],)
                             values_header_errors.append(msg_val)
                             err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
                                                 context=context)
@@ -442,98 +449,94 @@ class internal_request_import(osv.osv):
                                                 context=context)
 
                 # Line 4: Order Category
-                categ = values.get(4, [])[1]
+                categ = values.get(4, [])[1] or ' '
                 if categ in ORDER_CATEGORY_BY_VALUE:
                     header_values['imp_categ'] = ORDER_CATEGORY_BY_VALUE[categ]
                 elif not ir_order:
                     msg_val = _('Order Category: Order Category \'%s\' not defined, default value will be \'Other\'') \
-                              % (categ or False,)
+                        % (categ or False,)
                     values_header_errors.append(msg_val)
                     err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
                                         context=context)
                     header_values['imp_categ'] = 'other'
 
                 # Line 5: Priority
-                priority = values.get(5, [])[1]
+                priority = values.get(5, [])[1] or ' '
                 if priority in ORDER_PRIORITY_BY_VALUE:
                     header_values['imp_priority'] = ORDER_PRIORITY_BY_VALUE[priority]
                 elif not ir_order:
                     msg_val = _('Order Priority: Order Priority \'%s\' not defined, default value will be \'Normal\'')\
-                              % (priority or False,)
+                        % (priority or False,)
                     values_header_errors.append(msg_val)
                     err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
                                         context=context)
                     header_values['imp_priority'] = 'normal'
 
+                # Line 6: Creation date
+                create_date = values.get(6, [])[1]
+                if type(create_date) == type(DateTime.now()):
+                    create_date = create_date.strftime('%Y-%m-%d')
+                    header_values['imp_creation_date'] = create_date
+                else:
+                    for format in l_date_format:
+                        try:
+                            create_date = datetime.datetime.strptime(create_date, format)
+                            header_values['imp_creation_date'] = create_date.strftime('%Y-%m-%d')
+                            break
+                        except:
+                            continue
+                    if not header_values.get('imp_creation_date'):
+                        msg_val = _('Creation Date: The Creation Date \'%s\' is empty or incorrect, current date will be used.') \
+                            % (create_date,)
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
+                                                      'line_message': msg_val}, context=context)
+                        header_values['imp_creation_date'] = time.strftime('%Y-%m-%d')
+
                 # Line 7: Requested date
                 req_date = values.get(7, [])[1]
-                if req_date:
-                    if type(req_date) == type(DateTime.now()):
-                        req_date = req_date.strftime('%d-%m-%Y')
-                        header_values['imp_requested_date'] = req_date
-                    else:
+                if type(req_date) == type(DateTime.now()):
+                    req_date = req_date.strftime('%Y-%m-%d')
+                    header_values['imp_requested_date'] = req_date
+                else:
+                    for format in l_date_format:
                         try:
-                            time.strptime(req_date, '%d-%m-%Y')
-                            header_values['imp_requested_date'] = req_date
+                            req_date = datetime.datetime.strptime(req_date, format)
+                            header_values['imp_requested_date'] = req_date.strftime('%Y-%m-%d')
+                            break
                         except:
-                            blocked = True
-                            msg_val = _('Requested Date: The Requested Date \'%s\' must be formatted like \'DD-MM-YYYY\'')\
-                                      % req_date
-                            values_header_errors.append(msg_val)
-                            err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                                context=context)
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Requested Date: The Requested Date is mandatory in the first import.')
-                    values_header_errors.append(msg_val)
-                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                        context=context)
+                            continue
+                    if not header_values.get('imp_requested_date'):
+                        msg_val = _('Requested Date: The Requested Date \'%s\' is incorrect, you will need to correct this manually.') \
+                            % req_date
+                        values_header_errors.append(msg_val)
+                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
+                                                      'line_message': msg_val}, context=context)
 
                 # Line 8: Requestor
                 if values.get(8, [])[1]:
                     header_values['imp_requestor'] = values.get(8, [])[1]
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Requestor: The Requestor is mandatory in the first import.')
-                    values_header_errors.append(msg_val)
-                    err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                        context=context)
 
                 # Line 9: Location Requestor
                 loc_req = values.get(9, [])[1]
-                if loc_req:
-                    ir_loc_req_domain = [
-                        ('name', '=ilike', loc_req), '&',
-                        ('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&',
-                        ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')
-                    ]
-                    loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, limit=1, context=context)
-                    if loc_ids:
-                        header_values['imp_loc_requestor'] = loc_ids[0]
-                    else:
-                        blocked = True
-                        msg_val = _('Location Requestor: The Location Requestor \'%s\' does not match possible options.')\
-                                  % (loc_req,)
-                        values_header_errors.append(msg_val)
-                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                            context=context)
-                elif not ir_order:
-                    blocked = True
-                    msg_val = _('Location Requestor: The Location Requestor is mandatory.')
+                ir_loc_req_domain = [
+                    ('name', '=ilike', loc_req), '&',
+                    ('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&',
+                    ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')
+                ]
+                loc_ids = loc_obj.search(cr, uid, ir_loc_req_domain, limit=1, context=context)
+                if loc_ids:
+                    header_values['imp_loc_requestor'] = loc_ids[0]
+                else:
+                    msg_val = _('Location Requestor: The Location Requestor \'%s\' does not match possible options, you will need to correct this manually.')\
+                        % (loc_req,)
                     values_header_errors.append(msg_val)
                     err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
                                         context=context)
 
                 # Line 10: Origin
-                if not ir_order:
-                    if values.get(10, [])[1]:
-                        header_values['imp_origin'] = values.get(10, [])[1]
-                    else:
-                        blocked = True
-                        msg_val = _('Origin: The Origin is mandatory in the first import.')
-                        values_header_errors.append(msg_val)
-                        err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True, 'line_message': msg_val},
-                                            context=context)
+                if values.get(10, [])[1]:
+                    header_values['imp_origin'] = values.get(10, [])[1]
 
                 '''
                 The header values have been imported, start the importation of
@@ -562,7 +565,7 @@ class internal_request_import(osv.osv):
                             if required_field:
                                 red = True
                                 line_errors += _('The column \'%s\' mustn\'t be empty%s. ') \
-                                               % (manda_field[1], manda_field[0] == 0 or '')
+                                    % (manda_field[1], manda_field[0] == 0 or '')
 
                     # Get values
                     vals = values.get(x, [])
@@ -582,10 +585,10 @@ class internal_request_import(osv.osv):
                     product = False
                     line_recap = ''
                     for val in vals:
-                        line_recap += str(val or '') + '/'
+                        line_recap += tools.ustr(val or '') + '/'
                     # Line number
-                    if ir_line_numbers:
-                        if vals[0]:
+                    if ir_order and vals[0]:
+                        if vals[0] in ir_line_numbers:
                             try:
                                 line_n = int(vals[0])
                                 line_data.update({'imp_line_number': line_n})
@@ -600,12 +603,13 @@ class internal_request_import(osv.osv):
                                 line_errors += _('Line Number must be an integer. ')
                         else:
                             red = True
-                            line_errors += _('Line Number is mandatory to update a line. ')
+                            line_errors += _('Line Number must be empty to add a new line to an existing IR. ')
 
                     # Product and Comment
                     product_code = vals[1]
                     comment = vals[7]
                     if product_code:
+                        product_code = tools.ustr(product_code)
                         prod_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
@@ -618,10 +622,11 @@ class internal_request_import(osv.osv):
                         else:
                             if ir_imp.no_prod_as_comment:
                                 nb_treated_lines_by_nomen += 1
+                                desc = vals[2] and '/' + tools.ustr(vals[2]) or ''
                                 if comment:
-                                    line_data.update({'imp_comment': product_code + '\n' + comment})
+                                    line_data.update({'imp_comment': product_code + desc + '/' + tools.ustr(comment)})
                                 else:
-                                    line_data.update({'imp_comment': product_code})
+                                    line_data.update({'imp_comment': product_code + desc})
                                 line_errors += _('Product \'%s\' not recognized, line by nomenclature created. ') % vals[1]
                             else:
                                 red = True
@@ -637,7 +642,11 @@ class internal_request_import(osv.osv):
                     qty = vals[3] or 0.00
                     try:
                         qty = float(qty)
-                        line_data.update({'imp_qty': qty})
+                        if qty > 0:
+                            line_data.update({'imp_qty': qty})
+                        else:
+                            red = True
+                            line_errors += _('Quantity \'%s\' must be above 0. ') % (qty,)
                     except:
                         red = True
                         line_errors += _('Quantity must be a number. ')
@@ -648,25 +657,34 @@ class internal_request_import(osv.osv):
                         cost_price = vals[4]
                         try:
                             cost_price = float(cost_price)
-                            line_data.update({'imp_cost_price': cost_price})
+                            if cost_price > 0:
+                                line_data.update({'imp_cost_price': cost_price})
+                            else:
+                                line_data.update({'imp_cost_price': product['standard_price']})
+                                line_errors += _('Price \'%s\' must be above 0, default cost price has been used. ') \
+                                    % (cost_price,)
                         except:
                             line_data.update({'imp_cost_price': product['standard_price']})
                             line_errors += _('Price \'%s\' is not a correct value, default cost price has been used. ') \
-                                           % (cost_price,)
+                                % (cost_price,)
                         if uom_ids and uom_ids[0] in [product['uom_id'][0], product['uom_po_id'][0]]:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
                             red = True
                             line_errors += _('UoM \'%s\' is not consistent with the Product \'%s\'. ') \
-                                           % (vals[5], vals[1])
+                                % (vals[5], vals[1])
                     else:
                         cost_price = vals[4] or 0.00
                         try:
                             cost_price = float(cost_price)
-                            line_data.update({'imp_cost_price': cost_price})
+                            if cost_price > 0:
+                                line_data.update({'imp_cost_price': cost_price})
+                            else:
+                                red = True
+                                line_errors += _('Price \'%s\' must be above 0. ') % (cost_price,)
                         except:
                             red = True
-                            line_errors += _('Cost Price must be a number. ')
+                            line_errors += _('Unit Price must be a number. ')
                         if uom_ids:
                             line_data.update({'imp_uom_id': uom_ids[0]})
                         else:
@@ -675,12 +693,21 @@ class internal_request_import(osv.osv):
 
                     # Date of Stock Take
                     if vals[8]:
-                        try:
-                            time.strptime(vals[8], '%d-%m-%Y')
-                            line_data.update({'imp_stock_take_date': vals[8]})
-                        except:
-                            line_errors += _('Date of Stock Take \'%s\' must be in the format \'DD-MM-YYYY\', line has been imported without Date of Stock Take. ')\
-                                           % vals[8]
+                        dost = vals[8]
+                        if type(dost) == type(DateTime.now()):
+                            dost = dost.strftime('%Y-%m-%d')
+                            line_data.update({'imp_stock_take_date': dost})
+                        else:
+                            for format in l_date_format:
+                                try:
+                                    dost = datetime.datetime.strptime(dost, format)
+                                    line_data.update({'imp_stock_take_date': dost.strftime('%Y-%m-%d')})
+                                    break
+                                except:
+                                    continue
+                            if not line_data.get('imp_stock_take_date'):
+                                line_errors += _('Date of Stock Take \'%s\' is not a correct value, line has been imported without Date of Stock Take. ') \
+                                    % vals[8]
 
                     line_data.update({
                         'error_msg': line_errors,
@@ -711,14 +738,20 @@ class internal_request_import(osv.osv):
                 if len(values_header_errors) or len(values_line_errors):
                     import_error_ok = True
 
+                nb_imp_lines = nb_treated_lines - nb_error_lines
+                if blocked:
+                    nb_imp_lines = 0
+                    nb_error_lines = nb_treated_lines
+                    nb_treated_lines_by_nomen = 0
+
                 message = _('''
 <p>Importation completed in %s second(s)!</p>
 <p># of lines in the file : %s</p>
 <p># of lines imported : %s</p>
 <p># of lines not imported : %s</p>
 <p># of lines imported as line by nomenclature : %s</p>
-                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_treated_lines - nb_error_lines,
-                        nb_error_lines, nb_treated_lines_by_nomen)
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines, nb_error_lines,
+                        nb_treated_lines_by_nomen)
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
@@ -791,21 +824,31 @@ class internal_request_import(osv.osv):
                 self.write(cr, uid, [wiz.id], {'state': 'import_progress'}, context=context)
                 if wiz.order_id:  # update IR
                     ir_vals = {
-                        'delivery_requested_date': wiz.imp_requested_date,
-                        'requestor': wiz.imp_requestor,
-                        'location_requestor_id': wiz.imp_loc_requestor.id,
+                        'requestor': wiz.imp_requestor
                     }
+                    if wiz.imp_creation_date:
+                        ir_vals.update({'date_order': wiz.imp_creation_date})
+                    if wiz.imp_requested_date:
+                        ir_vals.update({'delivery_requested_date': wiz.imp_requested_date})
+                    else:
+                        ir_vals.update({'delivery_requested_date': False})
+                    if wiz.imp_loc_requestor:
+                        ir_vals.update({'location_requestor_id': wiz.imp_loc_requestor.id})
                     if wiz.imp_categ:
                         ir_vals.update({'categ': wiz.imp_categ})
                     if wiz.imp_priority:
                         ir_vals.update({'priority': wiz.imp_priority})
                     so_obj.write(cr, uid, wiz.order_id.id, ir_vals, context=context)
                     for line in wiz.imp_line_ids:
-                        if not line.red:
+                        if not line.red and line.imp_qty > 0:
                             line_vals = {
                                 'product_id': line.imp_product_id and line.imp_product_id.id or False,
                                 'product_uom_qty': line.imp_qty or 0.00,
                                 'comment': line.imp_comment or '',
+                                'procurement_request': True,
+                                'stock_take_date': line.imp_stock_take_date or False,
+                                'cost_price': line.imp_cost_price or 0.00,
+                                'price_unit': line.imp_cost_price or 0.00,
                             }
                             if line.imp_uom_id:
                                 line_vals.update({'product_uom': line.imp_uom_id.id})
@@ -814,8 +857,6 @@ class internal_request_import(osv.osv):
                             else:  # create IR line
                                 line_vals.update({
                                     'order_id': wiz.order_id.id,
-                                    'cost_price': line.imp_cost_price or 0.00,
-                                    'price_unit': line.imp_cost_price or 0.00,
                                 })
                                 sol_obj.create(cr, uid, line_vals, context=context)
                 else:  # Create IR
@@ -823,9 +864,10 @@ class internal_request_import(osv.osv):
                         'procurement_request': True,
                         'categ': wiz.imp_categ,
                         'priority': wiz.imp_priority,
-                        'delivery_requested_date': wiz.imp_requested_date,
+                        'date_order': wiz.imp_creation_date,
+                        'delivery_requested_date': wiz.imp_requested_date or False,
                         'requestor': wiz.imp_requestor,
-                        'location_requestor_id': wiz.imp_loc_requestor.id,
+                        'location_requestor_id': wiz.imp_loc_requestor and wiz.imp_loc_requestor.id or False,
                         'origin': wiz.imp_origin,
                         'order_line': [(0, 0, {
                             'product_id': x.imp_product_id and x.imp_product_id.id or False,
@@ -833,7 +875,9 @@ class internal_request_import(osv.osv):
                             'cost_price': x.imp_cost_price or 0.00,
                             'price_unit': x.imp_cost_price or 0.00,
                             'product_uom': x.imp_uom_id and x.imp_uom_id.id or False,
+                            'procurement_request': True,
                             'comment': x.imp_comment or '',
+                            'stock_take_date': x.imp_stock_take_date or False,
                         }) for x in (y for y in wiz.imp_line_ids if not y.red)],
                     }
                     new_ir_id = so_obj.create(cr, uid, ir_vals, context=context)
@@ -904,7 +948,7 @@ class internal_request_import_line(osv.osv):
         'in_product': fields.char(string='Product', size=64, readonly=True),
         'in_product_desc': fields.char(string='Product Description', size=128, readonly=True),
         'in_qty': fields.char(string='Quantity', size=64, readonly=True),
-        'in_cost_price': fields.char(string='Cost Price', size=64, readonly=True),
+        'in_cost_price': fields.char(string='Unit Price', size=64, readonly=True),
         'in_uom': fields.char(string='UoM', size=64, readonly=True),
         'in_comment': fields.char(string='Comment', size=256, readonly=True),
         'in_stock_take_date': fields.char(string='Date of Stock Take', size=64, readonly=True),
@@ -912,7 +956,7 @@ class internal_request_import_line(osv.osv):
         'imp_line_number': fields.integer(string='Line Number'),
         'imp_product_id': fields.many2one('product.product', string='Product', readonly=True),
         'imp_qty': fields.float(digits=(16, 2), string='Quantity', readonly=True),
-        'imp_cost_price': fields.float(digits=(16, 2), string='Cost Price', readonly=True),
+        'imp_cost_price': fields.float(digits=(16, 2), string='Unit Price', readonly=True),
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_comment': fields.char(size=256, string='Comment', readonly=True),
         'imp_stock_take_date': fields.date(string='Date of Stock Take', readonly=True),

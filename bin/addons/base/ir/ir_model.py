@@ -56,6 +56,34 @@ def _in_modules(self, cr, uid, ids, field_name, arg, context=None):
     return result
 
 
+class common_import_ur(osv.osv):
+    _name = 'common.import.ur'
+    _description = 'Object used to delete non imported records'
+    _auto = False
+    _common_import = True
+    _columns = {
+        'imported_flag': fields.boolean('Record imported', internal=1),
+    }
+    _defaults = {
+        'imported_flag': False,
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).write(cr, uid, ids, vals, context=context)
+
+common_import_ur()
+
 class ir_model(osv.osv):
     _name = 'ir.model'
     _description = "Objects"
@@ -448,6 +476,9 @@ ir_model_fields()
 
 class ir_model_access(osv.osv):
     _name = 'ir.model.access'
+    _inherit = 'common.import.ur'
+    _auto = True
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'model_id': fields.many2one('ir.model', 'Object', required=True, domain=[('osv_memory','=', False)], select=True, ondelete='cascade'),
@@ -456,8 +487,14 @@ class ir_model_access(osv.osv):
         'perm_write': fields.boolean('Write Access'),
         'perm_create': fields.boolean('Create Access'),
         'perm_unlink': fields.boolean('Delete Access'),
+        'from_system': fields.boolean('ACL created by dev'),
     }
 
+    _defaults = {
+        'from_system': False,
+    }
+    _sql_constraints = [
+    ]
     def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -608,19 +645,39 @@ class ir_model_access(osv.osv):
     #
     # Check rights on actions
     #
-    def write(self, cr, uid, *args, **argv):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('from_system'):
+            vals['from_system'] = True
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).write(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).write(cr, uid, ids, vals, context=context)
         return res
 
-    def create(self, cr, uid, *args, **argv):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_system'):
+            vals['from_system'] = True
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).create(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).create(cr, uid, vals, context=context)
         return res
 
-    def unlink(self, cr, uid, *args, **argv):
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).unlink(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).unlink(cr, uid, ids, context)
         return res
 
 ir_model_access()

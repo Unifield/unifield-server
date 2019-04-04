@@ -40,33 +40,37 @@
         </record>
 
         <record id="menu_ir_import_action_create" model="ir.actions.server">
-            <field name="name">Import from IR Excel template to create</field>
+            <field name="name">Import from IR Excel template</field>
             <field name="model_id" ref="model_sale_order"/>
             <field name="state">code</field>
             <field name="code">action = obj.ir_import_by_order_to_create(context=context)</field>
+            <field name="sequence" eval="1"/>
         </record>
 
         <record id="ir_open_internal_request_import_to_create" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">sale.order</field>
-            <field name="name">Import from IR Excel template to create</field>
+            <field name="name">Import from IR Excel template</field>
             <field name="view_ids" ref="procurement_request.procurement_request_tree_view" />
+            <field name="sequence" eval="1"/>
             <field eval="'ir.actions.server,%d'%menu_ir_import_action_create" name="value"/>
             <field eval="True" name="object"/>
         </record>
 
         <record id="menu_ir_import_action_update" model="ir.actions.server">
-            <field name="name">Import from IR Excel template to update</field>
+            <field name="name">Import from IR Excel template</field>
             <field name="model_id" ref="model_sale_order"/>
             <field name="state">code</field>
             <field name="code">action = obj.ir_import_by_order_to_update(context=context)</field>
+            <field name="sequence" eval="1"/>
         </record>
 
         <record id="ir_open_internal_request_import_to_update" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">sale.order</field>
-            <field name="name">Import from IR Excel template to update</field>
+            <field name="name">Import from IR Excel template</field>
             <field name="view_ids" ref="procurement_request.procurement_request_form_view" />
+            <field name="sequence" eval="1"/>
             <field eval="'ir.actions.server,%d'%menu_ir_import_action_update" name="value"/>
             <field eval="True" name="object"/>
         </record>

@@ -4078,7 +4078,7 @@ External partner restriction - Coordo,base.field_res_partner_parent_id,FALSE,FAL
 External partner restriction - Coordo,sale.field_res_partner_partner_not_int,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20882
 External partner restriction - Coordo,msf_partner.field_res_partner_partner_type,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20883
 External partner restriction - Coordo,base.field_res_partner_phone,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20884
-External partner restriction - Coordo,partner_modification.field_res_partner_po_by_project,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20885
+External partner restriction - Coordo,partner_modification.field_res_partner_po_by_project,TRUE,TRUE,FALSE,msf_profile/field_access_rule_line/20885
 External partner restriction - Coordo,msf_partner.field_res_partner_price_currency,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20886
 External partner restriction - Coordo,msf_partner.field_res_partner_price_unit,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20887
 External partner restriction - Coordo,partner_modification.field_res_partner_procurement_lt,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20888
@@ -4161,7 +4161,7 @@ External partner restriction - Project,base.field_res_partner_parent_id,FALSE,FA
 External partner restriction - Project,sale.field_res_partner_partner_not_int,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20965
 External partner restriction - Project,msf_partner.field_res_partner_partner_type,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20966
 External partner restriction - Project,base.field_res_partner_phone,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20967
-External partner restriction - Project,partner_modification.field_res_partner_po_by_project,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20968
+External partner restriction - Project,partner_modification.field_res_partner_po_by_project,TRUE,TRUE,FALSE,msf_profile/field_access_rule_line/20968
 External partner restriction - Project,msf_partner.field_res_partner_price_currency,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20969
 External partner restriction - Project,msf_partner.field_res_partner_price_unit,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20970
 External partner restriction - Project,partner_modification.field_res_partner_procurement_lt,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20971

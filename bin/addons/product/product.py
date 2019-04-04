@@ -26,6 +26,7 @@ import math
 from _common import rounding
 import re
 from tools.translate import _
+from tools import cache
 
 def is_pair(x):
     return not x%2
@@ -74,6 +75,18 @@ class product_uom(osv.osv):
     _name = 'product.uom'
     _description = 'Product Unit of Measure'
 
+    @cache(skiparg=3)
+    def get_rounding(self, cr, uid):
+        uom_ids = self.search(cr, 1, [])
+        res = {}
+        for uom_data in self.read(cr, 1, uom_ids, ['rounding']):
+            res[uom_data['id']] = uom_data['rounding']
+        return res
+
+    def clear_caches(self, cr):
+        self.get_rounding.clear_cache(cr.dbname)
+        return self
+
     def _compute_factor_inv(self, factor):
         return factor and round(1.0 / factor, 6) or 0.0
 
@@ -91,7 +104,13 @@ class product_uom(osv.osv):
             if data['factor_inv'] <> 1:
                 data['factor'] = self._compute_factor_inv(data['factor_inv'])
             del(data['factor_inv'])
+        self.clear_caches(cr)
         return super(product_uom, self).create(cr, uid, data, context)
+
+    def write(self, cr, uid, ids, data, context=None):
+        if 'rounding' in data:
+            self.get_rounding.clear_cache(cr.dbname)
+        return super(product_uom, self).write(cr, uid, ids, data, context=context)
 
     def one_reference_by_categ(self, cr, uid, ids, context=None):
         cr.execute("""select count(*), category_id from product_uom where uom_type='reference' group by category_id""")
@@ -255,6 +274,7 @@ product_category()
 class product_template(osv.osv):
     _name = "product.template"
     _description = "Product Template"
+
     def _calc_seller(self, cr, uid, ids, fields, arg, context=None):
         result = {}
         for product in self.browse(cr, uid, ids, context=context):
@@ -271,6 +291,28 @@ class product_template(osv.osv):
                 result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
         return result
 
+    def _get_list_price(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        Update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            standard_price = obj.standard_price
+            #US-1035: Fixed the wrong hardcoded id given when calling config setup object
+            setup_br = setup_obj and setup_obj.get_config(cr, uid)
+            if not setup_br:
+                return res
+            percentage = setup_br.sale_price
+            list_price = standard_price * (1 + (percentage/100.00))
+            res[obj.id] = list_price
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=True, select=True),
         'product_manager': fields.many2one('res.users','Product Manager',help="This is use as task responsible"),
@@ -284,8 +326,11 @@ class product_template(osv.osv):
         'procure_method': fields.selection([('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], 'Procurement Method', required=True, help="'Make to Stock': When needed, take from the stock or wait until re-supplying. 'Make to Order': When needed, purchase or produce for the procurement request."),
         'rental': fields.boolean('Can be Rent'),
         'categ_id': fields.many2one('product.category','Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="Select category for the current product"),
-        'list_price': fields.float('Sale Price', digits_compute=dp.get_precision('Sale Price'), help="Base price for computing the customer price. Sometimes called the catalog price."),
-        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account'), help="Price of product calculated according to the selected costing method."),
+        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Price of product calculated according to the selected costing method."),
+        'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price', digits_compute=dp.get_precision('Sale Price Computation'), help="Base price for computing the customer price. Sometimes called the catalog price.",
+                                      store = {
+            'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
+        }),
         'volume': fields.float('Volume', help="The volume in m3."),
         'weight': fields.float('Gross weight', help="The gross weight in Kg."),
         'weight_net': fields.float('Net weight', help="The net weight in Kg."),
@@ -304,7 +349,7 @@ class product_template(osv.osv):
                                   ' uos = uom * coeff'),
         'mes_type': fields.selection((('fixed', 'Fixed'), ('variable', 'Variable')), 'Measure Type', required=True),
         'seller_delay': fields.function(_calc_seller, method=True, type='integer', string='Supplier Lead Time', multi="seller_delay", help="This is the average delay in days between the purchase order confirmation and the reception of goods for this product and for the default supplier. It is used by the scheduler to order requests based on reordering delays."),
-        'seller_qty': fields.function(_calc_seller, method=True, type='float', string='Supplier Quantity', multi="seller_qty", help="This is minimum quantity to purchase from Main Supplier."),
+        'seller_qty': fields.function(_calc_seller, method=True, type='float', string='Supplier Quantity', multi="seller_qty", help="This is minimum quantity to purchase from Main Supplier.", related_uom='uom_id'),
         'seller_id': fields.function(_calc_seller, method=True, type='many2one', relation="res.partner", string='Main Supplier', help="Main Supplier who has highest priority in Supplier List.", multi="seller_id"),
         'seller_ids': fields.one2many('product.supplierinfo', 'product_id', 'Partners'),
         'loc_rack': fields.char('Rack', size=16),
@@ -387,6 +432,41 @@ class product_template(osv.osv):
 product_template()
 
 class product_product(osv.osv):
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        location_id = False
+        filter_qty = False
+        for x in domain:
+            if x[0] == 'location_id':
+                location_id = x[2]
+
+            elif x[0] == 'postive_qty':
+                filter_qty = True
+            else:
+                new_dom.append(x)
+
+        ret = super(product_product, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if filter_qty:
+            stock_warehouse_obj = self.pool.get('stock.warehouse')
+            stock_location_obj = self.pool.get('stock.location')
+            if not location_id:
+                wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
+                location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+            if isinstance(location_id, basestring):
+                location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
+
+            if not isinstance(location_id, list):
+                location_id = [location_id]
+
+            child_location_ids = stock_location_obj.search(cr, uid, [('location_id', 'child_of', location_id)], order='NO_ORDER')
+            location_ids = child_location_ids or location_id
+            ret.tables.append('"stock_mission_report_line_location"')
+            ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
+            ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
+            ret.where_clause_params.append(tuple(location_ids))
+            ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+        return ret
+
     def view_header_get(self, cr, uid, view_id, view_type, context=None):
         if context is None:
             context = {}
@@ -521,10 +601,10 @@ class product_product(osv.osv):
     _inherits = {'product.template': 'product_tmpl_id'}
     _order = 'default_code,name_template'
     _columns = {
-        'qty_available': fields.function(_product_qty_available, method=True, type='float', string='Real Stock'),
-        'virtual_available': fields.function(_product_virtual_available, method=True, type='float', string='Virtual Stock'),
-        'incoming_qty': fields.function(_product_incoming_qty, method=True, type='float', string='Incoming'),
-        'outgoing_qty': fields.function(_product_outgoing_qty, method=True, type='float', string='Outgoing'),
+        'qty_available': fields.function(_product_qty_available, method=True, type='float', string='Real Stock', related_uom='uom_id'),
+        'virtual_available': fields.function(_product_virtual_available, method=True, type='float', string='Virtual Stock', related_uom='uom_id'),
+        'incoming_qty': fields.function(_product_incoming_qty, method=True, type='float', string='Incoming', related_uom='uom_id'),
+        'outgoing_qty': fields.function(_product_outgoing_qty, method=True, type='float', string='Outgoing', related_uom='uom_id'),
         'price': fields.function(_product_price, method=True, type='float', string='Pricelist', digits_compute=dp.get_precision('Sale Price')),
         'lst_price' : fields.function(_product_lst_price, method=True, type='float', string='Public Price', digits_compute=dp.get_precision('Sale Price')),
         'code': fields.function(_product_code, method=True, type='char', string='Reference'),
@@ -715,6 +795,35 @@ class product_product(osv.osv):
 
         return True
 
+    def onchange_sp(self, cr, uid, ids, standard_price, context=None):
+        '''
+        On change standard_price, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
+        '''
+        res = {}
+        if standard_price :
+            if standard_price < 0.0:
+                warn_msg = {
+                    'title': _('Warning'),
+                    'message': _("The Cost Price must be greater than 0 !")
+                }
+                res.update({'warning': warn_msg,
+                            'value': {'standard_price': 1,
+                                      'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
+            else:
+                setup_obj = self.pool.get('unifield.setup.configuration')
+                #US-1035: Fixed the wrong hardcoded id given when calling config setup object
+                setup_br = setup_obj.get_config(cr, uid)
+                if not setup_br:
+                    return res
+
+                percentage = setup_br.sale_price
+                list_price = standard_price * (1 + (percentage/100.00))
+                if 'value' in res:
+                    res['value'].update({'list_price': list_price})
+                else:
+                    res.update({'value': {'list_price': list_price}})
+        return res
+
 
 product_product()
 
@@ -828,8 +937,8 @@ class product_supplierinfo(osv.osv):
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
         'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
-        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
-        'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom."),
+        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
+        'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom.", related_uom='product_uom'),
         'product_id' : fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),
         'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
         'pricelist_ids': fields.one2many('pricelist.partnerinfo', 'suppinfo_id', 'Supplier Pricelist'),
@@ -904,7 +1013,7 @@ class pricelist_partnerinfo(osv.osv):
     _columns = {
         'name': fields.char('Description', size=64),
         'suppinfo_id': fields.many2one('product.supplierinfo', 'Partner Information', required=True, ondelete='cascade', select=True),
-        'min_quantity': fields.float('Quantity', required=True, help="The minimal quantity to trigger this rule, expressed in the supplier UoM if any or in the default UoM of the product otherrwise."),
+        'min_quantity': fields.float('Quantity', required=True, help="The minimal quantity to trigger this rule, expressed in the supplier UoM if any or in the default UoM of the product otherrwise.", related_uom='uom_id'),
         'price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price'), help="This price will be considered as a price for the supplier UoM if any or the default Unit of Measure of the product otherwise"),
     }
     _order = 'min_quantity asc'

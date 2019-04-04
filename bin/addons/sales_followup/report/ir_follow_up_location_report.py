@@ -279,7 +279,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.shipment_id.name or '-'
                                 is_shipment_done = move.picking_id.shipment_id.state == 'done'
                             elif from_stock:
-                                packing = '-'
+                                packing = move.picking_id.name or '-'
                                 shipment = '-'
                                 is_shipment_done = move.picking_id.state == 'done' and move.state != 'cancel'
                                 state = move.picking_id.state
@@ -319,8 +319,11 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             for rline in lines:
                                 if rline['packing'] == key[0] and rline['shipment'] == key[1] and \
                                         rline['delivered_uom'] == key[2] and line.line_number == key[3]:
+                                    if rline['is_delivered']:
+                                        rline.update({
+                                            'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
+                                        })
                                     rline.update({
-                                        'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
                                         'backordered_qty': rline['backordered_qty'] + data['backordered_qty'],
                                     })
                         else:

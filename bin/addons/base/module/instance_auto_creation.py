@@ -476,6 +476,11 @@ class instance_auto_creation(osv.osv):
                 else:
                     import_commitments = True
 
+                if config.has_option('reconfigure', 'previous_fy_dates_allowed'):
+                    previous_fy_dates_allowed = config.getboolean('reconfigure', 'previous_fy_dates_allowed')
+                else:
+                    previous_fy_dates_allowed = False
+
                 if config.has_option('reconfigure', 'payroll_ok'):
                     payroll_ok = config.getboolean('reconfigure', 'payroll_ok')
                 else:
@@ -526,6 +531,9 @@ class instance_auto_creation(osv.osv):
                     'currency.setup': {
                         'functional_id': config_dict['reconfigure'].get('functional_currency').lower(),
                     },
+                    'previous.fy.dates.setup': {
+                        'previous_fy_dates_allowed': previous_fy_dates_allowed,
+                    }
                 }
                 if country_id:
                     base_wizards['base.setup.company']['country_id'] = country_id

@@ -24,7 +24,6 @@ import time
 
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-from tools.translate import _
 
 
 class internal_request_import_overview_export(report_sxw.rml_parse):
@@ -57,7 +56,7 @@ class internal_request_import_overview_export_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
                  header='external', store=False):
         super(internal_request_import_overview_export_xls, self).__init__(name, table,
-                                                               rml=rml, parser=parser, header=header, store=store)
+                                                                          rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         a = super(internal_request_import_overview_export_xls, self).create(cr, uid, ids, data, context)

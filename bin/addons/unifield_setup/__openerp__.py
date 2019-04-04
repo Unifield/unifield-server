@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -23,16 +23,16 @@
     "name": "Unifield Setup",
     "version": "1.0",
     "depends": [
-                "base",
-                "base_setup",
-                "product",
-                "product_attributes",
-                "base_setup",
-                "hr",
-                "account",
-                "purchase",
-                "sale",
-                "purchase_double_validation",
+        "base",
+        "base_setup",
+        "product",
+        "product_attributes",
+        "base_setup",
+        "hr",
+        "account",
+        "purchase",
+        "sale",
+        "purchase_double_validation",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "http://www.unifield.org",
@@ -59,6 +59,7 @@
         "installer/payroll_view.xml",
         "installer/commitment_import_view.xml",
         "installer/vat_setup_view.xml",
+        "installer/previous_fy_dates_setup_view.xml",
         # Security and access rights
         "security/ir.model.access.csv",
         "view/product_view.xml",

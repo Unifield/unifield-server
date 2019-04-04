@@ -109,8 +109,13 @@ class product_supplier(osv.osv):
             log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
             log = log_seq.get_id(code_or_id='id')
 
+        if name == 'seller_ids' and context.get('real_user'):
+            user_id = self.pool.get('res.users').browse(cr, uid, context['real_user'], fields_to_fetch=['id'], context=context).id
+        else:
+            user_id = uid
+
         vals = {
-            'user_id': uid,
+            'user_id': user_id,
             'method': 'write',
             'name': name,
             'object_id': object_id,
@@ -150,8 +155,8 @@ class product_supplier(osv.osv):
                                     'Supplier sequence', vals['sequence'],
                                     supplier.sequence, context=context)
 
-        res = super(product_supplier, self).write(cr, uid, ids, vals,
-                                                  context=context)
+        res = super(product_supplier, self).write(cr, uid, ids, vals, context=context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):

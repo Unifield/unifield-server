@@ -57,6 +57,16 @@
                 string="Pre-Packing List"
                 view_ids="msf_outgoing.view_picking_ticket_tree,msf_outgoing.view_picking_ticket_form,msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
                 />
+
+        <report id="pre_packing_excel_export"
+                name="pre.packing.excel.export"
+                model="stock.picking"
+                string="Pre-Packing Excel Export"
+                file="msf_outgoing/report/pre_packing_excel_report_xls.mako"
+                report_type="webkit"
+                header="False"
+                view_ids="msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
+                auto="False" />
                 
         <report auto="False" 
                 id="labels" 

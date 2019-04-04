@@ -130,7 +130,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
@@ -142,7 +142,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.default_code or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_id.name or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.product_uom_qty or '' | x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.cost_price or (line.product_id and line.product_id.standard_price) or '' | x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${line.price_unit or (line.product_id and line.product_id.standard_price) or '' | x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.product_uom.name or ''| x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.functional_currency_id.name or ''| x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''| x}</Data></Cell>
@@ -159,13 +159,13 @@
     <Range>R4C2:R4C2</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;Medical,Log,Service,Transport,Other&quot;</Value>
+    <Value>&quot;${_('Medical,Log,Service,Transport,Other')|x}&quot;</Value>
 </DataValidation>
 <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
     <Range>R5C2:R5C2</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;Normal,Emergency,Priority&quot;</Value>
+    <Value>&quot;${_('Normal,Emergency,Priority')|x}&quot;</Value>
 </DataValidation>
 </ss:Worksheet>
 % endfor

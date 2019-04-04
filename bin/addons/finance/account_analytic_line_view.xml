@@ -68,6 +68,7 @@
                             <field name="reversal_origin"/>
                             <field name="invoice_id" invisible="1"/>
                             <field name="purchase_order_id" invisible="1"/>
+                            <field name="db_id" invisible="1"/>
                         </group>
                     </group>
                 </form>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <report
+            id="stock.unreserved_stock_report"
+            string="Unreserved Stock Report"
+            model="stock.move"
+            name="unreserved.stock.report"
+            file="stock/report/unreserved_stock_report_xls.mako"
+            target_filename="Unreserved Stock Report %(instance_code)s %(year)s%(month)s%(day)s"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+        <menuitem
+            name="Unreserved Stock Report"
+            action="stock.unreserved_stock_report"
+            id="menu_unreserved_stock_report"
+            parent="stock.next_id_61"
+            sequence="2"
+            type="report.xml"
+         />
+
+    </data>
+</openerp>

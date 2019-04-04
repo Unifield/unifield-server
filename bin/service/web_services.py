@@ -952,7 +952,7 @@ class report_spool(netsvc.ExportService):
         report_id = self.id
         self.id_protect.release()
         model_obj = pool.get(model)
-        view_name = context.get('_terp_view_name', '')
+        view_name = context.get('_terp_view_name', '') or context.get('_terp_view_name_for_export', '')
         title = '%s_%s' % (view_name, time.strftime('%Y%m%d'))
         self._reports[report_id] = {
             'uid': uid,
@@ -1104,7 +1104,7 @@ class report_spool(netsvc.ExportService):
                 tb_s = "".join(traceback.format_exception(*tb))
                 logger = netsvc.Logger()
                 logger.notifyChannel('web-services', netsvc.LOG_ERROR,
-                                     'Exception: %s\n%s' % (str(exception), tb_s))
+                                     'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
                 if hasattr(exception, 'name') and hasattr(exception, 'value'):
                     self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
                 else:
