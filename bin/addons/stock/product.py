@@ -342,7 +342,7 @@ class product_product(osv.osv):
             elif f == 'outgoing_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
             elif f == 'qty_allocable':
-                c.updates({'what': ('in', 'out'), 'in_states': ('done',), 'out_states': ('done', 'assigned')})
+                c.update({'what': ('in', 'out'), 'in_states': ('done',), 'out_states': ('done', 'assigned')})
 
             stock = self.get_product_available(cr, uid, ids, context=c)
             if any(stock.values()):
