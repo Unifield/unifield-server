@@ -322,6 +322,11 @@ class hr_employee(osv.osv):
             fields = form.xpath('/' + view_type + '//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change DEST field
+            dest_fields = form.xpath('/' + view_type + '//field[@name="destination_id"]')
+            for dest_field in dest_fields:
+                dest_field.set('domain', "[('category', '=', 'DEST'), ('type', '!=', 'view'), "
+                                         "('dest_compatible_with_cc_ids', '=', cost_center_id)]")
             # Change FP field
             try:
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

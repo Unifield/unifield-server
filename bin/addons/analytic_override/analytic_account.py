@@ -211,6 +211,27 @@ class analytic_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
+    def _search_dest_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with all destinations compatible with the selected Cost Center
+        """
+        dom = []
+        if context is None:
+            context = {}
+        for arg in args:
+            if arg[0] == 'dest_compatible_with_cc_ids':
+                operator = arg[1]
+                cc = arg[2]
+                if operator != '=' or not isinstance(cc, (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
+                all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
+                compatible_dest_ids = []
+                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_ids'], context=context):
+                    if dest.allow_all_cc or (cc and cc in [c.id for c in dest.dest_cc_ids]):
+                        compatible_dest_ids.append(dest.id)
+                dom.append(('id', 'in', compatible_dest_ids))
+        return dom
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -232,6 +253,10 @@ class analytic_account(osv.osv):
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
+        'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
+                                                       string='Destinations compatible with the Cost Center',
+                                                       type='many2many', relation='account.analytic.account',
+                                                       fnct_search=_search_dest_compatible_with_cc_ids),
     }
 
     _defaults ={
