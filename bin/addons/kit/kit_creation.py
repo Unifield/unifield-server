@@ -586,10 +586,9 @@ class kit_creation(osv.osv):
                         'original_from_process_stock_move': False,
                     }
                     create_move_ids.append(move_obj.create(cr, uid, values, context=context))
-            if create_move_ids:
-                ctx = context.copy()
-                ctx['compute_child'] = obj.consider_child_locations_kit_creation
-                self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id)
+            ctx = context.copy()
+            ctx['compute_child'] = obj.consider_child_locations_kit_creation
+            self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id)
 
         return True
 
