@@ -166,17 +166,27 @@ class res_log(osv.osv):
                 action_data = action_seen.get(r['action_xmlid'])
                 if action_data:
                     r['action_id'] = action_data['id']
-                    action_ctx = {}
+                    res_log_ctx = {}
                     if r['context']:
                         try:
-                            action_ctx = safe_eval(r['context'])
+                            res_log_ctx = safe_eval(r['context'])
                             if action_data['search_view_id']:
-                                action_ctx['search_view'] = action_data['search_view_id'][0]
-                            if 'view_id' in action_ctx:
-                                del(action_ctx['view_id'])
-                            r['context'] = action_ctx
+                                res_log_ctx['search_view'] = action_data['search_view_id'][0]
+                            if 'view_id' in res_log_ctx:
+                                del(res_log_ctx['view_id'])
+                            try:
+                                # try to merge context from res.log with context from ir.actions.act_window
+                                # but do not overwrite keys in res.log ctx (i.e res.log context takes precedence)
+                                if action_data['context']:
+                                    action_data_ctx = safe_eval(action_data['context'])
+                                    action_data_ctx.update(res_log_ctx)
+                                    res_log_ctx = action_data_ctx
+                            except:
+                                pass
+                            r['context'] = res_log_ctx
                         except:
                             pass
+
                     r['view_mode'] = '%s' % (action_data['view_mode'].split(','),)
                     r['view_ids'] = [x[0] for x in action_data['views']]
                     if action_data['domain'] and (not r['domain'] or r['domain'] == '[]'):
