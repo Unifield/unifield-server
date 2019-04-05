@@ -13,8 +13,10 @@
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
-                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
-                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, funding_pool_id)"
+                               context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"
+                                domain="[('dest_compatible_with_cc_ids', '=', cost_center_id)]"/>
                         <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     </group>
                     <newline/>

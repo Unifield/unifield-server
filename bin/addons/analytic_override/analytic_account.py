@@ -214,6 +214,7 @@ class analytic_account(osv.osv):
     def _search_dest_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
         """
         Returns a domain with all destinations compatible with the selected Cost Center
+        Ex: to get the dest. compatible with the CC 2, use the dom [('dest_compatible_with_cc_ids', '=', 2)]
         """
         dom = []
         if context is None:
