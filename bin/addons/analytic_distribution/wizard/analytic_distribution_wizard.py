@@ -208,7 +208,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
-                        domain = "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
                         field.set('domain', domain)
                     else:
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
@@ -253,7 +253,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
-                        domain = "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
                         field.set('domain', domain)
                     else:
                         domain_part = self._dest_compatible_with_cc_domain_part(tree)
