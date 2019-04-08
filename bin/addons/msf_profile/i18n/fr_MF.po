@@ -27129,7 +27129,6 @@ msgstr "Purchase orders which are in cancelled state."
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
 
-
 #. modules: sales_followup, sale, purchase_followup, stock
 #: view:po.track.changes.wizard:0
 #: view:sale.loan.stock.moves:0
@@ -102658,7 +102657,8 @@ msgstr "Numéro du Bon d'Engagement"
 #: code:addons/stock/physical_inventory.py:907
 #, python-format
 msgid "Unable to update line #%s product %s: line not found in the discrepancy report"
-msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"=======
+msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"
+
 #. module: account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1494
 #, python-format
@@ -104218,7 +104218,7 @@ msgstr "Date de Colisage"
 msgid "\n"
 "The line 1 of the column 7 must be named \"Consignee\" in the file."
 msgstr "\n"
-"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier.
+"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:113
@@ -105028,7 +105028,6 @@ msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas
 msgid "Receptions Report"
 msgstr "Rapport des Réceptions"
 
-
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:126
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:163
@@ -105179,7 +105178,7 @@ msgid "\n"
 "                                    "
 msgstr "\n"
 "                                    Votre fichier est prêt. Vous pouvez le télécharger depuis la barre à droite (Pièces Jointes).\n"
-"
+""
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -105329,7 +105328,6 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
 
-
 #. module: purchase
 #: view:purchase.order:0
 msgid "\n"
@@ -105384,3 +105382,9 @@ msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif.
 #, python-format
 msgid "In a PICK from scratch, your are not allowed to choose this type of partner."
 msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à choisir ce type de partenaire."
+
+#. module: kit
+#: code:addons/kit/kit_creation.py:1238
+#, python-format
+msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
+msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"

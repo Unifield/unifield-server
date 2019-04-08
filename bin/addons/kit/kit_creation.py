@@ -586,10 +586,9 @@ class kit_creation(osv.osv):
                         'original_from_process_stock_move': False,
                     }
                     create_move_ids.append(move_obj.create(cr, uid, values, context=context))
-            if create_move_ids:
-                ctx = context.copy()
-                ctx['compute_child'] = obj.consider_child_locations_kit_creation
-                self.pool.get('stock.picking').action_assign(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx)
+            ctx = context.copy()
+            ctx['compute_child'] = obj.consider_child_locations_kit_creation
+            self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id)
 
         return True
 
@@ -1232,6 +1231,12 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             kit_creation_id = move.kit_creation_id_stock_move.id
             if move.state == 'assigned':
+                if move.product_id.perishable:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
+                    av_qty = self.pool.get('stock.production.lot').read(cr, uid, move.prodlot_id.id, ['stock_available'], context={'location_id': move.location_id.id})['stock_available']
+                    if qty > av_qty:
+                        raise osv.except_osv(_('Warning !'), _('Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)') % ( move.product_id.default_code, move.prodlot_id.name, qty, move.product_id.uom_id.name, av_qty))
+
                 self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
 
             # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
