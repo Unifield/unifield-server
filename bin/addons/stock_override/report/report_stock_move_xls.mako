@@ -109,18 +109,18 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="${_('IN &amp; OUT Report')|x}">
+<ss:Worksheet ss:Name="${_('IN & OUT Report')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 15 %>
 <Table x:FullColumns="1" x:FullRows="1">
     # Product code
-    <Column ss:AutoFitWidth="1" ss:Width="81" />
+    <Column ss:AutoFitWidth="1" ss:Width="90" />
     # Product Description
     <Column ss:AutoFitWidth="1" ss:Width="200" />
     # UoM
     <Column ss:AutoFitWidth="1" ss:Width="55" />
     # Stock Move Date
-    <Column ss:AutoFitWidth="1" ss:Width="120" />
+    <Column ss:AutoFitWidth="1" ss:Width="110" />
     # Batch
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Exp Date
@@ -204,11 +204,11 @@
     </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('Only display standard stock location(s)')|x}</Data></Cell>
-        <Cell ss:MergeAcross="3" ss:StyleID="poheader"><Data ss:Type="String">${o.only_standard_loc and 'Yes' or 'No'|x}</Data></Cell>
+        <Cell ss:MergeAcross="3" ss:StyleID="poheader"><Data ss:Type="String">${o.only_standard_loc and _('Yes') or _('No')|x}</Data></Cell>
     </Row>
     <Row ss:AutoFitHeight="1">
-        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('Reason Types')|x}</Data></Cell>
-        <Cell ss:MergeAcross="3" ss:StyleID="poheader"><Data ss:Type="String">${o.reason_type_ids and ' ; '.join([r.complete_name for r in o.reason_type_ids])|x}</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">${_('Specific reason types')|x}</Data></Cell>
+        <Cell ss:MergeAcross="3" ss:StyleID="poheader"><Data ss:Type="String">${o.reason_type_ids and ' ; '.join([r.complete_name for r in o.reason_type_ids]) or ''|x}</Data></Cell>
     </Row>
 
     <Row></Row>
@@ -221,8 +221,8 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Batch')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Exp Date')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Quantity')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Unit Price (EUR / CHF)')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Movement value (EUR / CHF)')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Unit Price (%s)') % (o.company_id.currency_id.name,)|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Movement value (%s)') % (o.company_id.currency_id.name,)|x}</Data></Cell>
         % if o.location_ids:
             <Cell ss:StyleID="header"><Data ss:Type="String">${_('BN stock after movement (selected location(s))')|x}</Data></Cell>
             <Cell ss:StyleID="header"><Data ss:Type="String">${_('Total stock after movement (selected location(s))')|x}</Data></Cell>
@@ -236,7 +236,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Document Ref.')|x}</Data></Cell>
     </Row>
 
-    % for line in getLines():
+    % for line in getLines(o.company_id.currency_id.id):
     <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_code'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['product_name'])|x}</Data></Cell>
@@ -255,7 +255,11 @@
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['move_value'])|x}</Data></Cell>
+        % if line['need_batch']:
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['prod_stock_bn'])|x}</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line"><Data ss:Type="String">${_('NA')|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['prod_stock'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['source'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>

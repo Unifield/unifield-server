@@ -342,9 +342,7 @@ product will be shown.""",
 
     _defaults = {
         'state': 'draft',
-        'company_id': lambda s, cr, uid, c: s.pool.get('res.company').\
-        _company_default_get(
-            cr, uid, 'export.report.stock.move', context=c),
+        'company_id': lambda s, cr, uid, c: s.pool.get('res.company')._company_default_get(cr, uid, 'export.report.stock.move', context=c),
         'only_standard_loc': True,
     }
 
@@ -525,6 +523,7 @@ product will be shown.""",
         return super(export_report_stock_move, self).\
             write(cr, uid, ids, vals, context=context)
 
+
 export_report_stock_move()
 
 
@@ -537,8 +536,9 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             'getLines': self.getLines,
         })
 
-    def getLines(self):
+    def getLines(self, currency_id):
         prod_obj = self.pool.get('product.product')
+        curr_obj = self.pool.get('res.currency')
         res = []
         company_id = self.pool.get('res.users').browse(
             self.cr, self.uid, self.uid).company_id.partner_id.id
@@ -549,35 +549,43 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             else:
                 return m[f].name
 
-        for move in self.pool.get('stock.move').browse(
-            self.cr,
-            self.uid,
-            self.datas['moves'],
-            context=self.localcontext
-        ):
+        for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
+            move_date = move.picking_id and move.picking_id.date_done or move.date or False
+            # Get stock
             ctx = self.localcontext.copy()
-            ctx.update({
-                'date': move.picking_id and move.picking_id.date_done or move.date,
-            })
+            ctx.update({'date': move_date})
             prod_stock = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
             prod_stock_bn = 0
             if move.prodlot_id:
                 ctx_bn = self.localcontext.copy()
-                ctx_bn.update({
-                    'prodlot_id': move.prodlot_id.id or False,
-                })
+                ctx_bn.update({'prodlot_id': move.prodlot_id.id or False})
                 prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx_bn)['qty_available']
+
+            # Get Unit Price at date
+            prod_price = move.product_id.standard_price or move.price_unit
+            if move_date:
+                self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
+                            FROM standard_price_track_changes
+                            WHERE product_id = %s AND change_date >= %s
+                            ORDER BY product_id, change_date asc
+                            """, (move.product_id.id, move_date))
+                for x in self.cr.fetchall():
+                    prod_price = x[1]
+            if move.price_currency_id.id != currency_id:
+                prod_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id, currency_id,
+                                              prod_price, round=False, context=ctx)
 
             res.append({
                 'product_code': move.product_id.default_code,
                 'product_name': move.product_id.name,
                 'uom': move.product_uom.name,
-                'date_done': move.picking_id and move.picking_id.date_done or move.date or False,
+                'date_done': move_date,
+                'need_batch': move.product_id.batch_management,
                 'batch': move.prodlot_id and move.prodlot_id.name or '',
                 'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
                 'qty': move.product_qty,
-                'unit_price': move.price_unit,
-                'move_value': move.product_qty * move.price_unit,
+                'unit_price': prod_price,
+                'move_value': move.product_qty * prod_price,
                 'prod_stock_bn': move.prodlot_id and prod_stock_bn or prod_stock,
                 'prod_stock': prod_stock,
                 'source': get_src_dest(move, 'location_id'),
