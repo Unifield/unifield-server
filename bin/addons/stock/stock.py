@@ -872,6 +872,7 @@ class stock_picking(osv.osv):
             wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
         return self.action_process(
             cr, uid, ids, context=context)
+
     def cancel_assign(self, cr, uid, ids, *args):
         """ Cancels picking and moves.
         @return: True
@@ -2023,6 +2024,9 @@ class stock_move(osv.osv):
 
         # used for colors in tree views:
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
+
+        'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
+        'expiry_date': fields.date('ED set on processing'),
     }
     _constraints = [
         (_check_tracking,
@@ -2113,6 +2117,13 @@ class stock_move(osv.osv):
             cursor.execute('CREATE INDEX stock_move_location_id_location_dest_id_product_id_state ON stock_move (location_id, location_dest_id, product_id, state)')
         return res
 
+    def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
+        return self.pool.get('stock.move.processor').change_lot(cr, uid, ids, lot_id, qty, location_id, uom_id, context)
+
+
+    def onchange_expiry_processor(self, cr, uid, ids, expiry_date=False, product_id=False, type_check=False, context=None):
+        return self.pool.get('stock.move.processor').change_expiry(cr, uid, ids, expiry_date, product_id, type_check, context)
+
     def onchange_lot_id(self, cr, uid, ids, prodlot_id=False, product_qty=False,
                         loc_id=False, product_id=False, uom_id=False, context=None):
         """ On change of production lot gives a warning message.
@@ -2127,10 +2138,13 @@ class stock_move(osv.osv):
         ctx = context and context.copy() or {}
         ctx['location_id'] = loc_id
         ctx.update({'raise-exception': True})
+
         uom_obj = self.pool.get('product.uom')
         product_obj = self.pool.get('product.product')
-        product_uom = product_obj.browse(cr, uid, product_id, context=ctx).uom_id
-        prodlot = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=ctx)
+
+
+        product_uom = product_obj.browse(cr, uid, product_id, fields_to_fetch=['uom_id'], context=ctx).uom_id
+        prodlot = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, fields_to_fetch=['stock_available'],  context=ctx)
         location = self.pool.get('stock.location').browse(cr, uid, loc_id, context=ctx)
         uom = uom_obj.browse(cr, uid, uom_id, context=ctx)
         amount_actual = uom_obj._compute_qty_obj(cr, uid, product_uom, prodlot.stock_available, uom, context=ctx)
@@ -2152,21 +2166,13 @@ class stock_move(osv.osv):
         @return: Dictionary of values
         """
         result = {
-            'product_uos_qty': 0.00
+            'value' : {'product_uos_qty': 0.00}
         }
 
         if (not product_id) or (product_qty <=0.0):
-            return {'value': result}
+            return result
 
-        product_obj = self.pool.get('product.product')
-        uos_coeff = product_obj.read(cr, uid, product_id, ['uos_coeff'])
-
-        if product_uos and product_uom and (product_uom != product_uos):
-            result['product_uos_qty'] = product_qty * uos_coeff['uos_coeff']
-        else:
-            result['product_uos_qty'] = product_qty
-
-        return {'value': result}
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], result)
 
     def onchange_uos_quantity(self, cr, uid, ids, product_id, product_uos_qty,
                               product_uos, product_uom):
@@ -2195,7 +2201,7 @@ class stock_move(osv.osv):
         return {'value': result}
 
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False):
+                            loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False, context=None):
         """ On change of product id, if finds UoM, UoS, quantity and UoS quantity.
         @param prod_id: Changed Product id
         @param loc_id: Source location id
@@ -2203,30 +2209,139 @@ class stock_move(osv.osv):
         @param address_id: Address id of partner
         @return: Dictionary of values
         """
-        if not prod_id:
-            return {}
-        lang = False
-        if address_id:
-            addr_rec = self.pool.get('res.partner.address').browse(cr, uid, address_id)
-            if addr_rec:
-                lang = addr_rec.partner_id and addr_rec.partner_id.lang or False
-        ctx = {'lang': lang}
 
-        product = self.pool.get('product.product').browse(cr, uid, [prod_id], context=ctx)[0]
-        uos_id  = product.uos_id and product.uos_id.id or False
         result = {
+            'value': {
+                'product_type': False,
+                'hidden_batch_management_mandatory': False,
+                'hidden_perishable_mandatory': False,
+                'prodlot_id': False,
+                'expired_date': False,
+                'expiry_date': False,
+            },
+            'warning': {}}
+        if not prod_id:
+            if parent_type == 'in':
+                result['value']['location_dest_id'] = False
+            elif parent_type == 'out':
+                result['value']['location_id'] = False
+            else:
+                result['value']['location_dest_id'] = False
+                result['value']['location_id'] = False
+            return result
+
+        if context is None:
+            context = {}
+
+        prod_obj = self.pool.get('product.product')
+        location_obj = self.pool.get('stock.location')
+
+
+        product = prod_obj.browse(cr, uid, [prod_id], context=context)[0]
+        uos_id  = product.uos_id and product.uos_id.id or False
+        result['value'] = {
             'product_uom': product.uom_id.id,
             'product_uos': uos_id,
-            'product_qty': 1.00,
-            'product_uos_qty' : self.pool.get('stock.move').onchange_quantity(cr, uid, ids, prod_id, 1.00, product.uom_id.id, uos_id)['value']['product_uos_qty']
+            'subtype': product.product_tmpl_id.subtype,
+            'asset_id': False,
+            'hidden_batch_management_mandatory': product.batch_management,
+            'hidden_perishable_mandatory': product.perishable,
+            'lot_check': product.batch_management,
+            'exp_check': product.perishable,
+            'product_qty': 0,
+            'product_uos_qty': 0,
+            'product_type': product.type,
         }
         if not ids:
-            result['name'] = product.partner_ref
+            result['value']['name'] = product.partner_ref
         if loc_id:
-            result['location_id'] = loc_id
+            result['value']['location_id'] = loc_id
         if loc_dest_id:
-            result['location_dest_id'] = loc_dest_id
-        return {'value': result}
+            result['value']['location_dest_id'] = loc_dest_id
+
+        if parent_type and parent_type == 'internal' and loc_dest_id:
+            # Test the compatibility of the product with the location
+            result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'location_id': loc_dest_id}, context=context)
+            if test:
+                return result
+        elif parent_type in ('in', 'out'):
+            # Test the compatibility of the product with a stock move
+            result, test = prod_obj._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'constraints': ['picking']})
+
+        if product.batch_management:
+            result['warning'] = {'title': _('Info'), 'message': _('The selected product is Batch Management.')}
+        elif product.perishable:
+            result['warning'] = {'title': _('Info'), 'message': _('The selected product is Perishable.')}
+
+
+        location_id = loc_id and location_obj.browse(cr, uid, loc_id) or False
+        location_dest_id = loc_dest_id and location_obj.browse(cr, uid, loc_dest_id) or False
+        service_loc = location_obj.get_service_location(cr, uid)
+        non_stockable_loc = location_obj.search(cr, uid, [('non_stockable_ok', '=', True)])
+        if non_stockable_loc:
+            non_stockable_loc = non_stockable_loc[0]
+        id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        input_id = location_obj.search(cr, uid, [('input_ok', '=', True)])
+        if input_id:
+            input_id = input_id[0]
+        po = purchase_line_id and self.pool.get('purchase.order.line').browse(cr, uid, purchase_line_id) or False
+        cd = po and po.order_id.cross_docking_ok or False
+        packing_ids = []
+        stock_ids = []
+
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
+            packing_ids.append(wh.lot_packing_id.id)
+            stock_ids.append(wh.lot_stock_id.id)
+
+
+        if product.type and parent_type == 'in':
+            # Set service location as destination for service products
+            if product.type in ('service_recep', 'service'):
+                if service_loc:
+                    result['value'].update(location_dest_id=service_loc)
+            # Set cross-docking as destination for non-stockable with cross-docking context
+            elif product.type == 'consu' and cd and loc_dest_id not in (id_cross, service_loc):
+                result['value'].update(location_dest_id=id_cross)
+            # Set non-stockable as destination for non-stockable without cross-docking context
+            elif product.type == 'consu' and not cd and loc_dest_id not in (id_cross, service_loc):
+                result['value'].update(location_dest_id=non_stockable_loc)
+            # Set input for standard products
+            elif product.type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
+                result['value'].update(location_dest_id=input_id)
+        elif product.type and parent_type == 'internal':
+            # Source location
+            # Only cross-docking is available for Internal move for non-stockable products
+            if product.type == 'consu' and not (loc_id and (location_id.cross_docking_location_ok or location_id.quarantine_location)):
+                result['value'].update(location_id=id_cross)
+            elif product.type == 'product' and not (loc_id and (location_id.usage == 'internal' or location_dest_id.virtual_ok)):
+                result['value'].update(location_id=stock_ids and stock_ids[0] or False)
+            elif product.type == 'service_recep':
+                result['value'].update(location_id=id_cross)
+            # Destination location
+            if product.type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
+                result['value'].update(location_dest_id=non_stockable_loc)
+            elif product.type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
+                result['value'].update(location_dest_id=False)
+            elif product.type == 'service_recep':
+                result['value'].update(location_dest_id=service_loc)
+        # Case when outgoing delivery or picking ticket
+        elif product.type and parent_type == 'out':
+            # Source location
+            # Only cross-docking is available for Outgoing moves for non-stockable products
+            if product.type == 'consu' and not (loc_id and location_id.cross_docking_location_ok):
+                result['value'].update(location_id=id_cross)
+            elif product.type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
+                result['value'].update(location_id=stock_ids and stock_ids[0] or False)
+            elif product.type == 'service_recep':
+                result['value'].update(location_id=id_cross)
+            # Destinatio location
+            if product.type == 'consu' and not (loc_dest_id and (location_dest_id.output_ok or location_dest_id.usage == 'customer')):
+                # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
+                if loc_id and loc_id not in packing_ids:
+                    result['value'].update(location_dest_id=False)
+
+        return result
 
     def _hook_dest(self, cr, uid, *args, **kwargs):
         '''
@@ -2457,7 +2572,7 @@ class stock_move(osv.osv):
         @return: True
         """
         self._hook_cancel_assign_batch(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'confirmed'})
+        self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed'})
         return True
 
     #
@@ -2507,7 +2622,7 @@ class stock_move(osv.osv):
                     if bn_needed:
                         prodlot_id = r[3] or None
                         expired_date = r[2] or None
-                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, state=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, state, move.id))
+                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, expiry_date=%s, state=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, expired_date, state, r[0], move.id))
                     while res:
                         r = res.pop(0)
                         prodlot_id = False
@@ -2518,16 +2633,21 @@ class stock_move(osv.osv):
                         if r[1]:
                             if r[1] == move.location_dest_id.id:
                                 state = 'done'
+                                qty_to_process = r[1]
                             else:
                                 state = 'assigned'
+                                qty_to_process = r[1]
                         else:
                             state = 'confirmed'
+                            qty_to_process = 0
 
-                        self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date, 'state': state})
+                        self.copy(cr, uid, move.id, {'qty_to_process': qty_to_process, 'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date, 'expiry_date': expired_date, 'state': state})
 
         if done:
+            cr.execute('update stock_move set qty_to_process=product_qty where id in %s', (tuple(done),))
             self.write(cr, uid, done, {'state': 'done'})
         if move_to_assign:
+            cr.execute('update stock_move set qty_to_process=product_qty where id in %s', (tuple(move_to_assign),))
             self.write(cr, uid, move_to_assign, {'state': 'assigned'})
 
         count = 0

@@ -3731,9 +3731,6 @@ class stock_picking(osv.osv):
         '''
         # Objects
         move_obj = self.pool.get('stock.move')
-        uom_obj = self.pool.get('product.uom')
-        cp_proc_obj = self.pool.get('create.picking.processor')
-        usb_entity = self._get_usb_entity_type(cr, uid)
 
         if context is None:
             context = {}
@@ -3747,8 +3744,7 @@ class stock_picking(osv.osv):
                 _('No data to process !')
             )
 
-        for wizard in cp_proc_obj.browse(cr, uid, wizard_ids, context=context):
-            picking = wizard.picking_id
+        for picking in self.browse(cr, uid, wizard_ids, context=context):
 
             move_data = {}
 
@@ -3761,11 +3757,6 @@ class stock_picking(osv.osv):
             if 'associate_pick_name' in context:
                 pick_name = context.get('associate_pick_name', False)
                 del context['associate_pick_name']
-                already_replicated = True
-            # US-803: Set the pick name that given from sync
-            elif 'rw_backorder_name' in context:
-                pick_name = context.get('rw_backorder_name', False)
-                del context['rw_backorder_name']
                 already_replicated = True
 
             # UF-2531: if not exist, then calculate the name as before
@@ -3788,8 +3779,6 @@ class stock_picking(osv.osv):
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
             if picking.claim:
                 self.write(cr, uid, new_picking_id, ({'claim': True}), context=context)
-            if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-                self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
 
             if tmp_allow_copy is None:
                 del context['allow_copy']
@@ -3799,37 +3788,32 @@ class stock_picking(osv.osv):
             # Create stock moves corresponding to processing lines
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
-            for line in wizard.move_ids:
-                move_data.setdefault(line.move_id.id, {
-                    'initial_qty': line.move_id.product_qty,
-                    'line_number': line.move_id.line_number,
-                    'processed_qty': 0.00,
+            for line in picking.move_lines:
+                if line.qty_to_process <= 0 or line.state != 'assigned':
+                    continue
+
+                move_data.setdefault(line.id, {
+                    'initial_qty': line.product_qty,
+                    'line_number': line.line_number,
+                    'processed_qty': line.qty_to_process,
                 })
-
-
-                if line.uom_id.id != line.move_id.product_uom.id:
-                    processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
-                else:
-                    processed_qty = line.quantity
-
-                move_data[line.move_id.id]['processed_qty'] += processed_qty
 
                 # Copy the stock move and set the quantity
                 cp_values = {
                     'picking_id': new_picking_id,
-                    'product_qty': line.quantity,
-                    'product_uom': line.uom_id.id,
-                    'product_uos_qty': line.quantity,
-                    'product_uos': line.uom_id.id,
+                    'product_qty': line.qty_to_process,
+                    'product_uom': line.product_uom.id,
+                    'product_uos_qty': line.qty_to_process,
+                    'product_uos': line.product_uom.id,
                     'prodlot_id': line.prodlot_id and line.prodlot_id.id,
                     'asset_id': line.asset_id and line.asset_id.id,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'pt_created': True,
-                    'backmove_id': line.move_id.id,
-                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
+                    'backmove_id': line.id,
+                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
                 }
                 context['keepLineNumber'] = True
-                move_obj.copy(cr, uid, line.move_id.id, cp_values, context=context)
+                move_obj.copy(cr, uid, line.id, cp_values, context=context)
                 context['keepLineNumber'] = False
 
 
@@ -3845,6 +3829,7 @@ class stock_picking(osv.osv):
                     'product_qty': initial_qty,
                     'proudct_uos_qty': initial_qty,
                     'processed_stock_move': True,
+                    'processed_qty': 0,
                 }
                 context['keepLineNumber'] = True
                 move_obj.write(cr, uid, [move_id], wr_vals, context=context)
@@ -3860,11 +3845,6 @@ class stock_picking(osv.osv):
                 new_picking_id, self.read(cr, uid, new_picking_id, ['name'], context=context)['name'],
                 picking.id, picking.name,
             ))
-
-
-        # UF-2531: Run the creation of message at RW at some important points
-        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self._manual_create_rw_messages(cr, uid, context=context)
 
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)

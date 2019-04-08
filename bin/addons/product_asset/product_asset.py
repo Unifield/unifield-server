@@ -116,15 +116,15 @@ class product_asset(osv.osv):
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
 
-        # UF-1617: set the current instance into the new object if it has not been sent from the sync   
+        # UF-1617: set the current instance into the new object if it has not been sent from the sync
         if 'partner_name' not in vals or not vals['partner_name']:
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.partner_id:
                 vals['partner_name'] = company.partner_id.name
 
-        # UF-2148: make the xmlid_name from the asset name for building xmlid if it is not given in the vals 
+        # UF-2148: make the xmlid_name from the asset name for building xmlid if it is not given in the vals
         if 'xmlid_name' not in vals or not vals['xmlid_name']:
-            vals['xmlid_name'] = vals['name'] 
+            vals['xmlid_name'] = vals['name']
 
         exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']),
                                       ('partner_name', '=', vals['partner_name']), ('product_id', '=',
@@ -241,7 +241,7 @@ class product_asset(osv.osv):
         'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
         'receipt_place': 'Country/Project/Activity',
     }
-    # UF-2148: use this constraint with 3 attrs: name, prod and instance 
+    # UF-2148: use this constraint with 3 attrs: name, prod and instance
     _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
@@ -297,7 +297,7 @@ class product_asset_event(osv.osv):
         result.update({
             'product_id': asset.product_id.id,
             'asset_type_id': asset.asset_type_id.id,
-            'serial_nb': asset.serial_nb, 
+            'serial_nb': asset.serial_nb,
             'brand': asset.brand,
             'model': asset.model,
         })
@@ -491,30 +491,6 @@ class stock_move(osv.osv):
                             raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
 
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False,parent_type=False,purchase_line_id=False,out=False):
-        '''
-        override to clear asset_id
-        '''
-        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                                                             loc_dest_id, address_id, parent_type, purchase_line_id,out)
-
-        if 'value' not in result:
-            result['value'] = {}
-
-        if prod_id:
-            prod = self.pool.get('product.product').browse(cr, uid, prod_id)
-            result['value'].update({'subtype': prod.product_tmpl_id.subtype})
-
-            if parent_type and parent_type == 'internal' and loc_dest_id:
-                # Test the compatibility of the product with the location
-                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'location_id': loc_dest_id})
-                if test:
-                    return result
-
-        result['value'].update({'asset_id': False})
-
-        return result
 
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset'),
