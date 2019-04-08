@@ -401,8 +401,6 @@ class Database(BaseController):
                 ('reconfigure', 'address_street'),
                 ('reconfigure', 'address_city'),
                 ('reconfigure', 'address_country'),
-                ('reconfigure', 'address_phone'),
-                ('reconfigure', 'address_email'),
                 ('reconfigure', 'delivery_process'),
                 ('reconfigure', 'functional_currency'),
             )
