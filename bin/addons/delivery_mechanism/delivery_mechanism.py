@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 from order_types.stock import check_rw_warning
 import logging
+import decimal_precision as dp
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -155,7 +156,7 @@ class stock_move(osv.osv):
         'line_number': fields.integer(string='Line', required=True),
         'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
         'in_out_updated': fields.boolean(string='IN update OUT'),
-        'original_qty_partial': fields.integer(string='Original Qty for Partial process - only for sync and partial processed line', required=False),
+        'original_qty_partial': fields.float(string='Original Qty for Partial process - only for sync and partial processed line', required=False, digits_compute=dp.get_precision('Product UoM')),
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
     _defaults = {
@@ -821,12 +822,16 @@ class stock_picking(osv.osv):
         service_non_stock_ok = False
         if move.purchase_line_id and line.product_id.type in ('consu', 'service_recep'):
             sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
+            if not sol_ids:
+                service_non_stock_ok = True
             for sol_brw in sol_obj.browse(cr, uid, sol_ids, context=context):
                 if sol_brw.order_id.procurement_request:
                     service_non_stock_ok = True
 
-        # We check the dest_type for INCOMING shipment (and not the source_type which is reserved for OUTGOING shipment)
-        if wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
+        if wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
+            values['location_dest_id'] = db_data.get('service_loc')
+            values['cd_from_bo'] = False
+        elif wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
             if db_data.get('setup').allocation_setup == 'unallocated':
                 raise osv.except_osv(
                     _('Error'),
@@ -982,6 +987,7 @@ class stock_picking(osv.osv):
             done_moves = []  # Moves that are completed
             out_picks = set()
             processed_out_moves = []
+            processed_out_moves_by_exp = {}
             track_changes_to_create = [] # list of dict that contains data on track changes to create at the method's end
 
             picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
@@ -1143,19 +1149,10 @@ class stock_picking(osv.osv):
                                 'product_uos_qty': out_move.product_qty - uom_partial_qty,
                             }
                             # search for sol that match with the updated move:
-                            sol_to_relink = self.pool.get('sale.order.line').search(cr, uid, [
-                                ('order_id', '=', out_move.sale_line_id.order_id.id),
-                                ('product_uom_qty', '=', out_move.product_qty - uom_partial_qty),
-                                ('line_number', '=', out_move.sale_line_id.line_number),
-                                ('order_id', '=', out_move.picking_id.sale_id.id),
-                            ], context=context)
-                            if sol_to_relink:
-                                move_values.update({'sale_line_id': sol_to_relink[0],})
                             move_obj.write(cr, uid, [out_move.id], move_values, context=context)
-                            if sol_to_relink:
-                                if self.pool.get('sale.order.line').browse(cr, uid, sol_to_relink[0], context=context).state.startswith('cancel'):
-                                    move_obj.action_cancel(cr, uid, [out_move.id], context=context)
                             processed_out_moves.append(new_out_move_id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
+
                         elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
                             out_values.update({
                                 'product_qty': remaining_out_qty,
@@ -1165,6 +1162,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty = 0.00
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
                             # Just update the out move with the value of the out move with UoM of IN
                             out_qty = out_move.product_qty
@@ -1179,6 +1177,7 @@ class stock_picking(osv.osv):
                             remaining_out_qty -= out_qty
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
+                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         else:
                             # Just update the data of the initial out move
                             processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
@@ -1192,9 +1191,11 @@ class stock_picking(osv.osv):
                                 new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                                 context['keepLineNumber'] = False
                                 processed_out_moves.append(new_out_move_id)
+                                processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
                             else:
                                 move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                                 processed_out_moves.append(out_move.id)
+                                processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
 
                             if line.uom_id.id != out_move.product_uom.id:
                                 uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
@@ -1445,7 +1446,10 @@ class stock_picking(osv.osv):
                 ))
 
             if not sync_in and wizard.claim_type not in ('scrap', 'quarantine', 'return', 'missing'):
-                move_obj.action_assign(cr, uid, processed_out_moves)
+                to_process = []
+                for ed in sorted(processed_out_moves_by_exp.keys()):
+                    to_process += processed_out_moves_by_exp[ed]
+                move_obj.action_assign(cr, uid, to_process)
 
             # create track changes:
             for tc_data in track_changes_to_create:

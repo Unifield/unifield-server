@@ -908,15 +908,6 @@ class product_attributes(osv.osv):
         'uf_create_date': fields.datetime(_('Creation date')),
     }
 
-    # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
-    # in the field (international_status) declaration and put required=True in the XML view, the default value
-    # is blank and the field is mandatory before save
-    #def default_get(self, cr, uid, fields, context=None):
-    #    res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
-    #    id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 1
-    #    res.update({'international_status': id })
-    #    return res
-
     def _get_default_sensitive_item(self, cr, uid, context=None):
         """
         Return the ID of the product.heat_sensitive item with 'No' value.
@@ -1115,9 +1106,6 @@ class product_attributes(osv.osv):
             raise osv.except_osv(_('Error'), error_msg)
             return False
 
-#    _constraints = [
-#        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
-#    ]
 
     def change_soq_quantity(self, cr, uid, ids, soq, uom_id, context=None):
         """
@@ -1129,7 +1117,7 @@ class product_attributes(osv.osv):
         :param soq: New value for SoQ Quantity
         :param uom_id: ID of the product.uom linked to the product
         :param context: Context of the call
-        :return: A dictionary that contains a warning message and the SoQ quantity
+        :return: A dictionary that contains a warning message and the SoQ quantity
                  rounded with the UoM rounding value
         """
         uom_obj = self.pool.get('product.uom')
@@ -1267,6 +1255,7 @@ class product_attributes(osv.osv):
 
         vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
 
+        self.convert_price(cr, uid, vals, context)
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
 
@@ -1285,6 +1274,30 @@ class product_attributes(osv.osv):
                               context=context)
 
         return res
+
+    def convert_price(self, cr, uid, vals, context=None):
+        """ on OCG_HQ UniDate creates products with EUR currency: convert prices to CHF """
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        converted = False
+
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and company and company.instance_id and company.instance_id.instance == 'OCG_HQ':
+            unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            if vals.get('international_status') == unidata_id and (vals.get('currency_id') or vals.get('field_currency_id')):
+                curr_obj = self.pool.get('res.currency')
+                if vals.get('standard_price') and vals.get('currency_id') != company.currency_id.id:
+                    if vals['standard_price'] != 1:
+                        vals['standard_price'] = round(curr_obj.compute(cr, 1, vals['currency_id'], company.currency_id.id, vals['standard_price'], round=False, context=context), 5)
+                    vals['currency_id'] = company.currency_id.id
+                    converted = True
+                if vals.get('field_currency_id') != company.currency_id.id:
+                    vals['field_currency_id'] = company.currency_id.id
+                    converted = True
+
+        return converted
+
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1387,15 +1400,11 @@ class product_attributes(osv.osv):
             vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
-            #            stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
-            #            phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
             if vals.get('active', None) is False:
                 if self.deactivate_product(cr, uid, ids, context=context) is not True:
                     vals.update({
                         'active': True,
-                        #                        'state': stopped_status,
                     })
-#            elif vals.get('active', None) is True and vals.get('state') == stopped_status:
             elif vals.get('active', None) is True:
                 vals.update({
                     'active': True,
@@ -1424,6 +1433,7 @@ class product_attributes(osv.osv):
 
         vals['uf_write_date'] = vals.get('uf_write_date', datetime.now())
 
+        self.convert_price(cr, uid, vals, context)
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
         if product_uom_categ:
@@ -1487,6 +1497,20 @@ class product_attributes(osv.osv):
             if not product.active and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
 
+            cr.execute('select distinct(list.id) from product_list list, product_list_line line where line.list_id = list.id and line.name = %s', (product.id,))
+            has_product_list = [x[0] for x in cr.fetchall()]
+            if context.get('sync_update_execution') and has_product_list:
+                # update to deactivate product is executed before the update to remove prod from list
+                # so we have to check if a update is in the pipe
+                cr.execute('''select d.name from ir_model_data d
+                        left join sync_client_update_received up on up.run='f' and up.is_deleted='t' and up.sdref=d.name
+                         where d.model='product.list.line' and d.module='sd' and
+                            d.res_id in (select id from product_list_line where name=%s) and up.id is null''', (product.id,)
+                           )
+                if not cr.rowcount:
+                    has_product_list = []
+
+
             # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
@@ -1508,11 +1532,6 @@ class product_attributes(osv.osv):
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
                                                       ], context=context)
-#            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
-#                                                      ('picking_id', '!=', False),
-#                                                      '|', '&', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
-#                                                      ('picking_id.shipment_id', '!=', False),
-#                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel'])], context=context)
 
             # Check if the product is in a stock inventory
             has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
@@ -1547,12 +1566,20 @@ class product_attributes(osv.osv):
                 if has_stock:
                     break
 
-            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line
+            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
             if has_stock or opened_object:
                 # Create the error wizard
                 wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
                                                        'stock_exist': has_stock and True or False,
                                                        'opened_object': opened_object}, context=context)
+
+                if has_product_list:
+                    for prod_list in self.pool.get('product.list').read(cr, uid, has_product_list, ['name'], context=context):
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': _('Product List'),
+                                                        'internal_type': 'product.list',
+                                                        'doc_ref': prod_list['name'],
+                                                        'doc_id': prod_list['id']}, context=context)
 
                 # Create lines for error in PO/RfQ
                 po_ids = []
@@ -1698,7 +1725,6 @@ class product_attributes(osv.osv):
                     context['bypass_sync_update'] = True
                 self.write(cr, uid, product.id, {
                     'active': True,
-                    #                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
                 }, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1814,7 +1840,7 @@ class product_template(osv.osv):
             help="The volume in dm3.",
         ),
         'volume_updated': fields.boolean(
-            string='Volume updated',
+            string='Volume updated (deprecated)',
             readonly=True,
         ),
         'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
@@ -1825,29 +1851,6 @@ class product_template(osv.osv):
         'volume_updated': False,
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Update the volume from dm³ to m³ if the volume was not
-        yet updated.
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param ids: List of ID of product.template to update
-        :param vals: Values to apply on list of ID
-        :param context: Context of the call
-        :return: super write() method.
-        """
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if 'volume' in vals and not vals.get('volume_updated', False):
-            del vals['volume']
-
-        return super(product_template, self).write(cr, uid, ids, vals, context=context)
 
 product_template()
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_to_import_import_ppl_to_create_ship" model="ir.ui.view">
+            <field name="name">wizard.to.import.ppl.to.create.ship</field>
+            <field name="model">wizard.import.ppl.to.create.ship</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PPL Import">
+                    <separator colspan="4" string="Packing information" />
+                    <field name="picking_id" readonly="1" />
+                    <separator colspan="4" string="File to import" />
+                    <field name="file" filename="filename_template" />
+                    <field name="percent_completed" widget="progressbar" attrs="{'invisible':[('state', '=', 'draft')]}"/>
+                    <field name="filename" invisible="1" />
+
+                    <separator colspan="12" string="Information" />
+                    <field name="message" colspan="4" nolabel="1" widget="full_text" />
+                    <group name="buttons" string="" colspan="24" col="6">
+                        <button name="cancel" string="Cancel" icon="gtk-cancel" type="object"
+                        attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="import_file" string="Import file" icon="gtk-go-forward" type="object"
+                        attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="dummy" string="Update" icon="gtk-execute" type="object"
+                        attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                        <button name="close_import" string="Close window" icon="gtk-cancel" type="object"
+                        attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                    </group>
+                    <newline/>
+                    <field name="state" colspan="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

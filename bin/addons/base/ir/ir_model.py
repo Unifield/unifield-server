@@ -651,6 +651,10 @@ class ir_model_access(osv.osv):
 
         if context.get('from_system'):
             vals['from_system'] = True
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
         self.call_cache_clearing_methods(cr)
         res = super(ir_model_access, self).write(cr, uid, ids, vals, context=context)
         return res
@@ -660,13 +664,20 @@ class ir_model_access(osv.osv):
             context = {}
         if context.get('from_system'):
             vals['from_system'] = True
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
         res = super(ir_model_access, self).create(cr, uid, vals, context=context)
         return res
 
-    def unlink(self, cr, uid, *args, **argv):
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).unlink(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).unlink(cr, uid, ids, context)
         return res
 
 ir_model_access()

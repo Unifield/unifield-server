@@ -121,8 +121,101 @@ class internal_request_export(WebKitParser):
         a = super(internal_request_export, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-
 internal_request_export('report.internal_request_export','sale.order','addons/msf_supply_doc_export/internal_request_export_xls.mako')
+
+
+
+class picking_ticket_parser(report_sxw.rml_parse):
+    """
+    Parser for the picking ticket report
+    """
+
+    def __init__(self, cr, uid, name, context=None):
+        """
+        Set the localcontext on the parser
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs this method
+        :param name: Name of the parser
+        :param context: Context of the call
+        """
+        super(picking_ticket_parser, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'cr': cr,
+            'uid': uid,
+            'getStock': self.get_stock,
+            'getNbItems': self.get_nb_items,
+            'format_date': self.format_date,
+        })
+
+
+    def format_date(self, date):
+        if not date:
+            return ''
+        struct_time = time.strptime(date, '%Y-%m-%d %H:%M:%S')
+        return time.strftime('%Y-%m-%d', struct_time)
+
+    def get_nb_items(self, picking):
+        """
+        Returns the number of different line number. If a line is split
+        with a different product, this line count for +1
+        """
+        res = 0
+        dict_res = {}
+        for m in picking.move_lines:
+            dict_res.setdefault(m.line_number, {})
+            if m.product_id.id not in dict_res[m.line_number]:
+                dict_res[m.line_number][m.product_id.id] = 1
+
+        for ln in dict_res.values():
+            for p in ln.values():
+                res += p
+
+        return res
+
+
+    def get_stock(self, move=False):
+        product_obj = self.pool.get('product.product')
+
+        context = {}
+
+        if not move:
+            return 0.00
+
+        if move.location_id:
+            context = {
+                'location': move.location_id.id,
+                'location_id': move.location_id.id,
+                'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+            }
+
+        qty_available = product_obj.browse(
+            self.cr,
+            self.uid,
+            move.product_id.id,
+            context=context).qty_available
+
+        return qty_available
+
+
+class report_pick_export_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(report_pick_export_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(report_pick_export_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+report_pick_export_xls('report.pick.export.xls','stock.picking','addons/msf_supply_doc_export/report/report_pick_export_xls.mako', parser=picking_ticket_parser)
+
 
 
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object
@@ -1011,6 +1104,7 @@ class ir_values(osv.osv):
                 if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
                     or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
                     or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
+                    or v[2].get('report_name', False) == 'pre.packing.excel.export' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) \
                     or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
                     or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
                         or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
