@@ -535,6 +535,7 @@ class analytic_account(osv.osv):
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
             cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
             if cat_instance:

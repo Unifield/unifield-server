@@ -503,6 +503,7 @@ class hr_payroll_import(osv.osv_memory):
         xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
         filename = ""
+        error_msg = ""
         wiz_state = False
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -525,10 +526,11 @@ class hr_payroll_import(osv.osv_memory):
             if zipobj.namelist():
                 namelist = zipobj.namelist()
                 # Search CSV
-                csvfile = None
+                csvfiles = []
+                currency_list = []
                 for name in namelist:
                     if name.split(file_ext_separator) and name.split(file_ext_separator)[-1] == file_ext:
-                        csvfile = name
+                        csvfiles.append(name)
                 if not 'envoi.ini' in namelist:
                     raise osv.except_osv(_('Warning'), _('No envoi.ini file found in given ZIP file!'))
                 # Read information from 'envoi.ini' file
@@ -542,8 +544,8 @@ class hr_payroll_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
                 if not field:
                     raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
-                # Read CSV file
-                if csvfile:
+                # Read CSV files
+                for csvfile in csvfiles:
                     try:
                         reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         reader.next()
@@ -553,8 +555,10 @@ class hr_payroll_import(osv.osv_memory):
                     res = True
                     res_amount = 0.0
                     amount = 0.0
-                    error_msg = ""
+                    num_line = 1  # the header line is not taken into account
+                    file_error_msg = ""  # store the error/warning messages for the current file
                     for line in reader:
+                        num_line += 1
                         processed += 1
                         update, amount, nb_created, vals, ccy, msg = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
@@ -563,13 +567,22 @@ class hr_payroll_import(osv.osv_memory):
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
-                        if created == 0:
+                        if num_line == 2:  # the first line containing data
                             header_vals = vals
-                            header_vals['currency_code'] = ccy
+                            header_vals['currency_code'] = ccy  # note that the curr. is different from one file to another
+                            if ccy in currency_list:
+                                raise osv.except_osv(_('Error'), _('Several files contain lines with the currency %s. '
+                                                                   'Please use one file per currency.') % ccy)
+                            currency_list.append(ccy)
                         created += nb_created
 
                         if msg:
-                            error_msg += "Line " + str(processed) + ": " + msg + " \n"
+                            file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+
+                    # complete the list of error messages with the ones from this file if any
+                    if file_error_msg:
+                        # add a line break between files
+                        error_msg += _("%sFile %s:\n%s") % (error_msg and "\n" or "", csvfile, file_error_msg)
 
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
@@ -585,7 +598,8 @@ class hr_payroll_import(osv.osv_memory):
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
                                 ('state', '=', 'draft'),
-                                ('name', '=', 'Payroll rounding')
+                                ('name', '=', 'Payroll rounding'),
+                                ('currency_id', '=', header_vals['currency_id']),
                             ])
                         if not pr_ids:
                             # no SAGA BALANCE rounding line in file
@@ -611,7 +625,7 @@ class hr_payroll_import(osv.osv_memory):
                             # - add both
                             new_amount = round(pr.amount, 2) + (-1 * res_amount_rounded)
                             self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
-                else:
+                if not csvfiles:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
 

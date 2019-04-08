@@ -4,7 +4,6 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -28,7 +27,6 @@ from tempfile import NamedTemporaryFile
 import csv
 from tools.translate import _
 import time
-#import locale
 from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.misc import ustr
 
