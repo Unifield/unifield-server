@@ -558,7 +558,10 @@ class incoming_shipment_xml(WebKitParser):
 incoming_shipment_xml('report.incoming.shipment.xml', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xml.mako')
 
 
-def get_back_browse(self, cr, uid, context):
+def get_back_browse(self, cr, uid, context=None):
+    if context is None:
+        context = {}
+
     background_id = context.get('background_id')
     if background_id:
         return self.pool.get('memory.background.report').browse(cr, uid, background_id)
@@ -744,6 +747,12 @@ class po_follow_up_mixin(object):
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         report_lines = []
         order = po_obj.browse(self.cr, self.uid, po_id)
+
+        # Background
+        if not self.localcontext.get('processed_pos'):
+            self.localcontext['processed_pos'] = []
+        back_browse = get_back_browse(self, self.cr, self.uid, context=self.localcontext)
+
         for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(line)
             same_product_same_uom = []
@@ -931,6 +940,14 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
+            # Background
+            if 'processed_pos' in self.localcontext and po_id not in self.localcontext['processed_pos']:
+                self._order_iterator += 1
+                self.localcontext['processed_pos'].append(po_id)
+            if back_browse:
+                percent = float(self._order_iterator) / float(self._nb_orders)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [back_browse.id], percent)
+
         if pending_only_ok:
             report_lines = self.filter_pending_only(report_lines)
 
@@ -1025,8 +1042,13 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getRunParms': self.getRunParms,
             'getLineStyle': self.getLineStyle,
         })
+        self._order_iterator = 0
+        self._nb_orders = context.get('nb_orders', 0)
 
-
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
 
 
 class po_follow_up_report_xls(SpreadsheetReport):
@@ -1037,6 +1059,7 @@ class po_follow_up_report_xls(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         a = super(po_follow_up_report_xls, self).create(cr, uid, ids, data, context=context)
         return (a[0], 'xls')
+
 
 po_follow_up_report_xls('report.po.follow.up_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up_xls.mako', parser=parser_po_follow_up_xls, header='internal')
 
@@ -1053,10 +1076,16 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             'getReportHeaderLine2': self.getReportHeaderLine2,
             'getRunParmsRML': self.getRunParmsRML,
         })
+        self._order_iterator = 0
+        self._nb_orders = context.get('nb_orders', 0)
+
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
+
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
-
-
 
 
 class ir_values(osv.osv):

@@ -51,7 +51,7 @@ class po_follow_up(osv.osv_memory):
 
     _defaults = {
         'export_format': lambda *a: 'xls',
-        'background_time': lambda *a: 20,
+        'background_time': lambda *a: 3,
     }
 
     def excel_report(self, cr, uid, ids, context=None):
@@ -305,7 +305,7 @@ class po_follow_up(osv.osv_memory):
             report_header_line2 += wiz.po_date_thru
         report_header.append(report_header_line2)
 
-        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}
+        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms, 'context': context}
 
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
@@ -313,6 +313,7 @@ class po_follow_up(osv.osv_memory):
         background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
         context['background_id'] = background_id
         context['background_time'] = wiz.background_time
+        context['nb_orders'] = len(po_ids)
 
         return {
             'type': 'ir.actions.report.xml',
