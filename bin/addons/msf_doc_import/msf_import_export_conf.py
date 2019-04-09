@@ -96,7 +96,12 @@ MODEL_DICT = {
         'model': 'account.journal'
     },
     'analytic_accounts': {
-        'name': 'Analytic Accounts',
+        'name': 'Analytic Accounts except Destinations',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account'
+    },
+    'destinations': {
+        'name': 'Destinations',
         'domain_type': 'finance',
         'model': 'account.analytic.account'
     },
@@ -478,6 +483,26 @@ MODEL_DATA_DICT = {
             'cost_center_ids',
             'tuple_destination_account_ids',
             'instance_id.code',
+        ],
+        'required_field_list': [
+            'name',
+            'code',
+            'category',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'destinations': {
+        'header_list': [
+            'name',
+            'code',
+            'category',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+            'dest_cc_ids',
+            'allow_all_cc',
         ],
         'required_field_list': [
             'name',

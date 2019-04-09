@@ -633,6 +633,7 @@ class msf_import_export(osv.osv_memory):
         model = MODEL_DICT[import_brw.model_list_selection]['model']
         impobj = self.pool.get(model)
         acc_obj = self.pool.get('account.account')
+        acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
 
         import_data_obj = self.pool.get('import_data')
@@ -930,9 +931,11 @@ class msf_import_export(osv.osv_memory):
                     if len(ids_to_update) > 1:
                         raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
 
-                # Analytic Accounts
+                # Analytic Accounts except Destinations
                 if import_brw.model_list_selection == 'analytic_accounts':
                     context['from_import_menu'] = True
+                    if data.get('category', '') == 'DEST':
+                        raise Exception(_('To import Destinations, please select "Destinations" in the selection list.'))
                     # Cost Centers
                     if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
                         cc_list = []
@@ -968,6 +971,38 @@ class msf_import_export(osv.osv_memory):
                         data['tuple_destination_account_ids'] = [(6, 0, dest_acc_list)]
                     else:
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
+
+                # Destinations
+                if import_brw.model_list_selection == 'destinations':
+                    context['from_import_menu'] = True
+                    if data.get('category', '') != 'DEST':
+                        raise Exception(_('To import accounts other than destinations, '
+                                          'please select "Analytic Accounts except Destinations" in the selection list.'))
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'DEST':
+                            raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
+                    # Type
+                    if not data.get('type') or data['type'] not in ['normal', 'view']:
+                        raise Exception(_('The Type must be either "Normal" or "View".'))
+                    # Cost Centers
+                    if data.get('dest_cc_ids'):
+                        dest_cc_list = []
+                        for cost_center in data.get('dest_cc_ids').split(','):
+                            cc = cost_center.strip()
+                            cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
+                                      '|', ('code', '=', cc), ('name', '=', cc)]
+                            cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            if cc_ids:
+                                dest_cc_list.append(cc_ids[0])
+                            else:
+                                raise Exception(_('Cost Center "%s" not found.') % cc)
+                        data['dest_cc_ids'] = [(6, 0, dest_cc_list)]
+                    else:
+                        data['dest_cc_ids'] = [(6, 0, [])]
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
