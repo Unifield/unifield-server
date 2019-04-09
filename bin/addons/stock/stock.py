@@ -1517,6 +1517,7 @@ class stock_picking(osv.osv):
                 if move.state == 'done':
                     raise osv.except_osv(_('Error'), _('You cannot cancel picking because stock move is in done state !'))
         return True
+
     def unlink(self, cr, uid, ids, context=None):
         move_obj = self.pool.get('stock.move')
         if isinstance(ids, (int, long)):
@@ -2895,6 +2896,25 @@ class stock_move(osv.osv):
     def unlink(self, cr, uid, ids, context=None, force=False):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        tools_obj = self.pool.get('sequence.tools')
+        if not context.get('skipResequencing', False):
+            # re sequencing only happen if purchase order is draft (behavior 1)
+            draft_not_wkf_ids = self.allow_resequencing(cr, uid, ids, context=context)
+            tools_obj.reorder_sequence_number_from_unlink(
+                cr,
+                uid,
+                draft_not_wkf_ids,
+                'stock.picking',
+                'move_sequence_id',
+                'stock.move',
+                'picking_id',
+                'line_number',
+                context=context,
+            )
+
         ctx = context.copy()
         for move in self.read(cr, uid, ids, ['state'], context=context):
             if move['state'] != 'draft' and not ctx.get('call_unlink',False)\
@@ -2902,8 +2922,7 @@ class stock_move(osv.osv):
                     and not force:
                 raise osv.except_osv(_('UserError'),
                                      _('You can only delete draft moves.'))
-        return super(stock_move, self).unlink(
-            cr, uid, ids, context=ctx)
+        return super(stock_move, self).unlink(cr, uid, ids, context=ctx)
 
     def _create_lot(self, cr, uid, ids, product_id, prefix=False):
         """ Creates production lot

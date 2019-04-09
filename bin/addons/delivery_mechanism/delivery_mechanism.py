@@ -195,38 +195,6 @@ class stock_move(osv.osv):
                 defaults.update(location_dest_id=input_loc)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
-    def unlink(self, cr, uid, ids, context=None, force=False):
-        '''
-        check the numbering on deletion
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        tools_obj = self.pool.get('sequence.tools')
-
-        if not context.get('skipResequencing', False):
-            # re sequencing only happen if purchase order is draft (behavior 1)
-            # get ids with corresponding po at draft state
-            draft_not_wkf_ids = self.allow_resequencing(cr, uid, ids, context=context)
-            tools_obj.reorder_sequence_number_from_unlink(
-                cr,
-                uid,
-                draft_not_wkf_ids,
-                'stock.picking',
-                'move_sequence_id',
-                'stock.move',
-                'picking_id',
-                'line_number',
-                context=context,
-            )
-
-        return super(stock_move, self).unlink(cr, uid, ids, context=context,
-                                              force=force)
-
     def allow_resequencing(self, cr, uid, ids, context=None):
         '''
         define if a resequencing has to be performed or not

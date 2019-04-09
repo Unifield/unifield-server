@@ -64,103 +64,6 @@
             </field>
         </record>
 
-        <record id="inherit_view_move_form" model="ir.ui.view">
-            <field name="name">inherit.view.move.form</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='product_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_qty']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_dest_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
-                				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
-                <xpath expr="/form//field[@name='picking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='tracking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='date_expected']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='New pack']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='Split']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-            </field>
-        </record>
-        
-        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
-            <field name="name">inherit.view.move.form</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='product_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_qty']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_dest_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
-                				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
-                <xpath expr="/form//field[@name='picking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='tracking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='date_expected']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='New pack']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='Split']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-            </field>
-        </record>        
 
         <record id="view_split_in_lots" model="ir.ui.view">
             <field name="name">view.split.in.lots</field>
@@ -279,33 +182,6 @@
             </field>
         </record>
 
-        <record id="unifield_view_move_tree" model="ir.ui.view">
-            <field name="name">unifield.view.move.tree</field>
-            <field name="model">stock.move</field>
-            <field name="type">tree</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_tree" />
-            <field name="arch" type="xml">
-                <xpath expr="/tree" position="attributes">
-                    <attribute name="editable">top</attribute>
-                    <attribute name="noteditable">1</attribute>
-                    <attribute name="hide_new_button">1</attribute>
-                    <attribute name="hide_delete_button">1</attribute>
-                </xpath>
-
-                <xpath expr="/tree//field[@name='picking_id']" position="attributes">
-                    <attribute name="string">Picking Ref.</attribute>
-                </xpath>
-
-                <xpath expr="/tree//field[@name='tracking_id']" position="replace" />
-
-                <xpath expr="/tree//button[@string='Split in production lots']" position="replace" />
-                <xpath expr="/tree//button[@string='Put in current pack']" position="replace" />
-                <xpath expr="/tree//button[@string='Put in a new pack']" position="replace" />
-                <xpath expr="/tree//button[@string='Scrap Products']" position="replace" />
-            </field>
-        </record>
-
         <record id="stock.view_picking_form" model="ir.ui.view">
             <field name="name">view.picking.form</field>
             <field name="model">stock.picking</field>
@@ -357,7 +233,6 @@
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
 
-                                    <!--<button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>-->
 
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>

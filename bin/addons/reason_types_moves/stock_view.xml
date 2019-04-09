@@ -23,58 +23,6 @@
             </field>
         </record>
 
-        <record id="view_move_tree_type_id" model="ir.ui.view">
-            <field name="name">view.move.tree.type.id</field>
-            <field name="model">stock.move</field>
-            <field name="type">tree</field>
-            <field name="priority">30</field>
-            <field name="inherit_id" ref="stock.view_move_tree" />
-            <field name="arch" type="xml">
-				<data>
-		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
-		    		</xpath>
-
-	                <xpath expr="/tree/field[@name='create_date']" position="after">
-			    		<field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
-       	                <field name="comment" />
-	                </xpath>
-	        	</data>
-            </field>
-        </record>
-
-        <record id="view_move_form_type_id" model="ir.ui.view">
-            <field name="name">view.move.form.type.id</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">35</field>
-            <field name="inherit_id" ref="stock.view_move_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='tracking_id']" position="before">
-        	    	<field name="reason_type_id" widget="selection"
-        	    	       domain="[('internal_ok', '=', True)]" 
-        	    	       attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
-                    <field name="comment" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
-            </field>
-        </record>
-
-        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
-            <field name="name">inherit.view.move.form.reception.picking</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">35</field>
-            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
-            <field name="arch" type="xml">
-            	<data>
-                	<xpath expr="/form//field[@name='tracking_id']" position="before">
-                        <field name="reason_type_id" widget="selection" 
-                               domain="[('incoming_ok', '=', True)]"
-                               attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
 
         <record id="view_move_search_type_id" model="ir.ui.view">
             <field name="name">view.move.search.type.id</field>
@@ -95,28 +43,6 @@
             </field>
         </record>
        
-        <record id="inherit_view_move_tree_reception_picking" model="ir.ui.view">
-            <field name="name">inherit.view.move.tree.reception.picking</field>
-            <field name="model">stock.move</field>
-            <field name="type">tree</field>
-            <field name="priority">30</field>
-            <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
-            <field name="arch" type="xml">
-            	<data>
-                	<xpath expr="/tree/field[@name='picking_id']" position="after">
-                        <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
-                    </xpath>
-
-                	<xpath expr="/tree" position="attributes">
-                        <attribute name="hide_new_button">True</attribute>
-                        <attribute name="hide_delete_button">True</attribute>
-                        <attribute name="editable">top</attribute>
-                        <attribute name="noteditable">True</attribute>
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
 
         <record id="inherit_view_move_search_reception_incoming_picking" model="ir.ui.view">
             <field name="name">inherit.view.move.search.reception.incoming.picking</field>
