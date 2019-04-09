@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import time
 
 from osv import osv, fields
 from tools.translate import _
@@ -28,193 +27,6 @@ import decimal_precision as dp
 import netsvc
 
 from msf_order_date.order_dates import compute_rts
-
-
-class procurement_request_sourcing_document(osv.osv):
-    _name = 'procurement.request.sourcing.document'
-    _rec_name = 'order_id'
-
-    def _get_doc_name(self, cr, uid, ids, field_name, args, context=None):
-        """
-        Return for each record, the name of the sourcing document according to
-        the model of the sourcing document and its ID.
-        """
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = {}
-        for doc in self.browse(cr, uid, ids, context=context):
-            res[doc.id] = self.pool.get(doc.sourcing_document_model).browse(
-                cr, uid, doc.sourcing_document_id, context=context).name
-
-        return res
-
-    _columns = {
-        'order_id': fields.many2one(
-            'sale.order',
-            string='Internal request',
-            required=True,
-        ),
-        'sourcing_document_id': fields.integer(
-            string='Sourcing document ID',
-            required=True,
-        ),
-        'sourcing_document_type': fields.selection(
-            selection=[
-                ('rfq', 'Request for Quotation'),
-                ('tender', 'Tender'),
-                ('po', 'Purchase order'),
-                ('internal', 'Internal move'),
-                ('out', 'Outgoing delivery'),
-            ],
-            string='Type',
-            required=True,
-        ),
-        'sourcing_document_model': fields.selection(
-            selection=[
-                ('purchase.order', 'Purchase order'),
-                ('tender', 'Tender'),
-                ('stock.picking', 'Picking'),
-            ],
-            string='Model',
-            required=True,
-        ),
-        'sourcing_document_name': fields.function(
-            _get_doc_name,
-            method=True,
-            string='Document name',
-            type='char',
-            size=64,
-            readonly=True,
-            store=False,
-        ),
-        'first_date': fields.datetime(
-            string='Start date',
-            readonly=True,
-        ),
-        'last_date': fields.datetime(
-            string='Last date',
-            readonly=True,
-        ),
-        'sourcing_lines': fields.many2many(
-            'sale.order.line',
-            'sale_line_sourcing_doc_rel',
-            'document_id',
-            'sale_line_id',
-            'Sourced lines',
-            readonly=True,
-        ),
-    }
-
-    def go_to_document(self, cr, uid, ids, context=None):
-        """
-        Open the sourcing document in the new tab
-        """
-        data_obj = self.pool.get('ir.model.data')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        brw = self.browse(cr, uid, ids[0], context=context)
-        doc = self.pool.get(brw.sourcing_document_model).browse(
-            cr, uid, brw.sourcing_document_id, context=context)
-
-        if brw.sourcing_document_type == 'rfq':
-            context.update({
-                'rfq_ok': True
-            })
-        elif brw.sourcing_document_type == 'out':
-            pick_type = 'delivery'
-            if doc.subtype == 'picking':
-                pick_type = 'picking_ticket'
-
-            context.update({
-                'pick_type': pick_type,
-            })
-
-        res = {
-            'type': 'ir.actions.act_window',
-            'res_model': brw.sourcing_document_model,
-            'view_type': 'form',
-            'view_mode': 'form,tree',
-            'res_id': brw.sourcing_document_id,
-            'context': context,
-        }
-
-        if brw.sourcing_document_type == 'out':
-            if doc.subtype == 'picking':
-                view_id = data_obj.get_object_reference(cr, uid,
-                                                        'msf_outgoing', 'view_picking_ticket_form')[1]
-            elif doc.subtype == 'standard':
-                view_id = data_obj.get_object_reference(cr, uid,
-                                                        'stock', 'view_picking_out_form')[1]
-
-            res['view_id'] = [view_id]
-
-        return res
-
-    def chk_create(self, cr, uid, vals, context=None):
-        """
-        Check if a same record already exist. If not, create a new record.
-        """
-        mem_obj = self.pool.get('procurement.request.sourcing.document.mem')
-
-        if context is None:
-            context = {}
-
-        chk_ids = self.search(cr, uid, [
-            ('order_id', '=', vals.get('order_id')),
-            ('sourcing_document_id', '=', vals.get('sourcing_document_id')),
-            ('sourcing_document_model', '=', vals.get('sourcing_document_model')),
-        ], context=context)
-
-        if not chk_ids:
-            create_data = {
-                'order_id': vals.get('order_id'),
-                'sourcing_document_id': vals.get('sourcing_document_id'),
-                'sourcing_document_model': vals.get('sourcing_document_model'),
-                'sourcing_document_type': vals.get('sourcing_document_type'),
-                'first_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-            }
-            if vals.get('line_ids'):
-                create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
-            self.create(cr, uid, create_data, context=context)
-            mem_obj.create(cr, uid, create_data, context=context)
-        elif vals.get('line_ids'):
-            for chk in self.browse(cr, uid, chk_ids, context=context):
-                sourcing_lines = [vals.get('line_ids')]
-                for sl in chk.sourcing_lines:
-                    sourcing_lines.append(sl.id)
-
-                self.write(cr, uid, [chk.id], {
-                    'sourcing_lines': [(6, 0, sourcing_lines)],
-                    'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                }, context=context)
-        else:
-            self.write(cr, uid, chk_ids, {
-                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-            }, context=context)
-
-        if self._name != 'procurement.request.sourcing.document.mem':
-            mem_obj.chk_create(cr, uid, vals, context=context)
-
-        return True
-
-procurement_request_sourcing_document()
-
-
-class procurement_request_sourcing_document_mem(osv.osv_memory):
-    _name = 'procurement.request.sourcing.document.mem'
-    _inherit = 'procurement.request.sourcing.document'
-
-procurement_request_sourcing_document_mem()
 
 
 class procurement_request(osv.osv):
@@ -402,7 +214,6 @@ class procurement_request(osv.osv):
 
         if not default:
             default = {}
-
         order = self.browse(cr, uid, id)
         proc = order.procurement_request or context.get('procurement_request', False)
         default.update({
@@ -423,6 +234,9 @@ class procurement_request(osv.osv):
         if not default.get('order_ids'):
             default['order_ids'] = None
 
+        obj = self.browse(cr, uid, id, fields_to_fetch=['location_requestor_id'], context=context)
+        if obj.location_requestor_id and not obj.location_requestor_id.active:
+            default['location_requestor_id'] = False
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
@@ -539,7 +353,7 @@ class procurement_request(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -900,5 +714,16 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
+class procurement_request_sourcing_document(osv.osv):
+    """ Backward compatibility: do not change object's sdref """
+
+    _name = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _auto = False
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+    }
+
+procurement_request_sourcing_document()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

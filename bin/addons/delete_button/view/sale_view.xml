@@ -32,10 +32,6 @@
                     <xpath expr="/tree" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
-                    <xpath expr="/tree/field[@name='state']" position="after">
-                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        states = 'draft' confirm='Do you really want to delete selected record(s) ?'/>
-                    </xpath>
                 </data>
             </field>
         </record>
@@ -69,7 +65,7 @@
                         <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
                     <xpath expr="/tree/field[@name='state']" position="after">
-                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete"
                         states='draft' confirm='Do you really want to delete selected record(s) ?' />
                     </xpath>
                 </data>

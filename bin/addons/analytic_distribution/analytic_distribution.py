@@ -93,9 +93,6 @@ class analytic_distribution(osv.osv):
         if analytic_id == fp_id:
             is_private_fund = True
         # DISTRIBUTION VERIFICATION
-        # Check account user_type
-        if account.user_type_code != 'expense':
-            return res, _('Not an expense account')
         # Check that destination is compatible with account
         if destination_id not in [x.id for x in account.destination_ids]:
             return 'invalid', _('Destination not compatible with account')

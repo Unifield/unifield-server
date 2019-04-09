@@ -110,7 +110,7 @@ class PhysicalInventory(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'responsible': fields.char('Responsible', size=128, required=False),
+        'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
@@ -898,8 +898,19 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                           row_index, len(row))
                 break
 
-            # Check if product is non-stockable
             product_code = row.cells[2].data
+            line_no = row.cells[0].data
+            # check if line number and product code are matching together
+            product_id = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            disc_line_found = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [
+                ('inventory_id', '=', inventory_rec.id),
+                ('line_no', '=', int(line_no)),
+                ('product_id', 'in', product_id),
+            ], context=context)
+            if not disc_line_found:
+                add_error(_("""Unable to update line #%s product %s: line not found in the discrepancy report""") % (line_no, product_code), row_index, 2)
+
+            # Check if product is non-stockable
             if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
                                                   ('type', 'in', ['service_recep', 'consu'])],
                                         context=context):
@@ -924,7 +935,6 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
             comment = row.cells[19].data
 
-            line_no = row.cells[0].data
             line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
             if line_ids:
                 line_no = line_ids[0]
@@ -1261,7 +1271,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Batch / Expiry date
         'batch_number': fields.char(_('Batch number'), size=64),
-        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
+        'expiry_date': fields.date(string=_('Expiry date')),
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
         'quantity': fields.char(_('Quantity'), size=15),
@@ -1400,7 +1410,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
-        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True, write_relate=False, store=True),
+        'inv_state': fields.related('inventory_id', 'state', type='char', size=64, string='Inventory state', readonly=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),

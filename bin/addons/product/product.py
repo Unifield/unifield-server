@@ -274,6 +274,7 @@ product_category()
 class product_template(osv.osv):
     _name = "product.template"
     _description = "Product Template"
+
     def _calc_seller(self, cr, uid, ids, fields, arg, context=None):
         result = {}
         for product in self.browse(cr, uid, ids, context=context):
@@ -290,6 +291,28 @@ class product_template(osv.osv):
                 result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
         return result
 
+    def _get_list_price(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        Update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            standard_price = obj.standard_price
+            #US-1035: Fixed the wrong hardcoded id given when calling config setup object
+            setup_br = setup_obj and setup_obj.get_config(cr, uid)
+            if not setup_br:
+                return res
+            percentage = setup_br.sale_price
+            list_price = standard_price * (1 + (percentage/100.00))
+            res[obj.id] = list_price
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=True, select=True),
         'product_manager': fields.many2one('res.users','Product Manager',help="This is use as task responsible"),
@@ -303,8 +326,11 @@ class product_template(osv.osv):
         'procure_method': fields.selection([('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], 'Procurement Method', required=True, help="'Make to Stock': When needed, take from the stock or wait until re-supplying. 'Make to Order': When needed, purchase or produce for the procurement request."),
         'rental': fields.boolean('Can be Rent'),
         'categ_id': fields.many2one('product.category','Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="Select category for the current product"),
-        'list_price': fields.float('Sale Price', digits_compute=dp.get_precision('Sale Price'), help="Base price for computing the customer price. Sometimes called the catalog price."),
-        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account'), help="Price of product calculated according to the selected costing method."),
+        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Price of product calculated according to the selected costing method."),
+        'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price', digits_compute=dp.get_precision('Sale Price Computation'), help="Base price for computing the customer price. Sometimes called the catalog price.",
+                                      store = {
+            'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
+        }),
         'volume': fields.float('Volume', help="The volume in m3."),
         'weight': fields.float('Gross weight', help="The gross weight in Kg."),
         'weight_net': fields.float('Net weight', help="The net weight in Kg."),
@@ -406,6 +432,41 @@ class product_template(osv.osv):
 product_template()
 
 class product_product(osv.osv):
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        location_id = False
+        filter_qty = False
+        for x in domain:
+            if x[0] == 'location_id':
+                location_id = x[2]
+
+            elif x[0] == 'postive_qty':
+                filter_qty = True
+            else:
+                new_dom.append(x)
+
+        ret = super(product_product, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if filter_qty:
+            stock_warehouse_obj = self.pool.get('stock.warehouse')
+            stock_location_obj = self.pool.get('stock.location')
+            if not location_id:
+                wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
+                location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+            if isinstance(location_id, basestring):
+                location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
+
+            if not isinstance(location_id, list):
+                location_id = [location_id]
+
+            child_location_ids = stock_location_obj.search(cr, uid, [('location_id', 'child_of', location_id)], order='NO_ORDER')
+            location_ids = child_location_ids or location_id
+            ret.tables.append('"stock_mission_report_line_location"')
+            ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
+            ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
+            ret.where_clause_params.append(tuple(location_ids))
+            ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+        return ret
+
     def view_header_get(self, cr, uid, view_id, view_type, context=None):
         if context is None:
             context = {}
@@ -733,6 +794,35 @@ class product_product(osv.osv):
             return False
 
         return True
+
+    def onchange_sp(self, cr, uid, ids, standard_price, context=None):
+        '''
+        On change standard_price, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
+        '''
+        res = {}
+        if standard_price :
+            if standard_price < 0.0:
+                warn_msg = {
+                    'title': _('Warning'),
+                    'message': _("The Cost Price must be greater than 0 !")
+                }
+                res.update({'warning': warn_msg,
+                            'value': {'standard_price': 1,
+                                      'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
+            else:
+                setup_obj = self.pool.get('unifield.setup.configuration')
+                #US-1035: Fixed the wrong hardcoded id given when calling config setup object
+                setup_br = setup_obj.get_config(cr, uid)
+                if not setup_br:
+                    return res
+
+                percentage = setup_br.sale_price
+                list_price = standard_price * (1 + (percentage/100.00))
+                if 'value' in res:
+                    res['value'].update({'list_price': list_price})
+                else:
+                    res.update({'value': {'list_price': list_price}})
+        return res
 
 
 product_product()

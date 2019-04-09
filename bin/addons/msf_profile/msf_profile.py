@@ -35,7 +35,8 @@ import traceback
 #import re
 
 from msf_field_access_rights.osv_override import _get_instance_level
-
+import cStringIO
+import csv
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -50,6 +51,256 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+
+    # UF12.1
+    def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
+        '''
+        Set the correct sale_line_id on moves post SLL that were cancelled after the original line was partially processed
+        '''
+        move_obj = self.pool.get('stock.move')
+        sol_obj = self.pool.get('sale.order.line')
+
+        move_domain = [
+            ('state', '=', 'cancel'),
+            ('type', '=', 'out'),
+            ('picking_id.subtype', '=', 'standard'),
+            ('picking_id.type', '=', 'out'),
+            ('sale_line_id.order_id.procurement_request', '=', True),
+            ('sale_line_id.state', '=', 'done'),
+        ]
+        moves_ids = move_obj.search(cr, uid, move_domain)
+        impacted_ir = []
+        for move in self.pool.get('stock.move').browse(cr, uid, moves_ids):
+            split_sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', '=', move.sale_line_id.order_id.id),
+                ('id', '!=', move.sale_line_id.id),
+                ('line_number', '=', move.sale_line_id.line_number),
+                ('is_line_split', '=', True),
+                ('state', '=', 'cancel'),
+                ('product_uom_qty', '=', move.product_qty),
+            ])
+            if split_sol_ids:
+                impacted_ir.append('%s #%s' % (move.sale_line_id.order_id.name, move.sale_line_id.line_number))
+                move_obj.write(cr, uid, [move.id], {'sale_line_id': split_sol_ids[0]})
+
+        if impacted_ir:
+            self._logger.warn('%d IR cancelled lines linked to cancelled OUT: %s' % (len(impacted_ir), ', '.join(impacted_ir)))
+        return True
+
+
+    def us_5785_set_ocg_price_001(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG'):
+            cr.execute("""select p.id, tmpl.id, p.default_code from
+                product_template tmpl, product_product p
+                where
+                    p.product_tmpl_id = tmpl.id and
+                    standard_price=0
+                """)
+            prod = cr.fetchall()
+            if prod:
+                cr.execute('update product_template set standard_price=0.01, list_price=0.01 where id in %s', (tuple([x[1] for x in prod]), ))
+                self._logger.warn('Change price to 0.01 on %d products: %s' % (cr.rowcount,', '.join([x[2] for x in prod])))
+                for prod_i in prod:
+                    cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'Patch US-5785')
+                            """,  (prod_i[0], ))
+                if instance.level == 'section' and instance.code == 'CH':
+                    cr.execute('''update ir_model_data set touched='[''default_code'']', last_modification=NOW() where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
+                    self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5667_remove_contract_workflow(self, cr, uid, *a, **b):
+        """
+        Deletes the workflow related to Financing Contracts (not used anymore)
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE signal IN ('contract_open', 'contract_soft_closed', 'contract_hard_closed', 'contract_reopen')
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
+        return True
+
+    # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
+    def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
+        ''' OCBHQ: volume has not been converted to dm3 on instances '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.name == 'OCBHQ':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''volume'']' where module='sd' and name in ('product_TVECZTF0058','product_TVECZTF0051','product_TVECZBE0175','product_TVEAZTF0086','product_TVEAZTF0057','product_STRYZ597044S','product_STRYZ597004S','product_STRYZ596001S','product_STRYZ33625100','product_STRYZ33625080','product_SCTDZBE0102','product_SCTDZBE0090','product_PTOOZBE0502','product_PTOOPLIE01E','product_PSAFZBE0109','product_PSAFZBE0076','product_PPAIZBE0010','product_PIDEZTF0073','product_PHYGZBE0022','product_PELEZBE1287','product_PELEZBE1279','product_PCOOZTF0014','product_PCOOZBE0039','product_PCOOZBE0038','product_PCOMZBE0518','product_L028AIDG01E','product_KADMZBE0031','product_EPHYCRUT1C-','product_EMEQBOTP01-','product_ELAEZTF0809','product_ELAEZBE0941','product_ELAEZBE0898','product_EHOEZBE1052','product_EHOEZBE0907','product_EDIMZBE0103','product_EDIMZBE0102','product_EDIMZBE0101','product_EDIMZBE0099','product_EDIMZBE0061','product_EANEZTF0081','product_EANEZTF0079','product_EANEZBE0167','product_DEXTZBE0031','product_ALIFZTF0029','product_ADAPZBE0460','product_41400-35031')''')
+            self._logger.warn('Trigger sync updates on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5507_set_synchronize(self, cr, uid, *a, **b):
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("update res_users set synchronize='t' where create_uid=%s", (sync_id,))
+        self._logger.warn('Set synchronize on  %s users.' % (cr.rowcount,))
+        return True
+
+    def us_5480_correct_partner_fo_default_currency(self, cr, uid, *a, **b):
+        """
+        Sets FO default currency = PO default currency for all external partners where these currencies are different
+        """
+        partner_obj = self.pool.get('res.partner')
+        pricelist_obj = self.pool.get('product.pricelist')
+        partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])])
+        partner_count = 0
+        sync = 0
+        for partner in partner_obj.browse(cr, uid, partner_ids,
+                                          fields_to_fetch=['property_product_pricelist_purchase',
+                                                           'property_product_pricelist',
+                                                           'locally_created']):
+            if partner.property_product_pricelist_purchase and partner.property_product_pricelist \
+                    and partner.property_product_pricelist_purchase.currency_id.id != partner.property_product_pricelist.currency_id.id:
+                # search for the "Sale" pricelist having the same currency as the "Purchase" pricelist currently used
+                pricelist_dom = [('type', '=', 'sale'),
+                                 ('currency_id', '=', partner.property_product_pricelist_purchase.currency_id.id)]
+                pricelist_ids = pricelist_obj.search(cr, uid, pricelist_dom, limit=1)
+                if pricelist_ids:
+                    sql = """
+                          UPDATE ir_property
+                          SET value_reference = %s
+                          WHERE name = 'property_product_pricelist'
+                          AND res_id = %s;
+                          """
+                    cr.execute(sql, ('product.pricelist,%s' % pricelist_ids[0], 'res.partner,%s' % partner.id))
+                    if partner.locally_created:
+                        cr.execute("update ir_model_data set last_modification=NOW(), touched='[''property_product_pricelist'']' where model='res.partner' and module='sd' and res_id = %s", (partner.id,))
+                        sync += 1
+                    partner_count += 1
+        self._logger.warn('FO default currency modified for %s partner(s), %s sync generated' % (partner_count, sync))
+        return True
+
+    # UF11.1
+    def us_5559_set_pricelist(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # new instance nothing to fix
+            return True
+
+        data_obj = self.pool.get('ir.model.data')
+        po_id = data_obj.get_object_reference(cr, uid, 'purchase', 'list0')[1]
+        so_id = data_obj.get_object_reference(cr, uid, 'product', 'list0')[1]
+
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if c.currency_id and c.currency_id.name =='CHF':
+            ch_po_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_purchase')[1]
+            ch_so_id = data_obj.get_object_reference(cr, uid, 'sd', 'CHF_sale')[1]
+            to_fix = [(po_id, so_id, ['section']), (ch_po_id, ch_so_id, ['intermission'])]
+        else:
+            to_fix = [(po_id, so_id, ['section', 'intermission'])]
+
+        partner = self.pool.get('res.partner')
+
+
+        for pl_po_id, pl_so_id, domain in to_fix:
+            partner_ids = partner.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', 'in', domain)])
+
+
+            if partner_ids:
+                po_pricelist = 'product.pricelist,%s' % pl_po_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist_purchase' and value_reference!=%s and res_id in %s''', (po_pricelist, po_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('PO Currency changed on %d partners' % (cr.rowcount,))
+
+
+                so_pricelist = 'product.pricelist,%s' % pl_so_id
+                cr.execute('''update ir_property set value_reference=%s where name='property_product_pricelist' and value_reference!=%s and res_id in %s''', (so_pricelist, so_pricelist, tuple(['res.partner,%s'%x for x in partner_ids]),))
+                self._logger.warn('FO Currency changed on %d partners' % (cr.rowcount,))
+
+        return True
+
+    def us_5425_reset_amount_currency(self, cr, uid, *a, **b):
+        """
+        Sets to zero the JI "amount_currency" which wrongly have a value
+        Note: it fixes only the reval and FX entries where we forced the booking values to be exactly 0.00
+        """
+        update_ji_booking = """
+                    UPDATE account_move_line
+                    SET amount_currency = 0.0
+                    WHERE (debit_currency = 0.0 OR debit_currency IS NULL) 
+                    AND (credit_currency = 0.0 OR credit_currency IS NULL) 
+                    AND (amount_currency != 0.0 AND amount_currency IS NOT NULL)
+                    AND journal_id IN (SELECT id FROM account_journal WHERE type IN ('cur_adj', 'revaluation'));
+                """
+        cr.execute(update_ji_booking)
+        self._logger.warn('amount_currency reset in %s JI.' % (cr.rowcount,))
+
+    def us_5398_reset_ud_cost_price(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section' and instance_id.code == 'CH':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'us-5398-product-price'})
+        return True
 
     # UF11.0
     def us_5356_reset_ud_prod(self, cr, uid, *a, **b):
@@ -1610,22 +1861,6 @@ class patch_scripts(osv.osv):
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
-    def launch_patch_scripts(self, cr, uid, *a, **b):
-        ps_obj = self.pool.get('patch.scripts')
-        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
-        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
-            method = ps['method']
-            model_obj = self.pool.get(ps['model'])
-            try:
-                getattr(model_obj, method)(cr, uid, *a, **b)
-                self.write(cr, uid, [ps['id']], {'run': True})
-            except Exception as e:
-                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
-                self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
 
     def us_1421_lower_login(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
@@ -2050,35 +2285,6 @@ class patch_scripts(osv.osv):
                 where module='sd' and model='msf_button_access_rights.button_access_rule'
             ''')
 
-    def update_volume_patch(self, cr, uid, *a, **b):
-        """
-        Update the volume from dm³ to m³ for OCB databases
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param a: Unnamed parameters
-        :param b: Named parameters
-        :return: True
-        """
-        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance:
-            while instance.level != 'section':
-                if not instance.parent_id:
-                    break
-                instance = instance.parent_id
-
-        if instance and instance.name != 'OCBHQ':
-            cr.execute("""
-                UPDATE product_template
-                SET volume_updated = True
-                WHERE volume_updated = False
-            """)
-        else:
-            cr.execute("""
-                UPDATE product_template
-                SET volume = volume*1000,
-                    volume_updated = True
-                WHERE volume_updated = False
-            """)
 
     def us_750_patch(self, cr, uid, *a, **b):
         """
@@ -2901,6 +3107,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -2933,6 +3143,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],
@@ -3027,6 +3242,68 @@ class sync_tigger_something(osv.osv):
                   product_catalog_path=NULL
                 where international_status=%s ''', (unidata_id,))
             _logger.warn('Reset %d UD products' % (cr.rowcount,))
+
+        if vals.get('name') == 'us-5398-product-price':
+            msf_instance_obj = self.pool.get('msf.instance')
+            prod_obj = self.pool.get('product.product')
+
+            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance.instance.startswith('OCG') and \
+                '_KE1_' not in instance.instance and \
+                '_UA1_' not in instance.instance and \
+                '_MX1_' not in instance.instance and \
+                    '_LB1_' not in instance.instance:
+
+                setup_br = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+                if not setup_br:
+                    percent = 0
+                else:
+                    percent = setup_br.sale_price
+
+
+                data_file = tools.file_open(opj('msf_profile', 'data', 'us-5398-product-price.csv'), 'rb')
+                data = data_file.read()
+
+                hq_id = msf_instance_obj.search(cr, uid, [('code', '=', 'CH')])
+                hq_info =  msf_instance_obj.browse(cr, uid, hq_id[0])
+
+                crypt_o = tools.misc.crypt(hq_info.instance_identifier)
+                clear_data = cStringIO.StringIO(crypt_o.decrypt(data))
+                csv_reader = csv.reader(clear_data, delimiter=',')
+                csv_reader.next()
+                xmlid_price = {}
+                xmlid_code = {}
+                prod_id_price = {}
+
+                for line in csv_reader:
+                    xmlid_price[line[1]] = float(line[2])
+                    xmlid_code[line[1]] = line[0]
+
+
+                all_xmlid = xmlid_price.keys()
+
+                for sdref, p_id in prod_obj.find_sd_ref(cr, uid, all_xmlid).iteritems():
+                    prod_id_price[p_id] = xmlid_price[sdref]
+                    del xmlid_code[sdref]
+
+                if xmlid_code:
+                    _logger.warn('OCG Prod price update, %d products not found: %s' % (len(xmlid_code), ', '.join(xmlid_code.values())))
+
+                nb_updated= 0
+                nb_ignored = 0
+                for prod in prod_obj.read(cr, uid, prod_id_price.keys(), ['standard_price', 'product_tmpl_id']):
+                    if abs(prod['standard_price'] - prod_id_price[prod['id']]) > 0.000001:
+                        list_price = round(prod_id_price[prod['id']] * (1 + (percent/100.00)), 5)
+                        nb_updated += 1
+                        cr.execute('update product_template set standard_price=%s, list_price=%s where id=%s', (prod_id_price[prod['id']], list_price, prod['product_tmpl_id'][0]))
+                        cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), %s, %s, 1, %s, date_trunc('second', now()::timestamp), 'OCG Prod price update')
+                            """,  (prod['standard_price'], prod_id_price[prod['id']], prod['id']))
+                    else:
+                        nb_ignored += 1
+
+                _logger.warn('OCG Prod price update: %d updated, %s ignored' % (nb_updated, nb_ignored))
+
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 

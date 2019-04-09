@@ -69,7 +69,7 @@ LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account
 WHERE
 account_journal.type not in ('system', 'revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
-account_analytic_account.category not in ('FREE1', 'FREE2')
+COALESCE(account_analytic_account.category, '') not in ('FREE1', 'FREE2')
 %s
 GROUP BY account_period.name, m.name, l.id, account_period.date_start, account_account.code
 HAVING abs(abs(avg(l.debit_currency - l.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) > 0.00001
@@ -97,7 +97,7 @@ LEFT JOIN account_analytic_account ON account_analytic_line.account_id = account
 WHERE
 account_journal.type in ('revaluation', 'cur_adj') AND
 account_account.is_analytic_addicted = 't' AND
-account_analytic_account.category not in ('FREE1', 'FREE2')
+COALESCE(account_analytic_account.category, '') not in ('FREE1', 'FREE2')
 %s
 GROUP BY account_period.name, m.name, l.id, account_period.date_start, account_account.code
 HAVING abs(avg(l.credit - l.debit) - sum(COALESCE(account_analytic_line.amount, 0))) > 0.00001

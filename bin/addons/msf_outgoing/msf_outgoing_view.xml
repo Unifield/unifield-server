@@ -153,7 +153,7 @@
                     string="Picking Tickets" hide_new_button="1">
 					<field name="name" />
 					<field name="partner_id2" />
-					<field name="backorder_id" />
+					<field name="backorder_id" string="ORIGINAL PICK" />
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
@@ -203,17 +203,16 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
-                                                        required="1"
-							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="1"
+									attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
 								   domain="[('partner_id', '=', partner_id2)]"
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
-							<field name="backorder_id" readonly="1" />
+							<field name="backorder_id" readonly="1" string="Original PICK" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
                             <field name="order_category" />
-							<field name="incoming_id" readonly="True" />
+                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
@@ -224,8 +223,10 @@
 							<field name="sale_id" invisible="True" />
 							<field name="subtype" invisible="True" readonly="True" />
 							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+							<field name="incoming_id" readonly="True" />
 						</group>
 					</group>
+
 					<notebook colspan="4">
 						<page string="Products">
 							<field name="from_wkf" invisible="1"/>
@@ -235,6 +236,8 @@
 								widget="one2many_list"
 								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
 							    on_change="onchange_move()"
+                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
+                                default_selector="state == 'draft' and '0' or '1'"
 							    >
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
 								colors="red: inactive_product==True">
@@ -631,6 +634,9 @@
 							<field name='ppl_customize_label' required="True" />
 							<field name="description_ppl"  />
 						</group>
+						<group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
+							<button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+						</group>
 
 					</group>
 					<notebook colspan="4">
@@ -638,7 +644,7 @@
 							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
 								default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  
 								attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" 
-								filter_selector="[('Hide returned', ('ppl_returned_ok', '=', False)), ('Show all', '')]">
+								filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]">
 								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
@@ -1340,7 +1346,7 @@
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|','|', '&amp;', ('num_of_packs', '=', 0), ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}" />
+                                        attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
                                         attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
@@ -1423,9 +1429,9 @@
 				<search string="Shipment">
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
-						<filter icon="terp-check" name="shipped" string="Shipped" domain="[('state','=','shipped')]" />
-						<filter icon="terp-dialog-close" name="closed" string="Closed" domain="[('state','=','done')]" />
-						<filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state','=','delivered')]" />
+						<filter icon="terp-check" name="shipped" string="Ready to ship" domain="[('state','=','shipped')]" />
+						<filter icon="terp-dialog-close" name="closed" string="Dispatched" domain="[('state','=','done')]" />
+						<filter icon="gtk-yes" name="delivered" string="Received" domain="[('state','=','delivered')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />
