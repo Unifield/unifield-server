@@ -401,6 +401,7 @@ class analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some value
+        ad_obj = self.pool.get('analytic.distribution')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -442,12 +443,13 @@ class analytic_line(osv.osv):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
                 if check_accounts and aline.account_id.id in check_accounts:
                     continue
-
-                if aline.account_id and aline.account_id.id == msf_private_fund:
-                    res.append(aline.id)
-                elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
-                    if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
+                if ad_obj.check_dest_cc_compatibility(cr, uid, aline.destination_id and aline.destination_id.id or False,
+                                                      account_id, context=context):
+                    if aline.account_id and aline.account_id.id == msf_private_fund:
                         res.append(aline.id)
+                    elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
+                        if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
+                            res.append(aline.id)
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
@@ -473,7 +475,8 @@ class analytic_line(osv.osv):
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
-                if aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
+                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False, context=context) and \
+                        aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
