@@ -2092,15 +2092,6 @@ class stock_move(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        # check disabled due to an obvious bug on picking_id vs id in domain
-        # i.e: self is a stock.move object, ids are also stock.move
-        #if uid != 1:
-        #    frozen_fields = set(['product_qty', 'product_uom', 'product_uos_qty', 'product_uos', 'location_id', 'location_dest_id', 'product_id'])
-        #    done_moves = self.search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')])
-        #    if done_moves and frozen_fields.intersection(vals):
-        #        raise osv.except_osv(_('Operation forbidden'),
-        #                             _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -2343,77 +2334,6 @@ class stock_move(osv.osv):
 
         return result
 
-    def _hook_dest(self, cr, uid, *args, **kwargs):
-        '''
-        UF-1239 : Not chained the moves coming from stock.inventory
-        '''
-        return kwargs.get('dest')
-
-    def _chain_compute(self, cr, uid, moves, context=None):
-        """ Finds whether the location has chained location type or not.
-        @param moves: Stock moves
-        @return: Dictionary containing destination location with chained location type.
-        """
-        result = {}
-        if context is None:
-            context = {}
-        stock_location_obj = self.pool.get('stock.location')
-        stock_picking_obj = self.pool.get('stock.picking')
-        for m in moves:
-            dest = stock_location_obj.chained_location_get(
-                cr,
-                uid,
-                m.location_dest_id,
-                m.picking_id and m.picking_id.address_id and m.picking_id.address_id.partner_id,
-                m.product_id,
-                context
-            )
-            #if dest:
-            if self._hook_dest(cr, uid, dest=dest, m=m):
-                if dest[1] == 'transparent' and context.get('action_confirm', False):
-                    newdate = (datetime.strptime(m.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=dest[2] or 0)).strftime('%Y-%m-%d')
-                    self.write(cr, uid, [m.id], {
-                        'date': newdate,
-                        'location_dest_id': dest[0].id})
-                    if m.picking_id and (dest[3] or dest[5]):
-                        stock_picking_obj.write(cr, uid, [m.picking_id.id], {
-                            'stock_journal_id': dest[3] or m.picking_id.stock_journal_id.id,
-                            'type': m.picking_id.type
-                        }, context=context)
-                    m.location_dest_id = dest[0]
-                    res2 = self._chain_compute(cr, uid, [m], context=context)
-                    for pick_id in res2.keys():
-                        result.setdefault(pick_id, [])
-                        result[pick_id] += res2[pick_id]
-                elif not context.get('action_confirm', False):
-                    result.setdefault(m.picking_id, [])
-                    result[m.picking_id].append( (m, dest) )
-        return result
-
-    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
-        return pick_values
-
-    def _create_chained_picking(self, cr, uid, pick_name, picking, ptype, move, context=None):
-        if not context:
-            context={}
-        res_obj = self.pool.get('res.company')
-        picking_obj = self.pool.get('stock.picking')
-        pick_values = {'name': pick_name,
-                       'origin': tools.ustr(picking.origin or ''),
-                       'type': ptype,
-                       'note': picking.note,
-                       'move_type': picking.move_type,
-                       'auto_picking': move[0][1][1] == 'auto',
-                       'stock_journal_id': move[0][1][3],
-                       'company_id': move[0][1][4] or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
-                       'address_id': picking.address_id.id,
-                       'invoice_state': 'none',
-                       'date': picking.date,
-                       }
-        pick_values = self.hook__create_chained_picking(cr, uid, pick_values, picking)
-        pick_id= picking_obj.create(cr, uid, pick_values, context=context)
-        return pick_id
-
     def _create_chained_picking_move_values_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -2424,6 +2344,9 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         move_data = kwargs['move_data']
+        # set the line number from original stock move
+        move = kwargs['move']
+        move_data.update({'line_number': move.line_number})
         return move_data
 
     def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
@@ -2990,294 +2913,38 @@ class stock_move(osv.osv):
         prodlot_id = prodlot_obj.create(cr, uid, {'prefix': prefix, 'product_id': product_id})
         return prodlot_id
 
-    def action_scrap(self, cr, uid, ids, quantity, location_id, context=None):
-        """ Move the scrap/damaged product into scrap location
-        @param cr: the database cursor
-        @param uid: the user id
-        @param ids: ids of stock move object to be scrapped
-        @param quantity : specify scrap qty
-        @param location_id : specify scrap location
-        @param context: context arguments
-        @return: Scraped lines
+
+    def open_split_wizard(self, cr, uid, ids, context=None):
         """
-        if quantity <= 0:
-            raise osv.except_osv(_('Warning!'), _('Please provide a positive quantity to scrap!'))
-        res = []
-        product_obj = self.pool.get('product.product')
-        for move in self.browse(cr, uid, ids, context=context):
-            move_qty = move.product_qty
-            uos_qty = quantity / move_qty * move.product_uos_qty
-            default_val = {
-                'product_qty': quantity,
-                'product_uos_qty': uos_qty,
-                'state': move.state,
-                'scrapped' : True,
-                'location_dest_id': location_id,
-                'tracking_id': move.tracking_id.id,
-                'prodlot_id': move.prodlot_id.id,
-            }
-            if move.location_id.usage <> 'internal':
-                default_val.update({'location_id': move.location_dest_id.id})
-            new_move = self.copy(cr, uid, move.id, default_val)
-
-            res += [new_move]
-
-            for (id, name) in product_obj.name_get(cr, uid, [move.product_id.id]):
-                self.log(cr, uid, move.id, "%s x %s %s" % (move.product_qty, name, _("were scrapped")))
-
-        self.action_done(cr, uid, res)
-        return res
-
-    def action_split(self, cr, uid, ids, quantity, split_by_qty=1, prefix=False, with_lot=True, context=None):
-        """ Split Stock Move lines into production lot which specified split by quantity.
-        @param cr: the database cursor
-        @param uid: the user id
-        @param ids: ids of stock move object to be splited
-        @param split_by_qty : specify split by qty
-        @param prefix : specify prefix of production lot
-        @param with_lot : if true, prodcution lot will assign for split line otherwise not.
-        @param context: context arguments
-        @return: Splited move lines
+        Open the split line wizard: the user can select the quantity for the new move
         """
+        wiz_obj = self.pool.get('split.move.processor')
 
-        if context is None:
-            context = {}
-        if quantity <= 0:
-            raise osv.except_osv(_('Warning!'), _('Please provide Proper Quantity !'))
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        res = []
+        line = self.browse(cr, uid, ids[0], fields_to_fetch=['product_uom'], context=context)
+        split_wiz_id = wiz_obj.create(cr, uid, {
+            'processor_line_id': ids[0],
+            'processor_type': self._name,
+            'uom_id': line.product_uom.id,
+            'quantity': line.product_qty,
+        }, context=context)
 
-        for move in self.browse(cr, uid, ids, context=context):
-            if split_by_qty <= 0 or quantity == 0:
-                return res
-
-            uos_qty = split_by_qty / move.product_qty * move.product_uos_qty
-
-            quantity_rest = quantity % split_by_qty
-            uos_qty_rest = split_by_qty / move.product_qty * move.product_uos_qty
-
-            update_val = {
-                'product_qty': split_by_qty,
-                'product_uos_qty': uos_qty,
-            }
-            for idx in range(int(quantity//split_by_qty)):
-                if not idx and move.product_qty<=quantity:
-                    current_move = move.id
-                else:
-                    current_move = self.copy(cr, uid, move.id, {'state': move.state})
-                res.append(current_move)
-                if with_lot:
-                    update_val['prodlot_id'] = self._create_lot(cr, uid, [current_move], move.product_id.id)
-
-                self.write(cr, uid, [current_move], update_val)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': wiz_obj._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'nodestroy': True,
+            'target': 'new',
+            'res_id': split_wiz_id,
+            'context': context,
+        }
 
 
-            if quantity_rest > 0:
-                idx = int(quantity//split_by_qty)
-                update_val['product_qty'] = quantity_rest
-                update_val['product_uos_qty'] = uos_qty_rest
-                if not idx and move.product_qty<=quantity:
-                    current_move = move.id
-                else:
-                    current_move = self.copy(cr, uid, move.id, {'state': move.state})
-
-                res.append(current_move)
-
-
-                if with_lot:
-                    update_val['prodlot_id'] = self._create_lot(cr, uid, [current_move], move.product_id.id)
-
-                self.write(cr, uid, [current_move], update_val)
-        return res
-
-    def action_consume(self, cr, uid, ids, quantity, location_id=False, context=None):
-        """ Consumed product with specific quatity from specific source location
-        @param cr: the database cursor
-        @param uid: the user id
-        @param ids: ids of stock move object to be consumed
-        @param quantity : specify consume quantity
-        @param location_id : specify source location
-        @param context: context arguments
-        @return: Consumed lines
-        """
-        if context is None:
-            context = {}
-        if quantity <= 0:
-            raise osv.except_osv(_('Warning!'), _('Please provide Proper Quantity !'))
-        res = []
-        product_obj = self.pool.get('product.product')
-        for move in self.browse(cr, uid, ids, context=context):
-            move_qty = move.product_qty
-            if move_qty <= 0:
-                raise osv.except_osv(_('Error!'), _('Can not consume a move with negative or zero quantity !'))
-            quantity_rest = move.product_qty
-            quantity_rest -= quantity
-            uos_qty_rest = quantity_rest / move_qty * move.product_uos_qty
-            if quantity_rest <= 0:
-                quantity_rest = 0
-                uos_qty_rest = 0
-                quantity = move.product_qty
-
-            uos_qty = quantity / move_qty * move.product_uos_qty
-
-            if quantity_rest > 0:
-                default_val = {
-                    'product_qty': quantity,
-                    'product_uos_qty': uos_qty,
-                    'state': move.state,
-                    'location_id': location_id or move.location_id.id,
-                }
-                if (not move.prodlot_id.id) and (move.product_id.track_production and location_id):
-                    # IF product has checked track for production lot, move lines will be split by 1
-                    res += self.action_split(cr, uid, [move.id], quantity, split_by_qty=1, context=context)
-                else:
-                    current_move = self.copy(cr, uid, move.id, default_val)
-                    res += [current_move]
-                update_val = {}
-                update_val['product_qty'] = quantity_rest
-                update_val['product_uos_qty'] = uos_qty_rest
-                self.write(cr, uid, [move.id], update_val)
-
-            else:
-                quantity_rest = quantity
-                uos_qty_rest =  uos_qty
-                if (not move.prodlot_id.id) and (move.product_id.track_production and location_id):
-                    res += self.action_split(cr, uid, [move.id], quantity_rest, split_by_qty=1, context=context)
-                else:
-                    res += [move.id]
-                    update_val = {
-                        'product_qty' : quantity_rest,
-                        'product_uos_qty' : uos_qty_rest,
-                        'location_id': location_id or move.location_id.id
-                    }
-                    self.write(cr, uid, [move.id], update_val)
-
-        for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'], context=context):
-            for (id, name) in product_obj.name_get(cr, uid, [new_move['product_id'][0]]):
-                message = _('Product ') + " '" + name + "' "+ _("is consumed with") + " '" + str(new_move['product_qty']) + "' "+ _("quantity.")
-                self.log(cr, uid, new_move['id'], message)
-        self.action_done(cr, uid, res)
-
-        return res
-
-    # FIXME: needs refactoring, this code is partially duplicated in stock_picking.do_partial()!
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
-        """ Makes partial pickings and moves done.
-        @param partial_datas: Dictionary containing details of partial picking
-                          like partner_id, address_id, delivery_date, delivery
-                          moves with product_id, product_qty, uom
-        """
-        res = {}
-        picking_obj = self.pool.get('stock.picking')
-        product_obj = self.pool.get('product.product')
-        currency_obj = self.pool.get('res.currency')
-        uom_obj = self.pool.get('product.uom')
-        wf_service = netsvc.LocalService("workflow")
-
-        if context is None:
-            context = {}
-
-        complete, too_many, too_few = [], [], []
-        move_product_qty = {}
-        prodlot_ids = {}
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state in ('done', 'cancel'):
-                continue
-            partial_data = partial_datas.get('move%s'%(move.id), False)
-            assert partial_data, _('Missing partial picking data for move #%s') % (move.id)
-            product_qty = partial_data.get('product_qty',0.0)
-            move_product_qty[move.id] = product_qty
-            product_uom = partial_data.get('product_uom',False)
-            product_price = partial_data.get('product_price',0.0)
-            product_currency = partial_data.get('product_currency',False)
-            prodlot_ids[move.id] = partial_data.get('prodlot_id')
-            if move.product_qty == product_qty:
-                complete.append(move)
-            elif move.product_qty > product_qty:
-                too_few.append(move)
-            else:
-                too_many.append(move)
-
-            # Average price computation
-            # Average and chaining with type='in'
-            #old_moves = self.search(cr, uid, [('type', '=', 'in'), ('move_dest_id', '=', move.id)], context=context)
-            #if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not old_moves:
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
-                product = product_obj.browse(cr, uid, move.product_id.id)
-                move_currency_id = move.company_id.currency_id.id
-                context['currency_id'] = move_currency_id
-                qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
-                if qty > 0:
-                    new_price = currency_obj.compute(cr, uid, product_currency,
-                                                     move_currency_id, product_price)
-                    new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
-                                                       product.uom_id.id)
-                    if product.qty_available <= 0:
-                        new_std_price = new_price
-                    else:
-                        # Get the standard price
-                        amount_unit = product.price_get('standard_price', context)[product.id]
-                        new_std_price = ((amount_unit * product.qty_available)\
-                                         + (new_price * qty))/(product.qty_available + qty)
-
-                    product_obj.write(cr, uid, [product.id],{'standard_price': new_std_price})
-
-                    # Record the values that were chosen in the wizard, so they can be
-                    # used for inventory valuation if real-time valuation is enabled.
-                    self.write(cr, uid, [move.id],
-                               {'price_unit': product_price,
-                                'price_currency_id': product_currency,
-                                })
-
-        for move in too_few:
-            product_qty = move_product_qty[move.id]
-            if product_qty != 0:
-                defaults = {
-                    'product_qty' : product_qty,
-                    'product_uos_qty': product_qty,
-                    'picking_id' : move.picking_id.id,
-                    'state': 'assigned',
-                    'move_dest_id': False,
-                    'price_unit': move.price_unit,
-                }
-                prodlot_id = prodlot_ids[move.id]
-                if prodlot_id:
-                    defaults.update(prodlot_id=prodlot_id)
-                new_move = self.copy(cr, uid, move.id, defaults)
-                complete.append(self.browse(cr, uid, new_move))
-            self.write(cr, uid, [move.id],
-                       {
-                'product_qty' : move.product_qty - product_qty,
-                'product_uos_qty':move.product_qty - product_qty,
-            })
-
-
-        for move in too_many:
-            self.write(cr, uid, [move.id],
-                       {
-                'product_qty': move.product_qty,
-                'product_uos_qty': move.product_qty,
-            })
-            complete.append(move)
-
-        for move in complete:
-            if prodlot_ids.get(move.id):
-                self.write(cr, uid, [move.id],{'prodlot_id': prodlot_ids.get(move.id)})
-            self.action_done(cr, uid, [move.id], context=context)
-            if  move.picking_id.id :
-                # TOCHECK : Done picking if all moves are done
-                cr.execute("""
-                    SELECT move.id FROM stock_picking pick
-                    RIGHT JOIN stock_move move ON move.picking_id = pick.id AND move.state = %s
-                    WHERE pick.id = %s""",
-                           ('done', move.picking_id.id))
-                res = cr.fetchall()
-                if len(res) == len(move.picking_id.move_lines):
-                    picking_obj.action_move(cr, uid, [move.picking_id.id])
-                    wf_service.trg_validate(uid, 'stock.picking', move.picking_id.id, 'button_done', cr)
-
-        return [move.id for move in complete]
-
+    def split(self, cr, uid, id, quantity, uom_id, context=None):
+        pass
 
 stock_move()
 

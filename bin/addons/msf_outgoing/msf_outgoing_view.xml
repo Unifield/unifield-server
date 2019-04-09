@@ -245,6 +245,7 @@
                                             domain="[('uom_by_product', '=', product_id)]"
                                             />
                                     <field name="qty_to_process" attrs="{'readonly': [('fake_state', '!=', 'assigned')]}"/>
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed'))]}"/>
                                     <field name="asset_id" />
 
                                     <field name="prodlot_id"

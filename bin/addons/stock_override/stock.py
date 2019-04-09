@@ -1919,7 +1919,6 @@ class stock_move(osv.osv):
         return defaults
 
 
-    # @@@override stock>stock.py>stock_move>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
         """ Makes partial pickings and moves done.
         @param partial_datas: Dictionary containing details of partial picking
@@ -2048,7 +2047,6 @@ class stock_move(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', move.picking_id.id, 'button_done', cr)
 
         return [move.id for move in complete]
-    # @@@override end
 
     def _get_destruction_products(self, cr, uid, ids, product_ids=False, context=None, recursive=False):
         """ Finds the product quantity and price for particular location.
@@ -2096,7 +2094,6 @@ class stock_move(osv.osv):
         self.action_assign(cr, uid, ids, context)
         return True
 
-    # @@@override stock>stock.py>stock_move>_chain_compute
     def _chain_compute(self, cr, uid, moves, context=None):
         """ Finds whether the location has chained location type or not.
         @param moves: Stock moves
@@ -2151,9 +2148,7 @@ class stock_move(osv.osv):
                 result[pick_id] += res2[pick_id]
 
         return result
-    # @@@override end
 
-    # @@@override stock>stock.py>stock_move>_create_chained_picking
     def _create_chained_picking(self, cr, uid, pick_name, picking, ptype, move, context=None):
         if context is None:
             context = {}
@@ -2184,7 +2179,6 @@ class stock_move(osv.osv):
         }
 
         return picking_obj.create(cr, uid, pick_values, context=context)
-    # @@@override end
 
 stock_move()
 
