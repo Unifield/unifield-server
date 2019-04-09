@@ -105335,3 +105335,15 @@ msgid "\n"
 msgstr "\n"
 "                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1621
+#, python-format
+msgid "'Project Ref' Document can't be Confirmed, Closed or Cancelled"
+msgstr "Le Document de 'Réf. Projet' ne peut pas être Confirmé, Fermé ou Annulé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1625
+#, python-format
+msgid "The Reference in 'Project Ref' was not found"
+msgstr "La Référence dans 'Réf. Projet' n'a pas été trouvée"

@@ -1400,6 +1400,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         '''
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        sale_obj = self.pool.get('sale.order')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1608,7 +1609,22 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['esc_conf'] = True
 
             # Project Ref.
-            write_vals['imp_project_ref'] = values[17]
+            proj_ref = values[17]
+            if proj_ref:
+                so_ids = sale_obj.search(cr, uid, [('name', 'ilike', proj_ref), ('procurement_request', 'in', ['t', 'f'])],
+                                         limit=1, context=context)
+                if so_ids:
+                    so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
+                    if so_state in ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p'):
+                        write_vals['imp_project_ref'] = values[17]
+                    else:
+                        err_msg = _('\'Project Ref\' Document can\'t be Confirmed, Closed or Cancelled')
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
+                else:
+                    err_msg = _('The Reference in \'Project Ref\' was not found')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
 
             # Message ESC1
             write_vals['imp_esc1'] = values[18]
