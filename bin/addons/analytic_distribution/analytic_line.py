@@ -507,6 +507,7 @@ class analytic_line(osv.osv):
                         new_dest_id, new_dest_br,
                         new_cc_id, new_cc_br,
                         new_fp_id, new_fp_br):
+            ad_obj = self.pool.get('analytic.distribution')
             if not general_account_br.is_analytic_addicted:
                 res.append((id, entry_sequence, ''))
                 return False
@@ -517,6 +518,12 @@ class analytic_line(osv.osv):
                 # not compatible with general account
                 res.append((id, entry_sequence, _('DEST')))
                 return False
+
+            # check cost center with destination
+            if new_dest_id and new_cc_id:
+                if not ad_obj.check_dest_cc_compatibility(cr, uid, new_dest_id, new_cc_id, context=context):
+                    res.append((id, entry_sequence, _('CC/DEST')))
+                    return False
 
             # check funding pool (expect for MSF Private Fund)
             if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
