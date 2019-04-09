@@ -1611,7 +1611,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Project Ref.
             proj_ref = values[17]
             if proj_ref:
-                so_ids = sale_obj.search(cr, uid, [('name', 'ilike', proj_ref), ('procurement_request', 'in', ['t', 'f'])],
+                so_ids = sale_obj.search(cr, uid, [('name', '=', proj_ref), ('procurement_request', 'in', ['t', 'f'])],
                                          limit=1, context=context)
                 if so_ids:
                     so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
