@@ -400,6 +400,19 @@
                         </page>
                         <page string="Notes">
                             <field colspan="4" name="note" nolabel="1"/>
+                            <field name="is_subpick" invisible="1"  />
+                            <html>
+                                <p id="label_qty" style="display:none"><translate>Qty To Pick</translate></p>
+                                <script language="javascript">
+                                    if ($('#is_subpick').val() == "1") {
+                                        set_label = function() {
+                                            $('#grid-data-column\\/move_lines\\/qty_to_process').html($('#label_qty').html());
+                                        }
+                                        new ListView('move_lines').after_reload = set_label;
+                                        set_label();
+                                    }
+                                </script>
+                            </html>
                         </page>
                     </notebook>
                 </form>

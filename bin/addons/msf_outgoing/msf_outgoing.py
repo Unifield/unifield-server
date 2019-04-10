@@ -3779,7 +3779,7 @@ class stock_picking(osv.osv):
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
             for line in picking.move_lines:
-                if line.qty_to_process <= 0 or line.state != 'assigned':
+                if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
                     continue
 
                 move_data.setdefault(line.id, {
