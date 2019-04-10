@@ -2147,11 +2147,16 @@ class stock_move(osv.osv):
         return res
 
     def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
-        return self.pool.get('stock.move.processor').change_lot(cr, uid, ids, lot_id, qty, location_id, uom_id, context)
-
+        ret = self.pool.get('stock.move.processor').change_lot(cr, uid, ids, lot_id, qty, location_id, uom_id, context)
+        if 'expiry_date' in ret.get('value', {}):
+            ret['value']['expired_date'] = ret['value']['expiry_date']
+        return ret
 
     def onchange_expiry_processor(self, cr, uid, ids, expiry_date=False, product_id=False, type_check=False, context=None):
-        return self.pool.get('stock.move.processor').change_expiry(cr, uid, ids, expiry_date, product_id, type_check, context)
+        ret = self.pool.get('stock.move.processor').change_expiry(cr, uid, ids, expiry_date, product_id, type_check, context)
+        if 'expiry_date' in ret.get('value', {}):
+            ret['value']['expired_date'] = ret['value']['expiry_date']
+        return ret
 
     def onchange_lot_id(self, cr, uid, ids, prodlot_id=False, product_qty=False,
                         loc_id=False, product_id=False, uom_id=False, context=None):
