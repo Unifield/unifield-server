@@ -991,12 +991,12 @@ class msf_import_export(osv.osv_memory):
                         if parent_type != 'view' or parent_category != 'DEST':
                             raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
                     # Type
-                    if not data.get('type') or data['type'] not in ['normal', 'view']:
+                    if data['type'] not in ['normal', 'view']:
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
                     if data.get('dest_cc_ids'):
                         if data.get('allow_all_cc'):
-                            raise Exception(_("Please either list some Cost Centers or set \"Allow all Cost Centers\" to TRUE."))
+                            raise Exception(_("Please either list Cost Centers or set \"Allow all Cost Centers\" to TRUE."))
                         dest_cc_list = []
                         for cost_center in data.get('dest_cc_ids').split(','):
                             cc = cost_center.strip()
@@ -1024,6 +1024,20 @@ class msf_import_export(osv.osv_memory):
                         data['destination_ids'] = [(6, 0, acc_list)]
                     else:
                         data['destination_ids'] = [(6, 0, [])]
+                    # if the code matches with an existing destination: update it
+                    if data.get('code'):
+                        ids_to_update = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', data['code'])],
+                                                      limit=1, context=context)
+                        if ids_to_update:
+                            # in case of empty columns on non-required fields, existing values should be deleted
+                            if 'date' not in data:
+                                data['date'] = False
+                            if 'dest_cc_ids' not in data:
+                                data['dest_cc_ids'] = [(6, 0, [])]
+                            if 'destination_ids' not in data:
+                                data['destination_ids'] = [(6, 0, [])]
+                            if 'allow_all_cc' not in data:
+                                data['allow_all_cc'] = False
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':

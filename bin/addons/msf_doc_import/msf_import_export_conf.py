@@ -537,6 +537,7 @@ MODEL_DATA_DICT = {
             'name',
             'code',
             'parent_id.code',
+            'type',
             'date_start',
         ],
     },
