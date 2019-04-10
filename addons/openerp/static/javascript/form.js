@@ -790,6 +790,7 @@ function onChangePop(caller){
                 fld.value = value;
                 var $current_field = jQuery(fld);
                 var kind = $current_field.attr('kind')
+                var type2 = $current_field.attr('type2')
 
                 //o2m and m2m
                 if ($current_field.hasClass('gridview') && !kind){
@@ -918,7 +919,10 @@ function onChangePop(caller){
                         $('#' + prefix + k).val(value || '');
                         break;
                     case 'selection':
-                        if (typeof(value)=='object') {
+                        if (type2 == 'many2one' && typeof(value)=='object') {
+                            fld.value = value[0];
+                        }
+                        else if (typeof(value)=='object') {
                             var opts = [OPTION({'value': ''})];
                             for (var opt = 0; opt < value.length; opt++) {
                                 if (value[opt].length > 0) {
