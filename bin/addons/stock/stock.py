@@ -1815,7 +1815,7 @@ class stock_picking(osv.osv):
         to_check = []
         for key in data:
             to_check.append(data[key]['master'])
-            move_obj.write(cr, uid, data[key]['master'], {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expiry_date': False, 'expired_date': False}, context=context)
+            move_obj.write(cr, uid, data[key]['master'], {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expired_date': False}, context=context)
         move_obj.unlink(cr, uid, to_del, force=True, context=context)
         move_obj.cancel_assign(cr, uid, to_check, context=context)
         self.check_availability_manually(cr, uid, ids, context=context)
@@ -2082,7 +2082,6 @@ class stock_move(osv.osv):
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
 
         'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
-        'expiry_date': fields.date('ED set on processing'),
     }
     _constraints = [
         (_check_tracking,
@@ -2606,7 +2605,7 @@ class stock_move(osv.osv):
                     if bn_needed:
                         prodlot_id = r[3] or None
                         expired_date = r[2] or None
-                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, expiry_date=%s, state=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, expired_date, state, r[0], move.id))
+                    cr.execute("update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s, prodlot_id=%s, expired_date=%s, state=%s, qty_to_process=%s where id=%s", (r[1], r[0], r[0] * move.product_id.uos_coeff, prodlot_id, expired_date, state, r[0], move.id))
                     while res:
                         r = res.pop(0)
                         prodlot_id = False
@@ -2625,7 +2624,7 @@ class stock_move(osv.osv):
                             state = 'confirmed'
                             qty_to_process = 0
 
-                        self.copy(cr, uid, move.id, {'qty_to_process': qty_to_process, 'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date, 'expiry_date': expired_date, 'state': state})
+                        self.copy(cr, uid, move.id, {'qty_to_process': qty_to_process, 'line_number': move.line_number, 'product_qty': r[0], 'product_uos_qty': r[0] * move.product_id.uos_coeff, 'location_id': r[1] or move.location_id.id, 'prodlot_id': prodlot_id, 'expired_date': expired_date, 'state': state})
 
         if done:
             cr.execute('update stock_move set qty_to_process=product_qty where id in %s', (tuple(done),))
