@@ -95,13 +95,28 @@ MODEL_DICT = {
         'domain_type': 'finance',
         'model': 'account.journal'
     },
-    'analytic_accounts': {
-        'name': 'Analytic Accounts except Destinations',
+    'funding_pools': {
+        'name': 'Funding Pools',
         'domain_type': 'finance',
         'model': 'account.analytic.account'
     },
     'destinations': {
         'name': 'Destinations',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account'
+    },
+    'cost_centers': {
+        'name': 'Cost Centers',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account'
+    },
+    'free1': {
+        'name': 'Free 1',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account'
+    },
+    'free2': {
+        'name': 'Free 2',
         'domain_type': 'finance',
         'model': 'account.analytic.account'
     },
@@ -471,11 +486,10 @@ MODEL_DATA_DICT = {
             'analytic_journal_id.name',
         ],
     },
-    'analytic_accounts': {
+    'funding_pools': {
         'header_list': [
             'name',
             'code',
-            'category',
             'parent_id.code',
             'type',
             'date_start',
@@ -487,7 +501,22 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name',
             'code',
-            'category',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'cost_centers': {
+        'header_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
             'parent_id.code',
             'date_start',
         ],
@@ -496,7 +525,6 @@ MODEL_DATA_DICT = {
         'header_list': [
             'name',
             'code',
-            'category',
             'parent_id.code',
             'type',
             'date_start',
@@ -508,7 +536,38 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name',
             'code',
-            'category',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'free1': {
+        'header_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'free2': {
+        'header_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
             'parent_id.code',
             'date_start',
         ],
