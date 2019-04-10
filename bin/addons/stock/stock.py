@@ -2082,6 +2082,7 @@ class stock_move(osv.osv):
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
 
         'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
+        'qty_processed': fields.float('Qty Processed', help="Main pick, resgister sum of qties processed"),
     }
     _constraints = [
         (_check_tracking,
@@ -2153,6 +2154,8 @@ class stock_move(osv.osv):
         if default is None:
             default = {}
         default = default.copy()
+        if 'qty_processed' not in default:
+            default['qty_processed'] = 0
 
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
 
@@ -2174,6 +2177,17 @@ class stock_move(osv.osv):
         if 'expiry_date' in ret.get('value', {}):
             ret['value']['expired_date'] = ret['value']['expiry_date']
         return ret
+
+    def onchange_qty_to_process(self, cr, uid, ids, qty_to_process, product_qty, uom_id, context=None):
+        if qty_to_process > product_qty:
+            return {
+                'value': {'qty_to_process': 0},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _("Processing Qty can't be larger than move qty.")
+                }
+            }
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty_to_process, fields_q=['qty_to_process'], context=context)
 
     def onchange_lot_id(self, cr, uid, ids, prodlot_id=False, product_qty=False,
                         loc_id=False, product_id=False, uom_id=False, context=None):
@@ -3026,11 +3040,11 @@ class stock_move(osv.osv):
             context = {}
         keepLineNumber = context.get('keepLineNumber')
         context['keepLineNumber'] = True
-        init_data = self.browse(cr, uid, id, fields_to_fetch=['product_qty', 'state', 'qty_to_process'], context=context)
+        init_data = self.browse(cr, uid, id, fields_to_fetch=['product_qty', 'state', 'qty_to_process', 'pt_created'], context=context)
         if quantity >= init_data.product_qty:
             raise osv.except_osv(_('Warning'), _('Qty to split %s is more or equal to original qty %s') % (quantity, init_data.product_qty))
 
-        copy_data = {'product_qty': quantity, 'product_uos_qty': quantity, 'state': init_data.state, 'qty_to_process': 0}
+        copy_data = {'product_qty': quantity, 'product_uos_qty': quantity, 'state': init_data.state, 'qty_to_process': 0, 'pt_created': init_data.pt_created}
         new_id = self.copy(cr, uid, id, copy_data, context=context)
 
         new_qty = init_data.product_qty - quantity

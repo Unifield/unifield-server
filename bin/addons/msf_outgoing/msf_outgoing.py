@@ -3741,19 +3741,11 @@ class stock_picking(osv.osv):
 
         for picking in self.browse(cr, uid, wizard_ids, context=context):
 
-            move_data = {}
-
             self.check_integrity(cr, uid, picking.id, context)
 
-
-            # UF-2531: Use the name of the PICK sent from the RW sync if it's the case
-            pick_name = False
-
-            # UF-2531: if not exist, then calculate the name as before
-            if not pick_name:
-                sequence = picking.sequence_id
-                ticket_number = sequence.get_id(code_or_id='id', context=context)
-                pick_name = '%s-%s' % (picking.name or 'NoName/000', ticket_number)
+            sequence = picking.sequence_id
+            ticket_number = sequence.get_id(code_or_id='id', context=context)
+            pick_name = '%s-%s' % (picking.name or 'NoName/000', ticket_number)
 
             copy_data = {
                 'name': pick_name,
@@ -3782,12 +3774,6 @@ class stock_picking(osv.osv):
                 if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
                     continue
 
-                move_data.setdefault(line.id, {
-                    'initial_qty': line.product_qty,
-                    'line_number': line.line_number,
-                    'processed_qty': line.qty_to_process,
-                })
-
                 # Copy the stock move and set the quantity
                 cp_values = {
                     'picking_id': new_picking_id,
@@ -3807,22 +3793,21 @@ class stock_picking(osv.osv):
                 context['keepLineNumber'] = False
 
 
-            # Update initial stock moves
-            for move_id, move_vals in move_data.iteritems():
-                if move_vals['processed_qty'] > move_vals['initial_qty']:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed') % move_vals['line_number']
-                    )
-                initial_qty = max(move_vals['initial_qty'] - move_vals['processed_qty'], 0.00)
+                initial_qty = max(line.product_qty - line.qty_to_process, 0.00)
+                qty_processed = (line.qty_processed or 0) + line.qty_to_process
                 wr_vals = {
                     'product_qty': initial_qty,
-                    'proudct_uos_qty': initial_qty,
+                    'product_uos_qty': initial_qty,
                     'processed_stock_move': True,
-                    'processed_qty': 0,
+                    'qty_processed': qty_processed,
                 }
+                if initial_qty == 0:
+                    wr_vals['qty_to_process'] = qty_processed
+                else:
+                    wr_vals['qty_to_process'] = initial_qty
+
                 context['keepLineNumber'] = True
-                move_obj.write(cr, uid, [move_id], wr_vals, context=context)
+                move_obj.write(cr, uid, [line.id], wr_vals, context=context)
                 context['keepLineNumber'] = False
 
 
@@ -3846,13 +3831,34 @@ class stock_picking(osv.osv):
         lot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
 
-        if not move_obj.search_exist(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '!=', 0)], context=context):
+        if not move_obj.search_exist(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '!=', 0), ('product_qty', '!=', 0)], context=context):
             raise osv.except_osv( _('Warning'), _('No line to process, please set Qty to process'))
 
         neg_ids = move_obj.search(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '<', 0)], context=context)
         if neg_ids:
             neg = move_obj.browse(cr, uid, neg_ids, fields_to_fetch=['line_number'], context=context)
             raise osv.except_osv( _('Warning'), _('Qty to process must be positive, line(s): %s') % ', '.join(['#%s' % x.line_number for x in neg]))
+
+        # Do not process more that requested
+        cr.execute('''
+            select
+                line_number, qty_to_process, product_qty
+            from stock_move
+            where
+                qty_to_process!=0 and
+                product_qty!=0 and
+                state='assigned' and
+                picking_id=%s and
+                qty_to_process > product_qty
+        ''', (pid,))
+        error = []
+        for x in cr.fetchall():
+            error.append(_('#%d qty to process %s, qty in move %s') % (x[0], x[1], x[2]))
+        if error:
+            raise osv.except_osv(
+                _('Warning'),
+                _("Processed quantites can't be larger than quantity in move, please check these lines:\n %s") % "\n".join(error)
+            )
 
         # BN/ED: check qty in stock
         cr.execute('''
@@ -3861,6 +3867,7 @@ class stock_picking(osv.osv):
             from stock_move
             where
                 qty_to_process!=0 and
+                product_qty!=0 and
                 prodlot_id is not null and
                 state='assigned' and
                 picking_id=%s
@@ -4003,9 +4010,12 @@ class stock_picking(osv.osv):
                     if line.backmove_id:
                         if line.backmove_id.product_uom.id != line.product_uom.id:
                             diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, diff_qty, line.backmove_id.product_uom.id)
-                            backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
-                            if backorder_qty != 0.00:
-                                move_obj.write(cr, uid, [line.backmove_id.id], {'product_qty': backorder_qty}, context=context)
+                        backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
+                        if backorder_qty != 0.00:
+                            new_val = {'product_qty': backorder_qty, 'qty_processed': (line.backmove_id.qty_processed or 0)+diff_qty}
+                            if line.backmove_id.product_qty == 0:
+                                new_val['qty_to_process'] = diff_qty
+                            move_obj.write(cr, uid, [line.backmove_id.id], new_val, context=context)
 
                 if line.qty_to_process:
                     values.update({
