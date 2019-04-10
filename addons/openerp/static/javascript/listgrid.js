@@ -903,6 +903,9 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload();
     },
 
+    after_reload: function() {
+    },
+
     reload_from_wizard: function() {
         return this.reload(undefined, undefined, undefined, undefined, undefined, true);
     },
@@ -1034,6 +1037,7 @@ MochiKit.Base.update(ListView.prototype, {
                         //console.log('Set readonly');
                         new One2Many(self.name).setReadonly(true);
                     }
+                    __listview.after_reload()
                 }
 
                 var selfname = self.name
