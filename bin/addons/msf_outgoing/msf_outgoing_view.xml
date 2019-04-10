@@ -245,7 +245,7 @@
                                             domain="[('uom_by_product', '=', product_id)]"
                                             />
                                     <field name="qty_to_process" attrs="{'readonly': [('fake_state', '!=', 'assigned')]}"/>
-                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed'))]}"/>
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed', 'assigned'))]}"/>
                                     <field name="asset_id" />
 
                                     <field name="prodlot_id"
@@ -364,15 +364,16 @@
                             <group col="14" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
-                                <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
-                                            attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
-                                            context="{'from_button': True}" />
-                                <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  
-                                            attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
-                                            context="{'from_button': True}"  />
-                                <field name="cross_docking_ok" invisible='1'/>
+                                <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all"  attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
+                                <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
+                                <button name="reset_all" type="object" icon="gtk-go-forward" colspan="2" string="Reset" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
+                                <button name="change_all_location" string="Change All Sources" type="object" attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('cross_docking_ok','=', True), ('state', 'in', ['done','cancel'])]}" icon="gtk-execute"/>
+
+                                <field name="cross_docking_ok" invisible="1"/>
                                 <field name="allocation_setup" invisible="1" />
-                                <field name="flow_type" />
+                                <field name="flow_type" invisible="1" />
+                                <button name="quick_flow" type="object" string="" icon="escalator-up.png" attrs="{'invisible': [('flow_type', '=', 'quick')], 'readonly': [('state','!=','draft')]}" help="Switch to Quick flow"/>
+                                <button name="standard_flow" type="object" string="" icon="stairs-up.png"  attrs="{'invisible': [('flow_type', '=', 'full')], 'readonly': [('state','!=','draft')]}" help="Switch to Full flow"/>
                                 <group colspan="1" col="1">
                                     <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
                                     <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
@@ -383,7 +384,7 @@
                                 <button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="do_create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
-                                <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"  context="{'from_button': True}" />
+                                <button name="do_validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"  context="{'from_button': True}" />
                             </group>
                         </page>
                         <page string="Additional info">

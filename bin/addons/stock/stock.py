@@ -1774,6 +1774,43 @@ class stock_picking(osv.osv):
                 self.infolog(cr, uid, message)
         return True
 
+    def copy_all(self, cr, uid, ids, context=None):
+        cr.execute("update stock_move set qty_to_process=product_qty where state = 'assigned' and picking_id in %s and product_qty!=0", (tuple(ids),))
+        return True
+
+    def uncopy_all(self, cr, uid, ids, context=None):
+        cr.execute("update stock_move set qty_to_process=0 where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0", (tuple(ids),))
+        return True
+
+    def reset_all(self, cr, uid, ids, context=None):
+        move_obj = self.pool.get('stock.move')
+        cr.execute("select id, picking_id, product_id, line_number, purchase_line_id, sale_line_id, product_qty from stock_move where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0", (tuple(ids),))
+        data = {}
+        to_del = []
+        for x in cr.fetchall():
+            key = (x[1], x[2], x[3], x[4], x[5])
+            if key not in data:
+                data[key] =  {'product_qty': 0, 'master': x[0]}
+            else:
+                to_del.append(x[0])
+            data[key]['product_qty'] += x[6]
+        to_check = []
+        for key in data:
+            to_check.append(data[key]['master'])
+            move_obj.write(cr, uid, data[key]['master'], {'product_qty': data[key]['product_qty'], 'product_uos_qty': data[key]['product_qty'], 'prodlot_id': False, 'expiry_date': False, 'expired_date': False}, context=context)
+        move_obj.unlink(cr, uid, to_del, force=True, context=context)
+        move_obj.cancel_assign(cr, uid, to_check, context=context)
+        self.check_availability_manually(cr, uid, ids, context=context)
+        return True
+
+    def quick_flow(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'flow_type': 'quick'}, context=context)
+        return True
+
+    def standard_flow(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'flow_type': 'full'}, context=context)
+        return True
+
 stock_picking()
 
 class stock_production_lot(osv.osv):
@@ -2942,7 +2979,7 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        line = self.browse(cr, uid, ids[0], fields_to_fetch=['product_uom'], context=context)
+        line = self.browse(cr, uid, ids[0], fields_to_fetch=['product_uom', 'product_qty'], context=context)
         split_wiz_id = wiz_obj.create(cr, uid, {
             'processor_line_id': ids[0],
             'processor_type': self._name,
@@ -2963,7 +3000,26 @@ class stock_move(osv.osv):
 
 
     def split(self, cr, uid, id, quantity, uom_id, context=None):
-        pass
+        if context is None:
+            context = {}
+        keepLineNumber = context.get('keepLineNumber')
+        context['keepLineNumber'] = True
+        init_data = self.browse(cr, uid, id, fields_to_fetch=['product_qty', 'state', 'qty_to_process'], context=context)
+        if quantity >= init_data.product_qty:
+            raise osv.except_osv(_('Warning'), _('Qty to split %s is more or equal to original qty %s') % (quantity, init_data.product_qty))
+
+        copy_data = {'product_qty': quantity, 'product_uos_qty': quantity, 'state': init_data.state, 'qty_to_process': 0}
+        new_id = self.copy(cr, uid, id, copy_data, context=context)
+
+        new_qty = init_data.product_qty - quantity
+        new_data = {'product_qty': new_qty, 'product_uos_qty': new_qty}
+        if init_data.qty_to_process > new_qty:
+            new_data['qty_to_process'] = new_qty
+
+        self.write(cr, uid, id, new_data, context=context)
+        context['keepLineNumber'] = keepLineNumber
+        return new_id
+
 
 stock_move()
 

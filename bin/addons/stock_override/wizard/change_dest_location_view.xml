@@ -7,12 +7,28 @@
             <field name="model">change.dest.location</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Change destination location">
-                    <separator colspan="4" string="Internal move" />
+                <form string="Change Location">
+                    <group attrs="{'invisible':  [('type', '=', 'out')]}" colspan="4">
+                        <separator colspan="4" string="Internal move" />
+                    </group>
+
+                    <group attrs="{'invisible':  [('type', '=', 'internal')]}" colspan="4">
+                        <separator colspan="4" string="Picking" />
+                    </group>
+
                     <field name="picking_id" colspan="4" readonly="1" />
-                    <separator colspan="4" string="New destination location" />
-                    <field name="dest_location_id" colspan="4" domain="[('usage', 'not in', ['view', 'supplier', 'customer'])]" attrs="{'readonly': [('state', '=', 'end')]}" />
+
+                    <group attrs="{'invisible':  [('type', '=', 'out')]}" colspan="4">
+                        <separator colspan="4" string="New destination location" />
+                        <field name="dest_location_id" colspan="4" domain="[('usage', 'not in', ['view', 'supplier', 'customer'])]" attrs="{'readonly': [('state', '=', 'end')], 'required': [('type', '=', 'internal')]}" />
+                    </group>
+
+                    <group attrs="{'invisible':  [('type', '=', 'internal')]}" colspan="4">
+                        <separator colspan="4" string="New Source location" />
+                        <field name="src_location_id" colspan="4" domain="[('picking_ticket_src', '=', False)]" attrs="{'readonly': [('state', '=', 'end')], 'required': [('type', '=', 'out')]}" />
+                    </group>
                     <field name="state" invisible="1" />
+                    <field name="type" invisible="1" />
                     <group colspan="4" col="4" attrs="{'invisible': [('state', '=', 'start')]}">
                         <field name="warn_msg" colspan="4" nolabel="1" readonly="1" />
                     </group>
