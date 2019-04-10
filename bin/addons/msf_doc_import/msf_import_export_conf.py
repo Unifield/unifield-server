@@ -502,6 +502,7 @@ MODEL_DATA_DICT = {
             'date_start',
             'date',  # "inactive from"
             'dest_cc_ids',
+            'destination_ids',
             'allow_all_cc',
         ],
         'required_field_list': [

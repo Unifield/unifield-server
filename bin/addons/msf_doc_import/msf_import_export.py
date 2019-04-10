@@ -935,7 +935,7 @@ class msf_import_export(osv.osv_memory):
                 if import_brw.model_list_selection == 'analytic_accounts':
                     context['from_import_menu'] = True
                     if data.get('category', '') == 'DEST':
-                        raise Exception(_('To import Destinations, please select "Destinations" in the selection list.'))
+                        raise Exception(_('To import Destinations, please choose "Destinations" in the selection list.'))
                     # Cost Centers
                     if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
                         cc_list = []
@@ -977,7 +977,7 @@ class msf_import_export(osv.osv_memory):
                     context['from_import_menu'] = True
                     if data.get('category', '') != 'DEST':
                         raise Exception(_('To import accounts other than destinations, '
-                                          'please select "Analytic Accounts except Destinations" in the selection list.'))
+                                          'please choose "Analytic Accounts except Destinations" in the selection list.'))
                     # Parent Analytic Account
                     if data.get('parent_id'):
                         parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
@@ -1003,6 +1003,20 @@ class msf_import_export(osv.osv_memory):
                         data['dest_cc_ids'] = [(6, 0, dest_cc_list)]
                     else:
                         data['dest_cc_ids'] = [(6, 0, [])]
+                    # Accounts
+                    if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
+                        acc_list = []
+                        for account in data.get('destination_ids').split(','):
+                            acc = account.strip()
+                            acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
+                            acc_ids = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            if acc_ids:
+                                acc_list.append(acc_ids[0])
+                            else:
+                                raise Exception(_("Account code \"%s\" doesn't exist or isn't allowed.") % acc)
+                        data['destination_ids'] = [(6, 0, acc_list)]
+                    else:
+                        data['destination_ids'] = [(6, 0, [])]
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
