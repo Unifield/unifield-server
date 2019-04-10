@@ -995,6 +995,8 @@ class msf_import_export(osv.osv_memory):
                         raise Exception(_('The Type must be either "Normal" or "View".'))
                     # Cost Centers
                     if data.get('dest_cc_ids'):
+                        if data.get('allow_all_cc'):
+                            raise Exception(_("Please either list some Cost Centers or set \"Allow all Cost Centers\" to TRUE."))
                         dest_cc_list = []
                         for cost_center in data.get('dest_cc_ids').split(','):
                             cc = cost_center.strip()
