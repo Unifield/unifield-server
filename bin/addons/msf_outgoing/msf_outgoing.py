@@ -3759,6 +3759,7 @@ class stock_picking(osv.osv):
                 'name': pick_name,
                 'backorder_id': picking.id,
                 'move_lines': [],
+                'is_subpick': True,
             }
             tmp_allow_copy = context.get('allow_copy')
             context.update({

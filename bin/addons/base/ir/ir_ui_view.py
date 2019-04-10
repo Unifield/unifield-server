@@ -83,6 +83,7 @@ class view(osv.osv):
         'field_parent': fields.char('Child Field',size=64),
         'xml_id': fields.function(osv.osv.get_xml_id, type='char', size=128, string="XML ID",
                                   method=True, help="ID of the view defined in xml file"),
+        'title_field': fields.char('Field used as title', size=256),
     }
     _defaults = {
         'arch': '<?xml version="1.0"?>\n<tree string="My view">\n\t<field name="name"/>\n</tree>',

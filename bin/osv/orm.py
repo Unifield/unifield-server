@@ -1863,7 +1863,7 @@ class orm_template(object):
                         view_id = view_ref_res[0]
 
             if view_id:
-                query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
+                query = "SELECT arch,name,field_parent,id,type,inherit_id,model,title_field FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
                 if model:
                     query += " AND model = %s"
@@ -1871,7 +1871,7 @@ class orm_template(object):
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
-                        arch,name,field_parent,id,type,inherit_id,model
+                        arch,name,field_parent,id,type,inherit_id,model,title_field
                     FROM
                         ir_ui_view
                     WHERE
@@ -1893,11 +1893,12 @@ class orm_template(object):
             result['type'] = sql_res[4]
             result['view_id'] = sql_res[3]
             result['arch'] = sql_res[0]
+            result['title_field'] = sql_res[7]
 
             # Reverse the search on models to apply view inheritance in a good way
             def _inherit_apply_rec(result, inherit_id):
                 # get all views which inherit from (ie modify) this view
-                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
+                cr.execute('select arch, id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
                 sql_inherit = cr.fetchall()
                 for (inherit, id) in sql_inherit:
                     result = _inherit_apply(result, inherit, id)
@@ -1906,7 +1907,6 @@ class orm_template(object):
 
             inherit_result = etree.fromstring(encode(result['arch']))
             result['arch'] = _inherit_apply_rec(inherit_result, sql_res[3])
-
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:

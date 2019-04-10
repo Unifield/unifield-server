@@ -640,8 +640,21 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
+        # TODO: update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%';
+        ret = {}
+        for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype'], context=context):
+            if pick['subtype'] == 'picking':
+                if pick['is_subpick']:
+                    ret[pick['id']] = _('Picking Ticket')
+                else:
+                    ret[pick['id']] = _('Picking List')
+            else:
+                ret[pick['id']] = False
+        return ret
 
     _columns = {
+        'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
         'origin': fields.char('Origin', size=512, help="Reference of the document that produced this picking.", select=True),
         'backorder_id': fields.many2one('stock.picking', 'Back Order of', help="If this picking was split this field links to the picking that contains the other part that has been processed already.", select=True),
@@ -688,12 +701,14 @@ class stock_picking(osv.osv):
         'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'is_subpick': fields.boolean('Main or Sub PT'),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
         'state': 'draft',
         'move_type': 'direct',
         'type': 'in',
+        'is_subpick': False,
         'invoice_state': 'none',
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
@@ -754,6 +769,9 @@ class stock_picking(osv.osv):
             'claim_name': '',
             'from_manage_expired': False,
         })
+
+        if 'is_subpick' not in default:
+            default['is_subpick'] = False
 
         fields_to_read = ['name', 'type']
 

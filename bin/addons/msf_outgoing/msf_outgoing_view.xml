@@ -142,44 +142,47 @@
 		<menuitem action="action_pack_type_tree" id="menu_action_pack_type_tree"
 		sequence="6"
 		parent="stock.menu_product_in_config_stock"/>
-		<!-- Changed name to 'Picking Tickets' -->
-		<record id="view_picking_ticket_tree" model="ir.ui.view">
-			<field name="name">picking.ticket.tree</field>
-			<field name="model">stock.picking</field>
-			<field name="type">tree</field>
+
+        <!-- Changed name to 'Picking Tickets' -->
+        <record id="view_picking_ticket_tree" model="ir.ui.view">
+            <field name="name">picking.ticket.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
             <field name="priority">18</field>
-			<field name="arch" type="xml">
-				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
+            <field name="arch" type="xml">
+                <tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
                     string="Picking Tickets" hide_new_button="1">
-					<field name="name" />
-					<field name="partner_id2" />
-					<field name="backorder_id" string="ORIGINAL PICK" />
-					<field name="sale_id" invisible="True" />
-					<field name="reason_type_id" />
-					<field name="origin"/>
-					<field name="packing_list"/>
+                    <field name="name" />
+                    <field name="partner_id2" />
+                    <field name="backorder_id" string="ORIGINAL PICK" />
+                    <field name="sale_id" invisible="True" />
+                    <field name="reason_type_id" />
+                    <field name="origin"/>
+                    <field name="packing_list"/>
                     <field name="order_category" string="Order\nCategory"/>
-					<field name="incoming_id" />
-					<field name="overall_qty" invisible="True" />
-					<field name="date"/>
-					<field name="min_date" string="Expected\nPick Date" />
+                    <field name="incoming_id" />
+                    <field name="overall_qty" invisible="True" />
+                    <field name="date"/>
+                    <field name="min_date" string="Expected\nPick Date" />
                     <field name="state"/>
                     <field name="line_state" />
-					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
-                    <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" context="{'from_button': True}" />
-				</tree>
-			</field>
-		</record>
+                    <button name="do_create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
+                    <button name="do_validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" context="{'from_button': True}" />
+                </tree>
+            </field>
+        </record>
 
         <record id="view_picking_ticket_form" model="ir.ui.view">
             <field name="name">picking.ticket.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
             <field name="priority">18</field>
+            <field name="title_field">object_name</field>
             <field name="arch" type="xml">
                 <form string="Picking Ticket" noteditable="not __id" hide_delete_button="1" hide_duplicate_button="1">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
+                            <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="1"
