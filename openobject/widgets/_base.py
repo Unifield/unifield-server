@@ -72,7 +72,8 @@ class Widget(object):
                 pass
 
         self._resources = OrderedSet()
-
+        if params.get('css_width') == 'min':
+            self.css_classes.append('min-width')
         # Set default css class for the widget
         if not getattr(self, 'css_class', None):
             self.css_class = self.__class__.__name__.lower()

@@ -647,6 +647,9 @@ table.fields td {
     min-width: 90px;
 }
 
+.min-width {
+    min-width: 1px !important;
+}
 .item .fields {
     width: 100%;
 }
