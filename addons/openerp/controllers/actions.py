@@ -460,6 +460,11 @@ def act_window_opener(action, data):
     cherrypy.response.headers['Location'] = url
     if action and action.get('keep_open'):
         cherrypy.response.headers['keep-open'] = 1
+    if action and action.get('height'):
+        cherrypy.response.headers['height'] = action.get('height')
+    if action and action.get('width'):
+        cherrypy.response.headers['width'] = action.get('width')
+
     return """<script type="text/javascript">
         window.top.openAction('%s', '%s');
     </script>

@@ -134,7 +134,7 @@ function doLoadingSuccess(app, url) {
             } else {
                 _openAction = openAction;
             }
-            _openAction(xhr.getResponseHeader('Location'), target, active_id, keep_open);
+            _openAction(xhr.getResponseHeader('Location'), target, active_id, keep_open, xhr.getResponseHeader('height'), xhr.getResponseHeader('width'));
             return;
         }
         if(url) {
@@ -187,16 +187,17 @@ function doLoadingSuccess(app, url) {
  * @param action_url the URL of the action to open
  * @param target the target, if any, defaults to 'current'
  */
-function openAction(action_url, target, terp_id, keep_open) {
+function openAction(action_url, target, terp_id, keep_open, height, width) {
     var $dialogs = jQuery('.action-dialog');
+    console.log('H'+height+'W'+width);
     switch(target) {
         case 'new':
             $frame = jQuery.frame_dialog({
                 src: action_url,
                 'class': 'action-dialog'
             }, null, {
-                width: '90%',
-                height: '95%'
+                width: width?width:'90%',
+                height: height?height:'95%'
             });
             $frame.focus();
             if (terp_id && !$dialogs.length) {

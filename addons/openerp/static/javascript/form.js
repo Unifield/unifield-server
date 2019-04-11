@@ -418,6 +418,8 @@ function buttonClicked(name, btype, model, id, sure, target, context){
     s_ids = [];
     if (jQuery('[id="order_line"]').length > 0) {
         s_ids = ListView('order_line').getSelectedRecords();
+    } else if (jQuery('[id="move_lines"]').length > 0){
+        s_ids = ListView('move_lines').getSelectedRecords();
     }
 
     var params = {

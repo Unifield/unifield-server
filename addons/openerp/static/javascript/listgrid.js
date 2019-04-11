@@ -115,7 +115,7 @@ ListView.prototype = {
 
     checkAll: function(clear) {
         var self = this
-        jQuery('[id="' + this.name + '"] input.grid-record-selector').each(function(){
+        jQuery('[id="' + this.name + '"] input.grid-record-selector[id!="'+this.name+'_check_all"]').each(function(){
             jthis = jQuery(this)
             if (clear && jthis.attr('checked')) {
                 self.remove_previously_selected(jthis.val());
@@ -209,11 +209,18 @@ ListView.prototype = {
             nosidebar = arguments[2];
             if (clicked) {
                 this.add_previously_selected(id);
+                if (this.name != '_terp_list' && jQuery('[id="' + this.name + '"] input.grid-record-selector[id!="'+this.name+'_check_all"]').length == this.getSelectedRecords().length) {
+                    $('#'+this.name+'_check_all').attr('checked', true);
+                }
             } else {
                 this.remove_previously_selected(id);
+                if (this.name != '_terp_list') {
+                    $('#'+this.name+'_check_all').attr('checked', false);
+                }
             }
+        } else if (this.name != '_terp_list') {
+            nosidebar = true;
         }
-
         if (!nosidebar) {
             var $sidebar = jQuery('.toggle-sidebar');
             if ($sidebar.is('.closed')) {

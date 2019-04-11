@@ -97,7 +97,8 @@ if (auto_field && auto_field.val()){
         % if not data['id'] or data['id'] not in notselectable:
             % if not m2m:
                 <%
-                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
+                    nosidedar = name != '_terp_list' and 'true' or 'false'
+                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
                     if selector == "radio":
                         selector_click += " do_select();"
                 %>
@@ -303,7 +304,7 @@ if (auto_field && auto_field.val()){
                                 % if selector:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox' and not m2m:
-                                            <input type="checkbox" class="checkbox grid-record-selector" onclick="new ListView('${name}').checkAll(!this.checked)"/>
+                                            <input type="checkbox" class="checkbox grid-record-selector" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
                                         % endif
                                         % if selector != 'checkbox' and not m2m:
                                             <span>&nbsp;</span>
