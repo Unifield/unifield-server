@@ -1787,16 +1787,21 @@ class product_attributes(osv.osv):
         if not ids:
             return True
 
-        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management'], context=context)
+        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
         vals = {}
 
         if context.get('needed_batch_mngmt') is not None:
             vals.update({'batch_management': context['needed_batch_mngmt']})
             context.pop('needed_batch_mngmt')
+            if vals['batch_management'] and not (product.perishable or context.get('needed_perishable')):
+                raise osv.except_osv(_('Error'),
+                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
         if context.get('needed_perishable') is not None:
-            if not product.batch_management:
-                vals.update({'perishable': context['needed_perishable']})
+            vals.update({'perishable': context['needed_perishable']})
             context.pop('needed_perishable')
+            if not vals['perishable'] and (product.batch_management or vals.get('batch_management')):
+                raise osv.except_osv(_('Error'),
+                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
 
         in_use_stock = product.qty_available > 0 or False
         if not in_use_stock:  # Check stock IN - stock OUT

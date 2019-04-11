@@ -105370,3 +105370,10 @@ msgstr "Enlever l'obligation"
 #: view:change.bn.ed.mandatory.wizard:0
 msgid "Batch Number / Expiry Date flags change"
 msgstr "Changement du flag du Numéro de Lot / de la Date d'Expiration"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1798
+#: code:addons/product_attributes/product_attributes.py:1804
+#, python-format
+msgid "You are not allowed to have a Batch managed product without an Expiry Date"
+msgstr "Vous n'êtes pas en mesure d'avoir un produit géré par Lots mais sans Date d'Expiration"
