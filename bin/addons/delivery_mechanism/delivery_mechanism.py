@@ -1429,48 +1429,49 @@ class stock_picking(osv.osv):
                             line_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, proc_bro, move_to_process, context=context)
                             self.pool.get('create.picking.move.processor').create(cr, uid, line_data, context=context)
 
-                        # We copy all data in lines
-                        proc_obj.copy_all(cr, uid, [proc_id], context=wiz_context)
-
                         ### FIXME : IN > P/P/S
+                        # We copy all data in lines
+                        #proc_obj.copy_all(cr, uid, [proc_id], context=wiz_context)
+
                         # We process the creation of the picking
-                        res_wiz = proc_obj.do_create_picking(cr, uid, [proc_id], context=wiz_context)
+                        #res_wiz = proc_obj.do_create_picking(cr, uid, [proc_id], context=wiz_context)
 
                         # Validate sub pick
-                        new_pick = res_wiz['res_id']
-                        if  pack['packing_list']:
-                            self.pool.get('stock.picking').write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
-                        pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
-                        self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
-                        ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
+                        #new_pick = res_wiz['res_id']
+                        #if  pack['packing_list']:
+                        #    self.pool.get('stock.picking').write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
+                        #pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
+                        #self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
+                        #ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
 
                         # validate PPL
-                        ppl_wiz = self.ppl(cr, uid, [ppl_val_wiz['res_id']], context=context)
-                        pack_created = {}
-                        for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
-                            if ppl_line.move_id.pack_info_id:
-                                if ppl_line.move_id.pack_info_id.id not in pack_created:
-                                    pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
-                                        'wizard_id': ppl_wiz['res_id'],
-                                        'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
-                                        'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
-                                        'length': ppl_line.move_id.pack_info_id.total_length,
-                                        'width': ppl_line.move_id.pack_info_id.total_width,
-                                        'height': ppl_line.move_id.pack_info_id.total_height,
-                                        'weight': ppl_line.move_id.pack_info_id.total_weight,
+                        #ppl_wiz = self.ppl(cr, uid, [ppl_val_wiz['res_id']], context=context)
+                        #pack_created = {}
+                        #for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
+                        ##    if ppl_line.move_id.pack_info_id:
+                        #        if ppl_line.move_id.pack_info_id.id not in pack_created:
+                        #            pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
+                        #                'wizard_id': ppl_wiz['res_id'],
+                        #                'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
+                        #                'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
+                        #                'length': ppl_line.move_id.pack_info_id.total_length,
+                        #                'width': ppl_line.move_id.pack_info_id.total_width,
+                        #                'height': ppl_line.move_id.pack_info_id.total_height,
+                        #                'weight': ppl_line.move_id.pack_info_id.total_weight,
+                        #            })
+                        #        ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
 
-                                    })
-                                ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
-                        self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
-                        error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
-                        if error_lines_ids:
-                            error_data = []
-                            error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
-                            for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
-                                error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
-                            raise osv.except_osv(_('Error'), "\n".join(error_data))
+                        ### FIXME : IN > P/P/S
+                        #self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
+                        #error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
+                        #if error_lines_ids:
+                        #    error_data = []
+                        #    error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
+                        #    for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
+                        #        error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
+                        #    raise osv.except_osv(_('Error'), "\n".join(error_data))
 
-                        self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
+                        #self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
 
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'prepare_pick': _('Done'),

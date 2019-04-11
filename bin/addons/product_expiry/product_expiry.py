@@ -131,7 +131,6 @@ class stock_production_lot(osv.osv):
             ('export_report_stock_move', 'prodlot_id'),
             ('internal_move_processor', 'prodlot_id'),
             ('outgoing_delivery_move_processor', 'prodlot_id'),
-            ('ppl_move_processor', 'prodlot_id'),
             ('real_average_consumption_line', 'prodlot_id'),
             ('return_ppl_move_processor', 'prodlot_id'),
             ('stock_move_in_processor', 'prodlot_id'),
@@ -286,7 +285,6 @@ class stock_production_lot(osv.osv):
             TABLE "export_report_stock_move" CONSTRAINT "export_report_stock_move_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "internal_move_processor" CONSTRAINT "internal_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "outgoing_delivery_move_processor" CONSTRAINT "outgoing_delivery_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
-            TABLE "ppl_move_processor" CONSTRAINT "ppl_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "real_average_consumption_line" CONSTRAINT "real_average_consumption_line_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "return_ppl_move_processor" CONSTRAINT "return_ppl_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "stock_move_in_processor" CONSTRAINT "stock_move_in_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
@@ -316,7 +314,6 @@ class stock_production_lot(osv.osv):
             ('export_report_stock_move', 'prodlot_id'),
             ('internal_move_processor', 'prodlot_id'),
             ('outgoing_delivery_move_processor', 'prodlot_id'),
-            ('ppl_move_processor', 'prodlot_id'),
             ('real_average_consumption_line', 'prodlot_id'),
             ('return_ppl_move_processor', 'prodlot_id'),
             ('stock_move_in_processor', 'prodlot_id'),

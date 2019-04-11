@@ -619,7 +619,7 @@
 					<field name="date"/>
 					<field name="min_date" string="Expected\nPack Date" />
 					<field name="state"/>
-					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
+					<button name="ppl_integrity_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 				</tree>
 			</field>
 		</record>
@@ -752,7 +752,7 @@
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
                                 <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" />
                                 <button name="check_ppl_integrity" states="assigned" string="Check Integrity" type="object" icon="gtk-info"/>
-                                <button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
+                                <button name="ppl_integrity_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
                             </group>
                         </page>
                         <page string="Additional info">
