@@ -1034,10 +1034,20 @@ class msf_import_export(osv.osv_memory):
                                 data['date'] = False
                             if 'dest_cc_ids' not in data:
                                 data['dest_cc_ids'] = [(6, 0, [])]
-                            if 'destination_ids' not in data:
-                                data['destination_ids'] = [(6, 0, [])]
                             if 'allow_all_cc' not in data:
                                 data['allow_all_cc'] = False
+                            if 'destination_ids' not in data:
+                                data['destination_ids'] = [(6, 0, [])]
+                            elif data['destination_ids'][0][2]:
+                                # accounts already linked to the destination:
+                                # - if they don't appear in the new list: will be automatically de-activated
+                                # - if they appear in the list: must be re-activated if they are currently disabled
+                                link_ids = acc_dest_obj.search(cr, uid,
+                                                               [('account_id', 'in', data['destination_ids'][0][2]),
+                                                                ('destination_id', '=', ids_to_update[0]),
+                                                                ('disabled', '=', True)], context=context)
+                                if link_ids:
+                                    acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
