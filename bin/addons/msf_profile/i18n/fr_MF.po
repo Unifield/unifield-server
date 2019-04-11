@@ -5227,8 +5227,9 @@ msgstr "Maldives"
 msgid "Close period (Mission)"
 msgstr "Clôturer la Période (Mission)"
 
-#. module: msf_budget
+#. modules: msf_budget, analytic_distribution
 #: report:addons/msf_budget/report/report_local_expenses_xls.mako:116
+#: report:funding.pool:0
 msgid "Account name"
 msgstr "Nom du compte"
 
@@ -16477,6 +16478,7 @@ msgstr "Annuler le lettrage des Ecritures"
 #: view:threshold.value:0
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
+#: view:account.destination.summary:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -16779,7 +16781,7 @@ msgstr "\n"
 #. module: analytic_distribution
 #: view:account.analytic.account:0
 msgid "Remove all"
-msgstr "Remove all"
+msgstr "Tout supprimer"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_oca.py:176
@@ -31372,9 +31374,10 @@ msgstr "Nom d'Hôte du Serveur de Synchronisation"
 msgid "Type of file"
 msgstr "Type de fichier"
 
-#. module: msf_budget
+#. modules: msf_budget, analytic_distribution
 #: report:addons/msf_budget/report/report_local_expenses_xls.mako:115
 #: field:msf.budget.line,account_code:0
+#: report:funding.pool:0
 msgid "Account code"
 msgstr "Code du compte"
 
@@ -38475,6 +38478,7 @@ msgstr "Assistant Confirmation Bancaire"
 #: field:hr.payroll.msf,funding_pool_id:0
 #: field:account.invoice.line,funding_pool_id:0
 #: report:addons/account/report/free_allocation_report.mako:208
+#: view:account.destination.summary:0
 #, python-format
 msgid "Funding Pool"
 msgstr "Funding Pool"
@@ -47675,10 +47679,11 @@ msgstr "Informations sur la Transaction"
 msgid "America/Sitka"
 msgstr "America/Sitka"
 
-#. module: account
+#. modules: account, analytic_distribution
 #: view:account.analytic.line:0
+#: view:account.destination.summary:0
 msgid "G/L account"
-msgstr "G/L account"
+msgstr "Compte Grand Livre"
 
 #. modules: account, register_accounting
 #: help:account.invoice,state:0
@@ -67403,6 +67408,7 @@ msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la list
 #: view:msf.instance:0
 #: report:addons/account/report/free_allocation_report.mako:176
 #: field:free.allocation.wizard,cost_center_ids:0
+#: field:account.analytic.account,dest_cc_ids:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -86607,10 +86613,12 @@ msgstr "N. de Lot"
 msgid "Total weight:"
 msgstr "Total weight:"
 
-#. module: analytic_distribution
+#. modules: analytic_distribution, analytic_override
 #: view:account.analytic.account:0
 #: view:account.destination.summary:0
 #: model:ir.model,name:analytic_distribution.model_account_destination_summary
+#: model:ir.actions.server,name:analytic_distribution.action_analytic_acc_dest_summary
+#: code:addons/analytic_override/analytic_account.py:652
 msgid "Destinations by accounts"
 msgstr "Destinations par Compte"
 
@@ -91150,8 +91158,8 @@ msgstr "Russian / русский язык"
 
 #. module: analytic_distribution
 #: report:funding.pool:0
-msgid "Accounts:"
-msgstr "Comptes:"
+msgid "Account/Destination:"
+msgstr "Compte / Destination :"
 
 #. module: msf_outgoing
 #: help:return.pack.shipment.processor,address_id:0
@@ -96457,6 +96465,8 @@ msgstr "Facture venant de"
 #: view:sync.client.message_to_send:0
 #: report:addons/account/report/free_allocation_report.mako:202
 #: report:addons/stock_override/report/report_stock_move_xls.mako:143
+#: field:account.destination.summary,destination_id:0
+#: view:account.destination.summary:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -102110,6 +102120,12 @@ msgid "%s: DEST (%s) not compatible with account (%s)"
 msgstr "%s: DEST (%s) incompatible avec le compte (%s)"
 
 #. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:142
+#, python-format
+msgid "%s: CC (%s) not compatible with DEST (%s)"
+msgstr "%s: CC (%s) incompatible avec la DEST (%s)"
+
+#. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:103
 #, python-format
 msgid "%s: No CC"
@@ -105388,3 +105404,31 @@ msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à 
 #, python-format
 msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:123
+#, python-format
+msgid "Cost Center not compatible with destination"
+msgstr "Centre de Coût non compatible avec la destination"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:528
+#, python-format
+msgid "CC/DEST"
+msgstr "CC / DEST"
+
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "Destination code"
+msgstr "Code de la destination"
+
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "Destination name"
+msgstr "Nom de la destination"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:227
+#, python-format
+msgid "Filter not implemented on Destinations."
+msgstr "Filtre non mis en oeuvre sur les Destinations."
