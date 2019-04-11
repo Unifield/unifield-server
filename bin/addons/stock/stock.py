@@ -2148,6 +2148,8 @@ class stock_move(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if vals.get('from_pack') or vals.get('to_pack'):
+            vals['integrity_error'] = 'empty'
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):

@@ -834,7 +834,7 @@ class stock_move(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -842,7 +842,7 @@ class stock_move(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",
@@ -1298,7 +1298,7 @@ class stock_production_lot(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -1306,7 +1306,7 @@ class stock_production_lot(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",
@@ -2119,7 +2119,7 @@ class stock_inventory_line(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -2127,7 +2127,7 @@ class stock_inventory_line(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",

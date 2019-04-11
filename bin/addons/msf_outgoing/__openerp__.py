@@ -68,6 +68,7 @@
         'wizard/outgoing_delivery_processor_view.xml',
         'wizard/return_pack_shipment_processor_view.xml',
         'wizard/check_ppl_integrity.xml',
+        'wizard/ppl_set_pack_on_lines_view.xml',
         'msf_outgoing_report.xml',
         'msf_outgoing_workflow.xml',
     ],

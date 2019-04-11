@@ -37,3 +37,4 @@ import split_memory_move
 import stock_partial_move
 import shipment
 import check_ppl_integrity
+import ppl_set_pack_on_lines

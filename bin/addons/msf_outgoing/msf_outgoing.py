@@ -36,6 +36,7 @@ import time
 from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
+from . import INTEGRITY_STATUS_SELECTION
 
 class stock_warehouse(osv.osv):
     """
@@ -4025,6 +4026,8 @@ class stock_picking(osv.osv):
                         'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id,
                         'date': today,
                         'date_expected': today,
+                        'from_pack': 1,
+                        'to_pack': 1,
                     })
                     context.update({
                         'keepLineNumber': True,
@@ -4079,6 +4082,21 @@ class stock_picking(osv.osv):
         wizard_id = self.ppl(cr, uid, ids, context=context)['res_id']
         proc_obj.do_ppl_step1(cr, uid, wizard_id, context=context)
         return proc_obj.do_ppl_step2(cr, uid, wizard_id, context=context)
+
+    def check_ppl_integrity(self, cr, uid, ids, context=None):
+
+        move_obj = self.pool.get('stock.move')
+        for picking_id in ids:
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id), ('state', '=', 'assigned')], context=context)
+            sequences = []
+            move_obj.write(cr, uid, move_ids, {'integrity_error': 'empty'}, context=context)
+            for line in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['from_pack', 'to_pack'], context=context):
+                sequences.append((line.from_pack, line.to_pack, line.id))
+            if sequences:
+                self.pool.get('ppl.processor').check_sequences(cr, uid, sequences, move_obj, 'integrity_error', context=context)
+
+        return True
+
 
     @check_cp_rw
     def ppl(self, cr, uid, ids, context=None):
@@ -4764,6 +4782,26 @@ class stock_picking(osv.osv):
         super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         return True
 
+    def ppl_pack_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning'), _('Please select at least on line.'))
+
+        wiz_id = self.pool.get('ppl.set_pack_on_lines').create(cr, uid, {'picking_id': ids[0], 'from_pack': 1, 'to_pack': 1}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'ppl.set_pack_on_lines',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '190px',
+            'width': '220px',
+        }
+
+
 stock_picking()
 
 
@@ -5053,52 +5091,58 @@ class stock_move(osv.osv):
         picking_ids = self.pool.get('stock.picking').search(cr, uid, [('id', 'in', ids), ('shipment_id', '!=', False)], order='NO_ORDER', context=context)
         return self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', picking_ids)], order='NO_ORDER', context=context)
 
-    _columns = {'from_pack': fields.integer(string='From p.'),
-                'to_pack': fields.integer(string='To p.'),
-                'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
-                'pack_type': fields.many2one('pack.type', string='Pack Type'),
-                'length': fields.float(digits=(16, 2), string='Length [cm]'),
-                'width': fields.float(digits=(16, 2), string='Width [cm]'),
-                'height': fields.float(digits=(16, 2), string='Height [cm]'),
-                'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
-                # 'pack_family_id': fields.many2one('pack.family', string='Pack Family'),
-                'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
-                # relation to the corresponding move from draft **picking** ticket object
-                'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
-                # relation to the corresponding move from draft **packing** ticket object
-                'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
-                # functions
-                'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
-                'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
-                'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
-                'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
-                'sale_order_line_number': fields.function(_vals_get,
-                                                          method=True, type='integer', string='Sale Order Line Number',
-                                                          multi='get_vals_integer',),  # old_multi get_vals
-                'pick_shipment_id': fields.function(
-                    _get_pick_shipment_id,
-                    method=True,
-                    type='many2one',
-                    relation='shipment',
-                    string='Shipment',
-                    store={
-                        'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
-                        'stock.picking': (_get_picking, ['shipment_id'], 10),
-                    }
-    ),
+    _columns = {
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
+        'integrity_error': fields.selection(INTEGRITY_STATUS_SELECTION, 'Error', readonly=True),
+        'pack_type': fields.many2one('pack.type', string='Pack Type'),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        # 'pack_family_id': fields.many2one('pack.family', string='Pack Family'),
+        'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
+        # relation to the corresponding move from draft **picking** ticket object
+        'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
+        # relation to the corresponding move from draft **packing** ticket object
+        'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
+        # functions
+        'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
+        'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
+        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+        'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+        'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
+        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+        'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
+        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
+        'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
+        'sale_order_line_number': fields.function(_vals_get,
+                                                  method=True, type='integer', string='Sale Order Line Number',
+                                                  multi='get_vals_integer',),  # old_multi get_vals
+        'pick_shipment_id': fields.function(
+            _get_pick_shipment_id,
+            method=True,
+            type='many2one',
+            relation='shipment',
+            string='Shipment',
+            store={
+                'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
+                'stock.picking': (_get_picking, ['shipment_id'], 10),
+            }
+        ),
         # Fields used for domain
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
         'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
         'pt_created': fields.boolean(string='PT created'),
         'not_shipped': fields.boolean(string='Not shipped'),
-
         'old_out_location_dest_id': fields.many2one('stock.location', string='Old OUT dest location', help='Usefull in case of OUT converted to PICK and converted back to OUT'),
+    }
+
+
+    _defaults = {
+        'integrity_error': 'empty',
     }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
@@ -5108,8 +5152,10 @@ class stock_move(osv.osv):
         if values is None:
             values = {}
 
-        if not 'pt_created' in values:
+        if 'pt_created' not in values:
             values['pt_created'] = False
+        if 'integrity_error' not in values:
+            values['integrity_error'] = 'empty'
 
         return super(stock_move, self).copy(cr, uid, copy_id, values, context=context)
 
@@ -5281,6 +5327,12 @@ class stock_move(osv.osv):
         return True
 
 
+    def change_from_to_pack(self, cr, uid, from_p, to_p, context=None):
+        ret = {
+            'value': {'integrity_error': 'empty'}
+        }
+
+        return ret
 stock_move()
 
 

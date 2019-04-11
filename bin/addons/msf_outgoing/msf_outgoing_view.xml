@@ -166,8 +166,8 @@
                     <field name="min_date" string="Expected\nPick Date" />
                     <field name="state"/>
                     <field name="line_state" />
-                    <button name="do_create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
-                    <button name="do_validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" context="{'from_button': True}" />
+                    <button name="do_create_picking" states="draft" string="Create Picking" type="object" icon="gtk-add" context="{'from_button': True}"/>
+                    <button name="do_validate_picking" states="assigned" string="Validate Picking" type="object" icon="gtk-apply" context="{'from_button': True}" />
                 </tree>
             </field>
         </record>
@@ -393,8 +393,8 @@
                                 <button name="check_availability_manually" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                 <button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
-                                <button name="do_create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}" />
-                                <button name="do_validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"  context="{'from_button': True}" />
+                                <button name="do_create_picking" states="draft" string="Create Picking" type="object" icon="gtk-add" context="{'from_button': True}" />
+                                <button name="do_validate_picking" states="assigned" string="Validate Picking" type="object" icon="gtk-apply"  context="{'from_button': True}" />
                             </group>
                         </page>
                         <page string="Additional info">
@@ -623,189 +623,154 @@
 				</tree>
 			</field>
 		</record>
-		<!-- Remove 'Process Later' (draft_force_assign) and 'Process Now' (draft_validate) buttons -->
-		<!-- 'Check Availability' button available for 'draft' state -->
-		<!-- Changed name to 'PPL' -->
-		<!-- Add 'Flow Type' drop down list -->
-		<!-- TREE -->
-		<!-- Remove 'Scrap Products' button -->
-		<!-- Remove 'Scrapped' -->
-		<!-- Remove 'Split in production lots' -->
-		<!-- Remove 'Put in current pack' -->
-		<!-- Remove 'Put in a new pack' -->
-		<!-- Remove 'Process' at stock.move level -->
-		<!-- FORM -->
-		<!-- Remove 'Scrap' button -->
-		<!-- Remove 'New Pack' -->
-		<!-- Remove 'tracking_id' -->
-		<!-- Remove 'Split' -->
-		<!-- Remove 'Process' button -->
-		<!-- Added Asset Id to move tree and form -->
-		<record id="view_ppl_form" model="ir.ui.view">
-			<field name="name">ppl.form</field>
-			<field name="model">stock.picking</field>
-			<field name="type">form</field>
-			<!-- without priority 'view_picking_form' from stock is used -->
-			<!-- but then other form view also use it... -->
-			<!-- <field eval="11" name="priority"/> -->
+		
+        <record id="view_ppl_form" model="ir.ui.view">
+            <field name="name">ppl.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <!-- without priority 'view_picking_form' from stock is used -->
+            <!-- but then other form view also use it... -->
+            <!-- <field eval="11" name="priority"/> -->
             <field name="priority">19</field>
-			<field name="arch" type="xml">
-				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
-					<group col="6" colspan="4">
-						<group colspan="4" col="4">
-							<field name="name" readonly="1"/>
-							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+            <field name="arch" type="xml">
+                <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
+                    <group col="6" colspan="4">
+                        <group colspan="4" col="4">
+                            <field name="name" readonly="1"/>
+                            <field name="origin" readonly="1"/>
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
-							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
-							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
-								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
-								   domain="[('partner_id', '=', partner_id2)]"
-							/>
+                            <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
+                                   domain="[('partner_id', '=', partner_id2)]"
+                            />
                             <field name="order_category" />
-							<field name="invoice_state" invisible="1" />
-							<field name="backorder_id" readonly="1" />
-							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
-							<field name="num_of_packs" />
-							<field name="total_volume" />
-							<field name="total_weight" />
-						</group>
-						<group colspan="2" col="2">
-							<field name="date" readonly="1" />
-							<field name="stock_journal_id" widget="selection" invisible="True" />
-							<field name="min_date" string="Expected Pack Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
-							<field name="sale_id" invisible="True" />
-							<field name="subtype" invisible="True" />
-							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
-							<field name='ppl_customize_label' required="True" />
-							<field name="description_ppl"  />
-						</group>
-						<group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
-							<button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
-						</group>
+                            <field name="invoice_state" invisible="1" />
+                            <field name="backorder_id" readonly="1" />
+                            <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+                            <field name="num_of_packs" />
+                            <field name="total_volume" />
+                            <field name="total_weight" />
+                        </group>
+                        <group colspan="2" col="2">
+                            <field name="date" readonly="1" />
+                            <field name="stock_journal_id" widget="selection" invisible="True" />
+                            <field name="min_date" string="Expected Pack Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+                            <field name='ppl_customize_label' required="True" />
+                            <field name="description_ppl"  />
+                        </group>
+                        <group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
+                            <button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+                        </group>
 
-					</group>
-					<notebook colspan="4">
-						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" 
-								default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  
-								attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" 
-								filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]">
-								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
-                                    <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
-                                    <field name="comment" />
-									<field name="composition_list_id" />
-									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
-									<field name="product_uom" string="UoM"/>
-									<field name="asset_id" />
-									<field name="prodlot_id" string="Batch Number" />
-									<field name="expired_date" />
-									<field name="location_id" string="Src. Loc" />
-									<field name="location_dest_id" string="Dest. Loc" />
-									<field name="qty_per_pack" />
-									<field name="from_pack" />
-									<field name="to_pack" />
-									<field name="date" string="Actual Pack Date" />
-									<field name="state"/>
-									<field name="ppl_returned_ok" invisible="1"/>
-
-
-									<field name="lot_check" />
-									<field name="exp_check" />
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"
+                                attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}"
+                                filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]"
+                                o2m_selectable="2">
+                                <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1" colors="red: integrity_error!='empty'" editable="both">
+                                    <field name="line_number" readonly="1" css_width="min"/>
+                                    <field name="product_id" readonly="1" />
+                                    <field name="comment" readonly="1" />
+                                    <field name="composition_list_id" readonly="1" />
+                                    <field name="product_qty" string="Qty" readonly="1"/>
+                                    <field name="product_uom" string="UoM" readonly="1"/>
+                                    <field name="asset_id" readonly="1"/>
+                                    <field name="prodlot_id" string="Batch\nNumber" readonly="1" />
+                                    <field name="expired_date" string="Expiry\nDate" readonly="1" />
+                                    <field name="qty_per_pack" readonly="1" />
+                                    <field name="from_pack" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" />
+                                    <field name="to_pack" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" />
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed', 'assigned'))]}"/>
+                                    <field name="date" string="Actual\nPack Date" readonly="1"  />
+                                    <field name="state" readonly="1" />
+                                    <field name="ppl_returned_ok" invisible="1"/>
+                                    <field name="lot_check" />
+                                    <field name="exp_check" />
                                     <field name="kc_check" widget="null_boolean" />
                                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                                     <field name="dg_check" widget="null_boolean" />
                                     <field name="np_check" widget="null_boolean" />
-									<field name="inactive_product" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
-								</tree>
-								<form string="Stock Moves">
-									<group colspan="2" col="4">
-										<separator colspan="4" string="Move Information"/>
-										<field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id"
-                                               context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
-                                               on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
-                                               colspan="4" />
-                                        <field name="composition_list_id" invisible="True" />
-										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
-										<field name="product_uom" string="Unit Of Measure" colspan="2" domain="[('uom_by_product', '=', product_id)]"/>
-										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" />
-										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="2" />
-										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
-										<field name="comment" colspan="4" />
-									</group>
-									<group colspan="2" col="2">
-										<separator string="Locations" colspan="2" />
-										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok]), ('id', '!=', location_dest_id)]" readonly="1"
-										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
-									</group>
-									<group colspan="2" col="4">
-										<separator string="Traceability" colspan="4" />
-										<field name="asset_id" colspan="4" />
-										<field name="hidden_batch_management_mandatory" invisible="True" />
-										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="prodlot_id"
-										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-										'search_default_real': True}"
-										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
-										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2"
-										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
-										<field name="expired_date" />
-										<group colspan="4" col="10">
-											<field name="lot_check" />
-											<field name="exp_check" />
+                                    <field name="fake_state" invisible="1"/>
+                                    <field name="integrity_error" string=""/>
+                                </tree>
+                                <form string="Stock Moves">
+                                    <group colspan="2" col="4">
+                                        <separator colspan="4" string="Move Information"/>
+                                        <field name="name" invisible="1" colspan="4" />
+                                        <field name="product_id" readonly="1" />
+                                        <field name="product_qty" readonly="1" />
+                                        <field name="from_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" />
+                                        <field name="to_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" />
+                                        <field name="product_uom" readonly="1" />
+                                        <field name="comment" colspan="4" readonly="1" />
+                                    </group>
+                                    <group colspan="2" col="2">
+                                        <separator string="Locations" colspan="2" />
+                                        <field name="location_id" readonly="1" />
+                                        <field name="location_dest_id" readonly="1" />
+                                    </group>
+                                    <group colspan="2" col="4">
+                                        <separator string="Traceability" colspan="4" />
+                                        <field name="asset_id" colspan="4" readonly="1" />
+                                        <field name="prodlot_id" readonly="1" />
+                                        <field name="expired_date" readonly="1" />
+                                        <group colspan="4" col="10">
+                                            <field name="lot_check" />
+                                            <field name="exp_check" />
                                             <field name="kc_check" widget="null_boolean" />
                                             <field name="ssl_check" invisible="True"  widget="null_boolean" />
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
-										</group>
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
-									</group>
-									<group colspan="2" col="2">
-										<separator string="Dates" colspan="2" />
-										<field name="create_date" invisible="1"/>
-										<field name="date" string="Actual Pack Date" />
-										<field name="date_expected" string="Expected Pack Date" />
-									</group>
-	           			            <field name="purchase_line_id"  invisible="1"/>
-	           			            <field name="move_cross_docking_ok"  invisible="1"/>
+                                        </group>
+                                        <field name="reason_type_id" readonly="1" widget="selection"/>
+                                    </group>
+                                    <group colspan="2" col="2">
+                                        <separator string="Dates" colspan="2" />
+                                        <field name="date" string="Actual Pack Date" readonly="1" />
+                                        <field name="date_expected" string="Expected Pack Date" readonly="1" />
+                                    </group>
+                                    <field name="purchase_line_id"  invisible="1"/>
+                                    <field name="move_cross_docking_ok"  invisible="1"/>
 
-									<label string="" colspan="4"/>
-									<field name="state"/>
-									<group col="4" colspan="2">
-										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
-										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" />
-									</group>
-								</form>
-							</field>
-							<group col="12" colspan="4">
-								<field name="state" readonly="1"/>
-								<field name="flow_type" />
+                                    <label string="" colspan="4"/>
+                                    <field name="state"/>
+                                </form>
+                            </field>
+                            <group col="6" colspan="4">
+                                <field name="state" readonly="1"/>
                                 <button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo" context="{'from_button': True}" />
-								<button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
+                                <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
+                                <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
+                                <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" />
+                                <button name="check_ppl_integrity" states="assigned" string="Check Integrity" type="object" icon="gtk-info"/>
                                 <button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
-								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
-							</group>
-						</page>
-						<page string="Additional info">
-							<field name="auto_picking" invisible="1" />
-							<field name="date_done" />
-							<field name="move_type" invisible="1"/>
-							<field name="type" invisible="1"/>
-							<field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
-						</page>
-						<page string="Notes">
-							<field colspan="4" name="note" nolabel="1"/>
-							<field  name="from_wkf" invisible="1"/>
-						</page>
-					</notebook>
-				</form>
-			</field>
-		</record>
+                            </group>
+                        </page>
+                        <page string="Additional info">
+                            <field name="auto_picking" invisible="1" />
+                            <field name="date_done" />
+                            <field name="move_type" invisible="1"/>
+                            <field name="type" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+                        </page>
+                        <page string="Notes">
+                            <field colspan="4" name="note" nolabel="1"/>
+                            <field  name="from_wkf" invisible="1"/>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
 		<!-- Changed name to 'PPL' -->
 		<record id="view_ppl_search" model="ir.ui.view">
 			<field name="name">ppl.search</field>
