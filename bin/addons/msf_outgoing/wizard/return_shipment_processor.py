@@ -83,6 +83,53 @@ class return_shipment_processor(osv.osv):
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
+    def create_lines(self, cr, uid, ids, context=None):
+        """
+        Create the lines of the wizard
+        """
+        # Objects
+        family_obj = self.pool.get(self._columns['family_ids']._obj)  # Get the object of the o2m field because of heritage
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            shipment = wizard.shipment_id
+
+            for family in shipment.pack_family_memory_ids:
+                if family.state == 'done':
+                    continue
+
+                family_vals = {
+                    'wizard_id': wizard.id,
+                    'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
+                    'from_pack': family.from_pack,
+                    'to_pack': family.to_pack,
+                    'selected_number': 0 if self._name == 'return.shipment.processor' else family.num_of_packs,
+                    'pack_type': family.pack_type and family.pack_type.id or False,
+                    'length': family.length,
+                    'width': family.width,
+                    'height': family.height,
+                    'weight': family.weight,
+                    'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
+                    'description_ppl': family.description_ppl,
+                    'ppl_id': family.ppl_id and family.ppl_id.id or False,
+                    'comment': family.comment,
+                }
+
+                family_obj.create(cr, uid, family_vals, context=context)
+
+        return True
+
     def select_all(self, cr, uid, ids, context=None):
         """
         Select all button, write max number of packs in each pack family line

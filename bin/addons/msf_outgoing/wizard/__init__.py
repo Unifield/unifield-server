@@ -25,8 +25,6 @@ import change_product_move_processor
 import split_move_processor
 import internal_move_processor
 import outgoing_delivery_processor
-import create_picking_processor
-import validate_picking_processor
 import ppl_processor
 import return_ppl_processor
 import return_shipment_processor

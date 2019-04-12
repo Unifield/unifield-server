@@ -44,7 +44,7 @@ class check_ppl_integrity(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context)
 
         if wiz.picking_id:
-            res = self.pool.get('stock.picking').ppl_step2(cr, uid, [wiz.picking_id.id], context=context)
+            res = self.pool.get('stock.picking').ppl_step2_run_wiz(cr, uid, [wiz.picking_id.id], context=context)
         elif wiz.incoming_processor_id:
             res = self.pool.get('stock.incoming.processor').do_process_to_ship(cr, uid, [wiz.incoming_processor_id.id], context=context)
 

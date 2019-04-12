@@ -619,7 +619,7 @@
 					<field name="date"/>
 					<field name="min_date" string="Expected\nPack Date" />
 					<field name="state"/>
-					<button name="ppl_integrity_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
+					<button name="ppl_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
 				</tree>
 			</field>
 		</record>
@@ -752,7 +752,7 @@
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
                                 <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" />
                                 <button name="check_ppl_integrity" states="assigned" string="Check Integrity" type="object" icon="gtk-info"/>
-                                <button name="ppl_integrity_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
+                                <button name="ppl_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
                             </group>
                         </page>
                         <page string="Additional info">
@@ -1255,7 +1255,7 @@
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
-					<button name="do_create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add"/>
+					<button name="do_create_shipment" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
 					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
 				</tree>
 			</field>
@@ -1290,7 +1290,7 @@
 
                     <notebook colspan="4">
                         <page string="Pack Families">
-                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])]}">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
@@ -1299,9 +1299,9 @@
                                     <field name="description_ppl" readonly="1" />
                                     <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" css_width="min"/>
-                                    <field name="to_pack" readonly="1" css_width="min" />
+                                    <field name="to_pack" css_width="min" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
                                     <field name="num_of_packs" readonly="1" css_width="min" />
-                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': [('fake_state', '!=', 'available')]}" />
+                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': [('fake_state', '!=', 'assigned')]}" />
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
                                     <field name="weight" string="Weight\nP.P.[KG]" readonly="1" />
@@ -1311,8 +1311,9 @@
                                     <field name="currency_id" readonly="1" />
                                     <field name="state" readonly="1" />
                                     <field name="not_shipped"  string="Returned" readonly="1" />
-                                    <field name="volume_set" />
-                                    <field name="weight_set" />
+                                    <field name="volume_set" invisible="1" />
+                                    <field name="weight_set" invisible="1" />
+                                    <field name="quick_flow" invisible="1" />
                                 </tree>
                                 <form>
                                     <field name="sale_order_id" readonly="1"/>
@@ -1334,6 +1335,7 @@
                                     <field name="state" readonly="1" />
                                     <field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
                                         <tree colors="red: inactive_product==True">
+                                            <field name="line_number" />
                                             <field name="product_id" />
                                             <field name="origin" />
                                             <field name="comment" />
@@ -1349,26 +1351,6 @@
                                         </tree>
                                     </field>
                                 </form>
-                            </field>
-                            <group col="12" colspan="4">
-                                <field name="state" readonly="1"/>
-                                <field name="is_company" invisible="1" />
-                                <field name="num_of_packs" invisible="1" />
-                                <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy all"  attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                                <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                                <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                                <button name="do_create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" context="{'from_button': True}" />
-                                <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                                <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
-                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
-                                <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
-                                        attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
-                                confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
-                            </group>
-                        </page>
-                        <page string="Additional Items" invisible="1">
-                            <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" >
                             </field>
                         </page>
                         <page string="Document Information">
@@ -1413,7 +1395,27 @@
                                 <field name="consignee_date" />
                             </group>
                         </page>
+                        <page string="Additional Items" attrs="{'invisible': [('state', '=', 'draft')]}">
+                            <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '=', 'done')]}">
+                            </field>
+                        </page>
                     </notebook>
+                    <group col="12" colspan="4">
+                        <field name="state" readonly="1"/>
+                        <field name="is_company" invisible="1" />
+                        <field name="num_of_packs" invisible="1" />
+                        <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy all"  attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                        <button name="do_create_shipment" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
+                        <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                        <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
+                        <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                                attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
+                        <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                                attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
+                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -1423,14 +1425,16 @@
             <field name="model">shipment.additionalitems</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                    <tree string="Additional Items" editable="bottom">
+                <tree string="Additional Items" editable="top">
                         <field name="name"/>
-                        <field name="quantity" />
-                        <field name="uom" />
+                        <field name="nb_parcels" />
                         <field name="comment"/>
                         <field name="volume"/>
                         <field name="weight" />
-                        <field name="picking_id" />
+                        <field name="value" />
+                        <field name="kc" />
+                        <field name="dg" />
+                        <field name="cs" />
                     </tree>
             </field>
         </record>
