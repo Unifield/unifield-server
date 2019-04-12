@@ -84,7 +84,18 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="dd\-mmm\-yyyy"/>
+   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+  </Style>
+  <Style ss:ID="short_date_grey">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:Color="#747474"/>
+   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
   </Style>
   <Style ss:ID="short_date_fr">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -94,6 +105,17 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
+  <Style ss:ID="short_date_grey_fr">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:Color="#747474"/>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
@@ -218,29 +240,53 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_currency'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_func_currency'])|x}</Data></Cell>
       % if line['order_created'] and isDate(line['order_created']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
           % if getLang() == 'fr_MF':
           <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
           % else:
           <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
           % endif
+        % endif
       % else:
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
       % endif
       % if line['delivery_requested_date'] and isDate(line['delivery_requested_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
           % if getLang() == 'fr_MF':
           <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
           % else:
           <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
           % endif
+        % endif
       % else:
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
       % endif
       % if line['order_confirmed_date'] and isDate(line['order_confirmed_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
           % if getLang() == 'fr_MF':
           <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
           % else:
           <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
           % endif
+        % endif
       % else:
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
       % endif

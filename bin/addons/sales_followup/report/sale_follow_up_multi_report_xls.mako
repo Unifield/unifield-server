@@ -96,7 +96,7 @@
     </Style>
     <Style ss:ID="line_left_date">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="dd\-mmm\-yyyy" />
+        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -119,7 +119,7 @@
 
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
-        <NumberFormat ss:Format="dd\-mmm\-yyyy" />
+        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
         <Font ss:Size="8" ss:Color="#0000FF" />
     </Style>
     <Style ss:ID="short_date_fr">
@@ -162,7 +162,7 @@
     </Style>
     <Style ss:ID="line_left_date_grey">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="dd\-mmm\-yyyy" />
+        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
