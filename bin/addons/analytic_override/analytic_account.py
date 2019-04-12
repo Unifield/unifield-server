@@ -432,6 +432,8 @@ class analytic_account(osv.osv):
         if 'category' in vals:
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
+                vals['dest_cc_ids'] = [(6, 0, [])]
+                vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
