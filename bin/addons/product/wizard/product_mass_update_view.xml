@@ -71,9 +71,10 @@
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
                             <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}">
-                                <tree string="Products" hide_edit_button="1">
+                                <tree string="Products" hide_edit_button="1" colors="red:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
+                                    <field name="active" invisible="1" />
                                 </tree>
                             </field>
                         </page>

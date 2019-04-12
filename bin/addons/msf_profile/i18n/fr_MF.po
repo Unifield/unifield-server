@@ -104122,8 +104122,8 @@ msgstr "Vous ne pouvez pas appliquer de mise à jour à aucun produits."
 
 #. module: product
 #: code:addons/product/wizard/product_mass_update.py:287
-msgid "Some products could not be deactivated. Please check the corresponding tab."
-msgstr "Certains produits n'ont pas pu être désactivés. Veuillez vérifier l'onglet approprié."
+msgid "Some products could not be deactivated. No product will be changed until all of them can be deactivated. Please check the corresponding tab."
+msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera modifié tant qu'ils ne pourront pas tous être désactivés. Veuillez vérifier l'onglet approprié."
 
 #. module: product
 #: field:product.mass.update,name:0

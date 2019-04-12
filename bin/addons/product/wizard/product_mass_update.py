@@ -225,7 +225,7 @@ class product_mass_update(osv.osv):
         if not ids:
             return True
 
-        heat_obj = self.pool.get('product.heat_sensitive')
+        data_obj = self.pool.get('ir.model.data')
         p_state_obj = self.pool.get('product.status')
 
         p_mass_upd = self.browse(cr, uid, ids[0], context=context)
@@ -236,9 +236,11 @@ class product_mass_update(osv.osv):
         if p_mass_upd.dangerous_goods:
             vals.update({'dangerous_goods': p_mass_upd.dangerous_goods})
         if p_mass_upd.heat_sensitive_item:
-            heat_ids = heat_obj.search(cr, uid, [('code', '=', p_mass_upd.heat_sensitive_item)], context=context)
-            if heat_ids:
-                vals.update({'heat_sensitive_item': heat_ids[0]})
+            heat_attr = p_mass_upd.heat_sensitive_item == 'True' and 'heat_yes' or p_mass_upd.heat_sensitive_item == 'False' and 'heat_no' \
+                        or p_mass_upd.heat_sensitive_item == 'tbd' and 'heat_no_know' or False
+            heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', heat_attr)[1]
+            if heat_id:
+                vals.update({'heat_sensitive_item': heat_id})
         if p_mass_upd.short_shelf_life:
             vals.update({'short_shelf_life': p_mass_upd.short_shelf_life})
         if p_mass_upd.alert_time:
@@ -347,12 +349,16 @@ class product_mass_update(osv.osv):
 
                 p_mass_upd_vals = {
                     'has_not_deactivable': True,
-                    'message': _('Some products could not be deactivated. Please check the corresponding tab.'),
+                    'message': _('Some products could not be deactivated. No products will be changed until all of them can be deactivated. Please check the corresponding tab.'),
                     'state': 'error',
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
             else:
-                prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
+                prod_ids = [prod.id for prod in p_mass_upd.product_ids]
+                # Check each products
+                prod_obj._check_procurement_for_service_with_recep(cr, uid, prod_ids, context=context)
+                # Change products
+                prod_obj.write(cr, uid, prod_ids, vals, context=context)
                 user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
 
                 # Unlink existing errors
@@ -367,7 +373,7 @@ class product_mass_update(osv.osv):
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
         except Exception as e:
-            err = _('An error has occured during the update:\n%s') % tools.ustr(e)
+            err = _('An error has occured during the update:\n%s') % tools.ustr(e.value or e)
             self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': err}, context=context)
         finally:
             cr.commit()
