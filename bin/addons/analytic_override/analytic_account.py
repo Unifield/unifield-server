@@ -344,7 +344,7 @@ class analytic_account(osv.osv):
         if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # i.e. [(6, 0, [1, 2])]
             warning = {
                 'title': _('Warning!'),
-                'message': _('Please remove the Cost Centers selected before ticking this box.')
+                'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
             }
             res['warning'] = warning
             res['value'] = {'allow_all_cc': False, }

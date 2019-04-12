@@ -102123,7 +102123,7 @@ msgstr "%s: DEST (%s) incompatible avec le compte (%s)"
 #: code:addons/account_hq_entries/hq_entries.py:142
 #, python-format
 msgid "%s: CC (%s) not compatible with DEST (%s)"
-msgstr "%s: CC (%s) incompatible avec la DEST (%s)"
+msgstr "%s : CC (%s) incompatible avec la DEST (%s)"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:103
@@ -105432,3 +105432,79 @@ msgstr "Nom de la destination"
 #, python-format
 msgid "Filter not implemented on Destinations."
 msgstr "Filtre non mis en oeuvre sur les Destinations."
+
+#. module: analytic_override
+#: field:account.analytic.account,allow_all_cc:0
+msgid "Allow all Cost Centers"
+msgstr "Autoriser tous les Centres de Coût"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:999
+#, python-format
+msgid "Please either list the Cost Centers to allow, or allow all Cost Centers."
+msgstr "Veuillez soit lister les Centres de Coût à autoriser, soit autoriser tous les Centres de Coût."
+
+#. module: analytic_override
+#: field:account.analytic.account,dest_compatible_with_cc_ids:0
+msgid "Destinations compatible with the Cost Center"
+msgstr "Destinations compatibles avec le Centre de Coût"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:347
+#, python-format
+msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
+msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher la case."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:490
+#, python-format
+msgid "Line %s. The Cost Center %s is not compatible with the Destination %s."
+msgstr "Ligne %s. Le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:945
+#, python-format
+msgid "The Parent Analytic Account must be a View type Funding Pool."
+msgstr "Le Compte Analytique Parent doit être un Funding Pool de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:992
+#, python-format
+msgid "The Parent Analytic Account must be a View type Destination."
+msgstr "Le Compte Analytique Parent doit être une Destination de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1063
+#, python-format
+msgid "The Parent Analytic Account must be a View type Cost Center."
+msgstr "Le Compte Analytique Parent doit être un Centre de Coût de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1076
+#, python-format
+msgid "The Parent Analytic Account must be a View type Free 1 account."
+msgstr "Le Compte Analytique Parent doit être un compte \"Option 1\" de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1089
+#, python-format
+msgid "The Parent Analytic Account must be a View type Free 2 account."
+msgstr "Le Compte Analytique Parent doit être un compte \"Option 2\" de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:995
+#, python-format
+msgid "The Type must be either \"Normal\" or \"View\"."
+msgstr "Le Type doit être soit \"Normal\" soit \"Vue\"."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1023
+#, python-format
+msgid "Account code \"%s\" doesn't exist or isn't allowed."
+msgstr "Le code comptable \"%s\" n'existe pas ou n'est pas autorisé."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr.py:224
+#, python-format
+msgid "Employee %s: the Cost Center %s is not compatible with the Destination %s."
+msgstr "Employé %s : le Centre de Coût %s n'est pas compatible avec la Destination %s."

@@ -996,7 +996,7 @@ class msf_import_export(osv.osv_memory):
                     # Cost Centers
                     if data.get('dest_cc_ids'):
                         if data.get('allow_all_cc'):
-                            raise Exception(_("Please either list Cost Centers or set \"Allow all Cost Centers\" to TRUE."))
+                            raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
                         dest_cc_list = []
                         for cost_center in data.get('dest_cc_ids').split(','):
                             cc = cost_center.strip()
