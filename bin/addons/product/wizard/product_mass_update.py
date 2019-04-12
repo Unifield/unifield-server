@@ -324,7 +324,8 @@ class product_mass_update(osv.osv):
             not_deactivated = []
             for prod in p_mass_upd.product_ids:
                 # Check procurement method
-                if prod.type in ('consu', 'service', 'service_recep') and p_mass_upd.procure_method != 'make_to_order':
+                if p_mass_upd.procure_method and prod.type in ('consu', 'service', 'service_recep') and \
+                        p_mass_upd.procure_method != 'make_to_order':
                     raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.')
                                          % (prod.type == 'consu' and 'Non-stockable' or 'Service'))
                 # Deactivation
