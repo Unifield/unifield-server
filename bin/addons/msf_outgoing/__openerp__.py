@@ -61,7 +61,6 @@
         'wizard/create_picking_processor_view.xml',
         'wizard/validate_picking_processor_view.xml',
         'wizard/ppl_processor_view.xml',
-        'wizard/shipment_processor_view.xml',
         'wizard/return_ppl_processor_view.xml',
         'wizard/return_shipment_processor_view.xml',
         'wizard/internal_move_processor_view.xml',
