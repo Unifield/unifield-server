@@ -355,7 +355,7 @@ class product_mass_update(osv.osv):
 
                 p_mass_upd_vals = {
                     'has_not_deactivable': True,
-                    'message': _('Some products could not be deactivated. No products will be changed until all of them can be deactivated. Please check the corresponding tab.'),
+                    'message': _('Some products could not be deactivated. No product will be changed until all of them can be deactivated. Please check the corresponding tab.'),
                     'state': 'error',
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
