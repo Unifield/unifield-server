@@ -296,6 +296,7 @@
                     <group>
                         <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                         <field name="account_id" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
+                        <field name="destination_id" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
