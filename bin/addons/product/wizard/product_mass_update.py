@@ -356,7 +356,8 @@ class product_mass_update(osv.osv):
             else:
                 prod_ids = [prod.id for prod in p_mass_upd.product_ids]
                 # Check each products
-                prod_obj._check_procurement_for_service_with_recep(cr, uid, prod_ids, context=context)
+                if p_mass_upd.procure_method and p_mass_upd.procure_method != 'make_to_order':
+                    prod_obj._check_procurement_for_service_with_recep(cr, uid, prod_ids, context=context)
                 # Change products
                 prod_obj.write(cr, uid, prod_ids, vals, context=context)
                 user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
