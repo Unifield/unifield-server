@@ -323,6 +323,11 @@ class product_mass_update(osv.osv):
             num_prod = 0
             not_deactivated = []
             for prod in p_mass_upd.product_ids:
+                # Check procurement method
+                if prod.type in ('consu', 'service', 'service_recep') and p_mass_upd.procure_method != 'make_to_order':
+                    raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.')
+                                         % (prod.type == 'consu' and 'Non-stockable' or 'Service'))
+                # Deactivation
                 if p_mass_upd.seller_id and not p_suppinfo_obj.search(cr, uid, [('product_id', '=', prod.id), ('name', '=', p_mass_upd.seller_id.id)], context=context):
                     p_suppinfo_obj.create(cr, uid, {'product_id': prod.id, 'name': p_mass_upd.seller_id.id, 'sequence': 1}, context=context)
                 if p_mass_upd.active_product:
@@ -354,12 +359,7 @@ class product_mass_update(osv.osv):
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
             else:
-                prod_ids = [prod.id for prod in p_mass_upd.product_ids]
-                # Check each products
-                if p_mass_upd.procure_method and p_mass_upd.procure_method != 'make_to_order':
-                    prod_obj._check_procurement_for_service_with_recep(cr, uid, prod_ids, context=context)
-                # Change products
-                prod_obj.write(cr, uid, prod_ids, vals, context=context)
+                prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
                 user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
 
                 # Unlink existing errors

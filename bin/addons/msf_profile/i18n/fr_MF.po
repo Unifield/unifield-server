@@ -17325,8 +17325,9 @@ msgstr "Document d'Information"
 msgid "Error! The nomenclature complete name must be unique."
 msgstr "Error! The nomenclature complete name must be unique."
 
-#. module: service_purchasing
+#. module: service_purchasing, product
 #: code:addons/service_purchasing/service_purchasing.py:70
+#: code:addons/product/wizard/product_mass_update.py:328
 #, python-format
 msgid "You must select on order procurement method for %s products."
 msgstr "Vous devez sélectionner 'Sur commande' comme méthode d'acquisition pour les produits %s."
