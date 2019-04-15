@@ -1006,14 +1006,19 @@ function onChangePop(caller){
                 }
                 $fld.trigger('change');
                 MochiKit.Signal.signal(window.document, 'onfieldchange', fld);
+
+                var fld_ro = jQuery(idSelector(prefix + k + '_ro'));
+                    if (fld_ro) {
+                        if (kind == 'selection') {
+                            fld_ro.html($fld.children("option:selected").html());
+                        } else {
+                            fld_ro.html($fld.val());
+                        }
+                    }
             }
 
             fld.__lock_onchange = false;
 
-        var fld_ro = jQuery(idSelector(prefix + k + '_ro'));
-        if (fld_ro) {
-            fld_ro.html($fld.val());
-        }
         }
 
         if (obj.warning && obj.warning.message) {
