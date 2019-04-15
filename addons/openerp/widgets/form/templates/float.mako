@@ -8,6 +8,9 @@
         size="1"
         class="${css_class}" 
         ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)} />
+    % if editable_style:
+    <span id="${name}_ro" />
+    % endif
 % endif
 
 % if editable and error:

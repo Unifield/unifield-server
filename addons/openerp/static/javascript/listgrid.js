@@ -1045,6 +1045,9 @@ MochiKit.Base.update(ListView.prototype, {
                         new One2Many(self.name).setReadonly(true);
                     }
                     __listview.after_reload()
+                    jQuery('#view_form .editors (input|select):not([type="hidden"]):[fld_readonly="1"][editable_style="1"], #view_form .editors (input|select):[kind="many2one"]:[fld_readonly="1"][editable_style="1"]').each(function() {
+                        form_setReadonly(this, this, true);
+                    });
                 }
 
                 var selfname = self.name

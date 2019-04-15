@@ -647,9 +647,6 @@ table.fields td {
     min-width: 90px;
 }
 
-.min-width {
-    min-width: 1px !important;
-}
 .item .fields {
     width: 100%;
 }
@@ -1099,14 +1096,4 @@ img.translatable {
 iframe.ui-dialog-content {
     padding: 0 !important;
     width: 100% !important;
-}
-
-input.readonlyfield{
-  background-color:transparent !important;
-  border: 0 !important;
-  font-size: 1em !important;
-  min-width: 0 !important;
-  box-shadow: none;
-   word-wrap: break-word;
-    word-break: break-all;
 }

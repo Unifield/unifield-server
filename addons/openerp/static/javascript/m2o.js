@@ -448,11 +448,16 @@ ManyToOne.prototype.setReadonly = function(readonly) {
             .attr({'readOnly': readonly,
                    'disabled': readonly})
             .toggleClass('readonly', !!readonly).toggleClass('readonlyfield', !!readonly);
-	if (readonly) {
-		jQuery(this.text).hide();
-		console.log(jQuery(this.text).val());
-		jQuery(this.textro).show().html(jQuery(this.text).val());
-	}
+    if (jQuery(this.field).attr('editable_style') == '1') {
+        if (readonly) {
+            jQuery(this.text).hide();
+            jQuery(this.textro).show().html(jQuery(this.text).val());
+            jQuery(this.select_img).hide();
+        } else {
+            jQuery(this.text).show();
+            jQuery(this.textro).hide();
+        }
+    }
 };
 
 ManyToOne.prototype.clearResults = function() {

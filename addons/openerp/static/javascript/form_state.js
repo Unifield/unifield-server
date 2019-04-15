@@ -573,22 +573,34 @@ function form_setReadonly(container, fieldName, readonly) {
         return;
     }
     $field.attr({'disabled':readonly, 'readOnly': readonly});
-
+    ro_f = jQuery(idSelector(field_id+'_ro'))
     if (readonly) {
         if ((type == 'button')) {
             $field.css("cursor", "default");
         } else {
             $field.removeAttr('href');
         }
-        
         $field.toggleClass('readonlyfield', type != 'button');
         if ($field.attr('translatable') == "1") {
             $('#'+field_id+'_translatable').hide();
 
         }
+        if (ro_f.length) {
+            $field.hide();
+            ro_f.show();
+            if (type == 'select-one') {
+                ro_f.html($field.children("option:selected").html());
+            } else {
+                ro_f.html($field.val());
+            }
+        }
     } else {
         $field.removeClass('readonlyfield');
         $field.css('color', '');
+        if (ro_f.length) {
+            $field.show();
+            ro_f.hide();
+        }
     }
     if (type == 'hidden' && kind == 'many2one') {
         ManyToOne(field_id).setReadonly(readonly);

@@ -82,7 +82,7 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition', 'readonly_before_state']
+              'edition', 'readonly_before_state', 'editable_style']
     member_widgets = ['screen']
 
     form = None
@@ -94,6 +94,7 @@ class O2M(TinyInputWidget):
         attrs['required'] = False
 
         super(O2M, self).__init__(**attrs)
+
 
         self.new_attrs = { 'text': _("New"), 'help': _('Create new record.')}
         self.default_get_ctx = attrs.get('default_get', {}) or attrs.get('context', {})
@@ -124,7 +125,6 @@ class O2M(TinyInputWidget):
         mode = str(attrs.get('mode', 'tree,form')).split(',')
         view['uom_rounding'] = attrs.get('uom_rounding', {})
         self.view = view
-
         view_mode = mode
         view_type = mode[0]
         self.view_type = view_type
@@ -182,7 +182,6 @@ class O2M(TinyInputWidget):
                 tree_attribute = node_attributes(dom.childNodes[0])
                 if tree_attribute.get('limit'):
                     current.limit = tree_attribute.get('limit')
-
         if current.limit != -1 and not params.sort_key and not current.domain:
             ids = ids[current.offset: current.offset+current.limit]
 

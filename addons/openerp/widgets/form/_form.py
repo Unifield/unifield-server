@@ -532,7 +532,6 @@ class Selection(TinyInputWidget):
 
     def __init__(self, **attrs):
         super(Selection, self).__init__(**attrs)
-
         self.options = attrs.get('selection', [])
         self.type2 = attrs.get('type2')
         self.operator = attrs.get('operator', '=')

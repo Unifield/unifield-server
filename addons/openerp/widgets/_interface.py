@@ -57,7 +57,8 @@ class TinyWidget(Widget):
         'visible',
         'valign',
         'model',
-        'label'
+        'label',
+        'editable_style'
     ]
 
     colspan = 1
@@ -81,7 +82,7 @@ class TinyWidget(Widget):
         self.nolabel = _boolean_attr(attrs, 'nolabel')
 
         self.visible = True
-
+        self.editable_style = attrs.get('editable_style', False) and '1' or False
         try:
             visval = attrs.get('invisible', 'False')
             ctx = attrs.get('context', {})
@@ -237,6 +238,8 @@ class TinyInputWidget(TinyWidget, InputWidget):
             params['attrs']['autofocus'] = 'autofocus'
         if self.readonly:
             params['attrs']['disabled'] = 'disabled'
+        if self.editable_style:
+             params['attrs']['editable_style'] = '1'
         #if self.states:
         #    states = self.states
         #    # convert into JS

@@ -7,6 +7,9 @@
            class="${css_class}" 
            ${py.attrs(attrs, kind=kind, value=value, 
                       fld_readonly=1 if readonly_before_state else 0 )}/>
+    % if editable_style:
+    <span id="${name}_ro" />
+    % endif
     % if error:
         <span class="fielderror">${error}</span>
     % endif

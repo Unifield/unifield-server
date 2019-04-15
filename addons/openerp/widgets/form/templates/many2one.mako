@@ -9,16 +9,14 @@
 </%def>
 % if editable:
     <%self:m2o_container>
+        <span class="m2o">
             <input type="hidden" id="${name}" name="${name}" class="${css_class}" value="${value}"
                 ${py.attrs(attrs, kind=kind, domain=domain, context=ctx,
                 relation=relation, required=required and 1 or 0,
                 fld_readonly=1 if readonly_before_state else 0)}/>
-	% if 'readonlyfield' in css_class:
-        <span id="${name}" ${py.attrs(kind=kind, value=value, relation=relation, link=link)}>${text}</span>
-            <input type="hidden" id="${name}_text" class="${css_class}" size="1"
-                ${py.attrs(attrs, kind=kind, relation=relation, value=text)}/>
-	% else:
-	        <span id="${name}_ro" />
+            % if editable_style:
+            <span id="${name}_ro" />
+            % endif
             <input type="text" id="${name}_text" class="${css_class}" size="1"
                 ${py.attrs(attrs, kind=kind, relation=relation, value=text)}/>
 
@@ -26,18 +24,14 @@
             % if error:
                 <span class="fielderror">${error}</span>
             % endif
-<img id="${name}_select" alt="${_('Search')}" title="${_('Search')}"
-                src="/openerp/static/images/fields-a-lookup-a.gif" class="m2o_select"/>${self.display_open_resource(name)}
+            <img id="${name}_select" alt="${_('Search')}" title="${_('Search')}"
+                src="/openerp/static/images/fields-a-lookup-a.gif" class="m2o_select"/>
+        </span>
+        ${self.display_open_resource(name)}
         <div id="autoCompleteResults_${name}" class="autoTextResults"></div>
         <script type="text/javascript">
             new ManyToOne('${name}');
         </script>
-	% endif
-	% if False and 'readonlyfield' in css_class:
-		<script type="text/javascript">
-			resizeInput('${name}_text');
-		</script>
-	% endif
     </%self:m2o_container>
 % elif link:
     % if link == '0':

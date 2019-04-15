@@ -189,7 +189,6 @@ function doLoadingSuccess(app, url) {
  */
 function openAction(action_url, target, terp_id, keep_open, height, width) {
     var $dialogs = jQuery('.action-dialog');
-    console.log('H'+height+'W'+width);
     switch(target) {
         case 'new':
             $frame = jQuery.frame_dialog({
@@ -434,13 +433,3 @@ jQuery(document).bind({
 
 var global_list_refresh;
 var unique_id ='';
-
-function resizeInput(tid) {
-	t = $(idSelector(tid))
-		console.log(t);
-		console.log(t.val());
-	if (t.val()) {
-		console.log(t.val().length);
-	//	t.width((t.val().length-4)+'em');
-	}
-};
