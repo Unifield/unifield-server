@@ -676,7 +676,7 @@
                                 attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}"
                                 filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]"
                                 o2m_selectable="2">
-                                <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1" colors="red: integrity_error!='empty'" editable="both">
+                                <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1" colors="red: integrity_error!='empty'" editable="both" editable_style="new">
                                     <field name="line_number" readonly="1" />
                                     <field name="product_id" readonly="1" />
                                     <field name="comment" readonly="1" />
@@ -1291,7 +1291,7 @@
                     <notebook colspan="4">
                         <page string="Pack Families">
                             <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])]}">
-                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1">
+                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1"/>
@@ -1299,13 +1299,13 @@
                                     <field name="description_ppl" readonly="1" />
                                     <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
+                                    <field name="to_pack" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="num_of_packs" readonly="1" />
-                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" />
+                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0"/>
                                     <field name="pack_type" readonly="1" />
-                                    <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
+                                    <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="weight" string="Weight\nP.P.[KG]" readonly="1" />
-                                    <field name="total_weight" string="Total\nWeight[KG]" attrs="{'readonly': ['|', ('weight_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
+                                    <field name="total_weight" string="Total\nWeight[KG]" attrs="{'readonly': ['|', ('weight_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="amount" readonly="1" />
                                     <field name="total_amount" readonly="1" />
                                     <field name="currency_id" readonly="1" />
