@@ -674,6 +674,11 @@ table.fields td {
     padding-right: 16px;
     white-space: nowrap;
 }
+
+.grid-content .m2o_container {
+    white-space: normal !important;
+
+}
 .m2o {
     position: relative;
 }
@@ -1094,4 +1099,14 @@ img.translatable {
 iframe.ui-dialog-content {
     padding: 0 !important;
     width: 100% !important;
+}
+
+input.readonlyfield{
+  background-color:transparent !important;
+  border: 0 !important;
+  font-size: 1em !important;
+  min-width: 0 !important;
+  box-shadow: none;
+   word-wrap: break-word;
+    word-break: break-all;
 }

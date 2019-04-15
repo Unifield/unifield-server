@@ -38,6 +38,7 @@ ManyToOne.prototype.__init__ = function(name) {
 
     this.field = openobject.dom.get(name);
     this.text = openobject.dom.get(name + '_text');
+    this.textro = openobject.dom.get(name + '_ro');
     this.editable = this.field.tagName.toLowerCase() != 'span';
     //for autocomplete
     this.auto_hidden_id = openobject.dom.get('_hidden_' + name);
@@ -447,6 +448,11 @@ ManyToOne.prototype.setReadonly = function(readonly) {
             .attr({'readOnly': readonly,
                    'disabled': readonly})
             .toggleClass('readonly', !!readonly).toggleClass('readonlyfield', !!readonly);
+	if (readonly) {
+		jQuery(this.text).hide();
+		console.log(jQuery(this.text).val());
+		jQuery(this.textro).show().html(jQuery(this.text).val());
+	}
 };
 
 ManyToOne.prototype.clearResults = function() {

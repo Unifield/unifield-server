@@ -434,3 +434,13 @@ jQuery(document).bind({
 
 var global_list_refresh;
 var unique_id ='';
+
+function resizeInput(tid) {
+	t = $(idSelector(tid))
+		console.log(t);
+		console.log(t.val());
+	if (t.val()) {
+		console.log(t.val().length);
+	//	t.width((t.val().length-4)+'em');
+	}
+};
