@@ -1301,7 +1301,7 @@
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="num_of_packs" readonly="1" />
-                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0"/>
+                                    <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0"/>
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="weight" string="Weight\nP.P.[KG]" readonly="1" />
@@ -1407,6 +1407,7 @@
                         <field name="num_of_packs" invisible="1" />
                         <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy all"  attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="add_packs" states="shipped" string="Add Packs to Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                         <button name="do_create_shipment" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />

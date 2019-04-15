@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="shipment_add_pack_processor_form_view" model="ir.ui.view">
+            <field name="name">shipment.add.pack.processor.form.view</field>
+            <field name="model">shipment.add.pack.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add Packs to Shipment">
+                    <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
+                    <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
+                    <field name="family_ids" nolabel="1" colspan="4" mode="tree" widget="one2many_list" editable="top">
+                        <tree string="Packs" editable="top">
+                            <field name="sale_order_id" readonly="1"/>
+                            <field name="ppl_id" readonly="1" />
+                            <field name="from_pack" readonly="1" />
+                            <field name="to_pack" readonly="1" />
+                            <field name="num_of_packs" readonly="1" />
+                            <field name="pack_type" readonly="1" />
+                            <field name="volume" readonly="1" />
+                            <field name="weight" readonly="1" />
+                            <field name="selected_number" />
+                            <field name="selected_weight" readonly="1" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2"> </label>
+                    <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="1" />
+                    <button name="do_add_packs" type="object" string="Add Packs to Shipment" icon="gtk-add" colspan="1" />
+               </form>
+           </field>
+        </record>
+
+    </data>
+</openerp>
