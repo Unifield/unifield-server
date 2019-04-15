@@ -20,6 +20,9 @@
                 });
             </script>
         % endif
+        % if editable_style:
+            <span id="${name}_ro" />
+        % endif
         % if error:
             <span class="fielderror">${error}</span>
         % endif
