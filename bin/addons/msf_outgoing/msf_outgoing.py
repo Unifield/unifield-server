@@ -189,8 +189,8 @@ class shipment(osv.osv):
                     delivery_validated = packing.delivered
 
                 # backshipment_id check
-                if backshipment_id and packing.backorder_id and packing.backorder_id.shipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
-                    assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s' % (backshipment_id, packing.backorder_id.shipment_id.id)
+                #if backshipment_id and packing.backorder_id and packing.backorder_id.shipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
+                #    assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s' % (backshipment_id, packing.backorder_id.shipment_id.id)
                 backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or False
             # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
@@ -625,18 +625,6 @@ class shipment(osv.osv):
                 'from_pack': initial_from_pack,
                 'to_pack': initial_to_pack,
             }, context=context)
-
-        # FIX ME (from ship())
-        # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
-        #if new_packing.sale_id and not new_packing.sale_id.shipment_date:
-        #    # get the date format
-        #    date_tools = self.pool.get('date.tools')
-        #    date_format = date_tools.get_date_format(cr, uid, context=context)
-        #    db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        #    today = time.strftime(date_format)
-        #    today_db = time.strftime(db_date_format)
-        #    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-        #    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
 
         # Reset context
         context.update({
@@ -1464,9 +1452,12 @@ class shipment(osv.osv):
                 ('state', 'not in', ['done', 'cancel']),
             ], context=context)
 
+
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing' and packing.state == 'assigned'
                 # trigger standard workflow
+                if packing.sale_id and not packing.sale_id.shipment_date:
+                    self.pool.get('sale.order').write(cr, uid, [packing.sale_id.id], {'shipment_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 pick_obj._hook_create_sync_messages(cr, uid, packing.id, context)  # UF-1617: Create the sync message for batch and asset before shipping
