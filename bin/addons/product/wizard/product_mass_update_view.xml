@@ -70,8 +70,8 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}">
-                                <tree string="Products" hide_edit_button="1" colors="red:active == False">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f'])]">
+                                <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
                                     <field name="active" invisible="1" />
