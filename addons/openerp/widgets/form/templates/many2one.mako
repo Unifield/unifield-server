@@ -3,7 +3,7 @@
         src="/openerp/static/images/iconset-d-drop.gif" class="m2o_open"/>
 </%def>
 <%def name="m2o_container()">
-    <div class="m2o_container">
+    <div class="m2o_container${editable_style and readonly_before_state and '_nowrap' or ''}">
         ${caller.body()}
     </div>
 </%def>

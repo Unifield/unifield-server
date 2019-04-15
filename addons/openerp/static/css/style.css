@@ -672,8 +672,9 @@ table.fields td {
     white-space: nowrap;
 }
 
-.grid-content .m2o_container {
-    white-space: normal !important;
+.m2o_container_nowrap {
+    white-space: normal;
+    padding-right: 16px;
 
 }
 .m2o {
