@@ -135,6 +135,7 @@
             <rng:optional><rng:attribute name="colors"/></rng:optional>
             <rng:optional><rng:attribute name="color"/></rng:optional>
             <rng:optional><rng:attribute name="editable"/></rng:optional>
+            <rng:optional><rng:attribute name="editable_style"/></rng:optional>
             <rng:optional><rng:attribute name="noteditable"/></rng:optional>
             <rng:optional><rng:attribute name="notselectable"/></rng:optional>
             <rng:optional><rng:attribute name="resequencable"/></rng:optional>
@@ -475,7 +476,6 @@
             <rng:optional><rng:attribute name="img_width"/></rng:optional>
             <rng:optional><rng:attribute name="img_height"/></rng:optional>
             <rng:optional><rng:attribute name="size"/></rng:optional>
-            <rng:optional><rng:attribute name="css_width"/></rng:optional>
             <rng:optional><rng:attribute name="filename"/></rng:optional>
             <rng:optional><rng:attribute name="fieldname"/></rng:optional>
             <rng:optional><rng:attribute name="height"/></rng:optional>

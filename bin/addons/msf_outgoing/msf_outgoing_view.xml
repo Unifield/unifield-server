@@ -227,7 +227,7 @@
                                 on_change="onchange_move()"
                                 filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned', 'draft']), ('product_qty', '!=', 0)]), ('Show all', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
                                 default_selector="state == 'draft' and '0' or '1'" >
-                                <tree string="Stock Moves" noteditable="fake_state=='cancel'" hide_new_button="context.get('from_wkf')" hide_delete_button="1" editable="both" colors="red: inactive_product==True">
+                                <tree string="Stock Moves" noteditable="fake_state=='cancel'" hide_new_button="context.get('from_wkf')" hide_delete_button="1" editable="both" colors="red: inactive_product==True" editable_style="new">
                                     <field name="line_number" readonly="1"/>
                                     <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
@@ -677,7 +677,7 @@
                                 filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]"
                                 o2m_selectable="2">
                                 <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1" colors="red: integrity_error!='empty'" editable="both">
-                                    <field name="line_number" readonly="1" css_width="min"/>
+                                    <field name="line_number" readonly="1" />
                                     <field name="product_id" readonly="1" />
                                     <field name="comment" readonly="1" />
                                     <field name="composition_list_id" readonly="1" />
@@ -1298,9 +1298,9 @@
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
                                     <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
-                                    <field name="from_pack" readonly="1" css_width="min"/>
-                                    <field name="to_pack" css_width="min" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
-                                    <field name="num_of_packs" readonly="1" css_width="min" />
+                                    <field name="from_pack" readonly="1" />
+                                    <field name="to_pack" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
+                                    <field name="num_of_packs" readonly="1" />
                                     <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" />
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
