@@ -387,9 +387,11 @@ class automated_import_job(osv.osv):
 
             try:
                 oldest_file = False
+                orig_file_name = False
                 if not job.file_to_import:
                     try:
                         oldest_file = self.get_oldest_filename(job, ftp_connec, sftp, already_done)
+                        orig_file_name = oldest_file
                         already_done.append(oldest_file)
                         if not oldest_file:
                             raise ValueError()
@@ -551,8 +553,8 @@ class automated_import_job(osv.osv):
                     move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
             finally:
-                if oldest_file:
-                    self.end_processing_filename(oldest_file)
+                if orig_file_name:
+                    self.end_processing_filename(orig_file_name)
 
         if 'row' in context:
             # causing LmF when running job manually
