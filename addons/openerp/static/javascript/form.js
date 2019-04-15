@@ -1009,6 +1009,11 @@ function onChangePop(caller){
             }
 
             fld.__lock_onchange = false;
+
+        var fld_ro = jQuery(idSelector(prefix + k + '_ro'));
+        if (fld_ro) {
+            fld_ro.html($fld.val());
+        }
         }
 
         if (obj.warning && obj.warning.message) {
