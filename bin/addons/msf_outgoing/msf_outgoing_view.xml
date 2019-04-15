@@ -1291,7 +1291,7 @@
                     <notebook colspan="4">
                         <page string="Pack Families">
                             <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])]}">
-                                <tree string="Pack Families" colors="red: not_shipped" editable="both">
+                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1"/>
@@ -1301,7 +1301,7 @@
                                     <field name="from_pack" readonly="1" css_width="min"/>
                                     <field name="to_pack" css_width="min" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
                                     <field name="num_of_packs" readonly="1" css_width="min" />
-                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': [('fake_state', '!=', 'assigned')]}" />
+                                    <field name="num_of_packs_to_ship" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" />
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"/>
                                     <field name="weight" string="Weight\nP.P.[KG]" readonly="1" />
@@ -1310,6 +1310,7 @@
                                     <field name="total_amount" readonly="1" />
                                     <field name="currency_id" readonly="1" />
                                     <field name="state" readonly="1" />
+                                    <field name="pack_state" readonly="1" invisible="1"/>
                                     <field name="not_shipped"  string="Returned" readonly="1" />
                                     <field name="volume_set" invisible="1" />
                                     <field name="weight_set" invisible="1" />

@@ -755,8 +755,7 @@ class stock_picking(osv.osv):
         '''
         res = kwargs.get('res')
         assert res is not None, 'missing res'
-
-        return res
+        return res and not context.get('keep_prodlot', False)
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
