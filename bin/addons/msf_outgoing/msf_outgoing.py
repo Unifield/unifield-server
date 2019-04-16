@@ -2628,7 +2628,6 @@ class stock_picking(osv.osv):
             self.log(cr, uid, obj.id, _('The Picking Ticket (%s) has been converted to simple Out (%s).') % (obj.name, new_name), action_xmlid='stock.action_picking_tree')
 
             keep_move = self._get_keep_move(cr, uid, [obj.id], context=context).get(obj.id, None)
-
             # change subtype and name and add requestor
             default_vals = {'name': new_name,
                             'move_lines': [],
@@ -2642,6 +2641,7 @@ class stock_picking(osv.osv):
 
             if obj.state == 'draft' and keep_move is not None:
                 context['wkf_copy'] = True
+                context['allow_copy'] = True
                 new_pick_id = self.copy(cr, uid, obj.id, default_vals, context=context)
                 pick_to_check.add(obj.id)
             else:
