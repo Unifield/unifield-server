@@ -465,6 +465,7 @@ class analytic_account(osv.osv):
         default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
         default['line_ids'] = []
+        default['dest_cc_ids'] = []
         return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
 
     def _check_name_unicity(self, cr, uid, ids, context=None):
