@@ -69,14 +69,14 @@
     ## Changed Article
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     ## Comment
-    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    <Column ss:AutoFitWidth="1" ss:Width="250" />
     ## Src. Location
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     ## Qty in Stock
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    ## Qty to Pick
+    ## Qty
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    ## Qty Picked
+    ## Qty to Process
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     ## Batch
     <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -153,8 +153,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Src. Location')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty in Stock')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Pick')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty Picked')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Process')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('KC')}</Data></Cell>

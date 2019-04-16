@@ -12,7 +12,6 @@
                     <field name="picking_id" invisible="1" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
-                    <button name="import_pick" type="object" icon="gtk-undo" colspan="4" string="Import PICK" />
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                            colspan="4" nolabel="1" />

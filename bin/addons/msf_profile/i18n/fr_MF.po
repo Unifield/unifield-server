@@ -41215,11 +41215,15 @@ msgstr "Ce délai de paiement sera utilisé, au lieu de celui utilisé par défa
 msgid "Button Access Rule"
 msgstr "Button Access Rule"
 
-#. modules: msf_outgoing, msf_supply_doc_export
+#. modules: msf_outgoing
 #: report:picking.ticket:0
-#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
 msgid "Qty to Pick"
 msgstr "Qté à Prélever"
+
+#. modules: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:156
+msgid "Qty"
+msgstr "Qté"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_export.py:468
@@ -76587,11 +76591,15 @@ msgstr "Configuration de l'application des Commandes de terrain"
 msgid "button_confirm_cash - (account.bank.statement)"
 msgstr "button_confirm_cash - (account.bank.statement)"
 
-#. modules: msf_outgoing, msf_supply_doc_export
+#. modules: msf_outgoing
 #: report:picking.ticket:0
-#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:157
 msgid "Qty Picked"
-msgstr "Qté Prélevée"
+msgstr "Qté Traitée"
+
+#. modules: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:157
+msgid "Qty to Process"
+msgstr "Qté à Traiter"
 
 #. module: base
 #: view:res.users:0
@@ -104954,8 +104962,8 @@ msgstr "Total d'objets"
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:147
 #, python-format
-msgid "Line %s: Column \"Qty Picked\" should contains the quantity to process and cannot be empty, please fill it with \"0\" instead"
-msgstr "Ligne %s: La colonne \"Qté prélevée\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
+msgid "Line %s: Column \"Qty to Process\" should contains the quantity to process and cannot be empty, please fill it with \"0\" instead"
+msgstr "Ligne %s: La colonne \"Qté à Traiter\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:290
@@ -104966,8 +104974,8 @@ msgstr "La quantité totale de la ligne %s dans le fichier d'import ne correspon
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:160
 #, python-format
-msgid "Line %s: Column \"Qty Picked\" cannot be greater than \"Qty to pick\""
-msgstr "Ligne %s: La colonne \"Qté prélevée\" ne peut pas être supérieure à la \"Qté à prélever\""
+msgid "Line %s: Column \"Qty to Process\" cannot be greater than \"Qty\""
+msgstr "Ligne %s: La colonne \"Qté à Traiter\" ne peut pas être supérieure à la \"Qté\""
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:174
@@ -105308,14 +105316,14 @@ msgstr "La date du document (%s) doit être dans le même exercice comptable que
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:84
 #, python-format
-msgid "Line %s: Column \"Qty Picked\" must be a number"
-msgstr "Ligne %s: La Colonne \"Qté prélevée\" doit être un nombre"
+msgid "Line %s: Column \"Qty to Process\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté à Traiter\" doit être un nombre"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:95
 #, python-format
-msgid "Line %s: Column \"Qty to Pick\" must be a number"
-msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
+msgid "Line %s: Column \"Qty\" must be a number"
+msgstr "Ligne %s: La Colonne \"Qté\" doit être un nombre"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:346

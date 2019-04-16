@@ -44,33 +44,6 @@ class validate_picking_processor(osv.osv):
         'draft': fields.boolean('Draft'),
     }
 
-
-    def import_pick(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids,(int,long)):
-            ids = [ids]
-        if not ids:
-            raise osv.except_osv(_('Error'), _('No PICK selected'))
-
-        processor = self.browse(cr, uid, ids[0], context=context)
-
-        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {
-            'picking_id': processor.picking_id.id,
-            'validate_processor_id': ids[0],
-        }, context=context)
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.pick.import',
-            'res_id': wiz_id,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': context,
-        }
-
-
     def do_validate_picking(self, cr, uid, ids, context=None):
         """
         Made some integrity checks and launch the do_validate_picking method
