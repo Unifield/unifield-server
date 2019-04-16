@@ -1299,7 +1299,7 @@
                                     <field name="description_ppl" readonly="1" />
                                     <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" attrs="{'readonly': ['|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
+                                    <field name="to_pack" attrs="{'readonly': ['|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1)]}" readonly="0"/>
                                     <field name="num_of_packs" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0"/>
                                     <field name="pack_type" readonly="1" />
