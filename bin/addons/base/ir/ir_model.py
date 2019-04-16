@@ -880,7 +880,7 @@ class ir_model_data(osv.osv):
             cr.execute('delete from ir_model_data where res_id=%s and model=%s', (res_id, model))
         return True
 
-    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False):
+    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False, view_ids=False):
         if type(models[0])==type([]) or type(models[0])==type(()):
             model,res_id = models[0]
         else:
@@ -897,12 +897,16 @@ class ir_model_data(osv.osv):
         else:
             where += ' and (key2 is null)'
 
-        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
+        cr.execute('select id from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
         res = cr.fetchone()
         if not res:
-            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
+            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta, view_ids)
         elif xml_id:
             cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name)) # not_a_user_entry
+        if key == 'action' and view_ids is not False:
+            cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
+            for x in view_ids:
+                cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
         return True
 
     def _process_end(self, cr, uid, modules):

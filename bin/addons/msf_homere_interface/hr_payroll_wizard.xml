@@ -234,6 +234,7 @@
             view_mode="form"
             view_type="form"
             target="new"
+            view_ids="view_hr_payroll_msf_tree"
             view_id="analytic_reallocation_wizard"/>
 
         <!-- Mass reallocation wizard for Employee -->
@@ -256,6 +257,7 @@
             view_mode="form"
             view_type="form"
             target="new"
+            view_ids="msf_homere_interface.view_payroll_bs_lines_tree"
             view_id="payroll_validation_wizard"/>
 
         <!-- Payroll entries deletion wizard -->
@@ -301,12 +303,32 @@
             <field name="target">new</field>
         </record>
 
+        <record id="action_employee_import_wizard" model="ir.actions.act_window">
+            <field name="name">Employee Update</field>
+            <field name="res_model">hr.payroll.employee.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="payroll_employee_import"/>
+            <field name="target">new</field>
+        </record>
+
+        <record id="action_payroll_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Payroll</field>
+            <field name="res_model">hr.payroll.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="payroll_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
 
     <!--
         Menus
     -->
         <menuitem id="import_expat_employees" parent="hr.menu_hr_main" name="Import expats" sequence="20" action="action_expat_employee_import_wizard"/>
         <menuitem id="import_nat_staff" parent="hr.menu_hr_main" name="Import nat. staff" sequence="30" action="action_nat_staff_import_wizard"/>
+        <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
+        <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
 
 
     </data>
