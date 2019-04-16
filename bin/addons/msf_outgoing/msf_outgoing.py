@@ -680,35 +680,32 @@ class shipment(osv.osv):
             'carrier_other', 'carrier_date',
         ]
 
-        # FIXME
-        new_shipment_id = False
         for shipment in self.browse(cr, uid, ids, context=context):
-            if not new_shipment_id:
-                shipment_number = shipment.sequence_id.get_id(code_or_id='id', context=context)
-                shipment_name = '%s-%s' % (shipment.name, shipment_number)
+            shipment_number = shipment.sequence_id.get_id(code_or_id='id', context=context)
+            shipment_name = '%s-%s' % (shipment.name, shipment_number)
 
-                ship_val = {
-                    'name': shipment_name,
-                    'address_id': shipment.address_id.id,
-                    'partner_id': shipment.partner_id.id,
-                    'partner_id2': shipment.partner_id.id,
-                    'shipment_expected_date': shipment.shipment_expected_date,
-                    'parent_id': shipment.id,
-                    'transport_type': shipment.transport_type,
-                    'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
-                    'shipment_actual_date': today,
-                }
-                for cpf in cp_fields:
-                    ship_val[cpf] = shipment[cpf]
+            ship_val = {
+                'name': shipment_name,
+                'address_id': shipment.address_id.id,
+                'partner_id': shipment.partner_id.id,
+                'partner_id2': shipment.partner_id.id,
+                'shipment_expected_date': shipment.shipment_expected_date,
+                'parent_id': shipment.id,
+                'transport_type': shipment.transport_type,
+                'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
+                'shipment_actual_date': today,
+            }
+            for cpf in cp_fields:
+                ship_val[cpf] = shipment[cpf]
 
-                context['create_shipment'] = True
-                new_shipment_id = self.create(cr, uid, ship_val, context=context)
-                del context['create_shipment']
+            context['create_shipment'] = True
+            new_shipment_id = self.create(cr, uid, ship_val, context=context)
+            del context['create_shipment']
 
-                # Log creation message
-                message = _('The new Shipment id:%s (%s) has been created.')
-                self.log(cr, uid, new_shipment_id, message % (new_shipment_id, shipment_name,))
-                self.infolog(cr, uid, message % (new_shipment_id, shipment_name))
+            # Log creation message
+            message = _('The new Shipment id:%s (%s) has been created.')
+            self.log(cr, uid, new_shipment_id, message % (new_shipment_id, shipment_name,))
+            self.infolog(cr, uid, message % (new_shipment_id, shipment_name))
 
             context['shipment_id'] = new_shipment_id
 
