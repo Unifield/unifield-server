@@ -1245,6 +1245,7 @@
                     <group col="10" colspan="4">
                         <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        <field name="cheque_number"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Extended Filters...">
@@ -2650,12 +2651,12 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                         <page string="CashBox">
                             <group col="2" colspan="2" expand="1">
                                 <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'readonly':[('state','!=','draft')]}">
-                                    <tree string = "Opening Balance" editable="bottom">
+                                    <tree string="Starting Balance" editable="bottom">
                                         <field name="pieces"/>
                                         <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                         <field name="subtotal" sum="Total"/>
                                     </tree>
-                                    <form string = "Opening Balance">
+                                    <form string="Starting Balance">
                                         <field name="pieces"/>
                                         <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                         <field name="subtotal"/>
@@ -2688,8 +2689,8 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                             <field name="closing_date" select="1" readonly="1"/>
                         </group>
                         <group col="2" colspan="2">
-                            <separator string="Opening Balance" colspan="4"/>
-                            <field name="balance_start" readonly="1" string="Opening Balance"/>
+                            <separator string="Starting Balance" colspan="4"/>
+                            <field name="balance_start" readonly="1" string="Starting Balance"/>
                             <field name="total_entry_encoding"/>
                         </group>
                         <group col="2" colspan="2">

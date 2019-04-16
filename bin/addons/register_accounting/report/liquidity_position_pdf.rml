@@ -60,7 +60,7 @@
           <td><para style="text">Instance</para></td>
           <td><para style="text">Journal Code - Journal Name</para></td>
           <td><para style="text">State</para></td>
-          <td><para style="text">Opening Balance</para></td>
+          <td><para style="text">Starting Balance</para></td>
           <td><para style="text">Calculated Balance</para></td>
           <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
           <td><para style="text">Reg. ccy</para></td>
@@ -130,9 +130,9 @@
           <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
-          [[ repeatIn(getChqJournalCodes(), 'journal') ]]
+          [[ repeatIn(getSortedJournals(), 'journal') ]]
           <td><para style="text">[[ getPendingCheques()['registers'][journal]['instance'] ]]</para></td>
-          <td><para style="text">[[ journal ]] - [[ getPendingCheques()['registers'][journal]['journal_name'] ]]</para></td>
+          <td><para style="text">[[ getPendingCheques()['registers'][journal]['journal_code'] ]] - [[ getPendingCheques()['registers'][journal]['journal_name'] ]]</para></td>
           <td><para style="text">[[ getPendingCheques()['registers'][journal]['state'] ]]</para></td>
           <td><para style="text">[[ getPendingCheques()['registers'][journal]['bank_journal_code'] ]] - [[ getPendingCheques()['registers'][journal]['bank_journal_name'] ]]</para></td>
           <td><para style="right">[[ formatLang(getPendingCheques()['registers'][journal]['amount_reg_currency'], digits=2, grouping=True) or '0.00']]</para></td>

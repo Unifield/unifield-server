@@ -29,12 +29,13 @@ from osv import osv
 from tools.translate import _
 import netsvc
 
-from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import import GENERIC_MESSAGE, PPL_IMPORT_FOR_UPDATE_MESSAGE
 from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
+from msf_doc_import.wizard import PPL_COLUMNS_LINES_FOR_IMPORT as ppl_columns_lines_for_import
 from msf_doc_import.wizard.wizard_in_simulation_screen import LINES_COLUMNS as IN_LINES_COLUMNS
 from msf_doc_import.wizard.wizard_in_simulation_screen import HEADER_COLUMNS
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
@@ -251,6 +252,19 @@ class stock_picking(osv.osv):
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
+            with_pack = self.pool.get('wizard.import.in.simulation.screen').read(cr, uid, simu_id, ['pack_found'], context=context)['pack_found']
+            if with_pack:
+                info_wiz = self.pool.get('wizard.import.in.simulation.screen').read(cr,uid, [simu_id], ['state', 'message'])[0]
+                if info_wiz['state'] == 'error':
+                    errors = []
+                    if info_wiz['message']:
+                        for error in info_wiz['message'].split("\n"):
+                            if not error:
+                                continue
+                            errors.append(('', [], error))
+
+                    return ([], errors, [])
+
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
             context.pop('do_not_process_incoming'); context.pop('do_not_import_with_thread'); context.pop('simulation_bypass_missing_lot'); context.pop('auto_import_ok')
@@ -281,6 +295,7 @@ class stock_picking(osv.osv):
             import_success = True
         except Exception, e:
             raise e
+
 
         return self.get_processed_rejected_header(cr, uid, filetype, file_content, import_success, context=context)
 
@@ -345,6 +360,44 @@ class stock_picking(osv.osv):
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.pick.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
+
+    def wizard_update_ppl_to_create_ship(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to update lines from a file
+        '''
+        # Objects
+        wiz_obj = self.pool.get('wizard.import.ppl.to.create.ship')
+
+        context = context is None and {} or context
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        context.update({'active_id': ids[0]})
+
+        # header_cols = ppl_columns_lines_headers_for_import
+        cols = ppl_columns_lines_for_import
+
+        # TODO: Create a specific template for this case (US-2269)
+        # columns_header = [(_(f[0]), f[1]) for f in header_cols]
+        # default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
+        # file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = wiz_obj.create(cr, uid, {'file': False,
+                                             'filename_template': 'template.xls',
+                                             'filename': 'Lines_Not_Imported.xls',
+                                             'message': """%s %s"""
+                                                        % (_(PPL_IMPORT_FOR_UPDATE_MESSAGE), ', '.join([_(f) for f in cols])),
+                                             'picking_id': ids[0],
+                                             'state': 'draft',}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.ppl.to.create.ship',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',

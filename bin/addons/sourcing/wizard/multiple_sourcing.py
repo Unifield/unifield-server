@@ -306,7 +306,25 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def change_type(self, cr, uid, ids, l_type, supplier, context=None):
+    def get_same_seller(self, cr, uid, sols, context=None):
+        if context is None:
+            context = {}
+
+        res = False
+        for line in self.pool.get('sale.order.line').browse(cr, uid, sols[0][2], fields_to_fetch=['product_id'], context=context):
+            if line.product_id and line.product_id.seller_id:
+                if res and res != line.product_id.seller_id.id:
+                    res = False
+                    break
+                else:
+                    res = line.product_id.seller_id.id
+            else:
+                res = False
+                break
+
+        return res
+
+    def change_type(self, cr, uid, ids, lines, l_type, supplier, context=None):
         """
         Unset the other fields if the type is 'from stock'
         :param cr: Cursor to the database
@@ -327,7 +345,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
             return {
                 'value': {
                     'location_id': False,
-                    'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+                    'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context),
+                    'supplier_id': self.get_same_seller(cr, uid, lines, context=context),
                 },
             }
 

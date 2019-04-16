@@ -27,6 +27,7 @@ from lxml import etree
 import decimal_precision as dp
 import netsvc
 import time
+import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
 
@@ -108,7 +109,7 @@ class tender(osv.osv):
                 'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True),
+                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
@@ -122,7 +123,7 @@ class tender(osv.osv):
                 'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
 
-    _defaults = {'categ': 'other',
+    _defaults = {'categ': False,
                  'state': 'draft',
                  'internal_state': 'draft',
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
@@ -132,6 +133,9 @@ class tender(osv.osv):
                  'priority': 'normal',
                  'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
                  }
+
+    _sql_constraints = [
+    ]
 
     _order = 'name desc'
 
@@ -862,7 +866,7 @@ class tender_line(osv.osv):
         return res
 
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True),
+                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
                 'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
@@ -1157,14 +1161,19 @@ class tender_line(osv.osv):
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id
+            location_id = tender.location_id.id
+            cross_docking_ok = True if tender_line.sale_order_line_id else False
+            if tender.sale_order_id and tender.sale_order_id.procurement_request:
+                location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
+                cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
                 'customer_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.partner_id.id or False,
-                'location_id': tender.location_id.id,
+                'location_id': location_id,
                 'company_id': tender.company_id.id,
-                'cross_docking_ok': True if tender_line.sale_order_line_id else False,
+                'cross_docking_ok': cross_docking_ok,
                 'pricelist_id': pricelist,
                 'fiscal_position': tender_line.supplier_id.property_account_position and tender_line.supplier_id.property_account_position.id or False,
                 'warehouse_id': tender.warehouse_id.id,
@@ -1288,7 +1297,6 @@ class procurement_order(osv.osv):
         rfq_obj = self.pool.get('purchase.order')
         rfq_line_obj = self.pool.get('purchase.order.line')
         partner_obj = self.pool.get('res.partner')
-        prsd_obj = self.pool.get('procurement.request.sourcing.document')
 
         if not context:
             context = {}
@@ -1337,14 +1345,6 @@ class procurement_order(osv.osv):
                                                   'order_type': sale_order.order_type,
                                                   'origin': sale_order.name, }, context=context)
 
-            prsd_obj.chk_create(cr, uid, {
-                'order_id': sale_order.id,
-                'sourcing_document_id': rfq_id,
-                'sourcing_document_model': 'purchase.order',
-                'sourcing_document_type': 'rfq',
-                'line_ids': sale_order_line and sale_order_line.id or False,
-            }, context=context)
-
             # add a line to the RfQ
             rfq_line_id = rfq_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                         'comment': sale_order_line.comment,
@@ -1384,7 +1384,6 @@ class procurement_order(osv.osv):
         '''
         tender_obj = self.pool.get('tender')
         tender_line_obj = self.pool.get('tender.line')
-        prsd_obj = self.pool.get('procurement.request.sourcing.document')
         # find the corresponding sale order id for tender
         for proc in self.browse(cr, uid, ids, context=context):
             if proc.tender_id:
@@ -1408,13 +1407,6 @@ class procurement_order(osv.osv):
                                                         'warehouse_id': sale_order.shop_id.warehouse_id.id,
                                                         'requested_date': proc.date_planned,
                                                         }, context=context)
-            prsd_obj.chk_create(cr, uid, {
-                'order_id': sale_order.id,
-                'sourcing_document_id': tender_id,
-                'sourcing_document_model': 'tender',
-                'sourcing_document_type': 'tender',
-                'line_ids': sale_order_line and sale_order_line.id or False,
-            }, context=context)
             # add a line to the tender
             tender_line_id = tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
                                                               'comment': sale_order_line.comment,
@@ -2114,10 +2106,10 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
         new_values = values
 
         po_accepted_values = {'client_action_multi': ['Order Follow Up',
@@ -2157,4 +2149,127 @@ class ir_values(osv.osv):
 
         return new_values
 
+
 ir_values()
+
+
+SOURCE_DOCUMENT_MODELS = [
+    ('', ''),
+    ('po', 'Purchase Order'),
+    ('rfq', 'Request for Quotation'),
+    ('tender', 'Tender'),
+    ('out', 'Outgoing Delivery'),
+    ('pick', 'Picking Ticket'),
+    ('int', 'Internal Move'),
+]
+
+
+class procurement_request_sourcing_document(osv.osv):
+    _name = 'procurement.request.sourcing.document'
+    _inherit = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _description = 'Sourcing Document'
+    _rec_name = 'order_id'
+    _auto = False
+
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+        'linked_id': fields.integer('Document Id'),
+        'linked_name': fields.char('Document name', size=255),
+        'linked_model': fields.selection(SOURCE_DOCUMENT_MODELS, 'Document model'),
+    }
+
+    def init(self, cr):
+        tools.sql.drop_view_if_exists(cr, 'procurement_request_sourcing_document2')
+
+        cr.execute('''CREATE OR REPLACE view procurement_request_sourcing_document2 AS (
+            SELECT
+                ('x'||md5(''||COALESCE(order_id,0)||COALESCE(linked_id,0)||COALESCE(linked_name,'')))::bit(32)::int AS id,
+                order_id AS order_id,
+                linked_id AS linked_id,
+                linked_name AS linked_name,
+                linked_model AS linked_model
+            FROM (
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, CASE WHEN p.rfq_ok = 't' THEN 'rfq' ELSE 'po' END AS linked_model
+                FROM purchase_order_line pl, purchase_order p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND pl.order_id = p.id AND pl.linked_sol_id = sl.id AND so.procurement_request = True
+                GROUP BY p.id, sl.order_id
+
+                UNION
+
+                SELECT t.id AS linked_id, sl.order_id AS order_id, t.name AS linked_name, 'tender' AS linked_model
+                FROM tender_line tl, tender t, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND so.procurement_request = True
+                GROUP BY t.id, sl.order_id, t.name
+
+                UNION
+
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name,
+                    CASE WHEN p.type = 'out' AND p.subtype = 'standard' THEN 'out' ELSE 'pick' END AS linked_model
+                FROM stock_move m, stock_picking p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.sale_line_id = sl.id AND so.procurement_request = True
+                    AND p.type = 'out' AND p.subtype in ('standard', 'picking')
+                GROUP BY p.id, sl.order_id, p.name
+
+                UNION
+
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 'int' AS linked_model
+                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id
+                    AND so.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
+                GROUP BY p.id, sl.order_id, p.name
+                ) AS subq
+            )''')
+
+    def go_to_document(self, cr, uid, ids, context=None):
+        """
+        Open the sourcing document in the new tab
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        source_doc = self.browse(cr, uid, ids[0], fields_to_fetch=['linked_id', 'linked_model'], context=context)
+
+        view_id = False
+        if source_doc.linked_model == 'po':
+            source_model = 'purchase.order'
+        elif source_doc.linked_model == 'rfq':
+            context.update({'rfq_ok': True})
+            source_model = 'purchase.order'
+        elif source_doc.linked_model == 'tender':
+            source_model = 'tender'
+        elif source_doc.linked_model == 'out':
+            context.update({'pick_type': 'delivery'})
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1]
+        elif source_doc.linked_model == 'pick':
+            context.update({'pick_type': 'picking_ticket'})
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+        elif source_doc.linked_model == 'int':
+            source_model = 'stock.picking'
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_form')[1]
+        else:
+            raise osv.except_osv(_('Error'), _('No model found for this document'))
+
+        res = {
+            'type': 'ir.actions.act_window',
+            'res_model': source_model,
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'res_id': source_doc.linked_id,
+            'context': context,
+        }
+
+        if view_id:
+            res['view_id'] = [view_id]
+
+        return res
+
+
+procurement_request_sourcing_document()
