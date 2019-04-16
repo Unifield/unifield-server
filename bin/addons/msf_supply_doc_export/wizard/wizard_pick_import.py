@@ -180,8 +180,8 @@ class wizard_pick_import(osv.osv_memory):
                     if not new_move_id:
                         raise osv.except_osv(
                             _('Error'),
-                            _('The Line #%s could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.'
-                              % (line_data['item'],))
+                            _('The Line #%s could not be split. Please ensure that the new quantity is above 0 and less than the original line\'s quantity.')
+                            % (line_data['item'],)
                         )
                     else:
                         return new_move_id

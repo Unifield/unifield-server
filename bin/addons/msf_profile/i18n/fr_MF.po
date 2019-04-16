@@ -104927,7 +104927,7 @@ msgid "The Total amount of the following lines is more than 28 digits. Please ch
 msgstr "Le montant total est trop élevé sur les lignes suivantes (plus de 28 chiffres), veuillez vérifier que le prix unitaire et la quantité sont corrects, les valeurs acutelles ne sont pas autorisées"
 
 #. modules: msf_supply_doc_export, msf_outgoing
-#: view:create.picking.processor:0
+#: view:stock.picking:0
 #: view:wizard.pick.import:0
 msgid "Import PICK"
 msgstr "Importer PICK"
@@ -104966,7 +104966,7 @@ msgid "Line %s: Column \"Qty to Process\" should contains the quantity to proces
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
 
 #. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:290
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:336
 #, python-format
 msgid "The total quantity of line #%s in the import file doesn't match with the total qty on screen"
 msgstr "La quantité totale de la ligne %s dans le fichier d'import ne correspond pas à la quantité totale d'UniField"
@@ -105392,3 +105392,15 @@ msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif.
 #, python-format
 msgid "In a PICK from scratch, your are not allowed to choose this type of partner."
 msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à choisir ce type de partenaire."
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:183
+#, python-format
+msgid "The Line #%s could not be split. Please ensure that the new quantity is above 0 and less than the original line's quantity."
+msgstr "La Ligne #%s n'a pas pu être scindée. Veuillez vous assurer que la nouvelle quantité est au dessus de 0 et en dessous de la quantité de la ligne originelle."
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:241
+#, python-format
+msgid "Product with code %s not found in database"
+msgstr "Le Produit avec le code %s n'a pas été trouvé dans la base de données"
