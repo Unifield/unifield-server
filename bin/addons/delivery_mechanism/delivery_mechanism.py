@@ -1422,56 +1422,27 @@ class stock_picking(osv.osv):
                                                                              context=context)
 
                     if move_to_process_ids:
-                        proc_obj = self.pool.get('create.picking.processor')
-                        proc_id = proc_obj.create(cr, uid, {'picking_id': picking_id}, context=context)
-                        proc_bro = proc_obj.browse(cr, uid, proc_id, context=context)
-                        for move_to_process in self.pool.get('stock.move').browse(cr, uid, move_to_process_ids, context=context):
-                            line_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, proc_bro, move_to_process, context=context)
-                            self.pool.get('create.picking.move.processor').create(cr, uid, line_data, context=context)
+                        # sub pick creation
+                        new_pick = self.do_create_picking(cr, uid, [picking_id], context=context, only_pack_ids=pack_ids).get('res_id')
 
-                        ### FIXME : IN > P/P/S
-                        # We copy all data in lines
-                        #proc_obj.copy_all(cr, uid, [proc_id], context=wiz_context)
+                        if  pack['packing_list']:
+                            self.write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
 
-                        # We process the creation of the picking
-                        #res_wiz = proc_obj.do_create_picking(cr, uid, [proc_id], context=wiz_context)
 
-                        # Validate sub pick
-                        #new_pick = res_wiz['res_id']
-                        #if  pack['packing_list']:
-                        #    self.pool.get('stock.picking').write(cr, uid, [new_pick], {'packing_list': pack['packing_list']}, context=context)
-                        #pick_val_wiz = self.pool.get('stock.picking').validate_picking(cr, uid, [new_pick], context=context)
-                        #self.pool.get(pick_val_wiz['res_model']).copy_all(cr, uid, [pick_val_wiz['res_id']], context=context)
-                        #ppl_val_wiz = self.pool.get(pick_val_wiz['res_model']).do_validate_picking(cr, uid, [pick_val_wiz['res_id']], context=context)
+                        # ppl creation
+                        ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context).get('res_id')
+                        self.check_ppl_integrity(cr, uid, [ppl_id], context=context)
+                        stock_issues_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ppl_id), ('integrity_error', '!=', 'empty')], context=context)
+                        if stock_issues_ids:
+                            error_data = []
+                            error_string = dict(self.pool.get('stock.move')._columns['integrity_error'].selection)
+                            for error_line in self.pool.get('stock.move').browse(cr, uid, stock_issues_ids, context=context):
+                                error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_error)))
+                            raise osv.except_osv(_('Error'), "\n".join(error_data))
 
-                        # validate PPL
-                        #ppl_wiz = self.ppl(cr, uid, [ppl_val_wiz['res_id']], context=context)
-                        #pack_created = {}
-                        #for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
-                        ##    if ppl_line.move_id.pack_info_id:
-                        #        if ppl_line.move_id.pack_info_id.id not in pack_created:
-                        #            pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
-                        #                'wizard_id': ppl_wiz['res_id'],
-                        #                'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
-                        #                'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
-                        #                'length': ppl_line.move_id.pack_info_id.total_length,
-                        #                'width': ppl_line.move_id.pack_info_id.total_width,
-                        #                'height': ppl_line.move_id.pack_info_id.total_height,
-                        #                'weight': ppl_line.move_id.pack_info_id.total_weight,
-                        #            })
-                        #        ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
-
-                        ### FIXME : IN > P/P/S
-                        #self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
-                        #error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
-                        #if error_lines_ids:
-                        #    error_data = []
-                        #    error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
-                        #    for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
-                        #        error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
-                        #    raise osv.except_osv(_('Error'), "\n".join(error_data))
-
-                        #self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
+                        # shipment creation (ppl step2)
+                        step2_wiz_id = self.ppl_step2_run_wiz(cr, uid, [ppl_id], context=context).get('res_id')
+                        self.do_ppl_step2(cr, uid, [step2_wiz_id], context=context)
 
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'prepare_pick': _('Done'),

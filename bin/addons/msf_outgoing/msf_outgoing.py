@@ -2484,7 +2484,6 @@ class stock_picking(osv.osv):
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
-            print "NEW PACK"
             # creation of a new packing
             assert 'backorder_id' in vals, 'No backorder_id'
             assert 'shipment_id' in vals, 'No shipment_id'
@@ -2497,7 +2496,6 @@ class stock_picking(osv.osv):
 
 
             if not vals['backorder_id']:
-                print "MAKE IN CREATE!"
                 # creation of packing after ppl validation
                 # find an existing shipment or create one - depends on new pick state
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])], context=context)
@@ -3119,7 +3117,14 @@ class stock_picking(osv.osv):
 
         return res
 
-    def do_create_picking(self, cr, uid, ids, context=None):
+    def do_create_picking(self, cr, uid, ids, context=None, only_pack_ids=False):
+        """
+            from draft picking ticket create a sub-picking
+            it will process all available stock.move with a qty in qty_to_process
+
+            only_pack_ids : used for import from IN to P/P/S, then it will process only these moves
+        """
+
         # Objects
         move_obj = self.pool.get('stock.move')
 
@@ -3163,10 +3168,16 @@ class stock_picking(osv.osv):
             else:
                 context['allow_copy'] = tmp_allow_copy
 
+            if only_pack_ids:
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('pack_info_id', 'in', only_pack_ids)], context=context)
+                move_to_process = move_obj.browse(cr, uid, move_ids, context=context)
+            else:
+                move_to_process = picking.move_lines
+
             # Create stock moves corresponding to processing lines
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
-            for line in picking.move_lines:
+            for line in move_to_process:
                 if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
                     continue
 
@@ -3424,6 +3435,16 @@ class stock_picking(osv.osv):
                         'from_pack': 1,
                         'to_pack': 1,
                     })
+                    if line.pack_info_id:
+                        values.update({
+                            'from_pack': line.pack_info_id.parcel_from,
+                            'to_pack': line.pack_info_id.parcel_to,
+                            'length': line.pack_info_id.total_length,
+                            'width': line.pack_info_id.total_width,
+                            'height': line.pack_info_id.total_height,
+                            'weight': line.pack_info_id.total_weight,
+                        })
+
                     context.update({
                         'keepLineNumber': True,
                         'non_stock_noupdate': True,
