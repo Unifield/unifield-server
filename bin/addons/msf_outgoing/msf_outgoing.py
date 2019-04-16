@@ -223,6 +223,14 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family['currency_id'] or False
                     current_result['currency_id'] = currency_id
+
+        for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
+            for add in ship.additional_items_ids:
+                result[ship.id]['num_of_packs'] += add.nb_parcels or 0
+                result[ship.id]['total_weight'] += add.weight or 0
+                result[ship.id]['total_volume'] += add.volume or 0
+                result[ship.id]['total_amount'] += add.value or 0
+
         return result
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):
