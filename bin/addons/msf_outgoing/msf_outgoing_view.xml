@@ -633,7 +633,7 @@
             <!-- <field eval="11" name="priority"/> -->
             <field name="priority">19</field>
             <field name="arch" type="xml">
-                <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
+                <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List" force_string="1">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
