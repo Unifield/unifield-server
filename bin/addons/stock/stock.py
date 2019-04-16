@@ -755,8 +755,7 @@ class stock_picking(osv.osv):
         '''
         res = kwargs.get('res')
         assert res is not None, 'missing res'
-
-        return res
+        return res and not context.get('keep_prodlot', False)
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
@@ -2148,6 +2147,8 @@ class stock_move(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if vals.get('from_pack') or vals.get('to_pack'):
+            vals['integrity_error'] = 'empty'
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):

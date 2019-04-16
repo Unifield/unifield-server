@@ -16,7 +16,8 @@
          />
          
          <report
-         	auto="False"
+            auto="False"
+            menu="False"
             id="report_po_follow_up_rml"
             string="PO Follow Up Report"
             model="purchase.order"

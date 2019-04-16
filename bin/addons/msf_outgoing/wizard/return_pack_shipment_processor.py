@@ -29,7 +29,7 @@ class return_pack_shipment_processor(osv.osv):
     Wizard to return Packs from shipment
     """
     _name = 'return.pack.shipment.processor'
-    _inherit = 'shipment.processor'
+    _inherit = 'return.shipment.processor'
     _description = 'Wizard to return Packs from shipment'
 
     _columns = {
@@ -196,7 +196,7 @@ class return_pack_shipment_family_processor(osv.osv):
     Family of the wizard to be returned from shipment
     """
     _name = 'return.pack.shipment.family.processor'
-    _inherit = 'shipment.family.processor'
+    _inherit = 'return.shipment.family.processor'
     _description = 'Family to be returned from shipment'
     _order = 'sale_order_id, ppl_id, from_pack, id'
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):

@@ -13,9 +13,8 @@
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
             <drawString x="730" y="530.0">Page : <pageNumber /></drawString>
-            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
-            <!--            <drawString x="765" y="530.0">/</drawString>
-            <drawString x="770" y="530.0"><pageCount /> </drawString>-->
+            <drawString x="765" y="530.0">/</drawString>
+            <drawString x="770" y="530.0"><pageCount /> </drawString>
         </pageGraphics>
 
     </pageTemplate>
@@ -50,8 +49,9 @@
             <blockVAlign value="MIDDLE" />
             <blockBackground colorName="silver" />
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="3,0"/>
-            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="0,0" stop="3,0"/>
-            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,-1"/>
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" />
 
         </blockTableStyle>
 
@@ -159,21 +159,23 @@
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
 
-		<!-- Header font style -->
+        <!-- Header font style -->
         <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
-		<!-- Information font style -->
+        <!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+        <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation5" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
 
 
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
-        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="9.0" />
+        <paraStyle name="LinesBlue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="9.0" />
+        <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" alignment="LEFT" leading="9.0" />
+
     </stylesheet>
 
     <story>
@@ -248,26 +250,25 @@
 
         </blockTable>
 
-
-        <blockTable colWidths="80.5,200.0,5.5,200.0,5.5,200.0,11.0,69.5" style="OrderInformations">
+        <blockTable colWidths="0.5,252.0,5.5,252.0,5.5,252.0,1.0,0.5" style="OrderInformations">
             <tr>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Shipper :</u></para>
+                    <para style="TextInformation"><b>Shipper</b></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Carrier :</u></para>
+                    <para style="TextInformation"><b>Carrier</b></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"><u>Consignee :</u></para>
+                    <para style="TextInformation"><b>Consignee</b></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -561,25 +562,25 @@
         </section>
 
 
-        <blockTable colWidths="555.0,30.0,51.0,45.0,61.0,30.0" style="ItemsTitle2">
+        <blockTable colWidths="555.0,30.0,51.0,45.0,46,45" style="ItemsTitle2">
             <tr>
                 <td>
-                    <para style="TextInformation3" alignment="CENTER">Sub-total</para>
+                    <para style="Total" alignment="RIGHT">Sub-total</para>
                 </td>
                 <td>
-                    <para style="TextInformation4" alignment="RIGHT">[[ getTotParce() ]]</para>
+                    <para style="Total" alignment="RIGHT">[[ getTotParce() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation4" alignment="RIGHT">[[ getTotKg() ]]</para>
+                    <para style="Total" alignment="RIGHT">[[ getTotKg() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation4" alignment="RIGHT">[[ getTotM3() ]]</para>
+                    <para style="Total" alignment="RIGHT">[[ getTotM3() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation4" alignment="LEFT">[[ getTotValue() ]] </para>
+                    <para style="Total" alignment="RIGHT">[[ getTotValue() ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation4" alignment="LEFT">[[ getFonCur(line) ]]</para>
+                    <para style="Total" alignment="LEFT">[[ getFonCur(line) ]]</para>
                 </td>
             </tr>
         </blockTable>
@@ -599,64 +600,96 @@
         </para>
 
         <section>
-            [[ get_additional_items(objects) or removeParentNode('section') ]]
-            <blockTable colWidths="306.0,40.0,40.0,306.0, 40.0,40.0" style="LinesTable2" repeatRows="1" >
+            <para style="TextInformation3"><b>Additional Items</b></para>
+            <blockTable colWidths="310,245.0,30.0,51.0,45.0,46.0,15.0,15.0,15.0" style="LinesTable2" repeatRows="1" >
 
                 <tr>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">Additional items</para>
+                        <para style="TextInformation5" alignment="CENTER">Description</para>
                     </td>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">Quantity</para>
+                        <para style="TextInformation5" alignment="CENTER">Comment</para>
                     </td>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">UOM</para>
+                        <para style="TextInformation5" alignment="CENTER">Parcels</para>
                     </td>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">Comment</para>
+                        <para style="TextInformation5" alignment="CENTER">Kgs</para>
                     </td>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">Volume</para>
+                        <para style="TextInformation5" alignment="CENTER">m³</para>
                     </td>
                     <td>
-                        <para style="TextInformation3" alignment="RIGHT">Weight</para>
+                        <para style="TextInformation5" alignment="CENTER">Value</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">KC</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">DG</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">CS</para>
                     </td>
                 </tr>
 
 
                 <tr>
-                    [[ repeatIn(get_additional_items(objects), 'line') ]]
+                    [[ repeatIn(objects[0].additional_items_ids, 'line') ]]
 
                     <td>
-                        <para style="LinesBlue">[[ getadditional_items_name(line) ]]</para>
+                        <para style="LinesBlue">[[ line.name ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ getadditional_items_qty(line) ]]</para>
+                        <para style="LinesBlue">[[ line.comment ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ getadditional_items_uom(line) ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.nb_parcels ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ getadditional_items_comment(line) ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.weight ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ getadditional_items_volume(line) ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ (line.volume or 0) / 1000.0 ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ getadditional_items_weight(line) ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.value ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.kc and 'X' or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.dg and 'X' or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.cs and 'X' or '' ]]</para>
                     </td>
                 </tr>
             </blockTable>
-            <blockTable colWidths="732.0,40.0" style="ItemsTitle2">
+            <blockTable colWidths="555.0,30.0,51.0,45.0,46.0,45" style="ItemsTitle2">
+               [[ repeatIn(get_sum_additionnal(objects), 'add') ]]
                 <tr>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">Sub-total</para>
+                        <para style="Total" alignment="RIGHT">Sub-total</para>
                     </td>
                     <td>
-                        <para style="TextInformation4" alignment="RIGHT">[[ getadditional_items_getTotKg() ]]</para>
+                        <para style="Total" alignment="RIGHT">[[ add[0] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[1] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[2] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ formatLang(add[3]) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="LEFT">[[ add[4] ]]</para>
                     </td>
                 </tr>
             </blockTable>
+            [[ objects[0].additional_items_ids or removeParentNode('section') ]]
         </section>
 
         <para style="Standard">
@@ -664,13 +697,26 @@
         </para>
 
         <section>
-            <blockTable colWidths="386.0,386.0" style="LinesTable2" repeatRows="1" >
+            <blockTable colWidths="555.0,30.0,51.0,45.0,46,45" style="ItemsTitle2">
+               [[ repeatIn(get_total(), 'add') ]]
                 <tr>
                     <td>
-                        <para style="TextInformation3" alignment="CENTER">TOTAL WEIGHT IN KGs</para>
+                        <para style="Total" alignment="RIGHT">Total</para>
                     </td>
                     <td>
-                        <para style="TextInformation4" alignment="RIGHT">[[ getallTotKg() ]]</para>
+                        <para style="Total" alignment="RIGHT">[[ add[0] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[1] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ add[2] ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="RIGHT">[[ formatLang(add[3]) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Total" alignment="LEFT">[[ add[4] ]]</para>
                     </td>
                 </tr>
             </blockTable>
@@ -684,7 +730,7 @@
         <blockTable colWidths="772.0" style="ItemsTitle4" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextInformation3" alignment="CENTER">Reception remarks :</para>
+                    <para style="TextInformation3" alignment="CENTER">Reception remarks</para>
                 </td>
             </tr>
         </blockTable>

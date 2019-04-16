@@ -141,22 +141,6 @@
             </field>
         </record>
 
-        <record id="stock_move_memory_shipment_additionalitems_tree" model="ir.ui.view">
-            <field name="name">stock.move.memory.shipment.additionalitems.tree</field>
-            <field name="model">stock.move.memory.shipment.additionalitems</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                    <tree string="Additional Items" editable="bottom">
-                        <field name="name"/>
-                        <field name="quantity" />
-                        <field name="uom" />
-                        <field name="comment"/>
-                        <field name="volume"/>
-                        <field name="weight" />
-                    </tree>
-            </field>
-        </record>
-
    		<record id="stock_move_memory_tree_shipment_returnpacks" model="ir.ui.view">
             <field name="name">stock.move.memory.shipment.returnpacks.tree</field>
             <field name="model">stock.move.memory.shipment.returnpacks</field>

@@ -36,6 +36,7 @@ import time
 from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
+from . import INTEGRITY_STATUS_SELECTION
 
 class stock_warehouse(osv.osv):
     """
@@ -132,12 +133,10 @@ class shipment(osv.osv):
         multi function for global shipment values
         '''
         picking_obj = self.pool.get('stock.picking')
-        add_items = self.pool.get('shipment.additionalitems')
         pack_family_obj = self.pool.get('pack.family.memory')
 
         result = {}
-        shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids',
-                                                   'state', 'additional_items_ids'], context=context)
+        shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids', 'state'], context=context)
         pack_family_list = []
         for shipment in shipment_result:
             pack_family_list.extend(shipment['pack_family_memory_ids'])
@@ -165,7 +164,6 @@ class shipment(osv.osv):
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id'])], order='id', context=context)
             # fields to check and get
             state = None
-            first_shipment_packing_id = None
             backshipment_id = None
             # delivery validated
             delivery_validated = None
@@ -174,7 +172,6 @@ class shipment(osv.osv):
                                               fields_to_fetch=[
                                                   'state',
                                                   'delivered',
-                                                  'first_shipment_packing_id',
                                                   'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
@@ -191,20 +188,13 @@ class shipment(osv.osv):
                     # update the value
                     delivery_validated = packing.delivered
 
-                # first_shipment_packing_id check - no check for the same reason
-                first_shipment_packing_id = packing.first_shipment_packing_id.id
-
                 # backshipment_id check
-                if backshipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
-                    assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s' % (backshipment_id, packing.backorder_id.shipment_id.id)
+                #if backshipment_id and packing.backorder_id and packing.backorder_id.shipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
+                #    assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s' % (backshipment_id, packing.backorder_id.shipment_id.id)
                 backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or False
             # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
-                if first_shipment_packing_id:
-                    # second step of shipment : shipped
-                    state = 'shipped'
-                else:
-                    state = 'packed'
+                state = 'shipped'
             elif state == 'done':
                 if delivery_validated:
                     # special state corresponding to delivery validated
@@ -233,11 +223,14 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family['currency_id'] or False
                     current_result['currency_id'] = currency_id
-            if shipment['additional_items_ids']:
-                item_list = add_items.read(cr, uid, shipment['additional_items_ids'],
-                                           ['weight'], context=context)
-                for item in item_list:
-                    current_result['total_weight'] += item['weight']
+
+        for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
+            for add in ship.additional_items_ids:
+                result[ship.id]['num_of_packs'] += add.nb_parcels or 0
+                result[ship.id]['total_weight'] += add.weight or 0
+                result[ship.id]['total_volume'] += add.volume or 0
+                result[ship.id]['total_amount'] += add.value or 0
+
         return result
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):
@@ -354,11 +347,10 @@ class shipment(osv.osv):
         'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
         'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-        'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # interger fields.function need their own multi not to be considered as string
+        'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
-                                                                                      ('packed', 'Packed'),
                                                                                       ('shipped', 'Ready to ship'),
                                                                                       ('done', 'Dispatched'),
                                                                                       ('delivered', 'Received'),
@@ -367,7 +359,6 @@ class shipment(osv.osv):
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
         'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
-        # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
         'parent_id': fields.many2one('shipment', string='Parent shipment'),
         'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
         'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
@@ -545,76 +536,139 @@ class shipment(osv.osv):
 
         return {}
 
-    @check_cp_rw
-    def create_shipment(self, cr, uid, ids, context=None):
-        """
-        Open the wizard to process the shipment
-        """
-        # Objects
-        ship_proc_obj = self.pool.get('shipment.processor')
 
+    def attach_draft_pick_to_ship(self, cr, uid, new_shipment_id, family, description_ppl=False, context=None):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        move_obj = self.pool.get('stock.move')
+        picking_obj = self.pool.get('stock.picking')
 
-        if not ids:
+        if not family.selected_number:
+            return False
+
+        if family.selected_number > family.num_of_packs:
             raise osv.except_osv(
-                _('Processing Error'),
-                _('No data to process !'),
-            )
+                _('Warning'),
+                _("Nb to Ship (%s) can't be larger than Nb Parcels (%s) %s - %s") % (
+                    family.selected_number, family.num_of_packs, family.sale_order_id and family.sale_order_id.name or '', family.ppl_id and family.ppl_id.name or ''
+                ))
+        picking = family.draft_packing_id
+        move_ids = self.pool.get('stock.move').search(cr, uid, [
+            ('picking_id', '=', family.ppl_id.id),
+            ('from_pack', '=', family.from_pack),
+            ('to_pack', '=', family.to_pack)
+        ], context=context)
+        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['product_uom', 'qty_per_pack'], context=context):
+            if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
+                    move.qty_per_pack % move.product_uom.rounding != 0:
+                raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
 
-        for shipment in self.browse(cr, uid, ids, context=context):
-            if not shipment.address_id.id:
-                raise osv.except_osv(
-                    _('Processing Error'),
-                    _('Please fill the Address field on %s') % (shipment.name),
-                )
+        # Copy the picking object without moves
+        # Creation of moves and update of initial in picking create method
+        sequence = picking.sequence_id
+        packing_number = sequence.get_id(code_or_id='id', context=context)
 
-            # search for an existing shipment saved as draft ... :
-            wiz_ids = self.pool.get('shipment.processor').search(cr, uid, [('shipment_id', '=', shipment.id), ('draft', '=', True)], context=context)
-            if wiz_ids:
-                ship_proc_id = wiz_ids[0]
-            else:
-                # ... not found so create a new shipment processor wizard
-                ship_proc_vals = {
-                    'shipment_id': shipment.id,
-                    'address_id': shipment.address_id.id,
-                    'transport_type': shipment.transport_type,
-                }
-                ship_proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
-                ship_proc_obj.create_lines(cr, uid, ship_proc_id, context=context)
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Create shipment'),
-            'res_model': ship_proc_obj._name,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': ship_proc_id,
-            'context': context,
+        # New packing data
+        packing_data = {
+            'name': '%s-%s' % (picking.name, packing_number),
+            'backorder_id': picking.id,
+            'shipment_id': new_shipment_id,
+            'move_lines': [],
+            'description_ppl': description_ppl or picking.description_ppl,  # US-803: added the description
+            'claim': picking.claim or False, #TEST ME
         }
+        # Update context for copy
+        context.update({
+            'keep_prodlot': True,
+            'keepLineNumber': True,
+            'allow_copy': True,
+            'non_stock_noupdate': True,
+        })
 
-    def do_create_shipment(self, cr, uid, wizard_ids, context=None):
+        new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
+        selected_from_pack = family.to_pack - family.selected_number + 1
+
+        if family.selected_number == int(family.num_of_packs):
+            initial_from_pack = 0
+            initial_to_pack = 0
+        else:
+            initial_from_pack = family.from_pack
+            initial_to_pack = family.to_pack - family.selected_number
+
+        # find the corresponding moves
+        moves_ids = move_obj.search(cr, uid, [
+            ('picking_id', '=', family.draft_packing_id.id),
+            ('from_pack', '=', family.from_pack),
+            ('to_pack', '=', family.to_pack),
+            ('state', '!=', 'done'),
+        ], context=context)
+
+        # For corresponding moves
+        for move in move_obj.browse(cr, uid, moves_ids, context=context):
+            # We compute the selected quantity
+            selected_qty = move.qty_per_pack * family.selected_number
+
+            move_vals = {
+                'picking_id': new_packing_id,
+                'line_number': move.line_number,
+                'product_qty': selected_qty,
+                'from_pack': selected_from_pack,
+                'to_pack': family.to_pack,
+                'backmove_packing_id': move.id,
+                'location_id': picking.warehouse_id.lot_distribution_id.id,
+                'location_dest_id': picking.warehouse_id.lot_output_id.id,
+                'selected_number': family.selected_number,
+            }
+
+            move_obj.copy(cr, uid, move.id, move_vals, context=context)
+            # Update corresponding initial move
+            initial_qty = max(move.product_qty - selected_qty, 0)
+
+            # if all packs have been selected, from/to have been set to 0
+            # update the original move object - the corresponding original shipment (draft)
+            # is automatically updated generically in the write method
+            move_obj.write(cr, uid, [move.id], {
+                'product_qty': initial_qty,
+                'from_pack': initial_from_pack,
+                'to_pack': initial_to_pack,
+            }, context=context)
+
+        # Reset context
+        context.update({
+            'keep_prodlot': False,
+            'keepLineNumber': False,
+            'allow_copy': False,
+            'non_stock_noupdate': False,
+            'draft_packing_id': False,
+        })
+
+        # confirm the new packing
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
+        # simulate check assign button, as stock move must be available
+        picking_obj.force_assign(cr, uid, [new_packing_id])
+
+        return True
+
+    def do_create_shipment(self, cr, uid, ids, context=None):
         """
         Create the shipment
 
-        BE CAREFUL: the wizard_ids parameters is the IDs of the shipment.processor objects,
-        not those of shipment objects
         """
         # Objects
-        ship_proc_obj = self.pool.get('shipment.processor')
-        picking_obj = self.pool.get('stock.picking')
-        add_line_obj = self.pool.get('shipment.additionalitems')
         data_obj = self.pool.get('ir.model.data')
 
+        date_tools = self.pool.get('date.tools')
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
-            wizard_ids = wizard_ids
+        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+        today = time.strftime(db_datetime_format)
+
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         cp_fields = [
             'consignee_name', 'consignee_contact', 'consignee_address',
@@ -626,17 +680,9 @@ class shipment(osv.osv):
             'carrier_other', 'carrier_date',
         ]
 
-        for wizard in ship_proc_obj.browse(cr, uid, wizard_ids, context=context):
-            shipment = wizard.shipment_id
-            sequence = shipment.sequence_id
-
-            shipment_number = sequence.get_id(code_or_id='id', context=context)
+        for shipment in self.browse(cr, uid, ids, context=context):
+            shipment_number = shipment.sequence_id.get_id(code_or_id='id', context=context)
             shipment_name = '%s-%s' % (shipment.name, shipment_number)
-            source_shipment_address_id = shipment.address_id.id if shipment.address_id else False
-
-            if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False):  # RW Sync - update the shipment name same as on RW instance
-                shipment_name = context.get('rw_shipment_name')
-                del context['rw_shipment_name']
 
             ship_val = {
                 'name': shipment_name,
@@ -644,119 +690,43 @@ class shipment(osv.osv):
                 'partner_id': shipment.partner_id.id,
                 'partner_id2': shipment.partner_id.id,
                 'shipment_expected_date': shipment.shipment_expected_date,
-                'shipment_actual_date': shipment.shipment_actual_date,
                 'parent_id': shipment.id,
                 'transport_type': shipment.transport_type,
                 'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
+                'shipment_actual_date': today,
             }
             for cpf in cp_fields:
                 ship_val[cpf] = shipment[cpf]
 
             context['create_shipment'] = True
-            shipment_id = self.create(cr, uid, ship_val, context=context)
+            new_shipment_id = self.create(cr, uid, ship_val, context=context)
             del context['create_shipment']
 
-            context['shipment_id'] = shipment_id
-            if source_shipment_address_id:
-                context['source_shipment_address_id'] = source_shipment_address_id
+            # Log creation message
+            message = _('The new Shipment id:%s (%s) has been created.')
+            self.log(cr, uid, new_shipment_id, message % (new_shipment_id, shipment_name,))
+            self.infolog(cr, uid, message % (new_shipment_id, shipment_name))
 
-            for add_line in wizard.additional_line_ids:
-                line_vals = {
-                    'name': add_line.name,
-                    'shipment_id': shipment_id,
-                    'picking_id': False,
-                    'quantity': add_line.quantity,
-                    'uom': add_line.uom_id.id,
-                    'comment': add_line.comment,
-                    'volume': add_line.volume,
-                    'weight': add_line.weight,
-                }
-
-                add_line_obj.create(cr, uid, line_vals, context=context)
+            context['shipment_id'] = new_shipment_id
 
             # US-803: point 9, add the ship description, then remove it from the context
             description_ppl = context.get('description_ppl', False)
             if context.get('description_ppl', False):
                 del context['description_ppl']
 
-            for family in wizard.family_ids:
-                if not family.selected_number:  # UTP-1015 fix from Quentin
+            created = False
+            for family in shipment.pack_family_memory_ids:
+                if not family.selected_number or family.state != 'assigned':
                     continue
 
-                picking = family.draft_packing_id
+                created = self.attach_draft_pick_to_ship(cr, uid, new_shipment_id, family, description_ppl, context=context)
 
-                move_ids = self.pool.get('stock.move').search(cr, uid, [
-                    ('picking_id', '=', family.ppl_id.id),
-                    ('from_pack', '=', family.from_pack),
-                    ('to_pack', '=', family.to_pack)
-                ], context=context)
-                for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
-                    if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
-                            move.qty_per_pack % move.product_uom.rounding != 0:
-                        raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
+            if not created:
+                raise osv.except_osv(_('Warning'), _('Please set "Nb Parcels To Ship" to create a Shipment.'))
 
-                # Copy the picking object without moves
-                # Creation of moves and update of initial in picking create method
-                sequence = picking.sequence_id
-                packing_number = sequence.get_id(code_or_id='id', context=context)
-
-                # New packing data
-                packing_data = {
-                    'name': '%s-%s' % (picking.name, packing_number),
-                    'backorder_id': picking.id,
-                    'shipment_id': False,
-                    'move_lines': [],
-                    'description_ppl': description_ppl or picking.description_ppl,  # US-803: added the description
-                }
-                # Update context for copy
-                context.update({
-                    'keep_prodlot': True,
-                    'keepLineNumber': True,
-                    'allow_copy': True,
-                    'non_stock_noupdate': True,
-                    'shipment_proc_id': wizard.id,
-                    'draft_packing_id': picking.id,
-                })
-
-                new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
-                if picking.claim:
-                    picking_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
-
-                # Reset context
-                context.update({
-                    'keep_prodlot': False,
-                    'keepLineNumber': False,
-                    'allow_copy': False,
-                    'non_stock_noupdate': False,
-                    'draft_packing_id': False,
-                })
-
-                # confirm the new packing
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
-                # simulate check assign button, as stock move must be available
-                picking_obj.force_assign(cr, uid, [new_packing_id])
-
-            # Log creation message
-            message = _('The new Shipment id:%s (%s) has been created.')
-            self.log(cr, uid, shipment.id, message % (shipment.id, shipment_name,))
-            self.infolog(cr, uid, message % (shipment.id, shipment.name))
-            # The shipment is automatically shipped, no more pack states in between.
-            self.ship(cr, uid, [shipment_id], context=context)
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
-
-        # UF-2531: Run the creation of message if it's at RW at some important point
-        usb_entity = picking_obj._get_usb_entity_type(cr, uid)
-        if usb_entity == picking_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            picking_obj._manual_create_rw_messages(cr, uid, context=context)
-
-        # Remove unneeded data in context
-        context.update({
-            'partial_datas_ppl1': {},
-            'partial_datas': {},
-        })
 
         return {
             'name': _("Shipment"),
@@ -765,7 +735,7 @@ class shipment(osv.osv):
             'view_mode': 'form,tree',
             'view_type': 'form',
             'view_id': [view_id],
-            'res_id': shipment_id,
+            'res_id': new_shipment_id,
             'target': 'crush',
             'context': context,
         }
@@ -829,7 +799,6 @@ class shipment(osv.osv):
             )
 
         shipment_ids = []
-        return_info = {}
         counter = 0
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
             draft_picking = None
@@ -844,52 +813,7 @@ class shipment(osv.osv):
                 picking = family.draft_packing_id
                 draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
-                # get the linked "save as draft" wizard if has:
-                picking_processor_wiz = []
-                if draft_picking:
-                    picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
-                        ('picking_id', '=', draft_picking.id),
-                        ('draft', '=', True),
-                    ], context=context)
-                    if picking_processor_wiz:
-                        picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
 
-                # reset "save as draft" wizard if has:
-                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
-                    ('shipment_id', '=', shipment.id),
-                    ('draft', '=', True),
-                ], context=context)
-                if ship_processor_wiz and family.selected_number:
-                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
-                    related_draft_fam = False
-                    for fam in ship_processor_wiz.family_ids:
-                        # family = return
-                        # fam = SaD
-                        if family.ppl_id.id == fam.ppl_id.id and family.from_pack == fam.from_pack:
-                            if related_draft_fam:
-                                # if we enter there, it means that we have found 2 related draft family
-                                # so it's wrong, we stop the searcing
-                                related_draft_fam = False
-                                break
-                            else:
-                                related_draft_fam = fam
-
-                    if related_draft_fam:
-                        if family.selected_number < related_draft_fam.selected_number: # partial
-                            self.pool.get('shipment.family.processor').write(cr, uid, [related_draft_fam.id], {
-                                'selected_number': related_draft_fam.selected_number - family.selected_number,
-                                'to_pack': related_draft_fam.to_pack - family.selected_number,
-                            }, context=context)
-                        elif family.selected_number >= related_draft_fam.selected_number: # delete all line
-                            self.pool.get('shipment.family.processor').unlink(cr, uid, [related_draft_fam.id], context=context)
-
-                # UF-2531: Store some important info for the return pack messages
-                return_info.setdefault(str(counter), {
-                    'name': draft_picking.name,
-                    'selected_number': family.selected_number,
-                    'from_pack': family.from_pack,
-                    'to_pack': family.to_pack,
-                })
                 counter = counter + 1
 
                 # Update initial move
@@ -955,27 +879,12 @@ class shipment(osv.osv):
                     # Find the corresponding move in draft in the draft picking ticket
                     draft_move = move.backmove_id
                     # Increase the draft move with the move quantity
-                    draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
-                    draft_initial_qty += return_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
 
-                    # Update or create "save as draft" lines with returned qty:
-                    if picking_processor_wiz:
-                        save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
-                            ('wizard_id', '=', picking_processor_wiz.id),
-                            ('move_id', '=', draft_move.id),
-                        ], context=context)
-                        if not save_as_draft_move:  # then create the SaD line:
-                            move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=draft_move, context=context)
-                            move_data.update({'quantity': return_qty})
-                            save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
-                            save_as_draft_move = [save_as_draft_move]
-                        else:  # update Sad line
-                            for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
-                                self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
-                                    'ordered_quantity': sad_move.ordered_quantity + return_qty,
-                                    'quantity': sad_move.quantity + return_qty,
-                                }, context=context)
+                    ## FIXME issue with BN ??
+                    draft_initial_qty = draft_move.product_qty + return_qty
+                    qty_processed = draft_move.qty_processed - return_qty
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed}, context=context)
+
 
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
             if not log_flag:
@@ -993,13 +902,35 @@ class shipment(osv.osv):
         # If everything is allright (all draft packing are finished) the shipment is done also
         self.complete_finished(cr, uid, shipment_ids, context=context)
 
-        # UF-2531: Create manually the message for the return pack of the ship
-        if shipment and shipment.id:
-            self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs_shipment_draft', context=context)
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
         res['res_id'] = draft_picking.id
         return res
+
+    def add_packs(self, cr, uid, ids, context=None):
+        ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
+        other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id)], context=context)
+        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('shipment_id', 'in', other_ship_ids)], context=context)
+        if not pack_ids:
+            raise osv.except_osv(_('Warning !'), _('No Pack Available'))
+        proc_id = self.pool.get('shipment.add.pack.processor').create(cr, uid, {'shipment_id': ids[0]}, context=context)
+        cr.execute('''insert into shipment_add_pack_processor_line
+                (wizard_id, draft_packing_id, sale_order_id, ppl_id, from_pack, to_pack, num_of_packs, pack_type, volume, weight, create_date, create_uid)
+            select
+                %s, draft_packing_id, sale_order_id, ppl_id, from_pack, to_pack, num_of_packs, pack_type, round(length*width*height*num_of_packs/1000,4), weight*num_of_packs, NOW(), %s
+                from pack_family_memory
+                where id in %s
+        ''', (proc_id, uid, tuple(pack_ids)))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.add.pack.processor',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': proc_id,
+            'target': 'new',
+            'context': context,
+        }
 
     @check_cp_rw
     def return_packs_from_shipment(self, cr, uid, ids, context=None):
@@ -1035,58 +966,6 @@ class shipment(osv.osv):
             'context': context,
         }
 
-    def compute_sequences(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        compute corresponding sequences
-        '''
-        datas = kwargs['datas']
-        from_pack = kwargs['from_pack']
-        to_pack = kwargs['to_pack']
-        # the list of tuple representing the packing movements from/to - default to sequence value
-        stay = [(from_pack, to_pack)]
-        # the list of tuple representing the draft packing movements from/to
-        back_to_draft = []
-
-        # loop the partials
-        for partial in datas:
-            return_from = partial['return_from']
-            return_to = partial['return_to']
-            # create the corresponding tuple
-            back_to_draft.append((return_from, return_to))
-            # stay list must be ordered
-            sorted(stay)
-            # find the corresponding tuple in the stay list
-            for i in range(len(stay)):
-                # the tuple are ordered
-                seq = stay[i]
-                if seq[1] >= return_to:
-                    # this is the good tuple
-                    # stay tuple creation logic
-                    if return_from == seq[0]:
-                        if return_to == seq[1]:
-                            # all packs for this sequence are sent back - simply remove it
-                            break
-                        else:
-                            # to+1-seq[1] in stay
-                            stay.append((return_to + 1, seq[1]))
-                            break
-
-                    elif return_to == seq[1]:
-                        # do not start at beginning, but same end
-                        stay.append((seq[0], return_from - 1))
-                        break
-
-                    else:
-                        # in the middle, two new tuple in stay
-                        stay.append((seq[0], return_from - 1))
-                        stay.append((return_to + 1, seq[1]))
-                        break
-
-            # old one is always removed
-            stay.pop(i)
-
-        # return both values - return order is important
-        return stay, back_to_draft
 
     def do_return_packs_from_shipment(self, cr, uid, wizard_ids, context=None):
         """
@@ -1112,7 +991,6 @@ class shipment(osv.osv):
                 _('No data to process !'),
             )
         shipment_ids = []
-        return_info = {}
 
         counter = 0
         for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
@@ -1126,22 +1004,6 @@ class shipment(osv.osv):
                 if family.return_from == 0 and family.return_to == 0:
                     continue
 
-                # reset "save as draft" wizard if has:
-                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
-                    ('shipment_id', '=', shipment.id),
-                    ('draft', '=', True),
-                ], context=context)
-                if ship_processor_wiz:
-                    self.pool.get('shipment.processor').write(cr, uid, ship_processor_wiz, {'draft': False}, context=context)
-
-                # UF-2531: Store some important info for the return pack messages
-                return_info.setdefault(str(counter), {
-                    'name': family.ppl_id.name,
-                    'from_pack': family.from_pack,
-                    'to_pack': family.to_pack,
-                    'return_from': family.return_from,
-                    'return_to': family.return_to,
-                })
                 counter = counter + 1
 
                 # Search the corresponding moves
@@ -1162,32 +1024,6 @@ class shipment(osv.osv):
                         # In the middle, two now tuple in stay
                         stay.append((family.from_pack, family.return_from - 1))
                         stay.append((family.return_to + 1, family.to_pack))
-
-                ### update save as draft move if has ###
-                # get the linked "save as draft" wizard:
-                ship_processor_wiz = self.pool.get('shipment.processor').search(cr, uid, [
-                    ('shipment_id', '=', draft_shipment_id),
-                    ('draft', '=', True),
-                ], context=context)
-                if ship_processor_wiz:
-                    # create "save as draft" lines with returned qty:
-                    ship_processor_wiz = self.pool.get('shipment.processor').browse(cr, uid, ship_processor_wiz[0], context=context)
-                    family_vals = {
-                        'wizard_id': ship_processor_wiz.id,
-                        'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
-                        'from_pack': family.from_pack,
-                        'to_pack': family.to_pack,
-                        'selected_number': family.num_of_packs,
-                        'pack_type': family.pack_type and family.pack_type.id or False,
-                        'length': family.length,
-                        'width': family.width,
-                        'height': family.height,
-                        'weight': family.weight,
-                        'draft_packing_id': draft_packing and draft_packing.id or False,
-                        'ppl_id': family.ppl_id and family.ppl_id.id or False,
-                        'comment': family.comment,
-                    }
-                    self.pool.get('shipment.family.processor').create(cr, uid, family_vals, context=context)
 
 
                 move_data = {}
@@ -1294,10 +1130,6 @@ class shipment(osv.osv):
         # if everything is allright (all draft packing are finished) the shipment is done also
         self.complete_finished(cr, uid, shipment_ids, context=context)
 
-        # UF-2531: Create manually the message for the return pack of the ship
-        if shipment and shipment.id:
-            self._manual_create_rw_shipment_message(cr, uid, shipment.id, return_info, 'usb_shipment_return_packs', context=context)
-
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         return {
             'name': _("Shipment"),
@@ -1313,120 +1145,6 @@ class shipment(osv.osv):
     def _manual_create_rw_shipment_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
-    def action_cancel(self, cr, uid, ids, context=None):
-        '''
-        cancel the shipment which is not yet shipped (packed state)
-
-        - for each related packing object
-         - trigger the cancel workflow signal
-         logic is performed in the action_cancel method of stock.picking
-        '''
-        pick_obj = self.pool.get('stock.picking')
-        wf_service = netsvc.LocalService("workflow")
-
-        for shipment in self.browse(cr, uid, ids, context=context):
-            # shipment state should be 'packed'
-            assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s' % shipment.state
-            # for each shipment
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
-            # call cancel workflow on corresponding packing objects
-            for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
-                # we cancel each picking object - action_cancel is overriden at stock_picking level for stock_picking of subtype == 'packing'
-                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_cancel', cr)
-            # log corresponding action
-            self.log(cr, uid, shipment.id, _("The Shipment (%s) has been canceled.") % (shipment.name,))
-            self.log(cr, uid, shipment.backshipment_id.id, _("The corresponding Draft Shipment (%s) has been updated.") % (shipment.backshipment_id.name,))
-
-        return True
-
-    def ship(self, cr, uid, ids, context=None):
-        '''
-        we ship the created shipment, the state of the shipment is changed, we do not use any wizard
-        - state of the shipment is updated to 'shipped'
-        - copy the packing
-        - modify locations of moves for the new packing
-        - trigger the workflow button_confirm for the new packing
-        - trigger the workflow to terminate the initial packing
-        - update the draft_picking_id fields of pack_families
-        - update the shipment_date of the corresponding sale_order if not set yet
-        '''
-        pick_obj = self.pool.get('stock.picking')
-        so_obj = self.pool.get('sale.order')
-        # objects
-        date_tools = self.pool.get('date.tools')
-        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
-
-        for shipment in self.browse(cr, uid, ids, context=context):
-            # shipment state should be 'packed'
-            if shipment.state != 'packed':
-                raise osv.except_osv(_('Error, packing in wrong state !'),
-                                     _('Cannot process a Shipment which is in an incorrect state'))
-
-            # the state does not need to be updated - function
-            # update actual ship date (shipment_actual_date) to today + time
-            today = time.strftime(db_datetime_format)
-            vals = {'shipment_actual_date': today, }
-            if context.get('source_shipment_address_id', False):
-                vals['address_id'] = context['source_shipment_address_id']
-
-            shipment.write(vals)
-            # corresponding packing objects
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
-
-            for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
-                assert packing.subtype == 'packing'
-                # update the packing object for the same reason
-                # - an integrity check at _get_vals level of shipment states that all packing linked to a shipment must have the same state
-                # we therefore modify it before the copy, otherwise new (assigned) and old (done) are linked to the same shipment
-                # -> integrity check has been removed
-                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False}, context=context)
-                # copy each packing
-                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
-                                                                     'first_shipment_packing_id': packing.id,
-                                                                     # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
-                                                                     'shipment_id': shipment.id, }, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
-
-                pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
-                if packing.claim:
-                    pick_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
-                new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
-
-                if new_packing.move_lines and pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):  # RW Sync - set the replicated to True for not syncing it again
-                    pick_obj.write(cr, uid, [new_packing_id], {'for_shipment_replicate': True}, context=context)
-
-                # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
-                if new_packing.sale_id and not new_packing.sale_id.shipment_date:
-                    # get the date format
-                    date_tools = self.pool.get('date.tools')
-                    date_format = date_tools.get_date_format(cr, uid, context=context)
-                    db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-                    today = time.strftime(date_format)
-                    today_db = time.strftime(db_date_format)
-                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
-
-                # update locations of stock moves
-                for move in new_packing.move_lines:
-                    move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
-                                'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
-
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
-                # simulate check assign button, as stock move must be available
-                pick_obj.force_assign(cr, uid, [new_packing_id])
-                # trigger standard workflow
-                pick_obj.action_move(cr, uid, [packing.id])
-                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
-
-            # log the ship action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been shipped.') % (shipment.name,))
-            self.infolog(cr, uid, "The Shipment id:%s (%s) has been shipped." % (
-                shipment.id, shipment.name,
-            ))
-
-        # TODO which behavior
-        return True
-
     def complete_finished(self, cr, uid, ids, context=None):
         '''
         - check all draft packing corresponding to this shipment
@@ -1438,13 +1156,10 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
 
-        for shipment_base in self.browse(cr, uid, ids, context=context):
-            # the shipment which will be treated
-            shipment = shipment_base
-
-            if shipment.state not in ('draft',):
+        for shipment in self.browse(cr, uid, ids, context=context):
+            if shipment.state != 'draft':
                 # it's not a draft shipment, check all corresponding packing, trg.write them
-                packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ], context=context)
+                packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
                 for packing_id in packing_ids:
                     wf_service.trg_write(uid, 'stock.picking', packing_id, cr)
 
@@ -1505,9 +1220,6 @@ class shipment(osv.osv):
                     if draft_packing.previous_step_id.previous_step_id.backorder_id:
                         draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
 
-                    # UF-1617: set the flag to PPL to indicate that the SHIP has been done, for synchronisation purpose
-#                    if draft_packing.previous_step_id and draft_packing.previous_step_id.id:
-#                        cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %draft_packing.previous_step_id.id)
 
             # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
         return True
@@ -1745,9 +1457,12 @@ class shipment(osv.osv):
                 ('state', 'not in', ['done', 'cancel']),
             ], context=context)
 
+
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing' and packing.state == 'assigned'
                 # trigger standard workflow
+                if packing.sale_id and not packing.sale_id.shipment_date:
+                    self.pool.get('sale.order').write(cr, uid, [packing.sale_id.id], {'shipment_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 pick_obj._hook_create_sync_messages(cr, uid, packing.id, context)  # UF-1617: Create the sync message for batch and asset before shipping
@@ -1801,6 +1516,28 @@ class shipment(osv.osv):
         return True
 
 
+    def copy_all(self, cr, uid, ids, context=None):
+        cr.execute('''
+            update stock_move set selected_number = (to_pack-from_pack)+1 where picking_id in (
+                select id
+                    from stock_picking
+                    where
+                        shipment_id in %s and
+                        state = 'draft'
+            )''', (tuple(ids),))
+        return True
+
+    def uncopy_all(self, cr, uid, ids, context=None):
+        cr.execute('''
+            update stock_move set selected_number = 0 where picking_id in (
+                select id
+                    from stock_picking
+                    where
+                        shipment_id in %s and
+                        state = 'draft'
+            )''', (tuple(ids),))
+        return True
+
 
 shipment()
 
@@ -1809,15 +1546,18 @@ class shipment_additionalitems(osv.osv):
     _name = "shipment.additionalitems"
     _description = "Additional Items"
 
-    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
-                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
-                'quantity': fields.float(digits=(16, 2), string='Quantity', required=True, related_uom='uom'),
-                'uom': fields.many2one('product.uom', string='UOM', required=True),
-                'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
-                'weight': fields.float(digits=(16, 2), string='Weight[kg]', required=True),
-                }
+    _columns = {
+        'name': fields.char(string='Additional Item', size=1024, required=True),
+        'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
+        'nb_parcels': fields.integer('Nb Parcels'),
+        'comment': fields.char(string='Comment', size=1024),
+        'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
+        'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
+        'value': fields.float('Value', help='Total Value of the additionl item. The value is to be defined in the currency selected for the partner.'),
+        'kc': fields.boolean('KC', help='Defines whether the additional item is to be kept cool.'),
+        'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
+        'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
+    }
 
 shipment_additionalitems()
 
@@ -1925,37 +1665,33 @@ class ppl_customize_label(osv.osv):
     '''
     _name = 'ppl.customize.label'
 
-    _columns = {'name': fields.char(string='Name', size=1024,),
-                'notes': fields.text(string='Notes'),
-                # 'packing_list_reference': fields.boolean(string='Packing List Reference'),
-                'pre_packing_list_reference': fields.boolean(string='Pre-Packing List Reference'),
-                'destination_partner': fields.boolean(string='Destination Partner'),
-                'destination_address': fields.boolean(string='Destination Address'),
-                'requestor_order_reference': fields.boolean(string='Requestor Order Reference'),
-                'weight': fields.boolean(string='Weight'),
-                # 'shipment_reference': fields.boolean(string='Shipment Reference'),
-                'packing_parcel_number': fields.boolean(string='Packing Parcel Number'),
-                # 'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
-                'specific_information': fields.boolean(string='Specific Information'),
-                'logo': fields.boolean(string='Company Logo'),
-                'packing_list': fields.boolean(string='Supplier Packing List'),
-                }
+    _columns = {
+        'name': fields.char(string='Name', size=1024,),
+        'notes': fields.text(string='Notes'),
+        'pre_packing_list_reference': fields.boolean(string='Pre-Packing List Reference'),
+        'destination_partner': fields.boolean(string='Destination Partner'),
+        'destination_address': fields.boolean(string='Destination Address'),
+        'requestor_order_reference': fields.boolean(string='Requestor Order Reference'),
+        'weight': fields.boolean(string='Weight'),
+        'packing_parcel_number': fields.boolean(string='Packing Parcel Number'),
+        'specific_information': fields.boolean(string='Specific Information'),
+        'logo': fields.boolean(string='Company Logo'),
+        'packing_list': fields.boolean(string='Supplier Packing List'),
+    }
 
-    _defaults = {'name': 'My Customization',
-                 'notes': '',
-                 # 'packing_list_reference': True,
-                 'pre_packing_list_reference': True,
-                 'destination_partner': True,
-                 'destination_address': True,
-                 'requestor_order_reference': True,
-                 'weight': True,
-                 # 'shipment_reference': True,
-                 'packing_parcel_number': True,
-                 # 'expedition_parcel_number': True,
-                 'specific_information': True,
-                 'logo': True,
-                 'packing_list': False,
-                 }
+    _defaults = {
+        'name': 'My Customization',
+        'notes': '',
+        'pre_packing_list_reference': True,
+        'destination_partner': True,
+        'destination_address': True,
+        'requestor_order_reference': True,
+        'weight': True,
+        'packing_parcel_number': True,
+        'specific_information': True,
+        'logo': True,
+        'packing_list': False,
+    }
 
 ppl_customize_label()
 
@@ -2070,13 +1806,6 @@ class stock_picking(osv.osv):
 
             elif obj.subtype == 'ppl':
                 raise osv.except_osv(_('Error !'), _('Pre-Packing List copy is forbidden.'))
-                # ppl, use the draft picking ticket sequence
-#                if obj.previous_step_id and obj.previous_step_id.backorder_id:
-#                    base = obj.name
-#                    base = base.split('-')[0] + '-'
-#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(code_or_id='id', context=context))
-#                else:
-#                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
 
         if context.get('picking_type') == 'delivery_order' and obj.partner_id2 and not context.get('allow_copy', False):
             # UF-2539: do not allow to duplicate (validated by Skype 03/12/2014)
@@ -2120,7 +1849,6 @@ class stock_picking(osv.osv):
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
         default.update(in_ref=False)
-        # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         # US-779: Reset the ref to rw document
         default.update(rw_sdref_counterpart=False)
 
@@ -2131,14 +1859,6 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self).copy_data(cr, uid, copy_id, default=default, context=context)
 
         return result
-
-    def _erase_prodlot_hook(self, cr, uid, pick_id, context=None, *args, **kwargs):
-        '''
-        hook to keep the production lot when a stock move is copied
-        '''
-        res = super(stock_picking, self)._erase_prodlot_hook(cr, uid, pick_id, context=context, *args, **kwargs)
-
-        return res and not context.get('keep_prodlot', False)
 
     def has_picking_ticket_in_progress(self, cr, uid, ids, context=None):
         '''
@@ -2436,59 +2156,56 @@ class stock_picking(osv.osv):
 
         return res
 
-    _columns = {'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
-                'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
-                'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
-                'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
-                'shipment_id': fields.many2one('shipment', string='Shipment'),
-                'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
-                'first_shipment_packing_id': fields.many2one('stock.picking', 'Shipment First Step'),
-                # 'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
-                # attributes for specific packing labels
-                'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
-                # warehouse info (locations) are gathered from here - allow shipment process without sale order
-                'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True,),
-                # flag for converted picking
-                'converted_to_standard': fields.boolean(string='Converted to Standard'),
-                # functions
-                'num_of_packs': fields.function(_vals_get, method=True,
-                                                type='integer', string='#Packs', multi='get_vals_integer'),
-                'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
-                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'currency_id': fields.function(_get_currency, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
-                'is_dangerous_good': fields.function(_is_one_of_the_move_lines, method=True,
-                                                     type='char', size=8, string='Dangerous Good'),
-                'is_keep_cool': fields.function(_is_one_of_the_move_lines, method=True,
-                                                type='char', size=8, string='Keep Cool'),
-                'is_narcotic': fields.function(_is_one_of_the_move_lines, method=True,
-                                               type='char', size=8, string='CS'),
-                'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
-                                               store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
-                'line_state': fields.function(_get_lines_state, method=True, type='selection',
-                                              selection=[('confirmed', 'Not available'),
-                                                         ('assigned', 'Available'),
-                                                         ('empty', 'Empty'),
-                                                         ('processed', 'Processed'),
-                                                         ('mixed', 'Partially available')], string='Lines state',
-                                              store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
-                                                     'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
-                # 'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
-                'pack_family_memory_ids': fields.one2many('pack.family.memory', 'ppl_id', string='Memory Families'),
-                'description_ppl': fields.char('Description', size=256),
-                'already_shipped': fields.boolean(string='The shipment is done'),  # UF-1617: only for indicating the PPL that the relevant Ship has been closed
-                'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
-                'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
-                'in_ref': fields.char(string='IN Reference', size=1024),
-                'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
-                'requestor': fields.char(size=128, string='Requestor'),
-                }
+    _columns = {
+        'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
+        'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
+        'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
+        'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
+        'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
+        'shipment_id': fields.many2one('shipment', string='Shipment'),
+        'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
+        # attributes for specific packing labels
+        'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
+        # warehouse info (locations) are gathered from here - allow shipment process without sale order
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True,),
+        # flag for converted picking
+        'converted_to_standard': fields.boolean(string='Converted to Standard'),
+        # functions
+        'num_of_packs': fields.function(_vals_get, method=True,
+                                        type='integer', string='#Packs', multi='get_vals_integer'),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
+        'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
+        'currency_id': fields.function(_get_currency, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
+        'is_dangerous_good': fields.function(_is_one_of_the_move_lines, method=True,
+                                             type='char', size=8, string='Dangerous Good'),
+        'is_keep_cool': fields.function(_is_one_of_the_move_lines, method=True,
+                                        type='char', size=8, string='Keep Cool'),
+        'is_narcotic': fields.function(_is_one_of_the_move_lines, method=True,
+                                       type='char', size=8, string='CS'),
+        'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
+                                       store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
+        'line_state': fields.function(_get_lines_state, method=True, type='selection',
+                                      selection=[('confirmed', 'Not available'),
+                                                 ('assigned', 'Available'),
+                                                 ('empty', 'Empty'),
+                                                 ('processed', 'Processed'),
+                                                 ('mixed', 'Partially available')], string='Lines state',
+                                      store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
+                                             'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
+        'pack_family_memory_ids': fields.one2many('pack.family.memory', 'ppl_id', string='Memory Families'),
+        'description_ppl': fields.char('Description', size=256),
+        'already_shipped': fields.boolean(string='The shipment is done'),  # UF-1617: only for indicating the PPL that the relevant Ship has been closed
+        'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
+        'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
+        'in_ref': fields.char(string='IN Reference', size=1024),
+        'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
+        'requestor': fields.char(size=128, string='Requestor'),
+    }
 
     _defaults = {
         'flow_type': 'full',
         'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'), ], context=c)[0] or False,
         'subtype': 'standard',
-        'first_shipment_packing_id': False,
         'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
         'converted_to_standard': False,
         'already_shipped': False,
@@ -2668,124 +2385,6 @@ class stock_picking(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
 
-    def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, object_type='shipment', from_pack=False, to_pack=False, context=None):
-        '''
-        USED BY THE SHIPMENT PROCESS WIZARD
-        generate the data structure from the stock.picking object
-
-        we can limit the generation to certain from/to sequence
-
-        one data for each move_id - here is the difference with data generated from partial
-
-        structure:
-            {pick_id: {from_pack: {to_pack: {move_id: {data}}}}}
-
-        if the move has a quantity equal to 0, it means that no pack are available,
-        these moves are therefore not taken into account for the pack families generation
-
-        TODO: integrity constraints
-
-        Note: why the same dictionary is repeated n times for n moves, because
-        it is directly used when we create the pack families. could be refactored
-        with one dic per from/to with a 'move_ids' entry
-        '''
-        assert bool(from_pack) == bool(to_pack), 'from_pack and to_pack must be either both filled or empty'
-        result = {}
-
-
-        if object_type == 'shipment':
-            # all moves are taken into account, therefore the back moves are represented
-            # by done pack families
-            states = ('cancel')
-        elif object_type == 'memory':
-            # done moves are not displayed as pf as we cannot select these packs anymore (they are returned)
-            states = ('done')
-        else:
-            assert False, 'Should not reach this line'
-
-        for pick in self.browse(cr, uid, pick_ids, context=context):
-            result[pick.id] = {}
-            for move in pick.move_lines:
-                if not from_pack or move.from_pack == from_pack:
-                    if not to_pack or move.to_pack == to_pack:
-                        # the quantity must be positive and the state depends on the window's type
-                        if move.product_qty and move.state not in states:
-                            # subtype == ppl - called from stock picking
-                            if pick.subtype == 'ppl':
-                                result[pick.id] \
-                                    .setdefault(move.from_pack, {}) \
-                                    .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
-                                                                              'ppl_id': pick.id,  # only change between ppl - packing
-                                                                              'from_pack': move.from_pack,
-                                                                              'to_pack': move.to_pack,
-                                                                              'pack_type': move.pack_type.id,
-                                                                              'length': move.length,
-                                                                              'width': move.width,
-                                                                              'height': move.height,
-                                                                              'weight': move.weight,
-                                                                              'draft_packing_id': pick.id,
-                                                                              'description_ppl': pick.description_ppl,
-                                                                              }
-                            # subtype == packing - caled from shipment
-                            elif pick.subtype == 'packing':
-                                result[pick.id] \
-                                    .setdefault(move.from_pack, {}) \
-                                    .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
-                                                                              'ppl_id': pick.previous_step_id.id,
-                                                                              'from_pack': move.from_pack,
-                                                                              'to_pack': move.to_pack,
-                                                                              'pack_type': move.pack_type.id,
-                                                                              'length': move.length,
-                                                                              'width': move.width,
-                                                                              'height': move.height,
-                                                                              'weight': move.weight,
-                                                                              'draft_packing_id': pick.id,
-                                                                              }
-
-                                if object_type != 'memory':
-                                    result[pick.id][move.from_pack][move.to_pack][move.id]['description_ppl'] = pick.description_ppl
-
-        return result
-
-    def create_pack_families_memory_from_data(self, cr, uid, data, shipment_id, context=None,):
-        '''
-        **DEPECRATED**
-        - clear existing pack family memory objects is not necessary thanks to vaccum system
-        -> in fact cleaning old memory objects reslults in a bug, because when we click on a
-           pf memory to see it's form view, the shipment view is regenerated (delete the pf)
-           but then the form view uses the old pf memory id for data and it crashes. Cleaning
-           of previous pf memory has therefore been removed.
-        - generate new ones based on data
-        - return created ids
-        '''
-        pf_memory_obj = self.pool.get('pack.family.memory')
-        # find and delete existing objects
-        # ids = pf_memory_obj.search(cr, uid, [('shipment_id', '=', shipment_id),], context=context)
-        # pf_memory_obj.unlink(cr, uid, ids, context=context)
-        created_ids = []
-        # create pack family memory
-        for picking in data.values():
-            for from_pack in picking.values():
-                for to_pack in from_pack.values():
-                    for move_id in to_pack.keys():
-                        move_data = to_pack[move_id]
-                    # create corresponding memory object
-                    move_data.update(name='_name',
-                                     shipment_id=shipment_id,)
-                    pf_id = pf_memory_obj.create(cr, uid, move_data, context=context)
-                    created_ids.append(pf_id)
-        return created_ids
-
-    def get_current_pick_sequence_for_rw(self, cr, uid, picking_type, context=None):
-        cr.execute('SELECT id FROM ir_sequence WHERE code=%s and active=true ORDER BY id', (picking_type,))
-        res = cr.dictfetchone()
-        if res and res['id']:
-            cr.execute("SELECT last_value from ir_sequence_%03d" % res['id'])  # not_a_user_entry
-            res = cr.dictfetchone()
-            if res and res['last_value']:
-                return res['last_value']
-        return False
-
     def get_packing_list_label(self, cr, uid, context=None):
         try:
             return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'default_label_packing_list')[1]
@@ -2806,10 +2405,7 @@ class stock_picking(osv.osv):
          - creation of corresponding shipment
         '''
         # Objects
-        ship_proc_obj = self.pool.get('shipment.processor')
         sale_order_obj = self.pool.get('sale.order')
-        # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
-        usb_entity = self._get_usb_entity_type(cr, uid, context)
 
         # For picking ticket from scratch, invoice it !
         if not vals.get('sale_id') and not vals.get('purchase_id') and not vals.get('invoice_state') and 'type' in vals and vals['type'] == 'out':
@@ -2836,10 +2432,6 @@ class stock_picking(osv.osv):
         else:  # if it is a CONSO-OUT --_> set the state for replicating back to CP
             if 'name' in vals and 'OUT-CONSO' in vals['name']:
                 vals.update(already_replicated=False,)
-            # UF-2531: When the INT from scratch created in RW, just set it for sync to CP
-            if usb_entity == self.REMOTE_WAREHOUSE and (('type' in vals and vals['type'] == 'internal') or
-                                                        ('origin' not in vals or vals['origin'] == False)):  # US-702 Sync also the OUT from scratch in RW
-                vals.update(already_replicated=False,)
 
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
@@ -2857,10 +2449,7 @@ class stock_picking(osv.osv):
                         name=pick_name,
                         flow_type='full',
                         )
-        # shipment object
         shipment_obj = self.pool.get('shipment')
-        # move object
-        move_obj = self.pool.get('stock.move')
 
         # sequence creation
         # if draft picking
@@ -2890,27 +2479,6 @@ class stock_picking(osv.osv):
 
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
-        if not context.get('sync_message_execution', False) and usb_entity == self.CENTRAL_PLATFORM:
-            # read the new object
-            new_packing = self.browse(cr, uid, new_packing_id, context=context)
-            if new_packing and ((new_packing.type == 'out' and new_packing.subtype == 'picking' and new_packing.name.find('-') == -1) or
-                                (new_packing.type == 'in' and new_packing.subtype == 'standard') or
-                                (new_packing.type == 'internal' and new_packing.subtype == 'standard' and new_packing.sale_id)):
-                for_update = {'already_replicated': False}
-
-                '''
-                    Only get the current sequence for the IN object at the moment, as we still have problem with the naming of documents functionally
-                    A proper functional solution for this should be found, then we will look for technical solution to apply for all cases!
-
-                    Please refer to the code and explanation in sync_so/in_rw.py, method usb_replicate_in(), line 90 for further information on this issue
-
-                '''
-#                if new_packing.type in ('in', 'internal'):
-#                    seq_obj_name =  'stock.picking.' + vals['type']
-#                    sequence_id = self.get_current_pick_sequence_for_rw(cr, uid, seq_obj_name, context)
-#                    if sequence_id:
-#                        for_update['rw_force_seq'] = sequence_id
-                self.write(cr, uid, [new_packing_id], for_update, context=context)
 
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing
@@ -2923,96 +2491,11 @@ class stock_picking(osv.osv):
                 # TODO
                 return new_packing_id
 
-            if vals['backorder_id'] and not vals['shipment_id']:
-                if not context.get('shipment_proc_id', False):
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Missing the ID of the shipment processor in the context'),
-                    )
-                if not context.get('shipment_id', False):
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Missing the ID of the shipment in the context'),
-                    )
-
-                if not context.get('draft_packing_id', False):
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Missing the ID of the draft packing in the context'),
-                    )
-
-                ship_proc = ship_proc_obj.browse(cr, uid, context['shipment_proc_id'], context=context)
-                shipment_id = context['shipment_id']
-                draft_packing_id = context['draft_packing_id']
-
-                for family in ship_proc.family_ids:
-                    if family.draft_packing_id.id != draft_packing_id or family.selected_number == 0.00:
-                        continue
-
-                    selected_from_pack = family.to_pack - family.selected_number + 1
-
-                    if family.selected_number == int(family.num_of_packs):
-                        initial_from_pack = 0
-                        initial_to_pack = 0
-                    else:
-                        initial_from_pack = family.from_pack
-                        initial_to_pack = family.to_pack - family.selected_number
-
-                    # find the corresponding moves
-                    moves_ids = move_obj.search(cr, uid, [
-                        ('picking_id', '=', family.draft_packing_id.id),
-                        ('from_pack', '=', family.from_pack),
-                        ('to_pack', '=', family.to_pack),
-                        ('state', '!=', 'done'),
-                    ], context=context)
-
-                    # For corresponding moves
-                    for move in move_obj.browse(cr, uid, moves_ids, context=context):
-                        # We compute the selected quantity
-                        selected_qty = move.qty_per_pack * family.selected_number
-
-                        move_vals = {
-                            'picking_id': new_packing_id,
-                            'line_number': move.line_number,
-                            'product_qty': selected_qty,
-                            'from_pack': selected_from_pack,
-                            'to_pack': family.to_pack,
-                            'backmove_packing_id': move.id,
-                        }
-
-                        move_obj.copy(cr, uid, move.id, move_vals, context=context)
-
-                        # Update corresponding initial move
-                        initial_qty = max(move.product_qty - selected_qty, 0)
-
-
-                        # if all packs have been selected, from/to have been set to 0
-                        # update the original move object - the corresponding original shipment (draft)
-                        # is automatically updated generically in the write method
-                        move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty,
-                                                            'from_pack': initial_from_pack,
-                                                            'to_pack': initial_to_pack}, context=context)
 
             if not vals['backorder_id']:
                 # creation of packing after ppl validation
                 # find an existing shipment or create one - depends on new pick state
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])], context=context)
-
-                # UF-2427: If the shipment came from USB sync, and if it is shipped in different ship name, then do not merge them!
-                if shipment_ids and shipment_ids[0]:
-                    if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False) and usb_entity == self.CENTRAL_PLATFORM:
-                        new_name = context.get('rw_shipment_name')
-                        names = shipment_obj.read(cr, uid, shipment_ids, ['name'], context=context)
-                        found = False
-                        for n in names:
-                            if new_name == n['name']:
-                                # this shipment becomes the one for processing
-                                shipment_ids = [n['id']]
-                                found = True
-                                break
-                        if not found:  # If the name is new, then create a new Shipment
-                            shipment_ids = []
-
                 # only one 'draft' shipment should be available
                 if len(shipment_ids) > 1:
                     other = shipment_obj.read(cr, uid, shipment_ids, ['name'], context=context)
@@ -3060,7 +2543,7 @@ class stock_picking(osv.osv):
                         shipment_id = vals['shipment_id']
                 else:
                     shipment_id = shipment_ids[0]
-                    shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
+                    shipment = shipment_obj.browse(cr, uid, shipment_id, fields_to_fetch=['shipment_expected_date', 'name'], context=context)
                     # if expected ship date of shipment is greater than rts, update shipment_expected_date and shipment_actual_date
                     if shipment.shipment_expected_date:
                         shipment_expected = datetime.strptime(shipment.shipment_expected_date, db_datetime_format)
@@ -3069,28 +2552,10 @@ class stock_picking(osv.osv):
                     shipment_name = shipment.name
                     shipment_obj.log(cr, uid, shipment_id, _('The PPL has been added to the existing Draft Shipment %s.') % (shipment_name,))
 
-            # update the new pick with shipment_id
-            self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
+                # update the new pick with shipment_id
+                self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
 
         return new_packing_id
-
-    def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        stock>stock.py>log_picking
-        update the message to be displayed by the function
-        '''
-        pick = kwargs['pick']
-        message = kwargs['message']
-        # if the picking is converted to standard, and state is confirmed
-        if pick.converted_to_standard and pick.state == 'confirmed':
-            return 'The Preparation Picking has been converted to simple Out. ' + message
-        if pick.type == 'out' and pick.subtype == 'picking':
-            kwargs['message'] = message.replace('Delivery Order', 'Picking Ticket')
-        elif pick.type == 'out' and pick.subtype == 'packing':
-            kwargs['message'] = message.replace('Delivery Order', 'Packing List')
-        elif pick.type == 'out' and pick.subtype == 'ppl':
-            kwargs['message'] = message.replace('Delivery Order', 'Pre-Packing List')
-        return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
 
     def _get_keep_move(self, cr, uid, ids, context=None):
         '''
@@ -3147,8 +2612,6 @@ class stock_picking(osv.osv):
                     _('Error'),
                     _('The convert function should only be called on draft picking ticket objects'),
                 )
-#            if self.has_picking_ticket_in_progress(cr, uid, [obj.id], context=context)[obj.id]:
-#                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try again.'))
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
@@ -3304,12 +2767,6 @@ class stock_picking(osv.osv):
                 # Add an empty write to display the 'Process' button on OUT
                 self.write(cr, uid, [new_pick_id or obj.id], {'state': 'assigned'}, context=context)
 
-            # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
-            if not context.get('sync_message_execution', False):
-                # UF-2531: Added this name into the context for keeping the original name of the PICK when making the convert to OUT
-                context.update({'original_name': obj.name})
-                self._hook_create_rw_out_sync_messages(cr, uid, [new_pick_id or obj.id], context, True)
-
             self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been converted to simple Out id:%s (%s)." % (
                 obj.id, obj.name,
                 new_pick_id or obj.id, new_name,
@@ -3434,11 +2891,6 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
-        usb_entity = self._get_usb_entity_type(cr, uid)
-
-        # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
-        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self._manual_create_rw_messages(cr, uid, context=context)
 
         res = {}
 
@@ -3551,7 +3003,6 @@ class stock_picking(osv.osv):
                     break
 
             rw_full_process = context.get('rw_full_process', False)
-            to_be_replicated = True
             if rw_full_process:
                 del context['rw_full_process']
             if need_new_picking and not rw_full_process:
@@ -3563,10 +3014,6 @@ class stock_picking(osv.osv):
                 context['allow_copy'] = True
 
                 new_picking_id = picking_obj.copy(cr, uid, picking.id, cp_vals, context=context)
-                # US-327: if it's an internal picking and in partial process, then set the already_replicated to True, so no replicate needed
-                if picking.type == 'internal' and (usb_entity == self.REMOTE_WAREHOUSE or context.get('sync_message_execution', False)):
-                    to_be_replicated = False
-                    self.write(cr, uid, [new_picking_id], {'already_replicated': True}, context=context)
 
                 context['allow_copy'] = False
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
@@ -3584,8 +3031,6 @@ class stock_picking(osv.osv):
 
                 if picking.type == 'internal':
                     update_vals.update({'associate_pick_name': picking.name})
-                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False) and to_be_replicated:
-                    update_vals.update({'already_replicated': False})
 
                 if len(update_vals) > 0:
                     self.write(cr, uid, [new_picking_id], update_vals, context=context)
@@ -3638,8 +3083,6 @@ class stock_picking(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
                     pick_to_check = picking.id
-                    if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-                        update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
 
                 # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
@@ -3669,77 +3112,32 @@ class stock_picking(osv.osv):
             if picking.type == 'out' and picking.sale_id and picking.sale_id.procurement_request:
                 wf_service.trg_write(uid, 'sale.order', picking.sale_id.id, cr)
 
-        # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
-        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self._manual_create_rw_messages(cr, uid, context=context)
         return res
 
-    @check_cp_rw
-    def create_picking(self, cr, uid, ids, context=None):
-        '''
-        Open the wizard to create (partial) picking tickets
-        '''
-        # Objects
-        proc_obj = self.pool.get('create.picking.processor')
+    def do_create_picking(self, cr, uid, ids, context=None, only_pack_ids=False):
+        """
+            from draft picking ticket create a sub-picking
+            it will process all available stock.move with a qty in qty_to_process
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
+            only_pack_ids : used for import from IN to P/P/S, then it will process only these moves
+        """
 
-        data = self.read(cr, uid, ids[0], ['state', 'type', 'subtype', 'name'], context=context)
-        if data['type'] != 'out' or data['subtype'] != 'picking':
-            raise osv.except_osv(
-                _('Error'),
-                _('%s is not a main-pick !') % (data['name'])
-            )
-        if data['state'] != 'draft':
-            raise osv.except_osv(
-                _('Error'),
-                _('The picking ticket is not in \'Draft\' state. Please check this and re-try')
-            )
-
-        # if wizard already exists, then open it (able save as draft/reset functionnality):
-        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
-        if wiz_ids:
-            processor_id = wiz_ids[0]
-        else:
-            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-            proc_obj.create_lines(cr, uid, processor_id, context=context)
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': proc_obj._name,
-            'res_id': processor_id,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': context,
-        }
-
-    def do_create_picking(self, cr, uid, wizard_ids, context=None):
-        '''
-        Create the picking ticket from selected stock moves
-
-        BE CAREFUL: the wizard_ids parameters is the IDs of the ppl.processor objects,
-        not those of stock.picking objects
-        '''
         # Objects
         move_obj = self.pool.get('stock.move')
 
         if context is None:
             context = {}
 
-        if isinstance(wizard_ids, (int, long)):
-            wizard_ids = [wizard_ids]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        if not wizard_ids:
+        if not ids:
             raise osv.except_osv(
                 _('Processing Error'),
                 _('No data to process !')
             )
 
-        for picking in self.browse(cr, uid, wizard_ids, context=context):
+        for picking in self.browse(cr, uid, ids, context=context):
 
             self.check_integrity(cr, uid, picking.id, context)
 
@@ -3767,10 +3165,16 @@ class stock_picking(osv.osv):
             else:
                 context['allow_copy'] = tmp_allow_copy
 
+            if only_pack_ids:
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('pack_info_id', 'in', only_pack_ids)], context=context)
+                move_to_process = move_obj.browse(cr, uid, move_ids, context=context)
+            else:
+                move_to_process = picking.move_lines
+
             # Create stock moves corresponding to processing lines
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
-            for line in picking.move_lines:
+            for line in move_to_process:
                 if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
                     continue
 
@@ -4025,7 +3429,19 @@ class stock_picking(osv.osv):
                         'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id,
                         'date': today,
                         'date_expected': today,
+                        'from_pack': 1,
+                        'to_pack': 1,
                     })
+                    if line.pack_info_id:
+                        values.update({
+                            'from_pack': line.pack_info_id.parcel_from,
+                            'to_pack': line.pack_info_id.parcel_to,
+                            'length': line.pack_info_id.total_length,
+                            'width': line.pack_info_id.total_width,
+                            'height': line.pack_info_id.total_height,
+                            'weight': line.pack_info_id.total_weight,
+                        })
+
                     context.update({
                         'keepLineNumber': True,
                         'non_stock_noupdate': True,
@@ -4062,8 +3478,6 @@ class stock_picking(osv.osv):
 
         """
         # Objects
-        proc_obj = self.pool.get('ppl.processor')
-
         if context is None:
             context = {}
 
@@ -4076,139 +3490,121 @@ class stock_picking(osv.osv):
                 _('No data to process !'),
             )
 
-        wizard_id = self.ppl(cr, uid, ids, context=context)['res_id']
-        proc_obj.do_ppl_step1(cr, uid, wizard_id, context=context)
-        return proc_obj.do_ppl_step2(cr, uid, wizard_id, context=context)
+        return self.ppl_step2(cr, uid, ids, context=context)
 
-    @check_cp_rw
-    def ppl(self, cr, uid, ids, context=None):
-        """
-        Open the wizard to process the step 1 of the PPL
-        """
-        # Objects
-        proc_obj = self.pool.get('ppl.processor')
-        data_obj = self.pool.get('ir.model.data')
+    def check_ppl_integrity(self, cr, uid, ids, context=None):
+
+        move_obj = self.pool.get('stock.move')
+        for picking_id in ids:
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id), ('state', '=', 'assigned')], context=context)
+            sequences = []
+            move_obj.write(cr, uid, move_ids, {'integrity_error': 'empty'}, context=context)
+            for line in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['from_pack', 'to_pack'], context=context):
+                sequences.append((line.from_pack, line.to_pack, line.id))
+            if sequences:
+                self.pool.get('ppl.processor').check_sequences(cr, uid, sequences, move_obj, 'integrity_error', context=context)
+
+        return True
+
+    def ppl_step2(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.check_ppl_integrity(cr, uid, [ids[0]], context=context)
+        issue_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ids[0]), ('integrity_error', '!=', 'empty')], context=context)
+        if issue_ids:
+            cr.commit()
+            move = self.pool.get('stock.move').browse(cr, uid, issue_ids, fields_to_fetch=['line_number'], context=context)
+            raise osv.except_osv(
+                _('Error'),
+                _('The pre-packing list has pack integrity issues, please check lines:\n - %s') % ("\n -".join(['#%d'%x.line_number for x in move]))
+            )
+
+        ppl_processor = self.pool.get('ppl.processor')
+        picking = self.browse(cr, uid, ids[0], context=context)
+        rounding_issues = []
+        for move in picking.move_lines:
+            if not ppl_processor._check_rounding(cr, uid, move.product_uom, move.num_of_packs, move.product_qty, context=context):
+                rounding_issues.append(move.line_number)
+
+        if rounding_issues:
+            rounding_issues.sort()
+            wiz_check_ppl_id = self.pool.get('check.ppl.integrity').create(cr, uid, {
+                'picking_id': ids[0],
+                'line_number_with_issue': ', '.join([str(x) for x in rounding_issues]),
+            }, context=context)
+            return {
+                'name': _("PPL integrity"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'check.ppl.integrity',
+                'target': 'new',
+                'res_id': [wiz_check_ppl_id],
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+            }
+
+
+        return self.ppl_step2_run_wiz(cr, uid, ids, context)
+
+    def ppl_step2_run_wiz(self, cr, uid, ids, context=None):
+
+        family_obj = self.pool.get('ppl.family.processor')
+        ppl_processor = self.pool.get('ppl.processor')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        data = self.read(cr, uid, ids[0], ['state', 'name', 'type', 'subtype'], context=context)
-
-        if data['type'] != 'out' or data['subtype'] != 'ppl':
-            raise osv.except_osv(
-                _('Error'),
-                _('The object %s is not a pre-packing list. Please check this and re-try.') % (data['name'])
-            )
-
-        if data['state'] != 'assigned':
-            raise osv.except_osv(
-                _('Error'),
-                _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
-            )
-
-        # search for an existing shipment saved as draft ... :
-        wiz_ids = self.pool.get('ppl.processor').search(cr, uid, [('picking_id', 'in', ids), ('draft_step1', '=', True)], context=context)
-        if wiz_ids:
-            processor_id = wiz_ids[0]
-        else:
-            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-            proc_obj.create_lines(cr, uid, processor_id, context=context)
-
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
-
-        return {
-            'name': _('PPL Information - step 1'),
-            'type': 'ir.actions.act_window',
-            'res_model': proc_obj._name,
-            'res_id': processor_id,
-            'view_id': [view_id],
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-        }
-
-    def do_ppl_step1(self, cr, uid, wizard_ids, context=None):
-        """
-        Open the wizard to process the step 2 of the PPL
-
-        BE CAREFUL: the wizard_ids parameters is the IDs of the ppl.processor objects,
-        not those of stock.picking objects
-        """
-        # Objects
-        proc_obj = self.pool.get('ppl.processor')
-        proc_line_obj = self.pool.get('ppl.move.processor')
-        family_obj = self.pool.get('ppl.family.processor')
-
-        if isinstance(wizard_ids, (int, long)):
-            wizard_ids = [wizard_ids]
-
-        if not wizard_ids:
+        if not ids:
             raise osv.except_osv(
                 _('Processing Error'),
                 _('No data to process !'),
             )
 
-        # Create the different pack families according to values in stock moves
-        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
-            if wizard.picking_id.state != 'assigned':
-                raise osv.except_osv(
-                    _('Error'),
-                    _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
-                )
+        picking = self.browse(cr, uid, ids[0], context=context)
+        if picking.state != 'assigned':
+            raise osv.except_osv(
+                _('Error'),
+                _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
+            )
 
-            if wizard.draft_step2:
-                continue
-            else:
-                fam_ids = self.pool.get('ppl.family.processor').search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
-                self.pool.get('ppl.family.processor').unlink(cr, uid, fam_ids, context=context)
+        # TODO : refresh saved as draft
+        existing = ppl_processor.search(cr, uid, [('picking_id', '=', ids[0]), ('draft_step2', '=', True)], context=context)
+        if existing:
+            wizard_id = existing[0]
+        else:
+            wizard_id = ppl_processor.create(cr, uid, {'picking_id': ids[0]}, context=context)
+
+
+            # TODO if wizard.draft_step2:
 
             families_data = {}
 
-            for line in wizard.move_ids:
+            for line in picking.move_lines:
                 key = 'f%st%s' % (line.from_pack, line.to_pack)
                 families_data.setdefault(key, {
-                    'wizard_id': wizard.id,
-                    'move_ids': [],
+                    'wizard_id': wizard_id,
+                    'move_ids': [(6, 0, [])],
                     'from_pack': line.from_pack,
                     'to_pack': line.to_pack,
-                    'pack_type': line.move_id.pack_type.id,
-                    'length': line.move_id.length,
-                    'width': line.move_id.width,
-                    'height': line.move_id.height,
-                    'weight': line.move_id.weight,
+                    'pack_type': line.pack_type.id,
+                    'length': line.length,
+                    'width': line.width,
+                    'height': line.height,
+                    'weight': line.weight,
                 })
 
-                families_data[key]['move_ids'].append(line.id)
+                families_data[key]['move_ids'][0][2].append(line.id)
 
             for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
-                move_ids = family_data.get('move_ids', [])
-                if 'move_ids' in family_data:
-                    del family_data['move_ids']
+                family_obj.create(cr, uid, family_data)
 
-                fam_id = family_obj.create(cr, uid, family_data)
-                if move_ids:
-                    proc_line_obj.write(cr, uid, move_ids, {'pack_id': fam_id}, context=context)
 
-        return self.ppl_step2(cr, uid, wizard_ids, context)
-
-    def ppl_step2(self, cr, uid, wizard_ids, context=None):
-        """
-        Open the wizard of the second step of PPL processing
-
-        BE CAREFUL: the wizard_ids parameters is the IDs of the ppl.processor objects,
-        not those of stock.picking objects
-        """
-        # Objects
-        proc_obj = self.pool.get('ppl.processor')
-        data_obj = self.pool.get('ir.model.data')
-
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step2_form_view')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step2_form_view')[1]
 
         return {
-            'name': _('PPL Information - step 2'),
             'type': 'ir.actions.act_window',
-            'res_model': proc_obj._name,
-            'res_id': wizard_ids[0],
+            'res_model': 'ppl.processor',
+            'res_id': wizard_id,
             'view_id': [view_id],
             'view_type': 'form',
             'view_mode': 'form',
@@ -4226,10 +3622,8 @@ class stock_picking(osv.osv):
         # Objects
         proc_obj = self.pool.get('ppl.processor')
         move_obj = self.pool.get('stock.move')
-        uom_obj = self.pool.get('product.uom')
         wf_service = netsvc.LocalService("workflow")
 
-        usb_entity = self._get_usb_entity_type(cr, uid)
         date_tools = self.pool.get('date.tools')
         db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
         today = time.strftime(db_datetime_format)
@@ -4257,8 +3651,6 @@ class stock_picking(osv.osv):
                     _('Error'),
                     _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
                 )
-
-            moves_data = {}
 
             # Create the new packing
             # Copy to 'packing' stock.picking
@@ -4305,95 +3697,49 @@ class stock_picking(osv.osv):
 
             # Create the stock moves in the packing
             for family in wizard.family_ids:
-                for line in family.move_ids:
-                    move_to_copy = line.move_id.id
-
-                    if line.uom_id.id != line.move_id.product_uom.id:
-                        processed_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.move_id.product_uom.id)
-                    else:
-                        processed_qty = line.quantity
-
+                move_to_write = [x.id for x in family.move_ids]
+                if move_to_write:
                     values = {
-                        'product_qty': line.quantity,
                         'from_pack': family.from_pack,
                         'to_pack': family.to_pack,
+                        'selected_number': family.to_pack - family.from_pack + 1,
                         'pack_type': family.pack_type and family.pack_type.id or False,
                         'length': family.length,
                         'width': family.width,
                         'height': family.height,
                         'weight': family.weight,
+                        'volume_set': family.length * family.height * family.width > 0,
+                        'weight_set': family.weight > 0,
                     }
+                    move_obj.write(cr, uid, move_to_write, values, context=context)
 
-                    if line.move_id.id not in moves_data:
-                        moves_data.setdefault(line.move_id.id, {
-                            'line_number': line.move_id.line_number,
-                            'initial_qty': line.move_id.product_qty,
-                            'processed_qty': processed_qty,
-                        })
-                        move_obj.write(cr, uid, [line.move_id.id], values, context=context)
 
-                    else:
-                        # If already updated, we create a new stock move
-                        moves_data[line.move_id.id]['processed_qty'] += processed_qty
-                        # Force state to 'assigned'
-                        values['state'] = 'assigned'
-                        # Copy stock move
-                        context.update({
-                            'keepLineNumber': True,
-                            'non_stock_noupdate': True,
-                        })
-                        move_to_copy = move_obj.copy(cr, uid, line.move_id.id, values, context=context)
-                        context.update({
-                            'keepLineNumber': False,
-                            'non_stock_noupdate': False,
-                        })
-
-                    # Create a move line in the Packing
-                    context.update({
-                        'keepLineNumber': True,
-                        'non_stock_noupdate': True,
-                    })
+                # Create a move line in the Packing
+                context.update({
+                    'keepLineNumber': True,
+                    'non_stock_noupdate': True,
+                })
+                for move_to_copy in move_to_write:
                     move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
-                    context.update({
-                        'keepLineNumber': False,
-                        'non_stock_noupdate': False,
-                    })
+                context.update({
+                    'keepLineNumber': False,
+                    'non_stock_noupdate': False,
+                })
 
-            # Check quantities integrity status
-            for m_data in moves_data.values():
-                if m_data['initial_qty'] != m_data['processed_qty']:
-                    raise osv.except_osv(
-                        _('Processing Error'),
-                        _('Line %(line_number)s: The sum of processed quantities %(processed_qty)s '\
-                          'is not equal to the initial quantity of the stock move %(initial_qty)s.') % m_data
-                    )
             # Trigger standard workflow on PPL
             self.action_move(cr, uid, [picking.id])
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
-        '''
-        This code can be set back to the old one, because the shipment should always be available at this stage!!!!! DUY
-        '''
         shipment_id = False
         shipment_name = False
         if new_packing_id:
-            obj = self.browse(cr, uid, new_packing_id, context)
+            obj = self.browse(cr, uid, new_packing_id, fields_to_fetch=['shipment_id', 'name'], context=context)
             if obj and obj.shipment_id and obj.shipment_id.id:
                 shipment_id = obj.shipment_id.id
                 shipment_name = obj.shipment_id.name
-
-                if context.get('rw_shipment_name', False) and context.get('sync_message_execution', False):  # RW Sync - update the shipment name same as on RW instance
-                    new_name = context.get('rw_shipment_name')
-                    if new_name != obj.shipment_id.name:
-                        del context['rw_shipment_name']
-                        self.pool.get('shipment').write(cr, uid, shipment_id, {'name': new_name}, context=context)
-                    return
             else:
                 raise Exception, "For some reason, there is no shipment created for the Packing list: " + obj.name
 
-        # UF-2531: Run the creation of message at RW at some important points
-        if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-            self._manual_create_rw_messages(cr, uid, context=context)
 
         for pid, pname in pickings.iteritems():
             self.infolog(cr, uid, "Products of Pre-Packing List id:%s (%s) have been packed in Shipment id:%s (%s)" % (
@@ -4453,8 +3799,6 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         wf_service = netsvc.LocalService("workflow")
 
-        return_info = {}
-
         if context is None:
             context = {}
 
@@ -4466,20 +3810,9 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
 
-            # get the linked "save as draft" create.picking.processor wizard if has:
-            picking_processor_wiz = []
-            if draft_picking_id:
-                picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
-                    ('picking_id', '=', draft_picking_id),
-                    ('draft', '=', True),
-                ], context=context)
-                if picking_processor_wiz:
-                    picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
-
             # get the linked "save as draft" ppl.processor wizard if has:
             ppl_processor_wiz = self.pool.get('ppl.processor').search(cr, uid, [
                 ('picking_id', '=', picking.id),
-                '|', ('draft_step1', '=', True),
                 ('draft_step2', '=', True),
             ], context=context)
             if ppl_processor_wiz:
@@ -4498,13 +3831,6 @@ class stock_picking(osv.osv):
                         _('Line %s :: The move is not \'Available\'. Check the state of the stock move and re-try.') % line.move_id.line_number,
                     )
 
-                # UF-2531: Store some important info for the return pack messages
-                return_info.setdefault(str(counter), {
-                    'name': picking.previous_step_id.backorder_id.name,
-                    'returned_quantity': return_qty,
-                    'line_number': line.line_number,
-                    'ordered_quantity': line.ordered_quantity,
-                })
                 counter = counter + 1
 
                 initial_qty = max(line.move_id.product_qty - return_qty, 0)
@@ -4546,47 +3872,6 @@ class stock_picking(osv.osv):
                 draft_move_qty += return_qty
                 move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_move_qty}, context=context)
 
-                # Update or create "save as draft" lines with returned qty:
-                if picking_processor_wiz:
-                    save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
-                        ('wizard_id', '=', picking_processor_wiz.id),
-                        ('move_id', '=', draft_move_id),
-                    ], context=context)
-                    if not save_as_draft_move:  # then create the SaD line:
-                        move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=line.move_id.backmove_id, context=context)
-                        move_data.update({'quantity': return_qty})
-                        save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
-                        save_as_draft_move = [save_as_draft_move]
-                    else:  # update Sad line
-                        for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
-                            self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
-                                'ordered_quantity': sad_move.ordered_quantity + return_qty,
-                                'quantity': sad_move.quantity + return_qty,
-                            }, context=context)
-
-                if ppl_processor_wiz:
-                    sad_move = self.pool.get('ppl.move.processor').search(cr, uid, [
-                        ('wizard_id', '=', ppl_processor_wiz.id),
-                        ('move_id', '=', line.move_id.id),
-                    ], context=context)
-                    if sad_move:
-                        if ppl_processor_wiz.draft_step1 or ppl_processor_wiz.draft_step2:
-                            remaining_qty_to_return = return_qty
-                            for sad_move in self.pool.get('ppl.move.processor').browse(cr, uid, sad_move, context=context):
-                                if remaining_qty_to_return <= 0:
-                                    break
-                                if sad_move.quantity > remaining_qty_to_return:
-                                    self.pool.get('ppl.move.processor').write(cr, uid, [sad_move.id], {
-                                        'quantity': sad_move.quantity - remaining_qty_to_return,
-                                    }, context=context)
-                                    remaining_qty_to_return = 0
-                                else: # sad_move.quantity <= remaining_qty_to_return
-                                    self.pool.get('ppl.move.processor').unlink(cr, uid, [sad_move.id], context=context)
-                                    remaining_qty_to_return -= sad_move.quantity
-
-                            if ppl_processor_wiz.draft_step2:
-                                self.pool.get('ppl.processor').write(cr, uid, [ppl_processor_wiz.id], {'draft_step2': False})
-
             if move_to_unlink:
                 context.update({'call_unlink': True})
                 move_obj.unlink(cr, uid, list(move_to_unlink), context=context)
@@ -4621,9 +3906,6 @@ class stock_picking(osv.osv):
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
         context['picking_type'] = 'picking_ticket'
-
-        # UF-2531: Create manually the message for the return pack of the ship
-        self._manual_create_rw_picking_message(cr, uid, picking.id, return_info, 'usb_picking_return_products', context=context)
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
         res['res_id'] = draft_picking_id
@@ -4690,14 +3972,6 @@ class stock_picking(osv.osv):
                 # get the draft picking
                 draft_picking_id = picking.backorder_id.id
 
-                # get the linked "save as draft" wizard if has:
-                picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
-                    ('picking_id', '=', draft_picking_id),
-                    ('draft', '=', True),
-                ], context=context)
-                if picking_processor_wiz:
-                    picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
-
                 # for each move from picking ticket - could be split moves
                 for move in picking.move_lines:
                     # find the corresponding move in draft
@@ -4707,24 +3981,6 @@ class stock_picking(osv.osv):
                         initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                         initial_qty += move.product_qty
                         move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
-
-                        # Update or create "save as draft" lines with returned qty:
-                        if picking_processor_wiz:
-                            save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
-                                ('wizard_id', '=', picking_processor_wiz.id),
-                                ('move_id', '=', draft_move.id),
-                            ], context=context)
-                            if not save_as_draft_move:  # then create the SaD line:
-                                move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=move, context=context)
-                                move_data.update({'quantity': move.product_qty})
-                                save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
-                                save_as_draft_move = [save_as_draft_move]
-                            else:  # update Sad line
-                                for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
-                                    self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
-                                        'ordered_quantity': sad_move.ordered_quantity + move.product_qty,
-                                        'quantity': sad_move.quantity + move.product_qty,
-                                    }, context=context)
 
                         # log the increase action
                         # TODO refactoring needed
@@ -4767,7 +4023,7 @@ class stock_picking(osv.osv):
     def import_pick(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        if isinstance(ids,(int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No PICK selected'))
@@ -4782,6 +4038,27 @@ class stock_picking(osv.osv):
             'view_mode': 'form',
             'target': 'new',
             'context': context,
+        }
+
+    def ppl_pack_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning'), _('Please select at least on line.'))
+
+        wiz_id = self.pool.get('ppl.set_pack_on_lines').create(cr, uid, {'picking_id': ids[0], 'from_pack': 1, 'to_pack': 1}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'ppl.set_pack_on_lines',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '190px',
+            'width': '220px',
         }
 
 
@@ -4808,16 +4085,6 @@ class wizard(osv.osv):
             assert model, 'type "create" and no model defined'
             assert step, 'type "create" and no step defined'
             vals = {}
-            # if there are already additional items on the shipment we show them in the wizard
-            if (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
-                vals['product_moves_shipment_additionalitems'] = []
-                for s in self.pool.get('shipment').read(cr, uid, ids, ['additional_items_ids']):
-                    additionalitems_ids = s['additional_items_ids']
-                    for additionalitem in self.pool.get('shipment.additionalitems').read(cr, uid, additionalitems_ids):
-                        additionalitem['additional_item_id'] = additionalitem['id']
-                        additionalitem.pop('id')
-                        additionalitem.pop('shipment_id')
-                        vals['product_moves_shipment_additionalitems'].append((0, 0, additionalitem))
 
             # create the memory object - passing the picking id to it through context
             wizard_id = self.pool.get(model).create(
@@ -5074,52 +4341,61 @@ class stock_move(osv.osv):
         picking_ids = self.pool.get('stock.picking').search(cr, uid, [('id', 'in', ids), ('shipment_id', '!=', False)], order='NO_ORDER', context=context)
         return self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', picking_ids)], order='NO_ORDER', context=context)
 
-    _columns = {'from_pack': fields.integer(string='From p.'),
-                'to_pack': fields.integer(string='To p.'),
-                'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
-                'pack_type': fields.many2one('pack.type', string='Pack Type'),
-                'length': fields.float(digits=(16, 2), string='Length [cm]'),
-                'width': fields.float(digits=(16, 2), string='Width [cm]'),
-                'height': fields.float(digits=(16, 2), string='Height [cm]'),
-                'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
-                # 'pack_family_id': fields.many2one('pack.family', string='Pack Family'),
-                'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
-                # relation to the corresponding move from draft **picking** ticket object
-                'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
-                # relation to the corresponding move from draft **packing** ticket object
-                'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
-                # functions
-                'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
-                'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
-                'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
-                'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
-                'sale_order_line_number': fields.function(_vals_get,
-                                                          method=True, type='integer', string='Sale Order Line Number',
-                                                          multi='get_vals_integer',),  # old_multi get_vals
-                'pick_shipment_id': fields.function(
-                    _get_pick_shipment_id,
-                    method=True,
-                    type='many2one',
-                    relation='shipment',
-                    string='Shipment',
-                    store={
-                        'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
-                        'stock.picking': (_get_picking, ['shipment_id'], 10),
-                    }
-    ),
+    _columns = {
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
+        'integrity_error': fields.selection(INTEGRITY_STATUS_SELECTION, 'Error', readonly=True),
+        'pack_type': fields.many2one('pack.type', string='Pack Type'),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+        'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
+        # relation to the corresponding move from draft **picking** ticket object
+        'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
+        # relation to the corresponding move from draft **packing** ticket object
+        'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
+        # functions
+        'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
+        'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
+        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+        'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+        'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
+        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+        'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
+        'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
+        'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
+        'sale_order_line_number': fields.function(_vals_get,
+                                                  method=True, type='integer', string='Sale Order Line Number',
+                                                  multi='get_vals_integer',),  # old_multi get_vals
+        'pick_shipment_id': fields.function(
+            _get_pick_shipment_id,
+            method=True,
+            type='many2one',
+            relation='shipment',
+            string='Shipment',
+            store={
+                'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
+                'stock.picking': (_get_picking, ['shipment_id'], 10),
+            }
+        ),
         # Fields used for domain
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
         'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
         'pt_created': fields.boolean(string='PT created'),
         'not_shipped': fields.boolean(string='Not shipped'),
-
         'old_out_location_dest_id': fields.many2one('stock.location', string='Old OUT dest location', help='Usefull in case of OUT converted to PICK and converted back to OUT'),
+        'ppl_wizard_id': fields.many2one('ppl.family.processor', 'PPL processor', ondelete='set null', readonly=1, internal=1),
+        'selected_number': fields.integer('Nb. Parcels to Ship'),
+        'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
+        'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
+    }
+
+
+    _defaults = {
+        'integrity_error': 'empty',
     }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
@@ -5129,8 +4405,10 @@ class stock_move(osv.osv):
         if values is None:
             values = {}
 
-        if not 'pt_created' in values:
+        if 'pt_created' not in values:
             values['pt_created'] = False
+        if 'integrity_error' not in values:
+            values['integrity_error'] = 'empty'
 
         return super(stock_move, self).copy(cr, uid, copy_id, values, context=context)
 
@@ -5302,6 +4580,12 @@ class stock_move(osv.osv):
         return True
 
 
+    def change_from_to_pack(self, cr, uid, from_p, to_p, context=None):
+        ret = {
+            'value': {'integrity_error': 'empty'}
+        }
+
+        return ret
 stock_move()
 
 
@@ -5323,6 +4607,8 @@ class pack_family_memory(osv.osv):
                 array_agg(m.id) as move_lines,
                 min(from_pack) as from_pack,
                 min(packing_list) as packing_list,
+                bool_and(m.volume_set) as volume_set,
+                bool_and(m.weight_set) as weight_set,
                 case when to_pack=0 then 0 else to_pack-min(from_pack)+1 end as num_of_packs,
                 p.sale_id as sale_order_id,
                 case when p.subtype = 'ppl' then p.id else p.previous_step_id end as ppl_id,
@@ -5334,13 +4620,16 @@ class pack_family_memory(osv.osv):
                 min(m.location_id) as location_id,
                 min(m.location_dest_id) as location_dest_id,
                 min(m.pack_type) as pack_type,
+                min(m.selected_number) as selected_number,
                 p.id as draft_packing_id,
                 p.description_ppl as description_ppl,
                 '_name'::varchar(5) as name,
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
                 bool_and(m.not_shipped) as not_shipped,
-                ''::varchar(1) as comment
+                ''::varchar(1) as comment,
+                p.flow_type = 'quick' as quick_flow,
+                p.state as pack_state
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
@@ -5350,30 +4639,6 @@ class pack_family_memory(osv.osv):
             group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
     )
     ''')
-
-    def change_description(self, cr, uid, ids, context=None):
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        mod_obj = self.pool.get('ir.model.data')
-        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing',
-                                           'view_change_desc_wizard')
-        pack_obj = self.read(cr, uid, ids, ['draft_packing_id'], context=context)
-        for pack in pack_obj:
-            res_id = pack['draft_packing_id'][0]
-            return {
-                'name': 'Change description',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'view_id': [res and res[1] or False],
-                'res_model': 'stock.picking',
-                'context': "{}",
-                'type': 'ir.actions.act_window',
-                'target': 'new',
-                'res_id': res_id or False,
-            }
-        return {}
 
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -5433,23 +4698,89 @@ class pack_family_memory(osv.osv):
             ('ship_return', 'Returned from Shipment'),
             ('cancel', 'Cancelled'),
             ('done', 'Closed'), ], string='State'),
+        'pack_state': fields.char('Pack State', size=64),
         'location_id': fields.many2one('stock.location', string='Src Loc.'),
         'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
         'total_amount': fields.float('Total Amount'),
         'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
         'currency_id': fields.many2one('res.currency', string='Currency'),
-        'num_of_packs': fields.integer('#Packs'),
+        'num_of_packs': fields.integer('Nb. Parcels'),
+        'selected_number': fields.integer('Nb. Parcels to Ship'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'description_ppl': fields.char('Description', size=256),
         'not_shipped': fields.boolean(string='Not shipped'),
-        'comment': fields.char(string='Comment', size=1024)
+        'comment': fields.char(string='Comment', size=1024),
+        'volume_set': fields.boolean('Volume set at PPL'),
+        'weight_set': fields.boolean('Weight set at PPL'),
+        'quick_flow': fields.boolean('From quick flow'),
     }
 
     _defaults = {
         'shipment_id': False,
         'draft_packing_id': False,
     }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        sql_data = {
+            'ids': tuple(ids),
+        }
+
+        fields = []
+        to_pack_field = 'to_pack'
+        if 'to_pack' in vals:
+            sql_data['to_pack'] = vals['to_pack'] or 1
+            fields.append('to_pack=%(to_pack)s')
+            to_pack_field = sql_data['to_pack']
+
+        if 'selected_number' in vals:
+            sql_data['to_ship'] = vals['selected_number'] or 0
+            fields.append('selected_number=%(to_ship)s')
+
+        if 'total_weight' in vals:
+            sql_data['total_weight'] = vals['total_weight'] or 0
+            fields.append('weight=%%(total_weight)s/(%s-from_pack+1)' % to_pack_field)
+        if 'total_volume' in vals:
+            sql_data['size'] = (vals['total_volume']**(1.0/3))*10. or 0
+            fields += ['length=%%(size)s/(%s-from_pack+1)' % to_pack_field, 'width=%(size)s', 'height=%(size)s']
+
+        if fields:
+            cr.execute('''
+                update stock_move
+                set
+                    ''' + ','.join(fields) + '''
+                where id =ANY(
+                    select unnest(move_lines) from pack_family_memory where id in %(ids)s
+                )
+            ''', sql_data)  # not_a_user_entry
+        return True
+
+    def change_description(self, cr, uid, ids, context=None):
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mod_obj = self.pool.get('ir.model.data')
+        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing',
+                                           'view_change_desc_wizard')
+        pack_obj = self.read(cr, uid, ids, ['draft_packing_id'], context=context)
+        for pack in pack_obj:
+            res_id = pack['draft_packing_id'][0]
+            return {
+                'name': 'Change description',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [res and res[1] or False],
+                'res_model': 'stock.picking',
+                'context': "{}",
+                'type': 'ir.actions.act_window',
+                'target': 'new',
+                'res_id': res_id or False,
+            }
+        return {}
 
 pack_family_memory()
 

@@ -123,7 +123,7 @@ class ir_values(osv.osv):
         if not cr.fetchone():
             cr.execute('CREATE INDEX ir_values_key_model_key2_res_id_user_id_idx ON ir_values (key, model, key2, res_id, user_id)')
 
-    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False):
+    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False, view_ids=False):
         if isinstance(value, unicode):
             value = value.encode('utf8')
         if not isobject:
@@ -165,6 +165,9 @@ class ir_values(osv.osv):
                 'meta': meta,
                 'user_id': preserve_user and uid,
             }
+
+            if view_ids:
+                vals['view_ids'] = [(6, 0, view_ids)]
             if preserve_user and key == 'default':
                 vals['sequence'] = 50
 

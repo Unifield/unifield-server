@@ -46,7 +46,7 @@
 
     <story>
 
-        <para style="terp_default_8">[[repeatIn(objects,'s')]]</para>
+        <para>[[repeatIn(objects,'s')]]</para>
 
         <blockTable colWidths="120.0,440.0" style="NoBorder">
             <tr>

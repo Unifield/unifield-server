@@ -2,38 +2,13 @@
 <openerp>
     <data>
 
-        <record id="ppl_processor_step1_form_view" model="ir.ui.view">
-            <field name="name">ppl.processor.step1.form.view</field>
-            <field name="model">ppl.processor</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="PPL Information - Step 1">
-                    <field name="date" invisible="1" />
-                    <field name="draft_step1" invisible="1" />
-                    <field name="picking_id" invisible="1" />
-                    <separator colspan="4" string="Move lines" />
-                    <field name="move_ids" mode="tree"
-                           colspan="4" nolabel="1" />
-                    <group colspan="4" col="6" name="actions">
-                        <separator string="Actions" colspan="6" />
-                        <label colspan="1"> </label>
-                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_reset_step1" type="object" string="Reset" attrs="{'invisible':[('draft_step1','!=',True)]}" icon="gtk-go-forward" />
-                        <button name="do_save_draft_step1" type="object" string="Save as draft" icon="gtk-go-forward" />
-                        <button name="do_check_ppl" type="object" string="Check integrity" icon="gtk-info" />
-                        <button name="do_ppl_step1" type="object" string="Next" icon="gtk-go-forward" />
-                    </group>
-                </form>
-            </field>
-        </record>
-
         <record id="ppl_processor_step2_form_view" model="ir.ui.view">
             <field name="name">ppl.processor.step2.form.view</field>
             <field name="model">ppl.processor</field>
             <field name="type">form</field>
             <field name="priority">17</field>
             <field name="arch" type="xml">
-                <form string="PPL Information - Step 2">
+                <form string="Packing details: Volumes and Weights">
                     <field name="date" invisible="1" />
                     <field name="draft_step2" invisible="1" />
                     <field name="picking_id" invisible="1" />
@@ -45,62 +20,9 @@
                         <label colspan="2"> </label>
                         <button name="do_reset_step2" type="object" string="Reset" attrs="{'invisible':[('draft_step2','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft_step2" type="object" string="Save as draft" icon="gtk-go-forward" />
-                        <button name="do_ppl_back" type="object" string="Previous" icon="gtk-go-back" />
                         <button name="do_ppl_step2" type="object" string="Process" icon="gtk-go-forward" />
                     </group>
                 </form>
-            </field>
-        </record>
-
-        <record id="ppl_move_processor_tree_view" model="ir.ui.view">
-            <field name="name">ppl.move.processor.tree.view</field>
-            <field name="model">ppl.move.processor</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Product Moves"
-                      editable="bottom"
-                      hide_delete_button="1"
-                      hide_new_button="1"
-                      colors="red: integrity_status not in ('ok', 'empty'); green: integrity_status in ('ok');"
-                      >
-                    <!-- Invisible fields -->
-                    <field name="ssl_check" invisible="1" widget="null_boolean" />
-
-                    <field name="line_number"
-                           string="Line"
-                           readonly="1"
-                           />
-                    <field name="product_id"
-                           string="Product"
-                           readonly="1"
-                           />
-                    <field name="comment" readonly="1" />
-                    <field name="asset_id" readonly="1" />
-                    <field name="composition_list_id" readonly="1" />
-                    <field name="quantity"
-                           string="Quantity"
-                           readonly="1"
-                           />
-                    <field name="uom_id"
-                           string="UOM"
-                           readonly="True"
-                           />
-                    <field name="prodlot_id" readonly="1" />
-                    <field name="qty_per_pack" />
-                    <field name="from_pack" on_change="from_to_pack_change(from_pack, to_pack)" />
-                    <field name="to_pack" on_change="from_to_pack_change(from_pack, to_pack)" />
-                    <button name="open_split_wizard"
-                            type="object"
-                            icon="terp-stock_effects-object-colorize"
-                            string="Split"
-                            />
-                    <field name="lot_check" />
-                    <field name="exp_check" />
-                    <field name="kc_check" widget="null_boolean" />
-                    <field name="dg_check" widget="null_boolean" />
-                    <field name="np_check" widget="null_boolean" />
-                    <field name="integrity_status" string="" />
-                </tree>
             </field>
         </record>
 
@@ -113,7 +35,6 @@
                       editable="top"
                       hide_delete_button="1"
                       hide_new_button="1"
-                      colors="red: integrity_status != 'empty'"
                       >
                     <field name="from_pack" readonly="1" />
                     <field name="to_pack" readonly="1" />
@@ -121,8 +42,7 @@
                     <field name="length" />
                     <field name="width" />
                     <field name="height" />
-                    <field name="weight" required="1" default_focus="1" />
-                    <field name="integrity_status" string="" />
+                    <field name="weight"  default_focus="1" />
                 </tree>
             </field>
         </record>
