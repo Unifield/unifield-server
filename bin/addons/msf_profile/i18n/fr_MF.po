@@ -105455,6 +105455,12 @@ msgstr "Destinations compatibles avec le Centre de Coût"
 msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
 msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher la case."
 
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:246
+#, python-format
+msgid "The Cost Center %s is not compatible with the Destination %s."
+msgstr "Le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:490
 #, python-format
