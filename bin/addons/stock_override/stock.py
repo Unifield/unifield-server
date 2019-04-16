@@ -528,7 +528,7 @@ class stock_picking(osv.osv):
                     else:
                         vals['address_id'] = addr.get('delivery')
 
-        elif not vals.get('partner_id2') and vals.get('address_id'):
+        elif not vals.get('partner_id2') and vals.get('address_id') and isinstance(vals.get('address_id'), (int, long)):
             for pick in self.read(cr, uid, ids, ['address_id'], context=context):
                 if pick['address_id'] and pick['address_id'][0] != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').read(cr, uid,

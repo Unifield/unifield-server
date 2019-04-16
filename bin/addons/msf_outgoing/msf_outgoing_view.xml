@@ -190,7 +190,7 @@
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
                                    domain="[('partner_id', '=', partner_id2)]"
-                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
+                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', ('state', 'in', ['done', 'cancel']), ('partner_id2', '=', False)]}" />
                             <field name="backorder_id" readonly="1" string="Original PICK" />
                             <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}" />
                             <field name="order_category" />
