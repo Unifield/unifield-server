@@ -115,8 +115,8 @@ class ViewForm(Form):
             self.screen.widget.editable = False
 
         # get the correct view title
-        ## will break register
-        if params.context and (params.view_type !='form' or not self.screen.string):
+        #if params.context and (params.view_type !='form' or not self.screen.string):
+        if params.context:
             self.screen.string = params.context.get('_terp_view_name', self.screen.string)
         self.screen.string = self.screen.string
 

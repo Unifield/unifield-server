@@ -258,7 +258,9 @@ class Form(SecuredController):
         if params.view_type == 'form':
             if params.id:
                 title_field = form.screen.view.get('title_field')
-                if title_field and form.screen.view['fields'].get(title_field, {}).get('value'):
+                if form.screen.widget.force_string and form.screen.widget.string:
+                    form.screen.string = form.screen.widget.string
+                elif title_field and form.screen.view['fields'].get(title_field, {}).get('value'):
                     form.screen.string = form.screen.view['fields'][title_field]['value']
                 if form.screen.view.get('fields') and form.screen.view['fields'].get('name'):
                     display_name = {'field': form.screen.view['fields']['name']['string'], 'value': ustr(form.screen.view['fields']['name']['value'])}
