@@ -194,8 +194,8 @@
                             <field name="backorder_id" readonly="1" string="Original PICK" />
                             <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}" />
                             <field name="order_category" />
-                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
                         </group>
+
                         <group colspan="2" col="2">
                             <field name="date" readonly="1"/>
                             <field name="stock_journal_id" widget="selection" invisible="True" />
@@ -206,6 +206,10 @@
                             <field name="subtype" invisible="True" readonly="True" />
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name="incoming_id" readonly="True" />
+                        </group>
+                        <group colspan="6" col="6">
+                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
+                            <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" colspan="2" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
                         </group>
                     </group>
 

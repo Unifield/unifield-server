@@ -4020,13 +4020,35 @@ class stock_picking(osv.osv):
         super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         return True
 
+    def import_pick(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No PICK selected'))
+
+        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {'picking_id': ids[0]}, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.pick.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
     def ppl_pack_lines(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
         if not context.get('button_selected_ids'):
             raise osv.except_osv(_('Warning'), _('Please select at least on line.'))
 
         wiz_id = self.pool.get('ppl.set_pack_on_lines').create(cr, uid, {'picking_id': ids[0], 'from_pack': 1, 'to_pack': 1}, context=context)
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'ppl.set_pack_on_lines',
