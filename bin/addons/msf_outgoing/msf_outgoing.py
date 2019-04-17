@@ -4780,6 +4780,31 @@ class pack_family_memory(osv.osv):
             }
         return {}
 
+    def change_selected_number(self, cr, uid, ids, selected_number, context=None):
+        if not selected_number:
+            return {}
+
+        cr.execute('''select m.id
+            from
+                stock_move m,
+                product_uom u
+            where
+                m.product_uom = u.id and
+                u.rounding=1 and
+                (product_qty / (m.to_pack-m.from_pack+1)) %% 1 != 0 and
+                m.id =ANY(
+                    select unnest(move_lines) from pack_family_memory where id in %s and num_of_packs != %s
+            )
+        ''', (tuple(ids), selected_number))
+        if cr.rowcount:
+            return {
+                'warning': {
+                    'message': _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together')
+                }
+            }
+
+        return {}
+
 pack_family_memory()
 
 
