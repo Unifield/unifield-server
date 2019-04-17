@@ -641,7 +641,6 @@ class stock_picking(osv.osv):
         return res
 
     def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
-        # TODO: update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%';
         ret = {}
         for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype'], context=context):
             if pick['subtype'] == 'picking':

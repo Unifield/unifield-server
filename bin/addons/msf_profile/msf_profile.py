@@ -69,6 +69,11 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF13.1
+    def us_5859_set_flag_on_sub_pick(self, cr, uid, *a, **b):
+        cr.execute("update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%'")
+        return True
+
     # UF12.1
     def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
         '''
