@@ -102123,7 +102123,7 @@ msgstr "%s: DEST (%s) incompatible avec le compte (%s)"
 #: code:addons/account_hq_entries/hq_entries.py:142
 #, python-format
 msgid "%s: CC (%s) not compatible with DEST (%s)"
-msgstr "%s : CC (%s) incompatible avec la DEST (%s)"
+msgstr "%s : CC (%s) non compatible avec la DEST (%s)"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:103
@@ -105453,7 +105453,7 @@ msgstr "Destinations compatibles avec le Centre de Coût"
 #: code:addons/analytic_override/analytic_account.py:347
 #, python-format
 msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
-msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher la case."
+msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher cette case."
 
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:246

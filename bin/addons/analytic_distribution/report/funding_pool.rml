@@ -208,10 +208,10 @@
         <tr>
       <para style="P17">[[repeatIn(o.cost_center_ids,'line')]]</para>
           <td>
-            <para style="P7">[[ line.code ]]</para>
+            <para style="P7">[[ line.code or '' ]]</para>
           </td>
           <td>
-            <para style="P7">[[ line.name ]]</para>
+            <para style="P7">[[ line.name or '' ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -243,16 +243,16 @@
       <tr>
       [[repeatIn(o.tuple_destination_summary,'line')]]
         <td>
-          <para style="P7">[[ line.account_id and line.account_id.code ]]</para>
+          <para style="P7">[[ line.account_id and line.account_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P7">[[ line.account_id and line.account_id.name ]]</para>
+          <para style="P7">[[ line.account_id and line.account_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P7">[[ line.destination_id and line.destination_id.code ]]</para>
+          <para style="P7">[[ line.destination_id and line.destination_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P7">[[ line.destination_id and line.destination_id.name ]]</para>
+          <para style="P7">[[ line.destination_id and line.destination_id.name or '' ]]</para>
         </td>
       </tr>
     </blockTable>

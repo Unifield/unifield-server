@@ -341,7 +341,7 @@ class analytic_account(osv.osv):
         informs him that he has to remove the CC first
         """
         res = {}
-        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # i.e. [(6, 0, [1, 2])]
+        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
             warning = {
                 'title': _('Warning!'),
                 'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
@@ -355,7 +355,7 @@ class analytic_account(osv.osv):
         If at least a CC is selected, unticks the box "Allow all Cost Centers"
         """
         res = {}
-        if dest_cc_ids and dest_cc_ids[0][2]:  # i.e. [(6, 0, [1, 2])]
+        if dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
             res['value'] = {'allow_all_cc': False, }
         return res
 

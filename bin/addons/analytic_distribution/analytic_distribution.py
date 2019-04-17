@@ -28,8 +28,8 @@ class analytic_distribution(osv.osv):
 
     def check_dest_cc_compatibility(self, cr, uid, destination_id, cost_center_id, context=None):
         """
-        Checks the compatibility between the Destination and the Cost Center (cf CC tab in the Destination form).
-        Returns False is they aren't compatible.
+        Checks the compatibility between the Destination and the Cost Center (cf. CC tab in the Destination form).
+        Returns False if they aren't compatible.
         """
         if context is None:
             context = {}
