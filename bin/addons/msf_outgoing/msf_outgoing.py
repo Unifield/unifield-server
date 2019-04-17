@@ -880,7 +880,6 @@ class shipment(osv.osv):
                     draft_move = move.backmove_id
                     # Increase the draft move with the move quantity
 
-                    ## FIXME issue with BN ??
                     draft_initial_qty = draft_move.product_qty + return_qty
                     qty_processed = draft_move.qty_processed - return_qty
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed}, context=context)
@@ -3865,12 +3864,11 @@ class stock_picking(osv.osv):
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
                 context['keepLineNumber'] = False
-
                 # Increase the draft move with the returned quantity
                 draft_move_id = line.move_id.backmove_id.id
-                draft_move_qty = move_obj.read(cr, uid, [draft_move_id], ['product_qty'], context=context)[0]['product_qty']
-                draft_move_qty += return_qty
-                move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_move_qty}, context=context)
+                draft_move_qty = line.move_id.product_qty + return_qty
+                qty_processed = max(line.move_id.qty_processed - return_qty, 0)
+                move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_move_qty, 'qty_to_process': draft_move_qty, 'qty_processed': qty_processed}, context=context)
 
             if move_to_unlink:
                 context.update({'call_unlink': True})

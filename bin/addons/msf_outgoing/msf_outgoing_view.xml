@@ -675,9 +675,9 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
+                            <field name="flow_type" invisible="0" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"
-                                attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}"
+                                attrs="{'readonly': [ '|', ('flow_type', '=', 'quick'), ('state','not in',['draft','confirmed','assigned'])]}"
                                 filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]"
                                 o2m_selectable="2">
                                 <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1" colors="red: integrity_error!='empty'" editable="both" editable_style="new">
@@ -1295,7 +1295,7 @@
                     <notebook colspan="4">
                         <page string="Pack Families">
                             <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])]}">
-                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new">
+                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1"/>
@@ -1326,18 +1326,24 @@
                                     <field name="description_ppl" readonly="1" />
                                     <newline />
                                     <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" readonly="1"/>
-                                    <field name="num_of_packs" />
+                                    <field name="to_pack" attrs="{'readonly': ['|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1)]}" />
+                                    <field name="num_of_packs" readonly="1"/>
+                                    <field name="selected_number" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" />
                                     <field name="pack_type" readonly="1" />
-                                    <field name="total_volume" readonly="1" />
+                                    <field name="total_volume" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="weight" readonly="1" />
-                                    <field name="total_weight" readonly="1" />
+                                    <field name="total_weight" attrs="{'readonly': ['|', ('weight_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}"  />
                                     <field name="amount" readonly="1" />
                                     <field name="total_amount" readonly="1" />
                                     <field name="currency_id" readonly="1" />
                                     <field name="location_id" readonly="1" />
                                     <field name="location_dest_id" readonly="1" />
                                     <field name="state" readonly="1" />
+                                    <field name="volume_set" invisible="1" />
+                                    <field name="weight_set" invisible="1" />
+                                    <field name="quick_flow" invisible="1" />
+                                    <field name="pack_state" invisible="1" />
+                                    <field name="fake_state" invisible="1" />
                                     <field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
                                         <tree colors="red: inactive_product==True">
                                             <field name="line_number" />

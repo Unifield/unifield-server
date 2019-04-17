@@ -362,8 +362,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         })
                     elif row.cells[13].data and row.cells[13].type not in ('int', 'float'):
                         line_errors.append(_(' Weight per pack has to be an float.'))
-                    else:
-                        line_errors.append(_(' Weight per pack has to be defined and over 0.'))
 
                     # pack type + width, length & height
                     if row.cells[15].data:

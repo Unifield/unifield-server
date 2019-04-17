@@ -122,17 +122,6 @@ class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _description = "Picking List"
 
-    def _hook_state_list(self, cr, uid, *args, **kwargs):
-        '''
-        Change terms into states list
-        '''
-        state_list = kwargs['state_list']
-
-        state_list['done'] = _('is closed.')
-        state_list['shipped'] = _('is shipped.')  # UF-1617: New state for the IN of partial shipment
-
-        return state_list
-
     def _get_stock_picking_from_partner_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of res.partner objects for which values have changed
@@ -718,28 +707,6 @@ You cannot choose this supplier because some destination locations are not avail
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
 
         return True
-
-    @check_cp_rw
-    def force_assign(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(stock_picking, self).force_assign(cr, uid, ids)
-        for pick in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
-        return res
-
-    @check_cp_rw
-    def cancel_assign(self, cr, uid, ids, *args, **kwargs):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(stock_picking, self).cancel_assign(cr, uid, ids)
-        for pick in self.read(cr, uid, ids, ['name']):
-            self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
-        return res
 
     def check_availability_manually(self, cr, uid, ids, context=None):
         '''
@@ -1417,73 +1384,6 @@ class stock_move(osv.osv):
 
         return True
 
-    @check_cp_rw
-    def confirm_and_force_assign(self, cr, uid, ids, context=None, vals=None):
-        '''
-        when action_confirm and force_assign are both called, it is faster to
-        use confirm_and_force_assign to do only one write per move.
-        '''
-        if not context:
-            context = {}
-        if vals is None:
-            vals = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        self.check_product_quantity(cr, uid, ids, context=context)
-        vals = {'already_confirmed': True}
-
-        ids_assign = ids[:]
-        self.prepare_force_assign(cr, uid, ids_assign, context=context)
-
-        # if ids and ids_assign are equal, it is possible to call one write on
-        # all ids
-        res = []
-        if set(ids) == set(ids_assign):
-            self.prepare_action_confirm(cr, uid, ids, context)
-            vals.update({'state': 'assigned'})
-            self.write(cr, uid, ids, vals)
-        else:
-            res = super(stock_move, self).action_confirm(cr, uid,
-                                                         ids=ids, context=context, vals=vals)
-            res = super(stock_move, self).force_assign(cr, uid,
-                                                       ids=ids_assign, context=context)
-        return res
-
-    def prepare_force_assign(self, cr, uid, ids, context=None):
-        '''
-        split in smaller methods to ease the reusing of the code in other parts
-        '''
-        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
-
-        picking_name_dict = {}
-        pick_obj = self.pool.get('stock.picking')
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for move in self.read(cr, uid, ids,
-                              ['product_id', 'from_wkf_line', 'picking_id', 'line_number'], context=context):
-            if move['product_id'][0] == product_tbd and move['from_wkf_line']:
-                ids.pop(ids.index(move['id']))
-            else:
-                picking_id = move['picking_id'] and move['picking_id'][0] or False
-                if picking_id not in picking_name_dict:
-                    picking_id_name = pick_obj.read(cr, uid,
-                                                    picking_id, ['name'], context)['name']
-                    picking_name_dict[picking_id] = picking_id_name
-                else:
-                    picking_id_name = picking_name_dict[picking_id]
-
-                self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                    move['line_number'], move['id'], picking_id, picking_id_name,
-                ))
-
-    @check_cp_rw
-    def force_assign(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        self.prepare_force_assign(cr, uid, ids, context=context)
-        return super(stock_move, self).force_assign(cr, uid, ids, context=context)
-
     def _uom_constraint(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1792,122 +1692,6 @@ class stock_move(osv.osv):
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
 
-    def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
-        '''
-        Change the state of the chained move
-        '''
-        if kwargs.get('context'):
-            kwargs['context'].update({'call_unlink': True})
-        return {'state': 'cancel'}, kwargs.get('context', {})
-
-
-    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
-
-        -  it erases the batch number associated if any and reset the source location to the original one.
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-
-        prodlot_to_write_list = []
-        for line in self.browse(cr, uid, ids, context):
-            if line.prodlot_id:
-                prodlot_to_write_list.append(line.id)
-            # UF-2426: If the cancel is called from sync, do not change the source location!
-            if not context.get('sync_message_execution', False) and line.location_id.location_id and line.location_id.location_id.usage != 'view':
-                self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
-        self.write(cr, uid, prodlot_to_write_list, {'prodlot_id': False, 'expired_date': False})
-        return True
-
-    def check_assign(self, cr, uid, ids, context=None):
-        res = super(stock_move, self).check_assign(cr, uid, ids, context=context)
-        return res
-
-    @check_cp_rw
-    def cancel_assign(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
-        res = []
-
-        fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
-                          'product_qty', 'product_uos_qty', 'location_dest_id',
-                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
-        stock_picking_obj = self.pool.get('stock.picking')
-
-        qty_data = {}
-        for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
-            search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
-            picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
-
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                move_data['line_number'],
-                move_data['id'],
-                picking_id,
-                stock_picking_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-            ))
-
-            for f in fields_to_read:
-                if f in ('product_qty', 'product_uos_qty'):
-                    continue
-                d = move_data[f]
-                if isinstance(move_data[f], tuple):
-                    d = move_data[f][0]
-                search_domain.append((f, '=', d))
-
-            move_ids = self.search(cr, uid, search_domain, context=context)
-            if move_ids:
-                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
-                res.append(move['id'])
-                if move_data['id'] not in qty_data:
-                    qty_data[move['id']] = {
-                        'product_qty': move['product_qty'] + move_data['product_qty'],
-                        'product_uos_qty': move['product_uos_qty'] + move_data['product_uos_qty'],
-                    }
-                else:
-                    qty_data[move['id']] = {
-                        'product_qty': move['product_qty'] + qty_data[move_data['id']]['product_qty'],
-                        'product_uos_qty': move['product_uos_qty'] + qty_data[move_data['id']]['product_uos_qty'],
-                    }
-
-                self.write(cr, uid, [move['id']], qty_data[move['id']].copy(), context=context)
-
-                # Update all link objects
-                proc_ids = self.pool.get('procurement.order').search(cr, uid,
-                                                                     [('move_id', '=', move_data['id'])], order='NO_ORDER',context=context)
-                if proc_ids:
-                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move['id']}, context=context)
-
-                pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
-                                                                      [('move_dest_id', '=', move_data['id'])],
-                                                                      order='NO_ORDER', context=context)
-                if pol_ids:
-                    self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': move['id']}, context=context)
-
-                move_dest_ids = self.search(cr, uid, [('move_dest_id', '=',
-                                                       move_data['id'])], order='NO_ORDER', context=context)
-                if move_dest_ids:
-                    self.write(cr, uid, move_dest_ids, {'move_dest_id': move['id']}, context=context)
-
-                backmove_ids = self.search(cr, uid, [('backmove_id', '=',
-                                                      move_data['id'])], order='NO_ORDER', context=context)
-                if backmove_ids:
-                    self.write(cr, uid, backmove_ids, {'backmove_id': move['id']}, context=context)
-
-                pack_backmove_ids = self.search(cr, uid,
-                                                [('backmove_packing_id', '=', move_data['id'])],
-                                                order='NO_ORDER', context=context)
-                if pack_backmove_ids:
-                    self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': move['id']}, context=context)
-
-                #self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
-                self.unlink(cr, uid, move_data['id'], context=context, force=True)
-
-        return res
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
