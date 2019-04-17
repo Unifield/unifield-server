@@ -147,7 +147,7 @@ class account_destination_summary(osv.osv):
                     l.account_id, d.funding_pool_id, l.destination_id
             )
         """)
-    _order = 'funding_pool_id, account_id'
+    _order = 'funding_pool_id, account_id, destination_id'
 account_destination_summary()
 
 class account_account(osv.osv):
