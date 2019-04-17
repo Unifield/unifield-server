@@ -23,6 +23,19 @@ from openerp.utils import rpc
 
 from openobject.tools import expose
 
+class progress_bar(SecuredController):
+    _cp_path = '/openerp/progressbar'
+
+    @expose('json')
+    def get(self, id, model):
+        import random
+        random.randint(0, 100)
+        return {'progress': random.randint(0, 100), 'message': 'OO'}
+
+    @expose(template="/openerp/controllers/templates/progress.mako")
+    def index(self, id, model):
+        return {'id': id, 'model': model}
+
 
 class View_Log(SecuredController):
 

@@ -177,6 +177,7 @@
                 </div>
                 % endif
                 <div${ " class='non-editable'" if not form.screen.editable and form.screen.view_type == 'form' else "" | n }>${form.display()}</div>
+
                 </div>
 
             </td>
@@ -220,6 +221,9 @@
 
             % if tg_errors:
             error_display(_("The form contains errors."));
+            % endif
+            % if form.screen.id == 4953:
+            jQuery.fancybox({'href': "/openerp/progressbar?model=stock.picking&id=4953", 'modal': false});
             % endif
         })
     </script>
