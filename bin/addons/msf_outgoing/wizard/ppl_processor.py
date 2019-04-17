@@ -56,9 +56,9 @@ class ppl_processor(osv.osv):
         for proc in self.browse(cr, uid, ids, context=context):
             pick_id = proc['picking_id']['id']
 
-        self.write(cr, uid, ids, {'draft_step2': False}, context=context) #TODO Do not reset step 1 ?
+        self.write(cr, uid, ids, {'draft_step2': False}, context=context)
 
-        return self.pool.get('stock.picking').ppl(cr, uid, pick_id, context=context)
+        return self.pool.get('stock.picking').ppl_step2_run_wiz(cr, uid, pick_id, context=context)
 
     def do_save_draft_step2(self, cr, uid, ids, context=None):
         if context is None:

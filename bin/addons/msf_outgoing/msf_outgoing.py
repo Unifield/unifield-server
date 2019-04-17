@@ -3567,20 +3567,23 @@ class stock_picking(osv.osv):
             )
 
         # TODO : refresh saved as draft
-        existing = ppl_processor.search(cr, uid, [('picking_id', '=', ids[0]), ('draft_step2', '=', True)], context=context)
+        existing = ppl_processor.search(cr, uid, [('picking_id', '=', ids[0]), ('draft_step2', '=', True)], limit=1, context=context)
+        existing_data = {}
         if existing:
             wizard_id = existing[0]
+            for wiz in ppl_processor.browse(cr, uid, existing):
+                for fam in wiz.family_ids:
+                    key='f%st%s' % (fam.from_pack, fam.to_pack)
+                    existing_data[key] = {'pack_type': fam.pack_type and fam.pack_type.id or False, 'length': fam.length, 'width': fam.width, 'height': fam.height, 'weight': fam.weight, 'id': fam.id}
         else:
             wizard_id = ppl_processor.create(cr, uid, {'picking_id': ids[0]}, context=context)
 
+        families_data = {}
 
-            # TODO if wizard.draft_step2:
-
-            families_data = {}
-
-            for line in picking.move_lines:
-                key = 'f%st%s' % (line.from_pack, line.to_pack)
-                families_data.setdefault(key, {
+        for line in picking.move_lines:
+            key = 'f%st%s' % (line.from_pack, line.to_pack)
+            if key not in families_data:
+                families_data[key] =  {
                     'wizard_id': wizard_id,
                     'move_ids': [(6, 0, [])],
                     'from_pack': line.from_pack,
@@ -3590,13 +3593,24 @@ class stock_picking(osv.osv):
                     'width': line.width,
                     'height': line.height,
                     'weight': line.weight,
-                })
+                }
 
-                families_data[key]['move_ids'][0][2].append(line.id)
+                if existing_data.get(key):
+                    families_data[key].update(existing_data[key])
+                    del existing_data[key]
 
-            for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
+            families_data[key]['move_ids'][0][2].append(line.id)
+
+        for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
+            if 'id' in family_data:
+                fam_id = family_data['id']
+                del family_data['id']
+                family_obj.write(cr, uid, fam_id, family_data)
+            else:
                 family_obj.create(cr, uid, family_data)
 
+        if existing_data:
+            family_obj.unlink(cr, uid, [x['id'] for x in existing_data.values()], context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step2_form_view')[1]
 
