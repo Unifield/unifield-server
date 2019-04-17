@@ -1775,7 +1775,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(e.name, msg)
                 # Update analytic distribution lines
                 analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.get('id')], ['amount_currency'], context=context)[0].get('amount_currency', False)
-                if analytic_amount:
+                if analytic_amount and st_line.analytic_distribution_id:
                     self.pool.get('analytic.distribution').update_distribution_line_amount(cr, uid, [st_line.analytic_distribution_id.id],
                                                                                            amount=analytic_amount, context=context)
                 # Update move
