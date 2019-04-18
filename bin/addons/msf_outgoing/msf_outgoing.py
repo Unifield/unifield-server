@@ -3140,6 +3140,13 @@ class stock_picking(osv.osv):
         )
         th.start()
         th.join(1)
+        if not th.isAlive():
+            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
+            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
+            if job_data['state'] == 'done':
+                return job_data['target_link']
+            else:
+                raise osv.except_osv(_('Warning'), job_data['error'])
         return True
 
     def do_create_picking(self, crm, uid, ids, context=None, only_pack_ids=False, job_id=False):
@@ -3937,10 +3944,10 @@ class stock_picking(osv.osv):
                 move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
                 context['keepLineNumber'] = False
                 # Increase the draft move with the returned quantity
-                draft_move_id = line.move_id.backmove_id.id
-                draft_move_qty = line.move_id.product_qty + return_qty
-                qty_processed = max(line.move_id.qty_processed - return_qty, 0)
-                move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_move_qty, 'qty_to_process': draft_move_qty, 'qty_processed': qty_processed}, context=context)
+                draft_move = line.move_id.backmove_id
+                draft_move_qty = draft_move.product_qty + return_qty
+                qty_processed = max(draft_move.qty_processed - return_qty, 0)
+                move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_move_qty, 'qty_to_process': draft_move_qty, 'qty_processed': qty_processed}, context=context)
 
             if move_to_unlink:
                 context.update({'call_unlink': True})

@@ -1054,9 +1054,11 @@ class job_in_progress(osv.osv_memory):
         'state': fields.selection([('in-progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], 'State'),
         'target_link': fields.text('Target'),
         'error': fields.text('Error'),
+        'read': fields.boolean('Msg read by user'),
     }
 
     _defaults = {
+        'read': False,
         'state': 'in-progress',
     }
 
