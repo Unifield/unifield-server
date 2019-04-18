@@ -194,8 +194,9 @@ class Form(SecuredController):
 
         loading_id = False
         if params.view_type == 'form' and params.id:
-            loading_id = rpc.RPCProxy('job.in_progress').search([('model', '=', params.model), ('res_id', '=', params.id), ('state', '=', 'in-progress')])
-            if loading_id:
+            loading_ids = rpc.RPCProxy('job.in_progress').search([('model', '=', params.model), ('res_id', '=', params.id), ('state', 'in', ['in-progress', 'error'])])
+            if loading_ids:
+                loading_id = [loading_ids[-1]]
                 params.editable = False
                 params.readonly = True
                 params.force_readonly = True

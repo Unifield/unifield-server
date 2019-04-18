@@ -44,7 +44,20 @@ class progress_bar(SecuredController):
                 url = ('/openerp/execute?' + urllib.urlencode({'payload': compressed_payload}))
             return {'progress': 100, 'state': 'done', 'target': url}
 
-        return {'progress': 100*(job['nb_processed'] or 0)/(job['total'] or 1), 'state': 'in-progress'}
+        percent = 100*(job['nb_processed'] or 0)/(job['total'] or 1)
+        if job['state'] == 'error':
+            return {'state': 'error', 'errormsg': job['error'], 'progress': percent}
+
+        return {'progress': percent, 'state': 'in-progress'}
+
+    @expose('json')
+    def setread(self, id, model, job_id):
+        job_obj = rpc.RPCProxy('job.in_progress')
+        job_id = job_obj.search([('state', '=', 'error'), ('id', '=', int(job_id)), ('res_id', '=', int(id)), ('model', '=', model)])
+        if job_id:
+            job_obj.write(job_id, {'state': 'done'})
+
+        return {}
 
     @expose(template="/openerp/controllers/templates/progress.mako")
     def index(self, id, model, job_id):

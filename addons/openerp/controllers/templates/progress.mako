@@ -4,6 +4,18 @@
     <title>${_("Information")}</title>
     <link href="/openerp/static/css/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript">
+        set_as_read = function() {
+            var req = openobject.http.postJSON('/openerp/progressbar/setread', {'model': "${model}", 'id': ${id}, "job_id": ${job_id}});
+            req.addCallback(function(obj) {
+                if (obj.error) {
+                    jQuery.fancybox(obj.error, {scrolling: 'no'});
+                } else {
+                    window.editRecord(${id});
+                    jQuery.fancybox.close();
+                }
+            });
+        }
+
         get_progress = function () {
             var req = openobject.http.postJSON('/openerp/progressbar/get', {'model': "${model}", 'id': ${id}, "job_id": ${job_id}});
             req.addCallback(function(obj) {
@@ -13,7 +25,14 @@
                 else {
                     $('#indicator').width((obj.progress*250)/100+'px');
                     $('#percentage').html(obj.progress+'%');
-                    if (obj.state != 'done') {
+                    if (obj.state == 'error') {
+                        $('#boxtitle').html("Last Processing Error");
+                        $('#ack_error').show();
+                        $('#ack_error').click(set_as_read);
+                        $('#pwidget').css('overflow', 'scroll');
+                        $('#pwidget').css('white-space', 'pre');
+                        $('#pwidget').html(obj.errormsg);
+                    } else if (obj.state != 'done') {
                         setTimeout(get_progress, 1000);
                     } else {
                         $('#boxtitle').html("Done");
@@ -93,6 +112,7 @@
             <td>
             <button id="open_src" style="display:none" onclick="window.editRecord(${id});jQuery.fancybox.close();">View Object</button>
             <button id="open_target" style="display:none">View Target</button>
+            <button id="ack_error" style="display:none">Mark as Read</button>
             </td>
         </tr>
     </table>
