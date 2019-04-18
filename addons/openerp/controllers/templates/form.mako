@@ -222,8 +222,8 @@
             % if tg_errors:
             error_display(_("The form contains errors."));
             % endif
-            % if form.screen.id == 4953:
-            jQuery.fancybox({'href': "/openerp/progressbar?model=stock.picking&id=4953", 'modal': false});
+            % if loading_id:
+            jQuery.fancybox({'href': "/openerp/progressbar?model=${form.screen.model}&id=${form.screen.id}&job_id=${loading_id}", 'modal': false});
             % endif
         })
     </script>

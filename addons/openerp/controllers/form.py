@@ -192,6 +192,13 @@ class Form(SecuredController):
     def create(self, params, tg_errors=None):
         params.view_type = params.view_type or params.view_mode[0]
 
+        loading_id = False
+        if params.view_type == 'form' and params.id:
+            loading_id = rpc.RPCProxy('job.in_progress').search([('model', '=', params.model), ('res_id', '=', params.id), ('state', '=', 'in-progress')])
+            if loading_id:
+                params.editable = False
+                params.readonly = True
+                params.force_readonly = True
         if params.view_type == 'tree':
             params.editable = True
 
@@ -277,7 +284,7 @@ class Form(SecuredController):
 
         is_dashboard = form.screen.is_dashboard or False
 
-        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open, auto_refresh=params.auto_refresh, tg_errors=tg_errors)
+        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open, auto_refresh=params.auto_refresh, tg_errors=tg_errors, loading_id=loading_id)
 
     @expose('json', methods=('POST',))
     def close_or_disable_tips(self):

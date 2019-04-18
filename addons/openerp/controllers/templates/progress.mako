@@ -4,9 +4,8 @@
     <title>${_("Information")}</title>
     <link href="/openerp/static/css/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript">
-    jQuery(document).ready(function () {
-        setInterval(function () {
-            var req = openobject.http.postJSON('/openerp/progressbar/get', {'model': "${model}", 'id': "${id}"});
+        get_progress = function () {
+            var req = openobject.http.postJSON('/openerp/progressbar/get', {'model': "${model}", 'id': ${id}, "job_id": ${job_id}});
             req.addCallback(function(obj) {
                 if (obj.error) {
                     jQuery.fancybox(obj.error, {scrolling: 'no'});
@@ -14,10 +13,22 @@
                 else {
                     $('#indicator').width((obj.progress*250)/100+'px');
                     $('#percentage').html(obj.progress+'%');
+                    if (obj.state != 'done') {
+                        setTimeout(get_progress, 1000);
+                    } else {
+                        $('#boxtitle').html("Done");
+                        $('#open_src').show();
+                        if (obj.target) {
+                            $('#open_target').show();
+                            $('#open_target').click(function() {window.openAction(obj.target);jQuery.fancybox.close();});
+                        }
+                    }
                 }
                 });
 
-        }, 1500);
+        }
+    jQuery(document).ready(function () {
+        get_progress();
     });
     </script>
 
@@ -65,16 +76,24 @@
     <table class="view" cellspacing="5" border="0" height="200px" width="400px">
         <tr>
             <td>
-                <h1>${_("Information")}</h1>
+                <h1 id="boxtitle">${_("In Progress")}</h1>
             </td>
         </tr>
-        <tr><td>
+        <tr>
+            <td>
                 <div id="pwidget">
                     <div id="progressbar">
-                    <span id="percentage">10</span>
+                    <span id="percentage"></span>
                     <div id="indicator" style="width: 25px"></div>
                     </div>
                 </div>
-    </td></tr>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <button id="open_src" style="display:none" onclick="window.editRecord(${id});jQuery.fancybox.close();">View Object</button>
+            <button id="open_target" style="display:none">View Target</button>
+            </td>
+        </tr>
     </table>
 </%def>

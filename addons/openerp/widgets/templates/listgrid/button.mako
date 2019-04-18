@@ -14,7 +14,7 @@
        onclickAction="new ListView('%s').onButtonClick('%s', '%s', %s, getNodeAttribute(this, 'confirm'), getNodeAttribute(this, 'context'));" % (parent_grid, name, btype, ids)
    oncontextmenuAction="showBtnSdref(event, '%s', '%s', '%s', '%s');" % (name, model, ids, parent_grid)
 %>
-% if visible:
+% if visible and not force_readonly:
     % if icon:
         <a class="listImage-container" name="${name}" id="${name}" title="${help}" context="${ctx}" ${attrs_}
             onclick="${onclickAction}"

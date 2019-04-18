@@ -76,7 +76,7 @@ class List(TinyWidget):
 
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
-        super(List, self).__init__(name=name, model=model, ids=ids)
+        super(List, self).__init__(name=name, model=model, ids=ids, force_readonly=kw.get('force_readonly'))
         self.context = context or {}
         self.domain = domain or []
         custom_search_domain = getattr(cherrypy.request, 'custom_search_domain', [])

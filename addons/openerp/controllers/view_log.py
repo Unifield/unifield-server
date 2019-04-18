@@ -23,18 +23,32 @@ from openerp.utils import rpc
 
 from openobject.tools import expose
 
+import base64
+import urllib
+import zlib
+
 class progress_bar(SecuredController):
     _cp_path = '/openerp/progressbar'
 
     @expose('json')
-    def get(self, id, model):
-        import random
-        random.randint(0, 100)
-        return {'progress': random.randint(0, 100), 'message': 'OO'}
+    def get(self, id, model, job_id):
+        job = rpc.RPCProxy('job.in_progress').read(int(job_id))
+        if not job or job['state'] == 'done' or job['res_id'] != int(id) or job['model'] != model:
+            url = ''
+            if job['target_link']:
+                payload = str({
+                    'action': job['target_link'],
+                    'data': {}
+                })
+                compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
+                url = ('/openerp/execute?' + urllib.urlencode({'payload': compressed_payload}))
+            return {'progress': 100, 'state': 'done', 'target': url}
+
+        return {'progress': 100*(job['nb_processed'] or 0)/(job['total'] or 1), 'state': 'in-progress'}
 
     @expose(template="/openerp/controllers/templates/progress.mako")
-    def index(self, id, model):
-        return {'id': id, 'model': model}
+    def index(self, id, model, job_id):
+        return {'id': id, 'model': model, 'job_id': job_id}
 
 
 class View_Log(SecuredController):

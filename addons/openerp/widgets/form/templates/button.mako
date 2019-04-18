@@ -7,7 +7,11 @@
         onclick="buttonClicked('${name}', '${btype}', '${model}', '${id}', getNodeAttribute(this, 'confirm'), '${target}', getNodeAttribute(this, 'context'));"
         oncontextmenu="showBtnSdref(event, '${name}', '${model}', '${id}');"
         style="height: 20px;"
-        ${py.attrs(attrs, confirm=confirm, context=ctx)}>
+        ${py.attrs(attrs, confirm=confirm, context=ctx)}
+        % if force_readonly:
+            disabled="disabled"
+        % endif
+        >
     % if string:
         % if icon:
             <img src="${icon}" width="16" height="16" alt="">&nbsp;<span>${string}</span>

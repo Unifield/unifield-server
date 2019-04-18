@@ -61,7 +61,8 @@ class FormView(TinyView):
                            readonly=screen.readonly,
                            nodefault=screen.nodefault,
                            nolinks=screen.link,
-                           get_source=screen.get_source)
+                           get_source=screen.get_source,
+                           force_readonly=screen.force_readonly)
 
         if not screen.is_wizard and screen.ids is None:
             limit = screen.limit or 50
