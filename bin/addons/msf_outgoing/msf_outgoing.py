@@ -23,6 +23,7 @@ from osv import osv, fields
 from tools.translate import _
 import netsvc
 from datetime import datetime, date
+import pooler
 
 from order_types.stock import check_cp_rw
 from msf_order_date import TRANSPORT_TYPE
@@ -37,6 +38,9 @@ from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
 from . import INTEGRITY_STATUS_SELECTION
+import threading
+import traceback
+
 
 class stock_warehouse(osv.osv):
     """
@@ -3113,7 +3117,32 @@ class stock_picking(osv.osv):
 
         return res
 
-    def do_create_picking(self, cr, uid, ids, context=None, only_pack_ids=False):
+    def do_create_picking_bg(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        assert len(ids) == 1, 'do_create_picking_bg can only process 1 object'
+
+        for picking_id in ids:
+            self.check_integrity(cr, uid, picking_id, context)
+
+        nb_lines = self.pool.get('stock.move').search(cr, uid, [('qty_to_process', '>=', 0), ('state', '=', 'assigned'),('product_qty', '>', 0), ('picking_id', 'in', ids)], count=True)
+        if not nb_lines:
+            raise osv.except_osv(_('Warning'), _('No line to process'))
+        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': ids[0], 'model': 'stock.picking', 'name': _('Create Picking'), 'total': nb_lines})
+        th = threading.Thread(
+            target=self.do_create_picking,
+            args=(cr, uid, ids, context),
+            kwargs={'job_id': job_id}
+        )
+        th.start()
+        th.join(1)
+        return True
+
+    def do_create_picking(self, crm, uid, ids, context=None, only_pack_ids=False, job_id=False):
         """
             from draft picking ticket create a sub-picking
             it will process all available stock.move with a qty in qty_to_process
@@ -3130,104 +3159,133 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not ids:
-            raise osv.except_osv(
-                _('Processing Error'),
-                _('No data to process !')
-            )
+        process_error = False
+        if job_id:
+            cr = pooler.get_db(crm.dbname).cursor()
+        else:
+            cr = crm
 
-        for picking in self.browse(cr, uid, ids, context=context):
+        try:
+            for picking in self.browse(cr, uid, ids, context=context):
+                res = False
+                if not job_id:
+                    self.check_integrity(cr, uid, picking.id, context)
 
-            self.check_integrity(cr, uid, picking.id, context)
-
-            sequence = picking.sequence_id
-            ticket_number = sequence.get_id(code_or_id='id', context=context)
-            pick_name = '%s-%s' % (picking.name or 'NoName/000', ticket_number)
-
-            copy_data = {
-                'name': pick_name,
-                'backorder_id': picking.id,
-                'move_lines': [],
-                'is_subpick': True,
-            }
-            tmp_allow_copy = context.get('allow_copy')
-            context.update({
-                'wkf_copy': True,
-                'allow_copy': True,
-            })
-            new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
-            if picking.claim:
-                self.write(cr, uid, new_picking_id, ({'claim': True}), context=context)
-
-            if tmp_allow_copy is None:
-                del context['allow_copy']
-            else:
-                context['allow_copy'] = tmp_allow_copy
-
-            if only_pack_ids:
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('pack_info_id', 'in', only_pack_ids)], context=context)
-                move_to_process = move_obj.browse(cr, uid, move_ids, context=context)
-            else:
-                move_to_process = picking.move_lines
-
-            # Create stock moves corresponding to processing lines
-            # for now, each new line from the wizard corresponds to a new stock.move
-            # it could be interesting to regroup according to production lot/asset id
-            for line in move_to_process:
-                if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
-                    continue
-
-                # Copy the stock move and set the quantity
-                cp_values = {
-                    'picking_id': new_picking_id,
-                    'product_qty': line.qty_to_process,
-                    'product_uom': line.product_uom.id,
-                    'product_uos_qty': line.qty_to_process,
-                    'product_uos': line.product_uom.id,
-                    'prodlot_id': line.prodlot_id and line.prodlot_id.id,
-                    'asset_id': line.asset_id and line.asset_id.id,
-                    'composition_list_id': line.composition_list_id and line.composition_list_id.id,
-                    'pt_created': True,
-                    'backmove_id': line.id,
-                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
+                sequence = picking.sequence_id
+                ticket_number = sequence.get_id(code_or_id='id', context=context)
+                pick_name = '%s-%s' % (picking.name or 'NoName/000', ticket_number)
+                copy_data = {
+                    'name': pick_name,
+                    'backorder_id': picking.id,
+                    'move_lines': [],
+                    'is_subpick': True,
                 }
-                context['keepLineNumber'] = True
-                move_obj.copy(cr, uid, line.id, cp_values, context=context)
-                context['keepLineNumber'] = False
+                tmp_allow_copy = context.get('allow_copy')
+                context.update({
+                    'wkf_copy': True,
+                    'allow_copy': True,
+                })
+                new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
+                if picking.claim:
+                    self.write(cr, uid, new_picking_id, ({'claim': True}), context=context)
 
-
-                initial_qty = max(line.product_qty - line.qty_to_process, 0.00)
-                qty_processed = (line.qty_processed or 0) + line.qty_to_process
-                wr_vals = {
-                    'product_qty': initial_qty,
-                    'product_uos_qty': initial_qty,
-                    'processed_stock_move': True,
-                    'qty_processed': qty_processed,
-                }
-                if initial_qty == 0:
-                    wr_vals['qty_to_process'] = qty_processed
+                if tmp_allow_copy is None:
+                    del context['allow_copy']
                 else:
-                    wr_vals['qty_to_process'] = initial_qty
+                    context['allow_copy'] = tmp_allow_copy
 
-                context['keepLineNumber'] = True
-                move_obj.write(cr, uid, [line.id], wr_vals, context=context)
-                context['keepLineNumber'] = False
+                if only_pack_ids:
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id), ('pack_info_id', 'in', only_pack_ids)], context=context)
+                    move_to_process = move_obj.browse(cr, uid, move_ids, context=context)
+                else:
+                    move_to_process = picking.move_lines
+
+                nb_processed = 0
+                # Create stock moves corresponding to processing lines
+                # for now, each new line from the wizard corresponds to a new stock.move
+                # it could be interesting to regroup according to production lot/asset id
+                for line in move_to_process:
+                    if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
+                        continue
+
+                    nb_processed += 1
+                    if job_id and nb_processed % 10 == 0:
+                        self.pool.get('job.in_progress').write(cr, uid, [job_id], {'nb_processed': nb_processed})
+
+                    # Copy the stock move and set the quantity
+                    cp_values = {
+                        'picking_id': new_picking_id,
+                        'product_qty': line.qty_to_process,
+                        'product_uom': line.product_uom.id,
+                        'product_uos_qty': line.qty_to_process,
+                        'product_uos': line.product_uom.id,
+                        'prodlot_id': line.prodlot_id and line.prodlot_id.id,
+                        'asset_id': line.asset_id and line.asset_id.id,
+                        'composition_list_id': line.composition_list_id and line.composition_list_id.id,
+                        'pt_created': True,
+                        'backmove_id': line.id,
+                        'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
+                    }
+                    context['keepLineNumber'] = True
+                    move_obj.copy(cr, uid, line.id, cp_values, context=context)
+                    context['keepLineNumber'] = False
 
 
-            # Confirm the new picking ticket
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
-            # We force availability
-            self.force_assign(cr, uid, [new_picking_id])
-            self.infolog(cr, uid, "The Validated Picking Ticket id:%s (%s) has been generated by the Draft Picking Ticket id:%s (%s)" % (
-                new_picking_id, self.read(cr, uid, new_picking_id, ['name'], context=context)['name'],
-                picking.id, picking.name,
-            ))
+                    initial_qty = max(line.product_qty - line.qty_to_process, 0.00)
+                    qty_processed = (line.qty_processed or 0) + line.qty_to_process
+                    wr_vals = {
+                        'product_qty': initial_qty,
+                        'product_uos_qty': initial_qty,
+                        'processed_stock_move': True,
+                        'qty_processed': qty_processed,
+                    }
+                    if initial_qty == 0:
+                        wr_vals['qty_to_process'] = qty_processed
+                    else:
+                        wr_vals['qty_to_process'] = initial_qty
+
+                    context['keepLineNumber'] = True
+                    move_obj.write(cr, uid, [line.id], wr_vals, context=context)
+                    context['keepLineNumber'] = False
 
 
-        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
-        res['res_id'] = new_picking_id
-        return res
+                # Confirm the new picking ticket
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                # We force availability
+                self.force_assign(cr, uid, [new_picking_id])
+                self.infolog(cr, uid, "The Validated Picking Ticket id:%s (%s) has been generated by the Draft Picking Ticket id:%s (%s)" % (
+                    new_picking_id, self.read(cr, uid, new_picking_id, ['name'], context=context)['name'],
+                    picking.id, picking.name,
+                ))
+
+            if not nb_processed:
+                raise osv.except_osv(_('Warning'), _('No line to process'))
+
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'msf_outgoing.action_picking_ticket', ['form', 'tree'], context=context)
+            res['res_id'] = new_picking_id
+            return res
+
+        except osv.except_osv, er:
+            cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(er.value)})
+            raise
+
+        except Exception:
+            cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(traceback.format_exc())})
+            raise
+
+        finally:
+            if job_id:
+                if not process_error:
+                    self.pool.get('job.in_progress').write(cr, uid, [job_id], {'state': 'done', 'target_link': res})
+                cr.commit()
+                cr.close(True)
 
     def check_integrity(self, cr, uid, pid, context=None):
         move_obj = self.pool.get('stock.move')

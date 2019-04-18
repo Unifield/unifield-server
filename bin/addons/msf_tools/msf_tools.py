@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 
 import time
 import tools
@@ -1042,3 +1042,31 @@ class user_rights_tools(osv.osv_memory):
         return ur
 
 user_rights_tools()
+
+class job_in_progress(osv.osv_memory):
+    _name = 'job.in_progress'
+    _columns = {
+        'res_id': fields.integer('Db Id'),
+        'model': fields.char('Object', size=256),
+        'name': fields.char('Name', size=256),
+        'total': fields.integer('Total to process'),
+        'nb_processed': fields.integer('Total processed'),
+        'state': fields.selection([('in-progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], 'State'),
+        'target_link': fields.text('Target'),
+        'error': fields.text('Error'),
+    }
+
+    _defaults = {
+        'state': 'in-progress',
+    }
+
+    # force uid=1 to by pass osv_memory domain
+    def read(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).read(cr, 1, *a, **b)
+
+    def search(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).search(cr, 1, *a, **b)
+
+    def write(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).write(cr, 1, *a, **b)
+job_in_progress()
