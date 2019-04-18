@@ -4,13 +4,17 @@
     <title>${_("Information")}</title>
     <link href="/openerp/static/css/style.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript">
-        set_as_read = function() {
+        function set_as_read(target) {
             var req = openobject.http.postJSON('/openerp/progressbar/setread', {'model': "${model}", 'id': ${id}, "job_id": ${job_id}});
             req.addCallback(function(obj) {
                 if (obj.error) {
                     jQuery.fancybox(obj.error, {scrolling: 'no'});
                 } else {
-                    window.editRecord(${id});
+                    if (target) {
+                        window.openAction(target);
+                    } else {
+                        window.editRecord(${id});
+                    }
                     jQuery.fancybox.close();
                 }
             });
@@ -27,8 +31,8 @@
                     $('#percentage').html(obj.progress+'%');
                     if (obj.state == 'error') {
                         $('#boxtitle').html("Last Processing Error");
-                        $('#ack_error').show();
-                        $('#ack_error').click(set_as_read);
+                        $('#open_src').click(set_as_read);
+                        $('#open_src').show();
                         $('#pwidget').css('overflow', 'scroll');
                         $('#pwidget').css('white-space', 'pre');
                         $('#pwidget').html(obj.errormsg);
@@ -36,10 +40,11 @@
                         setTimeout(get_progress, 1000);
                     } else {
                         $('#boxtitle').html("Done");
+                        $('#open_src').click(function() {set_as_read()});
                         $('#open_src').show();
                         if (obj.target) {
                             $('#open_target').show();
-                            $('#open_target').click(function() {window.openAction(obj.target);jQuery.fancybox.close();});
+                            $('#open_target').click(function() {set_as_read(obj.target)});
                         }
                     }
                 }
@@ -110,9 +115,8 @@
         </tr>
         <tr>
             <td>
-            <button id="open_src" style="display:none" onclick="window.editRecord(${id});jQuery.fancybox.close();">View Object</button>
+            <button id="open_src" style="display:none">View Object</button>
             <button id="open_target" style="display:none">View Target</button>
-            <button id="ack_error" style="display:none">Mark as Read</button>
             </td>
         </tr>
     </table>

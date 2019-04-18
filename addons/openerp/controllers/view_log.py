@@ -53,9 +53,9 @@ class progress_bar(SecuredController):
     @expose('json')
     def setread(self, id, model, job_id):
         job_obj = rpc.RPCProxy('job.in_progress')
-        job_id = job_obj.search([('state', '=', 'error'), ('id', '=', int(job_id)), ('res_id', '=', int(id)), ('model', '=', model)])
+        job_id = job_obj.search([('id', '=', int(job_id)), ('res_id', '=', int(id)), ('model', '=', model)])
         if job_id:
-            job_obj.write(job_id, {'state': 'done'})
+            job_obj.write(job_id, {'read': True})
 
         return {}
 
