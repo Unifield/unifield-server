@@ -155,7 +155,8 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             requested_date = obj.delivery_requested_date
             for line in obj.order_line:
-                if obj._table_name == 'sale.order' and not obj.procurement_request:
+                if obj._table_name == 'sale.order' and not obj.procurement_request and \
+                        obj.state in ['sourced', 'sourced_p', 'confirmed', 'confirmed_p']:
                     if (line.resourced_original_line or (line.is_line_split and line.original_line_id and line.original_line_id.resourced_original_line)) \
                             and line.state.startswith('validated'):
                         if selected and context.get('button_selected_ids'):
@@ -218,7 +219,8 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             stock_take_date = obj.stock_take_date
             for line in obj.order_line:
-                if obj._table_name == 'sale.order' and not obj.procurement_request:
+                if obj._table_name == 'sale.order' and not obj.procurement_request and \
+                        obj.state in ['sourced', 'sourced_p', 'confirmed', 'confirmed_p']:
                     if (line.resourced_original_line or (line.is_line_split and line.original_line_id and line.original_line_id.resourced_original_line)) \
                             and line.state.startswith('validated'):
                         if selected and context.get('button_selected_ids'):
