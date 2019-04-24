@@ -1009,7 +1009,7 @@ function onChangePop(caller){
 
                 var fld_ro = jQuery(idSelector(prefix + k + '_ro'));
                     if (fld_ro) {
-                        if (kind == 'selection') {
+                        if (fld.nodeName == 'SELECT') {
                             fld_ro.html($fld.children("option:selected").html());
                         } else {
                             fld_ro.html($fld.val());
