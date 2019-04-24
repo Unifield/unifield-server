@@ -96488,8 +96488,8 @@ msgstr "Commandes de Projet - Propriétés"
 
 #. module: product_list
 #: field:product.product,xmlid_code:0
-msgid "Hidden xmlid code"
-msgstr "Hidden xmlid code"
+msgid "Xmlid Code"
+msgstr "Code Xmlid"
 
 #. module: sync_client
 #: code:addons/sync_client/hq_monitor.py:83
