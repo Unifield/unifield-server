@@ -3610,7 +3610,7 @@ class stock_picking(osv.osv):
             move = self.pool.get('stock.move').browse(cr, uid, issue_ids, fields_to_fetch=['line_number'], context=context)
             raise osv.except_osv(
                 _('Error'),
-                _('The pre-packing list has pack integrity issues, please check lines:\n - %s') % ("\n -".join(['#%d'%x.line_number for x in move]))
+                _('The pre-packing list has pack integrity issues, lines:\n - %s\nClick on Check Integrity button to display details.') % ("\n -".join(['#%d'%x.line_number for x in move]))
             )
 
         ppl_processor = self.pool.get('ppl.processor')
