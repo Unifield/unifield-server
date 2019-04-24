@@ -100,6 +100,8 @@ class account_cheque_register(osv.osv):
         'display_type': 'all',
     }
 
+    _order = 'state, period_id, instance_id, journal_id'
+
     def button_confirm_cheque(self, cr, uid, ids, context=None):
         """
         When you press "Confirm" on a Cheque Register.

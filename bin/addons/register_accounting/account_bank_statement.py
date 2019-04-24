@@ -211,7 +211,7 @@ class account_bank_statement(osv.osv):
                                           help='Name and position of the person who closes the register'),
     }
 
-    _order = 'state asc, period_number asc'
+    _order = 'state, period_id, instance_id, journal_id'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
