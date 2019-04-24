@@ -1058,6 +1058,8 @@ class job_in_progress(osv.osv_memory):
         'target_link': fields.text('Target'),
         'error': fields.text('Error'),
         'read': fields.boolean('Msg read by user'),
+        'src_name': fields.char('Src Name', size=256),
+        'target_name': fields.char('Target Name', size=256),
     }
 
     _defaults = {
@@ -1085,7 +1087,9 @@ class job_in_progress(osv.osv_memory):
         if main_object_id:
             object_id = main_object_id
 
-        job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines})
+        src_name = self.pool.get(model).read(cr, uid, object_id, ['name']).get('name')
+
+        job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines, 'src_name': src_name})
         th = threading.Thread(
             target=self._run_bg_job,
             args=(cr, uid, job_id,  method_to_call),
@@ -1128,10 +1132,14 @@ class job_in_progress(osv.osv_memory):
         finally:
             if job_id:
                 if not process_error:
+                    target_name = False
                     if isinstance(res, bool):
                         # if target is not a dict, do not display button
                         res = False
-                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res})
+                    if res and res.get('res_id') and res.get('res_model'):
+                        target_name = self.pool.get(res['res_model']).read(new_cr, uid, res['res_id'], ['name']).get('name')
+
+                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res, 'target_name': target_name})
                 new_cr.commit()
                 new_cr.close(True)
 job_in_progress()
