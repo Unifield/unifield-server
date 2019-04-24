@@ -2944,54 +2944,6 @@ class account_bank_statement_line(osv.osv):
             'context': context,
         }
 
-    def button_transfer(self, cr, uid, ids, context=None):
-        """
-        Open Transfer with change wizard
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        absl = self.browse(cr, uid, ids[0], context=context)
-        if absl.account_id and absl.account_id.type_for_register and absl.account_id.type_for_register != 'transfer':
-            raise osv.except_osv(_('Error'), _('Open transfer with change wizard is only possible with transfer account in other currency!'))
-        # Create wizard
-        vals = {'absl_id': ids[0],}
-        transfer_type = 'to'
-        amount_field = 'amount_to'
-        curr_field = 'currency_to'
-        if absl and absl.amount:
-            if absl.amount >= 0:
-                transfer_type = 'from'
-                amount_field = 'amount_from'
-                curr_field = 'currency_from'
-        if absl and absl.transfer_amount:
-            vals.update({amount_field: absl.transfer_amount,})
-        if absl and absl.transfer_journal_id:
-            vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
-        if absl and absl.state == 'hard':
-            vals.update({'state': 'closed',})
-        vals.update({'type': transfer_type,})
-        wiz_id = self.pool.get('wizard.transfer.with.change').create(cr, uid, vals, context=context)
-        # Return view with register_line id
-        context.update({
-            'active_id': wiz_id,
-            'active_ids': [wiz_id],
-            'register_line_id': ids[0],
-        })
-        return {
-            'name': _("Transfer with change"),
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.transfer.with.change',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'view_mode': 'form',
-            'view_type': 'form',
-            'context': context,
-        }
-
     def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context=None):
         """
         Update Third Party type regarding account type_for_register field.

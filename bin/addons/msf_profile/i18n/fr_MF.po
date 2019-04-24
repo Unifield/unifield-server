@@ -988,11 +988,6 @@ msgstr "Rechercher Processus"
 msgid "Create shipment"
 msgstr "Create shipment"
 
-#. module: register_accounting
-#: view:wizard.transfer.with.change:0
-msgid "Please indicate an amount and a currency in which the transfer with change will be done or come from."
-msgstr "Veuillez indiquer un montant et une devise pour lequel le transfert avec change se fera ou duquel il provient."
-
 #. module: purchase
 #: model:process.node,note:purchase.process_node_rfq_done
 msgid "Closed state of request for quotation."
@@ -2527,11 +2522,6 @@ msgstr "Date d'Eligibilité - Au"
 #: field:account.mcdb,account_ids:0
 msgid "Account Code"
 msgstr "Compte- Code"
-
-#. module: register_accounting
-#: view:wizard.transfer.with.change:0
-msgid "User tip"
-msgstr "Conseil pour Utilisateur"
 
 #. module: unifield_setup
 #: model:ir.model,name:unifield_setup.model_lang_setup
@@ -5352,11 +5342,6 @@ msgstr "Configurer le Montant Limite d'Achat"
 #: help:operations.event,kind:0
 msgid "What kind of event it was."
 msgstr "Quel genre d'événement c'était."
-
-#. module: register_accounting
-#: help:wizard.transfer.with.change,converted_amount:0
-msgid "Register line converted amount at standard rate (based on third party journal currency)"
-msgstr "Montant converti de la ligne de registre à un taux standard (basé sur la devise du Journal des Tiers)"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -8756,7 +8741,6 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:wizard.import.cheque,state:0
 #: selection:wizard.import.invoice,state:0
 #: selection:wizard.register.creation,state:0
-#: selection:wizard.transfer.with.change,state:0
 #: selection:res.currency.table,state:0
 #: selection:claim.event,hidden_state:0
 #: selection:claim.event,state:0
@@ -12894,12 +12878,6 @@ msgstr "Ancien"
 msgid "mm-dd-yyyy"
 msgstr "mm-dd-yyyy"
 
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:2925
-#, python-format
-msgid "Open transfer with change wizard is only possible with transfer account in other currency!"
-msgstr "Ouvrir transfert avec l'assistant de change n'est possible qu'avec compte de transfert dans une autre devise!"
-
 #. module: purchase
 #: help:res.company,po_lead:0
 msgid "This is the leads/security time for each purchase order."
@@ -15735,7 +15713,6 @@ msgstr "Fonctions d'export automatisé"
 #: field:account.direct.invoice.wizard,type:0
 #: field:wizard.account.invoice,type:0
 #: field:wizard.register.creation.lines,register_type:0
-#: field:wizard.transfer.with.change,type:0
 #: field:ir.header_img,type:0
 #: view:resource.resource:0
 #: field:claim.event,type_claim_event:0
@@ -16961,7 +16938,6 @@ msgstr "America/Nipigon"
 
 #. module: register_accounting
 #: field:account.move.line,transfer_amount:0
-#: field:wizard.transfer.with.change,absl_amount:0
 msgid "Transfer amount"
 msgstr "Montant Transfert"
 
@@ -21680,11 +21656,6 @@ msgstr "Délai de Transport Estimé en semaines"
 msgid "Ticked if the product is a Controlled Substance"
 msgstr "Ticked if the product is a Controlled Substance"
 
-#. module: register_accounting
-#: help:wizard.transfer.with.change,currency_id:0
-msgid "This currency is those from given third party journal."
-msgstr "Cette devise est de celles données par le Journal des Tiers."
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_year_end_closing.py:181
 #, python-format
@@ -26222,11 +26193,6 @@ msgstr "Métadonnées"
 msgid "Priority :"
 msgstr "Priorité :"
 
-#. module: register_accounting
-#: model:ir.model,name:register_accounting.model_wizard_transfer_with_change
-msgid "Transfer with Change Wizard"
-msgstr "Transfert avec Assistant de Change"
-
 #. module: stock
 #: view:stock.inventory:0
 msgid "Search Inventory"
@@ -27152,8 +27118,6 @@ msgstr "Remove all Free 2"
 
 #. module: register_accounting
 #: field:wizard.down.payment,currency_id:0
-#: field:wizard.transfer.with.change,absl_currency:0
-#: help:wizard.transfer.with.change,absl_currency:0
 msgid "Register line currency"
 msgstr "Devise de la ligne de registre"
 
@@ -29922,12 +29886,6 @@ msgstr "Iles Vierges (USA)"
 #: selection:res.users,context_tz:0
 msgid "America/Godthab"
 msgstr "Amériques/Godthab"
-
-#. module: register_accounting
-#: field:wizard.transfer.with.change,amount_from:0
-#: field:wizard.transfer.with.change,amount_to:0
-msgid "Transfer amount converted at real rate"
-msgstr "Montant Transfert converti au taux réel"
 
 #. module: stock
 #: code:addons/stock/wizard/stock_partial_move.py:154
@@ -34537,7 +34495,6 @@ msgstr "Asia/Hebron"
 #: view:wizard.account.invoice:0
 #: view:wizard.down.payment:0
 #: view:wizard.invoice.date:0
-#: view:wizard.transfer.with.change:0
 #: view:res.currency.table:0
 #: view:sale.order:0
 #: view:stock.cost.reevaluation:0
@@ -36288,12 +36245,6 @@ msgstr "Last line of the FO to source"
 msgid "Integer Big"
 msgstr "Grand Entier"
 
-#. module: register_accounting
-#: view:account.bank.statement:0
-#: view:wizard.transfer.with.change:0
-msgid "Transfer details"
-msgstr "Détails Transfert"
-
 #. module: account_payment
 #: view:account.payment.populate.statement:0
 msgid "ADD"
@@ -38011,7 +37962,6 @@ msgstr "Do reconfigure..."
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
-#: selection:wizard.transfer.with.change,type:0
 #: field:stock.location.product,from_date:0
 #: field:export.report.stock.move,date_from:0
 #: field:stock.analyze.view,from_date:0
@@ -38554,7 +38504,6 @@ msgstr "Serveur - Action"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2951
-#: view:wizard.transfer.with.change:0
 #: code:addons/register_accounting/report/report_fully_report.py:72
 #, python-format
 msgid "Transfer with change"
@@ -43657,7 +43606,6 @@ msgstr "done - (sale.order.line)"
 #. modules: register_accounting, analytic_distribution, account_override
 #: field:analytic.distribution.wizard,register_line_id:0
 #: view:account.bank.statement.line:0
-#: field:wizard.transfer.with.change,absl_id:0
 #: field:account.direct.invoice.wizard,register_line_id:0
 #: field:account.move.line,partner_register_line_id:0
 msgid "Register Line"
@@ -55606,7 +55554,6 @@ msgstr "Vérification du fichier…"
 #: view:stock.picking:0
 #: view:account.bank.statement:0
 #: selection:wizard.down.payment,state:0
-#: selection:wizard.transfer.with.change,state:0
 #: selection:res.currency.table,state:0
 #: selection:claim.product.line,claim_state_claim_product_line:0
 #: view:return.claim:0
@@ -82938,7 +82885,6 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:wizard.invoice.date,state:0
 #: field:wizard.register.creation,state:0
 #: field:wizard.register.import,state:0
-#: field:wizard.transfer.with.change,state:0
 #: field:res.currency.table,state:0
 #: field:claim.event,state:0
 #: view:return.claim:0
@@ -85573,11 +85519,6 @@ msgstr "COMMANDE DE TERRAIN"
 #: view:financing.contract.contract:0
 msgid "Hard closed"
 msgstr "Clôturé définitivement "
-
-#. module: register_accounting
-#: field:wizard.transfer.with.change,converted_amount:0
-msgid "Transfer amount valuation at system rate (automatic)"
-msgstr "Valorisation du montant du Transfert selon le système (taux automatique)"
 
 #. module: stock
 #: view:stock.picking:0
@@ -88613,7 +88554,6 @@ msgstr "TbD"
 #: field:res.request.history,act_to:0
 #: field:product.likely.expire.report,consumption_to:0
 #: field:product.likely.expire.report,date_to:0
-#: selection:wizard.transfer.with.change,type:0
 #: field:stock.location.product,to_date:0
 #: field:stock.analyze.view,to_date:0
 #: field:supplier.catalogue,period_to:0
@@ -94386,9 +94326,6 @@ msgstr "America/Anguilla"
 #: field:wizard.import.invoice,currency_id:0
 #: field:wizard.register.creation.lines,currency_id:0
 #: field:wizard.register.import.lines,currency_id:0
-#: field:wizard.transfer.with.change,currency_from:0
-#: field:wizard.transfer.with.change,currency_id:0
-#: field:wizard.transfer.with.change,currency_to:0
 #: field:account.bank.statement.line,currency_id:0
 #: view:account.move.line:0
 #: model:ir.model,name:res_currency_functional.model_res_currency
@@ -98031,7 +97968,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.register.creation:0
 #: view:wizard.register.import:0
 #: view:wizard.temp.posting:0
-#: view:wizard.transfer.with.change:0
 #: view:activate.currencies:0
 #: view:import.currencies:0
 #: view:import.table.currencies:0
