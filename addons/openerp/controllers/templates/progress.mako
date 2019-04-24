@@ -30,7 +30,7 @@
                     $('#indicator').width((obj.progress*250)/100+'px');
                     $('#percentage').html(obj.progress+'%');
                     if (obj.state == 'error') {
-                        $('#boxtitle').html("Last Processing Error");
+                        $('#boxtitle').html(_("Last Processing Error"));
                         $('#open_src').click(set_as_read);
                         $('#open_src').show();
                         $('#pwidget').css('overflow', 'scroll');
@@ -39,10 +39,20 @@
                     } else if (obj.state != 'done') {
                         setTimeout(get_progress, 1000);
                     } else {
-                        $('#boxtitle').html("Done");
+                        if (obj.job_name) {
+                            $('#boxtitle').html(obj.job_name + " " + _("Done"));
+                        } else {
+                            $('#boxtitle').html(_("Done"));
+                        }
+                        if (obj.src_name) {
+                            $('#open_src').html('View '+obj.src_name)
+                        }
                         $('#open_src').click(function() {set_as_read()});
                         $('#open_src').show();
                         if (obj.target) {
+                            if (obj.target_name) {
+                                $('#open_target').html('View '+obj.target_name);
+                            }
                             $('#open_target').show();
                             $('#open_target').click(function() {set_as_read(obj.target)});
                         }
