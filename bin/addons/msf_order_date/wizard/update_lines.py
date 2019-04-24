@@ -155,12 +155,21 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             requested_date = obj.delivery_requested_date
             for line in obj.order_line:
-                if selected and context.get('button_selected_ids'):
-                    if line.id in context['button_selected_ids'] and line.state in ('draft', 'validated', 'validated_n'):
-                        line.write({'date_planned': requested_date})
+                if obj._table_name == 'sale.order' and not obj.procurement_request:
+                    if (line.resourced_original_line or (line.is_line_split and line.original_line_id and line.original_line_id.resourced_original_line)) \
+                            and line.state.startswith('validated'):
+                        if selected and context.get('button_selected_ids'):
+                            if line.id in context['button_selected_ids']:
+                                line.write({'date_planned': requested_date})
+                        else:
+                            line.write({'date_planned': requested_date})
                 else:
-                    if line.state in ('draft', 'validated', 'validated_n'):
-                        line.write({'date_planned': requested_date})
+                    if selected and context.get('button_selected_ids'):
+                        if line.id in context['button_selected_ids'] and line.state in ('draft', 'validated', 'validated_n'):
+                            line.write({'date_planned': requested_date})
+                    else:
+                        if line.state in ('draft', 'validated', 'validated_n'):
+                            line.write({'date_planned': requested_date})
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -209,13 +218,23 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             stock_take_date = obj.stock_take_date
             for line in obj.order_line:
-                if selected and context.get('button_selected_ids'):
-                    if line.id in context['button_selected_ids'] and line.state in ('draft', 'validated', 'validated_n'):
-                        line.write({'stock_take_date': stock_take_date})
+                if obj._table_name == 'sale.order' and not obj.procurement_request:
+                    if (line.resourced_original_line or (line.is_line_split and line.original_line_id and line.original_line_id.resourced_original_line)) \
+                            and line.state.startswith('validated'):
+                        if selected and context.get('button_selected_ids'):
+                            if line.id in context['button_selected_ids']:
+                                line.write({'stock_take_date': stock_take_date})
+                        else:
+                            line.write({'stock_take_date': stock_take_date})
                 else:
-                    if line.state in ('draft', 'validated', 'validated_n'):
-                        line.write({'stock_take_date': stock_take_date})
+                    if selected and context.get('button_selected_ids'):
+                        if line.id in context['button_selected_ids'] and line.state in ('draft', 'validated', 'validated_n'):
+                            line.write({'stock_take_date': stock_take_date})
+                    else:
+                        if line.state in ('draft', 'validated', 'validated_n'):
+                            line.write({'stock_take_date': stock_take_date})
 
         return {'type': 'ir.actions.act_window_close'}
+
 
 update_lines()
