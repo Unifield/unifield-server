@@ -23,7 +23,6 @@ from osv import osv, fields
 from tools.translate import _
 import netsvc
 from datetime import datetime, date
-import pooler
 
 from order_types.stock import check_cp_rw
 from msf_order_date import TRANSPORT_TYPE
@@ -38,8 +37,6 @@ from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
 from . import INTEGRITY_STATUS_SELECTION
-import threading
-import traceback
 
 
 class stock_warehouse(osv.osv):
@@ -679,24 +676,8 @@ class shipment(osv.osv):
                 shipment_id = %s
         """, (ids[0], ))
         nb_lines = cr.fetchone()[0] or 0
-        if not nb_lines:
-            raise osv.except_osv(_('Warning'), _('No line to process'))
-        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': ids[0], 'model': 'shipment', 'name': _('Create Shipment'), 'total': nb_lines})
-        th = threading.Thread(
-            target=self.pool.get('stock.picking')._run_bg_job,
-            args=(cr, uid, ids, self.do_create_shipment, context),
-            kwargs={'job_id': job_id}
-        )
-        th.start()
-        th.join(1)
-        if not th.isAlive():
-            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
-            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
-            if job_data['state'] == 'done':
-                return job_data['target_link']
-            else:
-                raise osv.except_osv(_('Warning'), job_data['error'])
-        return True
+
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'shipment', self.do_create_shipment, nb_lines, _('Create Shipment'), context=context)
 
     def do_create_shipment(self, cr, uid, ids, context=None, job_id=False):
         """
@@ -1495,24 +1476,7 @@ class shipment(osv.osv):
         """, (ids[0], ))
         nb_lines = cr.fetchone()[0] or 0
 
-        if not nb_lines:
-            raise osv.except_osv(_('Warning'), _('No line to process'))
-        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': ids[0], 'model': 'shipment', 'name': _('Create Shipment'), 'total': nb_lines})
-        th = threading.Thread(
-            target=self.pool.get('stock.picking')._run_bg_job,
-            args=(cr, uid, ids, self.validate, context),
-            kwargs={'job_id': job_id}
-        )
-        th.start()
-        th.join(1)
-        if not th.isAlive():
-            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
-            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
-            if job_data['state'] == 'done':
-                return job_data['target_link']
-            else:
-                raise osv.except_osv(_('Warning'), job_data['error'])
-        return True
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'shipment', self.validate, nb_lines, _('Create Shipment'), context=context)
 
     def validate(self, cr, uid, ids, context=None, job_id=False):
         '''
@@ -3201,35 +3165,6 @@ class stock_picking(osv.osv):
 
         return res
 
-    def _run_bg_job(self, cr, uid, ids, method, context=None, job_id=False):
-        new_cr = pooler.get_db(cr.dbname).cursor()
-        try:
-            res = False
-            process_error = False
-            res = method(new_cr, uid, ids, context, job_id=job_id)
-        except osv.except_osv, er:
-            new_cr.rollback()
-            if job_id:
-                process_error = True
-                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(er.value)})
-            raise
-
-        except Exception:
-            new_cr.rollback()
-            if job_id:
-                process_error = True
-                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(traceback.format_exc())})
-            raise
-
-        finally:
-            if job_id:
-                if not process_error:
-                    if isinstance(res, bool):
-                        # if target is not a dict, do not display button
-                        res = False
-                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res})
-                new_cr.commit()
-                new_cr.close(True)
 
 
     def do_create_picking_bg(self, cr, uid, ids, context=None):
@@ -3245,24 +3180,9 @@ class stock_picking(osv.osv):
             self.check_integrity(cr, uid, picking_id, context)
 
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('qty_to_process', '>=', 0), ('state', '=', 'assigned'),('product_qty', '>', 0), ('picking_id', 'in', ids)], count=True)
-        if not nb_lines:
-            raise osv.except_osv(_('Warning'), _('No line to process'))
-        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': ids[0], 'model': 'stock.picking', 'name': _('Create Picking'), 'total': nb_lines})
-        th = threading.Thread(
-            target=self._run_bg_job,
-            args=(cr, uid, ids, self.do_create_picking, context),
-            kwargs={'job_id': job_id}
-        )
-        th.start()
-        th.join(1)
-        if not th.isAlive():
-            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
-            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
-            if job_data['state'] == 'done':
-                return job_data['target_link']
-            else:
-                raise osv.except_osv(_('Warning'), job_data['error'])
-        return True
+
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'stock.picking', self.do_create_picking, nb_lines, _('Create Picking'), context=context)
+
 
     def do_create_picking(self, cr, uid, ids, context=None, only_pack_ids=False, job_id=False):
         """
@@ -3484,24 +3404,7 @@ class stock_picking(osv.osv):
             self.check_integrity(cr, uid, picking_id, context)
 
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('state', '=', 'assigned'), ('picking_id', 'in', ids)], count=True)
-        if not nb_lines:
-            raise osv.except_osv(_('Warning'), _('No line to process'))
-        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': ids[0], 'model': 'stock.picking', 'name': _('Validate Picking'), 'total': nb_lines})
-        th = threading.Thread(
-            target=self._run_bg_job,
-            args=(cr, uid, ids, self.do_validate_picking, context),
-            kwargs={'job_id': job_id}
-        )
-        th.start()
-        th.join(1)
-        if not th.isAlive():
-            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
-            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
-            if job_data['state'] == 'done':
-                return job_data['target_link']
-            else:
-                raise osv.except_osv(_('Warning'), job_data['error'])
-        return True
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'stock.picking', self.do_validate_picking, nb_lines, _('Validate Picking'), context=context)
 
     def do_validate_picking(self, cr, uid, ids, context=None, job_id=False):
         '''
@@ -3824,29 +3727,11 @@ class stock_picking(osv.osv):
         if isinstance(wizard_ids, (int, long)):
             wizard_ids, = [wizard_ids]
 
-        assert len(wizard_ids) == 1, 'do_ppl_step2_bg can only process 1 object'
-
         proc = self.pool.get('ppl.processor').browse(cr, uid, wizard_ids, fields_to_fetch=['picking_id'], context=context)
 
         nb_lines = self.pool.get('ppl.family.processor').search(cr, uid, [('wizard_id', 'in', wizard_ids)], count=True)
-        if not nb_lines:
-            raise osv.except_osv(_('Warning'), _('No line to process'))
-        job_id = self.pool.get('job.in_progress').create(cr, uid, {'res_id': proc[0].picking_id.id, 'model': 'stock.picking', 'name': _('Validate PPL'), 'total': nb_lines})
-        th = threading.Thread(
-            target=self._run_bg_job,
-            args=(cr, uid, wizard_ids, self.do_ppl_step2, context),
-            kwargs={'job_id': job_id}
-        )
-        th.start()
-        th.join(1)
-        if not th.isAlive():
-            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
-            self.pool.get('job.in_progress').unlink(cr, uid, [job_id])
-            if job_data['state'] == 'done':
-                return job_data['target_link']
-            else:
-                raise osv.except_osv(_('Warning'), job_data['error'])
-        return {'type': 'ir.actions.act_window_close'}
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, wizard_ids, 'stock.picking', self.do_ppl_step2, nb_lines, _('Validate PPL'), main_object_id=proc[0].picking_id.id, return_success={'type': 'ir.actions.act_window_close'}, context=context)
+
 
     def do_ppl_step2(self, cr, uid, wizard_ids, context=None, job_id=False):
         '''

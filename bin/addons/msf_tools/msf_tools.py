@@ -37,6 +37,9 @@ from cStringIO import StringIO
 from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
+import threading
+import traceback
+import pooler
 
 class lang(osv.osv):
     '''
@@ -1071,4 +1074,64 @@ class job_in_progress(osv.osv_memory):
 
     def write(self, cr, uid, *a, **b):
         return super(job_in_progress, self).write(cr, 1, *a, **b)
+
+    def _prepare_run_bg_job(self, cr, uid, src_ids, model, method_to_call, nb_lines, name, return_success=True, main_object_id=False, context=None):
+        assert len(src_ids) == 1, 'Can only process 1 object'
+
+        if not nb_lines:
+            raise osv.except_osv(_('Warning'), _('No line to process'))
+
+        object_id = src_ids[0]
+        if main_object_id:
+            object_id = main_object_id
+
+        job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines})
+        th = threading.Thread(
+            target=self._run_bg_job,
+            args=(cr, uid, job_id,  method_to_call),
+            kwargs={'src_ids': src_ids, 'context': context}
+        )
+        th.start()
+        th.join(1)
+        if not th.isAlive():
+            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
+            self.unlink(cr, uid, [job_id])
+            if job_data['state'] == 'done':
+                return job_data['target_link']
+            else:
+                raise osv.except_osv(_('Warning'), job_data['error'])
+
+        return return_success
+
+
+    def _run_bg_job(self, cr, uid, job_id, method, src_ids, context=None):
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            res = False
+            process_error = False
+            res = method(new_cr, uid, src_ids, context, job_id=job_id)
+        except osv.except_osv, er:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(er.value)})
+            raise
+
+        except Exception:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(traceback.format_exc())})
+            raise
+
+        finally:
+            if job_id:
+                if not process_error:
+                    if isinstance(res, bool):
+                        # if target is not a dict, do not display button
+                        res = False
+                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res})
+                new_cr.commit()
+                new_cr.close(True)
 job_in_progress()
