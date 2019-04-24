@@ -510,6 +510,7 @@
                     <field name="origin"/>
                     <field name="customer_ref"/>
                     <field name="dest_partner_names"/>
+                    <field name="details" truncate="15"/>
                     <field name="line_count"/>
                     <field name="shipped_rate" widget="progressbar"/>
                     <field name="invoiced_rate" widget="progressbar"/>
