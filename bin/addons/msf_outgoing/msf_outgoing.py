@@ -546,7 +546,7 @@ class shipment(osv.osv):
         picking_obj = self.pool.get('stock.picking')
 
         if not family.selected_number:
-            return False
+            return nb_processed
 
         if family.selected_number > family.num_of_packs:
             raise osv.except_osv(
@@ -1221,9 +1221,10 @@ class shipment(osv.osv):
                             treat_draft = False
                         elif move.from_pack or move.to_pack:
                             # qty = 0, from/to pack should have been set to zero
+                            print move.id
                             raise osv.except_osv(
                                 _('Error'),
-                                _('There are stock moves with 0 quantity on the pack family sequence')
+                                _('There are stock moves with 0 quantity on the pack family sequence: %s %s' % (draft_packing.name, move.line_number))
                             )
 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished

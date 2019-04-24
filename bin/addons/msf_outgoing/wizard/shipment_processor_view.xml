@@ -11,7 +11,7 @@
                     <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
                     <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
                     <field name="family_ids" nolabel="1" colspan="4" mode="tree" widget="one2many_list" editable="top">
-                        <tree string="Packs" editable="top">
+                        <tree string="Packs" editable="top" hide_delete_button="1" hide_new_button="1">
                             <field name="sale_order_id" readonly="1"/>
                             <field name="ppl_id" readonly="1" />
                             <field name="from_pack" readonly="1" />
@@ -27,7 +27,7 @@
                     <separator colspan="4" string="Actions" />
                     <label colspan="2"> </label>
                     <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="1" />
-                    <button name="do_add_packs" type="object" string="Add Packs to Shipment" icon="gtk-add" colspan="1" />
+                    <button name="do_add_packs_bg" type="object" string="Add Packs to Shipment" icon="gtk-add" colspan="1" />
                </form>
            </field>
         </record>
