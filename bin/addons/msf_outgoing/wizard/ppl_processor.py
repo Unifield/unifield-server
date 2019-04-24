@@ -228,7 +228,7 @@ class ppl_processor(osv.osv):
             )
 
         # Call the stock.picking method
-        return picking_obj.do_ppl_step2(cr, uid, ids, context=context)
+        return picking_obj.do_ppl_step2_bg(cr, uid, ids, context=context)
 
 ppl_processor()
 

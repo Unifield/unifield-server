@@ -166,8 +166,8 @@
                     <field name="min_date" string="Expected\nPick Date" />
                     <field name="state"/>
                     <field name="line_state" />
-                    <button name="do_create_picking" states="draft" string="Create Picking" type="object" icon="gtk-add" context="{'from_button': True}"/>
-                    <button name="do_validate_picking" states="assigned" string="Validate Picking" type="object" icon="gtk-apply" context="{'from_button': True}" />
+                    <button name="do_create_picking_bg" states="draft" string="Create Picking" type="object" icon="gtk-add" context="{'from_button': True}"/>
+                    <button name="do_validate_picking_bg" states="assigned" string="Validate Picking" type="object" icon="gtk-apply" context="{'from_button': True}" />
                 </tree>
             </field>
         </record>
@@ -398,7 +398,7 @@
                                 <button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="do_create_picking_bg" states="draft" string="Create Picking" type="object" icon="gtk-add" context="{'from_button': True}" />
-                                <button name="do_validate_picking" states="assigned" string="Validate Picking" type="object" icon="gtk-apply"  context="{'from_button': True}" />
+                                <button name="do_validate_picking_bg" states="assigned" string="Validate Picking" type="object" icon="gtk-apply"  context="{'from_button': True}" />
                             </group>
                         </page>
                         <page string="Additional info">
@@ -1259,7 +1259,7 @@
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
-					<button name="do_create_shipment" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
+					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
 					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
 				</tree>
 			</field>
@@ -1419,9 +1419,9 @@
                         <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button name="add_packs" states="shipped" string="Add Packs to Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                        <button name="do_create_shipment" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
+                        <button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                        <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
+                        <button name="validate_bg" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
                                 attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
