@@ -613,23 +613,17 @@ class substitute_item(osv.osv_memory):
             result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
             return result
 
-        # objects
-        loc_obj = self.pool.get('stock.location')
         prod_obj = self.pool.get('product.product')
         # corresponding product object
-        product_obj = prod_obj.browse(cr, uid, product_id, context=context)
-        # uom from product is taken by default if needed
-        uom_id = uom_id or product_obj.uom_id.id
-        # we check for the available qty (in:done, out: assigned, done) - consider_child_locations=False
-        res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
+        ctx = context.copy()
+        ctx['location'] = location_id
+        if uom_id:
+            ctx['uom'] = uom_id
         if prodlot_id:
-            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
-            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
-        else:
-            # otherwise we take total according to the location
-            qty = res[location_id]['total']
+            ctx['prodlot_id'] = prodlot_id
+        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=context)
         # update the result
-        result.setdefault('value', {}).update({'qty_substitute_item': qty,
+        result.setdefault('value', {}).update({'qty_substitute_item': product_obj.qty_allocable,
                                                'uom_id_substitute_item': uom_id,
                                                })
         return result

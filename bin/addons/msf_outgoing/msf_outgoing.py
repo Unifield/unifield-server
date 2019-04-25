@@ -3079,16 +3079,6 @@ class stock_picking(osv.osv):
 
         return new_packing_id
 
-    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        - allow to choose wether or not an exception should be raised in case of no stock move
-        '''
-        res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
-        return res and False
-
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         stock>stock.py>log_picking
@@ -5204,6 +5194,7 @@ class stock_move(osv.osv):
 
         move_to_done = []
         pick_to_check = set()
+        sol_ids_to_check = {}
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_qty == 0.00:
@@ -5293,6 +5284,7 @@ class stock_move(osv.osv):
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
+                sol_ids_to_check[move.sale_line_id.id] = True
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or False
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
@@ -5300,7 +5292,7 @@ class stock_move(osv.osv):
                         has_linked_pol = self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
                         if has_linked_pol:
                             context['sol_done_instead_of_cancel'] = True
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, cancel_move=move.id, context=context)
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
@@ -5309,6 +5301,11 @@ class stock_move(osv.osv):
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+
+        # cancel remaining qty on OUT must close the IR/FO line
+        for sol_id in  sol_ids_to_check.keys():
+            wf_service.trg_write(uid, 'sale.order.line', sol_id, cr)
+
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
                 moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)
