@@ -1117,9 +1117,10 @@ Nothing has been imported because of %s. See below:
 
         context['from_simu_screen'] = True
 
-        if simu_id.with_pack:
+        if simu_id.with_pack or context.get('do_not_import_with_thread'):
             cr.commit()
             if context.get('do_not_import_with_thread'):
+                # Auto VI IN import: do not process IN
                 self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
             else:
                 new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
