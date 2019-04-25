@@ -18,6 +18,7 @@
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
                         <label colspan="2"> </label>
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="do_reset_step2" type="object" string="Reset" attrs="{'invisible':[('draft_step2','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft_step2" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button name="do_ppl_step2" type="object" string="Process" icon="gtk-go-forward" />
