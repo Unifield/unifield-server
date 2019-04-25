@@ -200,6 +200,7 @@ class ppl_processor(osv.osv):
             treated_moves = 0
             has_vol = 0
             has_weight = 0
+            error_vol = False
             total = 0
             for family in wizard.family_ids:
                 total += 1
@@ -207,7 +208,8 @@ class ppl_processor(osv.osv):
                     has_weight += 1
                 if family.length > 0 and family.width > 0 and family.height > 0:
                     has_vol += 1
-
+                if family.length+family.width+family.height != 0 and family.length*family.width*family.height == 0:
+                    error_vol = True
                 treated_moves += len(family.move_ids)
 
             nb_pick_moves = move_obj.search(cr, uid, [
@@ -221,7 +223,7 @@ class ppl_processor(osv.osv):
                     _('The number of treated moves (%s) are not compatible with the number of moves in PPL (%s).') % (treated_moves, nb_pick_moves),
                 )
 
-        if (has_vol and has_vol!=total) or (has_weight and has_weight!=total):
+        if (has_vol and has_vol!=total) or (has_weight and has_weight!=total) or error_vol:
             raise osv.except_osv(
                 _('Processing Error'),
                 _('Some weight and/or volume information is missing: please fill them all or emty them all.'),

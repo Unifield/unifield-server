@@ -674,7 +674,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field name="flow_type" invisible="0" />
+                            <field name="flow_type" invisible="1" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
                                 attrs="{'readonly': [ '|', ('flow_type', '=', 'quick'), ('state','not in',['draft','confirmed','assigned'])]}"
                                 filter_selector="[('Hide returned', [('ppl_returned_ok', '=', False)]), ('Show all', [])]"
