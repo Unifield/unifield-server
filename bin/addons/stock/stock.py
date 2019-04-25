@@ -2560,7 +2560,7 @@ class stock_move(osv.osv):
         return res
 
     def force_assign_manual(self, cr, uid, ids, context=None):
-        self.force_assign(cr, uid, ids, context, manual=True)
+        return self.force_assign(cr, uid, ids, context, manual=True)
 
     def force_assign(self, cr, uid, ids, context=None, manual=False):
         """ Changes the state to assigned.

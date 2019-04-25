@@ -238,7 +238,7 @@
                                             on_change="onchange_product_id(product_id, location_id, location_dest_id, parent.address_id, parent.type, purchase_line_id, True, context)"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('fake_state', '=', 'assigned')]}"
                                             />
-                                    <field name="comment" />
+                                    <field name="comment" readonly="1"/>
                                     <field name="composition_list_id" readonly="1"/>
                                     <field name="product_qty"
                                             string="Qty"
@@ -256,7 +256,7 @@
                                             on_change="onchange_qty_to_process(qty_to_process, product_qty, product_uom)"
                                             />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed', 'assigned'))]}"/>
-                                    <field name="asset_id" />
+                                    <field name="asset_id" attrs="{'readonly': [('fake_state', '!=', 'confirmed')]}"/>
 
                                     <field name="prodlot_id"
                                             string="Batch Number"
@@ -318,7 +318,7 @@
                                             attrs="{'readonly': [('state', 'not in', ['confirmed', 'assigned'])]}"
                                             on_change="onchange_qty_to_process(qty_to_process, product_qty, product_uom)"
                                             />
-                                        <field name="comment" colspan="4" />
+                                        <field name="comment" colspan="4" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                     </group>
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
@@ -331,7 +331,7 @@
                                     </group>
                                     <group colspan="2" col="4">
                                         <separator string="Traceability" colspan="4" />
-                                        <field name="asset_id" colspan="4" />
+                                        <field name="asset_id" colspan="4" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                         <field name="hidden_batch_management_mandatory" invisible="True" />
                                         <field name="hidden_perishable_mandatory" invisible="True" />
                                         <field name="prodlot_id"
@@ -357,7 +357,7 @@
                                         <separator string="Dates" colspan="2" />
                                         <field name="create_date" invisible="1"/>
                                         <field name="date" string="Actual Pick Date" />
-                                        <field name="date_expected" string="Expected Pick Date" />
+                                        <field name="date_expected" string="Expected Pick Date" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                     </group>
                                     <field name="purchase_line_id"  invisible="1"/>
                                     <field name="move_cross_docking_ok"  invisible="1"/>
@@ -367,7 +367,7 @@
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
-                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                        <button name="force_assign_manual" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
                                     </group>
                                     <html>
