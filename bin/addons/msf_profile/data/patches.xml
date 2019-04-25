@@ -128,11 +128,6 @@
             <field name="method">us_1273_patch</field>
         </record>
 
-        <record id="us_838_patch" model="patch.scripts">
-            <field name="method">us_838_migrate_dup_batch</field>
-            <field name="model">stock.production.lot</field>
-        </record>
-
         <record id="us_1024_send_bar_patch" model="patch.scripts">
             <field name="method">us_1024_send_bar_patch</field>
         </record>
@@ -147,11 +142,6 @@
 
         <record id="us_1452_patch_bis" model="patch.scripts">
             <field name="method">us_1452_patch_bis</field>
-        </record>
-
-        <record id="us_1469_patch" model="patch.scripts">
-            <field name="method">us_1469_restore_deleted_batch</field>
-            <field name="model">stock.production.lot</field>
         </record>
 
         <record id="us_1430_patch" model="patch.scripts">
