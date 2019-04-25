@@ -38,7 +38,7 @@ from pager import Pager
 class List(TinyWidget):
 
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
-    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'resequencable',
+    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'nopopup', 'resequencable',
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
@@ -60,6 +60,7 @@ class List(TinyWidget):
     headers = None
     noteditable = None
     notselectable = None
+    nopopup = False
     model = None
     selectable = False
     editable = False
@@ -93,6 +94,7 @@ class List(TinyWidget):
         self.dashboard = 0
         self.noteditable = []
         self.notselectable = []
+        self.nopopup = []
         self.selectable = kw.get('selectable', 0)
         self.editable = kw.get('editable', False)
         self.pageable = kw.get('pageable', True)
@@ -294,6 +296,13 @@ class List(TinyWidget):
                 try:
                     if expr_eval(attrs.get('noteditable'), x):
                         self.noteditable.append(x['id'])
+                except:
+                    pass
+        if self.editable and attrs.get('nopopup'):
+            for x in self.values:
+                try:
+                    if expr_eval(attrs.get('nopopup'), x):
+                        self.nopopup.append(x['id'])
                 except:
                     pass
 
