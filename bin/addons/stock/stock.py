@@ -1770,11 +1770,21 @@ class stock_picking(osv.osv):
                 'in':_('Reception'),
                 'internal': _('Internal picking'),
             }
+            sub_type = {
+                'picking': _('Picking Ticket'),
+                'packing': _('Packing List'),
+                'ppl': _('Pre-Packing List')
+            }
+
+            if pick.type == 'out' and pick.subtype in sub_type:
+                doc_name = sub_type.get(pick.subtype)
+            else:
+                doc_name = type_list.get(pick.type, _('Document'))
             # modify the list of views
-            message = ''.join((type_list.get(pick.type, _('Document')), " '", (pick.name or '?'), "' "))
+            message = ''.join((doc_name, " '", (pick.name or '?'), "' "))
             infolog_message = None
             if pick.state == 'assigned':
-                infolog_message = ''.join((type_list.get(pick.type, _('Document')), " id:", str(pick.id) or 'False', " '", (pick.name or '?'), "' "))
+                infolog_message = ''.join((doc_name, " id:", str(pick.id) or 'False', " '", (pick.name or '?'), "' "))
             if pick.min_date:
                 msg = ''.join((_(' for the '), datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format).decode('utf-8')))
             state_list = {
