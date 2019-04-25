@@ -126,7 +126,6 @@ class stock_production_lot(osv.osv):
 
 
         list_table_fields = [
-            ('create_picking_move_processor', 'prodlot_id'),
             ('export_report_stock_inventory', 'prodlot_id'),
             ('export_report_stock_move', 'prodlot_id'),
             ('internal_move_processor', 'prodlot_id'),
@@ -280,7 +279,6 @@ class stock_production_lot(osv.osv):
     def remap_reference_tables(self, cr, uid, wrong_id, lead_id, batch_name, context=None):
         '''
         -- with fkey = prodlot_id (total=13)
-            TABLE "create_picking_move_processor" CONSTRAINT "create_picking_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "export_report_stock_inventory" CONSTRAINT "export_report_stock_inventory_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "export_report_stock_move" CONSTRAINT "export_report_stock_move_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
             TABLE "internal_move_processor" CONSTRAINT "internal_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
@@ -309,7 +307,6 @@ class stock_production_lot(osv.osv):
         # Tables with foreign key prodlot_id (total 13 tables)
         self._logger.info("__ Migrating batch number:     %s\n", batch_name)
         list_table_fields = [
-            ('create_picking_move_processor', 'prodlot_id'),
             ('export_report_stock_inventory', 'prodlot_id'),
             ('export_report_stock_move', 'prodlot_id'),
             ('internal_move_processor', 'prodlot_id'),
