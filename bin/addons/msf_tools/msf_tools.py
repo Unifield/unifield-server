@@ -1101,7 +1101,7 @@ class job_in_progress(osv.osv_memory):
             job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
             self.unlink(cr, uid, [job_id])
             if job_data['state'] == 'done':
-                return job_data['target_link']
+                return job_data.get('target_link') or return_success
             else:
                 raise osv.except_osv(_('Warning'), job_data['error'])
 

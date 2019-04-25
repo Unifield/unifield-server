@@ -556,7 +556,7 @@ class shipment(osv.osv):
                 ))
         picking = family.draft_packing_id
         move_ids = self.pool.get('stock.move').search(cr, uid, [
-            ('picking_id', '=', family.ppl_id.id),
+            ('picking_id', '=', picking.id),
             ('from_pack', '=', family.from_pack),
             ('to_pack', '=', family.to_pack)
         ], context=context)
@@ -604,7 +604,6 @@ class shipment(osv.osv):
             ('to_pack', '=', family.to_pack),
             ('state', '!=', 'done'),
         ], context=context)
-
         # For corresponding moves
         for move in move_obj.browse(cr, uid, moves_ids, context=context):
             # We compute the selected quantity
@@ -621,7 +620,6 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_output_id.id,
                 'selected_number': family.selected_number,
             }
-
             move_obj.copy(cr, uid, move.id, move_vals, context=context)
             # Update corresponding initial move
             initial_qty = max(move.product_qty - selected_qty, 0)
@@ -638,7 +636,6 @@ class shipment(osv.osv):
             nb_processed += 1
             if job_id and nb_processed % 10 == 0:
                 self.pool.get('job.in_progress').write(cr, uid, [job_id], {'nb_processed': nb_processed})
-
 
         # Reset context
         context.update({
