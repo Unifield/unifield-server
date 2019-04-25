@@ -2559,7 +2559,10 @@ class stock_move(osv.osv):
         res = self.check_assign(cr, uid, todo)
         return res
 
-    def force_assign(self, cr, uid, ids, context=None):
+    def force_assign_manual(self, cr, uid, ids, context=None):
+        self.force_assign(cr, uid, ids, context, manual=True)
+
+    def force_assign(self, cr, uid, ids, context=None, manual=False):
         """ Changes the state to assigned.
         @return: True
         """
@@ -2571,7 +2574,7 @@ class stock_move(osv.osv):
             ids = [ids]
 
         for move in self.read(cr, uid, ids,
-                              ['product_id', 'from_wkf_line', 'picking_id', 'line_number', 'product_qty'], context=context):
+                              ['product_id', 'from_wkf_line', 'picking_id', 'line_number', 'product_qty', 'qty_to_process'], context=context):
             if move['product_id'][0] == product_tbd and move['from_wkf_line']:
                 ids.pop(ids.index(move['id']))
             else:
@@ -2586,8 +2589,10 @@ class stock_move(osv.osv):
                 self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
                     move['line_number'], move['id'], picking_id, picking_id_name,
                 ))
-
-                self.write(cr, uid, [move['id']], {'state': 'assigned', 'qty_to_process': move['product_qty']})
+                to_write = {'state': 'assigned'}
+                if not manual or not move['qty_to_process']:
+                    to_write['qty_to_process'] = move['product_qty']
+                self.write(cr, uid, [move['id']], to_write)
         return True
 
 
