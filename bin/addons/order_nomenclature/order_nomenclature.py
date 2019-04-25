@@ -123,7 +123,6 @@ class purchase_order_line(osv.osv):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
-
         if not context:
             context = {}
 
@@ -153,6 +152,21 @@ class purchase_order_line(osv.osv):
         if qty:
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+            if product and state == 'draft':
+                prod = self.pool.get('product.product').browse(cr, uid, product, fields_to_fetch=['seller_ids'], context=context)
+                if prod.seller_ids:
+                    cr.execute("""
+                        SELECT cal.unit_price 
+                        FROM product_supplierinfo ps, supplier_catalogue_line cal
+                        WHERE cal.supplier_info_id = ps.id AND ps.id IN %s AND cal.product_id = %s 
+                            AND cal.min_qty <= %s AND ps.name = %s
+                        ORDER BY ps.sequence
+                    """ % (tuple([s.id for s in prod.seller_ids]), product, qty, partner_id))
+                    for cat_line in cr.fetchall():
+                        result['value']['price_unit'] = cat_line[0]
+                        break
+                else:
+                    result['value']['price_unit'] = price_unit
 
         self.check_digits(cr, uid, result, context=context)
         return result
