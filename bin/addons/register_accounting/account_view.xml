@@ -62,7 +62,6 @@
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
-                                        <field name="transfer_amount" invisible="1"/>
                                         <field name="red_on_supplier" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -232,7 +231,6 @@
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
-                                      <field name="transfer_amount" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                         <field name="from_cash_return" invisible="1"/>
@@ -826,7 +824,6 @@
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
                                 <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
-                                    <field name="transfer_amount" invisible="1"/>
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
