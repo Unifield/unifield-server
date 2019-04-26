@@ -245,10 +245,13 @@ class hr_employee(osv.osv):
         local = False
         ex = False
         allowed = False
+        # to check if the user has changed the type
+        check_after_write = False
         res = []
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         if setup and not setup.payroll_ok:
             allowed = True
+            check_after_write = True
         # Prepare some variable for process
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
@@ -259,6 +262,7 @@ class hr_employee(osv.osv):
                 ex = True
         if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
             allowed = True
+            check_after_write = False
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
             new_vals = dict(vals)
@@ -277,6 +281,9 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
+        if res and check_after_write:
+            self.check_access_rule(cr, uid, res, 'write', context=context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):
