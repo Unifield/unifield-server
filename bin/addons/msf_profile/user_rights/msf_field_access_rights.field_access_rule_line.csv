@@ -4775,3 +4775,7 @@ Products at project  Supplier tab access only,product.field_product_template_war
 Products at project  Supplier tab access only,product.field_product_template_weight,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30580
 Products at project  Supplier tab access only,product.field_product_template_weight_net,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30581
 Products at project  Supplier tab access only,product_list.field_product_product_xmlid_code,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30582
+Expat employee restriction - Coordo,msf_homere_interface.field_hr_employee_employee_type,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30583
+Expat employee restriction - Coordo,resource.field_resource_resource_name,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30584
+Expat employee restriction - Project,msf_homere_interface.field_hr_employee_employee_type,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30585
+Expat employee restriction - Project,resource.field_resource_resource_name,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30586
