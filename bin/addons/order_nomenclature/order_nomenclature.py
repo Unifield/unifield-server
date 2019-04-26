@@ -165,7 +165,7 @@ class purchase_order_line(osv.osv):
                     for cat_line in cr.fetchall():
                         result['value']['price_unit'] = cat_line[0]
                         break
-                else:
+                elif price_unit != 0:
                     result['value']['price_unit'] = price_unit
 
         self.check_digits(cr, uid, result, context=context)
