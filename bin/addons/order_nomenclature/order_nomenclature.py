@@ -118,8 +118,8 @@ class purchase_order_line(osv.osv):
 
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
                            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                           name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
-                           nomen_manda_0=False, comment=False,context=None):
+                           name=False, price_unit=False, notes=False, state=False, line_state=False,
+                           old_unit_price=False, nomen_manda_0=False, comment=False,context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
@@ -152,9 +152,10 @@ class purchase_order_line(osv.osv):
         if qty:
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
-            if product and state == 'draft':
-                prod = self.pool.get('product.product').browse(cr, uid, product, fields_to_fetch=['seller_ids'], context=context)
+            if product and line_state == 'draft':
+                prod = self.pool.get('product.product').browse(cr, uid, product, fields_to_fetch=['standard_price', 'seller_ids'], context=context)
                 if prod.seller_ids:
+                    cat_found = False
                     cr.execute("""
                         SELECT cal.unit_price 
                         FROM product_supplierinfo ps, supplier_catalogue_line cal
@@ -164,7 +165,10 @@ class purchase_order_line(osv.osv):
                     """ % (tuple([s.id for s in prod.seller_ids]), product, qty, partner_id))
                     for cat_line in cr.fetchall():
                         result['value']['price_unit'] = cat_line[0]
+                        cat_found = True
                         break
+                    if not cat_found:
+                        result['value']['price_unit'] = prod.standard_price
                 elif price_unit != 0:
                     result['value']['price_unit'] = price_unit
 
