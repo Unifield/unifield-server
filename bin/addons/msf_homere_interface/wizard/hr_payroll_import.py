@@ -115,7 +115,7 @@ class hr_payroll_import(osv.osv_memory):
 
     def update_payroll_entries(self, cr, uid,
                                data='', field='', date_format='%d/%m/%Y',
-                               wiz_state='simu',
+                               wiz_state='simu', bs_only=True,
                                context=None):
         """
         Import payroll entries regarding all elements given in "data"
@@ -128,13 +128,14 @@ class hr_payroll_import(osv.osv_memory):
         res_amount = 0.0
         res = False
         created = 0
+        vals = {}
+        error_message = ""
         # verify that some data exists
         if not data:
-            return False, res_amount, created
+            return False, res_amount, created, vals, "", error_message, bs_only
         if not field:
             raise osv.except_osv(_('Error'), _('No field given for payroll import!'))
         # Prepare some values
-        vals = {}
         employee_id = False
         partner_id = False
         line_date = False
@@ -144,7 +145,6 @@ class hr_payroll_import(osv.osv_memory):
         cost_center_id = False
         # US-671: This flag is used to indicate whether the DEST and CC of employee needs to be updated
         to_update_employee = False
-        error_message = ""
         partner_obj = self.pool.get('res.partner')
 
         # strip spaces in all columns
@@ -245,6 +245,7 @@ class hr_payroll_import(osv.osv_memory):
                 employee_identification_id, employee_id = self._check_on_employee(cr, uid, third, second_description,
                                                                                   debit, credit, account, is_counterpart, context)
         if account.is_analytic_addicted:
+            bs_only = False
             if employee_id:
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
@@ -336,7 +337,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message
+        return True, amount, created, vals, currency[0], error_message, bs_only
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -497,6 +498,7 @@ class hr_payroll_import(osv.osv_memory):
         res = False
         created = 0
         processed = 0
+        bs_only = True  # will be set to False as soon as one expense line is found in the file
 
         header_vals = {}
 
@@ -560,10 +562,11 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, bs_only = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
-                            wiz_state=wiz.state)
+                            wiz_state=wiz.state,
+                            bs_only=bs_only)
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
@@ -627,6 +630,8 @@ class hr_payroll_import(osv.osv_memory):
                             self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
                 if not csvfiles:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
+                if created and bs_only:
+                    raise osv.except_osv(_('Error'), _("The file imported contains only B/S lines."))
             fileobj.close()
 
         if wiz_state == 'simu' and ids:
