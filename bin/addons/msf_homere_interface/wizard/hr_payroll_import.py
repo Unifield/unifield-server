@@ -498,7 +498,6 @@ class hr_payroll_import(osv.osv_memory):
         res = False
         created = 0
         processed = 0
-        bs_only = True  # will be set to False as soon as one expense line is found in the file
 
         header_vals = {}
 
@@ -559,6 +558,7 @@ class hr_payroll_import(osv.osv_memory):
                     amount = 0.0
                     num_line = 1  # the header line is not taken into account
                     file_error_msg = ""  # store the error/warning messages for the current file
+                    bs_only = True  # will be set to False as soon as one expense line is found in the file
                     for line in reader:
                         num_line += 1
                         processed += 1
@@ -581,6 +581,9 @@ class hr_payroll_import(osv.osv_memory):
 
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+
+                    if bs_only:
+                        raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
 
                     # complete the list of error messages with the ones from this file if any
                     if file_error_msg:
@@ -630,8 +633,6 @@ class hr_payroll_import(osv.osv_memory):
                             self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
                 if not csvfiles:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
-                if created and bs_only:
-                    raise osv.except_osv(_('Error'), _("The file imported contains only B/S lines."))
             fileobj.close()
 
         if wiz_state == 'simu' and ids:

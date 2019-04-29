@@ -105390,7 +105390,7 @@ msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock leve
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
 
 #. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:634
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:586
 #, python-format
-msgid "The file imported contains only B/S lines."
-msgstr "Le fichier importé contient uniquement des lignes de bilan."
+msgid "The file \"%s\" contains only B/S lines."
+msgstr "Le fichier \"%s\" contient uniquement des lignes de bilan."
