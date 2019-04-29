@@ -105320,20 +105320,21 @@ msgstr "Ligne %s: La Colonne \"Qté à prélever\" doit être un nombre"
 msgid "File line %s: Column \"Item\" must be an integer"
 msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 
-#. module: purchase
+#. modules: purchase, sale
 #: code:addons/purchase/purchase_order_line.py:24
+#: code:addons/sale/sale_order.py:1993
 #, python-format
-msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
-msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
+msgid "The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
+msgstr "Le montant total de la ligne est sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
 
 
 #. module: purchase
 #: view:purchase.order:0
 msgid "\n"
-"                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
+"                                        WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
 "                                    "
 msgstr "\n"
-"                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
+"                                        Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
 "                                    "
 
 #. module: account
@@ -105353,3 +105354,30 @@ msgstr "Ligne \"%s\" : l'un des nombres saisis est sur plus de 10 chiffres."
 #, python-format
 msgid "The amount of the register line \"%s\" is more than 10 digits."
 msgstr "Le montant de la ligne de registre \"%s\" est sur plus de 10 chiffres."
+
+#. module: sale
+#: view:sale.order:0
+msgid "\n"
+"                                    WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:\n"
+"                                "
+msgstr "\n"
+"                                    Attention: Les lignes suivantes ont des qté ou des montants sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information:\n"
+"                                "
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:561
+#, python-format
+msgid "%s line %s: %s"
+msgstr "%s ligne %s: %s"
+
+#. module: purchase
+#: code:addons/purchase/purchase_workflow.py:551
+#, python-format
+msgid "%s, line %s: %s"
+msgstr "%s, ligne %s: %s"
+
+#. module: purchase, sale
+#: field:purchase.order,msg_big_qty:0
+#: field:sale.order,msg_big_qty:0
+msgid "Lines with 10 digits total amounts"
+msgstr "Lignes avec un montant total de plus de 10 chiffres"

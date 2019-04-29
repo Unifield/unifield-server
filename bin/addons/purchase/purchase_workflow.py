@@ -547,6 +547,9 @@ class purchase_order_line(osv.osv):
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
         for pol in self.browse(cr, uid, ids, context=context):
+            if pol.product_qty*pol.price_unit >= self._max_amount:
+                raise osv.except_osv(_('Error'), _('%s, line %s: %s') % (pol.order_id.name, pol.line_number, _(self._max_msg)))
+
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level

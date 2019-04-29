@@ -643,8 +643,9 @@ class purchase_order(osv.osv):
 
         cr.execute('''select line_number, order_id from purchase_order_line
             where
-                order_id in %s
-                and ( product_qty >= %s or product_qty*price_unit >= %s)
+                order_id in %s and
+                ( product_qty >= %s or product_qty*price_unit >= %s) and
+                state not in ('cancel', 'cancel_r')
             ''', (tuple(ids), max_qty, max_amount))
         for x in cr.fetchall():
             res[x[1]] += ' #%s' % x[0]
@@ -807,7 +808,7 @@ class purchase_order(osv.osv):
         'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
         'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
-        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 15digtis total amounts', method=1),
+        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
     }
     _defaults = {
         'split_during_sll_mig': False,

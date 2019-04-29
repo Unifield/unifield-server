@@ -108,12 +108,29 @@
             <field name="arch" type="xml">
                 <form string="Sales Order" noteditable="import_in_progress==True" hide_delete_button="1">
                     <group col="4" colspan="4">
+                        <html>
+                            <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                <translate>
+                                    WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
+                                </translate>
+                            </p>
+                            <script language="javascript">
+                                var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
+                                if (is_big_amount) {
+                                    $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
+                                    $('#big_amount').show();
+                                }
+                            </script>
+                        </html>
+                    </group>
+                    <group col="4" colspan="4">
                         <field name="name" required="1"/>
                         <field name="date_order" readonly="1" />
                         <field name="invoiced" string="Invoiced" invisible="1"/>
                         <field name="warehouse_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="client_order_ref" readonly="1" />
                         <field name="shipped" invisible="1"/>
+                        <field name="msg_big_qty" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
@@ -179,13 +196,13 @@
                                     <notebook>
                                         <page string="Order Line">
                                             <field colspan="4" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" name="product_id" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" domain="[('sale_ok', '=', True)]" default_focus="1"/>
-                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True)"/>
+                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
                                             <field groups="product.group_uos" name="product_uos_qty" invisible="1"/>
                                             <field groups="product.group_uos" name="product_uos" invisible="1"/>
                                             <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" domain="[('uom_by_product', '=', product_id)]"/>
                                             <field name="product_packaging" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)" domain="[('product_id','=',product_id)]" invisible="1"/>
                                             <newline/>
-                                            <field name="price_unit"/>
+                                            <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
                                             <field name="supplier" invisible="True"/>
                                             <field name="po_cft" invisible="True"/>
                                             <field name="currency_id" invisible="False"/>

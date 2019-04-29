@@ -18,10 +18,9 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
-    _max_digits = 15
-    _max_qty = 10**(_max_digits+1)
-    _max_amount = 10**(_max_digits-3)
-    _max_msg = _('The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
+    _max_qty = 10**10
+    _max_amount = 10**10
+    _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
