@@ -1176,6 +1176,12 @@ class account_move(osv.osv):
                     if m.journal_id.type == 'extra' and ml.account_id.type_for_register != 'donation':
                         raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
                                                              'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
+                    # Only Internal transfers are allowed with liquidity journals in manual JE
+                    if m.journal_id.type in ('bank', 'cash', 'cheque') and ml.account_id.type_for_register not in ('transfer', 'transfer_same'):
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not allowed.\n'
+                                                             'Only internal transfers (in the same currency or not) '
+                                                             'are allowed in manual journal entries on a liquidity journal.') %
+                                             (ml.account_id.code, ml.account_id.name))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue

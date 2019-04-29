@@ -105388,3 +105388,11 @@ msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à 
 #, python-format
 msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
+
+#. module: account_override
+#: code:addons/account_override/account.py:1181
+#, python-format
+msgid "The account %s - %s is not allowed.\n"
+"Only internal transfers (in the same currency or not) are allowed in manual journal entries on a liquidity journal."
+msgstr "Le compte %s - %s n'est pas autorisé.\n"
+"Seuls les transferts internes (dans la même devise ou non) sont autorisés dans les écritures comptables manuelles sur un journal de trésorerie."
