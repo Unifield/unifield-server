@@ -9,15 +9,17 @@
             req.addCallback(function(obj) {
                 if (obj.error) {
                     jQuery.fancybox(obj.error, {scrolling: 'no'});
-                } else {
-                    if (target) {
-                        window.openAction(target);
-                    } else {
-                        window.editRecord(${id});
-                    }
-                    jQuery.fancybox.close();
                 }
             });
+        }
+
+        function open_progress_target(target) {
+            if (target) {
+                window.openAction(target);
+            } else {
+                window.editRecord(${id});
+            }
+            jQuery.fancybox.close();
         }
 
         get_progress = function () {
@@ -30,8 +32,9 @@
                     $('#indicator').width((obj.progress*250)/100+'px');
                     $('#percentage').html(obj.progress+'%');
                     if (obj.state == 'error') {
+                        set_as_read();
                         $('#boxtitle').html(_("Last Processing Error"));
-                        $('#open_src').click(set_as_read);
+                        $('#open_src').click(open_progress_target);
                         $('#open_src').show();
                         $('#pwidget').css('overflow', 'scroll');
                         $('#pwidget').css('white-space', 'pre');
@@ -39,6 +42,7 @@
                     } else if (obj.state != 'done') {
                         setTimeout(get_progress, 1000);
                     } else {
+                        set_as_read();
                         if (obj.job_name) {
                             $('#boxtitle').html(obj.job_name + " " + _("Done"));
                         } else {
@@ -47,14 +51,14 @@
                         if (obj.src_name) {
                             $('#open_src').html('View '+obj.src_name)
                         }
-                        $('#open_src').click(function() {set_as_read()});
+                        $('#open_src').click(function() {open_progress_target()});
                         $('#open_src').show();
                         if (obj.target) {
                             if (obj.target_name) {
                                 $('#open_target').html('View '+obj.target_name);
                             }
                             $('#open_target').show();
-                            $('#open_target').click(function() {set_as_read(obj.target)});
+                            $('#open_target').click(function() {open_progress_target(obj.target)});
                         }
                     }
                 }
