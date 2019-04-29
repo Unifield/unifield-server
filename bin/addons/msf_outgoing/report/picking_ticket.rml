@@ -8,7 +8,7 @@
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
+                <drawString x="20.0" y="555.0">[[ objects[0].is_subpick and translate('PICKING TICKET') or translate('PICKING LIST') ]] ([[ getSel(objects[0], 'state') ]])</drawString>
                 <fill color="blue"/>
                 <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="705.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
@@ -25,7 +25,7 @@
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
+                <drawString x="20.0" y="555.0">[[ objects[0].is_subpick and translate('PICKING TICKET') or translate('PICKING LIST') ]] ([[ getSel(objects[0], 'state') ]])</drawString>
                 <fill color="blue"/>
                 <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>

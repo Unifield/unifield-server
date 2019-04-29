@@ -4169,7 +4169,7 @@ class stock_picking(osv.osv):
             context = {}
 
         if not context.get('button_selected_ids'):
-            raise osv.except_osv(_('Warning'), _('Please select at least on line.'))
+            raise osv.except_osv(_('Warning'), _('Please select at least one line.'))
 
         wiz_id = self.pool.get('ppl.set_pack_on_lines').create(cr, uid, {'picking_id': ids[0], 'from_pack': 1, 'to_pack': 1}, context=context)
 
@@ -4184,7 +4184,6 @@ class stock_picking(osv.osv):
             'height': '190px',
             'width': '220px',
         }
-
 
 stock_picking()
 

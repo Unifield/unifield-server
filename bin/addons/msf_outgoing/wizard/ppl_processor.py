@@ -226,7 +226,7 @@ class ppl_processor(osv.osv):
         if (has_vol and has_vol!=total) or (has_weight and has_weight!=total) or error_vol:
             raise osv.except_osv(
                 _('Processing Error'),
-                _('Some weight and/or volume information is missing: please fill them all or emty them all.'),
+                _('Some weight and/or volume information is missing: please fill them all or empty them all.'),
             )
 
         # Call the stock.picking method

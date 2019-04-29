@@ -5008,7 +5008,7 @@ msgstr "Holds the row id of rows imported from a remote instance. Unused except 
 #: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
 #: selection:validate.move.processor,integrity_status:0
-msgid "A gap exist in the sequence"
+msgid "A gap exists in the sequence"
 msgstr "Un écart existe dans la séquence"
 
 #. module: stock_override
@@ -93986,6 +93986,11 @@ msgstr "Letton / latviešu valoda"
 #: view:stock.picking:0
 msgid "Show all"
 msgstr "Tout afficher"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Show all lines"
+msgstr "Toutes les lignes"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_families

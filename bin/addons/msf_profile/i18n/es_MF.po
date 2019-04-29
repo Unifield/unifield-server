@@ -11605,7 +11605,7 @@ msgstr "%s (copiar)"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-msgid "A gap exist in the sequence"
+msgid "A gap exists in the sequence"
 msgstr "Existe una brecha en la secuencia"
 
 #. modules: sync_remote_warehouse, sync_client, base, msf_button_access_rights, msf_profile
@@ -16319,7 +16319,7 @@ msgstr "Número de módulos"
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-msgid "A gap exist in the sequence"
+msgid "A gap exists in the sequence"
 msgstr "Hay una brecha en la secuencia"
 
 #. module: base

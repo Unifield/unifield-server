@@ -69,7 +69,13 @@ class picking_ticket(report_sxw.rml_parse):
             'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
+            'get_pdf_title': self.get_pdf_title,
         })
+
+    def get_pdf_title(self):
+        if self.objects[0].is_subpick:
+            return _('Picking Ticket')
+        return _('Picking List')
 
     def get_consignee(self, picking):
         """

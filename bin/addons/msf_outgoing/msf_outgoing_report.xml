@@ -56,7 +56,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/empty_picking_ticket.rml"
                 string="Pre-Packing List"
-                view_ids="msf_outgoing.view_picking_ticket_tree,msf_outgoing.view_picking_ticket_form,msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
+                view_ids="msf_outgoing.view_ppl_tree,msf_outgoing.view_ppl_form"
                 />
 
         <report id="pre_packing_excel_export"
