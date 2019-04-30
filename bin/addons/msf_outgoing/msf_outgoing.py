@@ -3602,7 +3602,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self.check_ppl_integrity(cr, uid, [ids[0]], context=context)
-        issue_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ids[0]), ('integrity_error', '!=', 'empty')], context=context)
+        issue_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ids[0]), ('integrity_error', '!=', 'empty'), ('state', '!=', 'done')], context=context)
         if issue_ids:
             cr.commit()
             move = self.pool.get('stock.move').browse(cr, uid, issue_ids, fields_to_fetch=['line_number'], context=context)
@@ -3615,6 +3615,8 @@ class stock_picking(osv.osv):
         picking = self.browse(cr, uid, ids[0], context=context)
         rounding_issues = []
         for move in picking.move_lines:
+            if move.state == 'done':
+                continue
             if not ppl_processor._check_rounding(cr, uid, move.product_uom, move.num_of_packs, move.product_qty, context=context):
                 rounding_issues.append(move.line_number)
 
@@ -3674,6 +3676,8 @@ class stock_picking(osv.osv):
         families_data = {}
 
         for line in picking.move_lines:
+            if line.state == 'done':
+                continue
             key = 'f%st%s' % (line.from_pack, line.to_pack)
             if key not in families_data:
                 families_data[key] =  {
