@@ -576,7 +576,12 @@ class account_move_line_compute_currency(osv.osv):
 #        if ctxcurr.get('date', False):
 #            newvals['date'] = ctxcurr['date']
 
-        if vals.get('credit_currency') or vals.get('debit_currency'):
+        if context.get('from_web_menu') and (vals.get('debit_currency', False) is not False or vals.get('credit_currency', False) is not False):
+            # use case where one of the booking fields MANUALLY CHANGED IN THE INTERFACE has a value, EVEN IF IT IS 0.00
+            newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
