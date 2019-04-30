@@ -1221,7 +1221,7 @@ class shipment(osv.osv):
                             print move.id
                             raise osv.except_osv(
                                 _('Error'),
-                                _('There are stock moves with 0 quantity on the pack family sequence: %s %s' % (draft_packing.name, move.line_number))
+                                _('There are stock moves with 0 quantity on the pack family sequence: %s %s') % (draft_packing.name, move.line_number)
                             )
 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
@@ -1602,7 +1602,7 @@ class shipment_additionalitems(osv.osv):
         'comment': fields.char(string='Comment', size=1024),
         'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
-        'value': fields.float('Value', help='Total Value of the additionl item. The value is to be defined in the currency selected for the partner.'),
+        'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),
         'kc': fields.boolean('KC', help='Defines whether the additional item is to be kept cool.'),
         'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
         'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
