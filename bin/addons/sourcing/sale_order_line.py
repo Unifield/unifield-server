@@ -1603,10 +1603,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
                     sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You can\'t source a line without a Sourcing Group if it has an ESC Type Supplier that can Split a PO'),
-                )
+                raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
                     self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
