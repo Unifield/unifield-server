@@ -105338,6 +105338,7 @@ msgstr "\n"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:1606
+#: view:multiple.sourcing.wizard:0
 #, python-format
 msgid "For this Supplier you have to select a Sourcing Group"
 msgstr "Vous devez sélectionner un Groupe de Sourcing pour ce Fournisseur"
