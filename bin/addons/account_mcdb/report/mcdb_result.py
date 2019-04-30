@@ -30,6 +30,8 @@ import tempfile
 import os
 
 limit_tozip = 15000
+limit_warning = 50000
+
 
 def getIds(self, cr, uid, ids, limit=5000, context=None):
     if not context:
@@ -50,7 +52,7 @@ def getObjects(self, cr, uid, ids, context):
 def getIterObjects(self, cr, uid, ids, context):
     if context is None:
         context = {}
-    ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+    ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
     len_ids = len(ids)
     l = 0
     steps = 1000
@@ -84,7 +86,7 @@ def getIterObjects(self, cr, uid, ids, context):
 def create_csv(self, cr, uid, ids, data, context=None):
     if context is None:
         context = {}
-    ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+    ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
     pool = pooler.get_pool(cr.dbname)
     obj = pool.get('account.line.csv.export')
     outfile = tempfile.TemporaryFile('w+')
@@ -148,7 +150,7 @@ class account_move_line_report_xls(SpreadsheetReport):
         return getIterObjects(self, cr, uid, ids, context)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+        ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
         if context is None:
             context = {}
         if len(ids) > limit_tozip:
@@ -226,7 +228,7 @@ class account_analytic_line_report_xls(SpreadsheetReport):
         return getIterObjects(self, cr, uid, ids, context)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, limit=65000, context=context)
+        ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
         if context is None:
             context = {}
         if len(ids) > limit_tozip:

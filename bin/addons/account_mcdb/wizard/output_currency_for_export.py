@@ -99,6 +99,26 @@ class output_currency_for_export(osv.osv_memory):
         return res
 
     def button_validate(self, cr, uid, ids, context=None, data_from_selector={}):
+        if context is None:
+            context = {}
+
+        cr.execute("""SELECT COUNT(id) FROM %s LIMIT 50001""" % (data_from_selector.get('model') or context.get('active_model')))
+        if cr.fetchone()[0] > 50000:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'output_currency_for_export_confirm_view')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'output.currency.for.export',
+                'res_id': ids,
+                'view_id': view_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+            }
+        else:
+            return self.launch_export(cr, uid, ids, context=context, data_from_selector=data_from_selector)
+
+    def launch_export(self, cr, uid, ids, context=None, data_from_selector={}):
         """
         Launch export wizard
         """
