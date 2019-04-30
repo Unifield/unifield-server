@@ -13,7 +13,8 @@
             <input type="hidden" id="${name}" name="${name}" class="${css_class}" value="${value}"
                 ${py.attrs(attrs, kind=kind, domain=domain, context=ctx,
                 relation=relation, required=required and 1 or 0,
-                fld_readonly=1 if readonly_before_state else 0)}/>
+                fld_readonly=1 if readonly_before_state else 0,
+                required_error_msg=required_error_msg)}/>
             <input type="text" id="${name}_text" class="${css_class}" size="1"
                 ${py.attrs(attrs, kind=kind, relation=relation, value=text)}/>
 

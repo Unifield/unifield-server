@@ -134,7 +134,8 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'kind',
         'hide_default_menu',
         'filters', # filter buttons within an input widget, part of the same implicit "group"
-        'readonly_before_state'
+        'readonly_before_state',
+        'required_error_msg'
     ]
 
     select = False
@@ -151,6 +152,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
     change_default = None
     kind = None
     hide_default_menu = False
+    required_error_msg = None
 
     label_type = InputWidgetLabel
 
@@ -176,6 +178,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         self.hide_default_menu = _boolean_attr(attrs, 'hide_default_menu')
 
         self.default_focus = attrs.get('default_focus', False)
+        self.required_error_msg = attrs.get('required_error_msg', False)
         self.label = self.label_type(self.name, self.string, self.help)
         self.filters = []
 
