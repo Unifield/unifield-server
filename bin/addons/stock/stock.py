@@ -1821,11 +1821,11 @@ class stock_picking(osv.osv):
 
     def reset_all(self, cr, uid, ids, context=None):
         move_obj = self.pool.get('stock.move')
-        cr.execute("select id, picking_id, product_id, line_number, purchase_line_id, sale_line_id, product_qty from stock_move where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0", (tuple(ids),))
+        cr.execute("select id, picking_id, product_id, line_number, purchase_line_id, sale_line_id, product_qty, in_out_updated from stock_move where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0", (tuple(ids),))
         data = {}
         to_del = []
         for x in cr.fetchall():
-            key = (x[1], x[2], x[3], x[4], x[5])
+            key = (x[1], x[2], x[3], x[4], x[5], x[7])
             if key not in data:
                 data[key] =  {'product_qty': 0, 'master': x[0]}
             else:
@@ -2625,7 +2625,7 @@ class stock_move(osv.osv):
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
                           'product_qty', 'product_uos_qty', 'location_dest_id',
-                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
+                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
@@ -3175,7 +3175,6 @@ class stock_move(osv.osv):
 
         copy_data = {'product_qty': quantity, 'product_uos_qty': quantity, 'state': init_data.state, 'qty_to_process': 0, 'pt_created': init_data.pt_created}
         new_id = self.copy(cr, uid, id, copy_data, context=context)
-
         new_qty = init_data.product_qty - quantity
         new_data = {'product_qty': new_qty, 'product_uos_qty': new_qty}
         if init_data.qty_to_process > new_qty:
