@@ -153,11 +153,6 @@ msgstr "Retour d'avance"
 msgid "Invoice has no line to merge by account"
 msgstr "Invoice has no line to merge by account"
 
-#. module: msf_outgoing
-#: field:validate.picking.processor,move_ids:0
-msgid "Moves to process"
-msgstr "Moves to process"
-
 #. module: account
 #: view:account.addtmpl.wizard:0
 #: model:ir.actions.act_window,name:account.action_account_addtmpl_wizard_form
@@ -980,14 +975,6 @@ msgstr "Compte Racine"
 msgid "Search Process"
 msgstr "Rechercher Processus"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:575
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:293
-#: view:shipment.processor:0
-#, python-format
-msgid "Create shipment"
-msgstr "Create shipment"
-
 #. module: register_accounting
 #: view:wizard.transfer.with.change:0
 msgid "Please indicate an amount and a currency in which the transfer with change will be done or come from."
@@ -1009,12 +996,6 @@ msgstr "Activité"
 #: selection:ir.actions.server,trigger_name:0
 msgid "invoice_cancel - (account.invoice)"
 msgstr "invoice_cancel - (account.invoice)"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:2899
-#, python-format
-msgid "Missing the ID of the shipment in the context"
-msgstr "L'ID de l'expédition est manquante dans le contexte"
 
 #. module: base
 #: selection:ir.model.fields,ttype:0
@@ -1440,7 +1421,6 @@ msgstr "Assistant Distribution Analytique"
 
 #. module: stock
 #: model:ir.model,name:stock.model_stock_move_consume
-#: view:stock.move.consume:0
 msgid "Consume Products"
 msgstr "Consommer Produits"
 
@@ -1462,12 +1442,6 @@ msgstr "Listes de Pré-Colisage"
 msgid "12. %w              ==> 5 ( Friday is the 6th day)"
 msgstr "12. %w              ==> 5 ( Vendredi est le 6ème jour)"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1460
-#, python-format
-msgid "The given batch does not exist for the given product, but will be created automatically during the process."
-msgstr "Le lot indiqué n'existe pas pour ce produit, le lot va être automatiquement créé."
-
 #. module: account_override
 #: help:res.company,import_invoice_default_account:0
 msgid "Default account for an import invoice on a Debit note"
@@ -1480,7 +1454,6 @@ msgid "PICK/PACK/SHIP"
 msgstr "Picking/Colisage/Expédition"
 
 #. module: specific_rules, stock
-#: code:addons/specific_rules/specific_rules.py:790
 #: code:addons/stock/stock.py:2360
 #, python-format
 msgid "The selected product is Perishable."
@@ -1561,7 +1534,6 @@ msgstr "Formulaire du Partenaire"
 #: selection:wizard.compare.rfq,categ:0
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
-#: selection:internal.request.import,in_categ:0
 #: selection:stock.reception.wizard,order_category:0
 msgid "Medical"
 msgstr "Médical"
@@ -1611,12 +1583,6 @@ msgstr "Nombre de Lignes"
 #: field:cash.request,liquidity_cash_ids:0
 msgid "Liquidity Position Cash"
 msgstr "Point de Trésorerie Caisse"
-
-#. module: stock
-#: code:addons/stock/stock.py:2950
-#, python-format
-msgid "Can not consume a move with negative or zero quantity !"
-msgstr "Ne peut pas consommer un mouvement/écriture avec une quantité négative ou nulle!"
 
 #. module: base
 #: code:addons/base/ir/ir_model.py:262
@@ -2082,7 +2048,6 @@ msgstr "Liste de Pré-Colisage ou Emballage ne ​​devrait pas être sélectio
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:764
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:270
 #: view:check.ppl.integrity:0
 #: code:addons/msf_outgoing/msf_outgoing.py:3630
 #, python-format
@@ -2237,12 +2202,6 @@ msgstr "Période à partir de"
 msgid "DateTime"
 msgstr "Horodatage"
 
-#. module: stock_override
-#: code:addons/stock_override/wizard/change_dest_location.py:54
-#, python-format
-msgid "The modification of the destination locations is only available for Internal moves."
-msgstr "La modification de la zone de destination est seulement disponible pour les demandes internes"
-
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
 msgid "Dec"
@@ -2292,10 +2251,7 @@ msgid "With Supplier Direct Invoices you can enter and manage direct invoices is
 msgstr "Avec des Factures Fournisseurs Directes, vous pouvez saisir et gérer des factures directes émises par votre utilisateur dans les Registres."
 
 #. module: msf_outgoing
-#: field:memory.additionalitems,weight:0
-#: field:shipment.additional.line.processor,weight:0
 #: field:shipment.additionalitems,weight:0
-#: field:stock.move.memory.shipment.additionalitems,weight:0
 msgid "Weight[kg]"
 msgstr "Poids[kg]"
 
@@ -2378,8 +2334,6 @@ msgid "An error occurred. %s: %s"
 msgstr "Une erreur est survenue. %s: %s"
 
 #. modules: account, finance, account_override
-#: report:account.partner.balance:0
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:446
 #: report:addons/account_override/report/account_chart_export.mako:102
 msgid "Initial Balance"
 msgstr "Solde Initial"
@@ -2434,11 +2388,6 @@ msgstr "Other B/S (Year-end)"
 #: field:product.product,loc_indic:0
 msgid "Indicative Location"
 msgstr "Zone Indicative"
-
-#. module: stock
-#: field:stock.move.track,tracking_prefix:0
-msgid "Tracking prefix"
-msgstr "Suivi d'un Préfix "
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:398
@@ -2506,7 +2455,6 @@ msgstr "Quantité doit être supérieure à 0.0."
 #. modules: msf_order_date, msf_outgoing
 #: code:addons/msf_order_date/order_dates.py:970
 #: code:addons/msf_order_date/order_dates.py:1010
-#: code:addons/msf_outgoing/msf_outgoing.py:1392
 #, python-format
 msgid "Shipment Date of the Field Order '%s' has been updated to %s."
 msgstr "Date d'Expédition de la Commande Client '%s' a été mise à jour au %s."
@@ -2644,14 +2592,11 @@ msgid "Import Items from Theoretical Kit"
 msgstr "Importer des articles du Kit Théorique"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,ssl_check:0
 #: help:internal.move.processor,ssl_check:0
 #: help:outgoing.delivery.move.processor,ssl_check:0
-#: help:ppl.move.processor,ssl_check:0
 #: help:return.ppl.move.processor,ssl_check:0
 #: help:stock.move.in.processor,ssl_check:0
 #: help:stock.move.processor,ssl_check:0
-#: help:validate.move.processor,ssl_check:0
 msgid "Ticked if the product is a Short Shelf Life product"
 msgstr "Ticked if the product is a Short Shelf Life product"
 
@@ -2904,13 +2849,8 @@ msgid "Batch numbers"
 msgstr "Numéro de Lot"
 
 #. module: msf_outgoing
-#: help:ppl.processor,draft_step1:0
 #: help:ppl.processor,draft_step2:0
-#: help:return.pack.shipment.processor,draft:0
-#: help:return.ppl.processor,draft_step1:0
 #: help:return.ppl.processor,draft_step2:0
-#: help:return.shipment.processor,draft:0
-#: help:shipment.processor,draft:0
 msgid "Usefull for internal management of save as draft order"
 msgstr "Usefull for internal management of save as draft order"
 
@@ -3000,21 +2940,12 @@ msgstr "La Quantité Produit doit être plus grande que 0"
 msgid "Process Node"
 msgstr "Traiter Node"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1370
-#, python-format
-msgid "PO line #%s has been confirmed or cancelled and consequently is not editable"
-msgstr "PO line #%s has been confirmed or cancelled and consequently is not editable"
-
 #. modules: msf_doc_import, msf_outgoing, return_claim, stock_override, kit
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0
 #: selection:kit.selection.sale.line,integrity_status:0
@@ -3141,14 +3072,11 @@ msgid "Discrepancies"
 msgstr "Écarts"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,change_reason:0
 #: field:internal.move.processor,change_reason:0
 #: field:outgoing.delivery.move.processor,change_reason:0
-#: field:ppl.move.processor,change_reason:0
 #: field:return.ppl.move.processor,change_reason:0
 #: field:stock.move.in.processor,change_reason:0
 #: field:stock.move.processor,change_reason:0
-#: field:validate.move.processor,change_reason:0
 msgid "Change reason"
 msgstr "Change reason"
 
@@ -3384,7 +3312,6 @@ msgstr "Sous-flux de Commande de Terrain généré."
 #: selection:import_nomenclature,import_mode:0
 #: selection:return.pack.shipment.processor,step:0
 #: selection:return.shipment.processor,step:0
-#: selection:shipment.processor,step:0
 #: selection:shipment.add.pack.processor,step:0
 msgid "Create"
 msgstr "Créer"
@@ -3948,11 +3875,6 @@ msgstr "Wizard de l'import d'inventaire physique"
 msgid "If you don't have enough stock available to deliver all at once, do you accept partial shipments or not?"
 msgstr "Si vous n'avez pas suffisamment de stock disponible que pour livrer en une seule fois, acceptez vous des livraisons partielles ?"
 
-#. module: msf_outgoing
-#: field:stock.picking,first_shipment_packing_id:0
-msgid "Shipment First Step"
-msgstr "Expédition - Première Etape"
-
 #. module: base
 #: selection:ir.actions.server,trigger_name:0
 msgid "button_write_off - (account.bank.statement)"
@@ -4179,12 +4101,6 @@ msgstr "Point de Trésorerie - Caisse"
 #, python-format
 msgid "Check complete. Reading potential errors or write needed changes."
 msgstr "Vérification terminée. Lecture des erreurs potentielles ou écriture des modifications nécessaires."
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:4404
-#, python-format
-msgid "Line %(line_number)s: The sum of processed quantities %(processed_qty)s is not equal to the initial quantity of the stock move %(initial_qty)s."
-msgstr "Line %(line_number)s: The sum of processed quantities %(processed_qty)s is not equal to the initial quantity of the stock move %(initial_qty)s."
 
 #. modules: account, msf_instance
 #: help:account.journal,centralisation:0
@@ -4421,7 +4337,6 @@ msgstr "Sélection"
 #: field:return.shipment.processor,shipment_id:0
 #: view:shipment:0
 #: field:shipment.additionalitems,shipment_id:0
-#: field:shipment.processor,shipment_id:0
 #: view:stock.move:0
 #: field:stock.move,pick_shipment_id:0
 #: field:stock.picking,shipment_id:0
@@ -4714,11 +4629,6 @@ msgstr "Ne peut effacer la(es) Demandee(s) Interne(s) déjà validée(s) !"
 msgid "Antarctica/Macquarie"
 msgstr "Antarctica/Macquarie"
 
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Shipper :"
-msgstr "Expéditeur :"
-
 #. modules: account_journal, msf_instance
 #: field:account.journal,cheque_journal_id:0
 #: field:account.journal.fake,cheque_journal_id:0
@@ -4912,14 +4822,10 @@ msgstr "Mois :"
 #: field:wizard.import.po.simulation.screen.line,po_line_id:0
 #: field:wizard.import.po.simulation.screen.line,str_in_line_number:0
 #: field:wizard.simu.import.po.line,line_number:0
-#: view:create.picking.move.processor:0
-#: field:create.picking.move.processor,line_number:0
 #: view:internal.move.processor:0
 #: field:internal.move.processor,line_number:0
 #: view:outgoing.delivery.move.processor:0
 #: field:outgoing.delivery.move.processor,line_number:0
-#: view:ppl.move.processor:0
-#: field:ppl.move.processor,line_number:0
 #: view:return.ppl.move.processor:0
 #: field:return.ppl.move.processor,line_number:0
 #: view:stock.move.in.processor:0
@@ -4931,8 +4837,6 @@ msgstr "Mois :"
 #: field:stock.move.memory.returnproducts,line_number:0
 #: view:stock.move.processor:0
 #: field:stock.move.processor,line_number:0
-#: view:validate.move.processor:0
-#: field:validate.move.processor,line_number:0
 #: field:purchase.order.line,line_number:0
 #: field:sale.order.line,line_number:0
 #: report:msf.purchase.order:0
@@ -5009,15 +4913,12 @@ msgstr "Holds the row id of rows imported from a remote instance. Unused except 
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "A gap exists in the sequence"
 msgstr "Un écart existe dans la séquence"
@@ -5025,7 +4926,6 @@ msgstr "Un écart existe dans la séquence"
 #. module: stock_override
 #: view:stock.move.cancel.wizard:0
 #: view:stock.move.cancel.more.wizard:0
-#: view:stock.picking.cancel.wizard:0
 #: view:stock.picking.cancel.more.wizard:0
 msgid "Cancel Only"
 msgstr "Annuler Seulement"
@@ -6519,14 +6419,11 @@ msgid "Wizard of the Order Impact vs. Budget report"
 msgstr "Wizard of the Order Impact vs. Budget report"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,lot_check:0
 #: help:internal.move.processor,lot_check:0
 #: help:outgoing.delivery.move.processor,lot_check:0
-#: help:ppl.move.processor,lot_check:0
 #: help:return.ppl.move.processor,lot_check:0
 #: help:stock.move.in.processor,lot_check:0
 #: help:stock.move.processor,lot_check:0
-#: help:validate.move.processor,lot_check:0
 msgid "A batch number is required on this line"
 msgstr "A batch number is required on this line"
 
@@ -6645,7 +6542,6 @@ msgstr "Nombre de mois avant qu'un lot de production ne doive être retiré."
 #. modules: hr, account
 #: view:account.analytic.account:0
 #: field:hr.department,manager_id:0
-#: view:hr.employee:0
 #: field:hr.employee,parent_id:0
 msgid "Manager"
 msgstr "Gérant"
@@ -6716,14 +6612,11 @@ msgstr "Lorsque vous vendez des produits à un client, vous pouvez lui donner un
 #: field:stock.move.memory.in,ssl_check:0
 #: field:stock.move.memory.out,ssl_check:0
 #: field:stock.production.lot,ssl_check:0
-#: field:create.picking.move.processor,ssl_check:0
 #: field:internal.move.processor,ssl_check:0
 #: field:outgoing.delivery.move.processor,ssl_check:0
-#: field:ppl.move.processor,ssl_check:0
 #: field:return.ppl.move.processor,ssl_check:0
 #: field:stock.move.in.processor,ssl_check:0
 #: field:stock.move.processor,ssl_check:0
-#: field:validate.move.processor,ssl_check:0
 msgid "SSL"
 msgstr "DVC (durée de vie courte)"
 
@@ -7090,7 +6983,6 @@ msgstr "Configurer la Politique de Picking pour la Commande Terrain"
 
 #. modules: account, account_override
 #: code:addons/account/wizard/account_move_journal.py:63
-#: code:addons/account_override/invoice.py:285
 #, python-format
 msgid "Can't find any account journal of %s type for this company.\n"
 "\n"
@@ -7518,11 +7410,6 @@ msgstr "File Name"
 #, python-format
 msgid "Unbalanced reconciliations in booking currency"
 msgstr "Lettrages non équilibrés en devise d'enregistement"
-
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Carrier :"
-msgstr "Transporteur :"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/purchase_order.py:676
@@ -8481,23 +8368,15 @@ msgstr "Générer les écarts"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:213
 #: field:incoming.import.xml.line,quantity:0
 #: field:purchase.line.import.xml.line,product_qty:0
-#: field:create.picking.move.processor,quantity:0
 #: field:internal.move.processor,quantity:0
 #: report:invoice:0
-#: field:memory.additionalitems,quantity:0
 #: field:outgoing.delivery.move.processor,quantity:0
-#: view:ppl.move.processor:0
-#: field:ppl.move.processor,quantity:0
 #: field:return.ppl.move.processor,quantity:0
-#: field:shipment.additional.line.processor,quantity:0
-#: field:shipment.additionalitems,quantity:0
 #: field:split.memory.move,quantity:0
 #: field:split.move.processor,quantity:0
 #: field:stock.move.in.processor,quantity:0
 #: view:stock.move.memory.ppl:0
-#: field:stock.move.memory.shipment.additionalitems,quantity:0
 #: field:stock.move.processor,quantity:0
-#: field:validate.move.processor,quantity:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:57
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:71
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:60
@@ -8521,7 +8400,6 @@ msgstr "Générer les écarts"
 #: field:purchase.order.merged.line,product_qty:0
 #: field:account.direct.invoice.wizard.line,quantity:0
 #: field:wizard.account.invoice.line,quantity:0
-#: report:msf.freight_manifest:0
 #: report:msf.sale.order:0
 #: field:sale.advance.payment.inv,qtty:0
 #: field:initial.stock.inventory.line,product_qty:0
@@ -8537,8 +8415,6 @@ msgstr "Générer les écarts"
 #: field:stock.inventory.line.split,qty:0
 #: report:stock.inventory.move:0
 #: field:stock.move,product_qty:0
-#: field:stock.move.consume,product_qty:0
-#: field:stock.move.scrap,product_qty:0
 #: field:stock.move.split,qty:0
 #: field:stock.move.split.lines,quantity:0
 #: field:stock.move.split.lines.exist,quantity:0
@@ -8653,13 +8529,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 
 #. modules: tender_flow, financing_contract, msf_tools, account_voucher, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock
 #: selection:msf.instance.cloud,state:0
-#: field:ppl.processor,draft_step1:0
 #: field:ppl.processor,draft_step2:0
-#: field:return.pack.shipment.processor,draft:0
-#: field:return.ppl.processor,draft_step1:0
 #: field:return.ppl.processor,draft_step2:0
-#: field:return.shipment.processor,draft:0
-#: field:shipment.processor,draft:0
 #: view:automated.export.job:0
 #: selection:automated.export.job,state:0
 #: view:account.bank.statement:0
@@ -8737,13 +8608,11 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:hr.payroll.validation,state:0
 #: selection:msf.instance,state:0
 #: selection:sale.order.line,so_state_stored:0
-#: field:create.picking.processor,draft:0
 #: selection:pack.family.memory,state:0
 #: view:shipment:0
 #: selection:shipment,state:0
 #: field:stock.incoming.processor,draft:0
 #: view:stock.picking:0
-#: field:validate.picking.processor,draft:0
 #: selection:po.follow.up,state:0
 #: view:automated.import.job:0
 #: selection:automated.import.job,state:0
@@ -8942,11 +8811,6 @@ msgstr "Liberia"
 msgid "Mandatory"
 msgstr "Obligatoire"
 
-#. module: base
-#: selection:ir.actions.server,trigger_name:0
-msgid "contract_reopen - (financing.contract.contract)"
-msgstr "contract_reopen - (financing.contract.contract)"
-
 #. modules: stock_override, stock
 #: view:stock.location.product:0
 #: view:stock.analyze.view:0
@@ -9046,11 +8910,6 @@ msgstr "Bons de Commandes en attente de Validation"
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_internal_move_xls
 msgid "Internal Move Excel Export"
 msgstr "Internal Move Excel Export"
-
-#. module: stock
-#: view:stock.move:0
-msgid "Split in production lots"
-msgstr "Diviser en lots de production"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -9626,13 +9485,10 @@ msgstr "Stock futur"
 
 #. modules: return_claim, msf_outgoing, stock, stock_override, kit, msf_doc_import
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.creation.to.consume,availability_to_consume:0
 #: selection:kit.selection.line,integrity_status:0
@@ -10912,7 +10768,6 @@ msgstr "Jamais"
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:240
 #: field:purchase.order.merged.line,original_uom:0
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:232
-#: field:sale.order.line,original_uom:0
 msgid "Original UoM"
 msgstr "UdM d'Origine"
 
@@ -11591,14 +11446,10 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #: code:addons/msf_doc_import/wizard/__init__.py:67
 #: code:addons/msf_doc_import/wizard/__init__.py:72
 #: code:addons/msf_doc_import/wizard/__init__.py:77
-#: field:create.picking.move.processor,composition_list_id:0
-#: field:create.picking.move.processor,kit_check:0
 #: field:internal.move.processor,composition_list_id:0
 #: field:internal.move.processor,kit_check:0
 #: field:outgoing.delivery.move.processor,composition_list_id:0
 #: field:outgoing.delivery.move.processor,kit_check:0
-#: field:ppl.move.processor,composition_list_id:0
-#: field:ppl.move.processor,kit_check:0
 #: field:return.ppl.move.processor,composition_list_id:0
 #: field:return.ppl.move.processor,kit_check:0
 #: field:stock.move.in.processor,composition_list_id:0
@@ -11608,8 +11459,6 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #: field:stock.move.memory.returnproducts,composition_list_id:0
 #: field:stock.move.processor,composition_list_id:0
 #: field:stock.move.processor,kit_check:0
-#: field:validate.move.processor,composition_list_id:0
-#: field:validate.move.processor,kit_check:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:73
 #: model:stock.reason.type,name:reason_types_moves.reason_type_kit
 #: field:claim.product.line,composition_list_id_claim_product_line:0
@@ -12308,8 +12157,6 @@ msgid "Note Type"
 msgstr "Type de Note"
 
 #. module: msf_outgoing
-#: field:memory.additionalitems,picking_id:0
-#: field:stock.move.memory.shipment.additionalitems,picking_id:0
 #: field:check.ppl.integrity,picking_id:0
 #: field:ppl.set_pack_on_lines,picking_id:0
 msgid "PPL"
@@ -12516,14 +12363,11 @@ msgid "Accrual?"
 msgstr "Régularisation?"
 
 #. modules: msf_outgoing, stock
-#: help:create.picking.move.processor,currency:0
 #: help:internal.move.processor,currency:0
 #: help:outgoing.delivery.move.processor,currency:0
-#: help:ppl.move.processor,currency:0
 #: help:return.ppl.move.processor,currency:0
 #: help:stock.move.in.processor,currency:0
 #: help:stock.move.processor,currency:0
-#: help:validate.move.processor,currency:0
 #: help:stock.move.memory.picking,currency:0
 #: help:stock.move.memory.ppl,currency:0
 #: help:stock.move.memory.returnproducts,currency:0
@@ -12630,8 +12474,6 @@ msgid "Australia/LHI"
 msgstr "Australie/LHI"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:550
-#: view:validate.picking.processor:0
 #: code:addons/msf_outgoing/msf_outgoing.py:3405
 #: view:stock.picking:0
 #, python-format
@@ -12698,7 +12540,6 @@ msgid "TURKISH LIRA"
 msgstr "TURKISH LIRA"
 
 #. module: msf_outgoing
-#: field:ppl.move.processor,move_id:0
 #: field:return.ppl.move.processor,move_id:0
 msgid "Stock move"
 msgstr "Stock move"
@@ -12784,7 +12625,6 @@ msgstr "Table name not found for the given object: %s"
 #: field:internal.request.import,imp_priority:0
 #: selection:internal.request.import,imp_priority:0
 #: field:internal.request.import,in_priority:0
-#: selection:internal.request.import,in_priority:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:181
 msgid "Priority"
 msgstr "Priorité"
@@ -12824,7 +12664,6 @@ msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."
 #. module: msf_outgoing
 #: help:return.pack.shipment.processor,shipment_id:0
 #: help:return.shipment.processor,shipment_id:0
-#: help:shipment.processor,shipment_id:0
 msgid "Linked shipment"
 msgstr "Linked shipment"
 
@@ -14459,11 +14298,6 @@ msgstr "Montant Total Devise"
 msgid "Real average consumption"
 msgstr "Consommations Moyennes Réelles"
 
-#. module: stock_override
-#: view:change.dest.location:0
-msgid "Change destination location"
-msgstr "Changer la zone de destination"
-
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:335
 #, python-format
@@ -14506,8 +14340,6 @@ msgstr "Europe/Kaliningrad"
 #: model:process.node,name:msf_outgoing.process_node_draft_pick_picking
 #: model:process.process,name:msf_outgoing.process_process_picking0
 #: code:addons/msf_outgoing/msf_outgoing.py:980
-#: code:addons/msf_outgoing/msf_outgoing.py:3842
-#: code:addons/msf_outgoing/msf_outgoing.py:4660
 #: view:stock.picking:0
 #: selection:procurement.request.sourcing.document,linked_model:0
 #: code:addons/msf_outgoing/report/picking_ticket.py:77
@@ -14849,7 +14681,6 @@ msgid "Instance:"
 msgstr "Instance:"
 
 #. module: stock_override, stock
-#: code:addons/stock_override/stock.py:132
 #: code:addons/stock/stock.py:1743
 #, python-format
 msgid "is shipped."
@@ -14882,18 +14713,6 @@ msgstr "Iles Féroé"
 #, python-format
 msgid "The staff field is not filled in. Please complete the third parties field with an employee/staff."
 msgstr "Le champ Personnel du terrain n'est pas rempli. Veuillez remplir le champ 'Tiers' avec un employé / personnel."
-
-#. module: msf_outgoing
-#: help:create.picking.move.processor,ordered_product_id:0
-#: help:internal.move.processor,ordered_product_id:0
-#: help:outgoing.delivery.move.processor,ordered_product_id:0
-#: help:ppl.move.processor,ordered_product_id:0
-#: help:return.ppl.move.processor,ordered_product_id:0
-#: help:stock.move.in.processor,ordered_product_id:0
-#: help:stock.move.processor,ordered_product_id:0
-#: help:validate.move.processor,ordered_product_id:0
-msgid "Expected product to receive"
-msgstr "Expected product to receive"
 
 #. module: product
 #: model:ir.model,name:product.model_product_ul
@@ -14930,7 +14749,6 @@ msgid "Installed version"
 msgstr "Version installée"
 
 #. modules: return_claim, msf_outgoing
-#: selection:create.picking.processor,claim_type:0
 #: selection:internal.picking.processor,claim_type:0
 #: selection:outgoing.delivery.processor,claim_type:0
 #: selection:stock.incoming.processor,claim_type:0
@@ -15403,12 +15221,6 @@ msgstr "Etc/GMT+0"
 msgid "America/Mexico_City"
 msgstr "America/Mexico_City"
 
-#. module: stock
-#: code:addons/stock/stock.py:2864
-#, python-format
-msgid "were scrapped"
-msgstr "ont été supprimés"
-
 #. module: product_manufacturer
 #: model:ir.module.module,description:product_manufacturer.module_meta_information
 msgid "A module that add manufacturers and attributes on the product form"
@@ -15590,12 +15402,8 @@ msgstr "Autre information"
 #: field:claim.product.line,hidden_perishable_mandatory_claim_product_line:0
 #: view:return.claim:0
 #: view:initial.stock.inventory:0
-#: field:initial.stock.inventory.line,exp_check:0
-#: field:stock.inventory.line,exp_check:0
-#: field:stock.move,exp_check:0
 #: field:stock.move.memory.in,exp_check:0
 #: field:stock.move.memory.out,exp_check:0
-#: field:stock.production.lot,exp_check:0
 msgid "Exp"
 msgstr "Exp"
 
@@ -15660,13 +15468,10 @@ msgstr "Diagramme"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "No Asset Needed"
@@ -15884,7 +15689,6 @@ msgstr "Liste de Devises"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/picking_processor.py:837
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:796
 #, python-format
 msgid "Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)"
 msgstr "Selected quantity (%0.1f %s) exceeds the initial quantity (%0.1f %s)"
@@ -16455,7 +16259,6 @@ msgstr "Annuler le lettrage des Ecritures"
 #: view:res.log.report:0
 #: view:monthly.review.consumption:0
 #: view:real.average.consumption:0
-#: view:account.partner.balance.tree:0
 #: view:cash.request.liquidity.bank:0
 #: view:cash.request.liquidity.cash:0
 #: view:cash.request.liquidity.cheque:0
@@ -16941,14 +16744,6 @@ msgstr "%s update%s"
 msgid "No"
 msgstr "Non"
 
-#. module: stock_override
-#: code:addons/stock_override/wizard/change_dest_location.py:108
-#, python-format
-msgid "Line %s : The state '%s' of the move doesn't allow a modification of the destination location. \n"
-""
-msgstr "Ligne %s : Le statut '%s' du mouvement ne permet pas la modification de la zone  de destination. \n"
-""
-
 #. module: kit
 #: code:addons/kit/wizard/substitute.py:323
 #, python-format
@@ -17294,12 +17089,6 @@ msgstr "No Field Order found with the Original Claim %s. Impossible to forward t
 #: field:wizard.cash.return,date:0
 msgid "Date for advance return"
 msgstr "Date du retour d'avance"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/purchase_order.py:275
-#, python-format
-msgid "%s: %s lines have been confirmed"
-msgstr "%s: %s lines have been confirmed"
 
 #. module: product
 #: field:product.packaging,ul:0
@@ -17667,12 +17456,6 @@ msgstr "Assigned Delivery Orders"
 msgid "America/Argentina/Buenos_Aires"
 msgstr "America/Argentina/Buenos_Aires"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/purchase_order.py:279
-#, python-format
-msgid "PO line #%s cannot be confirmed"
-msgstr "PO line #%s cannot be confirmed"
-
 #. module: base
 #: field:res.lang,grouping:0
 msgid "Separator Format"
@@ -17951,12 +17734,6 @@ msgstr "Supprimer toutes les Périodes"
 #: help:res.users,login:0
 msgid "Used to log into the system"
 msgstr "Utilisé pour se connecter au système"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1408
-#, python-format
-msgid "The Shipment %s has been shipped."
-msgstr "Les %s de l'expédition ont été envoyés."
 
 #. module: analytic_distribution
 #: field:account.analytic.line,imported_commitment:0
@@ -18441,11 +18218,6 @@ msgstr "Type de raison :"
 msgid "Click on Update below to start the process..."
 msgstr "Cliquer sur Mise à Jour afin de lancer l'opération..."
 
-#. module: purchase
-#: view:purchase.order:0
-msgid "Confirm lines"
-msgstr "Confirm lines"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:362
 #, python-format
@@ -18598,11 +18370,6 @@ msgstr "Journal d'inventaire sur lequel le mouvement chainé sera inscrit, si le
 #: model:ir.model,name:product_manufacturer.model_product_manufacturer_attribute
 msgid "Product attributes"
 msgstr "Caractéristiques produit"
-
-#. module: msf_outgoing
-#: view:stock.picking:0
-msgid "Create Picking..."
-msgstr "Créer un Picking..."
 
 #. module: base
 #: selection:ir.sequence,implementation:0
@@ -18886,7 +18653,6 @@ msgstr "AD missing on line %s, FO %s"
 
 #. module: msf_outgoing
 #: selection:in.family.processor,integrity_status:0
-#: selection:ppl.family.processor,integrity_status:0
 msgid "Weight is missing"
 msgstr "Weight is missing"
 
@@ -19706,11 +19472,6 @@ msgstr "America/Pangnirtung"
 msgid "ir.sequence"
 msgstr "ir.sequence"
 
-#. module: msf_outgoing
-#: field:validate.move.processor,wizard_id:0
-msgid "Wizard ID"
-msgstr "Wizard ID"
-
 #. module: register_accounting
 #: report:cash.inventory:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:500
@@ -19859,7 +19620,6 @@ msgid "Prevent correction on account codes"
 msgstr "Empêcher les corrections sur le compte comptable"
 
 #. modules: sales_followup, msf_outgoing, sale
-#: view:shipment:0
 #: view:sale.order.line:0
 #: field:sale.report,shipped:0
 #: code:addons/sales_followup/sale_followup.py:526
@@ -20218,12 +19978,6 @@ msgstr "Hawaii"
 #: view:base.setup.company:0
 msgid "Default address"
 msgstr "Adresse par défaut"
-
-#. module: stock
-#: model:ir.actions.act_window,name:stock.move_consume
-#: view:stock.move.consume:0
-msgid "Consume Move"
-msgstr "Consommer Mouvement "
 
 #. module: account
 #: report:account.invoice2:0
@@ -20641,14 +20395,11 @@ msgid "Bank Account for the Payment Mode"
 msgstr "Compte Bancaire pour le Mode de Paiement"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,exp_check:0
 #: help:internal.move.processor,exp_check:0
 #: help:outgoing.delivery.move.processor,exp_check:0
-#: help:ppl.move.processor,exp_check:0
 #: help:return.ppl.move.processor,exp_check:0
 #: help:stock.move.in.processor,exp_check:0
 #: help:stock.move.processor,exp_check:0
-#: help:validate.move.processor,exp_check:0
 msgid "An expiry date is required on this line"
 msgstr "Une date d'expiration est requise pour cette ligne"
 
@@ -20924,12 +20675,6 @@ msgstr "Ecritures comptables-"
 msgid "Header HTML"
 msgstr "En-tête HTML"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:2894
-#, python-format
-msgid "Missing the ID of the shipment processor in the context"
-msgstr "Missing the ID of the shipment processor in the context"
-
 #. module: account
 #: view:account.account:0
 #: view:account.bank.statement:0
@@ -21088,13 +20833,11 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 
 #. modules: msf_outgoing, stock_override, sale, specific_rules, msf_doc_import, stock, msf_supply_doc_export
 #: field:wizard.import.in.line.simulation.screen,np_check:0
-#: field:create.picking.move.processor,np_check:0
 #: report:empty.picking.ticket:0
 #: report:labels:0
 #: field:outgoing.delivery.move.processor,np_check:0
 #: report:packing.list:0
 #: report:picking.ticket:0
-#: field:ppl.move.processor,np_check:0
 #: field:return.ppl.move.processor,np_check:0
 #: field:stock.move,is_narcotic:0
 #: field:stock.move.in.processor,np_check:0
@@ -21103,7 +20846,6 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: field:stock.move.memory.returnproducts,np_check:0
 #: field:stock.move.processor,np_check:0
 #: field:stock.picking,is_narcotic:0
-#: field:validate.move.processor,np_check:0
 #: report:msf.freight_manifest:0
 #: report:msf.report_reception_in:0
 #: field:initial.stock.inventory.line,np_check:0
@@ -21327,9 +21069,7 @@ msgstr "Product category MSFID \"%s\" not found"
 
 #. modules: sales_followup, product, msf_outgoing, procurement, sale, account_override, product_attributes, purchase_followup, msf_supply_doc_export, stock
 #: field:memory.additionalitems,uom:0
-#: view:ppl.move.processor:0
 #: view:return.ppl.move.processor:0
-#: field:shipment.additionalitems,uom:0
 #: field:stock.move.memory.shipment.additionalitems,uom:0
 #: field:physical.inventory.discrepancy,product_uom_id:0
 #: view:account.invoice:0
@@ -21396,14 +21136,11 @@ msgstr "Suivi"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:return.pack.shipment.family.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Selected Sequence is out of range"
@@ -21714,14 +21451,11 @@ msgid "Estimated Transport Lead-Time in weeks"
 msgstr "Délai de Transport Estimé en semaines"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,np_check:0
 #: help:internal.move.processor,np_check:0
 #: help:outgoing.delivery.move.processor,np_check:0
-#: help:ppl.move.processor,np_check:0
 #: help:return.ppl.move.processor,np_check:0
 #: help:stock.move.in.processor,np_check:0
 #: help:stock.move.processor,np_check:0
-#: help:validate.move.processor,np_check:0
 msgid "Ticked if the product is a Controlled Substance"
 msgstr "Ticked if the product is a Controlled Substance"
 
@@ -21802,12 +21536,9 @@ msgid "Asset Form"
 msgstr "Bien - Formulaire"
 
 #. modules: msf_outgoing, stock
-#: code:addons/msf_outgoing/wizard/shipment.py:216
 #: code:addons/stock/wizard/stock_partial_picking.py:93
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:521
 #: view:return.pack.shipment.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #, python-format
 msgid "Process Document"
 msgstr "Traiter document"
@@ -21942,14 +21673,11 @@ msgstr "Unités Logistiques"
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:166
 #: field:incoming.import.xml.line,expiry_date:0
 #: field:wizard.import.in.line.simulation.screen,imp_exp_date:0
-#: field:create.picking.move.processor,expiry_date:0
 #: field:internal.move.processor,expiry_date:0
 #: field:outgoing.delivery.move.processor,expiry_date:0
-#: field:ppl.move.processor,expiry_date:0
 #: field:return.ppl.move.processor,expiry_date:0
 #: field:stock.move.in.processor,expiry_date:0
 #: field:stock.move.processor,expiry_date:0
-#: field:validate.move.processor,expiry_date:0
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:181
 #: report:order.type.donation.certificate:0
 #: report:order.type.gift.certificate:0
@@ -22662,7 +22390,6 @@ msgid "Check if Return Claim has a missing type Claim Event"
 msgstr "Check if Return Claim has a missing type Claim Event"
 
 #. module: product
-#: selection:product.pricelist.item,base:0
 #: code:addons/product/pricelist.py:543
 #, python-format
 msgid "Partner section of the product form"
@@ -22823,14 +22550,11 @@ msgid "Read is not allowed on '%s'!"
 msgstr "Lecture non autorisée sur '%s'!"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,location_id:0
 #: help:internal.move.processor,location_id:0
 #: help:outgoing.delivery.move.processor,location_id:0
-#: help:ppl.move.processor,location_id:0
 #: help:return.ppl.move.processor,location_id:0
 #: help:stock.move.in.processor,location_id:0
 #: help:stock.move.processor,location_id:0
-#: help:validate.move.processor,location_id:0
 msgid "Source location of the move"
 msgstr "Zone source du mouvement"
 
@@ -23417,7 +23141,6 @@ msgid "Pacific/Easter"
 msgstr "Pacific/Easter"
 
 #. modules: purchase, msf_outgoing, useability_dashboard_and_menu, stock
-#: code:addons/msf_outgoing/msf_outgoing.py:3292
 #: view:purchase.order:0
 #: model:ir.actions.act_window,name:stock.action_picking_tree
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree
@@ -23469,14 +23192,11 @@ msgid "- type,name,res_id,src,value"
 msgstr "- type,name,res_id,src,value"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,uom_id:0
 #: help:internal.move.processor,uom_id:0
 #: help:outgoing.delivery.move.processor,uom_id:0
-#: help:ppl.move.processor,uom_id:0
 #: help:return.ppl.move.processor,uom_id:0
 #: help:stock.move.in.processor,uom_id:0
 #: help:stock.move.processor,uom_id:0
-#: help:validate.move.processor,uom_id:0
 msgid "Received UoM"
 msgstr "UdM Reçue"
 
@@ -24759,12 +24479,6 @@ msgstr "Journal Analytique"
 msgid "Until"
 msgstr "Jusqu'à"
 
-#. module: stock
-#: code:addons/stock/stock.py:2076
-#, python-format
-msgid "Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)"
-msgstr "Quantités, UdM, Produits et Localisations ne peuvent pas être modifiés sur les mouvements de stock qui ont déjà été traités (excepté par l'administrateur)"
-
 #. module: threshold_value
 #: help:threshold.value,lead_time:0
 msgid "In months. Time to be delivered after processing the purchase order."
@@ -24961,7 +24675,6 @@ msgstr "Line created in a further PO, so we have to create it back in the flow"
 #: view:supplier.catalogue.line:0
 #: selection:stock.mission.report.line,type:0
 #: selection:stock.move,product_type:0
-#: selection:sale.donation.stock.moves,product_type:0
 msgid "Non-Stockable"
 msgstr "Non Stockable"
 
@@ -24989,9 +24702,7 @@ msgstr "Champ Enfant"
 #. module: msf_outgoing
 #: selection:return.pack.shipment.processor,step:0
 #: selection:return.shipment.processor,step:0
-#: selection:shipment.processor,step:0
 #: code:addons/msf_outgoing/msf_outgoing.py:774
-#: code:addons/msf_outgoing/wizard/shipment.py:229
 #, python-format
 msgid "Return Packs"
 msgstr "Renvoyer colis"
@@ -25068,26 +24779,19 @@ msgstr "Stopped products"
 #: field:wizard.import.po.simulation.screen.line,in_comment:0
 #: field:wizard.simu.import.po.line,initial_comment:0
 #: field:msf_field_access_rights.field_access_rule,comment:0
-#: field:create.picking.move.processor,comment:0
 #: report:empty.picking.ticket:0
 #: field:internal.move.processor,comment:0
 #: report:invoice:0
-#: field:memory.additionalitems,comment:0
 #: field:outgoing.delivery.move.processor,comment:0
 #: field:pack.family.memory,comment:0
 #: report:packing.list:0
 #: report:picking.ticket:0
-#: field:ppl.move.processor,comment:0
 #: field:return.pack.shipment.family.processor,comment:0
 #: field:return.ppl.move.processor,comment:0
 #: field:return.shipment.family.processor,comment:0
-#: field:shipment.additional.line.processor,comment:0
 #: field:shipment.additionalitems,comment:0
-#: field:shipment.family.processor,comment:0
 #: field:stock.move.in.processor,comment:0
-#: field:stock.move.memory.shipment.additionalitems,comment:0
 #: field:stock.move.processor,comment:0
-#: field:validate.move.processor,comment:0
 #: report:addons/msf_supply_doc_export/report/product_list_xls.mako:52
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:70
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:64
@@ -25649,15 +25353,11 @@ msgstr "Guide de Références"
 
 #. module: msf_outgoing
 #: view:shipment:0
-#: view:shipment.additional.line.processor:0
 #: view:shipment.additionalitems:0
-#: view:shipment.processor:0
-#: view:stock.move.memory.shipment.additionalitems:0
 #: model:ir.model,name:msf_outgoing.model_memory_additionalitems
 #: model:ir.model,name:msf_outgoing.model_shipment_additionalitems
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_additionalitems
 #: field:shipment,additional_items_ids:0
-#: field:shipment.wizard,product_moves_shipment_additionalitems:0
 msgid "Additional Items"
 msgstr "Éléments supplémentaires"
 
@@ -26014,11 +25714,6 @@ msgstr "Hauteur"
 #: selection:wizard.register.opening.confirmation,register_type:0
 msgid "OD-Extra Accounting"
 msgstr "OD-Extra Accounting"
-
-#. module: stock
-#: view:stock.move:0
-msgid "New pack"
-msgstr "Nouveau colis"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:330
@@ -26435,7 +26130,6 @@ msgstr "brouillon"
 
 #. module: msf_outgoing
 #: view:stock.move.memory.shipment.create:0
-#: view:shipment.family.processor:0
 msgid "Number to Ship"
 msgstr "Nombre à Expédier"
 
@@ -26507,7 +26201,6 @@ msgstr "Coefficient de conversion pour passer de l'UdM à l'UdV\n"
 " UdV = UdM x coeff"
 
 #. modules: return_claim, msf_outgoing
-#: field:create.picking.processor,claim_replacement_picking_expected:0
 #: field:internal.picking.processor,claim_replacement_picking_expected:0
 #: field:outgoing.delivery.processor,claim_replacement_picking_expected:0
 #: field:stock.incoming.processor,claim_replacement_picking_expected:0
@@ -26697,12 +26390,6 @@ msgstr "Autre Information"
 #: report:cash.request.export:0
 msgid "Request Date:"
 msgstr "Date de la Demande :"
-
-#. module: kit
-#: code:addons/kit/kit_creation.py:1456
-#, python-format
-msgid "Original Stock Move cannot be deleted."
-msgstr "Le mouvement de stock d'origine ne peut être supprimé."
 
 #. module: account
 #: code:addons/account/account_move_line.py:1201
@@ -26973,7 +26660,6 @@ msgstr "Informs about distribution state."
 #: selection:stock.move,product_type:0
 #: view:supplier.catalogue.line:0
 #: selection:stock.mission.report.line,type:0
-#: selection:sale.donation.stock.moves,product_type:0
 msgid "Service with Reception"
 msgstr "Service avec Réception"
 
@@ -27024,17 +26710,14 @@ msgstr "Total Solde Calculé en Devise Fonctionnelle"
 #. modules: msf_doc_import, msf_outgoing, stock
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:162
 #: field:wizard.import.in.line.simulation.screen,imp_cost:0
-#: field:create.picking.move.processor,cost:0
 #: field:internal.move.processor,cost:0
 #: field:outgoing.delivery.move.processor,cost:0
-#: field:ppl.move.processor,cost:0
 #: field:return.ppl.move.processor,cost:0
 #: field:stock.move.in.processor,cost:0
 #: field:stock.move.memory.picking,cost:0
 #: field:stock.move.memory.ppl,cost:0
 #: field:stock.move.memory.returnproducts,cost:0
 #: field:stock.move.processor,cost:0
-#: field:validate.move.processor,cost:0
 #: field:stock.move.memory.in,cost:0
 #: field:stock.move.memory.out,cost:0
 msgid "Cost"
@@ -27253,18 +26936,13 @@ msgid "Search Actions"
 msgstr "Rechercher Actions"
 
 #. modules: msf_outgoing, specific_rules
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:528
-#: code:addons/msf_outgoing/wizard/shipment.py:216
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:return.pack.shipment.processor:0
 #: view:return.ppl.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:43
 #: view:shipment:0
 #: view:shipment.add.pack.processor:0
@@ -27513,12 +27191,6 @@ msgid "It acts as a default account for credit amount"
 msgstr "Agira comme compte par défaut pour le montant du crédit"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1345
-#, python-format
-msgid "Error, packing in wrong state !"
-msgstr "Error, packing in wrong state !"
-
-#. module: msf_outgoing
 #: field:pack.family.memory,total_volume:0
 #: field:shipment,total_volume:0
 #: field:stock.picking,total_volume:0
@@ -27625,7 +27297,6 @@ msgstr "À vérifier par le comptable."
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:240
 #: report:po.simulation.screen:0
 #: field:wizard.import.in.line.simulation.screen,type_change:0
-#: field:wizard.import.po.simulation.screen.line,type_change:0
 #: field:wizard.simu.import.po.line,change_type:0
 #: view:purchase.order:0
 msgid "CHG"
@@ -27676,10 +27347,8 @@ msgid "This is a full inventory. All products currently in stock and all product
 msgstr "Ceci est un inventaire complet. Tous les produits actuellement en stock et tous les produit avec des mouvements dans les derniers X mois seront ajoutés."
 
 #. modules: account, base, finance
-#: report:addons/account/report/account_partner_ledger.mako:263
 #: field:res.partner,child_ids:0
 #: field:res.request,ref_partner_id:0
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:362
 msgid "Partner Ref."
 msgstr "Réf. partenaire"
 
@@ -28742,12 +28411,8 @@ msgstr "Update Datas"
 #: field:stock.move.memory.shipment.returnpacksfromshipment,from_pack:0
 #: field:in.family.processor,from_pack:0
 #: field:ppl.family.processor,from_pack:0
-#: field:ppl.move.processor,from_pack:0
 #: field:return.pack.shipment.family.processor,from_pack:0
-#: field:return.ppl.move.processor,from_pack:0
 #: field:return.shipment.family.processor,from_pack:0
-#: field:shipment.additional.line.processor,from_pack:0
-#: field:shipment.family.processor,from_pack:0
 #: field:stock.move.in.processor,from_pack:0
 #: field:shipment.add.pack.processor.line,from_pack:0
 msgid "From p."
@@ -28956,14 +28621,11 @@ msgid "Included Fields"
 msgstr "Champs Inclus"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,exp_check:0
 #: field:internal.move.processor,exp_check:0
 #: field:outgoing.delivery.move.processor,exp_check:0
-#: field:ppl.move.processor,exp_check:0
 #: field:return.ppl.move.processor,exp_check:0
 #: field:stock.move.in.processor,exp_check:0
 #: field:stock.move.processor,exp_check:0
-#: field:validate.move.processor,exp_check:0
 msgid "Exp."
 msgstr "Exp."
 
@@ -29333,7 +28995,6 @@ msgid "Closed state of draft shipment."
 msgstr "Statut fermé du brouillon expédition"
 
 #. modules: msf_outgoing, stock
-#: field:create.picking,product_moves_returnproducts:0
 #: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Return Products"
@@ -29571,7 +29232,6 @@ msgstr "Cette vue peut être utilisée par des comptables afin d'enregistrer rap
 
 #. modules: sale, procurement_request
 #: view:sale.order:0
-#: view:sale.order:0
 msgid "Validate Lines"
 msgstr "Validate Lines"
 
@@ -29671,12 +29331,10 @@ msgstr "Importer IN, traiter IN & Pick et Colissage"
 #. modules: delivery_mechanism, msf_outgoing
 #: view:stock.move.memory.in:0
 #: view:stock.move.memory.out:0
-#: view:create.picking.move.processor:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
 #: view:stock.move.in.processor:0
 #: view:stock.move.processor:0
-#: view:validate.move.processor:0
 msgid "Change Product"
 msgstr "Changer le Produit"
 
@@ -30024,14 +29682,11 @@ msgstr "Erreur ! La durée de l'Exercice comptable est incorrecte. "
 #: help:stock.move.memory.returnproducts,cost:0
 #: help:stock.move.memory.in,cost:0
 #: help:stock.move.memory.out,cost:0
-#: help:create.picking.move.processor,cost:0
 #: help:internal.move.processor,cost:0
 #: help:outgoing.delivery.move.processor,cost:0
-#: help:ppl.move.processor,cost:0
 #: help:return.ppl.move.processor,cost:0
 #: help:stock.move.in.processor,cost:0
 #: help:stock.move.processor,cost:0
-#: help:validate.move.processor,cost:0
 msgid "Unit Cost for this product line"
 msgstr "Coût Unitaire pour cette ligne de produits"
 
@@ -30728,7 +30383,6 @@ msgid "Regular"
 msgstr "Normal"
 
 #. module: msf_outgoing
-#: field:create.picking.processor,chained_from_in_stock_picking:0
 #: field:internal.picking.processor,chained_from_in_stock_picking:0
 #: field:outgoing.delivery.processor,chained_from_in_stock_picking:0
 msgid "Chained Internal Picking from IN"
@@ -30821,16 +30475,13 @@ msgid "To be installed"
 msgstr "A installer"
 
 #. module: msf_outgoing
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
-#: view:ppl.processor:0
 #: view:return.ppl.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 msgid "Move lines"
-msgstr "Move lines"
+msgstr "Lignes de mouvement"
 
 #. module: base
 #: model:res.currency,currency_name:base.BIF
@@ -30848,7 +30499,6 @@ msgstr "done - (msf.budget)"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:286
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:292
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:320
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:78
 #, python-format
 msgid "Line %s: %s"
 msgstr "Ligne %s : %s"
@@ -30969,11 +30619,6 @@ msgstr "Aucun journal comptable d'engagement trouvé !"
 #: report:voucher.print:0
 msgid "Particulars"
 msgstr "Particuliers"
-
-#. module: base
-#: selection:ir.actions.server,trigger_name:0
-msgid "contract_open - (financing.contract.contract)"
-msgstr "contract_open - (financing.contract.contract)"
 
 #. modules: product, base, resource
 #: code:addons/base/res/partner/partner.py:183
@@ -31348,12 +30993,6 @@ msgstr "Line %s in your Excel file ignored: Product Code [%s] not found ! Detail
 msgid "Europe/Saratov"
 msgstr "Europe/Saratov"
 
-#. module: product_attributes
-#: code:addons/product_attributes/product_attributes.py:1117
-#, python-format
-msgid "There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves."
-msgstr "Il y' a des mouvements de stock avec ce produits dans le sytème. Vous devez donc garder la même catégorie UdM que celle de ces mouvements de stock."
-
 #. module: financing_contract
 #: code:addons/financing_contract/contract.py:58
 #, python-format
@@ -31451,7 +31090,6 @@ msgstr "Alloc.Analyt."
 
 #. modules: consumption_calculation, specific_rules, stock_override, stock
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:70
-#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
 #: field:export.report.stock.move,name:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:132
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:113
@@ -31604,14 +31242,11 @@ msgstr "Run scheduler automatically ?"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1637
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #, python-format
@@ -32098,21 +31733,14 @@ msgstr "Pacific/Galapagos"
 #: field:stock.move.memory.returnproducts,lot_check:0
 #: field:claim.product.line,hidden_batch_management_mandatory_claim_product_line:0
 #: view:initial.stock.inventory:0
-#: field:initial.stock.inventory.line,lot_check:0
-#: field:stock.inventory.line,lot_check:0
-#: field:stock.move,lot_check:0
 #: field:stock.move.memory.in,lot_check:0
 #: field:stock.move.memory.out,lot_check:0
-#: field:stock.production.lot,lot_check:0
 #: field:wizard.import.in.line.simulation.screen,lot_check:0
-#: field:create.picking.move.processor,lot_check:0
 #: field:internal.move.processor,lot_check:0
 #: field:outgoing.delivery.move.processor,lot_check:0
-#: field:ppl.move.processor,lot_check:0
 #: field:return.ppl.move.processor,lot_check:0
 #: field:stock.move.in.processor,lot_check:0
 #: field:stock.move.processor,lot_check:0
-#: field:validate.move.processor,lot_check:0
 msgid "B.Num"
 msgstr "Num. Lot"
 
@@ -32260,12 +31888,6 @@ msgstr "Déclenche un approvisionnement automatique pour tous les produits qui o
 #: help:account.account,cash_domain:0
 msgid "This is only to change domain in journal's creation."
 msgstr "This is only to change domain in journal's creation."
-
-#. module: stock
-#: code:addons/stock/stock.py:805
-#, python-format
-msgid "Not enough stock, unable to reserve the products."
-msgstr "Stock insuffisant, impossible de réserver les produits."
 
 #. modules: sync_client, msf_tools
 #: field:automated.export,ftp_protocol:0
@@ -32530,7 +32152,6 @@ msgstr "Livre les lieux disponibles comme lieu source d'un bon de picking selon 
 #: report:po.simulation.screen:0
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
-#: view:internal.request.import:0
 msgid "Imported values"
 msgstr "Valeurs Importées"
 
@@ -33180,11 +32801,6 @@ msgstr "Contrat - Information:"
 msgid "Ethiopia"
 msgstr "Ethiopie"
 
-#. module: msf_config_locations
-#: field:stock.remove.location.wizard,move_from_to:0
-msgid "Has a move from/to the location"
-msgstr "A bouger de/vers la zone"
-
 #. modules: account, account_mcdb
 #: view:account.move:0
 #: view:account.move:0
@@ -33760,7 +33376,6 @@ msgstr "La destination \"%s\" n'existe pas !"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1017
-#: code:addons/msf_outgoing/wizard/shipment.py:232
 #: view:return.pack.shipment.processor:0
 #, python-format
 msgid "Return Packs from Shipment"
@@ -34301,19 +33916,14 @@ msgstr "30 Jours Fin de Mois"
 
 #. modules: msf_outgoing, consumption_calculation, specific_rules
 #: view:real.average.consumption:0
-#: code:addons/msf_outgoing/wizard/shipment.py:216
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:return.pack.shipment.processor:0
 #: view:return.ppl.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:42
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:528
 #: view:shipment:0
 #: view:shipment.add.pack.processor:0
 #: view:stock.picking:0
@@ -35199,13 +34809,10 @@ msgstr "MALAYSIAN RINGGIT"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Need Expiry Date (Internal) not Batch Number (Standard)"
@@ -35750,14 +35357,11 @@ msgid "Expiry date is not set."
 msgstr "Expiry date is not set."
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,kit_check:0
 #: help:internal.move.processor,kit_check:0
 #: help:outgoing.delivery.move.processor,kit_check:0
-#: help:ppl.move.processor,kit_check:0
 #: help:return.ppl.move.processor,kit_check:0
 #: help:stock.move.in.processor,kit_check:0
 #: help:stock.move.processor,kit_check:0
-#: help:validate.move.processor,kit_check:0
 msgid "A kit is required on this line"
 msgstr "A kit is required on this line"
 
@@ -36030,14 +35634,11 @@ msgid "America/Argentina/Jujuy"
 msgstr "America/Argentina/Jujuy"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,asset_check:0
 #: help:internal.move.processor,asset_check:0
 #: help:outgoing.delivery.move.processor,asset_check:0
-#: help:ppl.move.processor,asset_check:0
 #: help:return.ppl.move.processor,asset_check:0
 #: help:stock.move.in.processor,asset_check:0
 #: help:stock.move.processor,asset_check:0
-#: help:validate.move.processor,asset_check:0
 msgid "An asset is required on this line"
 msgstr "Un actif est requis sur cette ligne"
 
@@ -36208,7 +35809,6 @@ msgstr "cancel_voucher - (account.voucher)"
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
 #: report:addons/register_accounting/report/fully_report_xls.mako:590
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
-#: field:product.nomenclature,status:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:273
 #: report:combined.journals.report.pdf:0
 #, python-format
@@ -36714,8 +36314,6 @@ msgstr "Gestion des Widgets de la page d'accueil"
 #: field:ppl.family.processor,length:0
 #: field:return.pack.shipment.family.processor,length:0
 #: field:return.shipment.family.processor,length:0
-#: field:shipment.additional.line.processor,length:0
-#: field:shipment.family.processor,length:0
 #: field:shipment.add.pack.processor.line,length:0
 msgid "Length [cm]"
 msgstr "Longueur (cm)"
@@ -36929,11 +36527,7 @@ msgid "Indian/Chagos"
 msgstr "Indes/Chagos"
 
 #. module: msf_outgoing
-#: field:create.picking,product_moves_families:0
 #: view:shipment:0
-#: field:shipment.wizard,product_moves_shipment_create:0
-#: field:shipment.wizard,product_moves_shipment_returnpacks:0
-#: field:shipment.wizard,product_moves_shipment_returnpacksfromshipment:0
 #: view:stock.move.memory.families:0
 #: view:stock.move.memory.shipment.create:0
 #: view:stock.move.memory.shipment.returnpacks:0
@@ -36941,15 +36535,8 @@ msgstr "Indes/Chagos"
 #: view:ppl.family.processor:0
 #: view:return.pack.shipment.family.processor:0
 #: view:return.shipment.family.processor:0
-#: view:shipment.family.processor:0
 msgid "Pack Families"
 msgstr "Colis - Familles"
-
-#. module: msf_outgoing
-#: help:ppl.processor,move_ids:0
-#: help:return.ppl.processor,move_ids:0
-msgid "Lines of the PPL processor wizard"
-msgstr "Lines of the PPL processor wizard"
 
 #. module: msf_budget
 #: code:addons/msf_budget/report/report_local_expenses.py:97
@@ -36958,14 +36545,11 @@ msgid "Period to:"
 msgstr "Period jusqu'au:"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,ordered_product_id:0
 #: field:internal.move.processor,ordered_product_id:0
 #: field:outgoing.delivery.move.processor,ordered_product_id:0
-#: field:ppl.move.processor,ordered_product_id:0
 #: field:return.ppl.move.processor,ordered_product_id:0
 #: field:stock.move.in.processor,ordered_product_id:0
 #: field:stock.move.processor,ordered_product_id:0
-#: field:validate.move.processor,ordered_product_id:0
 msgid "Ordered product"
 msgstr "Produit commandé"
 
@@ -37116,15 +36700,8 @@ msgstr "vsep"
 msgid "Register that we come from."
 msgstr "Registre d'où nous venons."
 
-#. module: product_attributes
-#: field:product.template,volume_updated:0
-msgid "Volume updated"
-msgstr "Volume updated"
-
 #. module: msf_outgoing
 #: field:stock.move.memory.ppl,qty_per_pack:0
-#: field:ppl.move.processor,qty_per_pack:0
-#: field:return.ppl.move.processor,qty_per_pack:0
 msgid "Qty p.p."
 msgstr "Qté par colis"
 
@@ -37599,7 +37176,6 @@ msgid "You cannot confirm the sourcing of a line with a subtotal of zero."
 msgstr "Vous ne pouvez pas confimer le sourcing d'une ligne avec un sous-total de zéro."
 
 #. module: msf_outgoing
-#: field:create.picking.processor,register_a_claim:0
 #: field:internal.picking.processor,register_a_claim:0
 #: field:outgoing.delivery.processor,register_a_claim:0
 #: field:stock.incoming.processor,register_a_claim:0
@@ -37916,8 +37492,6 @@ msgstr "Sur Plusieurs Documents"
 #: field:msf.doc.import.accounting,date:0
 #: field:purchase.order.simu.import.file,timestamp:0
 #: field:hr.payroll.msf,date:0
-#: field:create.picking,date:0
-#: field:create.picking.processor,date:0
 #: report:empty.picking.ticket:0
 #: field:internal.picking.processor,date:0
 #: field:outgoing.delivery.processor,date:0
@@ -37929,11 +37503,8 @@ msgstr "Sur Plusieurs Documents"
 #: field:shipment,carrier_date:0
 #: field:shipment,consignee_date:0
 #: field:shipment,shipper_date:0
-#: field:shipment.processor,date:0
-#: field:shipment.wizard,date:0
 #: field:stock.incoming.processor,date:0
 #: field:stock.picking.processor,date:0
-#: field:validate.picking.processor,date:0
 #: report:procurement.request.report:0
 #: report:product.asset:0
 #: field:product.asset.event,date:0
@@ -38040,7 +37611,6 @@ msgstr "Vous ne pouvez pas avoir deux fois les même produit sur une même règl
 #. module: msf_outgoing
 #: field:return.pack.shipment.processor,transport_type:0
 #: field:return.shipment.processor,transport_type:0
-#: field:shipment.processor,transport_type:0
 #: field:shipment.add.pack.processor,transport_type:0
 msgid "Transport type"
 msgstr "Transport type"
@@ -38223,8 +37793,6 @@ msgstr "Is a Dangerous Goods ?"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,draft_packing_id:0
 #: field:return.shipment.family.processor,draft_packing_id:0
-#: field:shipment.additional.line.processor,draft_packing_id:0
-#: field:shipment.family.processor,draft_packing_id:0
 #: field:shipment.add.pack.processor.line,draft_packing_id:0
 msgid "Draft Packing Ref."
 msgstr "Draft Packing Ref."
@@ -38246,14 +37814,11 @@ msgid "Right Parent"
 msgstr "Parent Droit"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,type_check:0
 #: help:internal.move.processor,type_check:0
 #: help:outgoing.delivery.move.processor,type_check:0
-#: help:ppl.move.processor,type_check:0
 #: help:return.ppl.move.processor,type_check:0
 #: help:stock.move.in.processor,type_check:0
 #: help:stock.move.processor,type_check:0
-#: help:validate.move.processor,type_check:0
 msgid "Return the type of the picking"
 msgstr "Return the type of the picking"
 
@@ -38294,7 +37859,6 @@ msgstr "ID de la ligne d'origine avant la scission"
 #. modules: msf_doc_import, sale
 #: view:wizard.import.in.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
-#: view:internal.request.import:0
 msgid "Simulate"
 msgstr "Simuler"
 
@@ -38683,11 +38247,6 @@ msgstr "Modifier"
 #: view:automated.import.job:0
 msgid "Import job requests"
 msgstr "Import job requests"
-
-#. module: stock
-#: field:stock.move.track,quantity:0
-msgid "Quantity per lot"
-msgstr "Quantité par Lot"
 
 #. module: product_attributes
 #: model:ir.model,name:product_attributes.model_product_justification_code
@@ -39222,7 +38781,6 @@ msgstr "Configuration de l'Installation du Langage "
 #. module: msf_outgoing
 #: selection:return.pack.shipment.processor,step:0
 #: selection:return.shipment.processor,step:0
-#: selection:shipment.processor,step:0
 #: selection:shipment.add.pack.processor,step:0
 msgid "Return Packs from shipment"
 msgstr "Return Packs from shipment"
@@ -39286,7 +38844,6 @@ msgstr "base.report.sxw"
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
 #: selection:shipment,transport_type:0
-#: selection:shipment.processor,transport_type:0
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
@@ -39770,12 +39327,6 @@ msgstr "Les champs personnalisés doivent avoir un nom commençant par 'x_' !"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Tuvalu"
 msgstr "Tuvalu"
-
-#. module: msf_outgoing
-#: help:ppl.move.processor,num_of_packs:0
-#: help:return.ppl.move.processor,num_of_packs:0
-msgid "Number of packs"
-msgstr "Number of packs"
 
 #. module: stock
 #: view:stock.picking:0
@@ -40496,8 +40047,6 @@ msgstr "Types de contrôles"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,ppl_id:0
 #: field:return.shipment.family.processor,ppl_id:0
-#: field:shipment.additional.line.processor,ppl_id:0
-#: field:shipment.family.processor,ppl_id:0
 #: field:shipment.add.pack.processor.line,ppl_id:0
 msgid "PPL Ref."
 msgstr "Réf. LPC"
@@ -40883,8 +40432,6 @@ msgstr "America/Havana"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,selected_weight:0
 #: field:return.shipment.family.processor,selected_weight:0
-#: field:shipment.additional.line.processor,selected_weight:0
-#: field:shipment.family.processor,selected_weight:0
 #: field:shipment.add.pack.processor.line,selected_weight:0
 msgid "Selected Weight"
 msgstr "Selected Weight"
@@ -41016,19 +40563,15 @@ msgstr "De confirmé à attribué."
 #: field:wizard.import.po.simulation.screen.line,in_uom:0
 #: field:wizard.simu.import.po.line,import_uom_id:0
 #: field:wizard.simu.import.po.line,initial_uom_id:0
-#: field:create.picking.move.processor,uom_id:0
 #: field:internal.move.processor,uom_id:0
 #: field:outgoing.delivery.move.processor,uom_id:0
-#: field:ppl.move.processor,uom_id:0
 #: field:return.ppl.move.processor,uom_id:0
-#: field:shipment.additional.line.processor,uom_id:0
 #: field:split.memory.move,uom_id:0
 #: field:split.move.processor,uom_id:0
 #: view:stock.move:0
 #: field:stock.move.in.processor,uom_id:0
 #: field:stock.move.processor,uom_id:0
 #: view:stock.picking:0
-#: field:validate.move.processor,uom_id:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:72
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:62
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:73
@@ -43007,13 +42550,10 @@ msgstr "Afficher les instances ?"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Unit Price must be greater than 0.0"
@@ -43148,9 +42688,7 @@ msgstr "%w - Numéro de semaine [0(Dimanche),6]."
 
 #. modules: account, register_accounting
 #: code:addons/account/invoice.py:85
-#: selection:account.invoice,reference_type:0
 #: report:account.invoice2:0
-#: selection:wizard.account.invoice,reference_type:0
 #, python-format
 msgid "Free Reference"
 msgstr "Référence libre"
@@ -43322,8 +42860,6 @@ msgstr "Exemple : REGLE_GLOBALE_1 ET REGLE_GLOBALE_2 ET ( (GROUPE_A_REGLE_1 ET G
 
 #. module: stock
 #: model:ir.model,name:stock.model_stock_move_scrap
-#: view:stock.move:0
-#: view:stock.move.scrap:0
 msgid "Scrap Products"
 msgstr "Produits Rebut"
 
@@ -43677,11 +43213,6 @@ msgstr "OCG"
 msgid "Accountant"
 msgstr "Accountant"
 
-#. module: msf_outgoing
-#: selection:shipment.wizard,transport_type:0
-msgid "By road"
-msgstr "Par Route"
-
 #. module: stock_override
 #: report:internal.move:0
 msgid "Expected Move Date :"
@@ -43943,7 +43474,6 @@ msgstr "\n"
 #: view:stock.move.memory.returnproducts:0
 #: view:stock.move.memory.in:0
 #: view:stock.move.memory.out:0
-#: view:ppl.move.processor:0
 #: view:return.ppl.move.processor:0
 msgid "Product Moves"
 msgstr "Mouvements Produit"
@@ -44118,14 +43648,12 @@ msgid "Signature:"
 msgstr "Signature :"
 
 #. module: msf_outgoing
-#: field:create.picking.processor,contains_dg:0
 #: field:internal.picking.processor,contains_dg:0
 #: field:outgoing.delivery.processor,contains_dg:0
 #: field:ppl.processor,contains_dg:0
 #: field:return.ppl.processor,contains_dg:0
 #: field:stock.incoming.processor,contains_dg:0
 #: field:stock.picking.processor,contains_dg:0
-#: field:validate.picking.processor,contains_dg:0
 msgid "Contains Dangerous goods"
 msgstr "Contient des Produits Dangereux"
 
@@ -44414,14 +43942,11 @@ msgstr "MACEDONIAN DENAR"
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Assigned qty must be smaller or equal to available qty"
@@ -44449,13 +43974,10 @@ msgstr "La quantité allouée doit être plus petite ou égale à la quantité d
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "No Batch Number/Expiry Date Needed"
@@ -44900,10 +44422,7 @@ msgid "Controlled substances"
 msgstr "Substances contrôlées"
 
 #. module: msf_outgoing
-#: field:memory.additionalitems,volume:0
-#: field:shipment.additional.line.processor,volume:0
 #: field:shipment.additionalitems,volume:0
-#: field:stock.move.memory.shipment.additionalitems,volume:0
 #: field:shipment.add.pack.processor.line,volume:0
 msgid "Volume[dm³]"
 msgstr "Volume[dm³]"
@@ -45043,11 +44562,6 @@ msgstr "De fermé à livré."
 #, python-format
 msgid "You cannot have a lead time greater than 9 !"
 msgstr "Vous ne pouvez pas ajouter de délai supérieur à 9 !"
-
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Additional items"
-msgstr "Articles Supplémentaires"
 
 #. module: msf_instance
 #: code:addons/msf_instance/account.py:59
@@ -45716,8 +45230,6 @@ msgstr "Zones Virtuelles"
 
 #. modules: msf_outgoing, msf_button_access_rights, sync_client, base
 #: view:msf_button_access_rights.view_config_wizard_install_results:0
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:554
-#: view:ppl.processor:0
 #: view:res.config:0
 #: wizard_button:server.action.create,init,step_1:0
 #: view:sync.client.register_entity:0
@@ -45739,7 +45251,6 @@ msgstr "Vous ne pouvez pas supprimer / désactiver un compte qui est défini com
 
 #. module: msf_outgoing
 #: view:internal.picking.processor:0
-#: field:create.picking.processor,claim_description:0
 #: field:internal.picking.processor,claim_description:0
 #: field:outgoing.delivery.processor,claim_description:0
 #: view:stock.incoming.processor:0
@@ -45848,19 +45359,14 @@ msgstr "Modèles de Taxe"
 #: field:msf.doc.import.accounting.errors,wizard_id:0
 #: field:msf.doc.import.accounting.lines,wizard_id:0
 #: field:product.product.import.line.qty,wizard_id:0
-#: field:create.picking.move.processor,wizard_id:0
 #: field:in.family.processor,wizard_id:0
 #: field:internal.move.processor,wizard_id:0
 #: field:outgoing.delivery.move.processor,wizard_id:0
 #: field:ppl.family.processor,wizard_id:0
-#: field:ppl.move.processor,wizard_id:0
 #: field:return.pack.shipment.family.processor,wizard_id:0
 #: field:return.ppl.move.processor,wizard_id:0
 #: field:return.shipment.family.processor,wizard_id:0
-#: field:shipment.additional.line.processor,wizard_id:0
-#: field:shipment.family.processor,wizard_id:0
 #: field:stock.move.in.processor,wizard_id:0
-#: field:stock.move.memory.shipment.additionalitems,wizard_id:0
 #: field:stock.move.processor,wizard_id:0
 #: field:warning.import.currencies.lines,wizard_id:0
 #: field:sale.order.leave.close,wizard_id:0
@@ -45924,16 +45430,12 @@ msgstr "Excel file"
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
 #: selection:return.pack.shipment.family.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "To value must be greater or equal to From value"
 msgstr "'A Valeur' doit être supérieure ou égale à 'De Valeur'"
@@ -46039,7 +45541,6 @@ msgstr "Avant le patch"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:327
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:85
 #, python-format
 msgid "Line %s: The product is wrong - Should be the same as initial move"
 msgstr "Ligne %s: Le produit est faux - Il devrait être le même que pour le mouvement initial"
@@ -46172,7 +45673,6 @@ msgid "Process Substitute"
 msgstr "Traiter les substitutions"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/shipment.py:226
 #: code:addons/msf_outgoing/msf_outgoing.py:677
 #: code:addons/msf_outgoing/msf_outgoing.py:1477
 #: code:addons/msf_outgoing/wizard/return_shipment_processor.py:152
@@ -46391,14 +45891,11 @@ msgid "%d - Day of the month [01,31]."
 msgstr "%d - Jour du mois (01 à 31)."
 
 #. modules: msf_outgoing, stock_override, stock
-#: field:create.picking.move.processor,prodlot_id:0
 #: field:internal.move.processor,prodlot_id:0
 #: field:outgoing.delivery.move.processor,prodlot_id:0
-#: field:ppl.move.processor,prodlot_id:0
 #: field:return.ppl.move.processor,prodlot_id:0
 #: field:stock.move.in.processor,prodlot_id:0
 #: field:stock.move.processor,prodlot_id:0
-#: field:validate.move.processor,prodlot_id:0
 #: code:addons/stock/physical_inventory.py:1250
 #: code:addons/stock/physical_inventory.py:1402
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:459
@@ -46600,12 +46097,10 @@ msgstr "Anguille"
 
 #. modules: msf_doc_import, msf_outgoing
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Batch Number is Missing"
@@ -46820,7 +46315,6 @@ msgstr "Activer l'attribut Paie"
 #: selection:return.claim,category_return_claim:0
 #: selection:return.claim,type_return_claim:0
 #: selection:internal.request.import,imp_categ:0
-#: selection:internal.request.import,in_categ:0
 #: selection:sale.order,categ:0
 #: selection:sale.report,categ:0
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:293
@@ -46845,11 +46339,6 @@ msgstr "Exécution en cours"
 #: selection:base.setup.company,ship_country_id:0
 msgid "Gibraltar"
 msgstr "Gibraltar"
-
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "TOTAL WEIGHT IN KGs"
-msgstr "TOTAL WEIGHT IN KGs"
 
 #. module: stock
 #: help:stock.change.standard.price,new_price:0
@@ -47092,8 +46581,6 @@ msgstr "max"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,sale_order_id:0
 #: field:return.shipment.family.processor,sale_order_id:0
-#: field:shipment.additional.line.processor,sale_order_id:0
-#: field:shipment.family.processor,sale_order_id:0
 #: field:shipment.add.pack.processor.line,sale_order_id:0
 msgid "Field Order Ref."
 msgstr "Réf Commande de Terrain"
@@ -47523,11 +47010,6 @@ msgstr "The technical name for the model. This is used to make searching for Fie
 msgid "Automatic Supply Line"
 msgstr "Ligne d'Approvisionnement Automatique "
 
-#. module: sale
-#: view:sale.order:0
-msgid "Cancel Order"
-msgstr "Annuler la Commande"
-
 #. module: msf_doc_import
 #: model:ir.module.module,description:msf_doc_import.module_meta_information
 msgid "This module enables to import file in xls format"
@@ -47944,12 +47426,6 @@ msgstr "Répertoire"
 #: model:ir.model,name:stock_override.model_stock_picking_cancel_wizard
 msgid "stock.picking.cancel.wizard"
 msgstr "stock.picking.cancel.wizard"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1470
-#, python-format
-msgid "There are stock moves with 0 quantity on the pack family sequence"
-msgstr "There are stock moves with 0 quantity on the pack family sequence"
 
 #. module: delivery_mechanism
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1649
@@ -48763,14 +48239,11 @@ msgid "Destination Partner"
 msgstr "Destination Partenaire"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,location_supplier_customer_mem_out:0
 #: field:internal.move.processor,location_supplier_customer_mem_out:0
 #: field:outgoing.delivery.move.processor,location_supplier_customer_mem_out:0
-#: field:ppl.move.processor,location_supplier_customer_mem_out:0
 #: field:return.ppl.move.processor,location_supplier_customer_mem_out:0
 #: field:stock.move.in.processor,location_supplier_customer_mem_out:0
 #: field:stock.move.processor,location_supplier_customer_mem_out:0
-#: field:validate.move.processor,location_supplier_customer_mem_out:0
 msgid "Location Supplier Customer"
 msgstr "Zone Fournisseur Client"
 
@@ -49015,14 +48488,12 @@ msgid "Line %s in the Excel file was added to the file of the lines with errors,
 msgstr "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 
 #. module: msf_outgoing
-#: help:create.picking.processor,picking_id:0
 #: help:internal.picking.processor,picking_id:0
 #: help:outgoing.delivery.processor,picking_id:0
 #: help:ppl.processor,picking_id:0
 #: help:return.ppl.processor,picking_id:0
 #: help:stock.incoming.processor,picking_id:0
 #: help:stock.picking.processor,picking_id:0
-#: help:validate.picking.processor,picking_id:0
 msgid "Picking (incoming, internal, outgoing, picking ticket, packing...) to process"
 msgstr "Picking (incoming, internal, outgoing, picking ticket, packing...) to process"
 
@@ -49087,12 +48558,6 @@ msgstr "Commentaire de modification"
 msgid "Tax Declaration: Invoices"
 msgstr "Déclaration de Taxe: Factures"
 
-#. module: stock
-#: code:addons/stock/stock.py:2842
-#, python-format
-msgid "Please provide a positive quantity to scrap!"
-msgstr "Veuillez indiquer une quantité positive à mettre au rebus !"
-
 #. modules: purchase, partner_modification, msf_partner
 #: view:res.partner:0
 #: field:res.partner,zone:0
@@ -49126,14 +48591,11 @@ msgstr "\n"
 "    "
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,type_check:0
 #: field:internal.move.processor,type_check:0
 #: field:outgoing.delivery.move.processor,type_check:0
-#: field:ppl.move.processor,type_check:0
 #: field:return.ppl.move.processor,type_check:0
 #: field:stock.move.in.processor,type_check:0
 #: field:stock.move.processor,type_check:0
-#: field:validate.move.processor,type_check:0
 msgid "Picking Type Check"
 msgstr "Vérification du Type de Picking"
 
@@ -49747,7 +49209,6 @@ msgstr "Attribut cible"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/picking_processor.py:827
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:786
 #, python-format
 msgid "Selected quantity must be greater than 0.00 !"
 msgstr "Selected quantity must be greater than 0.00 !"
@@ -49872,7 +49333,6 @@ msgstr "Créer une Facture"
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
 #: selection:shipment,transport_type:0
-#: selection:shipment.processor,transport_type:0
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
@@ -49903,13 +49363,10 @@ msgstr "Air"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Weight is Missing"
@@ -50176,17 +49633,14 @@ msgstr "Prix Historiques"
 
 #. modules: msf_doc_import, msf_outgoing, stock
 #: field:wizard.import.in.line.simulation.screen,dg_check:0
-#: field:create.picking.move.processor,dg_check:0
 #: report:empty.picking.ticket:0
 #: field:internal.move.processor,dg_check:0
 #: field:outgoing.delivery.move.processor,dg_check:0
 #: report:packing.list:0
 #: report:picking.ticket:0
-#: field:ppl.move.processor,dg_check:0
 #: field:return.ppl.move.processor,dg_check:0
 #: field:stock.move.in.processor,dg_check:0
 #: field:stock.move.processor,dg_check:0
-#: field:validate.move.processor,dg_check:0
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_dg:0
 #: view:physical.inventory.select.products:0
@@ -50446,13 +49900,10 @@ msgstr "Product not defined on %s line%s: %s"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Wrong Batch Number Type"
@@ -50619,7 +50070,6 @@ msgid "From Picking Wizard"
 msgstr "De l'Assistant de Picking"
 
 #. module: msf_outgoing
-#: view:ppl.processor:0
 #: view:stock.incoming.processor:0
 msgid "PPL Information - Step 2"
 msgstr "Information LPC - Étape 2"
@@ -50794,7 +50244,6 @@ msgstr "L'importation des catégorie est en cours. A la fin de l'import, un fich
 #: selection:wizard.compare.rfq,priority:0
 #: selection:sale.order.line,priority:0
 #: selection:internal.request.import,imp_priority:0
-#: selection:internal.request.import,in_priority:0
 msgid "Emergency"
 msgstr "Urgence"
 
@@ -50854,13 +50303,10 @@ msgstr "Toutes les écritures doivent être comptabilisées définitivement avan
 
 #. modules: msf_doc_import, msf_outgoing, return_claim, kit
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0
 #: selection:kit.selection.sale.line,integrity_status:0
@@ -50938,10 +50384,8 @@ msgstr "Vous ne pouvez pas supprimer ce créateur  produit parce qu il est utili
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
 #: selection:return.pack.shipment.family.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
@@ -50958,12 +50402,10 @@ msgstr "Vous ne pouvez pas supprimer ce créateur  produit parce qu il est utili
 #: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
 #: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move,integrity_error:0
 msgid "The sequence overlaps previous one"
 msgstr "La séquence chevauche la précédente"
@@ -51213,11 +50655,6 @@ msgstr "Facture Sur Commande après la Livraison"
 #, python-format
 msgid "No open period found for given date: %s"
 msgstr "Pas de période ouverte trouvée pour la date donnée: %s"
-
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Driver :"
-msgstr "Chauffeur :"
 
 #. module: procurement_request
 #: field:sale.order.line,comment_ok:0
@@ -52671,12 +52108,10 @@ msgstr "This field is used to have only one PO by replenishment\n"
 #: code:addons/stock/stock.py:1918
 #: code:addons/msf_outgoing/wizard/picking_processor.py:153
 #: code:addons/msf_outgoing/wizard/picking_processor.py:183
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 #, python-format
 msgid "Products to Process"
 msgstr "Produits à Traiter"
@@ -52814,8 +52249,6 @@ msgstr "\n"
 #: field:ppl.family.processor,width:0
 #: field:return.pack.shipment.family.processor,width:0
 #: field:return.shipment.family.processor,width:0
-#: field:shipment.additional.line.processor,width:0
-#: field:shipment.family.processor,width:0
 #: field:shipment.add.pack.processor.line,width:0
 msgid "Width [cm]"
 msgstr "Largeur [cm]"
@@ -52864,14 +52297,11 @@ msgid "# of Voucher Lines"
 msgstr "#  de lignes du bon"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,ordered_quantity:0
 #: field:internal.move.processor,ordered_quantity:0
 #: field:outgoing.delivery.move.processor,ordered_quantity:0
-#: field:ppl.move.processor,ordered_quantity:0
 #: field:return.ppl.move.processor,ordered_quantity:0
 #: field:stock.move.in.processor,ordered_quantity:0
 #: field:stock.move.processor,ordered_quantity:0
-#: field:validate.move.processor,ordered_quantity:0
 msgid "Ordered quantity"
 msgstr "Quantité commandée"
 
@@ -53207,17 +52637,11 @@ msgstr "Planification"
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:return.shipment.family.processor,integrity_status:0
-#: selection:shipment.additional.line.processor,integrity_status:0
-#: selection:shipment.family.processor,integrity_status:0
-#: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:shipment.add.pack.processor.line,integrity_status:0
 #: selection:stock.move,integrity_error:0
@@ -53344,7 +52768,6 @@ msgstr "Vertical Integration"
 #: model:ir.module.module,shortdesc:procurement_request.module_meta_information
 #: code:addons/sale/sale_order.py:679
 #: code:addons/sale/sale_order.py:2527
-#: view:internal.request.import:0
 #: field:internal.request.import,order_id:0
 #, python-format
 msgid "Internal Request"
@@ -53632,8 +53055,6 @@ msgstr "publisher_warranty.contract.wizard"
 #: field:purchase.order.merged.line,product_uom:0
 #: field:initial.stock.inventory.line,product_uom:0
 #: field:stock.inventory.line,product_uom:0
-#: field:stock.move.consume,product_uom:0
-#: field:stock.move.scrap,product_uom:0
 #: field:tender.line,product_uom:0
 msgid "Product UOM"
 msgstr "UdM du Produit"
@@ -53967,11 +53388,6 @@ msgstr "OP automatique : %s"
 msgid "Journal Entry Model Line"
 msgstr "Modèle de Ligne d'Ecriture Comptable"
 
-#. module: msf_outgoing
-#: report:picking.ticket:0
-msgid "PICKING TICKET ("
-msgstr "PICKING TICKET ("
-
 #. module: report_webkit
 #: help:ir.actions.report.xml,report_webkit_data:0
 msgid "This template will be used if the main report file is not found"
@@ -54128,7 +53544,6 @@ msgstr "Compte de Débit par Défaut devrait être un compte de charge pour les 
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1498
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1503
 #, python-format
 msgid "The 'Expired date' value doesn't match with the expired date of the Batch - The expired date of the Batch was kept."
 msgstr "La 'Date d'expiration' ne correspond pas à celle du lot. La date du lot a été conservée"
@@ -54265,8 +53680,6 @@ msgstr "Vous ne pouvez pas avoir de champ de délai en négatif !"
 #: view:res.config:0
 #: view:sync.client.register_entity:0
 #: view:mission.stock.wizard:0
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:573
-#: view:ppl.processor:0
 #: view:stock.incoming.processor:0
 #, python-format
 msgid "Previous"
@@ -55282,7 +54695,6 @@ msgstr "KC/DG"
 
 #. modules: msf_outgoing, return_claim
 #: help:claim.event,replacement_picking_expected_claim_event:0
-#: help:create.picking.processor,claim_replacement_picking_expected:0
 #: help:internal.picking.processor,claim_replacement_picking_expected:0
 #: help:outgoing.delivery.processor,claim_replacement_picking_expected:0
 #: help:stock.incoming.processor,claim_replacement_picking_expected:0
@@ -55458,14 +54870,11 @@ msgstr "Montrer le modèle"
 #. modules: msf_doc_import, msf_outgoing
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:151
 #: field:wizard.import.in.line.simulation.screen,move_uom_id:0
-#: field:create.picking.move.processor,ordered_uom_id:0
 #: field:internal.move.processor,ordered_uom_id:0
 #: field:outgoing.delivery.move.processor,ordered_uom_id:0
-#: field:ppl.move.processor,ordered_uom_id:0
 #: field:return.ppl.move.processor,ordered_uom_id:0
 #: field:stock.move.in.processor,ordered_uom_id:0
 #: field:stock.move.processor,ordered_uom_id:0
-#: field:validate.move.processor,ordered_uom_id:0
 msgid "Ordered UoM"
 msgstr "UdM Commandée"
 
@@ -55708,7 +55117,6 @@ msgstr "Vérification du fichier…"
 #: selection:stock.move,hidden_state:0
 #: selection:sale.order.line,so_state_stored:0
 #: selection:pack.family.memory,state:0
-#: view:shipment:0
 #: view:stock.picking:0
 #: view:stock.picking:0
 #: selection:stock.picking,state_hidden:0
@@ -56549,14 +55957,11 @@ msgid "Name is missing!"
 msgstr "Name is missing!"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,kc_check:0
 #: help:internal.move.processor,kc_check:0
 #: help:outgoing.delivery.move.processor,kc_check:0
-#: help:ppl.move.processor,kc_check:0
 #: help:return.ppl.move.processor,kc_check:0
 #: help:stock.move.in.processor,kc_check:0
 #: help:stock.move.processor,kc_check:0
-#: help:validate.move.processor,kc_check:0
 msgid "Ticked if the product is a Heat Sensitive Item"
 msgstr "Ticked if the product is a Heat Sensitive Item"
 
@@ -57391,12 +56796,6 @@ msgstr "Progression de la Configuration"
 msgid "Batch Location"
 msgstr "Emplacements des Lots"
 
-#. module: stock
-#: model:ir.actions.act_window,name:stock.move_scrap
-#: view:stock.move.scrap:0
-msgid "Scrap Move"
-msgstr "Mouvement Rebut"
-
 #. module: account_period_closing_level
 #: view:account.account:0
 msgid "End Year Closing"
@@ -57414,8 +56813,6 @@ msgstr "Clôture annuelle"
 #: field:ppl.family.processor,height:0
 #: field:return.pack.shipment.family.processor,height:0
 #: field:return.shipment.family.processor,height:0
-#: field:shipment.additional.line.processor,height:0
-#: field:shipment.family.processor,height:0
 #: field:shipment.add.pack.processor.line,height:0
 msgid "Height [cm]"
 msgstr "Hauteur (cm)"
@@ -57603,7 +57000,6 @@ msgstr "Autres Types"
 #: selection:wizard.compare.rfq,categ:0
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
-#: selection:internal.request.import,in_categ:0
 #: selection:stock.reception.wizard,order_category:0
 msgid "Logistic"
 msgstr "Logistique"
@@ -59562,14 +58958,12 @@ msgid "The product %s is perishable but the line with this product has no expiry
 msgstr "Le produit %s est périssable mais la ligne relative à ce produit ne comporte pas de date d'expiration"
 
 #. module: msf_outgoing
-#: help:create.picking.processor,contains_dg:0
 #: help:internal.picking.processor,contains_dg:0
 #: help:outgoing.delivery.processor,contains_dg:0
 #: help:ppl.processor,contains_dg:0
 #: help:return.ppl.processor,contains_dg:0
 #: help:stock.incoming.processor,contains_dg:0
 #: help:stock.picking.processor,contains_dg:0
-#: help:validate.picking.processor,contains_dg:0
 msgid "Is at least one line contains a Dangerous good product."
 msgstr "Is at least one line contains a Dangerous good product."
 
@@ -59793,8 +59187,6 @@ msgstr "Le temps entre 2 réapprovisionnements. Sera utilisé pour calculer la q
 #. modules: return_claim, stock, msf_outgoing
 #: selection:claim.event,type_claim_event:0
 #: view:report.stock.inventory:0
-#: view:stock.move:0
-#: selection:create.picking.processor,claim_type:0
 #: selection:internal.picking.processor,claim_type:0
 #: selection:outgoing.delivery.processor,claim_type:0
 #: selection:stock.incoming.processor,claim_type:0
@@ -60148,8 +59540,6 @@ msgstr "Asia/Hovd"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,selected_number:0
 #: field:return.shipment.family.processor,selected_number:0
-#: field:shipment.additional.line.processor,selected_number:0
-#: field:shipment.family.processor,selected_number:0
 #: field:shipment.add.pack.processor.line,selected_number:0
 msgid "Selected number"
 msgstr "Selected number"
@@ -60410,12 +59800,6 @@ msgstr "A6  10  105 x 148 mm"
 #: constraint:account.move:0
 msgid "You cannot create more than one move per period on centralized journal"
 msgstr "Vous ne pouvez pas créer plus d'une écriture par période sur un journal centralisé"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1320
-#, python-format
-msgid "The Shipment (%s) has been canceled."
-msgstr "L'expédition (%s) a été annulée."
 
 #. module: account_override
 #: code:addons/account_override/account.py:1133
@@ -61399,12 +60783,8 @@ msgstr "Asie/Katmandou"
 #: field:stock.move.memory.shipment.returnpacksfromshipment,to_pack:0
 #: field:in.family.processor,to_pack:0
 #: field:ppl.family.processor,to_pack:0
-#: field:ppl.move.processor,to_pack:0
 #: field:return.pack.shipment.family.processor,to_pack:0
-#: field:return.ppl.move.processor,to_pack:0
 #: field:return.shipment.family.processor,to_pack:0
-#: field:shipment.additional.line.processor,to_pack:0
-#: field:shipment.family.processor,to_pack:0
 #: field:stock.move.in.processor,to_pack:0
 #: field:shipment.add.pack.processor.line,to_pack:0
 msgid "To p."
@@ -61623,9 +61003,7 @@ msgstr "Inventaire du Lot"
 #: field:wizard.import.po.simulation.screen,simu_line_ids:0
 #: field:return.pack.shipment.processor,family_ids:0
 #: field:return.shipment.processor,family_ids:0
-#: field:shipment.processor,family_ids:0
 #: field:unconsistent.stock.report,line_ids:0
-#: view:internal.request.import:0
 #: field:internal.request.import,imp_line_ids:0
 msgid "Lines"
 msgstr "Lignes"
@@ -61826,7 +61204,6 @@ msgstr "Montant fonctionnel de l'entrée comptable"
 #. modules: msf_doc_import, sale
 #: report:po.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
-#: view:internal.request.import:0
 msgid "Original values"
 msgstr "Valeurs initiales"
 
@@ -62351,12 +61728,6 @@ msgstr "Taxe Incluse dans le Prix"
 msgid "Search Cheque Registers"
 msgstr "Rechercher Registres de Chèque"
 
-#. module: msf_outgoing
-#: help:shipment.additional.line.processor,wizard_id:0
-#: help:shipment.family.processor,wizard_id:0
-msgid "Wizard to process the shipment"
-msgstr "Assistante d'exécution de l'expédition"
-
 #. module: product_attributes
 #: model:ir.model,name:product_attributes.model_res_country_restriction
 msgid "res.country.restriction"
@@ -62600,14 +61971,11 @@ msgid "When doing real-time inventory valuation, counterpart Journal Items for a
 msgstr "Lors de la valorisation en temps réel de l'inventaire des lignes d'écritures du Journal de la contrepartie correspondantes à tous les mouvements de sortie en stock seront comptabilisées sous ce compte. Voici la valeur par défaut des tous les produits sous cette catégorie. On peut aussi l'établir directement pour chacun des produits.  "
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,ordered_uom_category:0
 #: help:internal.move.processor,ordered_uom_category:0
 #: help:outgoing.delivery.move.processor,ordered_uom_category:0
-#: help:ppl.move.processor,ordered_uom_category:0
 #: help:return.ppl.move.processor,ordered_uom_category:0
 #: help:stock.move.in.processor,ordered_uom_category:0
 #: help:stock.move.processor,ordered_uom_category:0
-#: help:validate.move.processor,ordered_uom_category:0
 msgid "Category of the expected UoM to receive"
 msgstr "Category of the expected UoM to receive"
 
@@ -62823,9 +62191,8 @@ msgstr "Allocation synthesis"
 
 #. module: msf_outgoing
 #: field:in.family.processor,integrity_status:0
-#: field:ppl.family.processor,integrity_status:0
 msgid "Integrity status"
-msgstr "Integrity status"
+msgstr "Intégrité - Statut"
 
 #. module: account
 #: selection:account.account.type,sign:0
@@ -63829,7 +63196,6 @@ msgstr "Priorité Appel d'Offres"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/shipment_processor.py:151
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:182
 #, python-format
 msgid "Create Shipment"
 msgstr "Créer Expédition"
@@ -64482,7 +63848,6 @@ msgid "Stock Level Forecast"
 msgstr "Niveau Prévision de Stock"
 
 #. module: msf_outgoing, stock
-#: code:addons/msf_outgoing/msf_outgoing.py:4095
 #: model:ir.actions.report.xml,name:msf_outgoing.empty_picking_ticket
 #: model:process.process,name:msf_outgoing.process_process_ppl0
 #: view:stock.picking:0
@@ -65435,11 +64800,6 @@ msgstr "PPL processing wizard"
 msgid "Composition Items"
 msgstr "Composition - Articles"
 
-#. module: msf_outgoing
-#: view:ppl.processor:0
-msgid "PPL Information - Step 1"
-msgstr "Information LPC - Étape 1"
-
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_register_creation_form
 #: model:ir.ui.menu,name:register_accounting.menu_register_creation
@@ -65463,7 +64823,6 @@ msgstr "Zone - Stock"
 #: report:expiry.report:0
 #: model:ir.model,name:consumption_calculation.model_stock_location
 #: field:monthly.review.consumption,cons_location_id:0
-#: field:product.history.consumption,location_id:0
 #: view:product.likely.expire.report:0
 #: field:product.likely.expire.report,location_id:0
 #: field:product.likely.expire.report,msf_instance:0
@@ -65481,14 +64840,11 @@ msgstr "Zone - Stock"
 #: field:stock.mission.report.line.location,remote_location_name:0
 #: model:ir.model,name:msf_config_locations.model_stock_location
 #: model:ir.model,name:msf_cross_docking.model_stock_location
-#: field:create.picking.move.processor,location_id:0
 #: field:internal.move.processor,location_id:0
 #: field:outgoing.delivery.move.processor,location_id:0
-#: field:ppl.move.processor,location_id:0
 #: field:return.ppl.move.processor,location_id:0
 #: field:stock.move.in.processor,location_id:0
 #: field:stock.move.processor,location_id:0
-#: field:validate.move.processor,location_id:0
 #: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:62
 #: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:61
 #: field:procurement.order,location_id:0
@@ -65531,8 +64887,6 @@ msgstr "Zone - Stock"
 #: field:stock.inventory.line,location_id:0
 #: report:stock.inventory.move:0
 #: view:stock.location:0
-#: field:stock.move.consume,location_id:0
-#: field:stock.move.scrap,location_id:0
 #: field:stock.picking,location_id:0
 #: field:stock.report.prodlots,location_id:0
 #: field:stock.report.tracklots,location_id:0
@@ -65711,7 +65065,6 @@ msgstr "Ce compte sera utilisé pour les factures lors de la valorisation des ve
 #: selection:wizard.compare.rfq,priority:0
 #: selection:purchase.order.followup,priority:0
 #: selection:internal.request.import,imp_priority:0
-#: selection:internal.request.import,in_priority:0
 #: view:sale.order:0
 #: selection:sale.order,priority:0
 #: view:sale.report:0
@@ -65803,11 +65156,6 @@ msgstr "Montant du Code de Taxe"
 msgid "Cancel Inventory"
 msgstr "Annuler l'inventaire"
 
-#. module: msf_outgoing
-#: help:ppl.move.processor,wizard_id:0
-msgid "PPL processor wizard"
-msgstr "PPL processor wizard"
-
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
 msgid "Nov"
@@ -65853,10 +65201,7 @@ msgstr "Etc/GMT-5"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
-#: view:create.picking.processor:0
 #: view:ppl.processor:0
-#: view:shipment.processor:0
-#: view:validate.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 msgid "Save as draft"
@@ -65915,11 +65260,6 @@ msgstr "Ajouter tous les Journaux Analytiques"
 #: field:wizard.account.invoice,can_merge_lines:0
 msgid "Can merge lines ?"
 msgstr "Can merge lines ?"
-
-#. module: stock
-#: view:stock.move:0
-msgid "Put in current pack"
-msgstr "Ajouter dans le colis actuel"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:344
@@ -66220,12 +65560,10 @@ msgstr "En Cours à partir de la Coordination"
 
 #. modules: msf_doc_import, msf_outgoing, return_claim, stock_override, kit
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0
 #: selection:kit.selection.sale.line,integrity_status:0
@@ -66246,7 +65584,6 @@ msgstr "En Cours à partir de la Coordination"
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Does not exist in selected IN/OUT"
@@ -66323,16 +65660,11 @@ msgstr "Les produits de Service doivent avoir comme lieu source le lieu de trans
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:return.shipment.family.processor,integrity_status:0
-#: selection:shipment.additional.line.processor,integrity_status:0
-#: selection:shipment.family.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:shipment.add.pack.processor.line,integrity_status:0
 #: selection:stock.move,integrity_error:0
@@ -66466,7 +65798,6 @@ msgstr "Modifier la devise de la commande"
 #: view:stock.move.memory.picking:0
 #: view:stock.move.memory.ppl:0
 #: view:stock.move.memory.shipment.returnpacksfromshipment:0
-#: view:stock.move:0
 #: selection:wizard.import.in.line.simulation.screen,type_change:0
 #: selection:wizard.import.po.simulation.screen.line,type_change:0
 #: selection:wizard.simu.import.po.line,change_type:0
@@ -66474,13 +65805,10 @@ msgstr "Modifier la devise de la commande"
 #: view:hq.entries:0
 #: view:hq.entries.split:0
 #: model:ir.actions.server,name:account_hq_entries.action_hq_split
-#: view:create.picking.move.processor:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
-#: view:ppl.move.processor:0
 #: view:stock.move.in.processor:0
 #: view:stock.move.processor:0
-#: view:validate.move.processor:0
 msgid "Split"
 msgstr "Scinder"
 
@@ -67024,12 +66352,6 @@ msgstr "Rechercher Ecritures HQ"
 msgid "MSF Private Funds"
 msgstr "MSF Private Funds"
 
-#. module: stock_override
-#: code:addons/stock_override/wizard/change_dest_location.py:123
-#, python-format
-msgid "The destination location has been changed on all stock moves."
-msgstr "La zone de destination a été changée sur tous les mouvements de stock."
-
 #. module: useability_dashboard_and_menu
 #: view:board.board:0
 msgid "Orders Sourced"
@@ -67382,7 +66704,6 @@ msgstr "Livraison entrante"
 
 #. module: stock
 #: view:stock.inventory:0
-#: view:stock.move:0
 msgid "Put in a new pack"
 msgstr "Mettre dans un nouveau colis"
 
@@ -67737,14 +67058,11 @@ msgid "Line %s, Column B: Incorrect format"
 msgstr "Line %s, Column B: Incorrect format"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,ordered_uom_id:0
 #: help:internal.move.processor,ordered_uom_id:0
 #: help:outgoing.delivery.move.processor,ordered_uom_id:0
-#: help:ppl.move.processor,ordered_uom_id:0
 #: help:return.ppl.move.processor,ordered_uom_id:0
 #: help:stock.move.in.processor,ordered_uom_id:0
 #: help:stock.move.processor,ordered_uom_id:0
-#: help:validate.move.processor,ordered_uom_id:0
 msgid "Expected UoM to receive"
 msgstr "UdM attendue en réception"
 
@@ -68080,14 +67398,10 @@ msgstr "New Mexico"
 
 #. modules: product_attributes, account, msf_outgoing, stock_override, stock
 #: field:account.bank.statement.line,move_ids:0
-#: field:create.picking,product_moves_picking:0
-#: field:create.picking,product_moves_ppl:0
-#: view:create.picking.move.processor:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
 #: view:stock.move.in.processor:0
 #: view:stock.move.processor:0
-#: view:validate.move.processor:0
 #: view:stock.move:0
 #: view:stock.move:0
 #: field:stock.partial.move,product_moves_in:0
@@ -68095,7 +67409,6 @@ msgstr "New Mexico"
 #: field:stock.partial.picking,product_moves_in:0
 #: field:stock.partial.picking,product_moves_out:0
 #: view:stock.card.wizard:0
-#: field:create.picking.processor,move_ids:0
 #: view:in.family.processor:0
 #: field:in.family.processor,move_ids:0
 #: field:internal.picking.processor,move_ids:0
@@ -68105,8 +67418,6 @@ msgstr "New Mexico"
 #: field:return.pack.shipment.family.processor,move_ids:0
 #: field:return.ppl.processor,move_ids:0
 #: field:return.shipment.family.processor,move_ids:0
-#: field:shipment.additional.line.processor,move_ids:0
-#: field:shipment.family.processor,move_ids:0
 #: field:stock.incoming.processor,move_ids:0
 #: field:stock.picking.processor,move_ids:0
 #: view:stock.reserved.products:0
@@ -68263,17 +67574,14 @@ msgstr "Sous-Liste"
 #. modules: msf_doc_import, msf_outgoing, sale, stock, msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:160
 #: field:wizard.import.in.line.simulation.screen,kc_check:0
-#: field:create.picking.move.processor,kc_check:0
 #: report:empty.picking.ticket:0
 #: field:internal.move.processor,kc_check:0
 #: field:outgoing.delivery.move.processor,kc_check:0
 #: report:packing.list:0
 #: report:picking.ticket:0
-#: field:ppl.move.processor,kc_check:0
 #: field:return.ppl.move.processor,kc_check:0
 #: field:stock.move.in.processor,kc_check:0
 #: field:stock.move.processor,kc_check:0
-#: field:validate.move.processor,kc_check:0
 #: report:msf.report_reception_in:0
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_kc:0
@@ -68982,7 +68290,6 @@ msgid "Canada/Atlantic"
 msgstr "Canada/Atlantic"
 
 #. module: stock_override, stock
-#: code:addons/stock_override/stock.py:131
 #: code:addons/stock/stock.py:1742
 #, python-format
 msgid "is closed."
@@ -68994,7 +68301,6 @@ msgid "Sales by Product's Category in last 90 days"
 msgstr "Commandes de Terrain par Catégorie de Produit durant les 90 derniers jours"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:556
 #: code:addons/msf_outgoing/msf_outgoing.py:3735
 #, python-format
 msgid "Validate PPL"
@@ -69367,7 +68673,6 @@ msgstr "Recevoir un rapport"
 #. modules: msf_doc_import, sale
 #: field:wizard.import.in.simulation.screen,message:0
 #: field:wizard.import.po.simulation.screen,message:0
-#: field:internal.request.import,message:0
 msgid "Import message"
 msgstr "Message d'import"
 
@@ -69425,12 +68730,6 @@ msgstr "Pas de règle de point de commande définie pour ce produit."
 msgid "Italian / Italiano"
 msgstr "Italian / Italiano"
 
-#. module: msf_outgoing
-#: help:ppl.move.processor,qty_per_pack:0
-#: help:return.ppl.move.processor,qty_per_pack:0
-msgid "Quantity per pack"
-msgstr "Quantity per pack"
-
 #. module: product
 #: model:process.node,name:product.process_node_supplier0
 #: view:product.supplierinfo:0
@@ -69438,11 +68737,8 @@ msgid "Supplier Information"
 msgstr "Fournisseur - Informations"
 
 #. module: msf_outgoing
-#: view:create.picking.processor:0
 #: view:ppl.processor:0
-#: view:shipment.processor:0
 #: view:stock.incoming.processor:0
-#: view:validate.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:stock.picking:0
@@ -69546,7 +68842,6 @@ msgstr "You cannot choose Direct Purchase Order as method to source an Internal 
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/picking_processor.py:844
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:803
 #, python-format
 msgid "Selected quantity (%0.1f %s) cannot be equal to the initial quantity (%0.1f %s)"
 msgstr "La quantité sélectionnée (%0.1f%s) ne peut être égale à la quantité initiale (%0.1f%s) "
@@ -69775,11 +69070,8 @@ msgstr "Date Justificatif"
 #: view:real.average.consumption:0
 #: view:wizard.common.import.line:0
 #: field:wizard.common.import.line,product_ids:0
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:534
-#: code:addons/msf_outgoing/wizard/shipment.py:216
 #: view:return.pack.shipment.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #: view:stock.picking:0
 #: field:stock.warehouse.orderpoint,line_ids:0
 #: view:stock.warehouse.automatic.supply:0
@@ -69864,16 +69156,12 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "The first sequence must start with 1"
 msgstr "La première séquence doit commencer par un 1"
@@ -70068,17 +69356,14 @@ msgstr "Relevés sous statut brouillon"
 #: field:real.average.consumption,picking_id:0
 #: field:stock.picking.processing.info,picking_id:0
 #: field:account.invoice,picking_id:0
-#: field:create.picking.processor,picking_id:0
 #: field:internal.picking.processor,picking_id:0
 #: model:ir.ui.menu,name:msf_outgoing.menu_action_picking_ticket
 #: field:outgoing.delivery.processor,picking_id:0
 #: field:ppl.processor,picking_id:0
 #: field:return.ppl.processor,picking_id:0
-#: field:shipment.additionalitems,picking_id:0
 #: field:stock.incoming.processor,picking_id:0
 #: selection:stock.picking,subtype:0
 #: field:stock.picking.processor,picking_id:0
-#: field:validate.picking.processor,picking_id:0
 #: field:stock.certificate.valuation,picking_id:0
 #: field:wizard.account.invoice,picking_id:0
 #: field:product.product,picking_ids:0
@@ -70294,7 +69579,6 @@ msgstr "Line %s of the Excel file: The product UOM did not match with the existi
 
 #. module: msf_outgoing
 #: field:shipment,transport_type:0
-#: field:shipment.wizard,transport_type:0
 msgid "Transport Type"
 msgstr "Type de Transport"
 
@@ -70747,13 +70031,6 @@ msgstr "Indiquer si le catalogue est actuellement actif."
 msgid "Search Commitment Voucher"
 msgstr "Rechercher Bon d'Engagement"
 
-#. module: msf_outgoing
-#: field:return.pack.shipment.processor,additional_line_ids:0
-#: field:return.shipment.processor,additional_line_ids:0
-#: field:shipment.processor,additional_line_ids:0
-msgid "Additional lines"
-msgstr "Additional lines"
-
 #. module: sales_followup
 #: code:addons/sales_followup/sale_followup.py:402
 #: code:addons/sales_followup/sale_followup.py:518
@@ -70799,12 +70076,6 @@ msgstr "Délai de Produits Sortants"
 #: field:mrp.property,composition:0
 msgid "Properties composition"
 msgstr "Combinaison de Propriétés"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:294
-#, python-format
-msgid "Line %(l_num)s: The processed %(word)s is not the same as the initial move %(word)s."
-msgstr "Line %(l_num)s: The processed %(word)s is not the same as the initial move %(word)s."
 
 #. module: account_period_closing_level
 #: field:wizard.account.year.end.closing,has_book_pl_results:0
@@ -71146,10 +70417,7 @@ msgid "The partner you want have the FO"
 msgstr "The partner you want have the FO"
 
 #. module: msf_outgoing
-#: field:memory.additionalitems,name:0
-#: field:shipment.additional.line.processor,name:0
 #: field:shipment.additionalitems,name:0
-#: field:stock.move.memory.shipment.additionalitems,name:0
 msgid "Additional Item"
 msgstr "Élément Supplémentaire"
 
@@ -72365,34 +71633,14 @@ msgstr "Date de livraison prévue non trouvée, le système a pris la date de l'
 
 #. modules: return_claim, msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:555
-#: code:addons/msf_outgoing/msf_outgoing.py:765
-#: code:addons/msf_outgoing/msf_outgoing.py:1008
-#: code:addons/msf_outgoing/msf_outgoing.py:1099
-#: code:addons/msf_outgoing/msf_outgoing.py:3710
-#: code:addons/msf_outgoing/msf_outgoing.py:3912
-#: code:addons/msf_outgoing/msf_outgoing.py:4123
-#: code:addons/msf_outgoing/msf_outgoing.py:4187
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:482
-#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:501
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:149
-#: code:addons/msf_outgoing/wizard/internal_move_processor.py:179
-#: code:addons/msf_outgoing/wizard/internal_move_processor.py:237
-#: code:addons/msf_outgoing/wizard/internal_move_processor.py:303
 #: code:addons/msf_outgoing/wizard/outgoing_delivery_processor.py:62
-#: code:addons/msf_outgoing/wizard/outgoing_delivery_processor.py:92
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:196
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:252
 #: code:addons/msf_outgoing/wizard/return_ppl_processor.py:61
 #: code:addons/msf_outgoing/wizard/return_shipment_processor.py:60
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:104
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:124
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:208
 #: code:addons/msf_outgoing/wizard/shipment_processor.py:256
 #: code:addons/return_claim/return_claim.py:2535
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:75
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:95
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:169
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:189
 #, python-format
 msgid "No data to process !"
 msgstr "Aucune donnée à traiter !"
@@ -73583,14 +72831,11 @@ msgid "Narcotic/Psychotropic"
 msgstr "Stupéfiants/Psychotropes"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,dg_check:0
 #: help:internal.move.processor,dg_check:0
 #: help:outgoing.delivery.move.processor,dg_check:0
-#: help:ppl.move.processor,dg_check:0
 #: help:return.ppl.move.processor,dg_check:0
 #: help:stock.move.in.processor,dg_check:0
 #: help:stock.move.processor,dg_check:0
-#: help:validate.move.processor,dg_check:0
 msgid "Ticked if the product is a Dangerous Good"
 msgstr "Ticked if the product is a Dangerous Good"
 
@@ -74040,7 +73285,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_cross_docking/wizard/stock_partial_picking.py:124
 #: code:addons/msf_cross_docking/wizard/stock_partial_picking.py:231
 #: code:addons/msf_custom_settings/sale.py:44
-#: code:addons/msf_custom_settings/stock_picking.py:46
 #: code:addons/msf_doc_import/account.py:69
 #: code:addons/msf_doc_import/account.py:211
 #: code:addons/msf_doc_import/account.py:245
@@ -74598,7 +73842,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/analytic_override/analytic_line.py:169
 #: code:addons/analytic_override/analytic_line.py:176
 #: code:addons/analytic_override/analytic_line.py:181
-#: code:addons/base/res/partner/partner.py:342
 #: field:instance.auto.creation,error:0
 #: code:addons/consumption_calculation/report/consumption_report.py:90
 #: code:addons/consumption_calculation/weekly_forecast_report.py:295
@@ -74641,7 +73884,6 @@ msgstr "Date Prévue de Colisage"
 #: view:wizard.import.po.simulation.screen:0
 #: code:addons/msf_instance/account.py:57
 #: code:addons/msf_instance/account.py:60
-#: code:addons/msf_instance/add_instance.py:590
 #: code:addons/msf_instance/msf_instance.py:565
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:77
 #: code:addons/msf_outgoing/wizard/change_product_move_processor.py:115
@@ -74668,7 +73910,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_outgoing/wizard/picking_processor.py:875
 #: code:addons/msf_outgoing/wizard/picking_processor.py:881
 #: code:addons/msf_outgoing/wizard/picking_processor.py:991
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:778
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:785
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:795
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:802
@@ -74790,7 +74031,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_outgoing/report/packing_list.py:90
 #: code:addons/sale/wizard/internal_request_import.py:162
 #: code:addons/sale/wizard/internal_request_import.py:166
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
 #: selection:internal.request.import,state:0
 #: field:stock.move,integrity_error:0
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:82
@@ -74823,7 +74063,6 @@ msgstr "Erreur"
 
 #. module: product
 #: code:addons/product/pricelist.py:542
-#: selection:product.pricelist.item,base:0
 #, python-format
 msgid "Other Pricelist"
 msgstr "Autre liste de prix"
@@ -75260,7 +74499,6 @@ msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lign
 #: field:wizard.register.import,error_ids:0
 #: field:msf.import.export,error_message:0
 #: code:addons/sourcing/wizard/multiple_sourcing.py:252
-#: view:internal.request.import:0
 #, python-format
 msgid "Errors"
 msgstr "Erreurs"
@@ -75348,12 +74586,10 @@ msgstr "You can't source a loan 'on order'."
 #: field:stock.move.memory.returnproducts,quantity:0
 #: field:stock.move.memory.in,quantity:0
 #: field:stock.move.memory.out,quantity:0
-#: view:create.picking.move.processor:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
 #: view:stock.move.in.processor:0
 #: view:stock.move.processor:0
-#: view:validate.move.processor:0
 msgid "Quantity to process"
 msgstr "Quantité à traiter"
 
@@ -75650,13 +74886,11 @@ msgstr "Assistant d'exécution du bon de picking"
 #: field:shipment,carrier_address:0
 #: field:shipment,consignee_address:0
 #: field:shipment,shipper_address:0
-#: field:shipment.wizard,address_id:0
 #: view:res.users:0
 #: field:purchase.order,partner_address_id:0
 #: field:account.journal.fake,bank_address:0
 #: field:return.pack.shipment.processor,address_id:0
 #: field:return.shipment.processor,address_id:0
-#: field:shipment.processor,address_id:0
 #: field:shipment.add.pack.processor,address_id:0
 msgid "Address"
 msgstr "Adresse"
@@ -76315,9 +75549,7 @@ msgid "This invoice: %s %s has already been added. Please choose another invoice
 msgstr "Cette facture: %s %s a déjà été ajoutée. Veuillez choisir une autre facture."
 
 #. modules: msf_outgoing, stock_override
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:831
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:266
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:142
 #: code:addons/stock_override/wizard/stock_partial_picking.py:132
 #: code:addons/msf_outgoing/msf_outgoing.py:3363
 #, python-format
@@ -76717,7 +75949,6 @@ msgstr "Warning! There is already another inactive catalogue for this Supplier! 
 
 #. module: stock
 #: field:stock.location,scrap_location:0
-#: view:stock.move.scrap:0
 msgid "Scrap Location"
 msgstr "Zone Rebut"
 
@@ -76872,14 +76103,11 @@ msgid "Last run"
 msgstr "Dernière exécution"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,product_id:0
 #: help:internal.move.processor,product_id:0
 #: help:outgoing.delivery.move.processor,product_id:0
-#: help:ppl.move.processor,product_id:0
 #: help:return.ppl.move.processor,product_id:0
 #: help:stock.move.in.processor,product_id:0
 #: help:stock.move.processor,product_id:0
-#: help:validate.move.processor,product_id:0
 msgid "Received product"
 msgstr "Received product"
 
@@ -77063,13 +76291,10 @@ msgstr "La connexion au site distant est OK"
 
 #. modules: msf_doc_import, msf_outgoing, return_claim, stock_override, kit
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0
 #: selection:kit.selection.sale.line,integrity_status:0
@@ -77914,15 +77139,12 @@ msgid "Stock Forecast"
 msgstr "Stock - Prévision"
 
 #. module: msf_outgoing
-#: field:pack.family.memory,num_of_packs:0
 #: field:stock.move,num_of_packs:0
 #: field:stock.move.memory.ppl,num_of_packs:0
 #: field:stock.move.memory.shipment.create,num_of_packs:0
 #: field:stock.move.memory.shipment.returnpacks,num_of_packs:0
 #: field:stock.move.memory.shipment.returnpacksfromshipment,num_of_packs:0
 #: field:stock.picking,num_of_packs:0
-#: field:ppl.move.processor,num_of_packs:0
-#: field:return.ppl.move.processor,num_of_packs:0
 msgid "#Packs"
 msgstr "#Colis"
 
@@ -78262,8 +77484,6 @@ msgstr "Limitation"
 #: field:ppl.family.processor,pack_type:0
 #: field:return.pack.shipment.family.processor,pack_type:0
 #: field:return.shipment.family.processor,pack_type:0
-#: field:shipment.additional.line.processor,pack_type:0
-#: field:shipment.family.processor,pack_type:0
 #: field:shipment.add.pack.processor.line,pack_type:0
 msgid "Pack Type"
 msgstr "Colis - Type"
@@ -78508,12 +77728,6 @@ msgstr "Affichage BC"
 #: field:purchase.order.merged.line,supplier_name:0
 msgid "Supplier name"
 msgstr "Nom Fournisseur"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1509
-#, python-format
-msgid "The 'Expired date' is not defined in file - The expired date of the Batch was put instead."
-msgstr "La date d'expiration n'est pas indiquée dans le fichier. La date d'expiration du lot a été utilisée"
 
 #. module: account_period_closing_level
 #: selection:account.period.create,fiscalyear:0
@@ -79098,11 +78312,6 @@ msgstr "\n"
 #: field:base.language.import,name:0
 msgid "Language Name"
 msgstr "Nom de la Langue"
-
-#. module: msf_outgoing
-#: view:ppl.processor:0
-msgid "Check integrity"
-msgstr "Vérifier les erreurs"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_open_journal_button
@@ -79784,7 +78993,6 @@ msgstr "Nombre de lignes d'inventaire"
 #: field:substitute,step_substitute:0
 #: field:return.pack.shipment.processor,step:0
 #: field:return.shipment.processor,step:0
-#: field:shipment.processor,step:0
 #: field:shipment.add.pack.processor,step:0
 msgid "Step"
 msgstr "Étape"
@@ -80151,12 +79359,6 @@ msgstr "You cannot convert %s delivery orders"
 msgid "Account Balance Sheet Report"
 msgstr "Compte - Rapport de Bilan Comptable"
 
-#. module: stock
-#: code:addons/stock/stock.py:2995
-#, python-format
-msgid "is consumed with"
-msgstr "est consommé avec"
-
 #. module: account_payment
 #: view:payment.order:0
 msgid "Make Payments"
@@ -80217,7 +79419,6 @@ msgstr "Ne peut être installé maintenant.\n"
 
 #. module: msf_outgoing
 #: help:shipment,address_id:0
-#: help:shipment.wizard,address_id:0
 msgid "Address of customer"
 msgstr "Adresse du client"
 
@@ -80743,11 +79944,6 @@ msgstr "Contrôle de Facturation"
 msgid "Validated Purchase Order Excel Export"
 msgstr "Validated Purchase Order Excel Export"
 
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Reception remarks :"
-msgstr "Remarques Reception :"
-
 #. module: base
 #: model:res.currency,currency_name:base.GEL
 msgid "GEORGIAN LARI"
@@ -81183,11 +80379,6 @@ msgstr "Valider la réception"
 msgid "No PO to export !"
 msgstr "No PO to export !"
 
-#. module: sale
-#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:122
-msgid "Expense Account"
-msgstr "Compte de Dépenses"
-
 #. module: msf_tools
 #: code:addons/msf_tools/msf_tools.py:811
 #, python-format
@@ -81233,11 +80424,6 @@ msgstr "Total Projet - Budget"
 #, python-format
 msgid "Line %s. The Third Party must be a liquidity journal with the same currency as the booking one for the given account: %s."
 msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement pour le compte donné : %s."
-
-#. module: base
-#: selection:ir.actions.server,trigger_name:0
-msgid "contract_soft_closed - (financing.contract.contract)"
-msgstr "contract_soft_closed - (financing.contract.contract)"
 
 #. module: msf_currency_revaluation
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:521
@@ -81329,12 +80515,10 @@ msgid "Purchase orders which are in the exception state."
 msgstr "Purchase orders which are in the exception state."
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,move_id:0
 #: help:internal.move.processor,move_id:0
 #: help:outgoing.delivery.move.processor,move_id:0
 #: help:stock.move.in.processor,move_id:0
 #: help:stock.move.processor,move_id:0
-#: help:validate.move.processor,move_id:0
 #: help:return.ppl.move.processor,move_id:0
 msgid "Move to process"
 msgstr "Move to process"
@@ -81610,13 +80794,10 @@ msgstr "Factures Manuelles"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Assigned qty must be smaller or equal to required qty"
@@ -81934,7 +81115,6 @@ msgstr "Picking id"
 #: selection:product.template,type:0
 #: selection:stock.move,product_type:0
 #: selection:stock.mission.report.line,type:0
-#: selection:sale.donation.stock.moves,product_type:0
 msgid "Stockable Product"
 msgstr "Produit Stockable"
 
@@ -81957,7 +81137,6 @@ msgstr "Product creators"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,volume:0
 #: field:return.shipment.family.processor,volume:0
-#: field:shipment.family.processor,volume:0
 #: field:stock.move.memory.shipment.create,volume:0
 #: field:stock.move.memory.shipment.returnpacks,volume:0
 #: field:stock.move.memory.shipment.returnpacksfromshipment,volume:0
@@ -82307,7 +81486,6 @@ msgstr "Import IN, écran de simulation"
 
 #. module: stock
 #: code:addons/stock/stock.py:2884
-#: code:addons/stock/stock.py:2944
 #, python-format
 msgid "Please provide Proper Quantity !"
 msgstr "Veuillez fournir la Bonne Quantité !"
@@ -82497,14 +81675,6 @@ msgstr "Link id"
 msgid "There are no products to return (only lines in Done state and not fully returned yet can be returned)!"
 msgstr "Il n'y a pas de produit à retourner (seulement les lignes sous statut 'Terminé' et pas encore totalement retournées peuvent être retournées) !"
 
-#. module: sale
-#: code:addons/sale/sale_order.py:3103
-#, python-format
-msgid "%s line%s sourced on %s.\n"
-""
-msgstr "%s line%s sourced on %s.\n"
-""
-
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
@@ -82551,14 +81721,11 @@ msgid "Del. Conf. date"
 msgstr "Date de Livraison Confirmée"
 
 #. module: msf_outgoing
-#: field:create.picking.move.processor,ordered_uom_category:0
 #: field:internal.move.processor,ordered_uom_category:0
 #: field:outgoing.delivery.move.processor,ordered_uom_category:0
-#: field:ppl.move.processor,ordered_uom_category:0
 #: field:return.ppl.move.processor,ordered_uom_category:0
 #: field:stock.move.in.processor,ordered_uom_category:0
 #: field:stock.move.processor,ordered_uom_category:0
-#: field:validate.move.processor,ordered_uom_category:0
 msgid "Ordered UoM category"
 msgstr "Catégorie UdM Commandée"
 
@@ -82793,14 +81960,12 @@ msgid "Partner Reconciliation"
 msgstr "Lettrage Partenaire"
 
 #. module: msf_outgoing
-#: help:create.picking.processor,contains_kc:0
 #: help:internal.picking.processor,contains_kc:0
 #: help:outgoing.delivery.processor,contains_kc:0
 #: help:ppl.processor,contains_kc:0
 #: help:return.ppl.processor,contains_kc:0
 #: help:stock.incoming.processor,contains_kc:0
 #: help:stock.picking.processor,contains_kc:0
-#: help:validate.picking.processor,contains_kc:0
 msgid "Is at least one line contains a keep cool product."
 msgstr "Is at least one line contains a keep cool product."
 
@@ -82880,12 +82045,6 @@ msgstr "Listes Produits"
 #: code:addons/msf_outgoing/msf_outgoing.py:4186
 #: code:addons/msf_outgoing/msf_outgoing.py:4281
 #: code:addons/msf_outgoing/msf_outgoing.py:4403
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:74
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:94
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:830
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:853
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:917
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:1010
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:350
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:481
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:500
@@ -82910,22 +82069,9 @@ msgstr "Listes Produits"
 #: code:addons/msf_outgoing/wizard/return_ppl_processor.py:81
 #: code:addons/msf_outgoing/wizard/return_shipment_processor.py:59
 #: code:addons/msf_outgoing/wizard/return_shipment_processor.py:79
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:103
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:123
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:207
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:255
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:287
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:77
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:84
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:92
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:141
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:153
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:168
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:188
 #: code:addons/return_claim/return_claim.py:2528
 #: code:addons/return_claim/return_claim.py:2534
 #: code:addons/delivery_mechanism/wizard/stock_partial_picking.py:149
-#: code:addons/msf_outgoing/wizard/shipment.py:442
 #: code:addons/stock/wizard/stock_move.py:265
 #: code:addons/stock/wizard/stock_partial_picking.py:157
 #: code:addons/stock/wizard/stock_partial_picking.py:165
@@ -82939,12 +82085,6 @@ msgstr "Listes Produits"
 #, python-format
 msgid "Processing Error"
 msgstr "Erreur de traitement"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:562
-#, python-format
-msgid "Please fill the Address field on %s"
-msgstr "Veuillez remplir le champ Adresse sur %s"
 
 #. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_draft_done
@@ -83457,7 +82597,6 @@ msgstr "analytic.distribution"
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
 #: selection:shipment,transport_type:0
-#: selection:shipment.processor,transport_type:0
 #: selection:shipment.add.pack.processor,transport_type:0
 msgid "Road"
 msgstr "Route"
@@ -83781,7 +82920,6 @@ msgid "B7  21  88 x 125 mm"
 msgstr "B7  21  88 x 125 mm"
 
 #. modules: out_step, msf_outgoing, sale
-#: view:shipment:0
 #: view:stock.picking:0
 #: field:stock.picking,delivered:0
 #: selection:stock.picking,state_hidden:0
@@ -84017,15 +83155,11 @@ msgstr "SFTP connection succeeded"
 #: field:wizard.import.in.line.simulation.screen,move_product_id:0
 #: field:wizard.import.po.simulation.screen.line,imp_product_id:0
 #: field:wizard.import.po.simulation.screen.line,in_product_id:0
-#: view:create.picking.move.processor:0
-#: field:create.picking.move.processor,product_id:0
 #: view:internal.move.processor:0
 #: field:internal.move.processor,product_id:0
 #: model:ir.model,name:msf_outgoing.model_product_product
 #: view:outgoing.delivery.move.processor:0
 #: field:outgoing.delivery.move.processor,product_id:0
-#: view:ppl.move.processor:0
-#: field:ppl.move.processor,product_id:0
 #: view:return.ppl.move.processor:0
 #: field:return.ppl.move.processor,product_id:0
 #: view:stock.move.in.processor:0
@@ -84035,8 +83169,6 @@ msgstr "SFTP connection succeeded"
 #: field:stock.move.memory.returnproducts,product_id:0
 #: view:stock.move.processor:0
 #: field:stock.move.processor,product_id:0
-#: view:validate.move.processor:0
-#: field:validate.move.processor,product_id:0
 #: report:order.type.donation.certificate:0
 #: report:order.type.gift.certificate:0
 #: field:stock.certificate.valuation,product_id:0
@@ -84129,10 +83261,8 @@ msgstr "SFTP connection succeeded"
 #: report:stock.inventory.move:0
 #: view:stock.move:0
 #: field:stock.move,product_id:0
-#: field:stock.move.consume,product_id:0
 #: field:stock.move.memory.in,product_id:0
 #: field:stock.move.memory.out,product_id:0
-#: field:stock.move.scrap,product_id:0
 #: field:stock.move.split,product_id:0
 #: view:stock.production.lot:0
 #: field:stock.production.lot,product_id:0
@@ -84164,7 +83294,6 @@ msgstr "SFTP connection succeeded"
 #: field:stock.reserved.products,product_id:0
 #: field:reserved.products.wizard,product_id:0
 #: field:internal.request.import.line,imp_product_id:0
-#: field:internal.request.import.line,in_product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -84839,8 +83968,6 @@ msgstr "Maroc"
 #: field:stock.move.memory.out,move_id:0
 #: field:report.stock.move,move:0
 #: field:stock.move.cancel.more.wizard,move_id:0
-#: field:return.ppl.move.processor,move_id:0
-#: field:change.dest.location,picking_id:0
 msgid "Move"
 msgstr "Transaction"
 
@@ -85250,8 +84377,6 @@ msgstr "Prodlot Caché"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,num_of_packs:0
 #: field:return.shipment.family.processor,num_of_packs:0
-#: field:shipment.additional.line.processor,num_of_packs:0
-#: field:shipment.family.processor,num_of_packs:0
 msgid "# Packs"
 msgstr "# Colis"
 
@@ -85386,7 +84511,6 @@ msgstr "Calcul Spécial"
 
 #. module: msf_outgoing
 #: view:stock.move.memory.shipment.create:0
-#: view:shipment.family.processor:0
 msgid "Weight to Ship [kg]"
 msgstr "Poids à Expédier [kg]"
 
@@ -85627,7 +84751,6 @@ msgstr "Nelle Qtté"
 #: selection:account.tax.template,type_tax_use:0
 #: code:addons/account/report/account_profit_loss.py:196
 #: code:addons/account/report/account_profit_loss.py:201
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:296
 #: selection:account.balance.report,account_type:0
 #: selection:account.report.general.ledger,account_type:0
 #: code:addons/account/report/account_balance_sheet.py:289
@@ -85962,7 +85085,6 @@ msgid "Total Expired Value"
 msgstr "Total Expired Value"
 
 #. module: account_mcdb
-#: code:addons/account_mcdb/account_mcdb.py:622
 #: code:addons/account_mcdb/account_mcdb.py:678
 #, python-format
 msgid "Error: System does not know from where you come from."
@@ -86076,14 +85198,12 @@ msgid "Accounts"
 msgstr "Comptes"
 
 #. module: msf_outgoing
-#: field:create.picking.processor,contains_kc:0
 #: field:internal.picking.processor,contains_kc:0
 #: field:outgoing.delivery.processor,contains_kc:0
 #: field:ppl.processor,contains_kc:0
 #: field:return.ppl.processor,contains_kc:0
 #: field:stock.incoming.processor,contains_kc:0
 #: field:stock.picking.processor,contains_kc:0
-#: field:validate.picking.processor,contains_kc:0
 msgid "Contains Keep Cool goods"
 msgstr "Contains Keep Cool goods"
 
@@ -86562,11 +85682,6 @@ msgstr "Spanish (SV) / Español (SV)"
 msgid "The income or expense account related to the selected product."
 msgstr "Le compte de produit ou de charge du produit sélectionné."
 
-#. module: msf_outgoing
-#: view:stock.picking:0
-msgid "Validate Picking..."
-msgstr "Valider Picking..."
-
 #. module: msf_instance
 #: view:msf.instance:0
 msgid "Add Cost Centers"
@@ -86975,11 +86090,6 @@ msgstr "Wrong extension for given import file"
 msgid "Currency used in this catalogue."
 msgstr "Devise utilisée pour ce catalogue."
 
-#. module: purchase
-#: view:purchase.order:0
-msgid "Validate lines"
-msgstr "Validate lines"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:1025
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:312
@@ -87297,7 +86407,6 @@ msgstr "Statistiques Ecritures Analytiques"
 #: field:res.partner.address,is_supplier_add:0
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:98
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:59
-#: field:create.picking.processor,claim_partner_id:0
 #: field:internal.picking.processor,claim_partner_id:0
 #: field:outgoing.delivery.processor,claim_partner_id:0
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:120
@@ -87413,11 +86522,6 @@ msgstr "Fichier CSV"
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:763
 msgid "Total Balance"
 msgstr "Balance Total"
-
-#. module: sale
-#: view:sale.order:0
-msgid "Confirm Order"
-msgstr "Confirmer la Commande"
 
 #. module: update_client
 #: sql_constraint:sync_client.version:0
@@ -87576,14 +86680,11 @@ msgid "Accounts only"
 msgstr "Accounts only"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,comment:0
 #: help:internal.move.processor,comment:0
 #: help:outgoing.delivery.move.processor,comment:0
-#: help:ppl.move.processor,comment:0
 #: help:return.ppl.move.processor,comment:0
 #: help:stock.move.in.processor,comment:0
 #: help:stock.move.processor,comment:0
-#: help:validate.move.processor,comment:0
 msgid "Comment of the move"
 msgstr "Comment of the move"
 
@@ -87654,7 +86755,6 @@ msgstr "Associer les Evénements aux Actions"
 #. modules: msf_outgoing, stock_override, report_webkit, stock, delivery_mechanism
 #: view:split.memory.move:0
 #: view:report.webkit.actions:0
-#: code:addons/stock/wizard/stock_partial_picking.py:110
 #: view:stock.change.product.qty:0
 #: view:stock.change.standard.price:0
 #: view:stock.fill.inventory:0
@@ -87662,7 +86762,6 @@ msgstr "Associer les Evénements aux Actions"
 #: view:stock.invoice.onshipping:0
 #: view:stock.location.product:0
 #: view:stock.move:0
-#: view:stock.move.track:0
 #: view:stock.picking:0
 #: view:stock.split.into:0
 #: view:stock.analyze.view:0
@@ -88373,12 +87472,6 @@ msgstr "Annulé"
 msgid "Pacific/Guam"
 msgstr "Pacific/Guam"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1518
-#, python-format
-msgid "A batch is defined on the imported file but the product doesn't require batch number - Batch ignored, expiry date kept"
-msgstr "Un lot est indiqué dans le fichier à importer mais le produit ne nécessite aucun lot. Le lot est ingnoré, la date d'expiration est conservée"
-
 #. module: account_payment
 #: report:payment.order:0
 msgid "Execution Type"
@@ -88460,12 +87553,10 @@ msgstr "Statut UniData"
 
 #. modules: msf_doc_import, msf_outgoing, stock_override
 #: field:wizard.import.in.line.simulation.screen,move_id:0
-#: field:create.picking.move.processor,move_id:0
 #: field:internal.move.processor,move_id:0
 #: field:outgoing.delivery.move.processor,move_id:0
 #: field:stock.move.in.processor,move_id:0
 #: field:stock.move.processor,move_id:0
-#: field:validate.move.processor,move_id:0
 #: field:stock.move.cancel.wizard,move_id:0
 msgid "Move"
 msgstr "Mouvement"
@@ -88645,7 +87736,6 @@ msgid "The convert function should only be called on draft picking ticket object
 msgstr "La fonction de conversion doit seulement être appelée sur les objets bon de Picking brouillon"
 
 #. module: msf_outgoing
-#: field:create.picking.processor,claim_in_has_partner_id:0
 #: field:internal.picking.processor,claim_in_has_partner_id:0
 #: field:outgoing.delivery.processor,claim_in_has_partner_id:0
 #: field:stock.incoming.processor,claim_in_has_partner_id:0
@@ -88874,7 +87964,6 @@ msgstr "Sélectionnez une date si vous avez choisi de fixer une \"Date de Préf�
 
 #. module: account_mcdb
 #: report:addons/account_mcdb/report/combined_journals_report.mako:173
-#: report:combined.journals.report.pdf:0
 msgid "COMBINED JOURNALS REPORT"
 msgstr "RAPPORT DES JOURNAUX AGRÉGÉS"
 
@@ -89115,16 +88204,6 @@ msgstr "Recharger depuis la Pièce Jointe"
 #: model:ir.actions.act_window,help:account.action_account_type_form
 msgid "An account type is used to determine how an account is used in each journal. The deferral method of an account type determines the process for the annual closing. Reports such as the Balance Sheet and the Profit and Loss report use the category (profit/loss or balance sheet). For example, the account type could be linked to an asset account, expense account or payable account. From this view, you can create and manage the account types you need for your company."
 msgstr "Un type de compte est utilisé pour déterminer la facon dont un compte est utilisé dans chaque journal. La méthode d'ajournement d'un type de compte détermine le processus de clôture annuelle. Les rapports tels que le bilan et le compte de résultat utilisent la catégorie (produits/charges ou bilan). Par exemple, le type de compte peut être associé à un compte d'actifs, un compte de charge ou un compte fournisseur. De cette vue, vous pouvez créer et gérer les types de comptes dont vous avez besoin pour votre société."
-
-#. module: base
-#: selection:ir.actions.server,trigger_name:0
-msgid "contract_hard_closed - (financing.contract.contract)"
-msgstr "contract_hard_closed - (financing.contract.contract)"
-
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Ship"
-msgstr "Expédier"
 
 #. module: tender_flow
 #: model:ir.module.module,shortdesc:tender_flow.module_meta_information
@@ -89488,7 +88567,6 @@ msgid "Child Companies"
 msgstr "Sociétés Filiales"
 
 #. modules: sales_followup, msf_outgoing
-#: selection:shipment,state:0
 #: code:addons/sales_followup/sale_followup.py:525
 #, python-format
 msgid "Packed"
@@ -89606,11 +88684,6 @@ msgstr "O"
 #, python-format
 msgid "Copy of standard.price.track.changes is not allowed"
 msgstr "Copy of standard.price.track.changes is not allowed"
-
-#. module: sale
-#: report:msf.freight_manifest:0
-msgid "Consignee :"
-msgstr "Destinataire :"
 
 #. module: msf_budget
 #: field:wizard.budget.criteria.export,period_id:0
@@ -90646,13 +89719,6 @@ msgstr "Réf Commande de Terrain"
 msgid "A rounding value of %s UoM has been set for this product, you should than modify the quantity ordered to match the supplier criteria."
 msgstr "A rounding value of %s UoM has been set for this product, you should than modify the quantity ordered to match the supplier criteria."
 
-#. module: msf_outgoing
-#: field:memory.additionalitems,additional_item_id:0
-#: field:shipment.additional.line.processor,additional_item_id:0
-#: field:stock.move.memory.shipment.additionalitems,additional_item_id:0
-msgid "Additional item id"
-msgstr "Additional item id"
-
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:51
 #, python-format
@@ -91131,12 +90197,10 @@ msgid "Etc/GMT-1"
 msgstr "Etc/GMT-1"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,integrity_status:0
 #: help:internal.move.processor,integrity_status:0
 #: help:outgoing.delivery.move.processor,integrity_status:0
 #: help:stock.move.in.processor,integrity_status:0
 #: help:stock.move.processor,integrity_status:0
-#: help:validate.move.processor,integrity_status:0
 #: help:return.ppl.move.processor,integrity_status:0
 msgid "Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)"
 msgstr "Integrity status (e.g: check if a batch is set for a line with a batch mandatory product...)"
@@ -91356,7 +90420,6 @@ msgstr "Comptes:"
 #. module: msf_outgoing
 #: help:return.pack.shipment.processor,address_id:0
 #: help:return.shipment.processor,address_id:0
-#: help:shipment.processor,address_id:0
 #: help:shipment.add.pack.processor,address_id:0
 msgid "Address of the customer"
 msgstr "Adresse du Client"
@@ -91425,7 +90488,6 @@ msgstr "La Destination %s n'est pas active à cette date: %s"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:549
 #: field:tender,details:0
 #: field:real.average.consumption,details:0
-#: view:internal.request.import:0
 msgid "Details"
 msgstr "Détails"
 
@@ -91747,7 +90809,6 @@ msgstr "Valider les Lignes d'Ecriture comptable"
 #: field:ppl.family.processor,weight:0
 #: field:return.pack.shipment.family.processor,weight:0
 #: field:return.shipment.family.processor,weight:0
-#: field:shipment.family.processor,weight:0
 msgid "Weight p.p [kg]"
 msgstr "Poids p/colis (kg) "
 
@@ -92183,12 +91244,6 @@ msgstr "Prix unitaire"
 msgid "Current Instance Level"
 msgstr "Niveau de l'Instance Actuelle"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:2905
-#, python-format
-msgid "Missing the ID of the draft packing in the context"
-msgstr "Missing the ID of the draft packing in the context"
-
 #. module: product
 #: view:product.pricelist:0
 msgid "Products Price Search"
@@ -92293,7 +91348,6 @@ msgid "Purchase type"
 msgstr "Type d'achat"
 
 #. module: specific_rules, stock
-#: code:addons/specific_rules/specific_rules.py:785
 #: code:addons/stock/stock.py:2358
 #, python-format
 msgid "The selected product is Batch Management."
@@ -92334,7 +91388,6 @@ msgstr "Exporter le résultat de la recherche"
 #: selection:wizard.compare.rfq,categ:0
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
-#: selection:internal.request.import,in_categ:0
 #: selection:stock.reception.wizard,order_category:0
 msgid "Other"
 msgstr "Autre"
@@ -92369,17 +91422,14 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:wizard.delete.lines:0
 #: view:wizard.export.po.validated:0
 #: view:wizard.import.batch:0
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:ppl.processor:0
 #: view:return.pack.shipment.processor:0
 #: view:return.ppl.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 #: view:user.access.configurator:0
 #: view:user.access.results:0
 #: view:automated.export.job:0
@@ -93246,12 +92296,6 @@ msgstr "Hello,\n"
 "On %s, the system detected Not Run data:\n"
 ""
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:1346
-#, python-format
-msgid "Cannot process a Shipment which is in an incorrect state"
-msgstr "Cannot process a Shipment which is in an incorrect state"
-
 #. module: specific_rules
 #: code:addons/specific_rules/specific_rules.py:730
 #, python-format
@@ -93422,13 +92466,10 @@ msgstr "Entrant"
 
 #. modules: return_claim, msf_outgoing, stock_override, kit, msf_doc_import
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0
 #: selection:kit.selection.sale.line,integrity_status:0
@@ -93598,12 +92639,6 @@ msgstr "Storage"
 #: field:account.move.line,down_payment_amount:0
 msgid "Down Payment used amount"
 msgstr "Montant utilisé pour acompte"
-
-#. module: stock
-#: code:addons/stock/stock.py:2075
-#, python-format
-msgid "Operation forbidden"
-msgstr "Opération interdite"
 
 #. module: base
 #: model:res.currency,currency_name:base.IDR
@@ -93923,7 +92958,6 @@ msgid "ir.ui.view_sc"
 msgstr "ir.ui.view_sc"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1431
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1520
 #, python-format
 msgid "A batch is defined on the imported file but the product doesn't require batch number - Batch ignored"
@@ -94065,11 +93099,6 @@ msgstr "Sélectionnez les Factures à Payer"
 #: view:hq.entries:0
 msgid "HQ Entry"
 msgstr "Entrée Siège"
-
-#. module: purchase
-#: model:ir.actions.act_window,name:purchase.act_purchase_order_2_stock_picking
-msgid "Receptions"
-msgstr "Réceptions"
 
 #. modules: msf_cross_docking, reason_types_moves, stock_override, service_purchasing, consumption_calculation, msf_config_locations, kit, specific_rules, specific_locations, stock
 #: constraint:stock.location:0
@@ -94390,7 +93419,6 @@ msgstr "Montant réel projet (valeur)"
 
 #. module: msf_outgoing, msf_supply_doc_export
 #: code:addons/msf_outgoing/wizard/picking_processor.py:820
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:779
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:132
 #, python-format
 msgid "No line to split !"
@@ -94549,11 +93577,9 @@ msgstr "America/Anguilla"
 #: field:wizard.simu.import.po.line,initial_currency:0
 #: field:hr.payroll.msf,currency_id:0
 #: field:account.journal.fake,currency:0
-#: field:create.picking.move.processor,currency:0
 #: field:internal.move.processor,currency:0
 #: field:outgoing.delivery.move.processor,currency:0
 #: field:pack.family.memory,currency_id:0
-#: field:ppl.move.processor,currency:0
 #: field:return.ppl.move.processor,currency:0
 #: field:shipment,currency_id:0
 #: field:stock.move,currency_id:0
@@ -94563,7 +93589,6 @@ msgstr "America/Anguilla"
 #: field:stock.move.memory.returnproducts,currency:0
 #: field:stock.move.processor,currency:0
 #: field:stock.picking,currency_id:0
-#: field:validate.move.processor,currency:0
 #: field:product.supplierinfo,get_first_currency:0
 #: view:res.partner:0
 #: field:res.partner,price_currency:0
@@ -94753,7 +93778,6 @@ msgstr "Rapport Journal"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:169
 #: field:internal.request.import,in_ref:0
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:85
-#: field:internal.request.import,in_order_name:0
 #, python-format
 msgid "Order Reference"
 msgstr "Référence de la Commmande"
@@ -94836,8 +93860,6 @@ msgid "Import Invoices"
 msgstr "Importer Factures"
 
 #. modules: return_claim, msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:558
-#: selection:create.picking.processor,claim_type:0
 #: selection:internal.picking.processor,claim_type:0
 #: selection:outgoing.delivery.processor,claim_type:0
 #: view:return.ppl.processor:0
@@ -94958,13 +93980,10 @@ msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la factur
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Need Batch Number (Standard) not Expiry Date (Internal)"
@@ -95065,7 +94084,6 @@ msgid "Currency for average price"
 msgstr "Devise pour prix moyen"
 
 #. modules: return_claim, msf_outgoing
-#: selection:create.picking.processor,claim_type:0
 #: selection:internal.picking.processor,claim_type:0
 #: selection:outgoing.delivery.processor,claim_type:0
 #: selection:stock.incoming.processor,claim_type:0
@@ -95886,12 +94904,6 @@ msgstr "Donne la vue utilisée lors de la saisie des écritures ou de la navigat
 #: view:product.product:0
 msgid "Cost Price "
 msgstr "Prix Coûtant"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:4159
-#, python-format
-msgid "PPL Information - step 1"
-msgstr "Information LPC - étape 1"
 
 #. modules: account, msf_currency_revaluation
 #: selection:account.journal.column,field:0
@@ -97059,7 +96071,6 @@ msgstr "Mexico/BajaSur"
 #. modules: purchase, kit
 #: code:addons/kit/kit.py:373
 #: view:composition.kit:0
-#: view:purchase.order.line:0
 #, python-format
 msgid "De-Kitting"
 msgstr "Désassemblage de kits"
@@ -97252,7 +96263,6 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1628
-#: selection:stock.move.in.processor,sequence_issue:0
 #, python-format
 msgid "Batch Number is Missing"
 msgstr "Numéro de lot manquant"
@@ -97663,13 +96673,6 @@ msgstr "Uom livré"
 msgid "Import category in progress"
 msgstr "Import Catégorie en cours"
 
-#. modules: msf_doc_import, msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:182
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:48
-#, python-format
-msgid "Qty. p.p."
-msgstr "Qté p.p."
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:623
 #, python-format
@@ -97736,11 +96739,6 @@ msgstr "Erreur : l'UdM par défaut et l'UdM du Fournisseur de Produit doivent ap
 msgid "Expiry Date Mandatory"
 msgstr "Date d'Expiration Obligatoire"
 
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Cancel Shipment"
-msgstr "Annuler Expédition"
-
 #. module: base
 #: model:res.currency,currency_name:base.NOK
 msgid "NORWEGIAN KRONE"
@@ -97762,7 +96760,7 @@ msgstr "An error occurs during the reading of the file. Please contact an admini
 #: field:stock.move,exp_check:0
 #: field:stock.production.lot,exp_check:0
 msgid "ED"
-msgstr "EXP"
+msgstr "DE"
 
 #. module: sale
 #: report:msf.report_reception_in:0
@@ -97948,7 +96946,6 @@ msgid "Export to HQ system (OCB)"
 msgstr "Export to HQ system (OCB)"
 
 #. modules: return_claim, msf_outgoing
-#: selection:create.picking.processor,claim_type:0
 #: selection:internal.picking.processor,claim_type:0
 #: selection:outgoing.delivery.processor,claim_type:0
 #: selection:claim.event,type_claim_event:0
@@ -98199,18 +97196,15 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:hr.payroll.import.confirmation:0
 #: view:hr.payroll.validation:0
 #: view:wizard.add.cost.centers:0
-#: view:create.picking.processor:0
 #: view:internal.picking.processor:0
 #: view:outgoing.delivery.processor:0
 #: view:ppl.processor:0
 #: view:return.pack.shipment.processor:0
 #: view:return.ppl.processor:0
 #: view:return.shipment.processor:0
-#: view:shipment.processor:0
 #: view:stock.incoming.processor:0
 #: view:stock.picking:0
 #: view:stock.picking.processor:0
-#: view:validate.picking.processor:0
 #: view:user.access.configurator:0
 #: view:po.follow.up:0
 #: view:automated.import.job:0
@@ -98268,8 +97262,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:physical.inventory.import.wizard:0
 #: view:physical.inventory.select.products:0
 #: view:stock.inventory.line.split:0
-#: view:stock.move.consume:0
-#: view:stock.move.scrap:0
 #: view:stock.move.split:0
 #: view:stock.picking:0
 #: view:stock.move.tracking:0
@@ -98652,7 +97644,6 @@ msgstr "Amériques/Port-au-Prince"
 #: selection:purchase.order.followup,categ:0
 #: selection:return.claim,category_return_claim:0
 #: selection:internal.request.import,imp_categ:0
-#: selection:internal.request.import,in_categ:0
 #: view:sale.order:0
 #: selection:sale.order,categ:0
 #: view:sale.report:0
@@ -98885,8 +97876,6 @@ msgstr "product.likely.expire.report.item"
 #: field:return.shipment.processor,partner_id:0
 #: field:shipment,partner_id:0
 #: field:shipment,partner_id2:0
-#: field:shipment.processor,partner_id:0
-#: field:shipment.wizard,partner_id:0
 #: selection:add.event,claim_type:0
 #: selection:claim.product.line,claim_type_claim_product_line:0
 #: view:return.claim:0
@@ -99030,13 +98019,10 @@ msgstr "Cochez cette case pour forcer cet utilisateur à changer son mot de pass
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 msgid "Asset is Missing"
@@ -99110,8 +98096,6 @@ msgid "Asia/Kuala_Lumpur"
 msgstr "Asia/Kuala_Lumpur"
 
 #. modules: product, msf_outgoing, stock_override, stock
-#: field:ppl.move.processor,pack_id:0
-#: field:return.ppl.move.processor,pack_id:0
 #: field:stock.move.in.processor,pack_id:0
 #: view:stock.move:0
 #: selection:product.ul,type:0
@@ -99507,7 +98491,6 @@ msgstr "À"
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: view:hr.payroll.import.confirmation:0
-#: selection:create.picking.move.processor,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
 #: selection:ppl.move.processor,integrity_status:0
@@ -99519,7 +98502,6 @@ msgstr "À"
 #: view:split.memory.move:0
 #: view:split.move.processor:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
 #: selection:stock.move.memory.families,integrity_status:0
 #: selection:stock.move.memory.in,integrity_status:0
 #: selection:stock.move.memory.out,integrity_status:0
@@ -99533,7 +98515,6 @@ msgstr "À"
 #: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
 #: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
 #: view:cashbox.write.off:0
 #: view:register.reopen:0
 #: view:wizard.cash.return:0
@@ -99644,8 +98625,6 @@ msgid "Asia/Oral"
 msgstr "Asia/Oral"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:548
-#: view:create.picking.processor:0
 #: model:ir.model,name:msf_outgoing.model_create_picking
 #: code:addons/msf_outgoing/msf_outgoing.py:3182
 #: view:stock.picking:0
@@ -100623,8 +99602,6 @@ msgstr "'From' period can not be after 'To' period"
 
 #. modules: purchase, sale, procurement_request
 #: view:sale.order:0
-#: view:purchase.order:0
-#: view:sale.order:0
 msgid "Update Lines"
 msgstr "Mise à jour des Lignes"
 
@@ -100772,18 +99749,6 @@ msgstr "is wizard already imported"
 msgid "%s (in %s)"
 msgstr "%s (in %s)"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1536
-#, python-format
-msgid "No batch found in database and you need to define a name AND an expiry date if you expect an automatic creation."
-msgstr "Aucun lot trouvé dans la base. Vous devez indiquer un nom et une date d'expiration."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1541
-#, python-format
-msgid "No expiry date set on ED product."
-msgstr "Aucune date d'expiration sur un produit date exp. obligatoire."
-
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:506
 #: model:ir.actions.report.xml,name:register_accounting.open_advances_2
@@ -100885,22 +99850,16 @@ msgstr "Langues"
 #: field:real.average.consumption.line,asset_id:0
 #: report:kit.report:0
 #: field:wizard.import.in.line.simulation.screen,imp_asset_id:0
-#: field:create.picking.move.processor,asset_check:0
-#: field:create.picking.move.processor,asset_id:0
 #: field:internal.move.processor,asset_check:0
 #: field:internal.move.processor,asset_id:0
 #: field:outgoing.delivery.move.processor,asset_check:0
 #: field:outgoing.delivery.move.processor,asset_id:0
-#: field:ppl.move.processor,asset_check:0
-#: field:ppl.move.processor,asset_id:0
 #: field:return.ppl.move.processor,asset_check:0
 #: field:return.ppl.move.processor,asset_id:0
 #: field:stock.move.in.processor,asset_check:0
 #: field:stock.move.in.processor,asset_id:0
 #: field:stock.move.processor,asset_check:0
 #: field:stock.move.processor,asset_id:0
-#: field:validate.move.processor,asset_check:0
-#: field:validate.move.processor,asset_id:0
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:69
 #, python-format
 msgid "Asset"
@@ -101582,7 +100541,6 @@ msgid "Unable to write report on SFTP server"
 msgstr "Unable to write report on SFTP server"
 
 #. module: msf_outgoing
-#: field:create.picking.processor,claim_type:0
 #: field:internal.picking.processor,claim_type:0
 #: field:outgoing.delivery.processor,claim_type:0
 #: field:stock.incoming.processor,claim_type:0
@@ -101798,22 +100756,10 @@ msgid "The column '%s' mustn't be empty%s. "
 msgstr "La colonne '%s' ne doit pas être vide%s. "
 
 #. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:311
-#, python-format
-msgid "Line 2 of the file: You can not import this file with a non-existing IR Order Reference."
-msgstr "Ligne 2 du fichier: Impossible d'importer un fichier avec une Référence de Demande Interne non existante."
-
-#. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:466
 #, python-format
 msgid "UoM '%s' is not consistent with the Product '%s'. "
 msgstr "L'UdM '%s' n'est pas cohérente avec le Produit '%s'. "
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:294
-#, python-format
-msgid "Line 2 of the file: IR Order Reference '%s' is not correct."
-msgstr "Ligne 2 du fichier: La Référence de la Demande Interne '%s' est incorrecte."
 
 #. module: account_override
 #: code:addons/account_override/account.py:1138
@@ -101872,12 +100818,6 @@ msgstr "Ligne %s du fichier importé: Les informations de l'entête doivent êtr
 msgid "Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns"
 msgstr "Ligne %s du fichier importé: Les informations de la ligne doivent être sur au moins %s colonnes. La ligne %s a %s colonnes"
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:319
-#, python-format
-msgid "Line 4 of the file: Order Category '%s' not defined, default value will be 'Other'"
-msgstr "Ligne 4 du fichier: La Catégorie de Commande '%s' n'existe pas, la valeur par défaut sera 'Autre'"
-
 #. modules: msf_order_date, purchase, purchase_override, sale, procurement_request, msf_supply_doc_export
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:137
 #: code:addons/sale/wizard/internal_request_import.py:50
@@ -101899,11 +100839,6 @@ msgstr "Date de Prise de Stock"
 #, python-format
 msgid "Product Code is mandatory. "
 msgstr "Le Code Produit est obligatoire. "
-
-#. module: sale
-#: model:ir.model,name:sale.model_internal_request_line_import
-msgid "internal.request.line.import"
-msgstr "internal.request.line.import"
 
 #. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:435
@@ -101928,12 +100863,6 @@ msgstr "internal.request.import.line"
 msgid "Line Number '%s' has already been treated. "
 msgstr "Le Numéro de Ligne '%s' a déjà été traité. "
 
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:329
-#, python-format
-msgid "Line 5 of the file: Order Priority '%s' not defined, default value will be 'Normal'"
-msgstr "Ligne 5 du fichier: La Priorité de la Commande '%s' n'est pas définie, la valeur par défaut sera 'Normal'"
-
 #. modules: msf_supply_doc_export, procurement_request
 #: report:addons/msf_supply_doc_export/report/internal_request_export_xls.mako:101
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:185
@@ -101950,20 +100879,9 @@ msgstr "internal.request.import"
 msgid "Total of file lines"
 msgstr "Nombre total de lignes du fichier"
 
-#. module: sale
-#: view:internal.request.import:0
-msgid "Import"
-msgstr "Import"
-
-#. module: sale
-#: view:internal.request.import:0
-msgid "Reset the import"
-msgstr "Réinitialiser l'import"
-
 #. modules: msf_doc_import, sale
 #: view:wizard.import.in.line.simulation.screen:0
 #: view:wizard.import.po.simulation.screen:0
-#: view:internal.request.import:0
 msgid "See error"
 msgstr "Voir l'erreur"
 
@@ -101978,11 +100896,6 @@ msgstr "Écran de simulation"
 #: view:internal.request.import:0
 msgid "Import data"
 msgstr "Données d'import"
-
-#. module: sale
-#: view:internal.request.import:0
-msgid "Return to IR"
-msgstr "Retourner à la Demande Interne"
 
 #. module: sale
 #: field:internal.request.import,error_file:0
@@ -102011,62 +100924,6 @@ msgid "Date of finished import"
 msgstr "Date de fin de l'import"
 
 #. module: sale
-#: model:ir.ui.menu,name:sale.menu_order_import
-msgid "Order Import"
-msgstr "Import de Commande"
-
-#. module: sale
-#: model:ir.actions.act_window,name:sale.menu_ir_import_action
-#: model:ir.ui.menu,name:sale.menu_ir_import
-msgid "Internal Request Import"
-msgstr "Import de Demande Interne"
-
-#. module: msf_doc_import
-#: view:sale.order:0
-msgid "Import IR"
-msgstr "Importer une Demande Interne"
-
-#. module: msf_doc_import
-#: view:sale.order:0
-msgid "Export IR"
-msgstr "Exporter la Demande Interne"
-
-#. module: sale
-#: view:internal.request.import:0
-msgid "IR Import - Simulation Screen"
-msgstr "Import de Demande Interne - Écran de Simulation"
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:506
-#, python-format
-msgid "\n"
-"## Errors on line values ##\n"
-"\n"
-""
-msgstr "\n"
-"## Erreurs au niveau des lignes ##\n"
-"\n"
-""
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:500
-#, python-format
-msgid "\n"
-"## Errors on header values ##\n"
-"\n"
-""
-msgstr "\n"
-"## Erreurs au niveau de l'entête ##\n"
-"\n"
-""
-
-#. module: sale
-#: code:addons/sale/wizard/internal_request_import.py:475
-#, python-format
-msgid "Line %s of the file: %sLine not imported."
-msgstr "Ligne %s du fichier: %sLigne non importée."
-
-#. module: sale
 #: code:addons/sale/wizard/internal_request_import.py:468
 #, python-format
 msgid "Quantity must be a number. "
@@ -102091,18 +100948,6 @@ msgid "PO line has been confirmed or cancelled and consequently is not editable"
 msgstr "La ligne du BC a été confirmée ou annulée et n'est donc plus éditable"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:3588
-#, python-format
-msgid "The picking ticket is not in 'Draft' state. Please check this and re-try"
-msgstr "Ce Picking n'est pas dans l'état Brouillon. Veuillez vérifier et ré-essayer."
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:3774
-#, python-format
-msgid "%s is not a sub-pick !"
-msgstr "%s n'est pas sous-Picking"
-
-#. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
 #, python-format
 msgid "This object: %s is not an Incoming Shipment"
@@ -102114,12 +100959,6 @@ msgstr "Cet objet: %s n'est pas un une Livraison Entrante."
 #, python-format
 msgid "The object %s is not a pre-packing list. Please check this and re-try."
 msgstr "Cet objet %s n'est pas une Liste de Pré-Colisage. Veuillez vérifier et ré-essayer."
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:3583
-#, python-format
-msgid "%s is not a main-pick !"
-msgstr "%s n'est pas un Picking Brouillon"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:157
@@ -102160,64 +100999,6 @@ msgstr "Créer le Mouvement Interne avec le stock expiré"
 #: view:stock.picking:0
 msgid "Check Expired Products' Availability"
 msgstr "Vérifier Disponibilité des produits expirés"
-
-#. modules: msf_doc_import, msf_outgoing, stock_override
-#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
-#: selection:return.ppl.move.processor,integrity_status:0
-#: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
-#: selection:internal.move.processor,integrity_status:0
-#: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
-#: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-msgid "The quantity per pack must be an integer for this UoM"
-msgstr "La quantité par paquet doit être un entier pour cette UdM"
-
-#. modules: msf_doc_import, msf_outgoing, stock_override
-#: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
-#: selection:return.ppl.move.processor,integrity_status:0
-#: selection:wizard.import.in.line.simulation.screen,integrity_status:0
-#: selection:create.picking.move.processor,integrity_status:0
-#: selection:internal.move.processor,integrity_status:0
-#: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.in.processor,sequence_issue:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
-#: selection:stock.move.processor,integrity_status:0
-#: selection:validate.move.processor,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
-msgid "The quantity per pack must be a multiple of UoM's rounding"
-msgstr "La quantité par paquet doit être un multiple de l'arrondi de l'UdM"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:983
@@ -102467,14 +101248,9 @@ msgid "HQ entry split"
 msgstr "Écritures HQ scindée"
 
 #. module: account_hq_entries
-#: constraint:hq.entries:0
-msgid "HQ entry: G/L account is inactive"
-msgstr "Écriture HQ: compte inactif"
-
-#. module: account_hq_entries
 #: model:ir.module.module,description:account_hq_entries.module_meta_information
 msgid "HQ records integration"
-msgstr "Iintégration des Ecritures HQ"
+msgstr "Intégration des Ecritures HQ"
 
 #. module: account_hq_entries
 #: field:hq.entries,cc_changed:0
@@ -102719,11 +101495,6 @@ msgstr " dangeureuses"
 msgid " goods products, please refer to the appropriate procedures"
 msgstr " veuillez vous référer aux procédures adéquates."
 
-#. module: specific_rules
-#: view:export.report.stock.inventory:0
-msgid "Generate report (product list)"
-msgstr "Générer le rapport (liste de produits)"
-
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
 msgid "Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually."
@@ -102817,7 +101588,6 @@ msgstr "Retourner à l'écran précédent"
 
 #. module: sale, sale_override
 #: code:addons/sale/wizard/delete_sale_order_line.py:84
-#: code:addons/sale_override/wizard/delete_sale_order_line.py:69
 #, python-format
 msgid " and %s"
 msgstr " et %s"
@@ -102935,18 +101705,6 @@ msgstr "La Période de fin ne peut pas précéder la Période de début."
 #, python-format
 msgid "Either the Start date or the End date is missing."
 msgstr "Il manque soit la Date de début soit la Date de fin."
-
-#. module: stock
-#: code:addons/stock/physical_inventory.py:938
-#, python-format
-msgid "Please remove non-stockable product %s from the counting sheet to validate."
-msgstr "Veuillez supprimer le produit non stockable %s depuis la feuille de comptage pour pouvoir valider."
-
-#. module: stock
-#: code:addons/stock/physical_inventory.py:933
-#, python-format
-msgid "Please remove non-stockable product from the discrepancy report to validate:%s"
-msgstr "Veuillez supprimer le produit non stockable depuis le rapport de divergence pour pouvoir valider:%s"
 
 #. modules: purchase, purchase_override, sale
 #: selection:purchase.order.line,state:0
@@ -103216,12 +101974,6 @@ msgstr "Statut de l'Inventaire"
 #: field:stock.move.in.processor,split_move_ok:0
 msgid "Is split move ?"
 msgstr "Est un mouvement scindé ?"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:3820
-#, python-format
-msgid "Line %s :: You cannot processed more quantity than the quantity of the stock move - Maybe the line is already processed"
-msgstr "Ligne %s :: Vous ne pouvez pas traiter une quantité supérieure à la quantié du mouvement - La ligne a peut être déjà été traitée "
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/report/packing_list.py:90
@@ -103523,11 +102275,6 @@ msgid "%s-Product reservation report - excel export"
 msgstr "%s-Rapport des produits reserves - export excel"
 
 #. module: stock
-#: model:ir.model,name:stock.model_reserved_products_report
-msgid "Reserved Products Report"
-msgstr "Rapport des Produits Réservés"
-
-#. module: stock
 #: model:ir.model,name:stock.model_reserved_products_wizard
 #: view:reserved.products.wizard:0
 msgid "Reserved Products Export"
@@ -103546,7 +102293,6 @@ msgstr "Export Excel des Produits Réservés"
 
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:160
-#: view:stock.move:0
 #: view:stock.reserved.products:0
 msgid "Reserved Qty"
 msgstr "Qté Réservée"
@@ -103570,7 +102316,6 @@ msgstr "Une erreur s'est produire lors de l'utilisation de la page, veuillez la 
 #. module: stock, msf_outgoing
 #: model:ir.actions.act_window,name:stock.reserved_products_action
 #: model:ir.ui.menu,name:stock.reserved_products_menu
-#: view:stock.move:0
 #: model:ir.model,name:msf_outgoing.model_stock_reserved_products
 #: view:stock.reserved.products:0
 msgid "Reserved Products"
@@ -104040,12 +102785,6 @@ msgstr "Zone Destination %s inactive, ne peut traiter %s, ligne %s, produit %s"
 msgid "Destination Location is inactive"
 msgstr "Zone Destination inactive"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/consumption_calculation.py:223
-#, python-format
-msgid "estination Location %s is inactive"
-msgstr "Zone Destination %s inactive"
-
 #. module: msf_config_locations
 #: field:stock.remove.location.wizard,move_from:0
 msgid "Has a move from the location"
@@ -104420,12 +103159,6 @@ msgid " Weight per pack has to be an float."
 msgstr " Le Poids par colis doit être un nombre."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:417
-#, python-format
-msgid " Weight per pack has to be defined and over 0."
-msgstr " Le Poids par colis doit être défini et au dessus de 0."
-
-#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:429
 #, python-format
 msgid " This Pack Type doesn't exists."
@@ -104534,14 +103267,6 @@ msgstr "Réf du Demandeur"
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
 msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes en erreur, une erreur est survenue. Details : %s"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:323
-#, python-format
-msgid "There is %s lines in the file and %s lines in %s. Please import the same number of lines.\n"
-""
-msgstr "Il y a %s lignes dans le fichier et %s lignes dans %s. Veuillez importer le même nombre de lignes.\n"
-""
 
 #. module: msf_doc_import
 #: view:wizard.import.ppl.to.create.ship:0
@@ -105093,12 +103818,6 @@ msgid "You cannot source with location 'Stock' if the destination location of th
 msgstr "Vous ne pouvez pas sourcer cette ligne sur l'emplacement 'Stock' si l'emplacement de la Demande Interne est LOG ou MED"
 
 #. module: procurement_request
-#: code:addons/procurement_request/procurement_request.py:134
-#, python-format
-msgid "No model found for this document"
-msgstr "Aucun modèle n'a été trouvé pour ce document"
-
-#. module: procurement_request
 #: field:procurement.request.sourcing.document,linked_model:0
 msgid "Document model"
 msgstr "Modèle du Document"
@@ -105127,8 +103846,6 @@ msgstr "Validé par :"
 
 #. module: specific_rules
 #: field:export.report.stock.inventory,prodlot_id:0
-#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:175
-#: report:addons/specific_rules/report/report_stock_inventory_xls.mako:178
 msgid "Specific Batch number"
 msgstr "Numéro de Lot spécifique"
 
@@ -105162,7 +103879,6 @@ msgid "Export PICK"
 msgstr "Exporter PICK"
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
 #: code:addons/msf_outgoing/msf_outgoing.py:4157
 #, python-format
 msgid "No PICK selected"
@@ -105207,12 +103923,6 @@ msgstr "Ligne %s: La colonne \"Qté à Traiter\" ne peut pas être supérieure �
 #, python-format
 msgid "Line %s: Move with line number %s and ordered qty %s not found"
 msgstr "Ligne %s: Le mouvement avec le numéro de ligne %s et la quantité commandée %s n'a pas été trouvé"
-
-#. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:184
-#, python-format
-msgid "Line %s: Import product code doesn't match with the product"
-msgstr "Ligne %s: Le code du produit à importé ne correspond pas"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:189
