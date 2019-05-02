@@ -107,7 +107,7 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, fields_to_fetch=['rfq_ids', 'supplier_ids'], context=context):
             diff_number = False
             supplier_ids = [supplier.id for supplier in tender.supplier_ids]
-            rfq_ids = [rfq.id for rfq in tender.rfq_ids if rfq.rfq_state != 'cancel' and rfq.partner_id.id in supplier_ids]
+            rfq_ids = [rfq.id for rfq in tender.rfq_ids if rfq.partner_id.id in supplier_ids]
             if len(rfq_ids) < len(supplier_ids):
                 diff_number = True
             res[tender.id] = diff_number
@@ -337,8 +337,7 @@ class tender(osv.osv):
             if not tender_line_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
-                if not po_obj.search_exist(cr,  uid, [('tender_id', '=', tender.id), ('partner_id', '=', supplier.id),
-                                                      ('rfq_state', '!=', 'cancel')], context=context):
+                if not po_obj.search_exist(cr,  uid, [('tender_id', '=', tender.id), ('partner_id', '=', supplier.id)], context=context):
                     # create a purchase order for each supplier
                     address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
                     if not address_id:
