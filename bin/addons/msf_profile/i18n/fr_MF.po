@@ -4915,7 +4915,6 @@ msgstr "Holds the row id of rows imported from a remote instance. Unused except 
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
@@ -12538,11 +12537,6 @@ msgstr "Journal Général"
 #: model:res.currency,currency_name:base.TRY
 msgid "TURKISH LIRA"
 msgstr "TURKISH LIRA"
-
-#. module: msf_outgoing
-#: field:return.ppl.move.processor,move_id:0
-msgid "Stock move"
-msgstr "Stock move"
 
 #. module: account
 #: help:account.fiscalyear.close,fy_id:0
@@ -21068,9 +21062,7 @@ msgid "Product category MSFID \"%s\" not found"
 msgstr "Product category MSFID \"%s\" not found"
 
 #. modules: sales_followup, product, msf_outgoing, procurement, sale, account_override, product_attributes, purchase_followup, msf_supply_doc_export, stock
-#: field:memory.additionalitems,uom:0
 #: view:return.ppl.move.processor:0
-#: field:stock.move.memory.shipment.additionalitems,uom:0
 #: field:physical.inventory.discrepancy,product_uom_id:0
 #: view:account.invoice:0
 #: view:stock.move.memory.picking:0
@@ -29230,11 +29222,6 @@ msgstr "In Pipe Qty"
 msgid "This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart \"Account Payable\"."
 msgstr "Cette vue peut être utilisée par des comptables afin d'enregistrer rapidement des écritures comptables dans OpenERP. Si vous voulez enregistrer une facture fournisseur, commencez par enregistrer la ligne du compte de charge. OpenERP vous proposera automatiquement la taxe afférente à ce compte et la contrepartie \"Compte fournisseur\"."
 
-#. modules: sale, procurement_request
-#: view:sale.order:0
-msgid "Validate Lines"
-msgstr "Validate Lines"
-
 #. module: financing_contract
 #: field:financing.contract.format.line,account_destination_ids:0
 msgid "Accounts/Destinations"
@@ -34220,9 +34207,7 @@ msgid "Validate"
 msgstr "Valider"
 
 #. modules: stock_override, msf_outgoing
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:854
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:278
-#: code:addons/msf_outgoing/wizard/validate_picking_processor.py:154
 #: code:addons/stock_override/wizard/stock_partial_picking.py:188
 #, python-format
 msgid "Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !"
@@ -47525,14 +47510,11 @@ msgid "There are some stock moves with this product on the system. So you should
 msgstr "Il y' a des mouvements de stock avec ce produits dans le sytème. Vous devez donc garder la même catégorie UdM que celle de ces mouvements de stock. La catégorie d'UdM utilisée pour ces mouvements de stock : %s"
 
 #. module: msf_outgoing
-#: help:create.picking.move.processor,ordered_quantity:0
 #: help:internal.move.processor,ordered_quantity:0
 #: help:outgoing.delivery.move.processor,ordered_quantity:0
-#: help:ppl.move.processor,ordered_quantity:0
 #: help:return.ppl.move.processor,ordered_quantity:0
 #: help:stock.move.in.processor,ordered_quantity:0
 #: help:stock.move.processor,ordered_quantity:0
-#: help:validate.move.processor,ordered_quantity:0
 msgid "Expected quantity to receive"
 msgstr "Quantité attendue à recevoir"
 
@@ -53541,12 +53523,6 @@ msgstr "Début date éligibilité"
 #, python-format
 msgid "Default Debit Account should be an expense account for Adjustment Journals!"
 msgstr "Compte de Débit par Défaut devrait être un compte de charge pour les journaux d'Ajustement !"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1498
-#, python-format
-msgid "The 'Expired date' value doesn't match with the expired date of the Batch - The expired date of the Batch was kept."
-msgstr "La 'Date d'expiration' ne correspond pas à celle du lot. La date du lot a été conservée"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order.py:61
@@ -63194,12 +63170,6 @@ msgstr "Marge du bas (mm)"
 msgid "Tender Priority"
 msgstr "Priorité Appel d'Offres"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/shipment_processor.py:151
-#, python-format
-msgid "Create Shipment"
-msgstr "Créer Expédition"
-
 #. module: account
 #: view:account.installer:0
 msgid "Configure Your Accounting Chart"
@@ -64495,7 +64465,6 @@ msgstr "États"
 
 #. modules: tender_flow, purchase_override, stock_override, purchase
 #: view:purchase.order.cancel.wizard:0
-#: view:stock.picking.cancel.wizard:0
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:purchase.order.line.cancel.wizard:0
@@ -64938,11 +64907,6 @@ msgstr "Ligne d'Engagement pour la Cash Request"
 #, python-format
 msgid "Automatic Supply: %s"
 msgstr "Approvisionnement Automatique : %s"
-
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Create Shipment..."
-msgstr "Créer une Expédition…"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1076
@@ -73911,8 +73875,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_outgoing/wizard/picking_processor.py:881
 #: code:addons/msf_outgoing/wizard/picking_processor.py:991
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:785
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:795
-#: code:addons/msf_outgoing/wizard/ppl_processor.py:802
 #: code:addons/msf_outgoing/wizard/split_move_processor.py:73
 #: code:addons/msf_outgoing/wizard/split_move_processor.py:117
 #: code:addons/msf_printed_documents/printed_report.py:204
@@ -78282,7 +78244,6 @@ msgid "If you unreconciliate transactions, you must also verify all the actions 
 msgstr "Si vous annulez le lettrage des écritures, il vous faudra alors aussi vérifier toutes les actions qui y sont liées (car elles ne seront pas désactivées) ."
 
 #. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:4242
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:791
 #, python-format
 msgid "PPL Information - step 2"
@@ -85010,12 +84971,6 @@ msgstr "Le prix unitaire doit être supérieure à 0.00"
 msgid "Automated import"
 msgstr "Automated import"
 
-#. module: stock
-#: model:ir.actions.act_window,name:stock.track_line_old
-#: view:stock.move.track:0
-msgid "Tracking a move"
-msgstr "Suivi d'un mouvement"
-
 #. modules: account_override, account, base, account_mcdb, analytic_distribution
 #: view:account.common.report:0
 #: view:account.mcdb:0
@@ -86271,7 +86226,6 @@ msgstr "Lecture"
 
 #. module: stock_override
 #: view:change.dest.location:0
-#: field:change.dest.location,picking_id:0
 msgid "Internal move"
 msgstr "Mouvement Interne"
 
@@ -86766,7 +86720,6 @@ msgstr "Associer les Evénements aux Actions"
 #: view:stock.split.into:0
 #: view:stock.analyze.view:0
 #: view:change.product.move.processor:0
-#: code:addons/msf_outgoing/wizard/create_picking_processor.py:568
 #: view:split.move.processor:0
 #, python-format
 msgid "_Cancel"
@@ -92957,12 +92910,6 @@ msgstr "Le document %s est une Demande de Devis, vous ne pouvez pas avoir de rap
 msgid "ir.ui.view_sc"
 msgstr "ir.ui.view_sc"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1520
-#, python-format
-msgid "A batch is defined on the imported file but the product doesn't require batch number - Batch ignored"
-msgstr "Un numéro de lot est défini dans le fichier importé mais le produit ne requiert pas de numéro de lot - Numéro de lot ignoré"
-
 #. modules: financing_contract, sync_so
 #: constraint:financing.contract.contract:0
 #: constraint:financing.contract.contract:0
@@ -98493,12 +98440,9 @@ msgstr "À"
 #: view:hr.payroll.import.confirmation:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
-#: selection:ppl.move.processor,integrity_status:0
 #: selection:return.pack.shipment.family.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:return.shipment.family.processor,integrity_status:0
-#: selection:shipment.additional.line.processor,integrity_status:0
-#: selection:shipment.family.processor,integrity_status:0
 #: view:split.memory.move:0
 #: view:split.move.processor:0
 #: selection:stock.move.in.processor,integrity_status:0
@@ -98524,10 +98468,7 @@ msgstr "À"
 #: view:add.event:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: view:stock.inventory.line.split:0
-#: view:stock.move.consume:0
-#: view:stock.move.scrap:0
 #: view:stock.move.split:0
-#: view:stock.move.track:0
 #: view:stock.split.into:0
 #: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
@@ -99599,11 +99540,6 @@ msgstr "Description de l'Article"
 #, python-format
 msgid "'From' period can not be after 'To' period"
 msgstr "'From' period can not be after 'To' period"
-
-#. modules: purchase, sale, procurement_request
-#: view:sale.order:0
-msgid "Update Lines"
-msgstr "Mise à jour des Lignes"
 
 #. module: base
 #: view:ir.actions.report.xml:0
@@ -103917,12 +103853,6 @@ msgstr "La quantité totale de la ligne %s dans le fichier d'import ne correspon
 #, python-format
 msgid "Line %s: Column \"Qty to Process\" cannot be greater than \"Qty\""
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" ne peut pas être supérieure à la \"Qté\""
-
-#. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:174
-#, python-format
-msgid "Line %s: Move with line number %s and ordered qty %s not found"
-msgstr "Ligne %s: Le mouvement avec le numéro de ligne %s et la quantité commandée %s n'a pas été trouvé"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:189
