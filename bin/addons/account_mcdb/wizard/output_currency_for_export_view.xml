@@ -16,7 +16,7 @@
                     <newline/>
                     <field name="export_format" colspan="2"/>
                     <field name="export_selected" />
-                    <label colspan="4" string="Excel and CSV format are limited to 1000000 records. If the number of exported records exceeds 15000 the result will be a zip file." />
+                    <label colspan="4" string="If the number of exported records exceeds 15000 the result will be a zip file." />
                     <label colspan="4" string="PDF is limited to 5000 records." />
                     <group col="4" colspan="6">
                         <label string="" colspan="1"/>
@@ -31,13 +31,9 @@
             <field name="name">ouptut.currency.for.export.confirm.view</field>
             <field name="model">output.currency.for.export</field>
             <field name="type">form</field>
+            <field name="priority" eval="50" />
             <field name="arch" type="xml">
-                <form string="Output currency choice confirmation">
-                    <group colspan="4">
-                        <html>
-                            <p><translate>There is more than 50000 records, do you still want to continue ?</translate></p>
-                        </html>
-                    </group>>
+                <form string="There is more than 50000 records, do you still want to continue ?">
                     <group col="4" colspan="6">
                         <label string="" colspan="1"/>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>

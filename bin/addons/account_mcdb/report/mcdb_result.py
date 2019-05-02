@@ -28,9 +28,9 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import zipfile
 import tempfile
 import os
+import logging
 
 limit_tozip = 15000
-limit_warning = 50000
 
 
 def getIds(self, cr, uid, ids, limit=5000, context=None):
@@ -52,7 +52,7 @@ def getObjects(self, cr, uid, ids, context):
 def getIterObjects(self, cr, uid, ids, context):
     if context is None:
         context = {}
-    ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
+    ids = getIds(self, cr, uid, ids, limit=0, context=context)
     len_ids = len(ids)
     l = 0
     steps = 1000
@@ -84,35 +84,39 @@ def getIterObjects(self, cr, uid, ids, context):
     raise StopIteration
 
 def create_csv(self, cr, uid, ids, data, context=None):
-    if context is None:
-        context = {}
-    ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
-    pool = pooler.get_pool(cr.dbname)
-    obj = pool.get('account.line.csv.export')
-    outfile = tempfile.TemporaryFile('w+')
-    writer = csv.writer(outfile, quotechar='"', delimiter=',')
+    try:
+        if context is None:
+            context = {}
+        ids = getIds(self, cr, uid, ids, limit=0, context=context)
+        logging.getLogger('Finance export').info('CSV Exporting %d %s ...' % (len(ids), self.table))
+        pool = pooler.get_pool(cr.dbname)
+        obj = pool.get('account.line.csv.export')
+        outfile = tempfile.TemporaryFile('w+')
+        writer = csv.writer(outfile, quotechar='"', delimiter=',')
 
-    if self.table == 'account.analytic.line':
-        obj._account_analytic_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
-    elif self.table == 'account.bank.statement.line':
-        obj._account_bank_statement_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
-    else:
-        obj._account_move_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
+        if self.table == 'account.analytic.line':
+            obj._account_analytic_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
+        elif self.table == 'account.bank.statement.line':
+            obj._account_bank_statement_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
+        else:
+            obj._account_move_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
 
-    outfile.seek(0)
-    out = outfile.read()
-    outfile.close()
-    if len(ids) > limit_tozip:
-        fd, tmpzipname = tempfile.mkstemp()
-        zf = zipfile.ZipFile(tmpzipname, 'w')
-        zf.writestr('export_result.csv', out)
-        zf.close()
-        out = file(tmpzipname, 'rb').read()
-        os.close(fd)
-        os.unlink(tmpzipname)
-        return (out, 'zip')
+        outfile.seek(0)
+        out = outfile.read()
+        outfile.close()
+        if len(ids) > limit_tozip:
+            fd, tmpzipname = tempfile.mkstemp()
+            zf = zipfile.ZipFile(tmpzipname, 'w')
+            zf.writestr('export_result.csv', out)
+            zf.close()
+            out = file(tmpzipname, 'rb').read()
+            os.close(fd)
+            os.unlink(tmpzipname)
+            return (out, 'zip')
 
-    return (out, 'csv')
+        return (out, 'csv')
+    finally:
+        logging.getLogger('Finance export').info('CSV End of Export %s' % (self.table,))
 
 
 class account_move_line_report(report_sxw.report_sxw):
@@ -145,12 +149,13 @@ account_move_line_report_csv('report.account.move.line_csv','account.move.line',
 class account_move_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_move_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+        self.log_export = True
 
     def getObjects(self, cr, uid, ids, context):
         return getIterObjects(self, cr, uid, ids, context)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
+        ids = getIds(self, cr, uid, ids, limit=0, context=context)
         if context is None:
             context = {}
         if len(ids) > limit_tozip:
@@ -166,22 +171,6 @@ class parser_account_move_line(report_sxw.rml_parse):
 
     def getObjects(self, cr, uid, ids, context):
         return getIterObjects(self, cr, uid, ids, context)
-#    def getSub(self):
-#        len_ids = len(self.localcontext.get('ids'))
-#        obj = self.pool.get('account.move.line')
-#        ctx = {}
-#        l = 0
-#        steps = 1000
-#        output_cur = self.localcontext.get('data',{}).get('context', {}).get('output_currency_id')
-#        if output_cur and output_cur != self.localcontext.get('company').currency_id.id:
-#            ctx['output_currency_id'] = output_cur
-#        else:
-#            output_cur = False
-#        while l < len_ids:
-#            old_l = l
-#            l = l+steps
-#            yield obj.browse(self.cr, self.uid, self.localcontext.get('ids')[old_l:l], context={'output_currency_id': output_cur})
-#        yield []
 
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context=context)
@@ -223,12 +212,13 @@ account_analytic_line_report_csv('report.account.analytic.line_csv','account.ana
 class account_analytic_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_analytic_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+        self.log_export = True
 
     def getObjects(self, cr, uid, ids, context):
         return getIterObjects(self, cr, uid, ids, context)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, limit=1000000, context=context)
+        ids = getIds(self, cr, uid, ids, limit=0, context=context)
         if context is None:
             context = {}
         if len(ids) > limit_tozip:
@@ -240,6 +230,7 @@ account_analytic_line_report_xls('report.account.analytic.line_xls','account.ana
 class account_analytic_line_free_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_analytic_line_free_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+        self.log_export = True
 
     def getObjects(self, cr, uid, ids, context):
         if context is None:
@@ -260,6 +251,7 @@ account_analytic_line_free_report_xls('report.account.analytic.line.free_xls','a
 class account_bank_statement_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 
@@ -287,6 +279,7 @@ account_bank_statement_line_report_csv('report.account.bank.statement.line_csv',
 class account_bank_statement_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_bank_statement_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
+        self.log_export = True
 
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context=context)

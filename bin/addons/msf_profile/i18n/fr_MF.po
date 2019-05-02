@@ -56030,8 +56030,8 @@ msgstr "Toutes les Ecritures Analytiques"
 
 #. module: account_mcdb
 #: view:output.currency.for.export:0
-msgid "Excel and CSV format are limited to 1000000 records. If the number of exported records exceeds 15000 the result will be a zip file."
-msgstr "Les formats Excel et CSV sont limités à 1000000 lignes. Si le nombre de lignes dépasse les 15000, le résultat sera un fichier zip."
+msgid "If the number of exported records exceeds 15000 the result will be a zip file."
+msgstr "Si le nombre de lignes dépasse les 15000, le résultat sera un fichier zip."
 
 #. module: stock
 #: code:addons/stock/wizard/stock_change_product_qty.py:81
