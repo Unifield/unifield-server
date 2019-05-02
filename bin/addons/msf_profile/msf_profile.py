@@ -70,6 +70,27 @@ class patch_scripts(osv.osv):
                 )
 
     # UF13.1
+    def us_5859_remove_deprecated_objects(self, cr, uid, *a, **b):
+        to_del = [
+            'stock.move.track',
+            'stock.move.consume',
+            'stock.move.scrap',
+            'create.picking.processor',
+            'create.picking.move.processor',
+            'create.picking',
+            'validate.picking.processor',
+            'validate.move.processor',
+            'ppl.move.processor',
+            'shipment.processor',
+            'shipment.family.processor',
+            'shipment.additional.line.processor',
+            'shipment.wizard',
+            'memory.additionalitems',
+            'stock.move.memory.shipment.additionalitems',
+        ]
+        cr.execute('delete from ir_model where model in %s', (tuple(to_del),))
+        return True
+
     def us_5859_set_flag_on_sub_pick(self, cr, uid, *a, **b):
         cr.execute("update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%'")
         return True

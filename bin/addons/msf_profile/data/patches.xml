@@ -406,5 +406,9 @@
             <field name="method">us_5859_set_flag_on_sub_pick</field>
         </record>
 
+        <record id="us_5859_remove_deprecated_objects" model="patch.scripts">
+            <field name="method">us_5859_remove_deprecated_objects</field>
+        </record>
+
     </data>
 </openerp>
