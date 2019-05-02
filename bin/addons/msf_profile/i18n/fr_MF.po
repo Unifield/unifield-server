@@ -105388,3 +105388,8 @@ msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à 
 #, python-format
 msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
+
+#. module: analytic_override
+#: field:account.analytic.account,is_pf:0
+msgid "Is the default Funding Pool \"PF\""
+msgstr "Est le Funding Pool par défaut \"PF\""
