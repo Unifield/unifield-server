@@ -368,6 +368,38 @@ class purchase_order_line(osv.osv):
             res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
         return res
 
+    def get_distribution_account(self, cr, uid, product_record, nomen_record, po_type, product_cache=None, categ_cache=None, context=None):
+        if product_cache is None:
+            product_cache = {}
+        if categ_cache is None:
+            categ_cache = {}
+
+        a = False
+        # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
+        # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
+        # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
+        # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
+        # - other case: take expense account on family that's attached to nomenclature
+        if product_record and po_type =='in_kind':
+            a = product_record.donation_expense_account and product_record.donation_expense_account.id or False
+            if not a:
+                a = product_record.categ_id.donation_expense_account and product_record.categ_id.donation_expense_account.id or False
+        elif product_record:
+            if product_record.product_tmpl_id in product_cache:
+                a = product_cache[product_record.product_tmpl_id]
+            else:
+                a = product_record.product_tmpl_id.property_account_expense.id or False
+                product_cache[product_record.product_tmpl_id] = a
+            if not a:
+                if product_record.categ_id in categ_cache:
+                    a = categ_cache[product_record.categ_id]
+                else:
+                    a = product_record.categ_id.property_account_expense_categ.id or False
+                    categ_cache[product_record.categ_id] = a
+        else:
+            a = nomen_record and nomen_record.category_id and nomen_record.category_id.property_account_expense_categ and nomen_record.category_id.property_account_expense_categ.id or False
+        return a
+
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
         """
         Get account for given lines regarding:
@@ -384,36 +416,7 @@ class purchase_order_line(osv.osv):
         categ_dict = {}
         for line in self.browse(cr, uid, ids):
             # Prepare some values
-            res[line.id] = False
-            a = False
-            # Check if PO is inkind
-            is_inkind = False
-            if line.order_id and line.order_id.order_type == 'in_kind':
-                is_inkind = True
-            # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
-            # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
-            # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
-            # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
-            # - other case: take expense account on family that's attached to nomenclature
-            if line.product_id and is_inkind:
-                a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
-                if not a:
-                    a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
-            elif line.product_id:
-                if line.product_id.product_tmpl_id in product_tmpl_dict:
-                    a = product_tmpl_dict[line.product_id.product_tmpl_id]
-                else:
-                    a = line.product_id.product_tmpl_id.property_account_expense.id or False
-                    product_tmpl_dict[line.product_id.product_tmpl_id] = a
-                if not a:
-                    if line.product_id.categ_id in categ_dict:
-                        a = categ_dict[line.product_id.categ_id]
-                    else:
-                        a = line.product_id.categ_id.property_account_expense_categ.id or False
-                        categ_dict[line.product_id.categ_id] = a
-            else:
-                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
-            res[line.id] = a
+            res[line.id] = self.get_distribution_account(cr, uid, line.product_id, line.nomen_manda_2, line.order_id.order_type, product_cache=product_tmpl_dict, categ_cache=categ_dict, context=None)
         return res
 
     def _get_product_info(self, cr, uid, ids, field_name=None, arg=None, context=None):

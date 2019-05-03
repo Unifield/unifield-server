@@ -13212,6 +13212,7 @@ msgstr "Importation Unique"
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import.py:204
+#: code:addons/msf_tools/automated_export.py:197
 #, python-format
 msgid "Unable to connect with given login and password"
 msgstr "Impossible de se connecter avec le login/mot de passe donné"
@@ -31708,6 +31709,8 @@ msgstr "Date de Mise à jour"
 #: field:wizard.import.threshold.value.line,data:0
 #: field:wizard.import.threshold.value.line,filename:0
 #: field:internal.request.import,error_filename:0
+#: field:wizard.import.ppl.to.create.ship,data:0
+#: field:wizard.import.ppl.to.create.ship,filename:0
 msgid "Lines with errors"
 msgstr "Lignes avec des erreurs"
 
@@ -37894,6 +37897,7 @@ msgstr "Sur Plusieurs Documents"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -39269,7 +39273,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes
+#. modules: sales_followup, account, account_payment, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -39293,6 +39297,7 @@ msgstr "Is inactive for destination given in context"
 #: selection:account.journal.column,field:0
 #: code:addons/product_attributes/product_attributes.py:908
 #: field:product.product,uf_create_date:0
+#: field:purchase.order.line,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -59229,6 +59234,7 @@ msgstr "Journal Ajustement"
 #: code:addons/msf_instance/msf_instance.py:768
 #: code:addons/msf_instance/msf_instance.py:775
 #: code:addons/product/product.py:771
+#: code:addons/msf_doc_import/purchase_order.py:68
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -62165,6 +62171,13 @@ msgstr "Veuillez entrer quelques mouvements de stock avant de changer la localis
 msgid "Not able to connect to FTP server at location %s"
 msgstr "Impossible de se connecter au serveur FTP à l'adresse %s"
 
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:192
+#: code:addons/msf_tools/automated_import.py:199
+#, python-format
+msgid "Not able to connect to SFTP server at location %s"
+msgstr "Impossible de se connecter au serveur SFTP à l'adresse %s"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:397
 #, python-format
@@ -64386,6 +64399,7 @@ msgstr "Il n'y a pas de compte de produit de stock défini pour ce produit: \"%s
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:443
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:250
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:267
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:505
 #, python-format
 msgid "Nothing to import"
 msgstr "Rien à importer"
@@ -66830,6 +66844,7 @@ msgstr "Achat - Devise par Défaut"
 #: field:wizard.import.ir.line,import_error_ok:0
 #: field:wizard.import.po.line,import_error_ok:0
 #: field:wizard.import.tender.line,import_error_ok:0
+#: field:wizard.import.ppl.to.create.ship,import_error_ok:0
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
@@ -74643,6 +74658,11 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/sale/wizard/internal_request_import.py:166
 #: code:addons/msf_outgoing/wizard/create_picking_processor.py:55
 #: selection:internal.request.import,state:0
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:98
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:119
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:129
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:392
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:517
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -82207,6 +82227,7 @@ msgstr "Entrées fournisseurs pour la Cash Request"
 #: field:account.invoice.line,cost_center_id:0
 #: code:addons/register_accounting/wizard/wizard_register_import.py:570
 #: report:addons/account/report/free_allocation_report.mako:205
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -84319,6 +84340,7 @@ msgstr "L2"
 #: field:account.analytic.line,purchase_order_id:0
 #: selection:procurement.request.sourcing.document,linked_model:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:227
+#: field:purchase.order.manual.export,purchase_id:0
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
@@ -87629,8 +87651,9 @@ msgstr "Symbole Devise, à utiliser lors de l'impression des montants"
 msgid "Display analytic periods?"
 msgstr "Display analytic periods?"
 
-#. module: sale
+#. module: sale, purchase
 #: field:sale.order,date_confirm:0
+#: field:purchase.order.line,confirmation_date:0
 msgid "Confirmation Date"
 msgstr "Date de Confirmation"
 
@@ -94178,9 +94201,10 @@ msgstr "Pending Cheque"
 msgid "Real project amount (value)"
 msgstr "Montant réel projet (valeur)"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, msf_doc_import
 #: code:addons/msf_outgoing/wizard/picking_processor.py:820
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:779
+#: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:130
 #, python-format
 msgid "No line to split !"
 msgstr "Pas de ligne à diviser!"
@@ -96457,6 +96481,7 @@ msgstr "Facture venant de"
 #: view:sync.client.message_to_send:0
 #: report:addons/account/report/free_allocation_report.mako:202
 #: report:addons/stock_override/report/report_stock_move_xls.mako:143
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -98080,6 +98105,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:stock.move.cancel.wizard:0
 #: view:stock.picking.cancel.wizard:0
 #: view:wizard.pick.import:0
+#: code:addons/msf_doc_import/purchase_order.py:60
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -98752,7 +98778,7 @@ msgstr "Total Solde Initial"
 msgid "Removal date"
 msgstr "Date de Retrait"
 
-#. modules: msf_budget, sync_client, res_currency_tables, financing_contract, msf_homere_interface, msf_instance, export_import_lang
+#. modules: msf_budget, sync_client, res_currency_tables, financing_contract, msf_homere_interface, msf_instance, export_import_lang, msf_doc_import
 #: view:base.language.export:0
 #: view:base.language.import:0
 #: view:msf.language.import:0
@@ -98763,6 +98789,7 @@ msgstr "Date de Retrait"
 #: view:confirm.import.currencies:0
 #: view:warning.import.currencies:0
 #: code:addons/sync_client/backup.py:124
+#: code:addons/msf_doc_import/purchase_order.py:61
 #, python-format
 msgid "OK"
 msgstr "OK"
@@ -105388,3 +105415,107 @@ msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à 
 #, python-format
 msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1379
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1392
+#, python-format
+msgid "\n"
+"AD"
+msgstr "\n"
+"DA"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:584
+#, python-format
+msgid "%% in AD must be a number (value found %s), AD in file ignored"
+msgstr "%% de la DA doit être un nombre (valeur trouvé %s), DA du fichier ignorée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:616
+#, python-format
+msgid "%s %s not found or inactive , AD in file ignored"
+msgstr "%s %s non trouvé ou inactif, DA du fichier ignoré"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1542
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1550
+#, python-format
+msgid "A batch number is defined on the imported file but the product doesn't require batch number - Batch ignored"
+msgstr "Un numéro de lot est défini dans le fichier d'import mais le produit ne nécessite de pas lot - Numéro de Lot ignoré"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:625
+#, python-format
+msgid "Already has a valid Analytical Distribution"
+msgstr "Possède déjà une DA valide"
+
+#. module: msf_doc_import
+#: field:purchase.order,can_be_auto_exported:0
+msgid "Can be auto exported ?"
+msgstr "Peut être auto exporté ?"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:574
+#, python-format
+msgid "Invalid AD format: %d columns found, multiple of 4 expected"
+msgstr "Format DA invalide: %d colonnes trouvés, une multiple de 4 est attendu"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:907
+#, python-format
+msgid "Line 22 of the file: Analytical Distribution ignored: \n"
+" - %s"
+msgstr "Ligne 22 du fichier: DA ignorée: \n"
+" - %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:49
+#, python-format
+msgid "Manually run export of PO"
+msgstr "Exécuter manuellement l'export du BdC"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen.line,ad_info:0
+msgid "New AD"
+msgstr "Nouvelle AD"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen,ad_info:0
+msgid "New Header AD"
+msgstr "Nouvelle DA en en-tête"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:78
+#, python-format
+msgid "PO %s %d lines rejected"
+msgstr "BdC %s %d lignes rejetées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:76
+#, python-format
+msgid "PO %s successfully exported"
+msgstr "BdC %s exporté avec succès"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Run PO export job"
+msgstr "Exécuter la tâche d'export du BdC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:592
+#, python-format
+msgid "Sum of AD %% must be 100 (value found %s), AD in file ignored"
+msgstr "La somme des %% de la DA doit être de 100 (valeur du fichier %s), DA du fichier ignorée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:52
+#, python-format
+msgid "The PO was already exported, do you want to export it again ?"
+msgstr "Le BdC a déjà été exporté, voulez le ré-exporter ?"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:68
+#, python-format
+msgid "The job to export PO is not active."
+msgstr "La tâche d'export du PO n'est pas active."
