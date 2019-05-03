@@ -105567,3 +105567,11 @@ msgstr "Changement du flag du Numéro de Lot / de la Date d'Expiration"
 #, python-format
 msgid "You are not allowed to have a Batch managed product without an Expiry Date"
 msgstr "Vous n'êtes pas en mesure d'avoir un produit géré par Lots mais sans Date d'Expiration"
+
+#. module: account_override
+#: code:addons/account_override/account.py:1181
+#, python-format
+msgid "The account %s - %s is not allowed.\n"
+"Only internal transfers (in the same currency or not) are allowed in manual journal entries on a liquidity journal."
+msgstr "Le compte %s - %s n'est pas autorisé.\n"
+"Seuls les transferts internes (dans la même devise ou non) sont autorisés dans les écritures comptables manuelles sur un journal de trésorerie."
