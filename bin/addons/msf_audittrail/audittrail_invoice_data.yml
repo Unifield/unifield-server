@@ -288,7 +288,7 @@
         # cf. when an account is removed from a Dest., it is disabled but not unlinked (so still attached to the dest.)
         fields = ['disabled']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , 'account.destination.link'), ('name', 'in', fields)], context=context)
-        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.destination.link'), ('name', '=', 'name')], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.destination.link'), ('name', '=', 'account_id')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.destination.link'), ('name', '=', 'destination_id')], context=context)
 
         name_id = False
