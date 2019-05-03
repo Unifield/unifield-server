@@ -1,0 +1,32 @@
+-
+  For Accounts (account.account), track the creation, modification, and deletion
+-  
+  !python {model: audittrail.rule}: |
+    name = 'Accounts'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.account')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        fields = ['name', 'code', 'parent_id', 'type', 'user_type', 'shrink_entries_for_hq', 'type_for_register', 'accrual_account',
+                  'is_not_hq_correctible', 'is_not_ad_correctable', 'activation_date', 'inactivation_date', 'reconcile',
+                  'reconciliation_credit_account_id', 'reconciliation_debit_account_id', 'default_destination_id', 'has_partner_type_book',
+                  'has_partner_type_empty', 'has_partner_type_esc', 'has_partner_type_ex', 'has_partner_type_external',
+                  'has_partner_type_intermission', 'has_partner_type_internal', 'has_partner_type_local', 'has_partner_type_section',
+                  'note', 'currency_revaluation', 'include_in_yearly_move']
+
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.account'), ('name', 'in', fields)], context=context)
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
