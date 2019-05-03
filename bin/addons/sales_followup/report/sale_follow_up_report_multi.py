@@ -25,7 +25,6 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
-import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -35,12 +34,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         super(sale_follow_up_multi_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
             'getProducts': self._get_products,
-            'saleUstr': self._sale_ustr,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -52,8 +51,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         else:
             self.back_browse = None
 
-    def _sale_ustr(self, string):
-        return tools.ustr(string)
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
     def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []

@@ -56,7 +56,7 @@ class po_follow_up(osv.osv_memory):
             states[state_val] = state_string
         report_parms = {
             'title': 'PO Follow Up per Supplier',
-            'run_date': time.strftime("%d.%m.%Y"),
+            'run_date': wiz.export_format == 'xls' and time.strftime("%Y-%m-%d") or time.strftime("%d.%m.%Y"),
             'date_from': '',
             'date_thru': '',
             'state': '',
@@ -75,13 +75,19 @@ class po_follow_up(osv.osv_memory):
         # Dates
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
-            tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
-            report_parms['date_from'] = tmp.strftime("%d.%m.%Y")
+            if wiz.export_format == 'xls':
+                report_parms['date_from'] = wiz.po_date_from
+            else:
+                tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
+                report_parms['date_from'] = tmp.strftime("%d.%m.%Y")
 
         if wiz.po_date_thru:
             domain.append(('date_order', '<=', wiz.po_date_thru))
-            tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
-            report_parms['date_thru'] = tmp.strftime("%d.%m.%Y")
+            if wiz.export_format == 'xls':
+                report_parms['date_thru'] = wiz.po_date_thru
+            else:
+                tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
+                report_parms['date_thru'] = tmp.strftime("%d.%m.%Y")
 
         # Supplier
         if wiz.partner_id:
