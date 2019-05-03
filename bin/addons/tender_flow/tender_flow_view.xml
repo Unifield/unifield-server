@@ -50,7 +50,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'comparison']), ('internal_state', '=', 'updated')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
+                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'comparison']), ('internal_state', '=', 'updated')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]" on_change="change_supplier(supplier_ids)">
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />

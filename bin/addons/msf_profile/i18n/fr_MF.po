@@ -18642,6 +18642,12 @@ msgstr "ir.translation"
 msgid "At least one RfQ must be in state Updated."
 msgstr "Il doit y avoir au moins une Demande de Devis sous statut 'Mis à jour'."
 
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:452
+#, python-format
+msgid "Please Generate RfQs for all Suppliers"
+msgstr "Veuillez générer les Demandes de Devis pour tous les fournisseur"
+
 #. module: account
 #: help:account.central.journal,amount_currency:0
 #: help:account.common.journal.report,amount_currency:0

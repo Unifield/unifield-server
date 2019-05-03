@@ -211,6 +211,7 @@ class tender(osv.osv):
 
         return super(tender, self).create(cr, uid, vals, context=context)
 
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Check consistency between lines and categ of tender
@@ -229,7 +230,15 @@ class tender(osv.osv):
             ], context=context)
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
 
-        return super(tender, self).write(cr, uid, ids, vals, context=context)
+        r =  super(tender, self).write(cr, uid, ids, vals, context=context)
+        if 'supplier_ids' in vals:
+            for t_id in ids:
+                # prevent deletion of partner if RfQ generated
+                cr.execute("select partner_id from purchase_order po left join tender_supplier_rel sup on sup.tender_id = po.tender_id and sup.supplier_id = po.partner_id  where po.tender_id = %s and sup.supplier_id is null", (t_id,))
+                missing_partners = [x[0] for x in cr.fetchall()]
+                if missing_partners:
+                    super(tender, self).write(cr, uid, [t_id], {'supplier_ids': [(4,x) for x in missing_partners]}, context=context)
+        return r
 
     def onchange_categ(self, cr, uid, ids, category, context=None):
         """
@@ -305,6 +314,14 @@ class tender(osv.osv):
             result['value'].update(location_id=input_loc_id)
 
         return result
+
+    def change_supplier(self, cr, uid, ids, supplier_ids, context=None):
+        if ids and supplier_ids and isinstance(supplier_ids, list) and isinstance(supplier_ids[0], tuple) and len(supplier_ids[0]) == 3:
+            # display generates RfQs
+            nb_po = self.pool.get('purchase.order').search(cr, uid, [('tender_id', 'in', ids)], count=True)
+            return {'value': {'diff_nb_rfq_supplier': nb_po!=len(supplier_ids[0][2])}}
+
+        return {}
 
     def wkf_generate_rfq(self, cr, uid, ids, context=None):
         '''
@@ -470,6 +487,9 @@ class tender(osv.osv):
                                           ('rfq_state', 'in', ('updated',)), ], context=context)
         if not rfq_ids:
             raise osv.except_osv(_('Warning !'), _("At least one RfQ must be in state Updated."))
+
+        if tender.diff_nb_rfq_supplier:
+            raise osv.except_osv(_('Warning !'), _("Please Generate RfQs for all Suppliers"))
 
         return rfq_ids
 
