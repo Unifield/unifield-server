@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- Views -->
+        <record id="view_product_mass_update_form" model="ir.ui.view">
+            <field name="name">product.mass.update.form</field>
+            <field name="model">product.mass.update</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product Mass Update" hide_delete_button="1" >
+                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <group string=" New Data " colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                        <field name="active_product" />
+                        <field name="dangerous_goods" />
+                        <field name="heat_sensitive_item" />
+                        <field name="single_use" />
+                        <field name="short_shelf_life" />
+                        <field name="alert_time" />
+                        <field name="life_time" />
+                        <field name="use_time" />
+                        <field name="procure_delay" />
+                        <field name="procure_method" />
+                        <group colspan="2">
+                            <field name="product_state" attrs="{'readonly':['|', ('empty_status', '=', True), ('state', '!=', 'draft')]}" />
+                            <field name="empty_status" on_change="onchange_status_check(empty_status)" />
+                        </group>
+                        <field name="sterilized" />
+                        <field name="supply_method" />
+                        <field name="seller_id" />
+                        <group colspan="2">
+                            <field name="property_account_income" attrs="{'readonly':['|', ('empty_inc_account', '=', True), ('state', '!=', 'draft')]}"
+                                domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
+                            <field name="empty_inc_account" on_change="onchange_inc_check(empty_inc_account)" />
+                        </group>
+                        <group colspan="2">
+                            <field name="property_account_expense" attrs="{'readonly':['|', ('empty_exp_account', '=', True), ('state', '!=', 'draft')]}"
+                                domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
+                            <field name="empty_exp_account" on_change="onchange_exp_check(empty_exp_account)" />
+                        </group>
+                    </group>
+                    <field name="has_not_deactivable" invisible="1" />
+                    <group colspan="4" attrs="{'invisible':[('has_not_deactivable', '=', False), ('state', 'not in', ['in_progress', 'error'])]}">
+                        <html>
+                            <style>
+                                #prod_mass_upd_error p, #prod_mass_upd_error span, #prod_mass_upd_error textarea {
+                                    text-align: center;
+                                    v-align: middle;
+                                    color: red;
+                                    font-weight: bold;
+                                    font-size: 1.2em;
+                                    resize: None;
+                                }
+                            </style>
+                            <div id="prod_mass_upd_error">
+                                <field name="message" colspan="4" nolabel="1" />
+                            </div>
+                        </html>
+                    </group>
+                    <group colspan="4">
+                        <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', 'not in', ['in_progress', 'done'])]}"/>
+                        <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                        <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
+                    </group>
+                    <notebook>
+                        <page string="Products">
+                            <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
+                            </group>
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f'])]">
+                                <tree string="Products" hide_edit_button="1" colors="grey:active == False">
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="active" invisible="1" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Non-Deactivable Products" attrs="{'invisible': [('has_not_deactivable', '=', False)]}">
+                            <button name="export_product_errors" string="Export Product List" icon="gtk-execute" colspan="4" type="object" />
+                            <field name="not_deactivated_product_ids" colspan="4" nolabel="1" readonly="1">
+                                <tree string="Products" noteditable="1">
+                                    <field name="product_id" />
+                                    <field name="stock_exist" />
+                                    <field name="open_documents" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group colspan="4">
+                        <field name="state" colspan="2" />
+                        <button name="cancel_update" string="Delete Update" icon="gtk-cancel" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" colspan="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_product_mass_update_tree" model="ir.ui.view">
+            <field name="name">product.mass.update.tree</field>
+            <field name="model">product.mass.update</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error')">
+                    <field name="name"/>
+                    <field name="product_ids"/>
+                    <field name="date_done"/>
+                    <field name="user_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_product_mass_update_search" model="ir.ui.view">
+            <field name="name">product.mass.update.search</field>
+            <field name="model">product.mass.update</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Product Mass Update">
+                    <field name="name"/>
+                    <field name="date_done"/>
+                    <field name="user_id"/>
+                    <field name="state"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Menu -->
+        <record id="previous_mass_update_action" model="ir.actions.act_window">
+            <field name="name">Product Mass Update</field>
+            <field name="res_model">product.mass.update</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_product_mass_update_tree"/>
+            <field name="context">{}</field>
+        </record>
+    </data>
+</openerp>

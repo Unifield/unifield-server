@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');black:virtual_available&gt;=0 and state not in ('draft', 'end', 'obsolete')" string="Products">
+                        <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');grey:active == False" string="Products">
                         <field name="default_code" string="Code"/>
                         <field name="name" string="Description"/>
                         <field name="categ_id" invisible="1"/>
@@ -28,6 +28,7 @@
                         <field name="international_status"/>
                         <field name="uf_create_date" string="Creation"/>
                         <field name="uf_write_date" string="Modification"/>
+                        <field name="active" invisible="1"/>
                        </tree>
                     </xpath>
                 </data>
@@ -852,6 +853,10 @@
                 </form>
             </field>
         </record>
+
+        <!-- Product Mass Update Menu -->
+        <menuitem id="product.parent_product_mass_update" parent="product_attributes.menu_main_product" name="Products Update" />
+        <menuitem action="product.previous_mass_update_action" id="menu_import_request" sequence="1" parent="product.parent_product_mass_update" />
 
     </data>
 </openerp>
