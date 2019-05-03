@@ -74,6 +74,7 @@
                             <field name="old_code"/>
                             <field name="sale_ok" invisible="1" />
                             <field name="purchase_ok" invisible="1" />
+                            <field name="xmlid_code" invisible="1" />
                         </group>
                     </group>
 
