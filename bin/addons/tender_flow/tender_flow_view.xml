@@ -50,12 +50,14 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'comparison']), ('internal_state', '=', 'updated')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]" on_change="change_supplier(supplier_ids)">
-                                <tree string="Suppliers">
+                            <field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'comparison']), ('internal_state', '=', 'updated')]}" domain="[('check_partner_rfq', '=', active_id),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]" context="{'tender_id': parent_id}"  on_change="change_supplier(supplier_ids)">
+                                <tree string="Suppliers" hide_delete_button="1">
                                     <field name="name" />
                                     <field name="partner_type" />
                                     <field name="city" />
                                     <field name="country" />
+                                    <field name="is_rfq_generated" invisible="1"/>
+                                    <button name="deletem2m" string="Delete" special="deletem2m" icon="gtk-del" attrs="{'invisible': [('is_rfq_generated', '=', True)]}"/>
                                 </tree>
                             </field>
                         </page>

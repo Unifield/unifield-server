@@ -114,41 +114,43 @@ class tender(osv.osv):
             res[tender.id] = diff_number
         return res
 
-    _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
-                'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
-                'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
-                'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
-                                                 states={'draft': [('readonly', False)], 'comparison': [('readonly', False)]}, readonly=True,
-                                                 context={'search_default_supplier': 1, }),
-                'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft': [('readonly', False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
-                'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
-                'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
-                'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
-                'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
-                'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
-                'details': fields.char(size=30, string="Details", states={'draft': [('readonly', False)], }, readonly=True),
-                'requested_date': fields.date(string="Requested Date", required=True, states={'draft': [('readonly', False)], }, readonly=True),
-                'notes': fields.text('Notes'),
-                'internal_state': fields.selection([('draft', 'Draft'), ('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
-                'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
-                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
-                'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
-                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
-                'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
-                }
+    _columns = {
+        'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
+        'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
+        'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
+                                         states={'draft': [('readonly', False)], 'comparison': [('readonly', False)]}, readonly=True,
+                                         context={'search_default_supplier': 1, }),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft': [('readonly', False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
+        'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
+        'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
+        'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
+        'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
+        'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
+        'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
+        'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
+        'details': fields.char(size=30, string="Details", states={'draft': [('readonly', False)], }, readonly=True),
+        'requested_date': fields.date(string="Requested Date", required=True, states={'draft': [('readonly', False)], }, readonly=True),
+        'notes': fields.text('Notes'),
+        'internal_state': fields.selection([('draft', 'Draft'), ('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
+        'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
+        'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
+        'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
+        'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
+    }
 
-    _defaults = {'categ': False,
-                 'state': 'draft',
-                 'internal_state': 'draft',
-                 'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
-                 'creator': lambda obj, cr, uid, context: uid,
-                 'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-                 'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
-                 'priority': 'normal',
-                 'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
-                 }
+    _defaults = {
+        'categ': False,
+        'state': 'draft',
+        'internal_state': 'draft',
+        'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'creator': lambda obj, cr, uid, context: uid,
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'priority': 'normal',
+        'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
+    }
 
     _sql_constraints = [
     ]
@@ -2313,3 +2315,28 @@ class procurement_request_sourcing_document(osv.osv):
 
 
 procurement_request_sourcing_document()
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    def _get_is_rfq_generated(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        if context is None:
+            context = {}
+
+        if not context.get('tender_id'):
+            return ret
+
+        cr.execute('select partner_id from purchase_order where tender_id = %s', (context['tender_id'], ))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
+    _columns = {
+        'is_rfq_generated': fields.function(_get_is_rfq_generated, method=1, internal=1, type='boolean', string='RfQ Generated for the tender in context'),
+    }
+res_partner()
