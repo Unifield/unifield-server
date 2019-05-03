@@ -38,6 +38,7 @@ import time
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
+    _trace = True
 
     def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
         if not context:

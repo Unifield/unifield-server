@@ -24,6 +24,7 @@ from osv import fields, osv
 class account_target_costcenter(osv.osv):
     _name = 'account.target.costcenter'
     _rec_name = 'cost_center_id'
+    _trace = True
     
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
