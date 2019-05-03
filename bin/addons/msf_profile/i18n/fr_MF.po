@@ -16904,6 +16904,7 @@ msgstr "%s update%s"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:change.bn.ed.mandatory.wizard:0
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -25232,7 +25233,7 @@ msgstr "# push data"
 msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
-#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance
+#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -25272,6 +25273,10 @@ msgstr "Europe/Bucharest"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:177
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:178
+#: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:179
+#: view:change.bn.ed.mandatory.wizard:0
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -105525,3 +105530,40 @@ msgstr "Le BdC a déjà été exporté, voulez le ré-exporter ?"
 #, python-format
 msgid "The job to export PO is not active."
 msgstr "La tâche d'export du PO n'est pas active."
+
+#. module: product_attributes
+#: view:change.bn.ed.mandatory.wizard:0
+msgid "\n"
+"                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>\n"
+"                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>\n"
+"                                If you continue, products or transactions may be blocked.<br/><br/>\n"
+"                                Do you still want to continue ?\n"
+"                            "
+msgstr "\n"
+"                                Ce produit est toujours en cours d'utilisation, changer le flag de Numéro de Lot / Date d'Expiration aura un impact sur les quantités en stock ou sur les transactions en cours, les rendant indisponibles pour toute transaction.<br/><br/>\n"
+"                                Veuillez vous assurez que le produit n'est plus en cours d'utilisation avant de modifier ces valeurs.<br/><br/>\n"
+"                                Si vous continuez, les produits ou les transactions pourraient être bloqué(e)s.<br/><br/>\n"
+"                                Voulez-vous quand même continuer ?\n"
+"                            "
+
+#. module: product
+#: view:product.product:0
+msgid "Make mandatory"
+msgstr "Rendre obligatoire"
+
+#. module: product
+#: view:product.product:0
+msgid "Remove mandatory"
+msgstr "Enlever l'obligation"
+
+#. module: product_attributes
+#: view:change.bn.ed.mandatory.wizard:0
+msgid "Batch Number / Expiry Date flags change"
+msgstr "Changement du flag du Numéro de Lot / de la Date d'Expiration"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1798
+#: code:addons/product_attributes/product_attributes.py:1804
+#, python-format
+msgid "You are not allowed to have a Batch managed product without an Expiry Date"
+msgstr "Vous n'êtes pas en mesure d'avoir un produit géré par Lots mais sans Date d'Expiration"
