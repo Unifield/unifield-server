@@ -61,7 +61,7 @@ class stock_move_consume(osv.osv_memory):
 
     _columns = {
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
-        'product_qty': fields.float('Quantity', required=True),
+        'product_qty': fields.float('Quantity', required=True, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True)
     }
@@ -79,7 +79,7 @@ class stock_move_consume(osv.osv_memory):
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
         move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty', 'location_id'], context=context)
+                                                ['product_id', 'product_uom', 'product_qty', 'location_id'], context=context)
         if 'product_id' in fields:
             res.update({'product_id': move['product_id'][0]})
         if 'product_uom' in fields:
@@ -106,8 +106,8 @@ class stock_move_consume(osv.osv_memory):
         move_ids = context['active_ids']
         for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
             move_obj.action_consume(cr, uid, move_ids,
-                             data['product_qty'], data['location_id'],
-                             context=context)
+                                    data['product_qty'], data['location_id'],
+                                    context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 stock_move_consume()
@@ -135,7 +135,7 @@ class stock_move_scrap(osv.osv_memory):
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
         move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty'], context=context)
+                                                ['product_id', 'product_uom', 'product_qty'], context=context)
         location_obj = self.pool.get('stock.location')
         scrpaed_location_ids = location_obj.search(cr, uid, [('scrap_location','=',True)])
 
@@ -168,8 +168,8 @@ class stock_move_scrap(osv.osv_memory):
         move_ids = context['active_ids']
         for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
             move_obj.action_scrap(cr, uid, move_ids,
-                             data['product_qty'], data['location_id'],
-                             context=context)
+                                  data['product_qty'], data['location_id'],
+                                  context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 stock_move_scrap()
@@ -206,14 +206,14 @@ class split_in_production_lot(osv.osv_memory):
         return res
 
     _columns = {
-        'qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'qty': fields.float('Quantity', related_uom='product_uom'),
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
         'product_uom': fields.many2one('product.uom', 'UoM'),
         'line_ids': fields.one2many('stock.move.split.lines', 'lot_id', 'Production Lots'),
         'line_exist_ids': fields.one2many('stock.move.split.lines.exist', 'lot_id', 'Production Lots'),
         'use_exist' : fields.boolean('Existing Lots', help="Check this option to select existing lots in the list below, otherwise you should enter new ones line by line."),
         'location_id': fields.many2one('stock.location', 'Source Location')
-     }
+    }
 
     def split_lot(self, cr, uid, ids, context=None):
         """ To split a lot
@@ -263,7 +263,7 @@ class split_in_production_lot(osv.osv_memory):
                     total_move_qty += quantity
                     if total_move_qty > move_qty:
                         raise osv.except_osv(_('Processing Error'), _('Processing quantity %d for %s is larger than the available quantity %d!')\
-                                     %(total_move_qty, move.product_id.name, move_qty))
+                                             %(total_move_qty, move.product_id.name, move_qty))
                     if quantity <= 0 or move_qty == 0:
                         continue
                     quantity_rest -= quantity
@@ -292,7 +292,7 @@ class split_in_production_lot(osv.osv_memory):
                         prodlot_id = prodlot_obj.create(cr, uid, {
                             'name': line.name,
                             'product_id': move.product_id.id},
-                        context=context)
+                            context=context)
 
                     move_obj.write(cr, uid, [current_move], {'prodlot_id': prodlot_id, 'state':move.state})
 
@@ -323,7 +323,7 @@ class stock_move_split_lines_exist(osv.osv_memory):
     def onchange_lot_id(self, cr, uid, ids, prodlot_id=False, product_qty=False,
                         loc_id=False, product_id=False, uom_id=False):
         return self.pool.get('stock.move').onchange_lot_id(cr, uid, [], prodlot_id, product_qty,
-                        loc_id, product_id, uom_id)
+                                                           loc_id, product_id, uom_id)
 
 stock_move_split_lines_exist()
 

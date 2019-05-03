@@ -198,6 +198,7 @@ class float(_column):
 
         # custom fields
         self.computation = args.get('computation', False)
+        self.related_uom = args.get('related_uom', False)
 
     def digits_change(self, cr):
         if self.digits_compute:
@@ -772,6 +773,7 @@ class function(_column):
 
         # custom fields
         self.computation = args.get('computation', False)
+        self.related_uom = args.get('related_uom', False)
 
         if args.get('_fnct_migrate', False):
             self._fnct_migrate = args['_fnct_migrate']

@@ -312,6 +312,7 @@ class shipment_family_processor(osv.osv):
     _name = 'shipment.family.processor'
     _inherit = 'ppl.family.processor'
     _description = 'Family of the shipment to process'
+    _order = 'sale_order_id, ppl_id, from_pack, id'
 
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         """

@@ -79,6 +79,7 @@
         <record id="trans_pol_draft_validated" model="workflow.transition">
             <field name="act_from" ref="act_pol_draft"/>
             <field name="act_to" ref="act_pol_validated"/>
+            <field name="sequence" eval="10" />
             <field name="signal">validated</field>
         </record>
 
@@ -86,11 +87,19 @@
             <record id="trans_pol_draft_validated_n" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
                 <field name="act_to" ref="act_pol_validated_n"/>
+                <field name="sequence" eval="20" />
                 <field name="condition">set_as_validated_n == True</field>
             </record>
             <record id="trans_pol_validated_n_to_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated_n"/>
                 <field name="act_to" ref="act_pol_validated"/>
+                <field name="sequence" eval="10" />
+                <field name="signal">validated</field>
+            </record>
+            <record id="trans_pol_validated_validated" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated"/>
+                <field name="act_to" ref="act_pol_validated"/>
+                <field name="sequence" eval="11" />
                 <field name="signal">validated</field>
             </record>
         <!-- end validated-n -->
@@ -99,26 +108,31 @@
             <record id="trans_pol_validated_sourced_sy" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated"/>
                 <field name="act_to" ref="act_pol_sourced_sy"/>
+                <field name="sequence" eval="10" />
                 <field name="signal">sourced_sy</field>
             </record>
             <record id="trans_pol_validated_sourced_v" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated"/>
                 <field name="act_to" ref="act_pol_sourced_v"/>
+                <field name="sequence" eval="20" />
                 <field name="signal">sourced_v</field>
             </record>
             <record id="trans_pol_sourced_sy_sourced_v" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_sy"/>
                 <field name="act_to" ref="act_pol_sourced_v"/>
+                <field name="sequence" eval="10" />
                 <field name="signal">sourced_v</field>
             </record>
             <record id="trans_pol_sourced_sy_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_sy"/>
                 <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="sequence" eval="20" />
                 <field name="signal">confirmed</field>
             </record>
             <record id="trans_pol_sourced_v_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_v"/>
                 <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="sequence" eval="10" />
                 <field name="signal">confirmed</field>
             </record>
         <!-- end sourced-XXX -->
@@ -127,16 +141,25 @@
             <record id="trans_pol_draft_sourced_n" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
                 <field name="act_to" ref="act_pol_sourced_n"/>
+                <field name="sequence" eval="30" />
                 <field name="condition">set_as_sourced_n == True</field>
+            </record>
+            <record id="trans_pol_draft_sourced_sy" model="workflow.transition">
+                <field name="act_from" ref="act_pol_draft"/>
+                <field name="act_to" ref="act_pol_sourced_sy"/>
+                <field name="sequence" eval="35" />
+                <field name="signal">sourced_sy</field>
             </record>
             <record id="trans_pol_sourced_n_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_n"/>
                 <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="sequence" eval="10" />
                 <field name="signal">confirmed</field>
             </record>
             <record id="trans_pol_sourced_n_validated" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_n"/>
                 <field name="act_to" ref="act_pol_validated"/>
+                <field name="sequence" eval="20" />
                 <field name="signal">validated</field>
             </record>
         <!-- end sourced-n -->
@@ -144,16 +167,19 @@
         <record id="trans_pol_validated_confirmed" model="workflow.transition">
             <field name="act_from" ref="act_pol_validated"/>
             <field name="act_to" ref="act_pol_confirmed"/>
+            <field name="sequence" eval="30" />
             <field name="signal">confirmed</field>
         </record>
         <record id="trans_pol_validated_n_confirmed" model="workflow.transition">
             <field name="act_from" ref="act_pol_validated_n"/>
             <field name="act_to" ref="act_pol_confirmed"/>
+            <field name="sequence" eval="20" />
             <field name="signal">confirmed</field>
         </record>
         <record id="trans_pol_confirmed_done" model="workflow.transition">
             <field name="act_from" ref="act_pol_confirmed"/>
             <field name="act_to" ref="act_pol_done"/>
+            <field name="sequence" eval="10" />
             <field name="signal">done</field>
         </record>
 
@@ -161,71 +187,85 @@
             <record id="trans_pol_draft_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="40" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_validated_n_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated_n"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="30" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_validated_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="40" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_sourced_sy_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_sy"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="30" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_sourced_v_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_v"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="20" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_sourced_n_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_n"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="30" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_confirmed_cancel" model="workflow.transition">
                 <field name="act_from" ref="act_pol_confirmed"/>
                 <field name="act_to" ref="act_pol_cancel"/>
+                <field name="sequence" eval="20" />
                 <field name="signal">cancel</field>
             </record>
             <record id="trans_pol_draft_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="50" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_validated_n_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated_n"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="40" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_validated_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="50" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_sourced_sy_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_sy"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="40" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_sourced_v_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_v"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="30" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_sourced_n_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_sourced_n"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="40" />
                 <field name="signal">cancel_r</field>
             </record>
             <record id="trans_pol_confirmed_cancel_r" model="workflow.transition">
                 <field name="act_from" ref="act_pol_confirmed"/>
                 <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="sequence" eval="30" />
                 <field name="signal">cancel_r</field>
             </record>
         <!-- end cancel -->

@@ -653,7 +653,7 @@ class wizard_delete_lines(osv.osv_memory):
             'target': 'new',
         }
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         '''
         On this fields_get method, we build the line_ids field.
         The line_ids field is defined as a text field but, for users, this

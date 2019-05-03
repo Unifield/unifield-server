@@ -251,12 +251,7 @@ class ir_translation(osv.osv):
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         if clear:
-            for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return ids
 
     def write(self, cursor, user, ids, vals, clear=True, context=None):
@@ -287,13 +282,23 @@ class ir_translation(osv.osv):
                 result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
 
         if clear:
-            for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return result
+
+    def clear_transid(self, cr, uid, ids, context=None):
+        """
+        Clears the translation cache
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for trans_obj in self.read(cr, uid, ids, ['name','type','res_id','src','lang'], context=context):
+            self._get_source.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+            self._get_ids.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+            self._get_ids_dict.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'],trans_obj['lang'], [trans_obj['res_id']])
+        return True
 
     def unlink(self, cursor, user, ids, clear=True, context=None):
         if context is None:
