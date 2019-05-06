@@ -60513,6 +60513,12 @@ msgstr "Header notes:"
 msgid "The account \"%s - %s\" is set as \"Prevent correction on account codes\"."
 msgstr "Le compte \"%s - %s\" est défini comme \"Empêcher toutes corrections sur ce code comptable\"."
 
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:136
+#, python-format
+msgid "The account \"%s - %s\" is set as \"Prevent Reconciliation with different currencies\"."
+msgstr "Le compte \"%s - %s\" est défini comme \"Empêcher le Lettrage avec des devises différentes\"."
+
 #. module: sync_client
 #: code:addons/sync_client/update.py:1019
 #: model:ir.actions.act_window,name:sync_client.update_received_action
@@ -105388,3 +105394,8 @@ msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à 
 #, python-format
 msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
 msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
+
+#. module: account
+#: field:account.account,prevent_multi_curr_rec:0
+msgid "Prevent Reconciliation with different currencies"
+msgstr "Empêcher le Lettrage avec des devises différentes"

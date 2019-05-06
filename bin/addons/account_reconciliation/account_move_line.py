@@ -133,7 +133,7 @@ class account_move_line(osv.osv):
                 if aml.currency_id:
                     currencies.add(aml.currency_id.id)
             if len(currencies) > 1:
-                raise osv.except_osv(_('Warning'), _('The account %s - %s is set as "Prevent Reconciliation with different currencies".') %
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is set as "Prevent Reconciliation with different currencies".') %
                                      (rec_account.code, rec_account.name))
 
     def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
