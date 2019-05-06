@@ -99,7 +99,7 @@ class tender(osv.osv):
             res[tender.id] = retour
         return res
 
-    _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
+    _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True, sort_column='id'),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
@@ -137,7 +137,7 @@ class tender(osv.osv):
     _sql_constraints = [
     ]
 
-    _order = 'name desc'
+    _order = 'id desc'
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''

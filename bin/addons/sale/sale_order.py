@@ -545,8 +545,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
 
     _columns = {
-        'name': fields.char('Order Reference', size=64, required=True,
-                            readonly=True, states={'draft': [('readonly', False)]}, select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
@@ -689,7 +688,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
     ]
 
-    _order = 'name desc'
+    _order = 'id desc'
 
     # Form filling
     def unlink(self, cr, uid, ids, context=None):
