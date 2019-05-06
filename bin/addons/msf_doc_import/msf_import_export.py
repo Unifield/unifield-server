@@ -23,7 +23,6 @@ import base64
 import time
 import logging
 
-import pooler
 import tools
 
 from osv import fields
@@ -240,17 +239,21 @@ class msf_import_export(osv.osv_memory):
         headers = []
         if not field_list:
             field_list = MODEL_DATA_DICT[selection]['header_list']
-        model_obj = self.pool.get(model)
 
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
+        model_obj = self.pool.get(model)
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
 
         for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
 
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
@@ -327,6 +330,8 @@ class msf_import_export(osv.osv_memory):
                 result['value']['hide_download_all_entries'] = hide_all
                 csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
                 result['value']['csv_button'] = csv_button
+
+                result['value']['display_file_import'] = MODEL_DATA_DICT[model_list_selection].get('display_file_import', True)
             else:
                 result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
@@ -477,7 +482,11 @@ class msf_import_export(osv.osv_memory):
         field_list = MODEL_DATA_DICT[selection]['header_list']
 
         fields_get_dict = {}  # keep fields_get result in cache
-        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            new_ctx['lang'] = MODEL_DICT[selection]['lang']
+
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=new_ctx)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
                                               'than expected (get %s, expected %s). Check your import file and ' \
@@ -485,7 +494,7 @@ class msf_import_export(osv.osv_memory):
 
         for field_index, field in enumerate(field_list):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                                                            fields_get_dict, context=context)
+                                                            fields_get_dict, context=new_ctx)
             first_part = field.split('.')[0]
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
             if custom_name:
@@ -509,7 +518,6 @@ class msf_import_export(osv.osv_memory):
                                                fields_get_dict[child_model][child_field]['string'])
                 else:
                     column_name = fields_get_dict[model][first_part]['string']
-
             file_column_name = header_columns[field_index] or ''
             if column_name.upper() != file_column_name.upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
@@ -557,7 +565,10 @@ class msf_import_export(osv.osv_memory):
             }, context=context)
             return res
 
-    def import_xml(self, cr, uid, ids, context=None):
+    def button_import_xml(self, cr, uid, ids, context=None):
+        return self.import_xml(cr, uid, ids, context=context)
+
+    def import_xml(self, cr, uid, ids, raise_on_error=False, context=None):
         """Create a thread to import the data after import checking
         """
         if context is None:
@@ -567,7 +578,6 @@ class msf_import_export(osv.osv_memory):
 
         self.check_import(cr, uid, ids, context=context)
 
-        res = (False, False, False)
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
             if context.get('row'):
@@ -604,7 +614,7 @@ class msf_import_export(osv.osv_memory):
                     if index > len(MODEL_DATA_DICT[selection].get('header_info')) - 1:
                         break
 
-            res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)
+            #res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)
             # thread = threading.Thread(
             #     target=self.bg_import,
             #     args=(cr.dbname, uid, wiz, expected_headers, rows, context),
@@ -614,9 +624,9 @@ class msf_import_export(osv.osv_memory):
             # # in case background is needed, just set a value to wait time
             # wait_time = None
             # thread.join(wait_time)
-        return res
+        return self.bg_import(cr, uid, wiz, expected_headers, rows, raise_on_error=raise_on_error,  context=context)
 
-    def bg_import(self, dbname, uid, import_brw, headers, rows, context=None):
+    def bg_import(self, cr, uid, import_brw, headers, rows, raise_on_error=False, context=None):
         """
         Run the import of lines in background
         :param dbname: Name of the database
@@ -629,7 +639,9 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
-        cr = pooler.get_db(dbname).cursor()
+
+        dbname = cr.dbname
+
         model = MODEL_DICT[import_brw.model_list_selection]['model']
         impobj = self.pool.get(model)
         acc_obj = self.pool.get('account.account')
@@ -640,7 +652,8 @@ class msf_import_export(osv.osv_memory):
 
         # Manage errors
         import_errors = {}
-        allow_partial = MODEL_DICT[import_brw.model_list_selection].get('partial')
+        allow_partial = not raise_on_error and MODEL_DICT[import_brw.model_list_selection].get('partial')
+        forced_values =  MODEL_DICT[import_brw.model_list_selection].get('forced_values', {})
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -792,6 +805,9 @@ class msf_import_export(osv.osv_memory):
                 )
                 continue
             if res < 0:
+                if raise_on_error:
+                    raise Exception('Line %s: %s' % (row_index+1, '\n'.join(errors)))
+
                 save_error(errors, row_index)
                 rejected.append((row_index+1, line_data, '\n'.join(errors)))
                 continue
@@ -828,10 +844,13 @@ class msf_import_export(osv.osv_memory):
                             if len(line_data[n]) > max_size:
                                 msg_tpl = "field '%s' value exceed field length of %d"
                                 msg = msg_tpl % (h , max_size, )
+                                error = "Line %s, row: %s, %s" % (i, n, msg, )
+                                if raise_on_error:
+                                    raise Exception(error)
+
                                 logging.getLogger('import data').info(
                                     'Error %s'% (msg, ))
                                 cr.rollback()
-                                error = "Line %s, row: %s, %s" % (i, n, msg, )
                                 save_error(error, row_index)
                                 nb_error += 1
                                 line_ok = False
@@ -985,6 +1004,8 @@ class msf_import_export(osv.osv_memory):
                     if not data.get('groups_id'):
                         data['groups_id'] = [(6, 0, [])]
 
+                data.update(forced_values)
+
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
@@ -1010,13 +1031,17 @@ class msf_import_export(osv.osv_memory):
                         cr.commit()
             except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
+                if raise_on_error:
+                    raise Exception('Line %s, %s' % (row_index+2, e.value))
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
-                cr.rollback()
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
+                if raise_on_error:
+                    raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
+                cr.rollback()
                 save_error(tools.ustr(e), row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, tools.ustr(e)))
@@ -1087,8 +1112,8 @@ class msf_import_export(osv.osv_memory):
             prod_nomenclature_obj._cache[dbname] = {}
 
 
-        cr.commit()
-        cr.close()
+        if allow_partial:
+            cr.commit()
 
         return (processed, rejected, [tu[0] for tu in headers])
 

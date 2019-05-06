@@ -42,6 +42,7 @@ class button_access_rule(osv.osv):
         return res
 
     _columns = {
+        'create_date': fields.date('Creation date', readonly=True),
         'name': fields.char('Name', size=256, required=True),
         'label': fields.char('Label', size=256),
         'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),
@@ -53,11 +54,13 @@ class button_access_rule(osv.osv):
         'group_names': fields.function(_get_group_names, type='char', method=True, string='Group Names', help='A list of all group names given button access by this rule'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied.'),
         'deprecated': fields.boolean('Deprecated'),
+        'bar_type': fields.selection([('IT', 'IT'), ('Supply', 'Supply'), ('Finance', 'Finance')], string='Type'),
     }
 
     _defaults = {
         'active': True,
         'deprecated': True,
+        'bar_type': False,
     }
 
     _sql_constraints = [
