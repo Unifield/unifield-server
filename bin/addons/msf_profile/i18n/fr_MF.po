@@ -105895,3 +105895,9 @@ msgstr "Mettre le Statut à vide"
 #, python-format
 msgid "For this Supplier you have to select a Sourcing Group"
 msgstr "Vous devez sélectionner un Groupe de Sourcing pour ce Fournisseur"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:586
+#, python-format
+msgid "The file \"%s\" contains only B/S lines."
+msgstr "Le fichier \"%s\" contient uniquement des lignes de bilan."

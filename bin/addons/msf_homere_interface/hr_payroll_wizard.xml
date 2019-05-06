@@ -267,6 +267,7 @@
             view_mode="form"
             view_type="form"
             target="new"
+            empty_ids="1"
             view_id="payroll_deletion_wizard"/>
 
         <!-- Payment Orders -->
