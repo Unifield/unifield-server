@@ -210,6 +210,8 @@ class account_move_line_reconcile(osv.osv_memory):
         if debit <= 10**-3 or credit <= 10**-3:
             raise osv.except_osv(_('Error'), _('Both Debit and Credit lines are required for reconciliation.'))
 
+        account_move_line_obj.check_multi_curr_rec(cr, uid, context.get('active_ids', []), context=context)
+
         # Adapt state value
         if diff_in_booking <= 10**-3:
             state = 'total'
