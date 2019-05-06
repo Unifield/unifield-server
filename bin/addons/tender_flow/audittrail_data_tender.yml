@@ -79,7 +79,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['qty', 'product_id']
+        fields = ['qty', 'product_id', 'supplier_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender.line'), ('name', 'in', fields)], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'tender_id')], context=context)
 
