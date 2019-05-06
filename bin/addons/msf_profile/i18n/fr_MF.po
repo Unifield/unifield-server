@@ -105901,3 +105901,8 @@ msgstr "Vous devez sélectionner un Groupe de Sourcing pour ce Fournisseur"
 #, python-format
 msgid "The file \"%s\" contains only B/S lines."
 msgstr "Le fichier \"%s\" contient uniquement des lignes de bilan."
+
+#. module: analytic_override
+#: field:account.analytic.account,is_pf:0
+msgid "Is the default Funding Pool \"PF\""
+msgstr "Est le Funding Pool par défaut \"PF\""

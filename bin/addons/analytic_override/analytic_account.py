@@ -211,6 +211,21 @@ class analytic_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
+    def _is_pf(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns True if the Analytic Account is the default Funding Pool "MSF Private Funds"
+        """
+        res = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        # get the id of PF
+        try:
+            pf_id = ir_model_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            pf_id = 0
+        for analytic_acc_id in ids:
+            res[analytic_acc_id] = analytic_acc_id == pf_id
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -228,6 +243,7 @@ class analytic_account(osv.osv):
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'intermission_restricted': fields.function(_get_fake, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
         'balance': fields.function(_debit_credit_bal_qtty, method=True, type='float', string='Balance', digits_compute=dp.get_precision('Account'), multi='debit_credit_bal_qtty'),
+        'is_pf': fields.function(_is_pf, method=True, type='boolean', string='Is the default Funding Pool "PF"', store=False),
     }
 
     _defaults ={
@@ -482,7 +498,7 @@ class analytic_account(osv.osv):
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
-            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
+            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id', 'is_pf'], context=context)[0]
             if cat_instance:
                 self.check_fp(cr, uid, cat_instance, context=context)
         self._check_name_unicity(cr, uid, ids, context=context)
