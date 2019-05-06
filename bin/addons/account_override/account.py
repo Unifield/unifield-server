@@ -38,6 +38,7 @@ class account_account(osv.osv):
     '''
     _name = "account.account"
     _inherit = "account.account"
+    _trace = True
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
