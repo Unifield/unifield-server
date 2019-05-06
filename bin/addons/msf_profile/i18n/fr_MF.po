@@ -56041,8 +56041,8 @@ msgstr "Toutes les Ecritures Analytiques"
 
 #. module: account_mcdb
 #: view:output.currency.for.export:0
-msgid "Excel and CSV format are limited to 65000 records. If the number of exported records exceeds 15000 the result will be a zip file."
-msgstr "Les formats Excel et CSV sont limités à 65000 lignes. Si le nombre de lignes dépasse les 15000, le résultat sera un fichier zip."
+msgid "If the number of exported records exceeds 15000 the result will be a zip file."
+msgstr "Si le nombre de lignes dépasse les 15000, le résultat sera un fichier zip."
 
 #. module: stock
 #: code:addons/stock/wizard/stock_change_product_qty.py:81
@@ -92503,9 +92503,10 @@ msgstr "Code de travailleur déjà utilisé par : %s %s"
 msgid "Repeatition"
 msgstr "Répétition"
 
-#. module: sync_client
+#. module: sync_client, account_mcdb
 #: field:sync.client.message_received,run:0
 #: field:sync.client.update_received,run:0
+#: view:output.currency.for.export:0
 msgid "Run"
 msgstr "Exécuter"
 
@@ -105906,3 +105907,13 @@ msgstr "Le fichier \"%s\" contient uniquement des lignes de bilan."
 #: field:account.analytic.account,is_pf:0
 msgid "Is the default Funding Pool \"PF\""
 msgstr "Est le Funding Pool par défaut \"PF\""
+
+#. module: account_mcdb
+#: field:finance.sync.query.activation_wizard,list:0
+msgid "Queries"
+msgstr "Requêtes"
+
+#. module: account_mcdb
+#: view:output.currency.for.export:0
+msgid "There is more than 50000 records, do you still want to continue ?"
+msgstr "Il y a plus de 50000 enregistrements, voulez-vous continuer ?"
