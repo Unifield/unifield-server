@@ -71,33 +71,34 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Browse result
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
             # Update wizard
-            self.write(cr, uid, [w.id], {'message': _('Grouping by currencies…'), 'progression': 10.0})
+            self.write(cr, uid, [w.id], {'message': _('Grouping by currency and date…'), 'progression': 10.0})
             # Search all currencies (to create moves)
-            available_currencies = {}
+            curr_date_group = {}
             for entry in b_entries:
-                if (entry.currency_id.id, entry.period_id.id) not in available_currencies:
-                    available_currencies[(entry.currency_id.id, entry.period_id.id)] = []
-                available_currencies[(entry.currency_id.id, entry.period_id.id)].append(entry)
+                # note: having different periods is possible only for December dates (ex: Period 13 and 14)
+                if (entry.currency_id.id, entry.period_id.id, entry.document_date) not in curr_date_group:
+                    curr_date_group[(entry.currency_id.id, entry.period_id.id, entry.document_date)] = []
+                curr_date_group[(entry.currency_id.id, entry.period_id.id, entry.document_date)].append(entry)
             # Update wizard
-            self.write(cr, uid, ids, {'message': _('Writing a move for each currency…'), 'progression': 20.0})
+            self.write(cr, uid, ids, {'message': _('Writing of the Journal Entries…'), 'progression': 20.0})
             num = 1
-            nb_currencies = float(len(available_currencies))
+            nb_entries = float(len(curr_date_group))
             remaining_percent = 80.0
-            step = float(remaining_percent / nb_currencies)
-            for c_id, p_id in available_currencies:
+            step = float(remaining_percent / nb_entries)
+            for currency_id, period_id, document_date in curr_date_group:
                 # Create a move
                 move_vals = {
-                    'currency_id': c_id,
-                    'manual_currency_id': c_id,
+                    'currency_id': currency_id,
+                    'manual_currency_id': currency_id,
                     'journal_id': journal_id,
-                    'document_date': w.date,
+                    'document_date': document_date,
                     'date': w.date,
-                    'period_id': p_id,
+                    'period_id': period_id,
                     'status': 'manu',
                     'imported': True,
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
-                for l_num, l in enumerate(available_currencies[(c_id, p_id)]):
+                for l_num, l in enumerate(curr_date_group[(currency_id, period_id, document_date)]):
                     # Update wizard
                     progression = 20.0 + ((float(l_num) / float(len(b_entries))) * step) + (float(num - 1) * step)
                     self.write(cr, uid, [w.id], {'progression': progression})
@@ -107,7 +108,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                         common_vals = {
                             'distribution_id': distrib_id,
-                            'currency_id': c_id,
+                            'currency_id': currency_id,
                             'percentage': 100.0,
                             'date': l.date,
                             'source_date': l.date,
@@ -123,13 +124,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'name': l.description,
                         'reference': l.ref,
                         'account_id': l.account_id.id,
-                        'period_id': p_id,
+                        'period_id': period_id,
                         'document_date': l.document_date,
                         'date': l.date,
                         'journal_id': journal_id,
                         'debit_currency': l.debit,
                         'credit_currency': l.credit,
-                        'currency_id': c_id,
+                        'currency_id': currency_id,
                         'analytic_distribution_id': distrib_id,
                         'partner_id': l.partner_id and l.partner_id.id or False,
                         'employee_id': l.employee_id and l.employee_id.id or False,
@@ -246,6 +247,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
                 # All lines
                 money = {}
+                doc_date_periods = set()
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
                 # Check file's content
@@ -284,6 +286,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
+                    doc_date_period_ids = period_obj.get_period_from_date(cr, uid, r_document_date, context=context)
+                    if doc_date_period_ids:
+                        doc_date_periods.add(doc_date_period_ids[0])
                     # Check on booking amounts: ensure that one (and only one) value exists and that its amount isn't negative
                     book_debit = 0
                     book_credit = 0
@@ -325,29 +330,32 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not line[cols['Booking Currency']]:
                         errors.append(_('Line %s. No currency specified!') % (current_line_num,))
                         continue
-                    curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line[cols['Booking Currency']])])
+                    booking_curr = line[cols['Booking Currency']]
+                    curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_curr)])
                     if not curr_ids:
-                        errors.append(_('Line %s. Currency not found: %s') % (current_line_num, line[cols['Booking Currency']],))
+                        errors.append(_('Line %s. Currency not found: %s') % (current_line_num, booking_curr,))
                         continue
                     for c in self.pool.get('res.currency').browse(cr, uid, curr_ids):
                         if not c.active:
-                            errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, line[cols['Booking Currency']],))
+                            errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, booking_curr,))
                             continue
                     r_currency = curr_ids[0]
-                    if not line[cols['Booking Currency']] in money:
-                        money[line[cols['Booking Currency']]] = {}
-                    if not 'debit' in money[line[cols['Booking Currency']]]:
-                        money[line[cols['Booking Currency']]]['debit'] = 0
-                    if not 'credit' in money[line[cols['Booking Currency']]]:
-                        money[line[cols['Booking Currency']]]['credit'] = 0
-                    if not 'name' in money[line[cols['Booking Currency']]]:
-                        money[line[cols['Booking Currency']]]['name'] = line[cols['Booking Currency']]
+                    if not line[cols['Period']]:
+                        errors.append(_('Line %s. Period is missing.') % (current_line_num))
+                        continue
+                    period_name = line[cols['Period']]
+                    if not (booking_curr, period_name, r_document_date) in money:
+                        money[(booking_curr, period_name, r_document_date)] = {}
+                    if not 'debit' in money[(booking_curr, period_name, r_document_date)]:
+                        money[(booking_curr, period_name, r_document_date)]['debit'] = 0
+                    if not 'credit' in money[(booking_curr, period_name, r_document_date)]:
+                        money[(booking_curr, period_name, r_document_date)]['credit'] = 0
                     # Increment global debit/credit
                     if book_debit:
-                        money[line[cols['Booking Currency']]]['debit'] += book_debit
+                        money[(booking_curr, period_name, r_document_date)]['debit'] += book_debit
                         r_debit = book_debit
                     if book_credit:
-                        money[line[cols['Booking Currency']]]['credit'] += book_credit
+                        money[(booking_curr, period_name, r_document_date)]['credit'] += book_credit
                         r_credit = book_credit
 
                     # Check which journal it is to be posted to: should be of type OD, MIG or INT
@@ -504,12 +512,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 continue
 
                     # US-937: use period of import file
-                    if line[cols['Period']].startswith('Period 16'):
+                    if period_name.startswith('Period 16'):
                         raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
                     period_ids = period_obj.search(
                         cr, uid, [
                             ('id', 'in', wiz_period_ids),
-                            ('name', '=', line[cols['Period']]),
+                            ('name', '=', period_name),
                         ], limit=1, context=context)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'),
@@ -603,12 +611,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     created += 1
                 # Check if all is ok for the file
+                if len(doc_date_periods) > 1:
+                    errors.append(_('All Document Dates should be in the same period.'))
                 ## The lines should be balanced for each currency
                 if not errors:
                     # to compare the right amounts do the check only if no line has been ignored because of an error
-                    for c in money:
-                        if abs(money[c]['debit'] - money[c]['credit']) > 10**-3:
-                            raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s') % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
+                    for curr, per, doc_date in money:
+                        amount = money[(curr, per, doc_date)]['debit'] - money[(curr, per, doc_date)]['credit']
+                        if abs(amount) > 10**-3:
+                            raise osv.except_osv(_('Error'), _('Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s') %
+                                                 (curr, doc_date, per, amount,))
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
 
