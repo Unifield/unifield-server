@@ -772,6 +772,18 @@ class msf_import_export(osv.osv_memory):
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
                                     self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
+                if fields_def[field]['type'] == 'many2many':
+                    new_obj = self.pool.get(fields_def[field]['relation'])
+                    ret = [(6, 0, [])]
+                    for name in value.split(','):
+                        new_id = new_obj.name_search(cr, uid, name)
+                        if not new_id:
+                            raise osv.except_osv(_('Warning !'), _('%s \'%s\' does not exist') % (new_obj._description, name,))
+                        new_id = new_id[0]
+                        if isinstance(new_id, (list, tuple)): # name_search may return (id, name) or only id
+                            new_id = new_id[0]
+                        ret[0][2].append(new_id)
+                    return ret
                 return value
 
             else:
