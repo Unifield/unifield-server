@@ -82,12 +82,15 @@
         fields = ['qty', 'product_id', 'supplier_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'tender.line'), ('name', 'in', fields)], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'tender_id')], context=context)
+        name_field_id = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'tender.line'), ('name', '=', 'product_default_code')], context=context)
 
         name_id = False
         parent_id = False
 
         if field_parent:
             parent_id = field_parent[0]
+        if name_field_id:
+            name_id = name_field_id[0]
         vals = {
             'name': name,
             'object_id': object_ids[0],

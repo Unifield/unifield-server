@@ -44115,6 +44115,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:223
 #: report:addons/stock/report/stock_reception_report_xls.mako:237
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:218
+#: field:tender.line,product_code:0
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"

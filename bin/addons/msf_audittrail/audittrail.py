@@ -666,7 +666,7 @@ class audittrail_rule(osv.osv):
             model_id_tolog = rule.object_id.id
             parent_field = False
             if rule.parent_field_id:
-                parent_field_display = rule.name_get_field_id and rule.name_get_field_id.name or 'id'
+                parent_field_display = rule.name_get_field_id.name
                 parent_field = rule.parent_field_id.name
                 model_name_tolog = rule.parent_field_id.relation
                 model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]

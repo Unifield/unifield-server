@@ -907,33 +907,37 @@ class tender_line(osv.osv):
             res += [(rs.id, code)]
         return res
 
-    _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
-                'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
-                'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
-                'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
-                'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-                'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
-                # functions
-                'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
-                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
-                'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-                'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
-                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-                'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
-                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
-                'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
-                'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
-                'comment': fields.char(size=128, string='Comment'),
-                'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
-                'created_by_rfq': fields.boolean(string='Created by RfQ'),
-                }
-    _defaults = {'qty': lambda *a: 1.0,
-                 'state': lambda *a: 'draft',
-                 'line_state': lambda *a: 'draft',
-                 }
+    _columns = {
+        'product_id': fields.many2one('product.product', string="Product", required=True),
+        'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
+        'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
+        'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
+        'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
+        'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
+        'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
+        # functions
+        'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
+        'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
+        'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
+        'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+        'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
+        'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
+        'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
+        'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
+        'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
+        'comment': fields.char(size=128, string='Comment'),
+        'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
+        'created_by_rfq': fields.boolean(string='Created by RfQ'),
+        'product_default_code': fields.related('product_id', 'default_code', type='char', string='Product Code', size=64, store=False, write_relate=False)
+    }
+
+    _defaults = {
+        'qty': lambda *a: 1.0,
+        'state': lambda *a: 'draft',
+        'line_state': lambda *a: 'draft',
+    }
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
