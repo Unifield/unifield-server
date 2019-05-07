@@ -102653,12 +102653,8 @@ msgstr "Numéro du Bon d'Engagement"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
-msgid "\n"
-"                                    Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and changed into status \"Available Shipped\". To avoid major misalignment please proceed only if you could do a full reception.\n"
-"                                "
-msgstr "\n"
-"                                    Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\". Pour éviter tout mauvais alignement, veuillez a procéder au traitement uniquement si vous faites une réception totale.\n"
-"                                "
+msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
+msgstr "Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\"après une synchro. Pour éviter tout mauvais alignement, veuillez a procéder au traitement uniquement si vous faites une réception totale."
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:907
