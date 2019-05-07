@@ -25,6 +25,7 @@ from tools.translate import _
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
     _inherit = 'account.analytic.journal'
+    _trace = True
 
     def _get_current_instance(self, cr, uid, ids, name, args, context=None):
         """
