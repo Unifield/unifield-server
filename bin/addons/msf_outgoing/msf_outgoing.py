@@ -5156,6 +5156,7 @@ class stock_move(osv.osv):
                         'stock.picking': (_get_picking, ['shipment_id'], 10),
                     }
     ),
+        'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         # Fields used for domain
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
