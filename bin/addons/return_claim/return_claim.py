@@ -383,6 +383,8 @@ class return_claim(osv.osv):
                         'location_id': context['common']['input_id'],
                         'location_dest_id': loc_obj.chained_location_get(cr, uid, stock_loc, product=x.product_id_claim_product_line)[0].id,
                         'reason_type_id': context['common']['rt_goods_replacement'],
+                        'prodlot_id':  x.lot_id_claim_product_line and x.lot_id_claim_product_line.id or False,
+                        'expired_date': x.expiry_date_claim_product_line,
                     }) for x in claim.product_line_ids_return_claim],
                 }
                 # creation of the new IN
