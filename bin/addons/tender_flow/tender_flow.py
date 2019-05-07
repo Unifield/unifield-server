@@ -1784,7 +1784,7 @@ price. Please set unit price on these lines or cancel them'''),
             'view_mode': 'form,tree,graph,calendar',
             'view_type': 'form',
             'target': 'crush',
-            'context': {'rfq_ok': True, 'search_default_draft_rfq': 1},
+            'context': {'rfq_ok': True},
             'domain': [('rfq_ok', '=', True)],
             'res_id': rfq.id,
         }
