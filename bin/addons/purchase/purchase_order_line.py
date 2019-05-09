@@ -1557,7 +1557,6 @@ class purchase_order_line(osv.osv):
         # Update the old price value
         res['value'].update({'product_qty': qty})
 
-
         # price_unit is set only if catalogue exists
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
@@ -1610,12 +1609,11 @@ class purchase_order_line(osv.osv):
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
             st_uom = product_result['uom_id'][0]
-            if not price_unit or from_product:
+            if not res.get('value', {}).get('price_unit') and (not price_unit or from_product):
                 st_price = product_result['standard_price']
                 st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
                                                                  context=context)
                 st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
-
                 if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state:
                     res['value'].update({'price_unit': st_price})
                 elif state and state != 'draft' and old_price_unit:
