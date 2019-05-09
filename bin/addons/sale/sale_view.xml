@@ -157,7 +157,7 @@
                                 <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
                             </group>
                             <group colspan="2" col="3">
-                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}"/>
                                 <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'))]}"/>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
@@ -340,7 +340,7 @@
                             <group colspan="4" col="4" name="date">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
+                                    <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
                                     <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
