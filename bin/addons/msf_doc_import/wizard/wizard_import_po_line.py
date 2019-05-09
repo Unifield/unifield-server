@@ -237,7 +237,8 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 4: Price
                         price_value = check_line.compute_price_value(
-                            row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price', context=context)
+                            row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price',
+                            is_rfq=is_rfq, context=context)
                         to_write.update(
                             price_unit=price_value['price_unit'],
                             error_list=price_value['error_list'],
