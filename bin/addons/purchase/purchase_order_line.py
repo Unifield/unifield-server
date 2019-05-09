@@ -1476,6 +1476,9 @@ class purchase_order_line(osv.osv):
 
         return False
 
+
+    msg_selected_po = _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document.")
+
     def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
         '''
         Fill the origin field if a FO is selected
@@ -1486,6 +1489,9 @@ class purchase_order_line(osv.osv):
                 'value': {
                     'origin': fo['name'],
                     'display_sync_ref': len(fo['sourced_references']) and True or False,
+                },
+                'warning': {
+                    'message': _(self.msg_selected_po),
                 }
             }
         return {}
@@ -1511,9 +1517,11 @@ class purchase_order_line(osv.osv):
                     'origin': '',
                 }
             else:
+                fo = self.pool.get('sale.order').read(cr, uid, sale_id[0], ['sourced_references'], context=context)
                 res['value'] = {
-                    'display_sync_ref': True,
+                    'display_sync_ref': len(fo['sourced_references']) and True or False,
                 }
+                res['warning'] = {'message': self.msg_selected_po}
 
         return res
 
