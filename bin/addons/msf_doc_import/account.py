@@ -72,7 +72,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
             # Update wizard
             self.write(cr, uid, [w.id], {'message': _('Grouping by currency and date…'), 'progression': 10.0})
-            # Search all currencies (to create moves)
+            # Group entries by currency, period and doc date (to create moves)
             curr_date_group = {}
             for entry in b_entries:
                 # note: having different periods is possible only for December dates (ex: Period 13 and 14)
