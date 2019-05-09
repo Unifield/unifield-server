@@ -110,9 +110,9 @@ class products_situation_report(osv.osv_memory):
                 prod_domain.append(('nomen_manda_0', '=', report.nomen_manda_0.id))
                 if report.nomen_manda_1:
                     prod_domain.append(('nomen_manda_1', '=', report.nomen_manda_1.id))
-                    if report.nomen_manda_0:
+                    if report.nomen_manda_2:
                         prod_domain.append(('nomen_manda_2', '=', report.nomen_manda_2.id))
-                        if report.nomen_manda_0:
+                        if report.nomen_manda_3:
                             prod_domain.append(('nomen_manda_3', '=', report.nomen_manda_3.id))
 
             if report.heat_sensitive_item:
