@@ -20,13 +20,11 @@
 ##############################################################################
 
 import time
-import threading
 
 from report import report_sxw
 from osv import fields, osv
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-from service.web_services import report_spool
 
 
 class products_situation_report(osv.osv_memory):
@@ -221,9 +219,8 @@ class products_situation_report_parser(report_sxw.rml_parse):
                 'location': report.location_id.id,
                 'location_id': report.location_id.id,
             })
-        available_stock = prod_obj.get_product_available(self.cr, self.uid, report.prod_ids, context=rep_context)
         ftf = ['default_code', 'name', 'uom_id', 'standard_price', 'international_status', 'uf_create_date',
-               'uf_write_date', 'qty_available', 'virtual_available']
+               'uf_write_date', 'qty_available', 'virtual_available', 'qty_allocable']
         for prod in prod_obj.browse(self.cr, self.uid, report.prod_ids, fields_to_fetch=ftf, context=rep_context):
             amc = 0
             fmc = 0
@@ -245,7 +242,7 @@ class products_situation_report_parser(report_sxw.rml_parse):
                 'write_date': prod.uf_write_date,
                 'real_stock': prod.qty_available,
                 'virtual_stock': prod.virtual_available,
-                'available_stock': available_stock[prod.id],
+                'available_stock': prod.qty_allocable,
                 'amc': amc,
                 'fmc': fmc,
             })
