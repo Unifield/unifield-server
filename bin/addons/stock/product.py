@@ -264,6 +264,9 @@ class product_product(osv.osv):
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
         date_str = date_str and ' AND %s '% date_str or ''
         if 'in' in what:
+            if not states and context.get('in_states'):
+                where[3] = tuple(context['in_states'])
+
             # all moves from a location out of the set to a location in the set
             cr.execute("""
                 select sum(product_qty), product_id, product_uom
@@ -275,6 +278,8 @@ class product_product(osv.osv):
                 group by product_id,product_uom""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
         if 'out' in what:
+            if not states and context.get('out_states'):
+                where[3] = tuple(context['out_states'])
             # all moves from a location in the set to a location out of the set
             cr.execute("""
                 select sum(product_qty), product_id, product_uom
@@ -336,6 +341,9 @@ class product_product(osv.osv):
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('in',) })
             elif f == 'outgoing_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
+            elif f == 'qty_allocable':
+                c.update({'what': ('in', 'out'), 'in_states': ('done',), 'out_states': ('done', 'assigned')})
+
             stock = self.get_product_available(cr, uid, ids, context=c)
             if any(stock.values()):
                 for id in ids:
@@ -343,6 +351,7 @@ class product_product(osv.osv):
         return res
 
     _columns = {
+        'qty_allocable': fields.function(_product_available, method=True, type='float', string='Available Qty', help="Real stock - reserved stock", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'qty_available': fields.function(_product_available, method=True, type='float', string='Real Stock', help="Current quantities of products in selected locations or all internal if none have been selected.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'incoming_qty': fields.function(_product_available, method=True, type='float', string='Incoming', help="Quantities of products that are planned to arrive in selected locations or all internal if none have been selected.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),

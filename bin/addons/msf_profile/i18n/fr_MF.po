@@ -20476,12 +20476,6 @@ msgstr "Propriétés des Comptes Client"
 msgid "Selected Version is for a different product."
 msgstr "Version Sélectionnée est pour un produit différent."
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:98
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: account
 #: model:process.transition,name:account.process_transition_confirmstatementfromdraft0
 msgid "Confirm statement"
@@ -27153,7 +27147,6 @@ msgstr "Purchase orders which are in cancelled state."
 #: view:account.tax.template:0
 msgid "Applicable Code (if type=code)"
 msgstr "Code Applicable (si type=code)"
-
 
 #. modules: sales_followup, sale, purchase_followup, stock
 #: view:po.track.changes.wizard:0
@@ -39540,7 +39533,7 @@ msgstr "There is one revision available."
 #. module: msf_budget
 #: view:wizard.budget.import.finish:0
 msgid "The budget has been correctly uploaded."
-msgstr "Le budget n'a pas été correctement téléchargé."
+msgstr "Le budget a été correctement téléchargé."
 
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, sale, base, base_report_designer, msf_button_access_rights
 #: view:account.installer:0
@@ -47649,6 +47642,12 @@ msgstr "Base imposable différente !\n"
 #, python-format
 msgid "Posting of the Journal Entry. This may take a while..."
 msgstr "Comptabilisation de l'Ecriture Comptable. Cela peut prendre un certain temps..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:307
+#, python-format
+msgid "Posting of the Journal Entries. This may take a while..."
+msgstr "Comptabilisation des Ecritures Comptables. Cela peut prendre un certain temps..."
 
 #. module: account
 #: model:process.transition,note:account.process_transition_statemententries0
@@ -66756,6 +66755,7 @@ msgstr "Payer la facture"
 #: report:voucher.print:0
 #: selection:account.analytic.line,move_state:0
 #: selection:msf.accrual.line,state:0
+#: selection:integrity.finance.wizard,move_state:0
 #: view:msf.accrual.line:0
 msgid "Posted"
 msgstr "Comptabilisé"
@@ -68198,8 +68198,9 @@ msgstr "Réf de Commande:"
 msgid "Ireland"
 msgstr "Irlande"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account_override
 #: field:account.mcdb,document_state:0
+#: field:integrity.finance.wizard,move_state:0
 #: code:addons/account_mcdb/account_mcdb.py:1108
 #, python-format
 msgid "Entry Status"
@@ -68364,6 +68365,7 @@ msgstr "Devise d'impression:"
 #: view:account.move.line:0
 #: selection:account.analytic.line,move_state:0
 #: selection:account.move.line,move_state:0
+#: selection:integrity.finance.wizard,move_state:0
 msgid "Unposted"
 msgstr "Non comptabilisé"
 
@@ -102707,7 +102709,8 @@ msgstr "Numéro du Bon d'Engagement"
 #: code:addons/stock/physical_inventory.py:907
 #, python-format
 msgid "Unable to update line #%s product %s: line not found in the discrepancy report"
-msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"=======
+msgstr "Impossible de mettre à jour la ligne #%s produit %s: ligne correspondante non trouvée dans le rapport d'écarts"
+
 #. module: account_mcdb
 #: code:addons/account_mcdb/account_mcdb.py:1494
 #, python-format
@@ -104267,7 +104270,7 @@ msgstr "Date de Colisage"
 msgid "\n"
 "The line 1 of the column 7 must be named \"Consignee\" in the file."
 msgstr "\n"
-"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier.
+"La ligne 1 de la colonne 7 doit être nommée \"Destinataire\" dans le fichier"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:113
@@ -105077,7 +105080,6 @@ msgstr "Ligne numéro %s: Les Quantités importées pour %s ne correspondent pas
 msgid "Receptions Report"
 msgstr "Rapport des Réceptions"
 
-
 #. module: stock
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:126
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:163
@@ -105228,7 +105230,7 @@ msgid "\n"
 "                                    "
 msgstr "\n"
 "                                    Votre fichier est prêt. Vous pouvez le télécharger depuis la barre à droite (Pièces Jointes).\n"
-"
+""
 
 #. module: msf_outgoing
 #: view:shipment:0
@@ -105378,7 +105380,6 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 msgid "The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 15 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
 
-
 #. module: purchase
 #: view:purchase.order:0
 msgid "\n"
@@ -105485,3 +105486,55 @@ msgstr "Date de Modification"
 #, python-format
 msgid "You must use at least one of the following filters: Code, Description, Product List, Nomenclature"
 msgstr "Vous devez utiliser au moins un de ces filtres: Code, Description, Liste de Produits, Nomenclature"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:580
+#, python-format
+msgid "Line %s: %s\n"
+""
+msgstr "Ligne %s : %s\n"
+""
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:585
+#, python-format
+msgid "%sFile %s:\n"
+"%s"
+msgstr "%sFichier %s :\n"
+"%s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:574
+#, python-format
+msgid "Several files contain lines with the currency %s. Please use one file per currency."
+msgstr "Plusieurs fichiers contiennent des lignes avec la devise %s. Veuillez utiliser un fichier par devise."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_import.py:183
+#, python-format
+msgid "The Cost Center \"%s\" (or its parent) must be \"targeted\" to a Proprietary Instance."
+msgstr "Le Centre de Coût \"%s\" (ou son parent) doit avoir une Instance Propriétaire \"cible\"."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:510
+#, python-format
+msgid "The Cost Center of the HQ entry \"%s\" doesn't exist in the system."
+msgstr "Le Centre de Coût de l'entrée Siège \"%s\" n'existe pas dans le système."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:516
+#, python-format
+msgid "The Cost Center %s used in the HQ entry \"%s\" is inactive."
+msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif."
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:635
+#, python-format
+msgid "In a PICK from scratch, your are not allowed to choose this type of partner."
+msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à choisir ce type de partenaire."
+
+#. module: kit
+#: code:addons/kit/kit_creation.py:1238
+#, python-format
+msgid "Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)"
+msgstr "Produit %s, Lot: %s, pas assez de stock pour traiter la qantité %s %s (quantité en stock: %s)"
