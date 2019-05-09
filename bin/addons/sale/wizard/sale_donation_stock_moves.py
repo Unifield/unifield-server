@@ -53,6 +53,10 @@ class sale_donation_stock_moves(osv.osv_memory):
             'product.product',
             string='Product Ref.',
         ),
+        'nomen_manda_0': fields.many2one(
+            'product.nomenclature',
+            'Product Main Type',
+        ),
         'move_id': fields.many2one(
             'stock.move',
             string='Move Ref.',
@@ -72,6 +76,7 @@ class sale_donation_stock_moves(osv.osv_memory):
         Retrieve the data according to values in wizard
         '''
         sm_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -106,7 +111,18 @@ class sale_donation_stock_moves(osv.osv_memory):
                     sm_domain.append(('partner_id.partner_type', '=', wizard.partner_type))
 
                 if wizard.product_id:
-                    sm_domain.append(('product_id', '=', wizard.product_id.id))
+                    if wizard.nomen_manda_0:
+                        if prod_obj.search(cr, uid, [('id', '=', wizard.product_id.id), ('nomen_manda_0', '=', wizard.nomen_manda_0.id)], limit=1, context=context):
+                            sm_domain.append(('product_id', '=', wizard.product_id.id))
+                        else:
+                            raise osv.except_osv(_('Error'), _('The Product (%s) does not have this Nomenclature')
+                                                 % (wizard.product_id.default_code))
+                    else:
+                        sm_domain.append(('product_id', '=', wizard.product_id.id))
+                elif wizard.nomen_manda_0:
+                    prod_ids = prod_obj.search(cr, uid, [('nomen_manda_0', '=', wizard.nomen_manda_0.id)], context=context)
+                    if prod_ids:
+                        sm_domain.append(('product_id', 'in', prod_ids))
 
                 sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
 

@@ -138,11 +138,22 @@ ACCOUNT_RESTRICTED_AREA = {
         ('accrual_account', '=', True),
     ],
     # HQ ENTRIES
-    'hq_lines': [
+    # /!\ The accounts allowed at import are different from the ones allowed for correction
+    'hq_lines_import': [
         ('type', '!=', 'view'),
-        ('user_type_code', '=', 'expense'),
-        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
+        ('type_for_register', '!=', 'donation'),
         #('is_not_hq_correctible', '=', False), # UF-2312: not possibleto add this domain because WE SHOULD ALLOW "Not HQ Correctible" account during the import
+    ],
+    'hq_lines_correction': [
+        ('type', '!=', 'view'),
+        ('type_for_register', '!=', 'donation'),
+        ('is_not_hq_correctible', '=', False),
+        '|',
+        ('user_type.code', '=', 'income'),
+        '&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
+        # note : filter_active isn't set to True here as that would prevent to "Change Account" to an account
+        # currently inactive but active at the date of the entry
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [

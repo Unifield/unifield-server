@@ -119,7 +119,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
 #    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
 #    because then the user can always see the corresponding full list and change its mind
 #    if deleted, must cancel and redo
-#    
+#
 #    would be nice a validator decorator !
     _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
               'force_complete' : fields.boolean(string='Force'),
@@ -180,7 +180,7 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     '''
     _name = "stock.move.memory.returnproducts"
     _inherit = "stock.move.memory.picking"
-    _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
+    _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom' ),
                 }
 
     def _check_qty_to_return(self, cr, uid, ids, context=None):
@@ -384,7 +384,7 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
         return result
 
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
-                'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
+                'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'selected_number': fields.integer(string='Selected Number'),
                 # functions

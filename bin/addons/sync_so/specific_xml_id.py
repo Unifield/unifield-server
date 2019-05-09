@@ -7,7 +7,7 @@ Created on 15 mai 2012
 from osv import osv
 from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
-
+import time
 
 # Note:
 #
@@ -146,23 +146,53 @@ class hq_entries(osv.osv):
 
     _inherit = 'hq.entries'
 
+    def get_target_id(self, cr, uid, cost_center_id, context=None):
+        """
+        Returns the id of the target CC linked to the cost_center_id, or to its parent if there isn't any.
+        """
+        if context is None:
+            context = {}
+        target_ids = []
+        if cost_center_id:
+            analytic_cc_obj = self.pool.get('account.analytic.account')
+            target_cc_obj = self.pool.get('account.target.costcenter')
+            target_ids = target_cc_obj.search(cr, uid,
+                                              [('cost_center_id', '=', cost_center_id), ('is_target', '=', True)],
+                                              context=context)
+            if not target_ids:
+                cc = analytic_cc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['parent_id'], context=context)
+                if cc and cc.parent_id:
+                    target_ids = target_cc_obj.search(cr, uid,
+                                                      [('cost_center_id', '=', cc.parent_id.id), ('is_target', '=', True)],
+                                                      context=context)
+        return target_ids and target_ids[0] or False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        """
+        Gets the instances to which the HQ entries should sync.
+        For each HQ entry:
+        1) Search for the instance:
+           - to which the CC used in the entry is targeted to
+           - if there isn't any, to which the PARENT CC is targeted to
+        2) The entry will sync to the coordo of the corresponding mission
+        """
+        if context is None:
+            context = {}
+        target_cc_obj = self.pool.get('account.target.costcenter')
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
-                    cost_center_name = line_data.cost_center_id and \
-                        line_data.cost_center_id.code and \
-                        line_data.cost_center_id.code[:3] or ""
-                    cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
-                                                                                                 ('code', '=', cost_center_name)], context=context)
-                    if len(cost_center_ids) > 0:
-                        target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
-                                                                                                 ('is_target', '=', True)])
-                        if len(target_ids) > 0:
-                            target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
-                            if target.instance_id and target.instance_id.instance:
-                                res[line_data.id] = target.instance_id.instance
+                    targeted_instance = False
+                    target_id = self.get_target_id(cr, uid, line_data.cost_center_id.id, context=context)
+                    if target_id:
+                        target = target_cc_obj.browse(cr, uid, target_id, fields_to_fetch=['instance_id'], context=context)
+                        if target.instance_id.level == 'coordo':
+                            targeted_instance = target.instance_id
+                        elif target.instance_id.level == 'project':
+                            targeted_instance = target.instance_id.parent_id or False
+                    if targeted_instance:
+                        res[line_data.id] = targeted_instance.instance
             return res
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -199,7 +229,9 @@ class account_target_costcenter(osv.osv):
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
         if 'instance_id' in vals:
@@ -209,6 +241,27 @@ class account_target_costcenter(osv.osv):
                 # "touch" cost center if instance is active (to sync to new targets)
                 self.pool.get('account.analytic.account').synchronize(cr, uid, [vals['cost_center_id']], context=context)
         return res_id
+
+    def unlink(self, cr, uid, ids, context=None):
+        ''' target CC deletion: set the inactivation date on CC '''
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context.get('sync_update_execution'):
+            to_inactivate = []
+            now = time.strftime('%Y-%m-%d')
+            current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
+            search_target = self.search(cr, uid, [('id', 'in', ids), ('instance_id', '=', current_instance_id)], context=context)
+            for cc in self.browse(cr, uid, search_target, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
+                if cc.cost_center_id and (not cc.cost_center_id.date or cc.cost_center_id.date > now):
+                    to_inactivate.append(cc.cost_center_id.id)
+            if to_inactivate:
+                self.pool.get('account.analytic.account').write(cr, uid, to_inactivate, {'date': now}, context=context)
+
+        return super(account_target_costcenter, self).unlink(cr, uid, ids, context)
 
 account_target_costcenter()
 

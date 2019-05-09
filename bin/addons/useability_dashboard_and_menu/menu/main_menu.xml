@@ -27,6 +27,7 @@
                   name="Partners" 
                   web_icon="images/partner.jpg"
                   web_icon_hover="images/partner_hover.jpg"
+                  action="msf_partner.partner_normal_action"
                   sequence="4" 
                 />
                   

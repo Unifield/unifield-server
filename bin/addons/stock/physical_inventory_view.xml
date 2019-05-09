@@ -68,7 +68,7 @@
                                     <field name="product_uom_id" domain="[('uom_by_stock_product', '=', product_id)]"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>
@@ -81,7 +81,7 @@
                                     <field name="product_uom_id"/>
                                     <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
                                     <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
-                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity, product_uom_id)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
                                     <field name="is_kc" string="KC"/>
@@ -125,27 +125,27 @@
                                     attrs="{'invisible': [('state', 'not in', ['counted', 'validated','confirmed'])]}" type="object" icon="gtk-save" colspan="2"/>
                             </group>
                                 <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-                                   filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]">
+                                   filter_selector="[('Hide ignored', [('ignored', '!=', True)]), ('Show all', []), ('Show ignored only', [('ignored', '=', True)])]">
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
                                     <field name="inv_state" invisible="True" />
-                                    <field name="line_no" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="nomen_manda_2" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="product_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="product_uom_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="standard_price" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="currency_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="theoretical_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
+                                    <field name="line_no" readonly="1"/>
+                                    <field name="nomen_manda_2" readonly="1"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom_id" readonly="1"/>
+                                    <field name="standard_price" readonly="1"/>
+                                    <field name="currency_id" readonly="1"/>
+                                    <field name="theoretical_qty" readonly="1"/>
                                     <field name="counted_qty" readonly="1" />
-                                    <field name="batch_number" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="expiry_date" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="discrepancy_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="discrepancy_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_theoretical_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_counted_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_counted_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_discrepancy_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_discrepancy_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
+                                    <field name="batch_number" readonly="1"/>
+                                    <field name="expiry_date" readonly="1"/>
+                                    <field name="discrepancy_qty" readonly="1"/>
+                                    <field name="discrepancy_value" readonly="1"/>
+                                    <field name="total_product_theoretical_qty" readonly="1"/>
+                                    <field name="total_product_counted_qty" readonly="1"/>
+                                    <field name="total_product_counted_value" readonly="1"/>
+                                    <field name="total_product_discrepancy_qty" readonly="1"/>
+                                    <field name="total_product_discrepancy_value" readonly="1"/>
                                     <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated'])]}"/>
                                     <field name="comment" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated', 'confirmed'])]}"/>
                                     <field name="ignored" invisible="True"/>
@@ -283,6 +283,6 @@
             <field name="help">Periodical Inventories are used to count the number of products available per location. You can use it once a year when you do the general inventory or whenever you need it, to correct the current stock level of a product.</field>
         </record>
         <!-- Menu -->
-        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="23"/>
+        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="24"/>
     </data>
 </openerp>

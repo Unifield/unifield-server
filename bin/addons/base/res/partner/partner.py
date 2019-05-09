@@ -25,7 +25,7 @@ from osv import fields,osv
 import tools
 import pooler
 from tools.translate import _
-from tools.validators import validate_email
+
 
 class res_payterm(osv.osv):
     _description = 'Payment term'
@@ -332,20 +332,6 @@ class res_partner_address(osv.osv):
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner.address', context=c),
     }
 
-
-    def create(self, cr, uid, vals, context=None):
-
-        # If a non-empty email field is given
-        if "email" in vals and vals["email"]:
-            is_valid, error = validate_email(vals["email"])
-            if not is_valid:
-                raise osv.except_osv(_('Error'),
-                                     _('Invalid Value') + ": " + error)
-
-
-        return super(res_partner_address, self).create(cr, uid, vals, context=context)
-
-
     def name_get(self, cr, user, ids, context={}):
         if not len(ids):
             return []
@@ -477,7 +463,7 @@ class res_partner_bank(osv.osv):
             cursor, user, 'state_id', context=context),
     }
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         res = super(res_partner_bank, self).fields_get(cr, uid, fields, context)
         bank_type_obj = self.pool.get('res.partner.bank.type')
         type_ids = bank_type_obj.search(cr, uid, [])

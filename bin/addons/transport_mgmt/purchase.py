@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -40,13 +40,13 @@ class purchase_order(osv.osv):
             transport_cost = order.transport_cost
             if order.transport_currency_id.id != order.pricelist_id.currency_id.id:
                 transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
-                        order.pricelist_id.currency_id.id, order.transport_cost, round=True)
-            
+                                                 order.pricelist_id.currency_id.id, order.transport_cost, round=True)
+
             total_cost = order.amount_total + transport_cost
-            
+
             try:
                 func_transport_cost = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id,
-                        order.functional_currency_id.id, total_cost, round=True)
+                                                      order.functional_currency_id.id, total_cost, round=True)
             except:
                 func_transport_cost = total_cost
             res[order.id] = {'total_price_include_transport': total_cost,
@@ -62,7 +62,7 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
-                
+
         if not 'transport_currency_id' in vals and 'pricelist_id' in vals:
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], context=context).currency_id.id
             vals.update({'transport_currency_id': currency_id})
@@ -79,8 +79,8 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':
                 vals.update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
-        
-        if not vals.get('transport_currency_id', False):        
+
+        if not vals.get('transport_currency_id', False):
             for po in self.browse(cr, uid, ids, context=context):
                 if not po.transport_currency_id:
                     self.write(cr, uid, po.id, {'transport_currency_id': po.pricelist_id.currency_id.id}, context=context)
@@ -94,14 +94,14 @@ class purchase_order(osv.osv):
         if default is None:
             default = {}
         default.update({'transport_order_id': False,
-                         'shipment_transport_ids': []})
+                        'shipment_transport_ids': []})
 
         return super(purchase_order, self).copy(cr, uid, ids, default, context=context)
 
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
         'intl_supplier_ok': fields.boolean(string='International Supplier'),
-        'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'), 
+        'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'),
                                             ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
         'transport_cost': fields.float(string='Transport cost', digits_compute=dp.get_precision('Purchase Price')),
@@ -128,7 +128,7 @@ class purchase_order(osv.osv):
                 self.write(cr, uid, [order.id], {'display_intl_transport_ok': False}, context=context)
             else:
                 self.write(cr, uid, [order.id], {'display_intl_transport_ok': True}, context=context)
-        
+
         return True
 
     def onchange_partner_id(self, cr, uid, ids, part=False, *a, **b):
@@ -162,19 +162,19 @@ class purchase_order(osv.osv):
             res['domain'].update({'transport_currency_id': [('id', '=', currency_id)]})
         else:
             res['domain'].update({'transport_currency_id': [('id', 'in', [])]})
-            
+
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
                 if isinstance(ids, (int, long)):
                     ids = [ids]
-            
+
                 order = self.pool.get('purchase.order').browse(cr, uid, ids[0])
                 partner = self.pool.get('res.partner').browse(cr, uid, part)
                 pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner.partner_type)])
-                pricelist_id = res['value'].pop('pricelist_id')
                 if order.pricelist_id.id not in pricelist_ids:
+                    res['value'].pop('pricelist_id')
                     res.update({'warning': {'title': 'Warning',
-                                        'message': 'The currency used on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
+                                            'message': 'The currency used on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
 
         return res
 
@@ -183,7 +183,7 @@ class purchase_order(osv.osv):
         Change the domain of the transport currency according to the currency and the functional currency
         '''
         res = {}
-        
+
         # Set at least, the functional currency
         currency_ids = [self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id]
 
@@ -193,14 +193,14 @@ class purchase_order(osv.osv):
             currency_ids.append(cur_id)
             if not transport_currency_id or transport_currency_id not in currency_ids:
                 res.setdefault('value', {}).update({'transport_currency_id': cur_id})
-            
+
             if ids:
                 order = self.browse(cr, uid, ids[0])
                 if pricelist_id != order.pricelist_id.id and order.order_line:
                     res.update({'warning': {'title': 'Currency change',
                                             'message': 'You have changed the currency of the order. \
                                             Please note that all order lines in the old currency will be changed to the new currency without conversion !'}})
-            
+
         res.update({'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}})
 
         return res

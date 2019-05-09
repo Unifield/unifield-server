@@ -23,8 +23,8 @@
 <Styles>
   <Style ss:ID="mainheader">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
-        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000"/>
-        <Interior ss:Color="#E6E6E6" ss:Pattern="Solid"/>
+        <Font ss:FontName="Calibri" x:Family="Swiss" ss:Color="#000000" ss:Bold="1"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -46,7 +46,7 @@
     
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#d3d3d3" ss:Pattern="Solid"/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
           <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -65,7 +65,7 @@
         </Borders>
     </Style>
 
-    <Style ss:ID="line_grey">
+    <Style ss:ID="lgrey">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
           <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -84,58 +84,134 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+  </Style>
+  <Style ss:ID="short_date_grey">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:Color="#747474"/>
+   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+  </Style>
+  <Style ss:ID="short_date_fr">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
+  <Style ss:ID="short_date_grey_fr">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:Color="#747474"/>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
 
 <ss:Worksheet ss:Name="PO Follow Up">
 ## definition of the columns' size
-<% nb_of_columns = 12 %>
+<% nb_of_columns = 21 %>
 <Table x:FullColumns="1" x:FullRows="1">
-    # Order name
+    # Order ref
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Supplier
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Order Type
     <Column ss:AutoFitWidth="1" ss:Width="65" />
-    # Item
+    # Line
     <Column ss:AutoFitWidth="1" ss:Width="40" />
-    # Code
-    <Column ss:AutoFitWidth="1" ss:Width="81" />
-    # Description
-    <Column ss:AutoFitWidth="1" ss:Width="161" />
+    # Product Code
+    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    # Product Description
+    <Column ss:AutoFitWidth="1" ss:Width="200" />
     # Qty ordered
     <Column ss:AutoFitWidth="1" ss:Width="57" />
     # UoM
-    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
     # Qty received
-    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # IN
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     # Qty backorder
     <Column ss:AutoFitWidth="1" ss:Width="58" />
     # Unit Price
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # IN Unit Price
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Currency
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Total Currency
+    <Column ss:AutoFitWidth="1" ss:Width="95" />
+    # Total Functional Currency
     <Column ss:AutoFitWidth="1" ss:Width="95" />
     # Created (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Delivery Confirmed (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Delivery Requested Date
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Delivery Confirmed Date
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (line)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Status (order)
-    <Columns ss:AutoFitWidth="1" ss:Width="95" />
-    # Destination
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-    # Cost Center
-    <Column ss:AutoFitWidth="1" ss:Width="95" />
-
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
+    # Customer
+    <Column ss:AutoFitWidth="1" ss:Width="120" />
+    # Customer ref
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Source document
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Supplier ref
+    <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">Report run date: ${getRunParms()['run_date'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date from: ${getRunParms()['date_from'] or ''|x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">PO date to: ${getRunParms()['date_thru'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="1" ss:StyleID="mainheader"><Data ss:Type="String">Supplier: ${getRunParms()['supplier'] or '' |x}</Data></Cell>
-   <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">PO State: ${getRunParms()['state'] or '' | x}</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Report run date</Data></Cell>
+   % if getRunParms()['run_date'] and isDate(getRunParms()['run_date']):
+       % if getLang() == 'fr_MF':
+       <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['run_date']|n}T00:00:00.000</Data></Cell>
+       % else:
+       <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['run_date']|n}T00:00:00.000</Data></Cell>
+       % endif
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date from</Data></Cell>
+   % if getRunParms()['date_from'] and isDate(getRunParms()['date_from']):
+       % if getLang() == 'fr_MF':
+       <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['date_from']|n}T00:00:00.000</Data></Cell>
+       % else:
+       <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['date_from']|n}T00:00:00.000</Data></Cell>
+       % endif
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date to</Data></Cell>
+   % if getRunParms()['date_thru'] and isDate(getRunParms()['date_thru']):
+       % if getLang() == 'fr_MF':
+       <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['date_thru']|n}T00:00:00.000</Data></Cell>
+       % else:
+       <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${getRunParms()['date_thru']|n}T00:00:00.000</Data></Cell>
+       % endif
+   % else:
+   <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+   % endif
 </Row>
 
     <Row ss:AutoFitHeight="1" > 
@@ -145,49 +221,84 @@
     </Row>
     
 % for o in objects:
-    
-    % for line in getPOLines(o.id):
+  % for line in getPOLines(o.id):
     <Row ss:AutoFitHeight="1">
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_type'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['currency'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_currency'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['total_func_currency'])|x}</Data></Cell>
+      % if line['order_created'] and isDate(line['order_created']):
         % if line['raw_state'] in ['cancel', 'cancel_r']:
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-            <Cell ss:StyleID="line_grey"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % endif
         % else:
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_ordered'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['uom'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_received'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['in'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty_backordered'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['unit_price'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>
-        %endif
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_created']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % endif
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      % if line['delivery_requested_date'] and isDate(line['delivery_requested_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['delivery_requested_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % endif
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      % if line['order_confirmed_date'] and isDate(line['order_confirmed_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['order_confirmed_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % endif
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['state'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
-    % endfor
- % endfor   
+  % endfor
+% endfor   
     
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">

@@ -1,0 +1,522 @@
+Feature: SSL NEW US4517
+
+@supply @US4517
+Scenario: SSL US4517 FO to ESC split
+
+   
+#PARAMETRIZATION: 
+
+
+# HQ1C1: need to have 100000 quantity of ALIFCOFM1E- in LOG
+
+
+   ###################################################################
+    ## CREATE AN IR IN HQ1C1P1 (reference in IR_REFERENCE)
+    ###################################################################
+
+#LINE 2	
+ 
+    I log into instance "HQ1C1P1"
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I click on "New"
+	
+	I fill "Order category" with "Other"	
+
+    I fill "Supplier" with "HQ1C1"
+#    I fill "Supplier" with "HQ1C1" and open the window
+#	I click "option" on line and close the window:
+#	  | NAME     |
+#	  | HQ1C1    |
+	  
+	  
+    # Add multiple products at the same time
+	I click on "Add multiple lines" and open the window
+	I click on "Add" and open the window
+	I fill "Code" with "DINJPEN"
+	I click on "Search"
+	I click "checkbox" on line:
+	 | CODE        |
+	 | DINJPENB1V- |
+	 | DINJPENG5V- |
+ 
+	 
+	I click on "Select" and close the window
+	I click "Edit" on line:
+	 | CODE        |
+	 | DINJPENB1V- |
+	I fill "20000.00" within column "QTY"
+	I validate the line
+	I click "Edit" on line:
+	 | CODE        |
+	 | DINJPENG5V- |
+	I fill "30000.00" within column "QTY"
+	I validate the line
+
+	I click on "Add products" and close the window
+	
+	
+    # Add products line by line
+    I click on "New"
+    I fill "ALIFCLOC1--" within column "PRODUCT CODE"
+    I fill "50000.00" within column "QTY"
+    I validate the line
+
+
+    I click on "New"
+    I click on "OK"
+    I fill "ALIFCOFM1E-" within column "PRODUCT CODE"
+    I fill "10000.00" within column "QTY"
+    I validate the line
+	
+
+    I click on "Analytical Distribution" and open the window
+    I click on "New"
+    I fill "OPS" within column "Destination"
+    I fill "HT101" within column "Cost Center"
+    I validate the line
+    I click on "Save" and close the window
+
+
+#LINE 3	
+	
+    I click on "Validate document"
+	I should see "Validated" in "Order State"
+
+    I store "Order Reference" in "PO_REF"
+	
+#LINE 4	 & 5
+	I synchronize "HQ1C1P1"
+	
+    I synchronize "HQ1C1"
+
+    I log into instance "HQ1C1"
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+    I toggle on "DRAFT"
+
+	I click "Edit" on line:
+        | CUSTOMER REFERENCE |
+        | *{{PO_REF}}  |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  |
+       | DINJPENB1V- | 20,000 |
+	   | DINJPENG5V- | 30,000 |
+	   | ALIFCLOC1-- | 50,000 |
+       | ALIFCOFM1E- | 10,000 |
+
+#Line 6
+
+    I click on "Validate document"
+	I should see "Validated" in "State"
+
+    I store "Order Reference" in "FO_REFERENCE"
+	
+#LINE 7
+
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{FO_REFERENCE}}"
+	I click on "Search"
+	
+	
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [DINJPENB1V-] * |
+	I fill "MSF Supply" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [DINJPENB1V-]* |	
+
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [DINJPENG5V-] * |
+	I fill "MSF Supply" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [DINJPENG5V-]* |	
+
+
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [ALIFCLOC1--] * |
+	I fill "MSF Supply" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [ALIFCLOC1--]* |	
+
+#LINE 8		
+	I click "Split line" on line and open the window:
+        | PRODUCT         |
+        | [ALIFCOFM1E-] * |
+		
+	I fill "New line quantity" with "3000"
+	I click on "Split line" and close the window
+
+#LINE 9
+	
+    I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 7,000 |
+
+	I fill "MSF Supply" within column "SUPPLIER"
+	I validate the line
+	
+     I click "Source Line" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 7,000 |
+
+	I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |		
+				
+	I fill "from stock" within column "PROC. METHOD"
+	I validate the line
+     I click "Source Line" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |
+
+    
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  | STATE     |
+       | DINJPENB1V- | 20,000 | Sourced   |
+	   | DINJPENG5V- | 30,000 | Sourced   |
+	   | ALIFCLOC1-- | 50,000 | Sourced   |
+       | ALIFCOFM1E- |  7,000 | Sourced   |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |	 
+
+#LINE 10
+	   
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT   | SUPPLIER   |
+        | *{{FO_REFERENCE}} | MSF Supply | 
+
+	I should see in the main table the following data:
+       | PRODUCT CODE | STATE  |  QTY  |
+       | DINJPENB1V-  | Draft  | 20,000 |
+       | DINJPENG5V-  | Draft  | 30,000 |
+       | ALIFCLOC1--  | Draft  | 50,000 |
+       | ALIFCOFM1E-  | Draft  |  7,000 |
+
+	
+    I fill "Date of Stock Take" with "28/Dec/2015"	
+	I click on "Apply to lines" and open the window
+    I click on "Yes - All lines" and close the window	
+		
+    I click on "Validate document"	   
+	I should see "Validated" in "Order State"
+	
+	I store "Order Reference" in "PO_REF_COO1"		
+
+
+	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  | STATE     |
+       | DINJPENB1V- | 20,000 | Sourced-v |
+	   | DINJPENG5V- | 30,000 | Sourced-v |
+	   | ALIFCLOC1-- | 50,000 | Sourced-v |
+       | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |		
+	   
+#LINE 11=> 13
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REF_COO1}}"
+
+    I click on "Search"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+	
+    I click on "Import PO confirmation"
+    I click on "add attachment"
+    I fill "File to import" with "US4517_FOtoESC_PO_Import.xml"
+	
+    I click on "Simulate"
+	I should see "Simulation done" in "State"
+	I open tab "Details"
+	
+	I click on "Import"
+
+
+	I should see in the main table the following data:
+	   | LINE  |  PRODUCT CODE |  QTY  | STATE       | DELIVERY CONFIRMED DATE |                     
+       |   1   | DINJPENB1V-   |  5,000 | Validated   |       30/May/2018       |
+	   |   1   | DINJPENB1V-   | 15,000 | Validated   |       01/Aug/2018       |
+       |   2   | DINJPENG5V-   | 10,000 | Validated   |       30/May/2018       |
+	   |   2   | DINJPENG5V-   | 20,000 | Validated   |       01/Aug/2018       |
+	   |   3   | ALIFCLOC1--   | 50,000 | Validated   |       30/May/2018       |
+       |   4   | ALIFCOFM1E-   |  7,000 | Validated   |       30/May/2018       |	   
+	  
+
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+	   | LINE | PRODUCT CODE|  QTY  | STATE     |
+       |   1  | DINJPENB1V- |  5,000 | Sourced-v |
+       |   1  | DINJPENB1V- | 15,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 10,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 20,000 | Sourced-v |
+	   |   3  | ALIFCLOC1-- | 50,000 | Sourced-v |
+       |   4  | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |	
+
+	   
+#LINE 14	   
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+		
+	I click on "Confirm document"		
+	
+	I should see "Confirmed" in "Order State"
+	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+	   | LINE | PRODUCT CODE|  QTY  | STATE     |
+       |   1  | DINJPENB1V- |  5,000 | Confirmed |
+       |   1  | DINJPENB1V- | 15,000 | Confirmed |
+	   |   2  | DINJPENG5V- | 10,000 | Confirmed |
+	   |   2  | DINJPENG5V- | 20,000 | Confirmed |
+	   |   3  | ALIFCLOC1-- | 50,000 | Confirmed |
+       |   4  | ALIFCOFM1E- |  7,000 | Confirmed |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |	
+	   
+
+
+    I open tab menu "WAREHOUSE"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+        | PURCHASE ORDER    | STATE     |
+        | *{{PO_REF_COO1}}* | Available |	   
+
+
+	I should see in the main table the following data:
+       | LINE |  PRODUCT        | QUANTITY | STATE     |
+# code bug or meta bug? merged
+       |   1  | [DINJPENB1V-] * |   15,000   | Available |
+	   |   2  | [DINJPENG5V-] * |  10,000   | Available |
+	   |   2  | [DINJPENG5V-] * |  20,000   | Available |
+	   |   3  | [ALIFCLOC1--] * |  50,000   | Available |
+       |   4  | [ALIFCOFM1E-] * |   7,000   | Available |	
+# code bug or meta bug? line not found
+#       |   4  | [ALIFCOFM1E-] * |   3,000   | Available |		
+		
+
+#LINE 15
+
+	I synchronize "HQ1C1"
+	
+    I synchronize "HQ1C1P1"
+    I log into instance "HQ1C1P1"		
+	
+#LINE 16
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE  |
+        | {{PO_REF}} |	
+
+
+	I should see in the main table the following data:
+	   | LINE  |  PRODUCT CODE |  QTY  | STATE     | DELIVERY CONFIRMED DATE |                     
+       |   1   | DINJPENB1V-   |  5,000 | Confirmed |       30/May/2018       |
+	   |   1   | DINJPENB1V-   | 15,000 | Confirmed |       01/Aug/2018       |
+       |   2   | DINJPENG5V-   | 10,000 | Confirmed |       30/May/2018       |
+	   |   2   | DINJPENG5V-   | 20,000 | Confirmed |       01/Aug/2018       |
+	   |   3   | ALIFCLOC1--   | 50,000 | Confirmed |       30/May/2018       |
+       |   4   | ALIFCOFM1E-   |  7,000 | Confirmed |       30/May/2018       |		
+       |   4   | ALIFCOFM1E-   |  3,000 | Confirmed |             *           |			
+	   
+	   
+#EXTRA NOT IN INITIAL TC
+
+    I log into instance "HQ1C1"	
+
+    I open tab menu "WAREHOUSE"
+	I click on menu "Incoming Shipments"
+	
+
+	I click "Edit" on line:
+        | PURCHASE ORDER    | STATE     |
+        | *{{PO_REF_COO1}}* | Available |	
+
+	I click on "Process" and open the window
+	I click on "Copy all"
+	
+	I click "Edit" on line:
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENB1V-] * |  5,000    |
+	I fill "batchA{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2020"
+    I click on "Save" and close the window
+    I validate the line
+
+	
+	I click "Edit" on line:
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENB1V-] * |   15,000  |
+	I fill "batchB{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Dec/2020"
+    I click on "Save" and close the window
+    I validate the line	
+	
+	
+	I click "Edit" on line:
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENG5V-] * |   10,000  |
+	I fill "batchC{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Aug/2020"
+    I click on "Save" and close the window
+    I validate the line		
+	
+
+	I click "Edit" on line:
+        | PRODUCT         | ORDERED QUANTITY |
+        | [DINJPENG5V-] * |   20,000  |
+	I fill "batchD{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Nov/2022"
+    I click on "Save" and close the window
+    I validate the line		
+	
+	
+	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open		
+	
+
+	
+	I click on menu "Deliveries|Picking"
+
+	I click "Search" until I see:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+		
+	I click "Edit" on line:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+
+	I Click on "Convert to Simple Out"
+	
+	I click on "Process" and open the window
+	I click on "Copy all"
+
+	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+	
+	
+	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+	   | LINE | PRODUCT CODE|  QTY  | STATE  |
+       |   1  | DINJPENB1V- |  5,000 | Closed |
+       |   1  | DINJPENB1V- | 15,000 | Closed |
+	   |   2  | DINJPENG5V- | 10,000 | Closed |
+	   |   2  | DINJPENG5V- | 20,000 | Closed |
+	   |   3  | ALIFCLOC1-- | 50,000 | Closed |
+       |   4  | ALIFCOFM1E- |  7,000 | Closed |	
+       |   4  | ALIFCOFM1E- |  3,000 | Closed |		
+	   
+	   
+	I synchronize "HQ1C1"
+	
+    I synchronize "HQ1C1P1"
+    I log into instance "HQ1C1P1"		
+
+
+    I open tab menu "WAREHOUSE"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+        | PURCHASE ORDER    | STATE            |
+        | *{{PO_REF}}* | Available Shipped|	   
+
+
+	I should see in the main table the following data:
+       | LINE |  PRODUCT        | QUANTITY | BATCH        |
+       |   1  | [DINJPENB1V-] * |   5,000   | batchA{{ID}} |
+       |   1  | [DINJPENB1V-] * |  15,000   | batchB{{ID}} |
+	   |   2  | [DINJPENG5V-] * |  10,000   | batchC{{ID}} |
+	   |   2  | [DINJPENG5V-] * |  20,000   | batchD{{ID}} |
+	   |   3  | [ALIFCLOC1--] * |  50,000   |              |
+       |   4  | [ALIFCOFM1E-] * |   7,000   |              |	
+       |   4  | [ALIFCOFM1E-] * |   3,000   |              |	
+	   
+	   
+	I click on "Process" and open the window
+	I click on "Copy all"
+
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+
+	    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE  |
+        | {{PO_REF}} |	
+
+
+	I should see in the main table the following data:
+	   | LINE  |  PRODUCT CODE |  QTY  | STATE  |                     
+       |   1   | DINJPENB1V-   |  5,000 | Closed |
+	   |   1   | DINJPENB1V-   | 15,000 | Closed |
+       |   2   | DINJPENG5V-   | 10,000 | Closed |
+	   |   2   | DINJPENG5V-   | 20,000 | Closed |
+	   |   3   | ALIFCLOC1--   | 50,000 | Closed |
+       |   4   | ALIFCOFM1E-   |  7,000 | Closed |		
+       |   4   | ALIFCOFM1E-   |  3,000 | Closed |		

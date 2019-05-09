@@ -576,7 +576,12 @@ class account_move_line_compute_currency(osv.osv):
 #        if ctxcurr.get('date', False):
 #            newvals['date'] = ctxcurr['date']
 
-        if vals.get('credit_currency') or vals.get('debit_currency'):
+        if context.get('from_web_menu') and (vals.get('debit_currency', False) is not False or vals.get('credit_currency', False) is not False):
+            # use case where one of the booking fields MANUALLY CHANGED IN THE INTERFACE has a value, EVEN IF IT IS 0.00
+            newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
@@ -601,7 +606,7 @@ class account_move_line_compute_currency(osv.osv):
         # or if it's a revaluation line (US-1682)
         if vals.get('is_addendum_line', False) or \
                 (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
-            newvals.update({'debit_currency': 0.0, 'credit_currency': 0.0})
+            newvals.update({'debit_currency': 0.0, 'credit_currency': 0.0, 'amount_currency': 0.0})
         return newvals
 
     def create(self, cr, uid, vals, context=None, check=True):
@@ -706,7 +711,7 @@ class account_move_line_compute_currency(osv.osv):
         if isinstance(ids, (long, int)):
             ids = [ids]
         ret = {}
-        for line in self.browse(cr, uid, ids):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id']):
             ret[line.id] = line.account_id and line.account_id.user_type and line.account_id.user_type.name or False
         return ret
 

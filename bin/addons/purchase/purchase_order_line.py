@@ -18,6 +18,11 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
+    _max_digits = 15
+    _max_qty = 10**(_max_digits+1)
+    _max_amount = 10**(_max_digits-3)
+    _max_msg = _('The Total amount of the line is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
+
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the system configuration VAT management is set to True
@@ -169,15 +174,16 @@ class purchase_order_line(osv.osv):
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if pol.resourced_original_line and pol.state != 'done':
+            if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
                     res[pol.id] = 'Resourced-v'
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
                         res[pol.id] = 'Resourced-pv'
-                    elif pol.state == 'sourced_sy':
-                        res[pol.id] = 'Resourced-sy'
+                    #elif pol.state == 'sourced_sy':
+                    #    res[pol.id] = 'Resourced-sy'
                     else:
+                        # debatable
                         res[pol.id] = 'Resourced-s'
                 elif pol.state.startswith('confirmed'):
                     res[pol.id] = 'Resourced-c'
@@ -277,7 +283,9 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
+            if line.modification_comment or line.created_by_sync or line.cancelled_by_sync \
+                    or (line.original_qty and line.product_qty != line.original_qty) \
+                    or (line.original_product and line.product_id and line.product_id.id != line.original_product.id):
                 changed = True
 
             res[line.id] = changed
@@ -360,6 +368,38 @@ class purchase_order_line(osv.osv):
             res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
         return res
 
+    def get_distribution_account(self, cr, uid, product_record, nomen_record, po_type, product_cache=None, categ_cache=None, context=None):
+        if product_cache is None:
+            product_cache = {}
+        if categ_cache is None:
+            categ_cache = {}
+
+        a = False
+        # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
+        # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
+        # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
+        # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
+        # - other case: take expense account on family that's attached to nomenclature
+        if product_record and po_type =='in_kind':
+            a = product_record.donation_expense_account and product_record.donation_expense_account.id or False
+            if not a:
+                a = product_record.categ_id.donation_expense_account and product_record.categ_id.donation_expense_account.id or False
+        elif product_record:
+            if product_record.product_tmpl_id in product_cache:
+                a = product_cache[product_record.product_tmpl_id]
+            else:
+                a = product_record.product_tmpl_id.property_account_expense.id or False
+                product_cache[product_record.product_tmpl_id] = a
+            if not a:
+                if product_record.categ_id in categ_cache:
+                    a = categ_cache[product_record.categ_id]
+                else:
+                    a = product_record.categ_id.property_account_expense_categ.id or False
+                    categ_cache[product_record.categ_id] = a
+        else:
+            a = nomen_record and nomen_record.category_id and nomen_record.category_id.property_account_expense_categ and nomen_record.category_id.property_account_expense_categ.id or False
+        return a
+
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
         """
         Get account for given lines regarding:
@@ -376,36 +416,7 @@ class purchase_order_line(osv.osv):
         categ_dict = {}
         for line in self.browse(cr, uid, ids):
             # Prepare some values
-            res[line.id] = False
-            a = False
-            # Check if PO is inkind
-            is_inkind = False
-            if line.order_id and line.order_id.order_type == 'in_kind':
-                is_inkind = True
-            # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
-            # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
-            # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
-            # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
-            # - other case: take expense account on family that's attached to nomenclature
-            if line.product_id and is_inkind:
-                a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
-                if not a:
-                    a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
-            elif line.product_id:
-                if line.product_id.product_tmpl_id in product_tmpl_dict:
-                    a = product_tmpl_dict[line.product_id.product_tmpl_id]
-                else:
-                    a = line.product_id.product_tmpl_id.property_account_expense.id or False
-                    product_tmpl_dict[line.product_id.product_tmpl_id] = a
-                if not a:
-                    if line.product_id.categ_id in categ_dict:
-                        a = categ_dict[line.product_id.categ_id]
-                    else:
-                        a = line.product_id.categ_id.property_account_expense_categ.id or False
-                        categ_dict[line.product_id.categ_id] = a
-            else:
-                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
-            res[line.id] = a
+            res[line.id] = self.get_distribution_account(cr, uid, line.product_id, line.nomen_manda_2, line.order_id.order_type, product_cache=product_tmpl_dict, categ_cache=categ_dict, context=None)
         return res
 
     def _get_product_info(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -429,6 +440,7 @@ class purchase_order_line(osv.osv):
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
+        'set_as_resourced': fields.boolean(string='Force resourced state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
@@ -471,7 +483,7 @@ class purchase_order_line(osv.osv):
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
                                         string="Customer ref."),
         'name': fields.char('Description', size=256, required=True),
-        'product_qty': fields.float('Quantity', required=True, digits=(16, 2)),
+        'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True, select=True),
         'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok', '=', True)],
@@ -518,14 +530,16 @@ class purchase_order_line(osv.osv):
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
         'original_product': fields.many2one('product.product', 'Original Product'),
-        'original_qty': fields.float('Original Qty'),
-        'original_price': fields.float('Original Price'),
+        'original_qty': fields.float('Original Qty', related_uom='original_uom'),
+        'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
         'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
         'esc_confirmed': fields.boolean(string='ESC confirmed'),
+        'created_by_sync': fields.boolean(string='Created by Synchronisation'),
+        'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -543,15 +557,18 @@ class purchase_order_line(osv.osv):
         'cold_chain': fields.function(_get_product_info, type='char', string='Cold Chain', multi='product_info', method=True),
         'controlled_substance': fields.function(_get_product_info, type='char', string='Controlled Substance', multi='product_info', method=True),
         'justification_code_id': fields.function(_get_product_info, type='char', string='Justification Code', multi='product_info', method=True),
+        'create_date': fields.date('Creation date', readonly=True),
+        'validation_date': fields.date('Validation Date', readonly=True),
+        'confirmation_date': fields.date('Confirmation Date', readonly=True),
+        'closed_date': fields.date('Closed Date', readonly=True),
     }
-
 
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
         'set_as_validated_n': lambda *a: False,
         'block_resourced_line_creation': lambda *a: False,
         'change_price_manually': lambda *a: False,
-        'product_qty': lambda *a: 0.00,
+        'product_qty': lambda *a: 0,
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
         'is_line_split': False,  # UTP-972: by default not a split line
@@ -567,7 +584,37 @@ class purchase_order_line(osv.osv):
         'confirmed_delivery_date': False,
         'have_analytic_distribution_from_header': lambda *a: True,
         'created_by_vi_import': False,
+        'created_by_sync': False,
+        'cancelled_by_sync': False,
     }
+
+
+    def _check_max_price(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        msg = _('The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed')
+        error = []
+        for pol in self.browse(cr, uid, ids, context=context):
+            max_digits = 27
+            if pol.product_qty >= 10**(max_digits-2):
+                error.append('%s #%s' % (pol.order_id.name, pol.line_number))
+            else:
+                total_int = int(pol.product_qty * pol.price_unit)
+
+                nb_digits_allowed = max_digits - 2
+
+                if len(str(total_int)) > nb_digits_allowed:
+                    error.append('%s #%s' % (pol.order_id.name, pol.line_number))
+
+        if error:
+            raise osv.except_osv(_('Error'), '%s: %s' % (msg, ' ,'.join(error)))
+
+        return True
+
+    _constraints = [
+        (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
+    ]
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
@@ -1047,7 +1094,7 @@ class purchase_order_line(osv.osv):
 
         # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the
         # line as non-really validated. It avoids the PO to go back in draft state.
-        if order.state.startswith('validated'):
+        if order.state.startswith('validated') and not vals.get('is_line_split', False):
             vals.update({'set_as_validated_n': True})
 
         # Update the name attribute if a product is selected
@@ -1155,7 +1202,16 @@ class purchase_order_line(osv.osv):
         if defaults is None:
             defaults = {}
 
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'esc_confirmed': False})
+        defaults.update({
+            'merged_id': False,
+            'sync_order_line_db_id': False,
+            'linked_sol_id': False,
+            'set_as_sourced_n': False,
+            'set_as_validated_n': False,
+            'esc_confirmed': False,
+            'created_by_sync': False,
+            'cancelled_by_sync': False,
+        })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -1179,7 +1235,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1385,9 +1441,9 @@ class purchase_order_line(osv.osv):
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
             pol_to_update = [pol.id]
-            if pol.linked_sol_id and not pol.linked_sol_id.order_id.procurement_request:
+            if pol.linked_sol_id:
                 pol_to_update += [new_po_line]
-            self.update_fo_lines(cr, uid, pol_to_update, context=context)
+            self.update_fo_lines(cr, uid, pol_to_update, context=context, qty_updated=True)
 
             # cancel the new split PO line:
             signal = 'cancel_r' if resource else 'cancel'
@@ -1620,12 +1676,14 @@ class purchase_order_line(osv.osv):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
+
         res = {'value': {}}
 
         if context is None:
             context = {}
 
         if not product_id or not product_uom or not product_qty:
+            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1649,6 +1707,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
+        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
@@ -1662,7 +1721,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         sol_ids = set()
-        for pol in self.browse(cr, uid, ids, context=context):
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
             if pol.linked_sol_id:
                 sol_ids.add(pol.linked_sol_id.id)
 
@@ -1712,7 +1771,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type == 'loan':
+            if pol.order_id.order_type in ['loan', 'in_kind']:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)

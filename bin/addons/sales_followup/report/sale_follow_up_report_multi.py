@@ -25,7 +25,6 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
-import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -35,12 +34,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         super(sale_follow_up_multi_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
             'getProducts': self._get_products,
-            'saleUstr': self._sale_ustr,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -52,8 +51,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         else:
             self.back_browse = None
 
-    def _sale_ustr(self, string):
-        return tools.ustr(string)
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
     def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []
@@ -125,12 +124,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             m_index = 0
             bo_qty = line.product_uom_qty
             po_name = '-'
+            supplier_name = '-'
             cdd = False
             linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.order_id.delivery_confirmed_date
+                supplier_name = linked_pol.order_id.partner_id.name
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
@@ -155,6 +156,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     )
                     data.update({
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'cdd': cdd,
                         'line_number': line.line_number,
                         'product_name': line.product_id.name,
@@ -251,6 +253,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data = {
                         'line_number': line.line_number,
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'cdd': cdd,
                         'rts': line.state not in ('draft', 'validated', 'validated_n', 'cancel', 'cancel_r')
                         and line.order_id.ready_to_ship_date or '',
@@ -270,6 +273,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data.update({
                         'line_number': line.line_number,
                         'po_name': po_name,
+                        'supplier_name': supplier_name,
                         'product_code': line.product_id.default_code,
                         'product_name': line.product_id.name,
                         'uom_id': line.product_uom.name,
@@ -287,6 +291,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if not only_bo and bo_qty and bo_qty > 0 and not first_line and line.order_id.state != 'cancel':
                 lines.append({
                     'po_name': po_name,
+                    'supplier_name': supplier_name,
                     'cdd': cdd,
                     'line_number': line.line_number,
                     'product_name': line.product_id.name,
