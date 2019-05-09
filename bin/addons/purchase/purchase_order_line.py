@@ -804,19 +804,13 @@ class purchase_order_line(osv.osv):
                                                                  'uom': uom,
                                                                  'date': date_order,
         })[pricelist]
-        if price is False:
-            warning = {
-                'title': 'No valid pricelist line found !',
-                'message':
-                    "Couldn't find a pricelist line matching this product and quantity.\n"
-                    "You have to change either the product, the quantity or the pricelist."
-            }
-            res.update({'warning': warning})
         dt = (datetime.now() + relativedelta(days=int(seller_delay) or 0.0)).strftime('%Y-%m-%d %H:%M:%S')
 
+        if price:
+            value['price_unit'] = price
 
         value.update({
-            'price_unit': price, 'name': prod_name,
+            'name': prod_name,
             'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
             'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
             'product_qty': qty,
@@ -1517,7 +1511,7 @@ class purchase_order_line(osv.osv):
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
                              name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
-                             nomen_manda_0=False, comment=False, context=None, categ=False):
+                             nomen_manda_0=False, comment=False, context=None, categ=False, from_product=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
@@ -1544,7 +1538,7 @@ class purchase_order_line(osv.osv):
                                      partner_id, date_order, fiscal_position,
                                      date_planned, name, price_unit, notes)
 
-        if res.get('warning', {}).get('title', '') == 'No valid pricelist line found !' or qty == 0.00:
+        if qty == 0.00:
             res.update({'warning': {}})
 
         func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
@@ -1564,6 +1558,7 @@ class purchase_order_line(osv.osv):
         res['value'].update({'product_qty': qty})
 
 
+        # price_unit is set only if catalogue exists
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
@@ -1604,16 +1599,6 @@ class purchase_order_line(osv.osv):
                                 'the quantity ordered to match the supplier criteria.') % info_price.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
                     res['warning'].update({'message': message})
-            else:
-                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id,
-                                                                  res['value']['price_unit'], round=False,
-                                                                  context=context)
-                res['value'].update({'old_price_unit': old_price})
-        else:
-            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id,
-                                                              res.get('value').get('price_unit'), round=False,
-                                                              context=context)
-            res['value'].update({'old_price_unit': old_price})
 
         # Set the unit price with cost price if the product has no staged pricelist
         if product:
@@ -1625,18 +1610,19 @@ class purchase_order_line(osv.osv):
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
             st_uom = product_result['uom_id'][0]
-            st_price = product_result['standard_price']
-            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
-                                                             context=context)
-            st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
+            if not price_unit or from_product:
+                st_price = product_result['standard_price']
+                st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
+                                                                 context=context)
+                st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
 
-            if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state:
-                res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
-            elif state and state != 'draft' and old_price_unit:
-                res['value'].update({'price_unit': old_price_unit, 'old_price_unit': old_price_unit})
+                if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state:
+                    res['value'].update({'price_unit': st_price})
+                elif state and state != 'draft' and old_price_unit:
+                    res['value'].update({'price_unit': old_price_unit})
 
-            if res['value']['price_unit'] == 0.00:
-                res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
+                if not res['value'].get('price_unit'):
+                    res['value'].update({'price_unit': st_price})
 
         elif qty == 0.00:
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
@@ -1648,6 +1634,12 @@ class purchase_order_line(osv.osv):
                 res['value']['original_price'] = res['value']['price_unit']
             else:
                 res['value']['original_price'] = 0.00
+
+        if product and qty and state and state != 'draft' and old_price_unit:
+            res['value'].update({'price_unit': old_price_unit})
+
+        if 'price_unit' in res['value']:
+            res['value']['old_price_unit'] = res['value']['price_unit']
 
         if (categ or context.get('categ')) and product:
             # Check consistency of product
