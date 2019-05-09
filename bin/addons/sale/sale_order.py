@@ -2986,7 +2986,7 @@ sync_sale_order_line_split()
 class sale_order_sourcing_progress(osv.osv):
     _name = 'sale.order.sourcing.progress'
     _rec_name = 'order_id'
-    _order = 'create_date desc'
+    _order = 'id desc'
 
     def _get_nb_lines_by_type(self, cr, uid, order_id=None, context=None):
         """
