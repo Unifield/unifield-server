@@ -1495,7 +1495,8 @@ class purchase_order_line(osv.osv):
         if not linked_sol_id and origin:
             sale_id = self.pool.get('sale.order').search(cr, uid, [
                 ('name', '=', origin),
-                ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+                ('state', 'not in', ['done', 'cancel']),
+                ('procurement_request', 'in', ['t', 'f'])
             ], limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {

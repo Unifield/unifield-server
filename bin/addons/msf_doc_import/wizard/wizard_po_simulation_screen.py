@@ -1514,6 +1514,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         '''
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        sale_obj = self.pool.get('sale.order')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1660,20 +1661,25 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Origin
-            write_vals['imp_origin'] = values[8]
-            if line.simu_id.order_id.po_from_fo and not values[8]:
-                err_msg = _('The Origin is mandatory for a PO coming from a FO')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
-            elif line.simu_id.order_id.po_from_fo:
-                fo_ids = self.pool.get('sale.order').search(cr, uid,
-                                                            [('name', '=', values[8]),
-                                                             ('procurement_request', '=', False)], context=context)
-                ir_ids = self.pool.get('sale.order').search(cr, uid,
-                                                            [('name', '=', values[8]),
-                                                             ('procurement_request', '=', True)], context=context)
-                if not fo_ids and not ir_ids:
+            origin = values[8]
+            if origin:
+                so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
+                                         limit=1, context=context)
+                if so_ids:
+                    so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
+                    if so_state not in ('done', 'cancel'):
+                        write_vals['imp_origin'] = origin
+                    else:
+                        err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
+                else:
                     err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            else:
+                if line.simu_id.order_id.po_from_fo:
+                    err_msg = _('The Origin is mandatory for a PO coming from a FO')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 

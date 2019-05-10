@@ -105929,3 +105929,9 @@ msgstr "Il y a plus de 50000 enregistrements, voulez-vous continuer ?"
 #: field:account.account,prevent_multi_curr_rec:0
 msgid "Prevent Reconciliation with different currencies"
 msgstr "Empêcher le Lettrage avec des devises différentes"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1621
+#, python-format
+msgid "'Origin' Document can't be Closed or Cancelled"
+msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"
