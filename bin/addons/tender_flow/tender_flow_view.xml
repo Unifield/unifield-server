@@ -200,6 +200,14 @@
         <menuitem icon="STOCK_INDENT" action="tender_action"
             id="menu_tender" parent="purchase.menu_procurement_management" sequence="3" />
 
+        <record id="tender_action_dashboard" model="ir.actions.act_window">
+            <field name="name">Tenders</field>
+            <field name="res_model">tender</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="search_view_id" ref="tender_search_form_view" />
+        </record>
 
        <record id="product_supplierinfo_form_view" model="ir.ui.view">
             <field name="name">product.supplierinfo.form.view</field>
