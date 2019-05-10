@@ -557,9 +557,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             prod_stock = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
             prod_stock_bn = 0
             if move.prodlot_id:
-                ctx_bn = self.localcontext.copy()
-                ctx_bn.update({'prodlot_id': move.prodlot_id.id or False})
-                prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx_bn)['qty_available']
+                ctx.update({'prodlot_id': move.prodlot_id.id or False})
+                prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
 
             # Get Unit Price at date
             prod_price = move.product_id.standard_price or move.price_unit
