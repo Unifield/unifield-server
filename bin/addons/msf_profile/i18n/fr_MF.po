@@ -20580,7 +20580,7 @@ msgstr "Emballages Clients"
 msgid "Burundi"
 msgstr "Burundi"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, order_types
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
@@ -20588,8 +20588,9 @@ msgstr "Burundi"
 #: report:msf.product_list:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
+#: report:order.type.donation.certificate:0
 msgid "Name :"
-msgstr "Nom: "
+msgstr "Nom :"
 
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard,entry_mode:0
@@ -105379,3 +105380,13 @@ msgstr "Le Bénéficiaire de la donation assumera la responsabilité concernant 
 #: report:order.type.donation.certificate:0
 msgid "Total Value (currency)"
 msgstr "Valeur Totale (devise)"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Sent by :"
+msgstr "Envoyé par :"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Received by :"
+msgstr "Reçu par :"
