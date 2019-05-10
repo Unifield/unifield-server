@@ -105339,5 +105339,5 @@ msgstr "\n"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1621
 #, python-format
-msgid "'Origin' Document can't be Confirmed, Closed or Cancelled"
-msgstr "Le Document de 'Origine' ne peut pas être Confirmé, Fermé ou Annulé"
+msgid "'Origin' Document can't be Closed or Cancelled"
+msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"

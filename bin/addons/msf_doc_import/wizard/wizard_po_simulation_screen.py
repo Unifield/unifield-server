@@ -1542,10 +1542,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                          limit=1, context=context)
                 if so_ids:
                     so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
-                    if so_state in ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p'):
+                    if so_state not in ('done', 'cancel'):
                         write_vals['imp_origin'] = origin
                     else:
-                        err_msg = _('\'Origin\' Document can\'t be Confirmed, Closed or Cancelled')
+                        err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
                         errors.append(err_msg)
                         write_vals['type_change'] = 'error'
                 else:
