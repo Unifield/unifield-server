@@ -553,7 +553,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             move_date = move.picking_id and move.picking_id.date_done or move.date or False
             # Get stock
             ctx = self.localcontext.copy()
-            ctx.update({'date': move_date})
+            ctx.update({'to_date': move_date})
             prod_stock = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
             prod_stock_bn = 0
             if move.prodlot_id:
