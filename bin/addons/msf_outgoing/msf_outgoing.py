@@ -1553,7 +1553,7 @@ class shipment(osv.osv):
                                      _('Please put a partner on the shipment if you want to generate invoice.'))
 
             # (US-952) No STV created when a shipment is generated on an external supplier
-            if partner.partner_type == 'external':
+            if partner.partner_type in ('external', 'esc'):
                 continue
 
             inv_type = 'out_invoice'
