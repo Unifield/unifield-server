@@ -1088,7 +1088,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         self._nb_orders = len(wizard.pol_ids)
 
         self.cr.execute('''
-            SELECT DISTINCT ON (p.id, pl.line_number, m.id, al.id) 
+            SELECT 
                 pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
                 pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name, 
                 p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id, 
@@ -1108,7 +1108,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 LEFT JOIN account_invoice a ON a.picking_id = sp.id AND a.type = 'in_invoice' 
                     AND a.is_direct_invoice = 'f' AND a.is_inkind_donation = 'f' AND a.is_debit_note = 'f' 
                     AND a.is_intermission = 'f'
-                LEFT JOIN account_invoice_line al ON al.invoice_id = a.id AND al.order_line_id = pl.id
+                LEFT JOIN account_invoice_line al ON al.invoice_id = a.id AND al.order_line_id = pl.id 
+                    AND m.invoice_line_id=al.id
                 LEFT JOIN res_currency c3 ON c3.id = a.currency_id
             WHERE pl.id IN %s 
             ORDER BY p.id DESC, pl.line_number ASC, m.id ASC, al.id ASC
