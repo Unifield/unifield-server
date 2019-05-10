@@ -1536,20 +1536,25 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Origin
-            write_vals['imp_origin'] = values[8]
-            if line.simu_id.order_id.po_from_fo and not values[8]:
-                err_msg = _('The Origin is mandatory for a PO coming from a FO')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
-            elif line.simu_id.order_id.po_from_fo:
-                fo_ids = self.pool.get('sale.order').search(cr, uid,
-                                                            [('name', '=', values[8]),
-                                                             ('procurement_request', '=', False)], context=context)
-                ir_ids = self.pool.get('sale.order').search(cr, uid,
-                                                            [('name', '=', values[8]),
-                                                             ('procurement_request', '=', True)], context=context)
-                if not fo_ids and not ir_ids:
+            origin = values[8]
+            if origin:
+                so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
+                                         limit=1, context=context)
+                if so_ids:
+                    so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
+                    if so_state in ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p'):
+                        write_vals['imp_origin'] = origin
+                    else:
+                        err_msg = _('\'Origin\' Document can\'t be Confirmed, Closed or Cancelled')
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
+                else:
                     err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            else:
+                if line.simu_id.order_id.po_from_fo:
+                    err_msg = _('The Origin is mandatory for a PO coming from a FO')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 
@@ -1609,22 +1614,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['esc_conf'] = True
 
             # Project Ref.
-            proj_ref = values[17]
-            if proj_ref:
-                so_ids = sale_obj.search(cr, uid, [('name', '=', proj_ref), ('procurement_request', 'in', ['t', 'f'])],
-                                         limit=1, context=context)
-                if so_ids:
-                    so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
-                    if so_state in ('draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p'):
-                        write_vals['imp_project_ref'] = values[17]
-                    else:
-                        err_msg = _('\'Project Ref\' Document can\'t be Confirmed, Closed or Cancelled')
-                        errors.append(err_msg)
-                        write_vals['type_change'] = 'error'
-                else:
-                    err_msg = _('The Reference in \'Project Ref\' was not found')
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
+            write_vals['imp_project_ref'] = values[17]
 
             # Message ESC1
             write_vals['imp_esc1'] = values[18]
