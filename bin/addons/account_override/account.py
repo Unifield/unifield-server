@@ -38,6 +38,7 @@ class account_account(osv.osv):
     '''
     _name = "account.account"
     _inherit = "account.account"
+    _trace = True
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -516,7 +517,16 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Warning !'),
                                      _('An account set as "Included in revaluation" must be set as "Reconcile".'))
 
+    def _set_prevent_multi_curr_rec(self, vals):
+        """
+        Updates vals to set prevent_multi_curr_rec to False when "reconcile" is False.
+        Cf: when "reconcile" is unticked, prevent_multi_curr_rec is in readonly so its value (False in that case) is ignored
+        """
+        if 'reconcile' in vals and not vals['reconcile'] and 'prevent_multi_curr_rec' not in vals:
+            vals['prevent_multi_curr_rec'] = False
+
     def create(self, cr, uid, vals, context=None):
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
         account_id = super(account_account, self).create(cr, uid, vals, context=context)
@@ -530,6 +540,7 @@ class account_account(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
         # remove user_type from vals if it hasn't been modified to avoid the recomputation on JI Account Type (due to store feature)
