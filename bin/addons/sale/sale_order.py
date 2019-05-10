@@ -689,7 +689,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
     ]
 
-    _order = 'name desc'
+    _order = 'id desc'
 
     # Form filling
     def unlink(self, cr, uid, ids, context=None):
