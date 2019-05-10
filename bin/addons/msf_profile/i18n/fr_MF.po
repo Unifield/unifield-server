@@ -105935,3 +105935,9 @@ msgstr "Empêcher le Lettrage avec des devises différentes"
 #, python-format
 msgid "'Origin' Document can't be Closed or Cancelled"
 msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:1480
+#, python-format
+msgid "Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document."
+msgstr "Veuillez vous assurer que vous avez selectionné la bonne valeur pour le champ \"Document d'origine\". Une fois enregistrée cette valeur ne sera plus modifiable. En cas d'erreur la seule solution sera d'Annuler cette ligne et d'en créer une nouvelle."

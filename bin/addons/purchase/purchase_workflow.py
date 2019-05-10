@@ -695,7 +695,7 @@ class purchase_order_line(osv.osv):
 
             # if line created in PO, then create a FO line that match with it:
             if not pol.linked_sol_id and pol.origin:
-                fo_id = self.update_origin_link(cr, uid, pol.origin, context=context)
+                fo_id = self.update_origin_link(cr, uid, pol.origin, po_obj=pol.order_id, context=context)
                 fo_id = fo_id['link_so_id'] if fo_id else False
                 if fo_id:
                     new_sol_id = self.create_sol_from_pol(cr, uid, pol.id, fo_id, context=context)

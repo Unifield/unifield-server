@@ -1128,7 +1128,7 @@ class purchase_order_line(osv.osv):
                 linked_so = sol_data['order_id'] and sol_data['order_id'][0] or False
                 vals.update({'link_so_id': linked_so})
             elif vals.get('origin'):
-                vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
+                vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=order, context=context))
 
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
@@ -1310,7 +1310,7 @@ class purchase_order_line(osv.osv):
                     linked_so = sol_data['order_id'] and sol_data['order_id'][0] or False
                     new_vals.update({'link_so_id': linked_so})
                 elif vals.get('origin'):
-                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
+                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), po_obj=line.order_id, context=context))
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
@@ -1341,7 +1341,7 @@ class purchase_order_line(osv.osv):
 
         return res
 
-    def update_origin_link(self, cr, uid, origin, context=None):
+    def update_origin_link(self, cr, uid, origin, po_obj=None, context=None):
         '''
         Return the FO/IR that matches with the origin value
         '''
@@ -1349,11 +1349,17 @@ class purchase_order_line(osv.osv):
         context['procurement_request'] = True
         so_ids = self.pool.get('sale.order').search(cr, uid, [
             ('name', '=', origin),
-            ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_v']),
+            ('state', 'not in', ['done', 'cancel']),
         ], context=context)
         context['procurement_request'] = tmp_proc_context
 
         if so_ids:
+            if po_obj and (not po_obj.origin or origin not in po_obj.origin):
+                if po_obj.origin:
+                    new_po_origin = '%s:%s' % (po_obj.origin, origin)
+                else:
+                    new_po_origin = origin
+                self.pool.get('purchase.order').write(cr, uid, [po_obj.id], {'origin': new_po_origin}, context=context)
             return {'link_so_id': so_ids[0]}
         return {}
 
@@ -1473,6 +1479,9 @@ class purchase_order_line(osv.osv):
 
         return False
 
+
+    msg_selected_po = _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document.")
+
     def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
         '''
         Fill the origin field if a FO is selected
@@ -1483,6 +1492,9 @@ class purchase_order_line(osv.osv):
                 'value': {
                     'origin': fo['name'],
                     'display_sync_ref': len(fo['sourced_references']) and True or False,
+                },
+                'warning': {
+                    'message': _(self.msg_selected_po),
                 }
             }
         return {}
@@ -1509,9 +1521,11 @@ class purchase_order_line(osv.osv):
                     'origin': '',
                 }
             else:
+                fo = self.pool.get('sale.order').read(cr, uid, sale_id[0], ['sourced_references'], context=context)
                 res['value'] = {
-                    'display_sync_ref': True,
+                    'display_sync_ref': len(fo['sourced_references']) and True or False,
                 }
+                res['warning'] = {'message': self.msg_selected_po}
 
         return res
 
