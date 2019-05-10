@@ -36,7 +36,7 @@
                         <field name="batch_management" />
                     </group>
                     <separator colspan="4" string="Location" />
-                    <field name="location_id" domain="[('usage', 'in', ['internal', 'customer'])]" />
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
                 </form>

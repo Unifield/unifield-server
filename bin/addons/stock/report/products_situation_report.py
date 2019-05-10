@@ -232,20 +232,23 @@ class products_situation_report_parser(report_sxw.rml_parse):
             for srml in self.cr.fetchall():
                 amc = srml[0] or 0
                 fmc = srml[1] or 0
-            lines.append({
-                'code': prod.default_code,
-                'name': prod.name,
-                'uom': prod.uom_id and prod.uom_id.name or '',
-                'cost_price': prod.standard_price,
-                'creator': prod.international_status and prod.international_status.name or '',
-                'create_date': prod.uf_create_date,
-                'write_date': prod.uf_write_date,
-                'real_stock': prod.qty_available,
-                'virtual_stock': prod.virtual_available,
-                'available_stock': prod.qty_allocable,
-                'amc': amc,
-                'fmc': fmc,
-            })
+
+            # Do not show the line if Real Stock, Virtual Stock, Available Stock, AMC and FMC = 0
+            if prod.qty_available != 0 or prod.virtual_available != 0 or prod.qty_allocable != 0 or amc != 0 or fmc != 0:
+                lines.append({
+                    'code': prod.default_code,
+                    'name': prod.name,
+                    'uom': prod.uom_id and prod.uom_id.name or '',
+                    'cost_price': prod.standard_price,
+                    'creator': prod.international_status and prod.international_status.name or '',
+                    'create_date': prod.uf_create_date,
+                    'write_date': prod.uf_write_date,
+                    'real_stock': prod.qty_available,
+                    'virtual_stock': prod.virtual_available,
+                    'available_stock': prod.qty_allocable,
+                    'amc': amc,
+                    'fmc': fmc,
+                })
 
             self._order_iterator += 1
             if self.back_browse:
