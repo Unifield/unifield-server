@@ -2102,57 +2102,6 @@ class expected_sale_order_line(osv.osv):
 expected_sale_order_line()
 
 
-class ir_values(osv.osv):
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        new_values = values
-
-        po_accepted_values = {'client_action_multi': ['Order Follow Up',
-                                                      'action_view_purchase_order_group'],
-                              'client_print_multi': ['Purchase Order (Merged)',
-                                                     'Purchase Order',
-                                                     'po.allocation.report',
-                                                     'order.impact.vs.budget'],
-                              'client_action_relate': ['ir_open_product_list_export_view',
-                                                       'View_log_purchase.order',
-                                                       'Allocation report'],
-                              'tree_but_action': [],
-                              'tree_but_open': []}
-
-        rfq_accepted_values = {'client_action_multi': [],
-                               'client_print_multi': ['Request for Quotation'],
-                               'client_action_relate': [],
-                               'tree_but_action': [],
-                               'tree_but_open': []}
-        if context.get('purchase_order', False) and 'purchase.order' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in po_accepted_values[key2] \
-                        or v[1] == 'Purchase Order Excel Export' \
-                        or v[1] == 'Purchase Order' \
-                        or v[1] == 'Purchase Order (Merged)' \
-                        or v[1] == 'Allocation report' \
-                        or v[1] == 'Order impact vs. Budget':
-                    new_values.append(v)
-        elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                        or v[1] == 'Request for Quotation' \
-                        or v[1] == 'Request For Quotation Excel Export':
-                    new_values.append(v)
-
-        return new_values
-
-
-ir_values()
-
-
 SOURCE_DOCUMENT_MODELS = [
     ('', ''),
     ('po', 'Purchase Order'),
