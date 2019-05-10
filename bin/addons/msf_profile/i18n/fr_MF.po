@@ -68898,8 +68898,8 @@ msgstr "Journal des Ecritures d'ouverture"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:632
-msgid "Value (CHF)"
-msgstr "Valeur (CHF)"
+msgid "Value (%s)"
+msgstr "Valeur (%s)"
 
 #. module: base
 #: selection:ir.translation,lang:0
