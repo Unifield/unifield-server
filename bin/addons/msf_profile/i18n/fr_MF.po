@@ -16942,6 +16942,7 @@ msgstr ","
 #: report:addons/stock/report/stock_reception_report_xls.mako:216
 #: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
+#: field:stock.picking,destinations_list:0
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
