@@ -87,7 +87,7 @@
                     <field name="priority" />
                     <field name="categ" />
                     <field name="date_order"/>
-                    <field name="client_order_ref" groups="base.group_extended"/>
+                    <field name="short_client_ref" groups="base.group_extended"/>
                     <field name="partner_id"/>
                     <field name="details" truncate="15"/>
                     <field name="user_id" />
@@ -113,7 +113,8 @@
                         <field name="date_order" readonly="1" />
                         <field name="invoiced" string="Invoiced" invisible="1"/>
                         <field name="warehouse_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="client_order_ref" readonly="1" />
+                        <field name="client_order_ref" invisible="1" />
+                        <field name="short_client_ref" readonly="1" />
                         <field name="shipped" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
