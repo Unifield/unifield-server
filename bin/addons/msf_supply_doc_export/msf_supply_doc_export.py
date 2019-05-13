@@ -1169,7 +1169,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             si_ref = ''
             key = (line[26], line[0])
             if key in invoices:
-                si_ref = invoices[key]['inv_number']
+                si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
                 if invoices[key]['curr_id'] != line[24]:
                     si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
