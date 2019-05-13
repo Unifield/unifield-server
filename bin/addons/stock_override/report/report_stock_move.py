@@ -396,7 +396,7 @@ product will be shown.""",
 
             context['domain'] = domain
 
-            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, prodlot_id, date', context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -585,7 +585,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'qty': move.product_qty,
                 'unit_price': prod_price,
                 'move_value': move.product_qty * prod_price,
-                'prod_stock_bn': move.prodlot_id and prod_stock_bn or prod_stock,
+                'prod_stock_bn': move.prodlot_id and prod_stock_bn or 0,
                 'prod_stock': prod_stock,
                 'source': get_src_dest(move, 'location_id'),
                 'destination': get_src_dest(move, 'location_dest_id'),
