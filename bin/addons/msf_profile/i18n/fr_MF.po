@@ -23872,10 +23872,10 @@ msgid "Latest FX rates"
 msgstr "Derniers taux de change"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:73
+#: code:addons/msf_doc_import/account.py:74
 #, python-format
-msgid "Grouping by currencies…"
-msgstr "Regroupement par monnaies…"
+msgid "Grouping by currency and date…"
+msgstr "Regroupement par devise et date…"
 
 #. module: stock_override
 #: field:stock.picking,incoming_id:0
@@ -41335,10 +41335,10 @@ msgid "Retry from time"
 msgstr "Retry from time"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:588
+#: code:addons/msf_doc_import/account.py:622
 #, python-format
-msgid "Currency %s is not balanced: %s"
-msgstr "La devise %s n'est pas équilibrée : %s"
+msgid "Amount unbalanced for the Currency %s and the Document Date %s (Period: %s): %s"
+msgstr "Montant non équilibré pour la Devise %s et la Date de Document %s (Période : %s) : %s"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:754
@@ -58195,10 +58195,10 @@ msgid "Origin values"
 msgstr "Valeurs d'origine"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:81
+#: code:addons/msf_doc_import/account.py:83
 #, python-format
-msgid "Writing a move for each currency…"
-msgstr "Enregistrement d'une écriture comptable pour chaque monnaie…"
+msgid "Writing of the Journal Entries…"
+msgstr "Enregistrement des Écritures Comptables…"
 
 #. module: base
 #: code:addons/base/ir/ir_actions.py:677
@@ -105941,3 +105941,15 @@ msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"
 #, python-format
 msgid "Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document."
 msgstr "Veuillez vous assurer que vous avez selectionné la bonne valeur pour le champ \"Document d'origine\". Une fois enregistrée cette valeur ne sera plus modifiable. En cas d'erreur la seule solution sera d'Annuler cette ligne et d'en créer une nouvelle."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:343
+#, python-format
+msgid "Line %s. Period is missing."
+msgstr "Ligne %s. Il manque la Période."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:615
+#, python-format
+msgid "All Document Dates should be in the same period."
+msgstr "Toutes les Dates de Document doivent être dans la même période."
