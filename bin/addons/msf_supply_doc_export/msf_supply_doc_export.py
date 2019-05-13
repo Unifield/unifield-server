@@ -1097,7 +1097,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             where
                 i.type = 'in_invoice' and
                 l.invoice_id = i.id and
-                l.order_line_id in %s
+                l.order_line_id in %s and
+                l.state != 'cancel'
             group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice
         ''', (tuple(wizard.pol_ids),)
         )
@@ -1168,7 +1169,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             si_unit_price, func_si_unit_price = '-', '-'
             si_ref = ''
             key = (line[26], line[0])
-            if key in invoices:
+            if key in invoices and invoices[key]['qty']:
                 si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
                 if invoices[key]['curr_id'] != line[24]:
