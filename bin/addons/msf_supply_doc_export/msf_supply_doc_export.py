@@ -1098,7 +1098,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 i.type = 'in_invoice' and
                 l.invoice_id = i.id and
                 l.order_line_id in %s and
-                l.state != 'cancel'
+                i.state != 'cancel'
             group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice
         ''', (tuple(wizard.pol_ids),)
         )
