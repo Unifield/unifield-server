@@ -86,7 +86,8 @@ class M2M(TinyInputWidget):
             ids = attrs.get('value') or []
 
         id = (ids or None) and ids[0]
-        
+
+        parent_id = params.get('_terp_id')
         pprefix = ''
         if '/' in self.name:
             pprefix = self.name[:self.name.rindex('/')]
@@ -137,7 +138,8 @@ class M2M(TinyInputWidget):
                         self.context,
                         dict(cherrypy.request.terp_record,
                              context=current.context,
-                             active_id=current.id or False))
+                             active_id=current.id or False,
+                             parent_id=parent_id))
                 current.context.update(ctx)
             except:
                 pass
