@@ -346,6 +346,8 @@ product will be shown.""",
         'only_standard_loc': True,
     }
 
+    _order = 'id desc'
+
     def update(self, cr, uid, ids, context=None):
         return {}
 
@@ -390,13 +392,34 @@ product will be shown.""",
                 domain.append(('reason_type_id', 'in', rt_ids))
 
             loc_ids = [l.id for l in report.location_ids]
+            selected_locs = False
+            non_standard_loc_ids = []
             if loc_ids:
+                selected_locs = True
                 domain.extend(['|', ('location_id', 'in', loc_ids), ('location_dest_id', 'in', loc_ids)])
-                context['location_id'] = loc_ids
+                context['location'] = loc_ids
+            else:
+                if report.only_standard_loc:
+                    # Input
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1])
+                    # Cross Docking
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1])
+                    # Packing
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1])
+                    # Shipment
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1])
+                    # Distribution
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_distribution')[1])
+                    # Quarantine (analyze)
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1])
+                    # Quarantine (before scap)
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
+
+                    domain.extend([('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
 
             context['domain'] = domain
 
-            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, prodlot_id, date', context=context)
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -405,6 +428,8 @@ product will be shown.""",
             datas = {
                 'ids': [report.id],
                 'moves': rsm_ids,
+                'selected_locs': selected_locs,
+                'non_standard_loc_ids': non_standard_loc_ids,
             }
 
             cr.commit()
@@ -539,6 +564,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
     def getLines(self, currency_id):
         prod_obj = self.pool.get('product.product')
         curr_obj = self.pool.get('res.currency')
+        loc_obj = self.pool.get('stock.location')
+        data_obj = self.pool.get('ir.model.data')
         res = []
         company_id = self.pool.get('res.users').browse(
             self.cr, self.uid, self.uid).company_id.partner_id.id
@@ -548,6 +575,14 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 return m.picking_id.partner_id.name
             else:
                 return m[f].name
+
+        if not self.datas['selected_locs']:
+            inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
+            loc_domain = [('location_id', 'child_of', inst_full_view_id)]
+            if self.datas['non_standard_loc_ids']:
+                loc_domain.append(('id', 'not in', self.datas['non_standard_loc_ids']))
+            location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
+            self.localcontext.update({'location': location_ids})
 
         for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
             move_date = move.picking_id and move.picking_id.date_done or move.date or False
