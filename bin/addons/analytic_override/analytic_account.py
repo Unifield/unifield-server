@@ -509,8 +509,9 @@ class analytic_account(osv.osv):
             if cat_instance:
                 self.check_fp(cr, uid, cat_instance, context=context)
         self._check_name_unicity(cr, uid, ids, context=context)
-        for analytic_acc_id in ids:
-            self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
+        if not context.get('sync_update_execution'):
+            for analytic_acc_id in ids:
+                self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
