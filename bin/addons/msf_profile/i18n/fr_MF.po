@@ -10654,9 +10654,10 @@ msgstr "Soudan"
 msgid "Mission Report"
 msgstr "Mission - Rapport"
 
-#. modules: msf_outgoing, consumption_calculation
+#. modules: msf_outgoing, consumption_calculation, order_types
 #: view:expiry.quantity.report:0
 #: report:packing.list:0
+#: report:order.type.donation.certificate:0
 msgid "Exp. Date"
 msgstr "Date Exp."
 
@@ -14382,10 +14383,11 @@ msgstr "Description du modèle"
 msgid "Account ID"
 msgstr "Account ID"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, order_types
 #: report:packing.list:0
+#: report:order.type.donation.certificate:0
 msgid "Total Qty."
-msgstr "Total Qty."
+msgstr "Qté. Totale"
 
 #. module: base
 #: view:ir.translation:0
@@ -19296,13 +19298,14 @@ msgstr "Could not cancel this sales order !"
 msgid "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 msgstr "Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."
 
-#. modules: msf_field_access_rights, financing_contract, register_accounting, stock_override
+#. modules: msf_field_access_rights, financing_contract, register_accounting, stock_override, order_types
 #: view:financing.contract.contract:0
 #: view:msf_field_access_rights.field_access_rule:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,comments:0
 #: field:account.bank.statement,notes:0
 #: report:delivery.order:0
+#: report:order.type.donation.certificate:0
 msgid "Comments"
 msgstr "Commentaires"
 
@@ -20573,7 +20576,7 @@ msgstr "Emballages Clients"
 msgid "Burundi"
 msgstr "Burundi"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, order_types
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
@@ -20581,8 +20584,9 @@ msgstr "Burundi"
 #: report:msf.product_list:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
+#: report:order.type.donation.certificate:0
 msgid "Name :"
-msgstr "Nom: "
+msgstr "Nom :"
 
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard,entry_mode:0
@@ -38843,7 +38847,7 @@ msgstr "Mois"
 msgid "Male"
 msgstr "Masculin"
 
-#. modules: stock, account, sale, finance, purchase_followup, msf_homere_interface, procurement_request, specific_rules
+#. modules: stock, account, sale, finance, purchase_followup, msf_homere_interface, procurement_request, specific_rules, order_types
 #: report:hr.payment.order.report:0
 #: field:cash.request.expense,currency_id:0
 #: view:cash.request.liquidity.bank:0
@@ -38861,6 +38865,7 @@ msgstr "Masculin"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:204
 #: report:addons/stock/report/stock_reception_report_xls.mako:243
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:225
+#: report:order.type.donation.certificate:0
 msgid "Currency"
 msgstr "Devise"
 
@@ -46388,7 +46393,7 @@ msgstr "Exclure la sélection d'employés"
 msgid "Exclude journal selection"
 msgstr "Exclure la sélection de journaux"
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, msf_supply_doc_export, msf_doc_import, procurement_report, stock
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, msf_supply_doc_export, msf_doc_import, procurement_report, stock, order_types
 #: view:expiry.quantity.report:0
 #: field:expiry.quantity.report.line,batch_number:0
 #: view:product.likely.expire.report.item:0
@@ -46418,6 +46423,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:124
 #: report:addons/stock_override/report/report_stock_move_xls.mako:138
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:226
+#: report:order.type.donation.certificate:0
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -57858,7 +57864,7 @@ msgstr "Back Order Of"
 msgid "Source Type"
 msgstr "Source Type"
 
-#. modules: sale, msf_supply_doc_export, msf_outgoing, purchase_followup, sales_followup
+#. modules: sale, msf_supply_doc_export, msf_outgoing, purchase_followup, sales_followup, order_types
 #: report:msf.report_reception_in:0
 #: report:empty.picking.ticket:0
 #: report:invoice:0
@@ -57871,6 +57877,7 @@ msgstr "Source Type"
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:284
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
+#: report:order.type.donation.certificate:0
 msgid "Item"
 msgstr "Art."
 
@@ -77678,6 +77685,7 @@ msgstr "# de lignes importées"
 #: field:internal.request.import.line,in_cost_price:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:242
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:224
+#: report:order.type.donation.certificate:0
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -97696,9 +97704,11 @@ msgstr "In - brouillon"
 msgid "New value"
 msgstr "Nouvelle valeur"
 
-#. module: product_asset, msf_supply_doc_export
+#. module: product_asset, msf_supply_doc_export, order_types
 #: report:product.asset:0
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:95
+#: report:certificate.free.gift:0
+#: report:order.type.donation.certificate:0
 msgid "To:"
 msgstr "Vers:"
 
@@ -105960,3 +105970,48 @@ msgstr "Ligne %s. Il manque la Période."
 #, python-format
 msgid "All Document Dates should be in the same period."
 msgstr "Toutes les Dates de Document doivent être dans la même période."
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "CERTIFICATE of DONATION"
+msgstr "CERTIFICAT de DONATION"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "From:"
+msgstr "De:"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "The undersigned parties declare that the following listed items, with an approximate value of"
+msgstr "Les parties, ci-contre nommées, déclarent que la liste suivante des marchandises, d'une valeur approximative de"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid ", are donated by Médecins Sans Frontières, without any exchange of currency."
+msgstr ", est donnée par Médecins Sans Frontières à titre gracieux."
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Médecins Sans Frontières will bear no responsibility with regard to legal claims or claims for damage, injury, disability or death caused by the items donated or their use."
+msgstr "Au terme de la donation, la responsabilité de Médecins Sans Frontières ne pourra être engagée au titre d'éventuels dommages, blessure, handicap ou mort, causés par les articles donnés ou leur usage."
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Beneficiary from the donation will assume the responsibility regarding any potential judicial proceedings or claim."
+msgstr "Le Bénéficiaire de la donation assumera la responsabilité concernant les éventuelles poursuites légales ou réclamations engagées à ce titre."
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Total Value (currency)"
+msgstr "Valeur Totale (devise)"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Sent by :"
+msgstr "Envoyé par :"
+
+#. module: order_types
+#: report:order.type.donation.certificate:0
+msgid "Received by :"
+msgstr "Reçu par :"
