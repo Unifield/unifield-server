@@ -1087,13 +1087,40 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
 
         self._nb_orders = len(wizard.pol_ids)
 
+
+        invoices = {}
+
         self.cr.execute('''
-            SELECT 
-                pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0), 
-                pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name, 
-                p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id, 
-                c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, al.id, al.price_unit, 
-                a.number, a.name, c3.id, rp.id
+            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date
+            from
+                account_invoice i, account_invoice_line l
+            where
+                i.type = 'in_invoice' and
+                l.invoice_id = i.id and
+                l.order_line_id in %s
+            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice
+        ''', (tuple(wizard.pol_ids),)
+        )
+        for inv in self.cr.dictfetchall():
+            key = (inv['pick_id'], inv['pol_id'])
+            if key not in invoices:
+                invoices[key] = inv
+            else:
+                ex_curr = invoices[key]['curr_id']
+                if inv['curr_id'] != ex_curr:
+                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                else:
+                    price = inv['price_total']
+                invoices[key]['price_total'] += price*inv['qty']
+                invoices[key]['qty'] += inv['qty']
+
+
+        self.cr.execute('''
+            SELECT
+                pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0),
+                pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name,
+                p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id,
+                c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, rp.id, sp.id
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
@@ -1105,14 +1132,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 LEFT JOIN stock_move m ON m.purchase_line_id = pl.id AND m.type = 'in'
                 LEFT JOIN stock_picking sp ON sp.id = m.picking_id
                 LEFT JOIN res_currency c2 ON c2.id = m.price_currency_id
-                LEFT JOIN account_invoice a ON a.picking_id = sp.id AND a.type = 'in_invoice' 
-                    AND a.is_direct_invoice = 'f' AND a.is_inkind_donation = 'f' AND a.is_debit_note = 'f' 
-                    AND a.is_intermission = 'f'
-                LEFT JOIN account_invoice_line al ON al.invoice_id = a.id AND al.order_line_id = pl.id 
-                    AND m.invoice_line_id=al.id
-                LEFT JOIN res_currency c3 ON c3.id = a.currency_id
             WHERE pl.id IN %s 
-            ORDER BY p.id DESC, pl.line_number ASC, m.id ASC, al.id ASC
+            ORDER BY p.id DESC, pl.line_number ASC, sp.id ASC
         ''', (self.localcontext.get('lang', 'en_MF'), tuple(wizard.pol_ids)))
 
         for line in self.cr.fetchall():
@@ -1121,7 +1142,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             func_cat_unit_price = '-'
             if line[1]:
                 supl_info_domain = [('product_id', '=', line[1]), ('active', '=', True), ('catalogue_id', '!=', False),
-                                    ('catalogue_id.partner_id', '=', line[30]), ('catalogue_id.currency_id', '=', line[17])]
+                                    ('catalogue_id.partner_id', '=', line[25]), ('catalogue_id.currency_id', '=', line[17])]
                 supl_info_ids = supl_info_obj.search(self.cr, self.uid, supl_info_domain, limit=1,
                                                      order='sequence asc', context=self.localcontext)
                 if supl_info_ids:
@@ -1145,9 +1166,14 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, line[24], wizard.company_currency_id.id,
                                                             in_unit_price, round=False, context=self.localcontext), 2)
             si_unit_price, func_si_unit_price = '-', '-'
-            if line[25]:
-                si_unit_price = line[26] or 0.00
-                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, line[29], wizard.company_currency_id.id,
+            si_ref = ''
+            key = (line[26], line[0])
+            if key in invoices:
+                si_ref = invoices[key]['inv_number']
+                si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
+                if invoices[key]['curr_id'] != line[24]:
+                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
                                                             si_unit_price, round=False, context=self.localcontext), 2)
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,
                                                          line[4], round=False, context=self.localcontext), 2)
@@ -1178,7 +1204,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 'partner_name': line[15],
                 'po_name': line[11],
                 'in_ref': line[22] or '',
-                'si_ref': line[27] or line[28] or '',
+                'si_ref': si_ref,
                 'line_number': line[2],
                 'p_code': line[13],
                 'p_name': line[14],
