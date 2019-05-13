@@ -27,11 +27,19 @@
       <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
+    <blockTableStyle id="TableauNotes">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="20,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
+    </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" />
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
+    <paraStyle name="P2Bold" fontName="Helvetica-Bold" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
     <paraStyle name="P4Grey" textColor="#747474" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
@@ -126,7 +134,7 @@
         </td>
       </tr>
       <tr>
-         <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
+         <para style="P4">[[ repeatIn(getPOLines(o.id, getRunParmsRML('pending_only_ok')), 'line') ]]</para>
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
@@ -182,6 +190,17 @@
      </tr>
     
     </blockTable>
+
+    <blockTable colWidths="905.0" style="TableauNotes">
+        [[ getRunParmsRML('include_notes_ok') or removeParentNode('blockTable') ]]
+        <tr>
+            <td>
+                <para style="P2Bold">Notes :</para>
+                <para style="P4Left">[[o.notes]]</para>
+            </td>
+        </tr>
+    </blockTable>
+
     <section>
       <para style="P2">
         <font color="white"> </font>
