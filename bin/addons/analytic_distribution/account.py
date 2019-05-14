@@ -31,6 +31,7 @@ class account_destination_link(osv.osv):
     _name = 'account.destination.link'
     _description = 'Destination link between G/L and Analytic accounts'
     _order = 'name, id'
+    _trace = True
 
     def _get_tuple_name(self, cr, uid, ids, name=False, args=False, context=None):
         """

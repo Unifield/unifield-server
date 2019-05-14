@@ -256,15 +256,16 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['state', 'category', 'code', 'complete_name', 'cost_center_ids', 'date', 'date_start', 'name', 'parent_id']
+        fields = ['state', 'category', 'code', 'complete_name', 'cost_center_ids', 'date', 'date_start', 'name', 'parent_id',
+                  'type', 'for_fx_gain_loss', 'instance_id', 'tuple_destination_account_ids', 'description', 'destination_ids']
 
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.analytic.account'), ('name', 'in', fields)], context=context)
 
         vals = {
             'name': name,
             'object_id': object_ids[0],
-            'log_write': False,
-            'log_unlink': False,
+            'log_write': True,
+            'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
         }
@@ -273,6 +274,46 @@
         elif rule_id:
             self.write(cr, uid, rule_id, vals, context=context)
 
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For "Destination link between G/L and Analytic accounts" (account.destination.link), track only the modification of the field "disabled"
+-
+  !python {model: audittrail.rule}: |
+    name = 'Destinations Links'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.destination.link')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # track only the field "disabled", at Destination level (i.e. on the account.analytic.account object)
+        # cf. when an account is removed from a Dest., it is disabled but not unlinked (so still attached to the dest.)
+        fields = ['disabled']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , 'account.destination.link'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.destination.link'), ('name', '=', 'account_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.destination.link'), ('name', '=', 'destination_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+            if field_name:
+                name_id = field_name[0]
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': False,
+            'log_create': False,
+            'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
         # Subscribe to the rule
         self.subscribe(cr, uid, rule_id)
 -
