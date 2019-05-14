@@ -204,6 +204,8 @@ class real_average_consumption(osv.osv):
         (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
     ]
 
+    _order = 'id desc'
+
     def create(self, cr, uid, vals, context=None):
         '''
         Add name of the report at creation
@@ -1153,6 +1155,7 @@ class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
     _description = 'Monthly review consumption'
     _rec_name = 'creation_date'
+    _order = 'id desc'
 
     def _get_nb_lines(self, cr, uid, ids, field_name, args, context=None):
         '''
