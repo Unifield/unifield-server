@@ -415,7 +415,7 @@ product will be shown.""",
                     # Quarantine (before scap)
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
-                    domain.extend([('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
+                    domain.append(('location_dest_id', 'not in', non_standard_loc_ids))
 
             context['domain'] = domain
 
