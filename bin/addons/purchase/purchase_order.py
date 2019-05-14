@@ -362,6 +362,36 @@ class purchase_order(osv.osv):
 
         return [('id', 'in', list(po_ids))]
 
+    def _get_short_partner_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a shortened version of Supplier Reference, with only the Order Reference
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        partner_ref = {}
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['partner_ref', 'partner_id'], context=context):
+            partner_ref[po.id] = ''
+            if po.partner_ref:
+                if '.' in po.partner_ref and po.partner_id.name in po.partner_ref:
+                    partner_ref[po.id] = po.partner_ref.split('.')[-1]
+                else:
+                    partner_ref[po.id] = po.partner_ref
+
+        return partner_ref
+
+    def onchange_short_partner_ref(self, cr, uid, ids, short_partner_ref=False, context=None):
+        '''
+        Set Partner Ref. value to the value of the Short Partner Ref.
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        res['value'] = {'partner_ref': short_partner_ref}
+
+        return res
+
     def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return a concatenation of the PO's customer references from the project (case of procurement request)
@@ -380,6 +410,27 @@ class purchase_order(osv.osv):
                     if res[po_id]:
                         res[po_id] += ';'
                     res[po_id] += so['client_order_ref']
+
+        return res
+
+    def _get_short_customer_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a concatenation of the PO's customer references from the project (case of procurement request)
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        so_obj = self.pool.get('sale.order')
+        for po_id in ids:
+            res[po_id] = ""
+
+            so_ids = self.get_so_ids_from_po_ids(cr, uid, po_id, context=context)
+            for so in so_obj.read(cr, uid, so_ids, ['short_client_ref'], context=context):
+                if so['short_client_ref']:
+                    if res[po_id]:
+                        res[po_id] += ';'
+                    res[po_id] += so['short_client_ref']
 
         return res
 
@@ -684,6 +735,7 @@ class purchase_order(osv.osv):
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=128),
+        'short_partner_ref': fields.function(_get_short_partner_ref, method=True, string='Supplier Reference', type='char', size=64, store=False),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
@@ -709,6 +761,7 @@ class purchase_order(osv.osv):
         # US-1765: register the 1st call of wkf_confirm_trigger to prevent recursion error
         'po_confirmed': fields.boolean('PO', readonly=True),
         'customer_ref': fields.function(_get_customer_ref, fnct_search=_src_customer_ref, method=True, string='Customer Ref.', type='text', store=False),
+        'short_customer_ref': fields.function(_get_short_customer_ref, method=True, string='Customer Ref.', type='text', store=False),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
 
         'date_approve': fields.date('Date Approved', readonly=1, select=True, help="Date on which purchase order has been approved"),

@@ -10,8 +10,9 @@
                 <tree string="Field Orders" >
                     <field name="name"/>
                     <field name="date_order"/>
-                    <field name="client_order_ref" />
+                    <field name="short_client_ref" />
                     <field name="partner_id"/>
+                    <field name="details" truncate="15"/>
                     <field name="user_id" />
                     <field name="line_count"/>
                     <field name="picked_rate" widget="progressbar"/>
